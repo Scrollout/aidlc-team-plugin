@@ -12,20 +12,19 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 | `init` | asks questions, writes profile, renders templates, vendors itself | owner via the `aidlc` skill |
 | `upgrade` | re-vendors the CLI from the installed plugin | owner |
 | `index [bundle]` | regenerates every `index.md` in the bundle like the OKF reference implementation | docs hook, merge, anyone |
-| `check [--ci] [--staged] [path…]` | OKF validation, plan lint, profile lint; `--ci` adds merge-trailer checks. A directory is checked as a bundle; a file reports only its own findings | hooks, CI, anyone |
+| `check [--ci] [path…]` | OKF validation, plan lint, profile lint; `--ci` adds merge-trailer checks. A directory is checked as a bundle; a file reports only its own findings | hooks, CI, anyone |
 | `status` | the state table | SessionStart hook, anyone |
 | `next` | the single next action | lead |
 | `lane <unit>|--diff <range>` | the computed lane and why | lead, gate |
 | `card <unit>` | renders the unit card | lead |
 | `start <unit>` | in a builder's worktree: names the branch `unit/U-<n>`, checks the base matches the card | builder |
-| `reserve <kind> <area>` | next free number for a reservation, checked against the plan and the base | lead while planning |
 | `approve [--auto] <doc>` | stamps approval | owner (`!`); `--auto` the lead, for what the owner delegated ([0008](../decisions/0008-delegated-approvals.md)) |
 | `review record <unit> <file\|->` | stores a reviewer verdict keyed by diff hash; `-` reads it from stdin | reviewer |
 | `report <unit>` | stores the builder's report (JSON on stdin) | builder |
 | `hold <unit> [off]` / `priority <unit> <n>` | records an owner instruction in the plan (`hold: true`, `priority: <n>`, higher first) | lead, on the owner's word |
 | `fix "<title>"\|--from-issue <n>` | one-unit plan without an intent; from an issue, titled like it and linked to it | lead |
 | `sync` | projects intents and units onto GitHub issues and a Project ([Board](board.md)) | lead, merge |
-| `push` / `clean` | checked base push; removes orphan worktrees and branches | lead |
+| `push` | checked base push | lead |
 | `merge <unit>` | the merge gate, then `git merge --no-ff` with trailers | lead |
 | `hook <name>` | entry point for the plugin's hooks; reads the hook JSON on stdin | hooks |
 

@@ -39,18 +39,14 @@ export const diffHash = (cwd, base, unit) => sha256(git(cwd, 'diff', `${base}...
 
 
 // Focuses the unit's diff needs a review in, each with why: general first, then each focus whose globs
-// the diff touches, and security when an added line matches security.content (docs/design/prompts.md).
+// the diff touches (docs/design/prompts.md).
 export function reviewFocuses(cwd, profile, base, unit) {
-  const range = `${base}...${branchOf(unit)}`;
-  const paths = git(cwd, 'diff', '--name-only', range).split('\n').filter(Boolean);
-  const added = git(cwd, 'diff', '-U0', range).split('\n').filter((l) => l.startsWith('+') && !l.startsWith('+++'));
+  const paths = git(cwd, 'diff', '--name-only', `${base}...${branchOf(unit)}`).split('\n').filter(Boolean);
   const needed = new Map([[S.focus, '']]);
   for (const [focus, globs] of Object.entries(profile.focus ?? {})) {
     const path = paths.find((x) => list(globs).some((g) => overlaps('/' + x, g)));
     if (path) needed.set(focus, msg('gateFocusPath', { path, focus }));
   }
-  const pattern = list(profile.security?.content).find((c) => added.some((l) => l.includes(c)));
-  if (pattern && !needed.has(config.gate.security)) needed.set(config.gate.security, msg('gateFocusContent', { pattern }));
   return needed;
 }
 
@@ -175,7 +171,10 @@ export function readState(cwd, { now = Date.now() } = {}) {
       focus = verdicts.find((x) => x.verdict !== 'pass')?.focus ?? null;
       if (has('escalate')) state = 'escalated';
       else if (has('fix')) state = 'fix';
-      else if (!focus && (!quick || report)) state = 'reviewed';
+      else if (!focus && (!quick || report)) {
+        const gate = readJson(runtimeFile(cwd, 'gates', u.id));
+        state = gate?.diffHash === hash && gate.base === tryGit(cwd, 'rev-parse', base) ? 'gated' : 'reviewed';
+      }
       else if (has('pass') || (report && (!lastAt || report.at > lastAt) && Date.parse(report.at) > approvedAt(u.doc))) state = 'reported';
       else state = 'building';
     } else state = 'approved';
@@ -223,6 +222,8 @@ export function nextAction(st) {
   const merged = (id) => st.units.find((x) => x.id === id)?.state === 'merged';
   const reviewed = scope.find((u) => u.state === 'reviewed' && !u.fm.hold && u.depends.every(merged));
   if (reviewed) return action('act', 'nextMerge', { unit: reviewed.id });
+  const gated = scope.find((u) => u.state === 'gated');
+  if (gated) return action('human', 'nextGated', { unit: gated.id, codes: readJson(runtimeFile(st.cwd, 'gates', gated.id)).codes.join(', ') });
   const escalated = scope.find((u) => u.state === 'escalated');
   if (escalated) return action('human', 'nextEscalated', { unit: escalated.id });
   const stopped = scope.find((u) => u.state === 'stopped');

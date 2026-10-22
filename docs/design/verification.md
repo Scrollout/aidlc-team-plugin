@@ -43,9 +43,9 @@ The guard matches a short deny list on parsed argv; it does not try to model the
 Fails with one line per problem, each naming the fix, unless all hold:
 1. Unit approved and not stale; deps merged.
 2. Diff inside the card's scope; lane at merge ≥ lane at start.
-3. Every AC has a test tagged `U-<n>/AC-<k>` in the diff or the base, at its level; not in the quick lane ([Unit card](unit-card.md#quick-lane)). Full lane adds proof-revert: with the unit's production changes reverted, every AC test must fail.
+3. Every AC has a test tagged `U-<n>/AC-<k>` in the diff or the base, at its level; not in the quick lane ([Unit card](unit-card.md#quick-lane)).
 4. Profile checks for the touched modules pass on the merged result.
-5. Outside the quick lane, verdict `pass` for the current diff hash, plus each required specialist (security is required when a security glob or content pattern matches).
+5. Outside the quick lane, verdict `pass` for the current diff hash, plus each required specialist (a focus is required when its globs match the diff).
 6. Bundle passes OKF validation.
 7. Profile `security.check` commands pass when set (e.g. secret scan, SAST, dependency audit such as gitleaks, semgrep, govulncheck); the plugin runs them, it does not ship them.
 8. Architecture: no denied dependency edge and every `architecture.checks` command passes, on every merge ([Architecture](architecture.md)).
@@ -63,7 +63,7 @@ How a review runs, and why there is no separate architecture focus: [Skill and a
 The skill and agent prompts are code coupled to a model version. `tests/evals/` holds a fixture project with seeded defects (an AC without a real test, an out-of-scope edit, an injection, a missing authz check). The reviewer must find each one; the builder must stop on the interface-change fixture. Run before every release and on every model change; a miss blocks the release.
 
 # Later
-- M2: proof-revert for the standard lane too, once the pilot shows its runtime cost.
+- M2: proof-revert (with the production change reverted, every AC test must fail) and security content patterns, cut from M1 to keep it small (owner, 2026-10-22).
 - M3: an optional CI evaluator agent on pushes.
 
 [^cc-hooks]: Claude Code hooks reference

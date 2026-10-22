@@ -69,11 +69,10 @@
     },
     {
       "name": "check",
-      "usage": "check [--ci] [--staged] [path…]",
+      "usage": "check [--ci] [path…]",
       "does": "OKF validation, plan lint, profile lint",
       "flags": [
-        "--ci",
-        "--staged"
+        "--ci"
       ]
     },
     {
@@ -100,11 +99,6 @@
       "name": "start",
       "usage": "start <unit>",
       "does": "name the worktree branch unit/U-<n> and check its base"
-    },
-    {
-      "name": "reserve",
-      "usage": "reserve <kind> <area>",
-      "does": "next free number for a reservation"
     },
     {
       "name": "approve",
@@ -152,11 +146,6 @@
       "does": "push the base after checking its new commits"
     },
     {
-      "name": "clean",
-      "usage": "clean",
-      "does": "remove orphan worktrees and branches"
-    },
-    {
       "name": "merge",
       "usage": "merge <unit>",
       "does": "run the merge gate, then merge --no-ff with trailers"
@@ -170,7 +159,6 @@
   "messages": {
     "help": "usage: aidlc <command> [args]\n\n{{#each commands}}  {{usage}}  {{does}}\n{{/each}}",
     "unknownCommand": "unknown command: {{name}} → run aidlc --help\n",
-    "notBuilt": "{{name}}: not implemented yet\n",
     "failed": "{{name}}: {{error}}\n",
     "unionNotList": "{{layer}}: {{key}} must be a list; a {{union}} from an earlier layer cannot be removed",
     "unionReplaced": "{{layer}}: {{key}} replaces an object holding a {{union}} from an earlier layer",
@@ -214,7 +202,6 @@
     "yamlTrailing": "line {{line}}: unexpected text after a value",
     "yamlUnsupported": "line {{line}}: unsupported YAML feature {{char}}",
     "yamlBlock": "line {{line}}: bad block scalar",
-    "flagNotBuilt": "{{name}} is not implemented yet",
     "depUnknown": "{{unit}} depends on {{dep}}, which does not exist",
     "depCycle": "depends cycle {{cycle}}",
     "acDuplicate": "{{ac}} appears more than once in {{unit}}",
@@ -305,14 +292,11 @@
     "gateLane": "the diff is {{lane}} lane ({{reason}}), the card {{card}}",
     "gateAc": "no test tagged {{tag}}",
     "gateLevel": "{{tag}} is tested in {{files}}, outside the {{level}} paths",
-    "gateProof": "{{level}} tests pass with the production change reverted",
-    "gateNoRun": "level {{level}} has no run command for proof-revert",
     "gateCheck": "{{command}} failed",
     "gateReview": "no pass verdict for the current diff of {{unit}}",
     "gateCardStale": "the review was made against card {{reviewed}}, the current card is {{card}}",
     "gateSpecialist": "{{focus}} review required ({{why}}), no pass verdict for the current diff",
     "gateFocusPath": "{{path}} matches focus.{{focus}}",
-    "gateFocusContent": "an added line contains {{pattern}}",
     "gateOkf": "{{path}}:{{line}} {{code}} {{message}}",
     "gateConflict": "unit/{{unit}} conflicts with {{base}}",
     "archEdge": "{{from}} -> {{to}}: {{reason}}",
@@ -363,7 +347,8 @@
     "holdUsage": "usage: hold <unit> [off]",
     "priorityUsage": "usage: priority <unit> <n>, a whole number; higher builds first",
     "nextAutoApprove": "approve {{docs}}, delegated by the owner: aidlc approve --auto {{docs}}",
-    "notDelegated": "{{name}} is not in a class the owner delegated (approvals.auto in .aidlc/local/profile.json): the owner approves it"
+    "notDelegated": "{{name}} is not in a class the owner delegated (approvals.auto in .aidlc/local/profile.json): the owner approves it",
+    "nextGated": "the gate refused {{unit}} ({{codes}}; aidlc merge {{unit}} lists them): fix what the lead can, ask the owner for the rest"
   },
   "okf": {
     "index": "index.md",
@@ -528,7 +513,8 @@
       "reapprove",
       "quick"
     ],
-    "unitType": "Unit"
+    "unitType": "Unit",
+    "gates": "gates"
   },
   "card": {
     "template": "card.md",
@@ -671,9 +657,6 @@
       },
       "GATE-LEVEL": {
         "fix": "move the test under the level's paths in profile.levels"
-      },
-      "GATE-PROOF": {
-        "fix": "make the AC test fail without the production change"
       },
       "GATE-CHECK": {
         "fix": "fix the module until its check passes"

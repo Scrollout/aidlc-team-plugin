@@ -24,7 +24,7 @@ sources:
 The owner holds both leads of the AI-DLC diagram: product behaviour (Inception) and software system (Construction).
 
 # Specialists
-The reviewer prompt takes a `focus`: `general`, `security`, `data`, `ui`, or any focus a project defines. The profile maps globs to focuses (e.g. `internal/auth/**` → security) and, for security, content patterns too (e.g. `os/exec`, `crypto`, raw SQL, `password`), so a risky change outside the usual folders is still caught. A unit whose scope or diff matches gets one extra review per matching focus; `next` names each focus in turn ([Skill and agents](prompts.md)). These are the internal consultants of the AI-DLC team model, called on demand, never permanent.
+The reviewer prompt takes a `focus`: `general`, `security`, `data`, `ui`, or any focus a project defines. The profile maps globs to focuses (e.g. `internal/auth/**` → security). A unit whose scope or diff matches gets one extra review per matching focus; `next` names each focus in turn ([Skill and agents](prompts.md)). These are the internal consultants of the AI-DLC team model, called on demand, never permanent.
 
 Every general review also runs a short security baseline (input handling, authz on new entry points, secrets, injection, unsafe defaults); the dedicated security focus goes deeper and reads the project's threat model.
 

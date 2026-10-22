@@ -32,7 +32,7 @@ flowchart LR
 | Units | `units/U-<n>-<slug>.md`: stories, ACs (`AC-<k>`), NFRs, risks, `depends`, `modules`, `scope`, `reserves` | DAG acyclic, AC IDs unique, scopes of parallel units disjoint, reservations unique, size | the plan, once |
 | Domain | `design/U-<n>-domain.md`: entities, aggregates, context map; no technology | required sections | no |
 | Logical | `## Logical` in the unit doc, or `design/U-<n>-logical.md` + decision docs | decision has options, choice, why; contract and migration checks | one-way doors only |
-| Source | code + tests tagged `U-<n>/AC-<k>`, written first | every AC tagged by a test at its declared level; diff inside scope; module checks green; proof-revert (full lane); review verdict | no |
+| Source | code + tests tagged `U-<n>/AC-<k>`, written first | every AC tagged by a test at its declared level; diff inside scope; module checks green; review verdict | no |
 | Deployment | the package the profile's CI builds | profile `deploy.check` commands | no |
 | Operation | release tag, runbook link | profile `release` command, smoke | yes |
 

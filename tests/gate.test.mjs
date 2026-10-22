@@ -66,7 +66,6 @@ const BROKEN = {
   'GATE-LANE': () => setup({ beforeReview: (d) => write(d, { '.aidlc/profile.json': { ...PROFILE, lanes: { quick: [], full: ['src/add.mjs'] } } }) }),
   'GATE-AC': () => setup({ files: { ...CODE, 'tests/add.test.mjs': "import { test } from 'node:test';\ntest('adds', () => {});\n" } }),
   'GATE-LEVEL': () => setup({ files: { ...CODE, 'src/add.check.mjs': '// U-1/AC-1\n' } }),
-  'GATE-PROOF': () => setup({ unit: { scope: ['db/**', 'tests/**'] }, files: { 'db/add.mjs': 'export const x = 1;\n', 'tests/db.test.mjs': "import { test } from 'node:test';\ntest('U-1/AC-1 always passes', () => {});\n" } }),
   'GATE-CHECK': () => setup({ profile: { ...PROFILE, modules: [{ id: 'core', paths: ['src/**'], check: FAIL }] } }),
   'GATE-REVIEW': () => setup({ verdict: 'fix' }),
   'GATE-CARD': () => {
@@ -96,18 +95,7 @@ for (const [code, make] of Object.entries(BROKEN)) {
   });
 }
 
-test('U6/AC-4 a security content pattern outside the security folders requires a security verdict', () => {
-  const dir = setup({ files: { 'src/add.mjs': 'export const add = (a, b) => a + b; // password check\n', ...TEST } });
-  const r = merge(dir);
-  assert.match(r.out, /GATE-SPECIALIST security review required \(an added line contains password\)/);
-  review(dir, 'U-1', 'pass');
-  const file = join(mkdtempSync(join(tmpdir(), 'v-')), 'v.json');
-  write('/', { [file]: { verdict: 'pass', focus: 'security', findings: [] } });
-  assert.equal(run(dir, ['review', 'record', 'U-1', file]).code, 0);
-  assert.equal(merge(dir).code, 0);
-});
-
-test('U6/AC-8 proof-revert passes when the AC test needs the production change', () => {
+test('U6/AC-8 a full-lane unit merges on its tests; proof-revert is deferred to M2', () => {
   const dir = setup({ unit: { scope: ['db/**', 'tests/**'] }, files: { 'db/add.mjs': 'export const add = (a, b) => a + b;\n', 'tests/add.test.mjs': TEST['tests/add.test.mjs'].replace('../src/add.mjs', '../db/add.mjs') } });
   assert.equal(JSON.parse(read(dir, '.git/aidlc/cards/U-1.json')).lane, 'full');
   const r = merge(dir);
@@ -124,7 +112,15 @@ test('U6/AC-9 boundaries: denied edges, same-service edges, approved exceptions'
     'internal/core/a.go -> internal/providers/b.go: core never uses a provider',
     'cmd/api/main.go -> cmd/web/h.go: services build alone',
   ]);
-  assert.equal(boundaryFindings(edges, arch, new Set(['docs/decisions/0009-x.md'])).length, 1, 'the approved exception clears its boundary');
+  const whole = new Map([['docs/decisions/0009-x.md', '# Decision\nServices may share code for now.\n']]);
+  assert.equal(boundaryFindings(edges, arch, whole).length, 1, 'an approved exception that lists no edge clears its boundary');
+  const listed = new Map([['docs/decisions/0009-x.md', '# Baseline\n- `cmd/api/main.go -> cmd/web/h.go`\n']]);
+  assert.equal(boundaryFindings(edges, arch, listed).length, 1, 'a listed edge is covered');
+  const other = [...edges, ['cmd/api/main.go', 'cmd/admin/x.go']];
+  assert.deepEqual(boundaryFindings(other, arch, listed).map((f) => f.message), [
+    'internal/core/a.go -> internal/providers/b.go: core never uses a provider',
+    'cmd/api/main.go -> cmd/admin/x.go: services build alone',
+  ], 'an edge the decision does not list still fails');
 });
 
 test('U6/AC-3 and AC-10 check --ci flags merges without trailers or out of scope, and direct code commits, after adopted', () => {
@@ -206,4 +202,15 @@ test('U6/AC-1 a quick-lane unit needs no review: its report makes it ready to me
 test('U6/AC-1 an empty diff does not raise the lane', () => {
   const dir = setup({ beforeReview: (d) => { git(d, 'switch', '-q', 'unit/U-1'); git(d, 'revert', '--no-edit', 'HEAD'); git(d, 'switch', '-q', 'main'); } });
   assert.doesNotMatch(merge(dir).out, /GATE-LANE/);
+});
+
+test('U6/AC-1 a refused merge is not offered again until the base or the diff changes', () => {
+  const dir = setup({ profile: { ...PROFILE, modules: [{ id: 'core', paths: ['src/**'], check: FAIL }] } });
+  assert.match(run(dir, ['next']).out, /^merge U-1/);
+  assert.equal(merge(dir).code, 1);
+  const r = run(dir, ['next']);
+  assert.match(r.out, /^the gate refused U-1 \(GATE-CHECK; aidlc merge U-1 lists them\)/);
+  assert.equal(r.code, 2);
+  commit(dir, 'the base moves', { 'docs/note.md': 'x\n' });
+  assert.match(run(dir, ['next']).out, /^merge U-1/);
 });

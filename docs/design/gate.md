@@ -1,7 +1,7 @@
 ---
 type: Design
 title: Merge mechanics
-description: How aidlc merge, push, fix and check --ci carry out the gate in Verification - the trial merge, the codes, shared files, proof-revert, architecture rules and the CI history check.
+description: How aidlc merge, push, fix and check --ci carry out the gate in Verification - the trial merge, the codes, shared files, architecture rules and the CI history check.
 status: draft
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T11:45:00Z }
 ---
@@ -20,10 +20,9 @@ Nothing touches the base until every check passes, so a failed gate leaves no ha
 - **Scope:** every path in the unit's diff matches its scope. A builder's diff touching an `index.md`, a `log.md` or a `profile.shared` glob is `GATE-SHARED`: merge writes those.
 - **Lane:** the lane of the diff's paths must not exceed the card's lane.
 - **AC tests:** a file in the merged tree contains `U-<n>/AC-<k>` for each AC. With `profile.levels.<level>.paths` set, the file must match them.
-- **Proof-revert (full lane):** in a second worktree the unit's production files (diff paths outside every level's `paths`) go back to the base, and each AC level's `run` command must fail there.
 - **Checks:** `check` of every module whose `paths` the diff touches, then `security.check` and `architecture.checks`, run in the merged tree. Commands come from the owner's profile and run through the shell; git never does.
-- **Review:** the last `general` verdict is `pass`, for the current diff hash and the current card hash. Each focus whose globs the diff touches, and `security` when an added line matches `security.content`, needs its own `pass`. A verdict file's `focus` defaults to `general`.
-- **Architecture:** `architecture.graph` prints `<from path> -> <to path>` edges, repo-relative. An edge whose `from` matches a boundary's `from` and whose `to` matches one of its `deny` globs is denied, unless `same: false` and both paths matched the boundary's `*` segments alike, or an approved decision listed in `except` covers it.
+- **Review:** the last `general` verdict is `pass`, for the current diff hash and the current card hash. Each focus whose globs the diff touches needs its own `pass`. A verdict file's `focus` defaults to `general`.
+- **Architecture:** `architecture.graph` prints `<from path> -> <to path>` edges, repo-relative. An edge whose `from` matches a boundary's `from` and whose `to` matches one of its `deny` globs is denied, unless `same: false` and both paths matched the boundary's `*` segments alike, or an approved decision listed in `except` covers it: one that lists the edge as a `<from> -> <to>` line, or one that lists no edge and so covers the whole boundary. Boundaries are read from the merged tree, so the unit that adds a boundary is checked against it.
 
 # push and fix
 - `aidlc push` lists the base commits the remote lacks. Each must be a merge with a `Unit` trailer, or touch only allowed direct paths: the bundle, `.aidlc/**`, and the files `init` writes. Then it pushes the base.

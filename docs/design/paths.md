@@ -27,7 +27,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 - `profile.ci.wait` (optional) polls the base's CI. A red base is the first thing `next` returns: no new builds start until it is fixed.
 
 # Cleanup
-`aidlc merge` removes the unit's worktree and branch after a successful merge. `aidlc status` lists orphans; `aidlc clean` removes them.
+`aidlc merge` removes the unit's worktree and branch after a successful merge. An orphan left by a crash is removed with `git worktree remove`; a `clean` command is M2.
 
 # Adopting an existing project
 - `init --adopt` detects an existing bundle (index with `okf_version`) and keeps its layout, mapping folders into the profile instead of moving files.

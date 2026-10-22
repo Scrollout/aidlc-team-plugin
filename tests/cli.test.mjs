@@ -24,7 +24,7 @@ test('U1/AC-1 --help lists every command in the CLI design', () => {
   const r = run('--help');
   assert.equal(r.status, 0);
   const names = documentedCommands();
-  assert.ok(names.length >= 20, `parsed ${names.length} commands`);
+  assert.ok(names.length >= 15, `parsed ${names.length} commands`);
   for (const name of names) assert.match(r.stdout, new RegExp(`^  ${name}\\b`, 'm'), `${name} missing from --help`);
 });
 
@@ -53,8 +53,10 @@ test('U1/AC-1 unknown command exits 64', () => {
   assert.equal(run().status, 64);
 });
 
-test('U1/AC-1 a documented command not built yet exits 70', () => {
-  assert.equal(run('clean').status, 70);
+test('U1/AC-1 every documented command is built', async () => {
+  const { HANDLERS } = await import('../plugin/cli/aidlc.mjs');
+  const { config } = await import('../plugin/cli/lib/config.mjs');
+  assert.deepEqual(config.commands.map((c) => c.name).filter((n) => !HANDLERS[n]), []);
 });
 
 test('U1/AC-5 CI runs the tests and the docs check on every push', () => {
