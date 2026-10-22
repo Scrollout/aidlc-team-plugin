@@ -8,8 +8,8 @@ import { CLI_DIR, config, UsageError } from './config.mjs';
 import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
-import { computeLane, inside, overlaps, readPlan } from './grid.mjs';
-import { approval, baseOf, branchOf, bundleOf, diffHash, git, readState, roundsOf, runtimeFile, tryGit } from './state.mjs';
+import { computeLane, inside, readPlan } from './grid.mjs';
+import { approval, baseOf, branchOf, bundleOf, diffHash, git, readState, reviewFocuses, roundsOf, runtimeFile, tryGit } from './state.mjs';
 
 const G = config.gate;
 const list = (v) => (v === undefined || v === null ? [] : Array.isArray(v) ? v : [v]).map(String);
@@ -122,14 +122,8 @@ function runGate(cwd, st, unit) {
   const general = roundsOf(unit.review).at(-1);
   if (!general || general.verdict !== G.pass || general.diffHash !== hash) add('GATE-REVIEW', 'gateReview', {});
   else if (card && general.card !== card.hash) add('GATE-CARD', 'gateCardStale', { reviewed: general.card, card: card.hash });
-  const added = git(cwd, 'diff', '-U0', `${base}...${branchOf(unit.id)}`).split('\n').filter((l) => l.startsWith('+') && !l.startsWith('+++'));
-  const needed = new Map();
-  for (const [focus, globs] of Object.entries(p.focus ?? {})) {
-    const path = paths.find((x) => list(globs).some((g) => overlaps('/' + x, g)));
-    if (path) needed.set(focus, msg('gateFocusPath', { path, focus }));
-  }
-  const pattern = list(p.security?.content).find((c) => added.some((l) => l.includes(c)));
-  if (pattern && !needed.has(G.security)) needed.set(G.security, msg('gateFocusContent', { pattern }));
+  const needed = reviewFocuses(cwd, p, base, unit.id);
+  needed.delete(config.state.focus);
   for (const [focus, why] of needed) {
     const last = roundsOf(unit.review, focus).at(-1);
     if (!last || last.verdict !== G.pass || last.diffHash !== hash) add('GATE-SPECIALIST', 'gateSpecialist', { focus, why });

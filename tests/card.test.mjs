@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { approve, commit, git, intentDoc, makeRepo, read, review, run, unitDoc, write } from './state-repo.mjs';
@@ -34,7 +34,7 @@ test('U4/AC-4 card renders from the base commit with the unit fields', () => {
   assert.match(r.out, new RegExp(`^Base: ${base}$`, 'm'));
   assert.match(r.out, /^- AC-1 \(unit\): rounds half-even\.$/m, 'the base content, not the worktree edit');
   assert.match(r.out, /^- src\/pricing\/\*\*$/m);
-  assert.match(r.out, /^- \.\.\/architecture\/api\.md$/m);
+  assert.match(r.out, /^- docs\/architecture\/api\.md$/m, 'interface links become repo paths');
   assert.match(r.out, /^- api: make test$/m);
   assert.match(r.out, /^- Currency conversion\.$/m);
   assert.doesNotMatch(r.out, /As a buyer/);
@@ -139,7 +139,37 @@ test('U4/AC-7 start renames the worktree branch to unit/U-<n> and refuses a diff
   assert.equal(git(wt2, 'rev-parse', '--abbrev-ref', 'HEAD'), 'worktree-agent-2');
 
   run(dir, ['card', 'U-1']);
+  write(wt1, { 'src/pricing/wip.txt': 'not committed\n' });
   const taken = run(wt2, ['start', 'U-1']);
   assert.equal(taken.code, 1);
   assert.match(taken.out, /unit\/U-1 is checked out in /);
+});
+
+test('U8/AC-7 start takes over the branch from a clean, stale earlier worktree and refuses a dirty or live one', () => {
+  const dir = repo();
+  approve(dir, 'I-1', 'U-1');
+  run(dir, ['card', 'U-1']);
+  const worktree = (n) => {
+    const wt = join(mkdtempSync(join(tmpdir(), 'wt-')), 'w');
+    git(dir, 'worktree', 'add', '-q', '-b', `worktree-agent-${n}`, wt, 'main');
+    return wt;
+  };
+  const wt1 = worktree(1);
+  assert.equal(run(wt1, ['start', 'U-1']).code, 0);
+  commit(wt1, 'wip', { 'src/pricing/a.txt': 'a\n' });
+
+  const wt2 = worktree(2);
+  write(wt1, { 'src/pricing/b.txt': 'dirty\n' });
+  assert.equal(run(wt2, ['start', 'U-1']).code, 1, 'dirty');
+  rmSync(join(wt1, 'src/pricing/b.txt'));
+  const beat = join(dir, '.git/aidlc/heartbeats/U-1');
+  mkdirSync(join(beat, '..'), { recursive: true });
+  writeFileSync(beat, '');
+  assert.equal(run(wt2, ['start', 'U-1']).code, 1, 'live builder');
+  utimesSync(beat, new Date(0), new Date(0));
+  const r = run(wt2, ['start', 'U-1']);
+  assert.equal(r.code, 0, r.err + r.out);
+  assert.equal(git(wt2, 'rev-parse', '--abbrev-ref', 'HEAD'), 'unit/U-1');
+  assert.equal(read(wt2, 'src/pricing/a.txt'), 'a\n');
+  assert.ok(!existsSync(wt1));
 });

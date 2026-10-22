@@ -20,7 +20,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 | `start <unit>` | in a builder's worktree: names the branch `unit/U-<n>`, checks the base matches the card | builder |
 | `reserve <kind> <area>` | next free number for a reservation, checked against the plan and the base | lead while planning |
 | `approve <doc>` | stamps approval | owner only (`!`) |
-| `review record <unit> <file>` | stores a reviewer verdict keyed by diff hash | reviewer |
+| `review record <unit> <file\|->` | stores a reviewer verdict keyed by diff hash; `-` reads it from stdin | reviewer |
 | `report <unit>` | stores the builder's report (JSON on stdin) | builder |
 | `hold <unit>` / `priority <unit> <n>` | records an owner instruction in the plan | lead, on the owner's word |
 | `fix "<title>"` | one-unit plan without an intent | lead |

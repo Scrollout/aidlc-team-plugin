@@ -1,13 +1,13 @@
 // Unit card: rendered from the base commit, refused for unapproved or stale units, recorded for `start`
 // and the model hook (docs/design/unit-card.md). Model routing follows docs/design/team.md.
 import { existsSync, readFileSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { CLI_DIR, config, UsageError } from './config.mjs';
 import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { parseDoc, proseLines } from './okf.mjs';
-import { computeLane, overlaps, readPlan } from './grid.mjs';
-import { aidlcDir, approval, baseOf, branchOf, bundleOf, diffHash, git, roundsOf, runtimeFile, sha256, tryGit, writeJson } from './state.mjs';
+import { computeLane, overlaps, readPlan, reqId } from './grid.mjs';
+import { aidlcDir, approval, baseOf, branchOf, bundleOf, diffHash, git, heartbeatFresh, roundsOf, runtimeFile, sha256, tryGit, writeJson } from './state.mjs';
 
 const C = config.card;
 const AC_LINE = /^\s*[-*]\s+AC-\d+\b/;
@@ -40,9 +40,9 @@ function templateFile(cwd, name) {
 function section(doc, heading) {
   const out = [];
   let on = false;
-  for (const [, text] of proseLines(doc.lines, doc.body)) {
+  for (const [n, text] of proseLines(doc.lines, doc.body)) {
     if (/^#{1,6}\s/.test(text)) on = new RegExp(`^#{1,6}\\s+${heading}\\s*$`, 'i').test(text);
-    else if (on && text.trim()) out.push(text);
+    else if (on && text.trim()) out.push(doc.lines[n - 1]);
   }
   return out;
 }
@@ -54,7 +54,8 @@ export function renderCard(cwd, unitId) {
   const baseSha = tryGit(cwd, 'rev-parse', '-q', '--verify', `${base}^{commit}`);
   if (!baseSha) throw new UsageError(msg('noBase', { base }));
   const bundle = bundleOf(cwd, profile);
-  const unit = readPlan(bundle).units.find((u) => u.id === unitId);
+  const plan = readPlan(bundle);
+  const unit = plan.units.find((u) => u.id === unitId);
   if (!unit) throw new UsageError(msg('unknownUnit', { name: unitId, dir: relative(cwd, join(bundle, config.grid.units)) }));
 
   const top = git(cwd, 'rev-parse', '--show-toplevel');
@@ -66,8 +67,13 @@ export function renderCard(cwd, unitId) {
   if (state !== 'approved') return { code: config.exit.blocked, output: msg('cardRefused', { unit: unitId, state }) };
 
   const review = existsSync(runtimeFile(cwd, 'reviews', unitId)) ? JSON.parse(readFileSync(runtimeFile(cwd, 'reviews', unitId), 'utf8')) : null;
-  const current = review && tryGit(cwd, 'rev-parse', '-q', '--verify', branchOf(unitId)) && roundsOf(review).at(-1)?.diffHash === diffHash(cwd, base, unitId);
+  const hashNow = review && tryGit(cwd, 'rev-parse', '-q', '--verify', branchOf(unitId)) ? diffHash(cwd, base, unitId) : null;
+  const current = hashNow !== null && roundsOf(review).at(-1)?.diffHash === hashNow;
   const { model, reason } = routeModel(atBase, lane.lane, profile, current ? review : null);
+  // A fix round lists the findings of every focus whose last verdict for the current diff is `fix`.
+  const focuses = [...new Set((review?.rounds ?? []).map((r) => r.focus ?? config.state.focus))];
+  const fixes = focuses.map((f) => roundsOf(review, f).at(-1)).filter((r) => hashNow !== null && r.diffHash === hashNow && r.verdict === 'fix')
+    .flatMap((r) => (r.findings ?? []).map((f) => msg('cardFinding', { path: '', line: '', claim: '', scenario: '', confidence: '', ...f, focus: r.focus ?? config.state.focus })));
   const modules = new Set(atBase.modules);
   const data = {
     id: unitId,
@@ -78,10 +84,15 @@ export function renderCard(cwd, unitId) {
     model,
     modelReason: reason,
     base: baseSha,
-    acs: proseLines(doc.lines, doc.body).filter(([, t]) => AC_LINE.test(t)).map(([, t]) => t.trim()),
+    acs: proseLines(doc.lines, doc.body).filter(([, t]) => AC_LINE.test(t)).map(([n]) => doc.lines[n - 1].trim()),
     scope: atBase.scope,
-    interfaces: [...new Set([...doc.lines.slice(doc.body).join('\n').matchAll(LINK)].map((m) => m[1]))],
+    // Interface links resolved from the unit doc's folder to repo paths, as `git show <base>:<path>` takes them.
+    interfaces: [...new Set([...doc.lines.slice(doc.body).join('\n').matchAll(LINK)]
+      .map((m) => relative(top, resolve(dirname(unit.file), m[1])).split('\\').join('/')))],
     reserves: atBase.reserves,
+    requirements: list(doc.fm.requirements).map(reqId).flatMap((id) => plan.requirements.filter((r) => r.id === id)
+      .map((r) => msg('cardRequirement', { id, path: relative(top, r.file).split('\\').join('/') }))),
+    fixes: fixes.length ? msg('cardFixes', { list: fixes.join('') }) : '',
     checks: (profile.modules ?? []).filter((m) => modules.has(m.id) && m.check).map((m) => ({ module: m.id, check: m.check })),
     outOfScope: section(doc, 'Out of scope'),
   };
@@ -95,9 +106,10 @@ export function renderCard(cwd, unitId) {
   return { code: config.exit.ok, output: card, record };
 }
 
+const list = (v) => (v === undefined || v === null ? [] : Array.isArray(v) ? v : [v]).map(String);
+
 // The unit's fields as written at the base commit.
 function readPlanUnit(unit, doc) {
-  const list = (v) => (v === undefined || v === null ? [] : Array.isArray(v) ? v : [v]).map(String);
   return {
     ...unit,
     fm: doc.fm,
@@ -133,7 +145,12 @@ export const commands = {
       if (head !== record.base) return done(msg('baseMismatch', { unit, head, base: record.base }), config.exit.findings);
       if (tryGit(cwd, 'rev-parse', '-q', '--verify', `refs/heads/${branch}`)) {
         const taken = git(cwd, 'worktree', 'list', '--porcelain').split('\n\n').find((w) => w.includes(`branch refs/heads/${branch}`));
-        if (taken) return done(msg('branchTaken', { branch, path: taken.split('\n')[0].replace(/^worktree /, '') }), config.exit.findings);
+        if (taken) {
+          // An earlier builder's worktree is taken over only when it is clean and its heartbeat is stale.
+          const path = taken.split('\n')[0].replace(/^worktree /, '');
+          if (tryGit(path, 'status', '--porcelain') !== '' || heartbeatFresh(cwd, unit)) return done(msg('branchTaken', { branch, path }), config.exit.findings);
+          git(cwd, 'worktree', 'remove', path);
+        }
         git(cwd, 'switch', '-q', branch);
       } else git(cwd, 'branch', '-m', branch);
     }

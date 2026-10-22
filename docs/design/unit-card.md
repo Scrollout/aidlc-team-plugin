@@ -15,6 +15,8 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 - ACs with IDs; each becomes a test tagged `U-<n>/AC-<k>`.
 - **Scope:** globs the builder may write.
 - **Interfaces:** linked specs it consumes and provides (paths at the base commit).
+- **Requirements:** the requirement docs the unit cites, which the builder meets and every review checks.
+- **Findings to fix:** in a fix round, the findings of each focus whose last verdict for the current diff is `fix`.
 - **Reserves:** e.g. migration number `regional/0005`.
 - **Checks:** the profile commands for the unit's modules.
 - **Out of scope** and **stop and report if** (interface change, scope too small, AC ambiguous).
