@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** [M1 pilot report](pilot/report.md): a `/clear` mid-elaboration lost an owner answer and the lead did not return to the draft intent; both are in [M2](roadmap/m2.md).
 - **Update** [M1 pilot report](pilot/report.md): prompt evals on 0.16.1 found all four seeded defects and the builder stopped on the interface change (U8/AC-5); two findings went to [M2](roadmap/m2.md).
 - **Creation** [M1 pilot report](pilot/report.md) and [Pilot interventions](pilot/interventions.md): wall time, tokens, fix rounds, denials, and each manual step mapped to its fix or an M2 item. [M2](roadmap/m2.md) collects those items; [M1](roadmap/m1.md) records the U9 result. The prompt evals are still pending.
 - **Update** `sync` creates the milestone of an intent with no target without a due date, which GitHub requires to be absent rather than null. Release 0.16.1.
