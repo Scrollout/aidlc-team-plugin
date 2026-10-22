@@ -59,11 +59,12 @@
     },
     {
       "name": "upgrade",
-      "usage": "upgrade [--downgrade]",
+      "usage": "upgrade [--downgrade] [--dirty]",
       "flags": [
-        "--downgrade"
+        "--downgrade",
+        "--dirty"
       ],
-      "does": "re-vendor the CLI from the installed plugin"
+      "does": "re-vendor the CLI from the installed plugin's release"
     },
     {
       "name": "index",
@@ -281,6 +282,10 @@
     "baseMismatch": "worktree is at {{head}}, the card of {{unit}} at {{base}}: restart the builder from a fresh card\n",
     "branchTaken": "{{branch}} is checked out in {{path}}, with uncommitted work or a live builder: stop and report\n",
     "started": "on {{branch}} at {{base}}\n",
+    "startMerged": "on {{branch}}, with the card's base {{base}} merged in\n",
+    "startMergeMessage": "Merge base {{base}} into {{branch}}",
+    "startConflict": "merging the card's base {{base}} into {{branch}} conflicts in {{files}} → resolve them inside the scope, commit, and run start again\n",
+    "upgradeDirty": "the plugin checkout at {{path}} has uncommitted changes → upgrade from the installed plugin or a clean checkout, or pass --dirty on purpose\n",
     "badJson": "{{name}}: not a JSON object",
     "badVerdict": "verdict must be one of {{verdicts}}",
     "noBranch": "no branch {{branch}}",

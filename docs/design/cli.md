@@ -10,14 +10,14 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 | Command | Does | Run by |
 |---|---|---|
 | `init` | asks questions, writes profile, renders templates, vendors itself | owner via the `aidlc` skill |
-| `upgrade` | re-vendors the CLI from the installed plugin | owner |
+| `upgrade [--downgrade] [--dirty]` | re-vendors the CLI from the installed plugin's release; refuses an older one or a checkout with uncommitted changes unless told | owner |
 | `index [bundle]` | regenerates every `index.md` in the bundle like the OKF reference implementation | docs hook, merge, anyone |
 | `check [--ci] [path…]` | OKF validation, plan lint, profile lint; `--ci` adds merge-trailer checks. A directory is checked as a bundle, or within the profile's bundle when it lies below its root; a file reports only its own findings | hooks, CI, anyone |
 | `status` | the state table | SessionStart hook, anyone |
 | `next` | the single next action | lead |
 | `lane <unit>|--diff <range>` | the computed lane and why | lead, gate |
 | `card <unit>` | renders the unit card | lead |
-| `start <unit>` | in a builder's worktree: names the branch `unit/U-<n>`, checks the base matches the card | builder |
+| `start <unit>` | in a builder's worktree: names the branch `unit/U-<n>`, checks the base matches the card, and merges the card's base into an existing branch | builder |
 | `delegate <class>…\|off` | lets the lead approve re-approvals and quick-lane units ([0008](../decisions/0008-delegated-approvals.md)) | owner (prompt or `!`) |
 | `mode attended\|unattended [--stop <action>] [--report <to>]\|off` | records the owner's run mode in the personal profile: unattended or not, the `next` action to stop at (`build`, `review`, `fix`, `merge`, `release`), where to report | owner (prompt or `!`) |
 | `approve [--auto] <doc>` | stamps approval | owner (`!`); `--auto` the lead, for what the owner delegated ([0008](../decisions/0008-delegated-approvals.md)) |

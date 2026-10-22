@@ -18,7 +18,7 @@ function parseFlags(args, known) {
   for (let k = 0; k < args.length; k++) {
     const a = args[k];
     if (!known.includes(a)) throw new UsageError(msg('unknownFlag', { name: a }));
-    if (a === '--adopt' || a === '--downgrade') { out[a.slice(2)] = true; continue; }
+    if (['--adopt', '--downgrade', '--dirty'].includes(a)) { out[a.slice(2)] = true; continue; }
     const v = args[++k];
     if (v === undefined || v.startsWith('--')) throw new UsageError(msg('badFlag', { name: a }));
     if (a === '--overwrite') out.overwrite.push(v);
@@ -167,7 +167,11 @@ export const commands = {
     const root = projectRoot(cwd);
     const version = pluginVersion(root);
     const pinned = existsSync(join(root, I.bin, I.version)) ? readFileSync(join(root, I.bin, I.version), 'utf8').trim() : '';
-    if (pinned.localeCompare(version, 'en', { numeric: true }) > 0 && !parseFlags(args, config.commands.find((c) => c.name === 'upgrade').flags).downgrade) throw new UsageError(msg('upgradeOlder', { version, pinned }));
+    const flags = parseFlags(args, config.commands.find((c) => c.name === 'upgrade').flags);
+    if (pinned.localeCompare(version, 'en', { numeric: true }) > 0 && !flags.downgrade) throw new UsageError(msg('upgradeOlder', { version, pinned }));
+    // A release, not work in progress: a plugin checkout must have nothing uncommitted under the plugin folder.
+    const tracked = tryGit(PLUGIN_DIR, 'ls-files', '--error-unmatch', I.manifest) !== null;
+    if (tracked && tryGit(PLUGIN_DIR, 'status', '--porcelain', '--', '.') !== '' && !flags.dirty) throw new UsageError(msg('upgradeDirty', { path: PLUGIN_DIR }));
     return done(vendor(root, version));
   },
 };

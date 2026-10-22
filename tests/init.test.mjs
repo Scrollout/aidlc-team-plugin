@@ -87,12 +87,12 @@ test('U5/AC-3 upgrade replaces .aidlc/bin and nothing else; the pinned copy cann
   writeFileSync(join(dir, '.aidlc/bin/stale.mjs'), '// old\n');
   writeFileSync(join(dir, 'AGENTS.md'), '# edited by the project\n');
   const before = tree(dir, ['.aidlc/bin']);
-  const r = run(dir, ['upgrade']);
+  const r = run(dir, ['upgrade', '--dirty']);
   assert.equal(r.code, 0, r.err);
   assert.deepEqual(tree(dir, ['.aidlc/bin']), before);
   assert.equal(readFileSync(join(dir, '.aidlc/bin/VERSION'), 'utf8'), PLUGIN.version + '\n');
   assert.ok(!existsSync(join(dir, '.aidlc/bin/stale.mjs')));
-  const self = run(dir, ['upgrade']);
+  const self = run(dir, ['upgrade', '--dirty']);
   assert.equal(self.code, 0);
   const own = (args) => {
     const { spawnSync } = process.getBuiltinModule('node:child_process');
@@ -100,10 +100,10 @@ test('U5/AC-3 upgrade replaces .aidlc/bin and nothing else; the pinned copy cann
   };
   assert.equal(own(['upgrade']).status, 64);
   writeFileSync(join(dir, '.aidlc/bin/VERSION'), '99.0.0\n');
-  const older = run(dir, ['upgrade']);
+  const older = run(dir, ['upgrade', '--dirty']);
   assert.equal(older.code, 64, 'an older plugin never replaces a newer pinned CLI');
   assert.match(older.err, /older than the pinned CLI 99\.0\.0/);
-  assert.equal(run(dir, ['upgrade', '--downgrade']).code, 0);
+  assert.equal(run(dir, ['upgrade', '--downgrade', '--dirty']).code, 0);
   assert.equal(readFileSync(join(dir, '.aidlc/bin/VERSION'), 'utf8'), PLUGIN.version + '\n');
 });
 
@@ -146,4 +146,27 @@ test('U5/AC-5 with the plugin removed, the pinned CLI still checks the project',
   const r = spawnSync(process.execPath, ['.aidlc/bin/aidlc.mjs', 'check', '--ci'], { cwd: copy, encoding: 'utf8' });
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.equal(spawnSync(process.execPath, ['.aidlc/bin/aidlc.mjs', 'next'], { cwd: copy, encoding: 'utf8' }).status, 2);
+});
+
+test('U16/AC-2 upgrade copies a release: the installed copy or a clean checkout; a dirty checkout needs --dirty', () => {
+  const dir = emptyRepo();
+  assert.equal(run(dir, ['init']).code, 0);
+  const { spawnSync } = process.getBuiltinModule('node:child_process');
+  const from = (cli, ...args) => spawnSync(process.execPath, [join(cli, 'cli/aidlc.mjs'), 'upgrade', ...args], { cwd: dir, encoding: 'utf8' });
+
+  const installed = join(mkdtempSync(join(tmpdir(), 'cache-')), PLUGIN.version);
+  cpSync(join(ROOT, 'plugin'), installed, { recursive: true });
+  assert.equal(from(installed).status, 0, 'the installed plugin is a release copy');
+
+  const checkout = mkdtempSync(join(tmpdir(), 'checkout-'));
+  cpSync(join(ROOT, 'plugin'), join(checkout, 'plugin'), { recursive: true });
+  for (const args of [['init', '-q'], ['add', '-A'], ['-c', 'user.email=t@example.com', '-c', 'user.name=t', 'commit', '-q', '-m', 'release']]) git(checkout, ...args);
+  assert.equal(from(join(checkout, 'plugin')).status, 0, 'a clean checkout');
+  writeFileSync(join(checkout, 'plugin/cli/lib/wip.mjs'), '// work in progress\n');
+  const dirty = from(join(checkout, 'plugin'));
+  assert.equal(dirty.status, 64);
+  assert.match(dirty.stderr, /has uncommitted changes → upgrade from the installed plugin or a clean checkout, or pass --dirty on purpose/);
+  assert.ok(!existsSync(join(dir, '.aidlc/bin/lib/wip.mjs')), 'nothing copied');
+  assert.equal(from(join(checkout, 'plugin'), '--dirty').status, 0);
+  assert.ok(existsSync(join(dir, '.aidlc/bin/lib/wip.mjs')));
 });

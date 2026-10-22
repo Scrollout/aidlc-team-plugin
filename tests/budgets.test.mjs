@@ -90,7 +90,7 @@ const CHECKS = {
 // The median run time of each blocking hook, through the plugin's run.mjs and the pinned CLI, on a small project.
 function hookTimes() {
   const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), 'docs/units/U-1-a.md': unitDoc({ scope: ['src/**'] }) });
-  run(dir, ['upgrade']);
+  run(dir, ['upgrade', '--dirty']);
   commit(dir, 'pin the CLI');
   approve(dir, 'I-1', 'U-1');
   run(dir, ['card', 'U-1']);

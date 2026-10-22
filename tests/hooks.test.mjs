@@ -19,7 +19,7 @@ function project() {
     'docs/units/U-2-b.md': unitDoc({ scope: ['lib/**'] }),
     'docs/log.md': '---\ntype: Log\ntitle: History\n---\n\n# History\n\n## 2026-01-01\n\n- **Creation** docs.\n',
   }, { security: { secrets: ['INTERNAL-[0-9]{6}'] } });
-  const init = run(dir, ['upgrade']);
+  const init = run(dir, ['upgrade', '--dirty']);
   assert.equal(init.code, 0, init.err);
   commit(dir, 'pin the CLI');
   return dir;

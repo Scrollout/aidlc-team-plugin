@@ -189,3 +189,36 @@ test('U4/AC-4 the card hash ignores a base that moved for other units', () => {
   assert.notEqual(after.match(/^Base: (\w+)$/m)[1], git(dir, 'rev-parse', 'HEAD~1'));
   assert.equal(hashOf(after), before);
 });
+
+test('U16/AC-1 start merges the card base into an existing unit branch; a conflict is named and left to resolve', () => {
+  const dir = repo();
+  approve(dir, 'I-1', 'U-1');
+  run(dir, ['card', 'U-1']);
+  const worktree = (n) => {
+    const wt = join(mkdtempSync(join(tmpdir(), 'wt-')), 'w');
+    git(dir, 'worktree', 'add', '-q', '-b', `worktree-agent-${n}`, wt, 'main');
+    return wt;
+  };
+  const wt1 = worktree(1);
+  assert.equal(run(wt1, ['start', 'U-1']).code, 0);
+  commit(wt1, 'wip', { 'src/pricing/a.txt': 'a\n', 'README.md': 'unit\n' });
+  git(dir, 'worktree', 'remove', wt1);
+
+  commit(dir, 'another unit merged', { 'src/shared.txt': 'merged since\n' });
+  run(dir, ['card', 'U-1']);
+  const wt2 = worktree(2);
+  const r = run(wt2, ['start', 'U-1']);
+  assert.equal(r.code, 0, r.err + r.out);
+  assert.match(r.out, /^on unit\/U-1, with the card's base [0-9a-f]{40} merged in$/m);
+  assert.equal(read(wt2, 'src/shared.txt'), 'merged since\n', 'the restarted builder sees the work merged since');
+  assert.equal(read(wt2, 'src/pricing/a.txt'), 'a\n', 'and keeps its own');
+  assert.match(run(wt2, ['start', 'U-1']).out, /^on unit\/U-1 at /, 'nothing to merge the second time');
+  git(dir, 'worktree', 'remove', wt2);
+
+  commit(dir, 'the base edits the same line', { 'README.md': 'base\n' });
+  run(dir, ['card', 'U-1']);
+  const wt3 = worktree(3);
+  const c = run(wt3, ['start', 'U-1']);
+  assert.equal(c.code, 1);
+  assert.match(c.out, /conflicts in README\.md → resolve them inside the scope, commit, and run start again/);
+});
