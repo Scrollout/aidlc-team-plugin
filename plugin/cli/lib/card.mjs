@@ -7,7 +7,7 @@ import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { parseDoc, proseLines } from './okf.mjs';
 import { computeLane, overlaps, readPlan, reqId } from './grid.mjs';
-import { aidlcDir, approval, baseOf, branchOf, bundleOf, diffHash, git, heartbeatFresh, roundsOf, runtimeFile, sha256, tryGit, writeJson } from './state.mjs';
+import { aidlcDir, approval, baseOf, branchOf, bundleOf, diffHash, git, heartbeatFresh, readReview, roundsOf, runtimeFile, sha256, tryGit, writeJson } from './state.mjs';
 
 const C = config.card;
 const AC_LINE = /^\s*[-*]\s+AC-\d+\b/;
@@ -66,7 +66,7 @@ export function renderCard(cwd, unitId) {
   const state = !atBase ? 'draft' : atBase.fm.intent || lane.lane !== 'quick' ? approval(doc) : 'approved';
   if (state !== 'approved') return { code: config.exit.blocked, output: msg('cardRefused', { unit: unitId, state }) };
 
-  const review = existsSync(runtimeFile(cwd, 'reviews', unitId)) ? JSON.parse(readFileSync(runtimeFile(cwd, 'reviews', unitId), 'utf8')) : null;
+  const review = readReview(cwd, unitId, doc);
   const hashNow = review && tryGit(cwd, 'rev-parse', '-q', '--verify', branchOf(unitId)) ? diffHash(cwd, base, unitId) : null;
   const current = hashNow !== null && roundsOf(review).at(-1)?.diffHash === hashNow;
   const { model, reason } = routeModel(atBase, lane.lane, profile, current ? review : null);

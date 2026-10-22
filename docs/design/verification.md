@@ -15,7 +15,7 @@ All hooks are thin wrappers in the plugin's `hooks/hooks.json`, run in exec form
 
 Failure handling, per the hooks reference:[^cc-hooks]
 - By default a hook that cannot start, exits with a code other than 0 or 2, times out or prints invalid JSON is a non-blocking error: the action goes ahead (fail open). A wrapper alone cannot catch a missing `node` or a timeout.
-- Every blocking hook (guard, scope, secrets, model) therefore sets `"onFailure": "block"` (Claude Code v2.1.295+) and an explicit `timeout` of 10 seconds instead of the 600-second default. `aidlc init` and `aidlc status` warn when the installed Claude Code is older.
+- Every blocking hook (guard, scope, secrets, model) therefore sets `"onFailure": "block"` (Claude Code v2.1.295+) and an explicit `timeout` of 10 seconds, not the 600-second default. `aidlc init` and `aidlc status` warn when the installed Claude Code is older.
 - Decisions are returned with exit 0 and JSON: `hookSpecificOutput.permissionDecision: "deny"` with a reason for PreToolUse; top-level `decision: "block"` with `reason` for Stop.
 - `onFailure` has no effect on Stop hooks, so `steer` is advisory by design: if it fails, the lead simply stops.
 - Matching hooks run in parallel, so no hook depends on another's result.
@@ -25,7 +25,7 @@ Facts from the hooks reference this design relies on:[^cc-hooks]
 - Hooks fire for subagents' tool calls too; the input carries `agent_id`, `agent_type` and `cwd` (which follows the worktree), so the scope hook knows which builder and which unit it is judging.
 - The subagent tool is matched as `Agent`; its `tool_input` has `subagent_type` and `model`, which the model-routing check compares with the card.
 - SessionStart `source` is `startup`, `resume`, `clear`, `compact` or `fork`; context is returned as `additionalContext`.
-- PreToolUse runs only for Claude's tool calls, so an owner's `!` command is not subject to the guard (also observed in this repo on 2026-10-22).
+- PreToolUse runs only for Claude's tool calls, so an owner's `!` command is not subject to the guard.
 | Hook | Event | Blocks |
 |---|---|---|
 | guard | PreToolUse Bash | force push; `--no-verify` / `-n` on commit; `aidlc approve`; raw `git merge` of a `unit/*` branch into base; deleting the base |
@@ -52,7 +52,7 @@ Fails with one line per problem, each naming the fix, unless all hold:
 On success: `git merge --no-ff` with trailers `Unit: U-<n>`, `Card: <hash>`, `Review: pass`. How it runs: [Merge mechanics](gate.md).
 
 # Reviewer contract
-Returns JSON only: `{verdict: pass|fix|escalate, focus?, findings: [{path, line, ac?, claim, scenario, confidence: CONFIRMED|PLAUSIBLE}]}`, at most 10 findings. Round 1 `fix` → builder fixes → round 2. A second `fix` becomes `escalate`: the owner decides. The reviewer reads tests first: tests are what the owner samples.
+Returns JSON only: `{verdict: pass|fix|escalate, focus?, findings: [{path, line, ac?, claim, scenario, confidence: CONFIRMED|PLAUSIBLE}]}`, at most 10 findings. Round 1 `fix` → builder fixes → round 2. A second `fix` becomes `escalate`: the owner decides ([State](state.md#next)). The reviewer reads tests first: tests are what the owner samples.
 
 How a review runs, and why there is no separate architecture focus: [Skill and agents](prompts.md#review).
 
