@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Creation** [Board](design/board.md): an optional, one-way GitHub issues and Project projection. It costs zero model tokens and has no scrum-master agent, because `next` already does that job. M1 gains U11.
 - **Update** U5 built:
   - `init` renders the profile, AGENTS.md, CLAUDE.md, the bundle root, doc templates and CI, adds `.gitignore` lines and the worktree setting, and pins the CLI;
   - `--adopt` records the adoption commit and lists leftovers;
