@@ -8,6 +8,7 @@ title: aidlc-team-plugin docs history
 ## 2026-10-22
 
 - **Update** [0008 Delegated approvals](decisions/0008-delegated-approvals.md): delegated approvals are stamped `process:delegated`, an OKF v0.2 actor, instead of `agent:auto`, which OKF has no prefix for (pilot finding, owner's choice); earlier `agent:auto` stamps still count. Release 0.14.0.
+- **Update** An intent that is merged but not yet released no longer holds back the next intent: `next` serves the next intent's work and offers the release once that is idle (pilot finding, [State](design/state.md)). Release 0.14.0.
 - **Update** A reviewer's tool calls no longer keep a builder's heartbeat fresh, so a fix-round builder takes over the clean worktree; a stopped builder's advice asks for a re-approval only when the unit doc is wrong (pilot findings, [Hooks](design/hooks.md), [State](design/state.md)). Release 0.13.4.
 - **Update** `review record` ends the review in flight, so a unit's next focus is offered while another unit's reviewer runs (pilot finding, [Hooks](design/hooks.md)). Release 0.13.3.
 - **Update** A delegated re-approval of a stopped unit now restarts its builder, as an owner one does; answering an escalation still takes the owner (pilot finding). Release 0.13.2.

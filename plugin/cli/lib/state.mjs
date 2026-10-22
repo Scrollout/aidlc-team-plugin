@@ -208,7 +208,8 @@ export function nextAction(st) {
   const stale = [...st.requirements, ...st.intents, ...st.units].filter((d) => d.state === 'stale');
   if (stale.length) return action(...(st.auto.includes(S.auto[0]) ? ['act', 'nextAutoApprove'] : ['human', 'nextReapprove']), { docs: ids(stale) });
 
-  const intent = st.intents.find((i) => i.state !== 'released');
+  const unreleased = st.intents.find((i) => i.state === 'merged'); // its release does not hold back the next intent
+  const intent = st.intents.find((i) => !['released', 'merged'].includes(i.state)) ?? unreleased;
   if (!intent && !st.intents.length && !st.units.length) {
     if (st.profile.adopted) return action('human', 'nextMigrate', { dir: rel(config.grid.intents), commit: String(st.profile.adopted).slice(0, 12) });
     return action('human', 'nextNoIntent', { dir: rel(config.grid.intents) });
@@ -252,7 +253,7 @@ export function nextAction(st) {
   if (inFlight.length) return action('wait', 'nextWait', { units: inFlight.map((u) => u.id).join(', ') });
   const held = scope.filter((u) => u.fm.hold && ['approved', 'reviewed'].includes(u.state));
   if (held.length) return action('human', 'nextHeld', { units: held.map((u) => u.id).join(', ') });
-  if (intent?.state === 'merged') return action('human', 'nextRelease', { intent: intent.id });
+  if (unreleased) return action('human', 'nextRelease', { intent: unreleased.id });
   return action('human', 'nextIdle');
 }
 

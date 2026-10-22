@@ -54,9 +54,9 @@ stateDiagram-v2
 9. Building with a stale heartbeat (over 2 min) and no report → restart its builder.
 10. Approved, unblocked units → build, on one line; up to `parallel.max` in flight, with scopes disjoint from units in flight.
 11. Builders running → wait.
-12. Intent fully merged and not tagged → release with the owner.
+12. Intent merged, untagged → release with the owner; meanwhile 3–11 serve the next one.
 
-`aidlc status` prints the same state as a short table; the SessionStart hook injects it, capped at 1,000 chars. This replaces handoff files.
+`aidlc status` prints the same state as a short table; SessionStart injects it (max 1,000 chars) in place of handoff files.
 
 # Surviving a clear, crash or new session
 Rule: nothing that matters lives only in the conversation. Everything below is on disk before the turn that produced it ends.
