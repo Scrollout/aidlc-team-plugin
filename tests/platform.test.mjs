@@ -1,0 +1,44 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { approve, branch, commit, intentDoc, makeRepo, read, run, unitDoc } from './state-repo.mjs';
+
+const RUN = join(import.meta.dirname, '..', 'plugin/hooks/run.mjs');
+const U1 = 'docs/units/U-1-export.md';
+
+// A project in a folder whose path has spaces (and, on Windows, a drive letter and maybe a short name).
+function spaced() {
+  const parent = join(mkdtempSync(join(tmpdir(), 'with space-')), 'my projects');
+  mkdirSync(parent);
+  const dir = makeRepo({ 'docs/intents/I-1-pricing.md': intentDoc('I-1'), [U1]: unitDoc({ scope: ['src/**'] }) }, {}, parent);
+  approve(dir, 'I-1', 'U-1');
+  assert.equal(run(dir, ['upgrade']).code, 0, 'pins the CLI for the hooks');
+  commit(dir, 'pin the CLI');
+  return dir;
+}
+
+test('U12/AC-2 paths in output and cards use / on every platform', () => {
+  const dir = spaced();
+  const card = run(dir, ['card', 'U-1']);
+  assert.equal(card.code, 0, card.err);
+  const next = run(dir, ['fix', 'Typo in guide', '--scope', 'docs/guide/**']);
+  assert.equal(next.code, 0, next.err);
+  assert.match(next.out, /^wrote docs\/units\/U-2-typo-in-guide\.md/);
+  for (const out of [card.out, next.out, next.err, run(dir, ['status']).out]) assert.doesNotMatch(out, /\\/, out);
+});
+
+test('U12/AC-3 the CLI and hooks run from a path with spaces, and a CRLF doc keeps its approval', () => {
+  const dir = spaced();
+  branch(dir, 'U-1');
+  const r = run(dir, ['next']);
+  assert.equal(r.code, 0, r.err);
+  assert.match(r.out, /^restart the builder of U-1|^build U-1|^wait/);
+  const hook = spawnSync(process.execPath, [RUN, 'guard'], { input: JSON.stringify({ cwd: dir, hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: { command: 'git status' } }), encoding: 'utf8' });
+  assert.equal(hook.status, 0, hook.stderr);
+  writeFileSync(join(dir, U1), read(dir, U1).replace(/\n/g, '\r\n'));
+  commit(dir, 'CRLF checkout');
+  assert.match(run(dir, ['status']).out, /U-1 (building|approved)/, 'line ends alone never stale an approval');
+});

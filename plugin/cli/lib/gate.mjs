@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, join, relative, resolve } from 'node:path';
-import { CLI_DIR, config, done, list, readJson, UsageError } from './config.mjs';
+import { CLI_DIR, config, done, list, readJson, UsageError, relPath } from './config.mjs';
 import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
@@ -99,9 +99,9 @@ const dropWorktree = (cwd, dir) => { tryGit(cwd, 'worktree', 'remove', '--force'
 function runGate(cwd, st, unit) {
   const { profile, base } = st;
   const p = withDefaults(profile);
-  const bundleRel = relative(git(cwd, 'rev-parse', '--show-toplevel'), st.bundle).split('\\').join('/');
+  const bundleRel = relPath(git(cwd, 'rev-parse', '--show-toplevel'), st.bundle);
   const out = [];
-  const add = (code, key, data, path = relative(cwd, unit.file)) => out.push(finding(code, path, 1, key, { unit: unit.id, ...data }));
+  const add = (code, key, data, path = relPath(cwd, unit.file)) => out.push(finding(code, path, 1, key, { unit: unit.id, ...data }));
 
   if (['draft', 'stale'].includes(unit.state)) add('GATE-APPROVAL', 'gateApproval', { state: unit.state });
   for (const dep of unit.depends) if (st.units.find((u) => u.id === dep)?.state !== 'merged') add('GATE-DEPS', 'gateDeps', { dep });
@@ -165,7 +165,7 @@ function runGate(cwd, st, unit) {
 
 // Base commits in `range` that are neither gate merges in scope nor direct commits on allowed paths.
 function historyFindings(cwd, range, st, codes) {
-  const bundleRel = relative(git(cwd, 'rev-parse', '--show-toplevel'), st.bundle).split('\\').join('/');
+  const bundleRel = relPath(git(cwd, 'rev-parse', '--show-toplevel'), st.bundle);
   const out = [];
   const shas = (tryGit(cwd, 'rev-list', '--first-parent', '--reverse', range) ?? '').split('\n').filter(Boolean);
   for (const sha of shas) {
@@ -178,7 +178,7 @@ function historyFindings(cwd, range, st, codes) {
       for (const t of Object.values(G.trailers)) if (!value(t)) out.push(finding(codes.merge, '.', 1, 'ciTrailer', { sha: short, trailer: t }));
       const unitId = value(G.trailers.unit);
       const unit = unitId && st.units.find((u) => u.id === unitId);
-      const doc = unit && tryGit(cwd, 'show', `${sha}:${relative(git(cwd, 'rev-parse', '--show-toplevel'), unit.file).split('\\').join('/')}`);
+      const doc = unit && tryGit(cwd, 'show', `${sha}:${relPath(git(cwd, 'rev-parse', '--show-toplevel'), unit.file)}`);
       const scope = doc ? list(parseDoc(doc + '\n').fm?.scope) : [];
       for (const path of changed) {
         if (unit && !mergeWritten(path, bundleRel, st.profile) && !scope.some((g) => matches(path, g))) out.push(finding(codes.merge, path, 1, 'ciScope', { sha: short, unit: unitId, path }));
@@ -199,7 +199,7 @@ export const commands = {
   merge(args, { cwd }) {
     const st = readState(cwd);
     const unit = st.units.find((u) => u.id === args[0]);
-    if (!unit) throw new UsageError(msg('unknownUnit', { name: args[0] ?? '', dir: relative(cwd, join(st.bundle, config.grid.units)) }));
+    if (!unit) throw new UsageError(msg('unknownUnit', { name: args[0] ?? '', dir: relPath(cwd, join(st.bundle, config.grid.units)) }));
     if (git(cwd, 'rev-parse', '--abbrev-ref', 'HEAD') !== st.base) throw new UsageError(msg('gateNotBase', { base: st.base }));
     if (!tryGit(cwd, 'rev-parse', '-q', '--verify', branchOf(unit.id))) throw new UsageError(msg('noBranch', { branch: branchOf(unit.id) }));
     const { findings, tree } = runGate(cwd, st, unit);
@@ -275,7 +275,7 @@ export const commands = {
     }, G.fixTemplate);
     mkdirSync(join(bundle, config.grid.units), { recursive: true });
     writeFileSync(file, text);
-    return done(msg('fixWrote', { path: relative(cwd, file), lane: lane.lane, approve: lane.lane === 'quick' ? [] : [id] }));
+    return done(msg('fixWrote', { path: relPath(cwd, file), lane: lane.lane, approve: lane.lane === 'quick' ? [] : [id] }));
   },
 
   // The CI part of `check --ci`: base history since `profile.adopted`, and architecture on the checked-out tree.

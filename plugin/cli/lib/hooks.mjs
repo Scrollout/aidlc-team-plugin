@@ -2,7 +2,7 @@
 // (docs/design/hooks.md). Deny lists, patterns, codes and messages come from cli.json.
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, utimesSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
-import { config, readJson, UsageError } from './config.mjs';
+import { config, readJson, UsageError, relPath } from './config.mjs';
 import { msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
@@ -74,7 +74,7 @@ function guard(input, cwd) {
   const { profile } = loadProfile(cwd);
   const base = baseOf(profile);
   const top = git(cwd, 'rev-parse', '--show-toplevel');
-  const bundleRel = relative(top, bundleOf(top, profile)).split('\\').join('/');
+  const bundleRel = relPath(top, bundleOf(top, profile));
   const branch = tryGit(cwd, 'rev-parse', '--abbrev-ref', 'HEAD');
   for (const argv of segments(String(input.tool_input?.command ?? ''))) {
     // The owner answers a permission prompt for an owner command; without prompts (bypass) it stays a `!` command (decision 0009).
@@ -131,18 +131,18 @@ const unitOfBranch = (cwd) => {
   return b.startsWith(S.branchPrefix) ? b.slice(S.branchPrefix.length) : null;
 };
 
-const real = (p) => (existsSync(p) ? realpathSync(p) : join(real(dirname(p)), basename(p))); // as git's top level: no symlink escape
+const real = (p) => (existsSync(p) ? realpathSync.native(p) : join(real(dirname(p)), basename(p))); // as git's top level: no symlink escape
 function scope(input, cwd) {
   const file = real(resolve(cwd, String(input.tool_input?.file_path ?? input.tool_input?.notebook_path ?? '')));
   const top = git(cwd, 'rev-parse', '--show-toplevel');
-  const path = relative(top, file).split('\\').join('/');
+  const path = relPath(top, file);
   const before = existsSync(file) ? readFileSync(file, 'utf8') : '';
   if (file.endsWith(config.okf.ext) && approvalPart(before) !== approvalPart(resulting(input, file))) return deny(cwd, input, 'SCOPE-APPROVAL', 'scopeApproval', { path });
   if (path === personalProfile) return deny(cwd, input, 'SCOPE-APPROVAL', 'scopeApproval', { path });
   const unit = unitOfBranch(cwd);
   if (!unit || path.startsWith('..')) return allow();
   const { profile } = loadProfile(top);
-  const bundleRel = relative(top, bundleOf(top, profile)).split('\\').join('/');
+  const bundleRel = relPath(top, bundleOf(top, profile));
   if (mergeWritten(path, bundleRel, profile)) return deny(cwd, input, 'SCOPE-SHARED', 'scopeShared', { path });
   const scope = readJson(runtimeFile(cwd, 'cards', unit))?.scope ?? readPlan(bundleOf(top, profile)).units.find((u) => u.id === unit)?.scope ?? [];
   if (!scope.some((g) => inside('/' + path, g))) return deny(cwd, input, 'SCOPE-OUT', 'scopeOut', { path, unit });
@@ -155,7 +155,7 @@ function secrets(input, cwd) {
   const added = [t.content, t.new_string, ...(Array.isArray(t.edits) ? t.edits.map((e) => e.new_string) : [])].filter((x) => typeof x === 'string').join('\n');
   const { profile } = loadProfile(cwd);
   const patterns = [...H.secrets, ...(profile.security?.secrets ?? [])].map((p) => new RegExp(p, 'i'));
-  if (patterns.some((re) => re.test(added))) return deny(cwd, input, 'SECRET', 'secretFound', { path: relative(cwd, file) });
+  if (patterns.some((re) => re.test(added))) return deny(cwd, input, 'SECRET', 'secretFound', { path: relPath(cwd, file) });
   return allow();
 }
 
@@ -181,7 +181,7 @@ function docs(input, cwd) {
   const file = real(resolve(cwd, String(input.tool_input?.file_path ?? '')));
   if (!file.startsWith(bundle + '/')) return allow();
   if (!unitOfBranch(cwd)) writeIndexes(bundle);
-  const errors = checkBundle(bundle, { rules: profile.docs?.rules ?? {}, base: top }).filter((f) => f.level === 'error' && f.path === relative(top, file));
+  const errors = checkBundle(bundle, { rules: profile.docs?.rules ?? {}, base: top }).filter((f) => f.level === 'error' && f.path === relPath(top, file));
   if (!errors.length) return allow();
   return JSON.stringify({ decision: 'block', reason: msg('docsErrors', { errors: errors.map((f) => msg('finding', f).trim()).join('\n') }) });
 }
@@ -237,7 +237,7 @@ export const commands = {
     const run = HOOKS[args[0]];
     if (!run) throw new UsageError(msg('unknownCommand', { name: args[0] ?? '' }));
     const input = JSON.parse(ctx.stdin ? ctx.stdin() : readFileSync(0, 'utf8'));
-    const cwd = input.cwd && tryGit(input.cwd, 'rev-parse', '--show-toplevel') ? input.cwd : ctx.cwd; // .git/aidlc is no work tree
+    const cwd = input.cwd && tryGit(input.cwd, 'rev-parse', '--show-toplevel') ? real(input.cwd) : ctx.cwd; // .git/aidlc is no work tree
     return { code: config.exit.ok, findings: [], output: run(input, cwd) + '\n' };
   },
 };

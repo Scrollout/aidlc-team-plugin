@@ -90,7 +90,7 @@ test('U7/AC-2 scope: in-scope writes pass, out-of-scope and merge-written files 
   rmSync(join(dir, '.git/aidlc/cards/U-1.json'));
   assert.match(reason(hook('scope', writeTool(wt, 'docs/log.md', 'x\n'))), /^SCOPE-SHARED docs\/log\.md is written by merge/);
   const link = join(mkdtempSync(join(tmpdir(), 'link-')), 'wt');
-  symlinkSync(wt, link);
+  symlinkSync(wt, link, 'junction'); // a junction needs no admin rights on Windows
   assert.match(reason(hook('scope', writeTool(link, 'lib/x.mjs', '1;\n'))), /^SCOPE-OUT lib\/x\.mjs/, 'a symlink in the session\'s path does not escape the scope');
   assert.equal(decision(hook('scope', writeTool(dir, 'lib/x.mjs', '1;\n'))), 'allow', 'outside a unit worktree there is no scope');
   assert.match(reason(hook('scope', writeTool(dir, '.aidlc/local/profile.json', '{}'))), /^SCOPE-APPROVAL/, 'only the owner delegates approvals');
@@ -123,7 +123,7 @@ test('U7/AC-3 blocking hooks fail closed; unmanaged folders are left alone; a mi
   rmSync(join(dir, '.aidlc/bin'), { recursive: true });
   const r = bash(dir, 'git status');
   assert.equal(r.code, 2, 'exit 2 blocks the tool call');
-  assert.match(r.err, /pinned CLI .* is missing → ask the owner to restore it: ! node \S+cli\/aidlc\.mjs upgrade/);
+  assert.match(r.err, /pinned CLI .* is missing → ask the owner to restore it: ! node \S+cli[\\/]aidlc\.mjs upgrade/);
   const stop = hook('steer', { cwd: dir, hook_event_name: 'Stop' });
   assert.equal(stop.code, 0, 'a Stop hook lets the turn end, so it cannot block every stop');
 });

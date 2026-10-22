@@ -13,7 +13,6 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         node: [22, 24, 26] # every Node release line still supported upstream
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.os == 'windows-latest' }} # Windows support is an M2 item; its results show in the summary
     defaults:
       run:
         shell: bash

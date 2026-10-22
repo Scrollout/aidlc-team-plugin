@@ -2,7 +2,7 @@
 // and the model hook (docs/design/unit-card.md). Model routing follows docs/design/team.md.
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
-import { CLI_DIR, config, done, list, UsageError } from './config.mjs';
+import { CLI_DIR, config, done, list, UsageError, relPath } from './config.mjs';
 import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { parseDoc, proseLines } from './okf.mjs';
@@ -56,10 +56,10 @@ export function renderCard(cwd, unitId) {
   const bundle = bundleOf(cwd, profile);
   const plan = readPlan(bundle);
   const unit = plan.units.find((u) => u.id === unitId);
-  if (!unit) throw new UsageError(msg('unknownUnit', { name: unitId, dir: relative(cwd, join(bundle, config.grid.units)) }));
+  if (!unit) throw new UsageError(msg('unknownUnit', { name: unitId, dir: relPath(cwd, join(bundle, config.grid.units)) }));
 
   const top = git(cwd, 'rev-parse', '--show-toplevel');
-  const docText = tryGit(cwd, 'show', `${baseSha}:${relative(top, unit.file).split('\\').join('/')}`);
+  const docText = tryGit(cwd, 'show', `${baseSha}:${relPath(top, unit.file)}`);
   const doc = docText === null ? null : parseDoc(docText + '\n');
   const atBase = doc && !doc.error && doc.fm ? readPlanUnit(unit, doc) : null;
   const lane = atBase ? computeLane(atBase.scope, profile) : null;
@@ -88,10 +88,10 @@ export function renderCard(cwd, unitId) {
     scope: atBase.scope,
     // Interface links resolved from the unit doc's folder to repo paths, as `git show <base>:<path>` takes them.
     interfaces: [...new Set([...doc.lines.slice(doc.body).join('\n').matchAll(LINK)]
-      .map((m) => relative(top, m[1].startsWith('/') ? join(bundle, m[1]) : resolve(dirname(unit.file), m[1])).split('\\').join('/')))],
+      .map((m) => relPath(top, m[1].startsWith('/') ? join(bundle, m[1]) : resolve(dirname(unit.file), m[1]))))],
     reserves: atBase.reserves,
     requirements: list(doc.fm.requirements).map(reqId).flatMap((id) => plan.requirements.filter((r) => r.id === id)
-      .map((r) => msg('cardRequirement', { id, path: relative(top, r.file).split('\\').join('/') }))),
+      .map((r) => msg('cardRequirement', { id, path: relPath(top, r.file) }))),
     fixes: fixes.length ? msg('cardFixes', { list: fixes.join('') }) : '',
     checks: (profile.modules ?? []).filter((m) => modules.has(m.id) && m.check).map((m) => ({ module: m.id, check: m.check })),
     outOfScope: section(doc, 'Out of scope'),

@@ -33,6 +33,6 @@ Zero model tokens. `aidlc sync` is CLI code calling `gh api` (REST for issues, G
 `sync` closes the issue of a merged unit and of a merged or released intent, and reopens one that is no longer done. `merge` stays offline: with `profile.github` set it runs `sync` afterwards, and a sync failure is a warning, never a merge failure. No `Closes` trailer is written.
 
 # When
-- After `aidlc merge`, and on demand (`aidlc sync`), with the owner's `gh` login. Not in hooks (network, time limits); not in CI by default, because CI's token cannot write organisation projects.
+- After `aidlc merge`, and on demand (`aidlc sync`), with the owner's `gh` login. `github.gh` names another `gh`, as a path or a command list (e.g. `["node", "stub.mjs"]`), usually in the personal layer. Not in hooks (network, time limits); not in CI by default, because CI's token cannot write organisation projects.
 - A second `sync` with nothing changed makes no write: it reads the issues, sub-issues and project items first and writes only differences.
 - The only inbound path: `aidlc fix --from-issue <n> --scope <glob>` turns an issue into a fix unit titled like the issue, with `board: { issue: <n> }`. Priority and holds are set with `aidlc priority` and `aidlc hold`, never from the board.

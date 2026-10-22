@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { approve, branch, CLI, commit, git, intentDoc, makeRepo, merge, read, unitDoc, write } from './state-repo.mjs';
@@ -34,10 +34,9 @@ function setup({ github = GITHUB, issues = [], u2 = '' } = {}) {
     [U(1)]: withFm(unitDoc({ title: 'Export', scope: ['src/a/**'], modules: ['api'], acs: ['- AC-1 (unit): exports `sku,price`.', '- AC-2 (unit): rejects an unknown region.'] }),
       'priority: 2\nboard: { effort: M, wave: 1, start: 2026-11-02 }'),
     [U(2)]: withFm(unitDoc({ title: 'Currency', scope: ['src/b/**'] }), u2),
-  }, { github });
+  }, { github: github && { gh: [process.execPath, STUB], ...github } }); // the stub, through github.gh on every platform
   approve(dir, 'I-1', 'U-1');
   const bin = mkdtempSync(join(tmpdir(), 'gh-'));
-  symlinkSync(STUB, join(bin, 'gh'));
   const state = join(bin, 'state.json');
   writeFileSync(state, JSON.stringify({ repo: REPO, issues, labels: [], calls: [], project: { id: 'PVT_1', fields: FIELDS, items: [] } }));
   return { dir, bin, state };
@@ -45,7 +44,7 @@ function setup({ github = GITHUB, issues = [], u2 = '' } = {}) {
 
 function aidlc({ dir, bin, state }, ...args) {
   const { NODE_TEST_CONTEXT, ...env } = process.env;
-  const r = spawnSync(process.execPath, [CLI, ...args], { cwd: dir, encoding: 'utf8', env: { ...env, PATH: `${bin}:${env.PATH}`, GH_STUB: state } });
+  const r = spawnSync(process.execPath, [CLI, ...args], { cwd: dir, encoding: 'utf8', env: { ...env, GH_STUB: state } });
   return { code: r.status, out: r.stdout, err: r.stderr };
 }
 const stub = ({ state }) => JSON.parse(readFileSync(state, 'utf8'));
@@ -160,7 +159,7 @@ test('U11/AC-1 with a board, plan lint requires the values the board maps, excep
 test('U11/AC-2 sync uses no model: it calls only gh, and runs against the recorded stub', () => {
   const src = readFileSync(join(ROOT, 'plugin/cli/lib/board.mjs'), 'utf8');
   assert.equal([...src.matchAll(/execFileSync\(/g)].length, 1);
-  assert.match(src, /execFileSync\(B\.gh, \['api'/);
+  assert.match(src, /execFileSync\(ghCommand\[0\], \[\.\.\.ghCommand\.slice\(1\), 'api'/);
   assert.doesNotMatch(src, /fetch\(|node:https?|claude|anthropic/i);
   const ctx = setup();
   aidlc(ctx, 'sync');
@@ -211,8 +210,10 @@ test('U11/AC-4 fix --from-issue creates a fix unit linked to the issue; board ed
 
 test('U11/AC-2 a failing gh call reports gh\'s own error', () => {
   const ctx = setup();
-  rmSync(join(ctx.bin, 'gh')); // a symlink to the stub: replace the link, never the stub
-  writeFileSync(join(ctx.bin, 'gh'), '#!/bin/sh\necho "HTTP 502: Bad gateway (https://api.github.com/graphql)" >&2\nexit 1\n', { mode: 0o755 });
+  const failing = join(ctx.bin, 'gh-fails.mjs');
+  writeFileSync(failing, 'process.stderr.write("HTTP 502: Bad gateway (https://api.github.com/graphql)\\n"); process.exit(1);\n');
+  const profile = JSON.parse(read(ctx.dir, '.aidlc/profile.json'));
+  commit(ctx.dir, 'a failing gh', { '.aidlc/profile.json': { ...profile, github: { ...profile.github, gh: [process.execPath, failing] } } });
   const r = aidlc(ctx, 'sync');
   assert.equal(r.code, 70);
   assert.match(r.err, /HTTP 502: Bad gateway/);

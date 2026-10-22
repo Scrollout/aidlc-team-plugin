@@ -2,7 +2,7 @@
 // (docs/design/profile.md, docs/design/paths.md). Settings, file list and messages come from cli.json.
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
-import { CLI_DIR, PLUGIN_DIR, config, done, isMap, UsageError } from './config.mjs';
+import { CLI_DIR, PLUGIN_DIR, config, done, isMap, UsageError, relPath } from './config.mjs';
 import { msg, render, renderFile } from './template.mjs';
 import { DEFAULTS } from './profile.mjs';
 import { checkBundle, parseDoc } from './okf.mjs';
@@ -103,7 +103,7 @@ export const commands = {
     if (flags.adopt) {
       const found = findBundle(root);
       if (!found) throw new UsageError(msg('initNoBundle', {}));
-      bundle = relative(root, found).split('\\').join('/');
+      bundle = relPath(root, found);
       adopted = git(root, 'rev-parse', 'HEAD');
     }
     const name = flags.name ?? basename(root);

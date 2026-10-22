@@ -1,7 +1,7 @@
 // OKF v0.2 validator and index generator (docs/design/okf.md). Settings, codes and messages come from cli.json.
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
-import { config, isMap, UsageError } from './config.mjs';
+import { config, isMap, UsageError, relPath } from './config.mjs';
 import { msg } from './template.mjs';
 import { loadProfile } from './profile.mjs';
 
@@ -511,7 +511,7 @@ export function checkBundle(root, { rules = {}, base = process.cwd() } = {}) {
   const findings = [];
   const add = (file, line, code, key, data) => {
     const level = (OKF.codes[code].house && OKF.levels.includes(rules[code]) ? rules[code] : null) ?? OKF.codes[code].level;
-    if (level !== 'off') findings.push(finding(code, level, relative(base, file), line, key, data));
+    if (level !== 'off') findings.push(finding(code, level, relPath(base, file), line, key, data));
   };
   for (const file of walk(root).filter((f) => f.endsWith(OKF.ext))) {
     const name = file.slice(dirname(file).length + 1);
@@ -538,8 +538,8 @@ const inside = (dir, file) => file === dir || file.startsWith(dir + sep);
 export const commands = {
   index(args, { cwd }) {
     const root = args[0] ? resolve(cwd, args[0]) : bundleOf(cwd, loadProfile(cwd).profile);
-    if (!existsSync(root)) throw new UsageError(msg('noSuchPath', { name: relative(cwd, root) }));
-    const written = writeIndexes(root).map((f) => relative(cwd, f));
+    if (!existsSync(root)) throw new UsageError(msg('noSuchPath', { name: relPath(cwd, root) }));
+    const written = writeIndexes(root).map((f) => relPath(cwd, f));
     return { code: config.exit.ok, findings: [], output: written.map((f) => f + '\n').join('') };
   },
 
@@ -553,9 +553,9 @@ export const commands = {
     const given = args.filter((a) => !a.startsWith('--'));
     const paths = given.length ? given.map((a) => resolve(cwd, a)) : [bundle];
     for (const p of paths) {
-      if (!existsSync(p)) throw new UsageError(msg('noSuchPath', { name: relative(cwd, p) }));
+      if (!existsSync(p)) throw new UsageError(msg('noSuchPath', { name: relPath(cwd, p) }));
       if (statSync(p).isDirectory()) findings.push(...checkBundle(p, { rules, base: cwd }));
-      else if (inside(bundle, p)) findings.push(...checkBundle(bundle, { rules, base: cwd }).filter((f) => f.path === relative(cwd, p)));
+      else if (inside(bundle, p)) findings.push(...checkBundle(bundle, { rules, base: cwd }).filter((f) => f.path === relPath(cwd, p)));
     }
     return { code: hasErrors(findings) ? config.exit.findings : config.exit.ok, findings, output: '' };
   },
