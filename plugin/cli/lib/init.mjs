@@ -2,14 +2,13 @@
 // (docs/design/profile.md, docs/design/paths.md). Settings, file list and messages come from cli.json.
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
-import { CLI_DIR, PLUGIN_DIR, config, UsageError } from './config.mjs';
+import { CLI_DIR, PLUGIN_DIR, config, done, isMap, UsageError } from './config.mjs';
 import { msg, render, renderFile } from './template.mjs';
 import { DEFAULTS } from './profile.mjs';
 import { checkBundle, parseDoc } from './okf.mjs';
 import { git, tryGit } from './state.mjs';
 
 const I = config.init;
-const isMap = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 
 function parseFlags(args, known) {
   const out = { overwrite: [] };
@@ -92,7 +91,6 @@ function leftovers(root) {
   return out;
 }
 
-const done = (output, code = config.exit.ok) => ({ code, findings: [], output });
 
 export const commands = {
   init(args, { cwd }) {

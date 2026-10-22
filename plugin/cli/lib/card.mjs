@@ -2,7 +2,7 @@
 // and the model hook (docs/design/unit-card.md). Model routing follows docs/design/team.md.
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
-import { CLI_DIR, config, UsageError } from './config.mjs';
+import { CLI_DIR, config, done, list, UsageError } from './config.mjs';
 import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { parseDoc, proseLines } from './okf.mjs';
@@ -106,7 +106,6 @@ export function renderCard(cwd, unitId) {
   return { code: config.exit.ok, output: card, record };
 }
 
-const list = (v) => (v === undefined || v === null ? [] : Array.isArray(v) ? v : [v]).map(String);
 
 // The unit's fields as written at the base commit.
 function readPlanUnit(unit, doc) {
@@ -120,7 +119,6 @@ function readPlanUnit(unit, doc) {
   };
 }
 
-const done = (output, code = config.exit.ok) => ({ code, findings: [], output });
 
 export const commands = {
   card(args, { cwd }) {

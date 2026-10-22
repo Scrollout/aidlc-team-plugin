@@ -2,7 +2,7 @@
 // (docs/design/hooks.md). Deny lists, patterns, codes and messages come from cli.json.
 import { existsSync, mkdirSync, readFileSync, utimesSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
-import { config, UsageError } from './config.mjs';
+import { config, readJson, UsageError } from './config.mjs';
 import { msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
@@ -49,7 +49,7 @@ function gitCall(argv) {
   return { sub: argv[k], args: argv.slice(k + 1) };
 }
 
-const isCli = (argv) => argv.some((a, k) => H.cli.some((c) => a === c || a.endsWith('/' + c)) && argv[k + 1] === 'approve');
+const isCli = (argv) => argv.some((a, k) => H.cli.some((c) => a === c || a.endsWith('/' + c)) && argv[k + 1] === 'approve') && !argv.includes(S.autoFlag);
 
 // ---- Decisions ----
 
@@ -116,9 +116,10 @@ function resulting(input, file) {
   return edits.reduce((text, e) => (typeof e.old_string === 'string' ? (e.replace_all ? text.split(e.old_string).join(e.new_string ?? '') : text.replace(e.old_string, e.new_string ?? '')) : text), current);
 }
 
+const personalProfile = config.layers.find((l) => l.name === 'personal').path;
 const approvalPart = (text) => {
   const fm = parseDoc(text).fm ?? {};
-  const events = [fm.verified].flat().filter((e) => e && String(e.by ?? '').startsWith(S.human));
+  const events = [fm.verified].flat().filter((e) => e && S.approvers.some((a) => String(e.by ?? '').startsWith(a)));
   return JSON.stringify([events, fm.verified_hash ?? null]);
 };
 
@@ -133,6 +134,7 @@ function scope(input, cwd) {
   const path = relative(top, file).split('\\').join('/');
   const before = existsSync(file) ? readFileSync(file, 'utf8') : '';
   if (file.endsWith(config.okf.ext) && approvalPart(before) !== approvalPart(resulting(input, file))) return deny(cwd, input, 'SCOPE-APPROVAL', 'scopeApproval', { path });
+  if (path === personalProfile) return deny(cwd, input, 'SCOPE-APPROVAL', 'scopeApproval', { path });
   const unit = unitOfBranch(cwd);
   if (!unit || path.startsWith('..')) return allow();
   const { profile } = loadProfile(top);
@@ -192,11 +194,8 @@ function heartbeat(input, cwd) {
 
 function steer(input, cwd) {
   const file = join(aidlcDir(cwd), H.denials);
-  if (existsSync(file) && input.session_id) {
-    const all = JSON.parse(readFileSync(file, 'utf8'));
-    delete all[input.session_id];
-    writeJson(file, all);
-  }
+  const all = readJson(file);
+  if (all && input.session_id) writeJson(file, { ...all, [input.session_id]: undefined });
   // A question to the owner anywhere in the last message (often followed by its options) lets the turn end.
   const asked = String(input.last_assistant_message ?? '').split('\n').some((l) => /\?[*_`)\s]*$/.test(l));
   if (input.stop_hook_active || asked) return allow();

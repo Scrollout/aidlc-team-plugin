@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, join, relative, resolve } from 'node:path';
-import { CLI_DIR, config, UsageError } from './config.mjs';
+import { CLI_DIR, config, done, list, readJson, UsageError } from './config.mjs';
 import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
@@ -13,12 +13,9 @@ import { issueTitle, sync } from './board.mjs';
 import { approval, baseOf, branchOf, bundleOf, diffHash, git, readState, reviewFocuses, roundsOf, runtimeFile, tryGit } from './state.mjs';
 
 const G = config.gate;
-const list = (v) => (v === undefined || v === null ? [] : Array.isArray(v) ? v : [v]).map(String);
 const matches = (path, glob) => inside('/' + path, glob);
 const finding = (code, path, line, key, data) => ({ code, level: 'error', path, line, message: msg(key, data), fix: G.codes[code].fix });
-const done = (output, code = config.exit.ok, findings = []) => ({ code, findings, output });
 const shell = (cwd, command) => spawnSync(command, { cwd, shell: true, encoding: 'utf8' }).status === 0;
-const readJson = (file) => (existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null);
 
 // Paths only `merge` writes: bundle indexes and logs, and the profile's shared files.
 export function mergeWritten(path, bundleRel, profile) {

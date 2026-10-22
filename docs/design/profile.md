@@ -34,7 +34,7 @@ Merged in order, later wins, except that a `deny` in an earlier layer cannot be 
 1. plugin defaults (`plugin/cli/defaults.json`: base, bundle, parallel, levels, models), beside the CLI so a project's pinned copy carries them
 2. org pack: a git repo pinned by tag in `profile.org`, cached under `.git/aidlc/org/` (M2)
 3. project: `.aidlc/profile.json`, `.aidlc/rules/*.md`
-4. personal: `.aidlc/local/profile.json` (untracked)
+4. personal: `.aidlc/local/profile.json` (untracked); only this layer may delegate approvals ([0008](../decisions/0008-delegated-approvals.md))
 
 Merge rules:
 - Objects merge key by key; any other value from a later layer replaces the earlier one. `levels` is replaced whole, so a project can drop a default level.

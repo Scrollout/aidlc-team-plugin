@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Creation** [0008 Delegated approvals](decisions/0008-delegated-approvals.md), chosen by the owner during the pilot: the personal profile can delegate re-approvals and quick-lane units to the lead, which approves them with `aidlc approve --auto`, stamped `agent:auto`. Release 0.11.0 also blocks a unit whose dependencies are unmerged even when an earlier branch exists, and moves helpers shared by every module into `config`.
 - **Update** `hold` now also holds a reviewed unit's merge, not only its build (pilot finding). Release 0.10.8.
 - **Update** `steer` lets a turn end when any line of the last message ends with a question mark, so an owner question followed by its options no longer makes the lead loop (pilot finding, [Hook mechanics](design/hooks.md)). Release 0.10.7.
 - **Update** A builder report with `status: stopped` now sends the unit back to the lead ("fix the unit doc, then ask the owner to re-approve it") instead of to review; after the re-approval the builder restarts (pilot finding, [State](design/state.md)). `hold` and `priority`, listed since U1 but never built, now write their frontmatter fields; `check` skips merged units in plan lint, as `next` does. Release 0.10.6.
