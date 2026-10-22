@@ -1,12 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { loadProfile, mergeLayers, ProfileError } from '../plugin/cli/lib/profile.mjs';
+import { tempDir } from './state-repo.mjs';
 
 function fixture(files) {
-  const dir = mkdtempSync(join(tmpdir(), 'profile-'));
+  const dir = tempDir('profile-');
   for (const [rel, data] of Object.entries(files)) {
     mkdirSync(join(dir, rel, '..'), { recursive: true });
     writeFileSync(join(dir, rel), typeof data === 'string' ? data : JSON.stringify(data));

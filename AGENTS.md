@@ -9,7 +9,7 @@ A Claude Code plugin that brings AI-DLC (Intent → Units → Design → Code �
 
 ## Layout
 - `plugin/`: what ships (CLI, hooks, agents, skill, templates). Nothing else is installed.
-- `tests/`: `*.test.mjs`, run with `node --test`. Fixtures under `tests/fixtures/`, never named like a test file.
+- `tests/`: `*.test.mjs`, run with `node --test`. Fixtures under `tests/fixtures/`, never named like a test file. Temp folders come only from `tempDir()` in `tests/state-repo.mjs`, which removes them when the run ends.
 - `docs/`: design, decisions, roadmap.
 
 ## Rules

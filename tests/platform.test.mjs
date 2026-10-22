@@ -1,17 +1,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { approve, branch, commit, intentDoc, makeRepo, read, run, unitDoc } from './state-repo.mjs';
+import { approve, branch, commit, intentDoc, makeRepo, read, run, tempDir, unitDoc } from './state-repo.mjs';
 
 const RUN = join(import.meta.dirname, '..', 'plugin/hooks/run.mjs');
 const U1 = 'docs/units/U-1-export.md';
 
 // A project in a folder whose path has spaces (and, on Windows, a drive letter and maybe a short name).
 function spaced() {
-  const parent = join(mkdtempSync(join(tmpdir(), 'with space-')), 'my projects');
+  const parent = join(tempDir('with space-'), 'my projects');
   mkdirSync(parent);
   const dir = makeRepo({ 'docs/intents/I-1-pricing.md': intentDoc('I-1'), [U1]: unitDoc({ scope: ['src/**'] }) }, {}, parent);
   approve(dir, 'I-1', 'U-1');

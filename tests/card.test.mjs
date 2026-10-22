@@ -1,9 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, mkdirSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { approve, commit, git, intentDoc, makeRepo, read, review, run, unitDoc, write } from './state-repo.mjs';
+import { approve, commit, git, intentDoc, makeRepo, read, review, run, tempDir, unitDoc, write } from './state-repo.mjs';
 import { routeModel } from '../plugin/cli/lib/card.mjs';
 
 const U1 = 'docs/units/U-1-pricing.md';
@@ -129,7 +128,7 @@ test('U4/AC-7 start renames the worktree branch to unit/U-<n> and refuses a diff
   approve(dir, 'I-1', 'U-1');
   assert.equal(run(dir, ['start', 'U-1']).code, 64, 'not in the main checkout');
 
-  const wt1 = join(mkdtempSync(join(tmpdir(), 'wt-')), 'w');
+  const wt1 = join(tempDir('wt-'), 'w');
   git(dir, 'worktree', 'add', '-q', '-b', 'worktree-agent-1', wt1, 'main');
   assert.equal(run(wt1, ['start', 'U-1']).code, 1, 'no card yet');
   run(dir, ['card', 'U-1']);
@@ -139,7 +138,7 @@ test('U4/AC-7 start renames the worktree branch to unit/U-<n> and refuses a diff
   assert.equal(run(wt1, ['start', 'U-1']).code, 0, 'idempotent');
 
   commit(dir, 'base moves on', { 'README.md': 'x\n' });
-  const wt2 = join(mkdtempSync(join(tmpdir(), 'wt-')), 'w');
+  const wt2 = join(tempDir('wt-'), 'w');
   git(dir, 'worktree', 'add', '-q', '-b', 'worktree-agent-2', wt2, 'main');
   const moved = run(wt2, ['start', 'U-1']);
   assert.equal(moved.code, 1);
@@ -158,7 +157,7 @@ test('U8/AC-7 start takes over the branch from a clean earlier worktree, even wi
   approve(dir, 'I-1', 'U-1');
   run(dir, ['card', 'U-1']);
   const worktree = (n) => {
-    const wt = join(mkdtempSync(join(tmpdir(), 'wt-')), 'w');
+    const wt = join(tempDir('wt-'), 'w');
     git(dir, 'worktree', 'add', '-q', '-b', `worktree-agent-${n}`, wt, 'main');
     return wt;
   };
@@ -195,7 +194,7 @@ test('U16/AC-1 start merges the card base into an existing unit branch; a confli
   approve(dir, 'I-1', 'U-1');
   run(dir, ['card', 'U-1']);
   const worktree = (n) => {
-    const wt = join(mkdtempSync(join(tmpdir(), 'wt-')), 'w');
+    const wt = join(tempDir('wt-'), 'w');
     git(dir, 'worktree', 'add', '-q', '-b', `worktree-agent-${n}`, wt, 'main');
     return wt;
   };

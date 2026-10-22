@@ -25,6 +25,8 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Tests
         run: node --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=tap --test-reporter-destination=tests.tap
+      - name: No temp folders left
+        run: node -e "const l = require('fs').readdirSync(require('os').tmpdir()).filter((n) => n.startsWith('aidlc-test-')); if (l.length) { console.error(l.join('\\n')); process.exit(1); }"
       - name: Docs check
         run: node plugin/cli/aidlc.mjs check docs 2>&1 | tee check.txt
       - name: Summary

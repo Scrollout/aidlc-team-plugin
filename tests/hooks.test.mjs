@@ -1,10 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, symlinkSync, utimesSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, readFileSync, rmSync, statSync, symlinkSync, utimesSync } from 'node:fs';
 import { join } from 'node:path';
-import { approve, commit, git, intentDoc, makeRepo, read, run, unitDoc, write } from './state-repo.mjs';
+import { approve, commit, git, intentDoc, makeRepo, read, run, tempDir, unitDoc, write } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const RUN = join(ROOT, 'plugin/hooks/run.mjs');
@@ -74,7 +73,7 @@ test('U7/AC-1 guard denies each listed command and allows the everyday ones', ()
 });
 
 function unitWorktree(dir) {
-  const wt = join(mkdtempSync(join(tmpdir(), 'wt-')), 'w');
+  const wt = join(tempDir('wt-'), 'w');
   git(dir, 'worktree', 'add', '-q', '-b', 'unit/U-1', wt, 'main');
   return wt;
 }
@@ -89,7 +88,7 @@ test('U7/AC-2 scope: in-scope writes pass, out-of-scope and merge-written files 
   assert.equal(decision(hook('scope', writeTool(wt, 'lib/x.mjs', '1;\n'))), 'allow', 'the card\'s scope wins over an older doc on the branch');
   rmSync(join(dir, '.git/aidlc/cards/U-1.json'));
   assert.match(reason(hook('scope', writeTool(wt, 'docs/log.md', 'x\n'))), /^SCOPE-SHARED docs\/log\.md is written by merge/);
-  const link = join(mkdtempSync(join(tmpdir(), 'link-')), 'wt');
+  const link = join(tempDir('link-'), 'wt');
   symlinkSync(wt, link, 'junction'); // a junction needs no admin rights on Windows
   assert.match(reason(hook('scope', writeTool(link, 'lib/x.mjs', '1;\n'))), /^SCOPE-OUT lib\/x\.mjs/, 'a symlink in the session\'s path does not escape the scope');
   assert.equal(decision(hook('scope', writeTool(dir, 'lib/x.mjs', '1;\n'))), 'allow', 'outside a unit worktree there is no scope');
@@ -114,7 +113,7 @@ test('U7/AC-3 blocking hooks fail closed; unmanaged folders are left alone; a mi
       assert.equal(h.command, 'node');
     }
   }
-  const plain = mkdtempSync(join(tmpdir(), 'plain-'));
+  const plain = tempDir('plain-');
   const free = bash(plain, 'git push --force');
   assert.equal(free.code, 0);
   assert.equal(decision(free), 'allow');

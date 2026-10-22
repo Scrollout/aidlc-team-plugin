@@ -3,10 +3,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, utimesSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { utimesSync } from 'node:fs';
 import { join } from 'node:path';
-import { aidlc, approve, commit, git, intentDoc, makeRepo, review, run, unitDoc } from './state-repo.mjs';
+import { aidlc, approve, commit, git, intentDoc, makeRepo, review, run, tempDir, unitDoc } from './state-repo.mjs';
 
 const RUN = join(import.meta.dirname, '..', 'plugin/hooks/run.mjs');
 
@@ -18,7 +17,7 @@ const launch = (dir, agent, prompt, model) => hook('model', { cwd: dir, tool_nam
 const next = (dir) => run(dir, ['next']).out;
 const quiet = (dir) => utimesSync(join(aidlc(dir), 'heartbeats', 'U-1'), new Date(0), new Date(0));
 function worktree(dir, n) {
-  const wt = join(mkdtempSync(join(tmpdir(), 'wt-')), 'w');
+  const wt = join(tempDir('wt-'), 'w');
   git(dir, 'worktree', 'add', '-q', '-b', `worktree-agent-${n}`, wt, 'main');
   return wt;
 }

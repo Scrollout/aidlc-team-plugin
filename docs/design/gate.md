@@ -31,7 +31,7 @@ Nothing touches the base until every check passes, so a failed gate leaves no ha
 - **Architecture:** `architecture.graph` prints `<from path> -> <to path>` edges, repo-relative. An edge whose `from` matches a boundary's `from` and whose `to` matches one of its `deny` globs is denied, unless `same: false` and both paths matched the boundary's `*` segments alike, or an approved decision listed in `except` covers it: one that lists the edge as a `<from> -> <to>` line, or one that lists no edge and so covers the whole boundary. Boundaries are read from the merged tree, so the unit that adds a boundary is checked against it.
 
 # push and fix
-- `aidlc push` lists the base commits the remote lacks. Each must be a merge with a `Unit` trailer, or touch only allowed direct paths: the bundle, `.aidlc/**`, and the files `init` writes. Then it pushes the base.
+- `aidlc push` lists the base commits the remote lacks; on a base never pushed, those after the commit that added `.aidlc/profile.json`, since history before the plugin follows no gate. Each must be a merge with a `Unit` trailer, or touch only allowed direct paths: the bundle, `.aidlc/**`, and the files `init` writes. Then it pushes the base.
 - `aidlc fix "<title>" --scope <glob>… [--requirement R-<n>…]` writes the next `units/U-<n>-<slug>.md`: no intent, one AC `(unit)` for a regression test that fails before the fix. A fix on a full-lane path needs the owner's approval, like any unit outside the quick lane.
 
 # check --ci

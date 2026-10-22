@@ -3,7 +3,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { basename, join, relative, resolve } from 'node:path';
+import { basename, dirname, join, relative, resolve } from 'node:path';
 import { CLI_DIR, config, done, list, readJson, UsageError, relPath } from './config.mjs';
 import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
@@ -93,7 +93,7 @@ function trialWorktree(cwd, base) {
   git(cwd, 'worktree', 'add', '-q', '--detach', dir, base);
   return dir;
 }
-const dropWorktree = (cwd, dir) => { tryGit(cwd, 'worktree', 'remove', '--force', dir); rmSync(dir, { recursive: true, force: true }); };
+const dropWorktree = (cwd, dir) => { tryGit(cwd, 'worktree', 'remove', '--force', dir); rmSync(dirname(dir), { recursive: true, force: true }); }; // with its temp parent
 
 // All gate conditions on a trial merge; returns { findings, tree } with the merged tree left for commit.
 function runGate(cwd, st, unit) {
@@ -246,7 +246,9 @@ export const commands = {
   push(args, { cwd }) {
     const st = readState(cwd);
     const remoteRef = `${G.remote}/${st.base}`;
-    const range = tryGit(cwd, 'rev-parse', '-q', '--verify', remoteRef) ? `${remoteRef}..${st.base}` : st.base;
+    // A base never pushed: only the commits after the one that added the profile, as history before it followed no gate.
+    const adding = (tryGit(cwd, 'log', '--diff-filter=A', '--format=%H', st.base, '--', config.layers.find((l) => l.from === 'project').path) ?? '').split('\n').filter(Boolean).at(-1);
+    const range = tryGit(cwd, 'rev-parse', '-q', '--verify', remoteRef) ? `${remoteRef}..${st.base}` : adding ? `${adding}..${st.base}` : st.base;
     const findings = historyFindings(cwd, range, st, { merge: 'PUSH-COMMIT', commit: 'PUSH-COMMIT' });
     if (findings.length) return done('', config.exit.findings, findings);
     git(cwd, 'push', '-q', G.remote, st.base);
