@@ -19,6 +19,26 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 
 Paths are relative to the project's bundle (profile `docs.bundle`).
 
+# Unit doc
+The ID comes from the file name, `units/U-<n>-<slug>.md`. Fields live in the frontmatter and ACs in the body:
+```
+---
+type: Unit
+intent: I-2
+depends: [U-3]
+modules: [api]
+scope: ["internal/pricing/**"]
+reserves: [migration regional/0005]
+---
+- AC-1 (unit): price rounds half-even per currency.
+```
+Plan lint compares every unit except `status: dropped` and the IDs its caller skips (U4 passes the merged ones, derived from git). Codes, all errors:
+- `PLAN-DAG` a `depends` cycle (named in full) or an unknown unit.
+- `PLAN-AC` a duplicate AC ID in a unit.
+- `PLAN-LEVEL` an AC without a level, or with one `profile.levels` does not define.
+- `PLAN-RESERVE` a malformed reservation (`<kind> <area>/<n>`), a kind `profile.reserve` lacks, or the same one in two units.
+- `PLAN-SCOPE` a unit without `scope`, or two units whose scopes overlap with no `depends` path between them.
+
 # Plan, execute, validate
 Every cell runs the same loop:
 1. **Plan:** the lead drafts and asks the owner clarifying questions, offering 2-3 options with trade-offs where a choice is real.
@@ -36,9 +56,11 @@ The owner's checkpoint is the plan of an approval row, where a correction is che
 
 The CLI computes the lane from the unit's `scope` before work and from the diff at merge; the higher wins. The model may raise a lane, never lower it.
 
+Globs: `**` spans folders, `*` and `?` stay inside one, and a pattern without `/` matches the file name at any depth, as in `.gitignore`. A scope or path is quick when it lies inside a `lanes.quick` glob, and full when it overlaps a `lanes.full` or `focus` glob (scope `internal/**` overlaps `internal/auth/**`). `lane` prints the lane and the glob or path that decided it.
+
 # Tests
 Tests are the Source row's second output, derived from the ACs written in Units, so they are planned before any code exists.
-- Each AC declares a level: `unit`, `integration` or `e2e`, e.g. `AC-2 (integration): …`. The profile maps each level to path globs and a command; the gate checks that the tagged test lives where its level says.
+- Each AC declares a level, e.g. `AC-2 (integration): …`. `profile.levels` maps each level to `paths` globs and a `run` command; the plugin defaults define `unit`, `integration` and `e2e`. The gate checks that the tagged test lives where its level says.
 - Behaviour that crosses a module or the network needs `integration` or higher; unit tests alone prove only local logic.
 - A fix unit always has one AC: a regression test that fails before the fix.
 - Quick lane adds no tests but runs the existing ones.

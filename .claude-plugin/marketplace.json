@@ -1,6 +1,6 @@
 {
-  "name": "scrollout",
-  "description": "Scrollout's Claude Code plugins",
+  "name": "aidlc-team",
+  "description": "AI-DLC team plugin for Claude Code",
   "owner": { "name": "Scrollout" },
   "plugins": [
     {
