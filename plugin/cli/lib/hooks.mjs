@@ -197,7 +197,9 @@ function steer(input, cwd) {
     delete all[input.session_id];
     writeJson(file, all);
   }
-  if (input.stop_hook_active || String(input.last_assistant_message ?? '').trim().endsWith('?')) return allow();
+  // A question to the owner anywhere in the last message (often followed by its options) lets the turn end.
+  const asked = String(input.last_assistant_message ?? '').split('\n').some((l) => /\?[*_`)\s]*$/.test(l));
+  if (input.stop_hook_active || asked) return allow();
   const next = nextAction(readState(cwd));
   return next.kind === 'act' ? JSON.stringify({ decision: 'block', reason: next.line }) : allow();
 }

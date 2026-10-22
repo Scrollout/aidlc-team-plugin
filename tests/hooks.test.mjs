@@ -142,6 +142,8 @@ test('U7/AC-6 steer blocks a stop when next is autonomous, allows it at a human 
   assert.match(r.json.reason, /^build U-1, U-2/);
   assert.equal(stop(dir, { stop_hook_active: true }).json.decision, undefined, 'never blocks twice in a row');
   assert.equal(stop(dir, { last_assistant_message: 'Shall I build both units now?' }).json.decision, undefined, 'the owner was asked');
+  assert.equal(stop(dir, { last_assistant_message: '**U-6: hold until U-9 merges, or merge now?**\n- A hold (recommended)\n- B merge now' }).json.decision, undefined, 'a question followed by its options');
+  assert.equal(stop(dir, { last_assistant_message: 'See https://example.com/?q=1 for details.' }).json.decision, 'block', 'a ? inside a line is no question');
 });
 
 test('U7/AC-7 the same denial three times in a turn escalates; the turn end resets it', () => {
