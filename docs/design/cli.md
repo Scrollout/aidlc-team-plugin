@@ -23,7 +23,8 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 | `review record <unit> <file\|->` | stores a reviewer verdict keyed by diff hash; `-` reads it from stdin | reviewer |
 | `report <unit>` | stores the builder's report (JSON on stdin) | builder |
 | `hold <unit>` / `priority <unit> <n>` | records an owner instruction in the plan | lead, on the owner's word |
-| `fix "<title>"` | one-unit plan without an intent | lead |
+| `fix "<title>"\|--from-issue <n>` | one-unit plan without an intent; from an issue, titled like it and linked to it | lead |
+| `sync` | projects intents and units onto GitHub issues and a Project ([Board](board.md)) | lead, merge |
 | `push` / `clean` | checked base push; removes orphan worktrees and branches | lead |
 | `merge <unit>` | the merge gate, then `git merge --no-ff` with trailers | lead |
 | `hook <name>` | entry point for the plugin's hooks; reads the hook JSON on stdin | hooks |
@@ -42,7 +43,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 
 # Implementation limits
 - Node 20+, ESM, no dependencies; git through `execFileSync`, never a shell.
-- `plugin/cli/lib/` one module per concern: `config`, `profile`, `template`, `okf`, `grid`, `state`, `card`, `gate`, `hooks`, `init`.
+- `plugin/cli/lib/` one module per concern: `config`, `profile`, `template`, `okf`, `grid`, `state`, `card`, `gate`, `hooks`, `init`, `board`.
 - No hand-coded values in code. Commands, exit codes, file paths, layer order and every user-facing message live in `plugin/cli/cli.json`, read by `config`. Messages are templates rendered by the template engine. `cli.json` sits beside the CLI so it is vendored with it. Tests check that it matches this doc.
 
 - Every module is tested with `node:test` against fixture repos created in a temp dir.

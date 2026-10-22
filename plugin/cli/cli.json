@@ -133,12 +133,18 @@
     },
     {
       "name": "fix",
-      "usage": "fix \"<title>\" --scope <glob>… [--requirement R-<n>…]",
+      "usage": "fix \"<title>\"|--from-issue <n> --scope <glob>… [--requirement R-<n>…]",
       "does": "create a one-unit plan without an intent",
       "flags": [
         "--scope",
-        "--requirement"
+        "--requirement",
+        "--from-issue"
       ]
+    },
+    {
+      "name": "sync",
+      "usage": "sync",
+      "does": "project intents and units onto GitHub issues and a Project"
     },
     {
       "name": "push",
@@ -319,7 +325,7 @@
     "pushed": "pushed {{base}} to {{remote}}\n",
     "fixWrote": "wrote {{path}}, {{lane}} lane{{#each approve}}; the owner approves it: ! aidlc approve {{this}}{{/each}}\n",
     "fixFull": "{{title}} is full lane ({{reason}}): it needs an intent, like any feature\n",
-    "fixUsage": "usage: fix \"<title>\" --scope <glob>… [--requirement R-<n>…]",
+    "fixUsage": "usage: fix \"<title>\"|--from-issue <n> --scope <glob>… [--requirement R-<n>…]",
     "hookDeny": "{{code}} {{message}} → {{fix}}",
     "hookEscalate": "escalate: {{reason}} (denied {{count}} times this turn; stop and tell the owner)",
     "guardForce": "force push",
@@ -337,7 +343,20 @@
     "modelUnit": "{{agent}} prompt names no unit",
     "modelMismatch": "{{agent}} for {{unit}} uses {{model}}, the card says {{expected}}",
     "docsErrors": "fix these OKF errors now:\n{{errors}}",
-    "statusResume": "Load the aidlc skill and run aidlc next.\n"
+    "statusResume": "Load the aidlc skill and run aidlc next.\n",
+    "boardOff": "no github section in the profile: the board is off",
+    "boardProject": "github.project {{project}} is not orgs/<owner>/projects/<n> or users/<owner>/projects/<n>",
+    "boardNoField": "the project has no field {{name}}",
+    "boardNoOption": "field {{name}} has no option {{value}}",
+    "boardMarker": "<!-- {{kind}}: {{id}} -->",
+    "boardLabel": "created label {{name}}\n",
+    "boardCreated": "created #{{number}} {{title}}\n",
+    "boardUpdated": "updated #{{number}}: {{what}}\n",
+    "boardLinked": "linked #{{child}} under #{{parent}}\n",
+    "boardAdded": "added #{{number}} to the project\n",
+    "boardSet": "set {{field}} of #{{number}} to {{value}}\n",
+    "boardInSync": "the board is in sync\n",
+    "boardFailed": "warning: sync failed, run aidlc sync: {{error}}\n"
   },
   "okf": {
     "index": "index.md",
@@ -468,7 +487,8 @@
       "verified_hash",
       "status",
       "hold",
-      "priority"
+      "priority",
+      "board"
     ],
     "verdicts": [
       "pass",
@@ -780,6 +800,47 @@
       "MODEL-MISMATCH": {
         "fix": "pass the model the card names (aidlc card)"
       }
+    }
+  },
+  "board": {
+    "gh": "gh",
+    "perPage": 100,
+    "maxBody": 1500,
+    "template": "issue.md",
+    "issue": "board.issue",
+    "statusField": "Status",
+    "held": "held",
+    "holdable": [
+      "approved",
+      "blocked"
+    ],
+    "done": [
+      "merged",
+      "released"
+    ],
+    "status": {
+      "draft": "Todo",
+      "approved": "Todo",
+      "stale": "Todo",
+      "building": "In Progress",
+      "fix": "In Progress",
+      "reported": "In review",
+      "reviewed": "In review",
+      "blocked": "On hold",
+      "escalated": "On hold",
+      "held": "On hold",
+      "merged": "Done",
+      "released": "Done"
+    },
+    "project": "^(orgs|users)/([^/]+)/projects/(\\d+)$",
+    "owners": {
+      "orgs": "organization",
+      "users": "user"
+    },
+    "queries": {
+      "project": "query($login: String!, $number: Int!, $cursor: String) { {{owner}}(login: $login) { projectV2(number: $number) { id fields(first: 50) { nodes { ... on ProjectV2FieldCommon { id name dataType } ... on ProjectV2SingleSelectField { options { id name } } } } items(first: 100, after: $cursor) { pageInfo { hasNextPage endCursor } nodes { id content { ... on Issue { number repository { nameWithOwner } } } fieldValues(first: 30) { nodes { ... on ProjectV2ItemFieldSingleSelectValue { name field { ... on ProjectV2FieldCommon { name } } } ... on ProjectV2ItemFieldNumberValue { number field { ... on ProjectV2FieldCommon { name } } } ... on ProjectV2ItemFieldDateValue { date field { ... on ProjectV2FieldCommon { name } } } ... on ProjectV2ItemFieldTextValue { text field { ... on ProjectV2FieldCommon { name } } } } } } } } } }",
+      "addItem": "mutation($project: ID!, $content: ID!) { addProjectV2ItemById(input: { projectId: $project, contentId: $content }) { item { id } } }",
+      "setField": "mutation($project: ID!, $item: ID!, $field: ID!, $value: ProjectV2FieldValue!) { updateProjectV2ItemFieldValue(input: { projectId: $project, itemId: $item, fieldId: $field, value: $value }) { projectV2Item { id } } }"
     }
   }
 }

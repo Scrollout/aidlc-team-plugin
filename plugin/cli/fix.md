@@ -4,6 +4,7 @@ title: {{title}}
 description: {{description}}
 scope: [{{scope}}]
 {{#each requirements}}requirements: [{{this}}]
+{{/each}}{{#each issue}}board: { issue: {{this}} }
 {{/each}}generated: { by: {{producer}}, at: {{at}} }
 ---
 

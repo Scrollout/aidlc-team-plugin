@@ -11,6 +11,7 @@ import { commands as card } from './lib/card.mjs';
 import { commands as init } from './lib/init.mjs';
 import { commands as gate } from './lib/gate.mjs';
 import { commands as hooks } from './lib/hooks.mjs';
+import { commands as board } from './lib/board.mjs';
 
 export const EXIT = config.exit;
 export { UsageError };
@@ -27,7 +28,7 @@ const combine = (...handlers) => async (args, ctx) => {
 };
 
 // Each unit that builds a command adds its handler here, keyed by the command name in cli.json.
-const HANDLERS = { ...okf, ...state, ...card, ...init, ...gate, ...hooks, lane: grid.lane, check: combine(okf.check, grid.check, gate.check) };
+const HANDLERS = { ...okf, ...state, ...card, ...init, ...gate, ...hooks, ...board, lane: grid.lane, check: combine(okf.check, grid.check, gate.check) };
 
 export function help() {
   const width = Math.max(...config.commands.map((c) => c.usage.length));

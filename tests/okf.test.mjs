@@ -49,6 +49,7 @@ test('U2/AC-1 YAML subset reads what PyYAML reads', () => {
     { a: 'one\ntwo\n', b: 'folded text\n', c: [1, { x: 'y' }], d: 'plain continued' });
   assert.deepEqual(parseYaml("list:\n- a\n- b: 1\n  c: 2\nq: 'it''s'\nn: ~\ny: yes\no: 010"),
     { list: ['a', { b: 1, c: 2 }], q: "it's", n: null, y: true, o: 8 });
+  assert.deepEqual(parseYaml('w: 12\np: 100\nh: 0x1f\nz: 0'), { w: 12, p: 100, h: 31, z: 0 }, 'only a leading 0 is octal');
   assert.deepEqual(parseYaml('at: 2026-07-10T21:14:56Z\nby: human:me@x'), { at: '2026-07-10T21:14:56Z', by: 'human:me@x' });
   for (const bad of ['a: b: c', 'a: [1', 'a: "open', 'a: @x', 'a: 1\n  b: 2', 'a: &x 1']) {
     assert.throws(() => parseYaml(bad), /line \d+/, bad);
