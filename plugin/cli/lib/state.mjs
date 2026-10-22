@@ -201,12 +201,29 @@ const ids = (docs) => docs.map((u) => u.id).join(' ');
 const action = (kind, key, data = {}) => ({ kind, key, line: msg(key, data) });
 const priorityOf = (u) => Number(u.fm.priority ?? 0);
 
+// Open points of a draft: frontmatter fields and sections still holding a template placeholder, or items under
+// the open-questions heading (docs/design/state.md).
+const PLACEHOLDER = /<[^<>\n]+>/;
+export function openPoints(doc) {
+  const points = new Set();
+  doc.lines.slice(1, doc.body).forEach((l) => { const m = /^(\w+):(.*)$/.exec(l); if (m && PLACEHOLDER.test(m[2])) points.add(m[1]); });
+  let heading = '';
+  for (const line of doc.lines.slice(doc.body)) {
+    const h = /^#+\s+(.+)$/.exec(line);
+    if (h) heading = h[1].trim();
+    else if (/^\s*(?:[-*]\s+)?<[^<>]+>\s*$/.test(line) || (heading === S.openQuestions && /^\s*[-*]\s+\S/.test(line))) points.add(heading);
+  }
+  return [...points];
+}
+
 export function nextAction(st) {
   const rel = (dir) => relative(st.cwd, join(st.bundle, dir)) || dir;
   if (st.mergeUnit) return action('act', 'nextContinueMerge', { unit: st.mergeUnit });
 
   const stale = [...st.requirements, ...st.intents, ...st.units].filter((d) => d.state === 'stale');
   if (stale.length) return action(...(st.auto.includes(S.auto[0]) ? ['act', 'nextAutoApprove'] : ['human', 'nextReapprove']), { docs: ids(stale) });
+  const open = [...st.requirements, ...st.intents, ...st.units].filter((d) => d.state === 'draft').map((d) => ({ d, points: openPoints(d.doc) })).find((x) => x.points.length);
+  if (open) return action('human', 'nextOpenDraft', { doc: open.d.id, points: open.points.join(', '), file: relative(st.cwd, open.d.file) });
 
   const unreleased = st.intents.find((i) => i.state === 'merged'); // its release does not hold back the next intent
   const intent = st.intents.find((i) => !['released', 'merged'].includes(i.state)) ?? unreleased;

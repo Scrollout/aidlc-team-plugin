@@ -161,6 +161,21 @@ test('U4/AC-2 next with no intent asks to elaborate one', () => {
   assert.equal(r.code, 2);
 });
 
+test('U4/AC-8 a draft with open points sends the lead back to the owner before approvals and unit work', () => {
+  const draft = '---\ntype: Intent\ntitle: Export\ndescription: <one sentence>\n---\n\n# Goal\nAdmins get prices weekly.\n\n# Why\n<the reason>\n\n# Out of scope\n- `GET /x?r=<r>` stays as is.\n\n## Open questions\n- Which day?\n';
+  const dir = base();
+  approve(dir, 'I-1', 'U-1', 'U-2');
+  branch(dir, 'U-1');
+  report(dir, 'U-1');
+  commit(dir, 'draft I-2', { 'docs/intents/I-2-export.md': draft });
+  let r = run(dir, ['next']);
+  assert.equal(r.out.trimEnd(), 'finish elaborating I-2 with the owner: description, Why, Open questions still open in docs/intents/I-2-export.md; then ask for approval');
+  assert.equal(r.code, 2);
+  write(dir, { 'docs/intents/I-2-export.md': draft.replace('<one sentence>', 'Weekly export.').replace('<the reason>', 'Sales asks.').replace('\n## Open questions\n- Which day?\n', '') });
+  r = run(dir, ['next']);
+  assert.match(r.out, /^review U-1, focus general/, 'a complete draft no longer holds unit work back');
+});
+
 test('U4/AC-6 after a clear, next returns the same action and loses nothing', () => {
   for (const name of ['elaborating (intent not approved)', 'plan pending', 'building, fresh heartbeat', 'building, stale heartbeat', 'reported', 'reviewed', 'merge cut off midway']) {
     const dir = base();
