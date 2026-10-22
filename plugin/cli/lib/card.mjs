@@ -98,7 +98,8 @@ export function renderCard(cwd, unitId) {
   };
   const file = templateFile(cwd, lane.lane === 'quick' ? C.quickTemplate : C.template);
   const template = readFileSync(file, 'utf8');
-  const hash = sha256(docText + '\n' + render(template, { ...data, hash: '' }, file)).slice(0, C.hashLength);
+  // The base is left out, so a base that moved for other units does not make a recorded review stale.
+  const hash = sha256(docText + '\n' + render(template, { ...data, base: '', hash: '' }, file)).slice(0, C.hashLength);
   const card = render(template, { ...data, hash }, file);
   if (card.length > C.max) return { code: config.exit.findings, output: msg('cardTooLong', { unit: unitId, size: card.length, max: C.max }) };
   const record = { unit: unitId, hash, base: baseSha, lane: lane.lane, model };
