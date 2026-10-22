@@ -175,7 +175,7 @@
     "typeMissing": "type is missing or empty",
     "runtimeMissing": "{{type}} has no {{field}}",
     "indexFrontmatter": "index.md may carry frontmatter only at the bundle root, with only {{keys}}",
-    "indexLine": "not a heading or a * [Title](url) - description entry",
+    "indexLine": "list line is not a * [Title](url) - description entry",
     "indexUnheaded": "entry before any heading",
     "logFrontmatter": "log.md frontmatter is not a valid YAML mapping",
     "logHeading": "date heading is not YYYY-MM-DD",
@@ -258,7 +258,11 @@
     "badVerdict": "verdict must be one of {{verdicts}}",
     "noBranch": "no branch {{branch}}",
     "recorded": "recorded {{what}} for {{unit}}\n",
-    "reviewUsage": "usage: review record <unit> <file>"
+    "reviewUsage": "usage: review record <unit> <file>",
+    "reqNone": "{{doc}} cites no requirement",
+    "reqUnknown": "{{doc}} cites {{req}}, which does not exist",
+    "nextApproveRequirements": "ask the owner to approve the requirements the plan cites: ! aidlc approve {{reqs}}",
+    "statusUncovered": "not yet delivered: {{reqs}}\n"
   },
   "okf": {
     "bundle": "docs",
@@ -370,8 +374,14 @@
       "PLAN-SCOPE": {
         "level": "error",
         "fix": "give the unit a scope, narrow the scopes, or add a depends between the units"
+      },
+      "PLAN-REQ": {
+        "level": "error",
+        "fix": "cite the requirements the intent or unit serves: requirements: [R-<n>]"
       }
-    }
+    },
+    "requirements": "requirements",
+    "requirementFile": "^(R-\\d+)(?:-[^/]*)?\\.md$"
   },
   "state": {
     "dir": "aidlc",
@@ -403,7 +413,8 @@
     "approvable": [
       "Intent",
       "Unit",
-      "Decision"
+      "Decision",
+      "Requirement"
     ]
   },
   "card": {

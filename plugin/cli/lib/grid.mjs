@@ -14,6 +14,9 @@ const RESERVE = /^(\S+)\s+(\S+)\/(\d+)$/;
 
 const list = (v) => (v === undefined || v === null ? [] : Array.isArray(v) ? v : [v]).map(String);
 
+// Requirement IDs compare by number: R-018 and R-18 are the same.
+export const reqId = (id) => id.replace(/^(R-)0*(\d)/, '$1$2');
+
 // ---- Globs: `**` spans folders, `*` and `?` stay in one, no `/` means any depth unless anchored by a leading `/` ----
 
 function segments(glob) {
@@ -67,7 +70,7 @@ export const inside = (a, b) => within(segments(a), segments(b), '**', segWithin
 
 // ---- Plan ----
 
-function readDocs(bundle, dir, pattern) {
+function readDocs(bundle, dir, pattern, norm = (id) => id) {
   const d = join(bundle, dir);
   if (!existsSync(d)) return [];
   const re = new RegExp(pattern);
@@ -76,7 +79,7 @@ function readDocs(bundle, dir, pattern) {
     if (!m) return [];
     const file = join(d, name);
     const doc = parseDoc(readFileSync(file, 'utf8'));
-    return doc.error || !doc.fm ? [] : [{ id: m[1], file, fm: doc.fm, doc }];
+    return doc.error || !doc.fm ? [] : [{ id: norm(m[1]), file, fm: doc.fm, doc, requirements: list(doc.fm.requirements).map(reqId) }];
   });
 }
 
@@ -97,7 +100,11 @@ export function readPlan(bundle) {
     modules: list(u.fm.modules),
     acs: acsOf(u.doc),
   }));
-  return { intents: readDocs(bundle, GRID.intents, GRID.intentFile), units };
+  return {
+    intents: readDocs(bundle, GRID.intents, GRID.intentFile),
+    units,
+    requirements: readDocs(bundle, GRID.requirements, GRID.requirementFile, reqId),
+  };
 }
 
 function finding(code, file, line, key, data, base) {
@@ -151,7 +158,7 @@ function cycles(units) {
 
 // Plan lint over live units: all but `status: dropped` and `skip` (the merged ones, from git).
 export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd() } = {}) {
-  const { units: all } = readPlan(bundle);
+  const { units: all, intents, requirements } = readPlan(bundle);
   const units = all.filter((u) => u.fm.status !== GRID.dropped && !skip.includes(u.id));
   const known = new Set(all.map((u) => u.id));
   const levels = profile.levels ? Object.keys(profile.levels) : GRID.defaultLevels;
@@ -169,6 +176,13 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
       else if (!levels.includes(ac.level)) add('PLAN-LEVEL', u, ac.line, 'acBadLevel', { ac: ac.id, level: ac.level, levels: levels.join(', ') });
     }
     if (!u.scope.length) add('PLAN-SCOPE', u, 1, 'scopeMissing', {});
+  }
+  if (requirements.length) {
+    const known = new Set(requirements.map((r) => r.id));
+    for (const d of [...intents.filter((i) => i.fm.status !== GRID.dropped), ...units]) {
+      if (!d.requirements.length) add('PLAN-REQ', d, 1, 'reqNone', { doc: d.id });
+      for (const req of d.requirements.filter((r) => !known.has(r))) add('PLAN-REQ', d, keyLine(d, 'requirements'), 'reqUnknown', { doc: d.id, req });
+    }
   }
   for (const c of cycles(units)) add('PLAN-DAG', c.unit, keyLine(c.unit, 'depends'), 'depCycle', { cycle: c.text });
 

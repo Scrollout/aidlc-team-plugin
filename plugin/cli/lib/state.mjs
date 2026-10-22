@@ -8,7 +8,7 @@ import { config, UsageError } from './config.mjs';
 import { msg } from './template.mjs';
 import { loadProfile } from './profile.mjs';
 import { parseDoc } from './okf.mjs';
-import { computeLane, overlaps, readPlan } from './grid.mjs';
+import { computeLane, overlaps, readPlan, reqId as reqIdOf } from './grid.mjs';
 
 const S = config.state;
 
@@ -140,7 +140,8 @@ export function readState(cwd, { now = Date.now() } = {}) {
     const released = complete && own.every((u) => (tryGit(cwd, 'tag', '--contains', merged.get(u.id)) ?? '') !== '');
     return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own };
   });
-  return { cwd, profile, base, bundle, intents, units, mergeUnit: mergeInProgress(cwd, units) };
+  const requirements = plan.requirements.map((r) => ({ ...r, state: approval(r.doc) }));
+  return { cwd, profile, base, bundle, intents, units, requirements, mergeUnit: mergeInProgress(cwd, units) };
 }
 
 // ---- next ----
@@ -153,7 +154,7 @@ export function nextAction(st) {
   const rel = (dir) => relative(st.cwd, join(st.bundle, dir)) || dir;
   if (st.mergeUnit) return action('act', 'nextContinueMerge', { unit: st.mergeUnit });
 
-  const stale = [...st.intents, ...st.units].filter((d) => d.state === 'stale');
+  const stale = [...st.requirements, ...st.intents, ...st.units].filter((d) => d.state === 'stale');
   if (stale.length) return action('human', 'nextReapprove', { docs: ids(stale) });
 
   const intent = st.intents.find((i) => i.state !== 'released');
@@ -162,6 +163,9 @@ export function nextAction(st) {
   if (intent && intent.state === 'approved' && !intent.units.length) return action('act', 'nextDraftUnits', { intent: intent.id, dir: rel(config.grid.units) });
 
   const scope = st.units.filter((u) => !u.fm.intent || u.fm.intent === intent?.id);
+  const cited = new Set([...(intent?.requirements ?? []), ...scope.filter((u) => u.state !== 'merged').flatMap((u) => u.requirements)]);
+  const draftReqs = st.requirements.filter((r) => r.state === 'draft' && cited.has(r.id));
+  if (draftReqs.length) return action('human', 'nextApproveRequirements', { reqs: ids(draftReqs) });
   const drafts = scope.filter((u) => u.state === 'draft');
   if (drafts.length) return action('human', 'nextApprovePlan', { units: ids(drafts) });
 
@@ -200,7 +204,7 @@ function findDoc(cwd, bundle, name) {
   const path = resolve(cwd, name);
   if (existsSync(path)) return path;
   const plan = readPlan(bundle);
-  const hit = [...plan.units, ...plan.intents].find((d) => d.id === name);
+  const hit = [...plan.units, ...plan.intents, ...plan.requirements].find((d) => d.id === reqIdOf(name));
   if (!hit) throw new UsageError(msg('noDoc', { name }));
   return hit.file;
 }
@@ -228,7 +232,9 @@ export const commands = {
     for (const u of st.units.filter((x) => x.state !== 'merged' || !st.intents.some((i) => i.state === 'released' && i.id === x.fm.intent))) {
       lines.push(msg('statusUnit', { id: u.id, state: u.state, title: u.fm.title ?? '' }));
     }
-    const tail = msg('statusNext', { line: next.line });
+    const delivered = new Set(st.units.filter((u) => u.state === 'merged').flatMap((u) => u.requirements));
+    const open = st.requirements.filter((r) => !delivered.has(r.id));
+    const tail = (open.length ? msg('statusUncovered', { reqs: ids(open) }) : '') + msg('statusNext', { line: next.line });
     let out = '';
     for (let k = 0; k < lines.length; k++) {
       const more = msg('statusMore', { count: lines.length - k });

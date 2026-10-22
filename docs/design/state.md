@@ -45,7 +45,7 @@ stateDiagram-v2
 `aidlc next` prints one line: the single next action and the command or agent that performs it, e.g. `build U-3 (card: aidlc card U-3)`. It exits 2 when the action waits on the owner. Order:
 1. A merge cut off midway → continue it.
 2. Any `stale` approval → re-approve.
-3. Intent not approved → elaborate and request approval.
+3. Intent not approved → elaborate and request approval; then the draft requirements it and its units cite.
 4. Plan not approved → draft units and request approval.
 5. Reviewed units → merge in DAG order.
 6. Verdict `escalate` → the owner decides. Verdict `fix` → fix round.

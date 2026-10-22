@@ -311,7 +311,30 @@ function rootFrontmatter(indexFile) {
   return doc.fmLines && Object.keys(doc.fm).every((k) => OKF.rootIndexKeys.includes(k)) ? doc.fmLines.join('\n') + '\n\n' : '';
 }
 
-function indexText(entries) {
+// Prose paragraphs of an existing index, keyed by the heading they sit under ('' before any heading).
+function existingProse(indexFile) {
+  const out = new Map();
+  if (!existsSync(indexFile)) return out;
+  const doc = parseDoc(read(indexFile));
+  if (doc.error) return out;
+  let heading = '';
+  let gap = false;
+  for (const line of doc.lines.slice(doc.body)) {
+    const h = line.match(/^# (.+)$/);
+    if (h) [heading, gap] = [h[1], false];
+    else if (!line.trim()) gap = true;
+    else if (!/^\s*[*+-]\s/.test(line)) {
+      const block = out.get(heading) ?? [];
+      if (gap && block.length) block.push('');
+      block.push(line);
+      out.set(heading, block);
+      gap = false;
+    }
+  }
+  return out;
+}
+
+function indexText(entries, prose = new Map()) {
   const groups = new Map();
   for (const e of entries) {
     const type = e.type || OKF.otherType;
@@ -321,7 +344,8 @@ function indexText(entries) {
   return [...groups.keys()].sort().map((type) => {
     const lines = groups.get(type).sort((a, b) => cmp(a.title.toLowerCase(), b.title.toLowerCase()))
       .map((e) => `* [${e.title}](${e.link})${e.desc ? ` - ${e.desc}` : ''}`);
-    return [`# ${type}`, '', ...lines].join('\n');
+    const kept = prose.get(type);
+    return [`# ${type}`, '', ...(kept ? [...kept, ''] : []), ...lines].join('\n');
   }).join('\n\n') + '\n';
 }
 
@@ -362,7 +386,9 @@ export function buildIndexes(root) {
     }
     if (!entries.length) continue;
     const prefix = dir === root ? rootFrontmatter(join(dir, OKF.index)) : '';
-    out.set(dir, prefix + indexText(entries));
+    const prose = existingProse(join(dir, OKF.index));
+    const top = prose.get('');
+    out.set(dir, prefix + (top ? top.join('\n') + '\n\n' : '') + indexText(entries, prose));
     if (dir === root) continue;
     // One entry: its description, as the reference. Otherwise keep the parent's existing line instead of an LLM.
     descs.set(dir, entries.length === 1 && entries[0].desc
@@ -432,7 +458,7 @@ function checkIndex(file, isRoot, add) {
     const line = doc.lines[k];
     if (/^#{1,6} \S/.test(line)) headed = true;
     else if (ENTRY.test(line)) { if (!headed) add(file, k + 1, 'OKF-INDEX', 'indexUnheaded'); }
-    else if (line.trim()) add(file, k + 1, 'OKF-INDEX', 'indexLine');
+    else if (/^\s*[*+-]\s/.test(line)) add(file, k + 1, 'OKF-INDEX', 'indexLine'); // prose paragraphs are allowed
   }
 }
 

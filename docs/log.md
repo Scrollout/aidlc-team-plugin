@@ -7,6 +7,13 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** U10 built:
+  - requirement docs are read by ID number;
+  - `PLAN-REQ` applies once a bundle has a requirement;
+  - requirements are approved, and the plan's draft ones come before the plan;
+  - `status` lists undelivered requirements;
+  - index prose is allowed and kept on regeneration ([OKF](design/okf.md), [Requirements and architecture checks](design/architecture.md)).
+  Release 0.5.0.
 - **Creation** [Requirements and architecture checks](design/architecture.md) and decision [0007](decisions/0007-requirements-and-architecture-checks.md):
   - lasting requirements are cited docs;
   - architecture boundaries and checks run on every merge;
