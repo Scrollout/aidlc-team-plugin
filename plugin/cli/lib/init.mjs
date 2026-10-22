@@ -1,6 +1,6 @@
 // Init and upgrade: render a project's files from templates, pin the CLI, adopt an existing bundle
 // (docs/design/profile.md, docs/design/paths.md). Settings, file list and messages come from cli.json.
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
 import { CLI_DIR, PLUGIN_DIR, config, done, isMap, UsageError, relPath } from './config.mjs';
 import { msg, render, renderFile } from './template.mjs';
@@ -9,6 +9,9 @@ import { checkBundle, parseDoc } from './okf.mjs';
 import { git, tryGit } from './state.mjs';
 
 const I = config.init;
+
+// Two folders are the same one, short names and symlinks aside (Windows `RUNNER~1`, macOS `/var`).
+const sameDir = (a, b) => existsSync(a) && existsSync(b) && realpathSync.native(a) === realpathSync.native(b);
 
 function parseFlags(args, known) {
   const out = { overwrite: [] };
@@ -33,7 +36,7 @@ function projectRoot(cwd) {
 // The version of the installed plugin; refuses to run from a pinned copy.
 function pluginVersion(root) {
   const manifest = join(PLUGIN_DIR, I.manifest);
-  if (!existsSync(manifest) || resolve(CLI_DIR) === resolve(root, I.bin)) throw new UsageError(msg('initNotPlugin', { path: CLI_DIR }));
+  if (!existsSync(manifest) || sameDir(CLI_DIR, resolve(root, I.bin))) throw new UsageError(msg('initNotPlugin', { path: CLI_DIR }));
   return JSON.parse(readFileSync(manifest, 'utf8')).version;
 }
 

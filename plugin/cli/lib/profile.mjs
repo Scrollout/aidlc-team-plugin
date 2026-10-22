@@ -1,7 +1,7 @@
 // Profile loader: reads the rule layers named in cli.json and merges them (docs/design/profile.md).
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { CLI_DIR, config } from './config.mjs';
+import { CLI_DIR, config, posix } from './config.mjs';
 import { msg } from './template.mjs';
 
 export class ProfileError extends Error {}
@@ -51,9 +51,9 @@ function readLayer(file) {
   try {
     data = JSON.parse(readFileSync(file, 'utf8'));
   } catch (e) {
-    throw fail('invalidJson', { file, error: e.message });
+    throw fail('invalidJson', { file: posix(file), error: e.message });
   }
-  if (!isObject(data)) throw fail('notObject', { file });
+  if (!isObject(data)) throw fail('notObject', { file: posix(file) });
   return data;
 }
 

@@ -48,7 +48,7 @@ test('U3/AC-2 a duplicate AC ID or a duplicate reservation is a finding', () => 
   const dup = lint('PLAN-RESERVE-duplicate');
   assert.equal(dup.length, 1);
   assert.match(dup[0].message, /migration regional\/5 is also reserved by U-1/);
-  assert.equal(dup[0].path, join('PLAN-RESERVE-duplicate', 'units', 'U-2-b.md'));
+  assert.equal(dup[0].path, 'PLAN-RESERVE-duplicate/units/U-2-b.md');
   assert.equal(lint('PLAN-RESERVE-malformed').length, 1);
   assert.match(lint('clean', { reserve: { schema: {} } })[0].message, /kind migration is not in profile\.reserve/);
 });
