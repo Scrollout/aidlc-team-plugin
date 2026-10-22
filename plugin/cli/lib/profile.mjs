@@ -1,34 +1,35 @@
-// Profile loader: reads the rule layers and merges them (docs/design/profile.md).
+// Profile loader: reads the rule layers named in cli.json and merges them (docs/design/profile.md).
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-export const PLUGIN_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+import { join } from 'node:path';
+import { config, PLUGIN_DIR } from './config.mjs';
+import { msg } from './template.mjs';
 
 export class ProfileError extends Error {}
 
+const UNION = config.unionKey;
+const fail = (key, data) => new ProfileError(msg(key, { union: UNION, ...data }));
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 
-function hasDeny(v) {
+function hasUnion(v) {
   if (!isObject(v)) return false;
-  return Object.entries(v).some(([k, x]) => k === 'deny' || hasDeny(x));
+  return Object.entries(v).some(([k, x]) => k === UNION || hasUnion(x));
 }
 
-// Merges `next` over `base`. Later wins, except that `deny` arrays are unions and cannot be removed.
-export function mergeLayer(base, next, layer = 'layer', path = []) {
+// Merges `next` over `base`. Later wins, except that union-key arrays (`deny`) are unions and cannot be removed.
+export function mergeLayer(base, next, layer, path = []) {
   const out = { ...base };
   for (const [key, value] of Object.entries(next)) {
     const at = [...path, key].join('.');
     const prev = out[key];
-    if (key === 'deny') {
-      if (!Array.isArray(value)) throw new ProfileError(`${layer}: ${at} must be a list; a deny from an earlier layer cannot be removed`);
+    if (key === UNION) {
+      if (!Array.isArray(value)) throw fail('unionNotList', { layer, key: at });
       const union = Array.isArray(prev) ? [...prev] : [];
       for (const v of value) if (!union.some((u) => JSON.stringify(u) === JSON.stringify(v))) union.push(v);
       out[key] = union;
     } else if (isObject(prev) && isObject(value)) {
       out[key] = mergeLayer(prev, value, layer, [...path, key]);
-    } else if (hasDeny(prev)) {
-      throw new ProfileError(`${layer}: ${at} replaces an object holding a deny from an earlier layer`);
+    } else if (hasUnion(prev)) {
+      throw fail('unionReplaced', { layer, key: at });
     } else {
       out[key] = value;
     }
@@ -47,18 +48,14 @@ function readLayer(file) {
   try {
     data = JSON.parse(readFileSync(file, 'utf8'));
   } catch (e) {
-    throw new ProfileError(`${file}: invalid JSON: ${e.message}`);
+    throw fail('invalidJson', { file, error: e.message });
   }
-  if (!isObject(data)) throw new ProfileError(`${file}: must be a JSON object`);
+  if (!isObject(data)) throw fail('notObject', { file });
   return data;
 }
 
 export function layerFiles(root, pluginDir = PLUGIN_DIR) {
-  return [
-    { name: 'plugin', file: join(pluginDir, 'templates', 'defaults.json') },
-    { name: 'project', file: join(root, '.aidlc', 'profile.json') },
-    { name: 'personal', file: join(root, '.aidlc', 'local', 'profile.json') },
-  ];
+  return config.layers.map((l) => ({ name: l.name, file: join(l.from === 'plugin' ? pluginDir : root, l.path) }));
 }
 
 // Returns the merged profile, the layers that were found and the project rule files.
@@ -68,9 +65,9 @@ export function loadProfile(root, { pluginDir = PLUGIN_DIR } = {}) {
     const data = readLayer(l.file);
     if (data) layers.push({ ...l, data });
   }
-  const rulesDir = join(root, '.aidlc', 'rules');
+  const rulesDir = join(root, config.rules.dir);
   const rules = existsSync(rulesDir)
-    ? readdirSync(rulesDir).filter((f) => f.endsWith('.md')).sort().map((f) => join(rulesDir, f))
+    ? readdirSync(rulesDir).filter((f) => f.endsWith(config.rules.ext)).sort().map((f) => join(rulesDir, f))
     : [];
   return { profile: mergeLayers(layers), layers: layers.map((l) => l.name), rules };
 }

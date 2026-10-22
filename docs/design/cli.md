@@ -38,5 +38,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 
 # Implementation limits
 - Node 20+, ESM, no dependencies; git through `execFileSync`, never a shell.
-- `plugin/cli/lib/` one module per concern: `profile`, `template`, `okf`, `grid`, `state`, `card`, `gate`, `hooks`, `init`.
+- `plugin/cli/lib/` one module per concern: `config`, `profile`, `template`, `okf`, `grid`, `state`, `card`, `gate`, `hooks`, `init`.
+- No hand-coded values in code. Commands, exit codes, file paths, layer order and every user-facing message live in `plugin/cli/cli.json`, read by `config`. Messages are templates rendered by the template engine. `cli.json` sits beside the CLI so it is vendored with it. Tests check that it matches this doc.
+
 - Every module is tested with `node:test` against fixture repos created in a temp dir.

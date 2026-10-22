@@ -1,9 +1,11 @@
 // Template engine: `{{a.b}}` and `{{#each list}}…{{/each}}`, nothing more (docs/design/profile.md).
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { PLUGIN_DIR } from './profile.mjs';
+import { config, PLUGIN_DIR } from './config.mjs';
 
 export class TemplateError extends Error {}
+
+const fail = (key, data) => new TemplateError(msg(key, data));
 
 const TAG = /\{\{\s*(#each\s+[\w.]+|\/each|[\w.]+)\s*\}\}/g;
 
@@ -35,13 +37,13 @@ function parse(text, file) {
       top.body.push(node);
       stack.push(node);
     } else if (tag === '/each') {
-      if (stack.length === 1) throw new TemplateError(`${file}: {{/each}} without {{#each}}`);
+      if (stack.length === 1) throw fail('strayEnd', { file });
       stack.pop();
     } else {
       top.body.push({ name: tag });
     }
   }
-  if (stack.length > 1) throw new TemplateError(`${file}: {{#each ${stack[stack.length - 1].each}}} is not closed`);
+  if (stack.length > 1) throw fail('unclosedEach', { file, name: stack[stack.length - 1].each });
   if (last < text.length) root.push({ text: text.slice(last) });
   return root;
 }
@@ -53,13 +55,13 @@ function emit(nodes, scopes, file) {
       out += n.text;
     } else if ('each' in n) {
       const list = lookup(scopes, n.each);
-      if (list === undefined || list === null) throw new TemplateError(`${file}: missing variable ${n.each}`);
-      if (!Array.isArray(list)) throw new TemplateError(`${file}: ${n.each} is not a list`);
+      if (list === undefined || list === null) throw fail('missingVariable', { file, name: n.each });
+      if (!Array.isArray(list)) throw fail('notList', { file, name: n.each });
       for (const item of list) out += emit(n.body, [item, ...scopes], file);
     } else {
       const v = lookup(scopes, n.name);
-      if (v === undefined || v === null) throw new TemplateError(`${file}: missing variable ${n.name}`);
-      if (typeof v === 'object') throw new TemplateError(`${file}: ${n.name} is not a scalar`);
+      if (v === undefined || v === null) throw fail('missingVariable', { file, name: n.name });
+      if (typeof v === 'object') throw fail('notScalar', { file, name: n.name });
       out += String(v);
     }
   }
@@ -70,12 +72,20 @@ export function render(text, data, file = '<template>') {
   return emit(parse(text, file), [data], file);
 }
 
-// A project file `.aidlc/templates/<rel>` overrides the plugin's `templates/<rel>`.
+// Renders a message template from cli.json.
+export function msg(key, data) {
+  return render(config.messages[key], data, `cli.json messages.${key}`);
+}
+
+// Template directories, highest priority first.
+const templateDirs = (root, pluginDir) => config.templates.map((t) => join(t.from === 'plugin' ? pluginDir : root, t.path));
+
+// The first template directory in cli.json holding `rel` wins (project overrides plugin).
 export function resolveTemplate(rel, { root, pluginDir = PLUGIN_DIR }) {
-  for (const file of [join(root, '.aidlc', 'templates', rel), join(pluginDir, 'templates', rel)]) {
-    if (existsSync(file)) return file;
+  for (const dir of templateDirs(root, pluginDir)) {
+    if (existsSync(join(dir, rel))) return join(dir, rel);
   }
-  throw new TemplateError(`template not found: ${rel}`);
+  throw fail('templateNotFound', { name: rel });
 }
 
 export function renderFile(rel, data, opts) {

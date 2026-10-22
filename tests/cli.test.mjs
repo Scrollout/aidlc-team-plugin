@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -26,6 +26,24 @@ test('U1/AC-1 --help lists every command in the CLI design', () => {
   const names = documentedCommands();
   assert.ok(names.length >= 20, `parsed ${names.length} commands`);
   for (const name of names) assert.match(r.stdout, new RegExp(`^  ${name}\\b`, 'm'), `${name} missing from --help`);
+});
+
+test('U1/AC-1 cli.json matches the CLI design: commands and exit codes', () => {
+  const config = readJson('plugin/cli/cli.json');
+  assert.deepEqual(config.commands.map((c) => c.name).sort(), documentedCommands().sort());
+  const md = readFileSync(join(ROOT, 'docs/design/cli.md'), 'utf8');
+  const line = md.split('# Exit codes')[1].trim().split('\n')[0];
+  const codes = [...line.matchAll(/`(\d+)`/g)].map((m) => Number(m[1]));
+  assert.deepEqual(Object.values(config.exit).sort((a, b) => a - b), codes);
+});
+
+test('every message the CLI uses is defined in cli.json, and none is unused', () => {
+  const { messages } = readJson('plugin/cli/cli.json');
+  const used = new Set();
+  for (const f of ['plugin/cli/aidlc.mjs', ...readdirSync(join(ROOT, 'plugin/cli/lib')).map((f) => `plugin/cli/lib/${f}`)]) {
+    for (const m of readFileSync(join(ROOT, f), 'utf8').matchAll(/(?:msg|fail)\('(\w+)'/g)) used.add(m[1]);
+  }
+  assert.deepEqual([...used].sort(), Object.keys(messages).sort());
 });
 
 test('U1/AC-1 unknown command exits 64', () => {

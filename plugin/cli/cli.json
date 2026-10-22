@@ -1,0 +1,54 @@
+{
+  "pluginRoot": "..",
+  "exit": { "ok": 0, "findings": 1, "blocked": 2, "usage": 64, "internal": 70 },
+  "helpFlags": ["--help", "-h", "help"],
+  "layers": [
+    { "name": "plugin", "from": "plugin", "path": "templates/defaults.json" },
+    { "name": "project", "from": "project", "path": ".aidlc/profile.json" },
+    { "name": "personal", "from": "project", "path": ".aidlc/local/profile.json" }
+  ],
+  "unionKey": "deny",
+  "rules": { "dir": ".aidlc/rules", "ext": ".md" },
+  "templates": [
+    { "from": "project", "path": ".aidlc/templates" },
+    { "from": "plugin", "path": "templates" }
+  ],
+  "commands": [
+    { "name": "init", "usage": "init", "does": "ask questions, write the profile, render templates, vendor the CLI" },
+    { "name": "upgrade", "usage": "upgrade", "does": "re-vendor the CLI from the installed plugin" },
+    { "name": "index", "usage": "index", "does": "regenerate every index.md in the bundle" },
+    { "name": "check", "usage": "check [--ci] [--staged] [path…]", "does": "OKF validation, plan lint, profile lint" },
+    { "name": "status", "usage": "status", "does": "print the state table" },
+    { "name": "next", "usage": "next", "does": "print the single next action" },
+    { "name": "lane", "usage": "lane <unit>|--diff <range>", "does": "print the computed lane and why" },
+    { "name": "card", "usage": "card <unit>", "does": "render the unit card" },
+    { "name": "start", "usage": "start <unit>", "does": "name the worktree branch unit/U-<n> and check its base" },
+    { "name": "reserve", "usage": "reserve <kind> <area>", "does": "next free number for a reservation" },
+    { "name": "approve", "usage": "approve <doc>", "does": "stamp approval (owner only)" },
+    { "name": "review", "usage": "review record <unit> <file>", "does": "store a reviewer verdict keyed by diff hash" },
+    { "name": "report", "usage": "report <unit>", "does": "store the builder's report (JSON on stdin)" },
+    { "name": "hold", "usage": "hold <unit>", "does": "record an owner hold in the plan" },
+    { "name": "priority", "usage": "priority <unit> <n>", "does": "record an owner priority in the plan" },
+    { "name": "fix", "usage": "fix \"<title>\"", "does": "create a one-unit plan without an intent" },
+    { "name": "push", "usage": "push", "does": "push the base after checking its new commits" },
+    { "name": "clean", "usage": "clean", "does": "remove orphan worktrees and branches" },
+    { "name": "merge", "usage": "merge <unit>", "does": "run the merge gate, then merge --no-ff with trailers" },
+    { "name": "hook", "usage": "hook <name>", "does": "entry point for hooks; reads the hook JSON on stdin" }
+  ],
+  "messages": {
+    "help": "usage: aidlc <command> [args]\n\n{{#each commands}}  {{usage}}  {{does}}\n{{/each}}",
+    "unknownCommand": "unknown command: {{name}} → run aidlc --help\n",
+    "notBuilt": "{{name}}: not implemented yet\n",
+    "failed": "{{name}}: {{error}}\n",
+    "unionNotList": "{{layer}}: {{key}} must be a list; a {{union}} from an earlier layer cannot be removed",
+    "unionReplaced": "{{layer}}: {{key}} replaces an object holding a {{union}} from an earlier layer",
+    "invalidJson": "{{file}}: invalid JSON: {{error}}",
+    "notObject": "{{file}}: must be a JSON object",
+    "missingVariable": "{{file}}: missing variable {{name}}",
+    "notList": "{{file}}: {{name}} is not a list",
+    "notScalar": "{{file}}: {{name}} is not a scalar",
+    "unclosedEach": "{{file}}: each block {{name}} is not closed",
+    "strayEnd": "{{file}}: end of each block without a start",
+    "templateNotFound": "template not found: {{name}}"
+  }
+}
