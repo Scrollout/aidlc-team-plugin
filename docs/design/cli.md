@@ -33,6 +33,10 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 - Advice: one line, imperative, naming the command or agent to run.
 - No banners, no colour unless a TTY, no summaries longer than the findings.
 
+# Engine and adapters
+- Every command handler returns `{ code, findings: [{ code, path, line, message, fix }], output }` and every hook rule returns `{ decision, code, message, fix }`. Handlers never print, write stdout or exit.
+- `aidlc.mjs` and `hook <name>` are adapters that render this data as the output and exit codes below. MCP, HTTP-hook and A2A adapters can reuse the same functions later; owner-only commands are never exposed on them ([0006](../decisions/0006-engine-behind-adapters.md)).
+
 # Exit codes
 `0` ok · `1` findings · `2` blocked by a human gate · `64` bad usage · `70` internal error (hooks treat it as deny).
 

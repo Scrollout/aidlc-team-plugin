@@ -19,6 +19,7 @@ Failure handling, per the hooks reference:[^cc-hooks]
 - Decisions are returned with exit 0 and JSON: `hookSpecificOutput.permissionDecision: "deny"` with a reason for PreToolUse; top-level `decision: "block"` with `reason` for Stop.
 - `onFailure` has no effect on Stop hooks, so `steer` is advisory by design: if it fails, the lead simply stops.
 - Matching hooks run in parallel, so no hook depends on another's result.
+- Each hook's rule is a pure decision function in the CLI ([0006](../decisions/0006-engine-behind-adapters.md)); the hook only adapts the event JSON. A remote setup can call the same functions through an `http` or `mcp_tool` hook.[^cc-hooks]
 
 Facts from the hooks reference this design relies on:[^cc-hooks]
 - Hooks fire for subagents' tool calls too; the input carries `agent_id`, `agent_type` and `cwd` (which follows the worktree), so the scope hook knows which builder and which unit it is judging.
