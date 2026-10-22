@@ -225,6 +225,9 @@
     "reserveDuplicate": "{{reserve}} is also reserved by {{other}}",
     "scopeMissing": "{{unit}} has no scope",
     "scopeOverlap": "{{unit}} scope {{glob}} overlaps {{other}} scope {{otherGlob}} with no depends path between them",
+    "scopeOverlapRoot": "{{unit}} scope {{glob}} overlaps {{other}} scope {{otherGlob}} with no depends path between them; a name without / matches at any depth, write {{root}} for the root file",
+    "acNoTestPath": "{{ac}} ({{level}}) has no test location: no scope glob overlaps levels.{{level}}.paths {{paths}}",
+    "acNeedsUnit": "{{ac}} names {{span}}, an output of {{other}}, with no depends path to it",
     "laneLine": "{{lane}} {{reason}}\n",
     "laneFull": "{{item}} overlaps {{source}} {{glob}}",
     "laneQuick": "every path is inside lanes.quick",
@@ -495,8 +498,17 @@
       "PLAN-BOARD": {
         "level": "error",
         "fix": "add the planned value to the unit's frontmatter, e.g. priority: 1 or board: { effort: M, target: 2026-11-30 }"
+      },
+      "PLAN-TEST": {
+        "level": "error",
+        "fix": "add a scope glob where the level's tests live, or give the AC a level whose paths the scope holds"
+      },
+      "PLAN-DEPENDS": {
+        "level": "error",
+        "fix": "add the other unit to depends, or move the AC to that unit"
       }
     },
+    "runners": { "make": "Makefile", "npm run": "package.json", "just": "justfile" },
     "requirements": "requirements",
     "requirementFile": "^(R-\\d+)(?:-[^/]*)?\\.md$"
   },
