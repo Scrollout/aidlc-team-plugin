@@ -14,4 +14,7 @@ export class UsageError extends Error {}
 export const list = (v) => (v === undefined || v === null ? [] : Array.isArray(v) ? v : [v]).map(String);
 export const isMap = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 export const readJson = (file) => (existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null);
+export const at = (obj, path) => path.split('.').reduce((v, k) => (isMap(v) ? v[k] : undefined), obj);
+// The frontmatter paths a board field map reads.
+export const fieldPaths = (fields) => Object.values(fields ?? {}).map((spec) => (typeof spec === 'string' ? spec : spec.from));
 export const done = (output, code = config.exit.ok, findings = []) => ({ code, findings, output });

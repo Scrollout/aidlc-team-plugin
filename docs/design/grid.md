@@ -59,6 +59,7 @@ Plan lint compares every unit except `status: dropped` and the IDs its caller sk
 - `PLAN-SCOPE` a unit without `scope`, or two units whose scopes overlap with no `depends` path between them.
 - `PLAN-SHARED` a scope naming a file only merge writes: a bundle `index.md` or `log.md`, or a `profile.shared` entry.
 - `PLAN-REQ` an intent or unit citing no requirement, or an unknown one ([Architecture](architecture.md)).
+- `PLAN-BOARD` a unit missing a planned board value ([Board](board.md)).
 
 # Plan, execute, validate
 Every cell runs the same loop:

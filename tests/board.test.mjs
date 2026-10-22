@@ -66,7 +66,7 @@ test('U11/AC-1 sync creates one issue per intent and unit, units as sub-issues, 
   assert.match(u1.body, /^- \[ \] AC-1 \(unit\): exports `sku,price`\.$/m);
   assert.match(u1.body, new RegExp(`https://github.com/${REPO}/blob/main/docs/units/U-1-export.md`));
   assert.deepEqual(item(ctx, u1.number).values, { Status: 'Todo', Priority: 'P0', Effort: 'M', Wave: 1, 'Start date': '2026-11-02' });
-  assert.deepEqual(item(ctx, u2.number).values, { Status: 'Todo' }, 'fields the doc does not set are left alone');
+  assert.deepEqual(item(ctx, u2.number).values, { Status: 'Todo', Wave: 1 }, 'the wave is derived; other fields the doc does not set are left alone');
   assert.deepEqual(stub(ctx).labels.sort(), ['api', 'standard']);
 });
 
@@ -123,6 +123,38 @@ test('U11/AC-1 a lagging issue list never duplicates the board; with duplicates,
   aidlc(ctx, 'sync');
   assert.equal(stub(ctx).issues.find((i) => i.number === 99).title, 'a newer copy', 'the newer copy, listed first as GitHub does, is left alone');
   assert.equal(stub(ctx).issues.find((i) => i.number === u1.number).title, 'U-1 Export');
+});
+
+test('U11/AC-1 sync sets assignees, a milestone per intent and the issue type; the wave follows the dependencies', () => {
+  const ctx = setup({ github: { ...GITHUB, types: { unit: 'Story' } }, u2: 'depends: [U-1]' });
+  write(ctx.dir, { 'docs/intents/I-1-shop.md': withFm(intentDoc('I-1', 'Shop'), 'board: { target: 2026-12-01 }') });
+  commit(ctx.dir, 'intent target');
+  approve(ctx.dir, 'I-1');
+  writeFileSync(ctx.state, JSON.stringify({ ...stub(ctx), ownerType: 'Organization', login: 'marius' }));
+  const r = aidlc(ctx, 'sync');
+  assert.equal(r.code, 0, r.err + r.out);
+  assert.deepEqual(stub(ctx).milestones.map((m) => [m.title, m.due_on]), [['I-1 Shop', '2026-12-01T00:00:00Z']]);
+  const [i1, u1, u2] = ['I-1', 'U-1', 'U-2'].map((t) => byTitle(ctx, t));
+  for (const i of [i1, u1, u2]) {
+    assert.deepEqual(i.assignees, ['marius'], 'the gh user, by default');
+    assert.equal(i.milestone, 1, 'the intent and its units share its milestone');
+  }
+  assert.deepEqual([i1.type, u1.type], ['Feature', 'Story'], 'cli.json defaults, overridden by github.types');
+  assert.equal(item(ctx, u2.number).values.Wave, 2, 'U-2 depends on U-1');
+
+  const user = setup();
+  aidlc(user, 'sync');
+  assert.ok(stub(user).issues.every((i) => !i.type), 'no issue types on a personal repository');
+  assert.equal(aidlc(user, 'sync').out, 'the board is in sync\n');
+});
+
+test('U11/AC-1 with a board, plan lint requires the values the board maps, except the derived wave', () => {
+  const ctx = setup();
+  const r = aidlc(ctx, 'check');
+  assert.match(r.out, /U-2 has no priority, which the board shows/);
+  assert.match(r.out, /U-2 has no board\.effort/);
+  assert.doesNotMatch(r.out, /board\.wave/);
+  assert.doesNotMatch(r.out, /U-1 has no/, 'U-1 carries them all');
 });
 
 test('U11/AC-2 sync uses no model: it calls only gh, and runs against the recorded stub', () => {
