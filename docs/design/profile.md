@@ -12,6 +12,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
   "name": "example",
   "base": "main",
   "docs": { "bundle": "docs" },
+  "levels": { "unit": { "paths": ["**/*_test.go"], "run": "make test" }, "integration": { "paths": ["tests/integration/**"], "run": "make it" } },
   "modules": [
     { "id": "api", "paths": ["internal/**", "cmd/**"], "check": "make test", "test": "make test-one PKG={pkg}" },
     { "id": "contracts", "paths": ["api-specs/**"], "check": "make contract-check" }

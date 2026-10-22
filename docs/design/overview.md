@@ -45,7 +45,7 @@ sources:
 - `plugin/agents/`: `builder.md`, `reviewer.md`.
 - `plugin/skills/aidlc/SKILL.md`: the lead's loop.
 - `plugin/templates/`: everything `init` renders.
-- `.claude-plugin/marketplace.json`: marketplace `scrollout`, one entry `aidlc-team` with `source: "./plugin"`, so tests and docs never ship. Install id: `aidlc-team@scrollout`.
+- `.claude-plugin/marketplace.json`: marketplace `aidlc-team`, one entry `aidlc-team` with `source: "./plugin"`, so tests and docs never ship. Install id: `aidlc-team@aidlc-team`.
 
 # Releases
 - `version` lives only in `plugin/.claude-plugin/plugin.json`, never in the marketplace entry. Users stay on a version until it changes.[^cc-host]

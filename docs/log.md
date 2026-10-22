@@ -7,13 +7,19 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** The repo is public and name neutral. The docs no longer name private projects or tools, and the marketplace is renamed to `aidlc-team` ([Overview](design/overview.md)).
+- **Update** U3 settled with the owner ([Grid](design/grid.md), [Profile and templates](design/profile.md)):
+  - The unit doc format.
+  - The PLAN codes, and that plan lint covers all live units, with merged ones skipped by U4.
+  - `profile.levels`.
+  - Glob and lane rules.
 - **Update** U2 built: [OKF](design/okf.md) now records the YAML subset, rule levels including `off`, and the exact subdirectory-description and listing behaviour of the index generator. Indexes were regenerated, so one-entry folders now show their entry's description, as in the reference.
 - **Update** Each release gets both `v<version>` and `aidlc-team--v<version>` tags, and `plugin/` may not change without a version bump ([Overview](design/overview.md)).
 - **Update** Versions are released as git tags `aidlc-team--v<version>`, made with `claude plugin tag`. CI checks that a tag matches `plugin.json` ([Overview](design/overview.md)).
 - **Creation** [0006 Engine behind adapters](decisions/0006-engine-behind-adapters.md): command handlers and hook rules return data, so MCP, HTTP hooks and A2A can be added later. Owner actions stay off agent-facing adapters. [CLI](design/cli.md) and [Verification](design/verification.md) updated to match.
 - **Update** No hand-coded values in the CLI. Commands, exit codes, paths, layers and messages now live in `plugin/cli/cli.json`, read by a new `config` module ([CLI](design/cli.md), [M1](roadmap/m1.md)).
 - **Update** Settled the open points of U1 with the owner:
-  - The plugin is `aidlc-team` in the `scrollout` marketplace ([Overview](design/overview.md)).
+  - The plugin is `aidlc-team` in the `aidlc-team` marketplace ([Overview](design/overview.md)).
   - `deny` arrays at any depth are unions across layers, and the personal layer is `.aidlc/local/profile.json` ([Profile and templates](design/profile.md)).
   - `#each` scoping and template errors are defined ([Profile and templates](design/profile.md)).
   - Tests run with `node --test` (no argument): from Node 22 on, `node --test tests/` loads the directory as a module and fails.
