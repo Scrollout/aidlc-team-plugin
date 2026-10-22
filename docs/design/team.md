@@ -24,7 +24,7 @@ sources:
 The owner holds both leads of the AI-DLC diagram: product behaviour (Inception) and software system (Construction).
 
 # Specialists
-The reviewer prompt takes a `focus`: `general`, `security`, `data`, `ui`, or any focus a project defines. The profile maps globs to focuses (e.g. `internal/auth/**` → security) and, for security, content patterns too (e.g. `os/exec`, `crypto`, raw SQL, `password`), so a risky change outside the usual folders is still caught. A unit whose scope or diff matches gets one extra review per matching focus. These are the internal consultants of the AI-DLC team model, called on demand, never permanent.
+The reviewer prompt takes a `focus`: `general`, `security`, `data`, `ui`, or any focus a project defines. The profile maps globs to focuses (e.g. `internal/auth/**` → security) and, for security, content patterns too (e.g. `os/exec`, `crypto`, raw SQL, `password`), so a risky change outside the usual folders is still caught. A unit whose scope or diff matches gets one extra review per matching focus; `next` names each focus in turn ([Skill and agents](prompts.md)). These are the internal consultants of the AI-DLC team model, called on demand, never permanent.
 
 Every general review also runs a short security baseline (input handling, authz on new entry points, secrets, injection, unsafe defaults); the dedicated security focus goes deeper and reads the project's threat model.
 
@@ -32,7 +32,7 @@ Every general review also runs a short security baseline (input handling, authz 
 - `aidlc next` lists buildable units: approved, deps merged, scopes disjoint from units in flight, up to `parallel.max` (default 3).
 - The lead starts one builder per unit in a single message. The builder agent's frontmatter sets `isolation: worktree`; Claude Code creates a temporary worktree under `.claude/worktrees/`, removes it if nothing changed, and keeps one holding work until a sweep finds it safe to remove.[^cc-worktrees] By default the worktree branches from the remote's default branch, so local merges not yet pushed would be invisible; `aidlc init` therefore sets `worktree.baseRef: "head"` in the project's `.claude/settings.json`, so builders branch from the lead's local base.[^cc-worktrees] The builder's first command is `aidlc start U-<n>`, which renames its auto-named branch to `unit/U-<n>` and refuses if the base differs from the card's.
 - Builders and reviewers set `omitClaudeMd: true`: the card carries what they need, so they do not pay for the project's AGENTS.md on every run.[^cc-subagents] Worktree subagents read instruction files from the main conversation, not their branch, so unit-specific rules travel in the card, never in a file on the branch.[^cc-worktrees]
-- Plugin agents are named `<plugin>:<name>` (e.g. `aidlc:builder`); hooks recognise them by `agent_type`.
+- Plugin agents are named `<plugin>:<name>` (e.g. `aidlc-team:builder`); hooks recognise them by `agent_type`.
 - Subagents started from the main conversation run in the background by default; the lead waits for their notifications, and heartbeats ([State](state.md)) cover the case where a session ends first.
 - Builders and reviewers omit `Agent` from `tools`, so they cannot spawn further subagents (nesting is allowed by default and would multiply cost).[^cc-subagents]
 - Plugin agents ignore `hooks` and `permissionMode` in their frontmatter, so all enforcement lives in the plugin's `hooks/hooks.json`.[^cc-subagents]

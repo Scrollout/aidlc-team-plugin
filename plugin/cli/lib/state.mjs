@@ -38,6 +38,24 @@ export const roundsOf = (review, focus = S.focus) => (review?.rounds ?? []).filt
 // Diff of a unit branch against its merge base with the base branch.
 export const diffHash = (cwd, base, unit) => sha256(git(cwd, 'diff', `${base}...${branchOf(unit)}`));
 
+const listOf = (v) => (v === undefined || v === null ? [] : Array.isArray(v) ? v : [v]).map(String);
+
+// Focuses the unit's diff needs a review in, each with why: general first, then each focus whose globs
+// the diff touches, and security when an added line matches security.content (docs/design/prompts.md).
+export function reviewFocuses(cwd, profile, base, unit) {
+  const range = `${base}...${branchOf(unit)}`;
+  const paths = git(cwd, 'diff', '--name-only', range).split('\n').filter(Boolean);
+  const added = git(cwd, 'diff', '-U0', range).split('\n').filter((l) => l.startsWith('+') && !l.startsWith('+++'));
+  const needed = new Map([[S.focus, '']]);
+  for (const [focus, globs] of Object.entries(profile.focus ?? {})) {
+    const path = paths.find((x) => listOf(globs).some((g) => overlaps('/' + x, g)));
+    if (path) needed.set(focus, msg('gateFocusPath', { path, focus }));
+  }
+  const pattern = listOf(profile.security?.content).find((c) => added.some((l) => l.includes(c)));
+  if (pattern && !needed.has(config.gate.security)) needed.set(config.gate.security, msg('gateFocusContent', { pattern }));
+  return needed;
+}
+
 // ---- Approvals ----
 
 const isMap = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -92,7 +110,7 @@ function mergedUnits(cwd, base) {
   return out;
 }
 
-function heartbeatFresh(cwd, unit, now) {
+export function heartbeatFresh(cwd, unit, now = Date.now()) {
   const file = join(aidlcDir(cwd), S.heartbeats, unit);
   return existsSync(file) && now - statSync(file).mtimeMs < S.heartbeatMs;
 }
@@ -123,18 +141,26 @@ export function readState(cwd, { now = Date.now() } = {}) {
     const report = readJson(runtimeFile(cwd, 'reports', u.id));
     const review = readJson(runtimeFile(cwd, 'reviews', u.id));
     let state;
+    let focus = null;
     if (merged.has(u.id)) state = 'merged';
     else if (needsApproval && approvalState !== 'approved') state = approvalState;
     else if (branches.has(branchOf(u.id))) {
-      const last = roundsOf(review).at(-1);
-      const current = last && last.diffHash === diffHash(cwd, base, u.id);
-      if (current && last.verdict === 'pass') state = 'reviewed';
-      else if (current && last.verdict === 'escalate') state = 'escalated';
-      else if (current && last.verdict === 'fix') state = 'fix';
-      else if (report && (!last || report.at > last.at)) state = 'reported';
+      // The last verdict of each required focus, counted only while it is for the current diff.
+      const hash = diffHash(cwd, base, u.id);
+      const verdicts = [...reviewFocuses(cwd, profile, base, u.id).keys()].map((f) => {
+        const last = roundsOf(review, f).at(-1);
+        return { focus: f, verdict: last?.diffHash === hash ? last.verdict : null };
+      });
+      const has = (v) => verdicts.some((x) => x.verdict === v);
+      const lastAt = review?.rounds?.at(-1)?.at;
+      focus = verdicts.find((x) => x.verdict !== 'pass')?.focus ?? null;
+      if (has('escalate')) state = 'escalated';
+      else if (has('fix')) state = 'fix';
+      else if (!focus) state = 'reviewed';
+      else if (has('pass') || (report && (!lastAt || report.at > lastAt))) state = 'reported';
       else state = 'building';
     } else state = u.depends.every((d) => merged.has(d)) ? 'approved' : 'blocked';
-    return { ...u, lane, state, fresh: heartbeatFresh(cwd, u.id, now), report, review };
+    return { ...u, lane, state, focus, fresh: heartbeatFresh(cwd, u.id, now), report, review };
   });
 
   const intents = plan.intents.sort(byId).map((i) => {
@@ -180,7 +206,7 @@ export function nextAction(st) {
   const fix = scope.find((u) => u.state === 'fix');
   if (fix) return action('act', 'nextFixRound', { unit: fix.id });
   const reported = scope.find((u) => u.state === 'reported');
-  if (reported) return action('act', 'nextReview', { unit: reported.id });
+  if (reported) return action('act', 'nextReview', { unit: reported.id, focus: reported.focus, model: st.profile.models.review });
   const lost = scope.find((u) => u.state === 'building' && !u.fresh);
   if (lost) return action('act', 'nextRestart', { unit: lost.id, branch: branchOf(lost.id) });
 
@@ -277,11 +303,12 @@ export const commands = {
     return done(msg('recorded', { what: 'report', unit }));
   },
 
-  review(args, { cwd }) {
+  review(args, ctx) {
+    const { cwd } = ctx;
     const [sub, unit, file] = args;
     if (sub !== 'record' || !unit || !file) throw new UsageError(msg('reviewUsage', {}));
-    if (!existsSync(resolve(cwd, file))) throw new UsageError(msg('noSuchPath', { name: file }));
-    const data = parseObject(readFileSync(resolve(cwd, file), 'utf8'), file);
+    if (file !== S.stdin && !existsSync(resolve(cwd, file))) throw new UsageError(msg('noSuchPath', { name: file }));
+    const data = parseObject(file === S.stdin ? readStdin(ctx) : readFileSync(resolve(cwd, file), 'utf8'), file);
     if (!S.verdicts.includes(data.verdict)) throw new UsageError(msg('badVerdict', { verdicts: S.verdicts.join(', ') }));
     const { profile } = loadProfile(cwd);
     if (!tryGit(cwd, 'rev-parse', '-q', '--verify', branchOf(unit))) throw new UsageError(msg('noBranch', { branch: branchOf(unit) }));

@@ -17,6 +17,9 @@ Write only inside:
 ## Interfaces (read them at the base commit)
 {{#each interfaces}}- {{this}}
 {{/each}}
+## Requirements (meet them; every review checks them)
+{{#each requirements}}- {{this}}
+{{/each}}
 ## Reserves
 {{#each reserves}}- {{this}}
 {{/each}}
@@ -26,7 +29,7 @@ Write only inside:
 ## Out of scope
 {{#each outOfScope}}{{this}}
 {{/each}}
-## Stop and report if
+{{fixes}}## Stop and report if
 - an interface above has to change
 - the scope is too small for the ACs
 - an AC is ambiguous

@@ -93,7 +93,7 @@ const SCENARIOS = {
     branch(dir, 'U-1');
     review(dir, 'U-1', 'fix');
   }],
-  reported: [/^review U-1: reviewer \(card: aidlc card U-1\)/, 0, (dir) => {
+  reported: [/^review U-1, focus general: reviewer on opus \(card: aidlc card U-1\)/, 0, (dir) => {
     approve(dir, 'I-1', 'U-1', 'U-2');
     branch(dir, 'U-1');
     report(dir, 'U-1');

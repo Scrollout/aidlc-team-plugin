@@ -33,4 +33,4 @@ The profile describes the intended shape; the plugin enforces it without knowing
 - An exception is a decision doc the owner approves, listed under the boundary as `except: ["docs/decisions/0009-….md"]`.
 
 # Review
-A unit whose scope touches a module's public interface, or which cites a requirement, gets the `architecture` review focus. The reviewer reads the cited requirements and the architecture docs the unit links, and checks the diff against them.
+Every review of a unit reads the requirements the unit cites and the interface docs it links (both are listed on its card) and checks the diff against them. AWS AI-DLC works the same way: its code-generation reviewer always gets the shared contracts and the requirements. There is no separate `architecture` focus, because the boundaries and checks above already gate every merge ([Skill and agents](prompts.md#review)).

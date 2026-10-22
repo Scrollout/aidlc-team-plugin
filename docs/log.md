@@ -7,6 +7,20 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** U8 built ([Skill and agents](design/prompts.md)):
+  - the `aidlc` skill runs the loop on `next` and sets a project up;
+  - the builder and reviewer agents, with the reviewer's JSON contract tested against [Verification](design/verification.md);
+  - `next` names each required review focus and the reviewer's model;
+  - the card lists requirements, fix-round findings and interface links as repo paths, and keeps inline code in ACs;
+  - `tests/evals/run.mjs` builds the seeded-defect project and scores a run.
+  Release 0.9.0.
+- **Creation** [Skill and agents](design/prompts.md), the U8 design. It follows AWS AI-DLC (awslabs/aidlc-workflows at cd110cc), where the engine names the reviewer and the orchestrator only invokes it:
+  - `next` names each review focus the gate requires, and a unit is `reviewed` once all have passed;
+  - there is no separate `architecture` focus: every review reads the requirements and interfaces on the card, which now lists the requirements;
+  - a fix round's card lists the findings;
+  - `review record` reads the verdict from stdin with `-`;
+  - `start` takes over the unit branch from a clean, stale earlier worktree.
+  M1 U8 gains that scope; its AC-6 is reworded and AC-7 added.
 - **Update** U7 built ([Hook mechanics](design/hooks.md)): eight hooks through a wrapper that calls the project's pinned CLI (guard, scope, secrets, model, docs, heartbeat, steer, status), with escalation after three identical denials. Release 0.8.0.
 - **Creation** [Hook mechanics](design/hooks.md):
   - the wrapper allows in projects without a profile;

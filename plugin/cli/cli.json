@@ -113,7 +113,7 @@
     },
     {
       "name": "review",
-      "usage": "review record <unit> <file>",
+      "usage": "review record <unit> <file|->",
       "does": "store a reviewer verdict keyed by diff hash"
     },
     {
@@ -239,7 +239,7 @@
     "nextMerge": "merge {{unit}}: aidlc merge {{unit}}",
     "nextEscalated": "{{unit}} review escalated: the owner decides",
     "nextFixRound": "fix round for {{unit}}: builder (card: aidlc card {{unit}})",
-    "nextReview": "review {{unit}}: reviewer (card: aidlc card {{unit}})",
+    "nextReview": "review {{unit}}, focus {{focus}}: reviewer on {{model}} (card: aidlc card {{unit}})",
     "nextRestart": "restart the builder of {{unit}} from branch {{branch}} (card: aidlc card {{unit}})",
     "nextBuild": "build {{units}} (cards: {{cards}})",
     "nextWait": "wait for the builders of {{units}}",
@@ -263,13 +263,16 @@
     "notWorktree": "start runs in a builder's worktree, not the main checkout",
     "noCard": "no card for {{unit}}: the lead runs aidlc card {{unit}} first\n",
     "baseMismatch": "worktree is at {{head}}, the card of {{unit}} at {{base}}: restart the builder from a fresh card\n",
-    "branchTaken": "{{branch}} is checked out in {{path}}: continue there or remove that worktree\n",
+    "branchTaken": "{{branch}} is checked out in {{path}}, with uncommitted work or a live builder: stop and report\n",
     "started": "on {{branch}} at {{base}}\n",
     "badJson": "{{name}}: not a JSON object",
     "badVerdict": "verdict must be one of {{verdicts}}",
     "noBranch": "no branch {{branch}}",
     "recorded": "recorded {{what}} for {{unit}}\n",
-    "reviewUsage": "usage: review record <unit> <file>",
+    "reviewUsage": "usage: review record <unit> <file|->",
+    "cardFixes": "## Findings to fix\n{{list}}",
+    "cardFinding": "- {{focus}} {{confidence}} {{path}}:{{line}}: {{claim}} ({{scenario}})\n",
+    "cardRequirement": "{{id}} {{path}}",
     "reqNone": "{{doc}} cites no requirement",
     "reqUnknown": "{{doc}} cites {{req}}, which does not exist",
     "nextApproveRequirements": "ask the owner to approve the requirements the plan cites: ! aidlc approve {{reqs}}",
@@ -480,7 +483,8 @@
       "Decision",
       "Requirement"
     ],
-    "focus": "general"
+    "focus": "general",
+    "stdin": "-"
   },
   "card": {
     "template": "card.md",

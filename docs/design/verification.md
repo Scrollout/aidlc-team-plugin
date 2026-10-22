@@ -52,7 +52,9 @@ Fails with one line per problem, each naming the fix, unless all hold:
 On success: `git merge --no-ff` with trailers `Unit: U-<n>`, `Card: <hash>`, `Review: pass`. How it runs: [Merge mechanics](gate.md).
 
 # Reviewer contract
-Returns JSON only: `{verdict: pass|fix|escalate, findings: [{path, line, ac?, claim, scenario, confidence: CONFIRMED|PLAUSIBLE}]}`, at most 10 findings. Round 1 `fix` → builder fixes → round 2. A second `fix` becomes `escalate`: the owner decides. The reviewer reads tests first: tests are what the owner samples.
+Returns JSON only: `{verdict: pass|fix|escalate, focus?, findings: [{path, line, ac?, claim, scenario, confidence: CONFIRMED|PLAUSIBLE}]}`, at most 10 findings. Round 1 `fix` → builder fixes → round 2. A second `fix` becomes `escalate`: the owner decides. The reviewer reads tests first: tests are what the owner samples.
+
+How a review runs, and why there is no separate architecture focus: [Skill and agents](prompts.md#review).
 
 # CI mode
 `aidlc check --ci` runs OKF validation, plan lint and, for each merge commit on the base, its trailers and scope. It needs only Node and the vendored CLI. A human samples about one merged unit in ten to audit the reviewer.
