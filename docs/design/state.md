@@ -42,10 +42,10 @@ stateDiagram-v2
 - Editing an approved doc makes it `stale`; `next` then asks for re-approval. Only intents, plans (units) and one-way-door decisions carry approvals, so this stays rare.
 
 # next
-`aidlc next` prints one line: the single next action and the command or agent that performs it, e.g. `build U-3 (card: aidlc card U-3)`. It exits 2 when the action waits on the owner. Order:
+`aidlc next` prints one line: the single next action and the command or agent that performs it, e.g. `build U-3 (card: aidlc card U-3)`. It exits 2 when the action waits on the owner. An owner command is printed as the owner types it, e.g. `! node .aidlc/bin/aidlc.mjs approve I-1`: `aidlc` is shorthand in the docs, not a shell command. Order:
 1. A merge cut off midway → continue it.
 2. Any `stale` approval → re-approve.
-3. Intent not approved → elaborate and request approval; then the draft requirements it and its units cite.
+3. No intent yet: elaborate one; in an adopted project with none, the migration intent ([Everyday paths](paths.md#adopting-an-existing-project)). Intent not approved → request approval; then the draft requirements it and its units cite.
 4. Plan not approved → draft units and request approval.
 5. Reviewed units → merge in DAG order.
 6. Verdict `escalate` in any focus → the owner decides. Verdict `fix` in any focus → fix round; the card lists the findings.

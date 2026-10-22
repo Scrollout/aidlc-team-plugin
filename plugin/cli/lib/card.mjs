@@ -88,7 +88,7 @@ export function renderCard(cwd, unitId) {
     scope: atBase.scope,
     // Interface links resolved from the unit doc's folder to repo paths, as `git show <base>:<path>` takes them.
     interfaces: [...new Set([...doc.lines.slice(doc.body).join('\n').matchAll(LINK)]
-      .map((m) => relative(top, resolve(dirname(unit.file), m[1])).split('\\').join('/')))],
+      .map((m) => relative(top, m[1].startsWith('/') ? join(bundle, m[1]) : resolve(dirname(unit.file), m[1])).split('\\').join('/')))],
     reserves: atBase.reserves,
     requirements: list(doc.fm.requirements).map(reqId).flatMap((id) => plan.requirements.filter((r) => r.id === id)
       .map((r) => msg('cardRequirement', { id, path: relative(top, r.file).split('\\').join('/') }))),

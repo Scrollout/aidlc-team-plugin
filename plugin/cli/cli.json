@@ -237,11 +237,11 @@
     "approved": "approved {{doc}}\n",
     "noDoc": "no doc {{name}}",
     "nextContinueMerge": "finish the merge of {{unit}}: aidlc merge {{unit}}, or git merge --abort",
-    "nextReapprove": "re-approve {{docs}} after their edits: ! aidlc approve {{docs}}",
+    "nextReapprove": "re-approve {{docs}} after their edits: ! node .aidlc/bin/aidlc.mjs approve {{docs}}",
     "nextNoIntent": "elaborate an intent with the owner in {{dir}}/I-1-<slug>.md, then ask for approval",
-    "nextApproveIntent": "ask the owner to approve {{intent}}: ! aidlc approve {{intent}}",
+    "nextApproveIntent": "ask the owner to approve {{intent}}: ! node .aidlc/bin/aidlc.mjs approve {{intent}}",
     "nextDraftUnits": "draft the units of {{intent}} in {{dir}}/U-<n>-<slug>.md, then ask for the plan approval",
-    "nextApprovePlan": "ask the owner to approve the plan: ! aidlc approve {{units}}",
+    "nextApprovePlan": "ask the owner to approve the plan: ! node .aidlc/bin/aidlc.mjs approve {{units}}",
     "nextMerge": "merge {{unit}}: aidlc merge {{unit}}",
     "nextEscalated": "{{unit}} review escalated: the owner decides",
     "nextFixRound": "fix round for {{unit}}: builder (card: aidlc card {{unit}})",
@@ -281,7 +281,7 @@
     "cardRequirement": "{{id}} {{path}}",
     "reqNone": "{{doc}} cites no requirement",
     "reqUnknown": "{{doc}} cites {{req}}, which does not exist",
-    "nextApproveRequirements": "ask the owner to approve the requirements the plan cites: ! aidlc approve {{reqs}}",
+    "nextApproveRequirements": "ask the owner to approve the requirements the plan cites: ! node .aidlc/bin/aidlc.mjs approve {{reqs}}",
     "statusUncovered": "not yet delivered: {{reqs}}\n",
     "initWrote": "wrote {{path}}\n",
     "initKept": "kept {{path}}: it exists; rerun with --overwrite {{path}} to replace it\n",
@@ -323,7 +323,7 @@
     "ciScope": "merge {{sha}} of {{unit}} changes {{path}}, outside its scope",
     "ciCommit": "commit {{sha}} changes {{path}} outside a unit",
     "pushed": "pushed {{base}} to {{remote}}\n",
-    "fixWrote": "wrote {{path}}, {{lane}} lane{{#each approve}}; the owner approves it: ! aidlc approve {{this}}{{/each}}\n",
+    "fixWrote": "wrote {{path}}, {{lane}} lane{{#each approve}}; the owner approves it: ! node .aidlc/bin/aidlc.mjs approve {{this}}{{/each}}\n",
     "fixFull": "{{title}} is full lane ({{reason}}): it needs an intent, like any feature\n",
     "fixUsage": "usage: fix \"<title>\"|--from-issue <n> --scope <glob>… [--requirement R-<n>…]",
     "hookDeny": "{{code}} {{message}} → {{fix}}",
@@ -356,7 +356,8 @@
     "boardAdded": "added #{{number}} to the project\n",
     "boardSet": "set {{field}} of #{{number}} to {{value}}\n",
     "boardInSync": "the board is in sync\n",
-    "boardFailed": "warning: sync failed, run aidlc sync: {{error}}\n"
+    "boardFailed": "warning: sync failed, run aidlc sync: {{error}}\n",
+    "nextMigrate": "elaborate the migration intent with the owner in {{dir}}/I-1-<slug>.md (adopted at {{commit}}): docs, always-on context, profile, architecture baseline, module audit, cleanup; then ask for approval"
   },
   "okf": {
     "index": "index.md",
@@ -631,7 +632,7 @@
     ],
     "codes": {
       "GATE-APPROVAL": {
-        "fix": "the owner approves the unit: ! aidlc approve <unit>"
+        "fix": "the owner approves the unit: ! node .aidlc/bin/aidlc.mjs approve <unit>"
       },
       "GATE-DEPS": {
         "fix": "merge its dependencies first"
@@ -777,7 +778,7 @@
         "fix": "merge units with aidlc merge"
       },
       "GUARD-APPROVE": {
-        "fix": "only the owner approves, with ! aidlc approve"
+        "fix": "only the owner approves, with ! node .aidlc/bin/aidlc.mjs approve"
       },
       "GUARD-RELEASE": {
         "fix": "the owner confirms tags and releases"
@@ -789,7 +790,7 @@
         "fix": "leave indexes, logs and shared files to aidlc merge"
       },
       "SCOPE-APPROVAL": {
-        "fix": "only the owner approves, with ! aidlc approve"
+        "fix": "only the owner approves, with ! node .aidlc/bin/aidlc.mjs approve"
       },
       "SECRET": {
         "fix": "keep secrets out of the repo; read them from the environment"

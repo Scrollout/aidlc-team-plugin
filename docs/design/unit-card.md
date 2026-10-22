@@ -36,4 +36,6 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 - A worker never changes an interface. It stops and reports; the lead updates the spec, the owner re-approves if it is a one-way door, and affected cards are re-rendered.
 
 # Quick lane
-The card shrinks to goal, scope and checks. It is still generated; it costs nothing and keeps one code path.
+The card keeps goal, ACs, scope, checks and out of scope, and drops what only matters for tests and review: interfaces, requirements, reserves, findings. Its ACs are what "done" means; they need no tagged tests and get no reviewer. It is still generated; it costs nothing and keeps one code path.
+
+Interface links resolve like OKF links: from the unit doc's folder, or from the bundle root when they start with `/`. The card shows repo paths.

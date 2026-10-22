@@ -138,7 +138,8 @@ function runGate(cwd, st, unit) {
   }
 
   const levelPaths = (level) => list(p.levels?.[level]?.paths);
-  for (const ac of unit.acs) {
+  // A quick-lane card carries no ACs, so its unit owes no AC tests (docs/design/verification.md).
+  for (const ac of card?.lane === 'quick' ? [] : unit.acs) {
     const tag = `${unit.id}/${ac.id}`;
     const files = (tryGit(tree, 'grep', '-l', '-F', tag) ?? '').split('\n').filter(Boolean);
     if (!files.length) add('GATE-AC', 'gateAc', { tag });

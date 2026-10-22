@@ -82,11 +82,19 @@ test('U4/AC-4 a project template overrides the card; the quick lane uses the sho
   write(dir, { '.aidlc/templates/card.md': 'CARD {{id}} {{model}} {{hash}}\n' });
   assert.match(run(dir, ['card', 'U-1']).out, /^CARD U-1 sonnet \w{16}\n$/);
 
-  const quick = makeRepo({ 'docs/units/U-1-typo.md': unitDoc({ intent: null, scope: ['docs/guide/**'] }) }, PROFILE);
+  const quick = makeRepo({ 'docs/units/U-1-typo.md': unitDoc({ intent: null, scope: ['docs/guide/**'], acs: ['- AC-1 (unit): `CLAUDE.md` is one line.'], extra: '\n# Out of scope\n\n- Other files.\n' }) }, PROFILE);
   const r = run(quick, ['card', 'U-1']);
   assert.equal(r.code, 0, 'a quick-lane fix unit needs no approval');
   assert.match(r.out, /^Lane: quick /m);
-  assert.doesNotMatch(r.out, /Acceptance criteria/);
+  assert.doesNotMatch(r.out, /Acceptance criteria|Interfaces/);
+  assert.match(r.out, /^## Done when\n.*\n- AC-1 \(unit\): `CLAUDE\.md` is one line\.$/m, 'the quick card keeps the ACs as done-when');
+  assert.match(r.out, /^- Other files\.$/m);
+});
+
+test('U4/AC-4 bundle-root interface links render as repo paths', () => {
+  const dir = repo({ extra: '\n# Interfaces\n\n- [I-1](/intents/I-1-pricing.md)\n' });
+  approve(dir, 'I-1', 'U-1');
+  assert.match(run(dir, ['card', 'U-1']).out, /^- docs\/intents\/I-1-pricing\.md$/m);
 });
 
 test('U4/AC-5 the model follows the routing table, escalation signals and fix rounds', () => {

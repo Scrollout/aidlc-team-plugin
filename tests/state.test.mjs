@@ -71,12 +71,12 @@ const SCENARIOS = {
     branch(dir, 'U-1');
     git(dir, 'merge', '-q', '--no-ff', '--no-commit', 'unit/U-1');
   }],
-  'stale approval': [/^re-approve U-1 after their edits: ! aidlc approve U-1/, 2, (dir) => {
+  'stale approval': [/^re-approve U-1 after their edits: ! node \.aidlc\/bin\/aidlc\.mjs approve U-1/, 2, (dir) => {
     approve(dir, 'I-1', 'U-1');
     commit(dir, 'edit', { [U(1)]: read(dir, U(1)) + '\nMore text.\n' });
   }],
-  'elaborating (intent not approved)': [/^ask the owner to approve I-1: ! aidlc approve I-1/, 2, () => {}],
-  'plan pending': [/^ask the owner to approve the plan: ! aidlc approve U-1 U-2$/, 2, (dir) => approve(dir, 'I-1')],
+  'elaborating (intent not approved)': [/^ask the owner to approve I-1: ! node \.aidlc\/bin\/aidlc\.mjs approve I-1/, 2, () => {}],
+  'plan pending': [/^ask the owner to approve the plan: ! node \.aidlc\/bin\/aidlc\.mjs approve U-1 U-2$/, 2, (dir) => approve(dir, 'I-1')],
   reviewed: [/^merge U-1: aidlc merge U-1/, 0, (dir) => {
     approve(dir, 'I-1', 'U-1', 'U-2');
     branch(dir, 'U-1');
@@ -197,4 +197,11 @@ test('review record turns a second fix into escalate; report needs a JSON object
   assert.deepEqual(rounds.map((r) => r.verdict), ['fix', 'escalate']);
   assert.equal(run(dir, ['report', 'U-1'], 'not json').code, 64);
   assert.equal(run(dir, ['review', 'record', 'U-9', 'x.json']).code, 64);
+});
+
+test('U5/AC-4 an adopted project with no intent is asked for the migration intent', () => {
+  const dir = makeRepo({}, { adopted: '0123456789abcdef0123' });
+  const r = run(dir, ['next']);
+  assert.match(r.out, /^elaborate the migration intent with the owner in docs\/intents\/I-1-<slug>\.md \(adopted at 0123456789ab\)/);
+  assert.equal(r.code, 2);
 });
