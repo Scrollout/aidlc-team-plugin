@@ -49,11 +49,12 @@ stateDiagram-v2
 4. Plan not approved → draft units and request approval.
 5. Reviewed units → merge in DAG order.
 6. Verdict `escalate` in any focus → the owner decides; once they re-approve the edited unit, it counts as `fix` and the round count restarts. Verdict `fix` in any focus → fix round; the card lists the findings.
-7. Reported, not reviewed → review, naming the first required focus without a `pass` for the current diff ([Skill and agents](prompts.md#review)).
-8. Building with a stale heartbeat (over 2 min) and no report → restart its builder.
-9. Approved, unblocked units → build, on one line; up to `parallel.max` in flight, with scopes disjoint from units in flight.
-10. Builders running → wait.
-11. Intent fully merged and not tagged → release with the owner.
+7. A builder that reported `stopped` → the lead fixes the unit doc and the owner re-approves it; the builder then restarts from the new card.
+8. Reported, not reviewed → review, naming the first required focus without a `pass` for the current diff ([Skill and agents](prompts.md#review)).
+9. Building with a stale heartbeat (over 2 min) and no report → restart its builder.
+10. Approved, unblocked units → build, on one line; up to `parallel.max` in flight, with scopes disjoint from units in flight.
+11. Builders running → wait.
+12. Intent fully merged and not tagged → release with the owner.
 
 `aidlc status` prints the same state as a short table; the SessionStart hook injects it, capped at 1,000 chars. This replaces handoff files.
 

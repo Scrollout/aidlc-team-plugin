@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** A builder report with `status: stopped` now sends the unit back to the lead ("fix the unit doc, then ask the owner to re-approve it") instead of to review; after the re-approval the builder restarts (pilot finding, [State](design/state.md)). `hold` and `priority`, listed since U1 but never built, now write their frontmatter fields; `check` skips merged units in plan lint, as `next` does. Release 0.10.6.
 - **Update** An escalated review now has a way out ([State](design/state.md)): when the owner re-approves the edited unit, the escalation counts as a fix round, the card lists its findings, and the two-round count restarts. Before, `next` stopped at "escalated" for good (pilot finding). Release 0.10.5.
 - **Update** A failing `gh` call during `sync` now reports gh's own error, not just the command line (pilot finding). Release 0.10.4.
 - **Update** Third pilot fixes ([Grid](design/grid.md)): plan lint `PLAN-SHARED` flags a scope naming a bundle index, a log or a shared file, which only merge writes; an empty unit diff no longer raises the lane at the gate; a test catches duplicate keys in `cli.json`. Release 0.10.3.

@@ -224,3 +224,41 @@ test('U8/AC-6 re-approving an escalated unit turns the escalation into a fix rou
   review(dir, 'U-1', 'fix', [finding]);
   assert.equal(JSON.parse(read(dir, '.git/aidlc/reviews/U-1.json')).rounds.at(-1).verdict, 'fix', 'the first fix after re-approval');
 });
+
+test('U4/AC-2 a stopped builder sends the unit back to the lead; re-approval restarts it', () => {
+  const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['src/**'] }) });
+  approve(dir, 'I-1', 'U-1');
+  branch(dir, 'U-1');
+  run(dir, ['report', 'U-1'], '{"status": "stopped", "stop": "the scope is too small"}');
+  const r = run(dir, ['next']);
+  assert.match(r.out, /^the builder of U-1 stopped \(the scope is too small\): fix the unit doc, then ask the owner to re-approve it/);
+  assert.equal(r.code, 0);
+  write(dir, { [U(1)]: read(dir, U(1)).replace('src/**', 'src/**", "lib/**') });
+  commit(dir, 'widen U-1');
+  approve(dir, 'U-1');
+  assert.match(run(dir, ['next']).out, /^restart the builder of U-1/);
+});
+
+test('U4/AC-2 hold and priority record the owner\'s word in the plan without staling it', () => {
+  const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['a/**'] }), [U(2)]: unitDoc({ scope: ['b/**'] }) }, { parallel: { max: 1 } });
+  approve(dir, 'I-1', 'U-1', 'U-2');
+  assert.match(run(dir, ['next']).out, /^build U-1 /);
+  assert.equal(run(dir, ['priority', 'U-2', '5']).code, 0);
+  assert.match(read(dir, U(2)), /^priority: 5$/m);
+  assert.match(run(dir, ['next']).out, /^build U-2 /);
+  run(dir, ['hold', 'U-2']);
+  assert.match(run(dir, ['next']).out, /^build U-1 /);
+  run(dir, ['hold', 'U-2', 'off']);
+  assert.doesNotMatch(read(dir, U(2)), /^hold:/m);
+  assert.match(run(dir, ['status']).out, /U-2 approved/, 'neither field stales the approval');
+  assert.equal(run(dir, ['priority', 'U-2', 'high']).code, 64);
+});
+
+test('U3/AC-3 check skips merged units in plan lint, as next does', () => {
+  const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['src/**'] }) });
+  approve(dir, 'I-1', 'U-1');
+  branch(dir, 'U-1');
+  merge(dir, 'U-1');
+  commit(dir, 'U-2 overlaps the merged U-1', { [U(2)]: unitDoc({ scope: ['src/b/**'] }) });
+  assert.doesNotMatch(run(dir, ['check']).out, /PLAN-SCOPE/);
+});

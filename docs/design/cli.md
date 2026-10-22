@@ -22,7 +22,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 | `approve <doc>` | stamps approval | owner only (`!`) |
 | `review record <unit> <file\|->` | stores a reviewer verdict keyed by diff hash; `-` reads it from stdin | reviewer |
 | `report <unit>` | stores the builder's report (JSON on stdin) | builder |
-| `hold <unit>` / `priority <unit> <n>` | records an owner instruction in the plan | lead, on the owner's word |
+| `hold <unit> [off]` / `priority <unit> <n>` | records an owner instruction in the plan (`hold: true`, `priority: <n>`, higher first) | lead, on the owner's word |
 | `fix "<title>"\|--from-issue <n>` | one-unit plan without an intent; from an issue, titled like it and linked to it | lead |
 | `sync` | projects intents and units onto GitHub issues and a Project ([Board](board.md)) | lead, merge |
 | `push` / `clean` | checked base push; removes orphan worktrees and branches | lead |

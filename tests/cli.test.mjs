@@ -54,7 +54,7 @@ test('U1/AC-1 unknown command exits 64', () => {
 });
 
 test('U1/AC-1 a documented command not built yet exits 70', () => {
-  assert.equal(run('hold').status, 70);
+  assert.equal(run('clean').status, 70);
 });
 
 test('U1/AC-5 CI runs the tests and the docs check on every push', () => {
