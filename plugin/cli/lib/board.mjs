@@ -3,7 +3,7 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { relative } from 'node:path';
-import { config, UsageError } from './config.mjs';
+import { at, config, UsageError } from './config.mjs';
 import { msg, render } from './template.mjs';
 import { templateFile } from './card.mjs';
 import { git, readState } from './state.mjs';
@@ -32,7 +32,6 @@ function pages(path) {
   }
 }
 
-const at = (obj, path) => path.split('.').reduce((v, k) => (v !== null && typeof v === 'object' ? v[k] : undefined), obj);
 const github = (profile) => {
   if (!profile.github?.repo) throw new UsageError(msg('boardOff', {}));
   return profile.github;
@@ -44,7 +43,17 @@ function wanted(cwd, st, gh) {
   const status = { ...B.status, ...(gh.status ?? {}) };
   const file = templateFile(cwd, B.template);
   const template = readFileSync(file, 'utf8');
+  const types = { ...B.types, ...(gh.types ?? {}) };
+  const waves = new Map();
+  const wave = (u) => { // 1 + the highest wave among its dependencies in its intent
+    if (waves.has(u.id)) return waves.get(u.id);
+    waves.set(u.id, 1); // a dependency cycle (PLAN-DAG) stops here
+    const deps = u.depends.map((id) => st.units.find((x) => x.id === id && x.fm.intent === u.fm.intent)).filter(Boolean);
+    waves.set(u.id, 1 + Math.max(0, ...deps.map(wave)));
+    return waves.get(u.id);
+  };
   const one = (d, kind, state, parent) => {
+    const value = (path) => at(d.fm, path) ?? (kind === 'unit' && path === B.wave ? wave(d) : undefined);
     const done = B.done.includes(state);
     const acs = (d.acs ?? []).map((a) => ({ box: done ? 'x' : ' ', text: d.doc.lines[a.line - 1].replace(/^\s*[-*]\s+/, '') }));
     const marker = msg('boardMarker', { kind, id: d.id });
@@ -52,12 +61,14 @@ function wanted(cwd, st, gh) {
     let body;
     do body = render(template, { ...data, acs }, file); while (body.length > B.maxBody && acs.pop());
     const fields = Object.fromEntries(Object.entries(gh.fields ?? {}).map(([name, spec]) => {
-      const raw = at(d.fm, typeof spec === 'string' ? spec : spec.from);
+      const raw = value(typeof spec === 'string' ? spec : spec.from);
       return [name, raw === undefined || raw === null ? undefined : spec.map ? spec.map[String(raw)] : raw];
     }));
     const labels = [...d.requirements, ...(kind === 'unit' ? [d.lane, ...d.modules] : [])].map(String);
-    return { key: `${kind}:${d.id}`, marker, title: `${d.id} ${d.fm.title ?? ''}`.trim(), body, labels, open: !done,
-      fields: { [gh.statusField ?? B.statusField]: status[state], ...fields }, parent, issue: at(d.fm, B.issue) };
+    const title = `${d.id} ${d.fm.title ?? ''}`.trim();
+    return { key: `${kind}:${d.id}`, marker, title, body, labels, open: !done, type: types[kind === 'unit' && !d.fm.intent ? 'fix' : kind],
+      fields: { [gh.statusField ?? B.statusField]: status[state], ...fields }, parent, issue: at(d.fm, B.issue),
+      group: kind === 'intent' ? `${kind}:${d.id}` : parent, milestone: kind === 'intent' ? { title, due: at(d.fm, B.target) } : null };
   };
   return [
     ...st.intents.map((i) => one(i, 'intent', i.state, null)),
@@ -65,8 +76,28 @@ function wanted(cwd, st, gh) {
   ];
 }
 
+// One milestone per intent, due on its target; returns intent key → milestone number.
+function milestones(repo, docs, out) {
+  const have = pages(`${repo}/milestones?state=all`);
+  return new Map(docs.filter((d) => d.milestone).map(({ key, milestone: { title, due } }) => {
+    let m = have.find((x) => x.title === title);
+    const due_on = due ? `${due}${B.dueTime}` : null;
+    if (!m) {
+      m = rest('POST', `${repo}/milestones`, { title, due_on });
+      out.push(msg('boardMilestoneCreated', { title }));
+    } else if (due && (m.due_on ?? '').slice(0, 10) !== String(due)) {
+      rest('PATCH', `${repo}/milestones/${m.number}`, { due_on });
+      out.push(msg('boardMilestoneDue', { title, due }));
+    }
+    return [key, m.number];
+  }));
+}
+
 function issues(gh, docs, out) {
   const repo = `repos/${gh.repo}`;
+  const assignees = gh.assignees ?? [rest('GET', 'user').login];
+  const typed = rest('GET', repo).owner?.type === B.typedOwner; // issue types exist on organisation repositories only
+  const stones = milestones(repo, docs, out);
   const list = () => pages(`${repo}/issues?state=all`).filter((i) => !i.pull_request).sort((a, b) => a.number - b.number); // the oldest copy wins
   let [all, relisted] = [list(), false];
   const have = new Set(pages(`${repo}/labels`).map((l) => l.name));
@@ -79,7 +110,8 @@ function issues(gh, docs, out) {
     const find = () => all.find((i) => d.issue !== undefined && i.number === Number(d.issue)) ?? all.find((i) => (i.body ?? '').includes(d.marker));
     let issue = find() ?? (relisted ? undefined : ((relisted = true), (all = list()), find())); // a lagging list must not duplicate
     if (!issue) {
-      issue = rest('POST', `${repo}/issues`, { title: d.title, body: d.body, labels: d.labels });
+      const extra = { assignees, milestone: stones.get(d.group), ...(typed && d.type ? { type: d.type } : {}) };
+      issue = rest('POST', `${repo}/issues`, { title: d.title, body: d.body, labels: d.labels, ...extra });
       if (!d.open) issue = rest('PATCH', `${repo}/issues/${issue.number}`, { state });
       out.push(msg('boardCreated', { number: issue.number, title: d.title }));
     } else {
@@ -89,6 +121,10 @@ function issues(gh, docs, out) {
       if ((issue.body ?? '') !== d.body) change.body = d.body;
       if (issue.state !== state) change.state = state;
       if (d.labels.some((l) => !names.includes(l))) change.labels = [...new Set([...names, ...d.labels])];
+      const people = (issue.assignees ?? []).map((a) => a.login);
+      if (assignees.some((a) => !people.includes(a))) change.assignees = [...new Set([...people, ...assignees])];
+      if (stones.get(d.group) && issue.milestone?.number !== stones.get(d.group)) change.milestone = stones.get(d.group);
+      if (typed && d.type && issue.type?.name !== d.type) change.type = d.type;
       if (Object.keys(change).length) {
         rest('PATCH', `${repo}/issues/${issue.number}`, change);
         out.push(msg('boardUpdated', { number: issue.number, what: Object.keys(change).join(', ') }));

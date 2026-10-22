@@ -10,6 +10,9 @@ const body = args.includes('--input') ? JSON.parse(readFileSync(0, 'utf8') || 'n
 const reply = (data) => { writeFileSync(file, JSON.stringify(s, null, 2)); process.stdout.write(JSON.stringify(data)); };
 const issue = (n) => s.issues.find((i) => i.number === Number(n));
 const labels = (names) => names.map((name) => ({ name }));
+// An issue as the REST API returns it: assignees, milestone and type as objects.
+const shown = (i) => ({ ...i, labels: labels(i.labels), assignees: (i.assignees ?? []).map((login) => ({ login })),
+  milestone: i.milestone ? { number: i.milestone } : null, type: i.type ? { name: i.type } : null });
 
 if (args[1] === 'graphql') {
   const q = body.query;
@@ -51,21 +54,28 @@ if (args[1] === 'graphql') {
   const slice = (list) => list.slice((page - 1) * per, page * per);
   const parts = path.replace(`repos/${s.repo}/`, '').split('/');
   s.calls.push({ method, path, write: method !== 'GET' });
-  if (parts[0] === 'labels') {
+  s.milestones ??= [];
+  if (path === 'user') reply({ login: s.login ?? 'owner' });
+  else if (path === `repos/${s.repo}`) reply({ owner: { type: s.ownerType ?? 'User' } });
+  else if (parts[0] === 'milestones') {
+    if (method === 'GET') reply(slice(s.milestones));
+    else if (method === 'POST') { const m = { number: s.milestones.length + 1, ...body }; s.milestones.push(m); reply(m); }
+    else { const m = s.milestones.find((x) => x.number === Number(parts[1])); Object.assign(m, body); reply(m); }
+  } else if (parts[0] === 'labels') {
     if (method === 'POST') { s.labels.push(body.name); reply({ name: body.name }); } else reply(slice(labels(s.labels)));
   } else if (parts.length === 1) {
     if (method === 'GET' && s.lag > 0) { s.lag--; reply([]); } // GitHub's list lagging behind its writes
-    else if (method === 'GET') reply(slice(s.issues.map((i) => ({ ...i, labels: labels(i.labels) }))));
+    else if (method === 'GET') reply(slice(s.issues.map(shown)));
     else {
       const number = Math.max(0, ...s.issues.map((i) => i.number)) + 1;
-      const created = { number, id: 1000 + number, node_id: `I_${number}`, title: body.title, body: body.body, state: 'open', labels: body.labels ?? [], parent: null };
+      const created = { number, id: 1000 + number, node_id: `I_${number}`, state: 'open', parent: null, ...body, labels: body.labels ?? [] };
       s.issues.push(created);
-      reply({ ...created, labels: labels(created.labels) });
+      reply(shown(created));
     }
   } else if (parts.length === 2) {
     const i = issue(parts[1]);
     if (method === 'PATCH') Object.assign(i, body);
-    reply({ ...i, labels: labels(i.labels) });
+    reply(shown(i));
   } else if (parts[2] === 'sub_issues') {
     if (method === 'POST') { s.issues.find((i) => i.id === body.sub_issue_id).parent = Number(parts[1]); reply({}); }
     else reply(slice(s.issues.filter((i) => i.parent === Number(parts[1]))));

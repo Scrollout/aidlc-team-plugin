@@ -3,7 +3,7 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve, sep } from 'node:path';
-import { config, list, UsageError } from './config.mjs';
+import { at, config, fieldPaths, list, UsageError } from './config.mjs';
 import { msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { parseDoc, proseLines } from './okf.mjs';
@@ -190,6 +190,9 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
       for (const req of d.requirements.filter((r) => !known.has(r))) add('PLAN-REQ', d, keyLine(d, 'requirements'), 'reqUnknown', { doc: d.id, req });
     }
   }
+  // With a board, each live unit carries the values it maps, except the derived wave (docs/design/board.md).
+  const planned = profile.github ? fieldPaths(profile.github.fields).filter((p) => p !== config.board.wave) : [];
+  for (const u of units) for (const path of planned.filter((p) => at(u.fm, p) === undefined)) add('PLAN-BOARD', u, 1, 'planBoard', { path });
   for (const c of cycles(units)) add('PLAN-DAG', c.unit, keyLine(c.unit, 'depends'), 'depCycle', { cycle: c.text });
 
   const held = new Map();
