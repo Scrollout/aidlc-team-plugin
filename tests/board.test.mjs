@@ -217,3 +217,27 @@ test('U11/AC-2 a failing gh call reports gh\'s own error', () => {
   assert.equal(r.code, 70);
   assert.match(r.err, /HTTP 502: Bad gateway/);
 });
+
+test('U14/AC-1 an issue list shorter than the repository count is retried with backoff; while it stays short, sync creates nothing', () => {
+  const ctx = setup();
+  aidlc(ctx, 'sync');
+  const before = stub(ctx);
+  writeFileSync(ctx.state, JSON.stringify({ ...before, calls: [], lag: 1 })); // one empty page
+  assert.equal(aidlc(ctx, 'sync').out, 'the board is in sync\n');
+  assert.deepEqual(writes(ctx), [], 'one empty page creates nothing');
+  assert.equal(stub(ctx).calls.filter((c) => c.op === 'count').length, 2, 'counted, waited, listed again');
+
+  writeFileSync(ctx.state, JSON.stringify({ ...stub(ctx), calls: [], lag: 99, labels: [], milestones: [] }));
+  const r = aidlc(ctx, 'sync');
+  assert.equal(r.code, 70);
+  assert.match(r.err, /GitHub listed 0 of the repository's 3 issues, also after waiting → sync created nothing/);
+  assert.deepEqual(writes(ctx), [], 'no issue, label or milestone is created from a short list');
+});
+
+test('U14/AC-2 PLAN-BOARD names the board field and gives an example from the profile map', () => {
+  const ctx = setup();
+  const lines = aidlc(ctx, 'check').out.split('\n').filter((l) => l.includes('PLAN-BOARD'));
+  assert.ok(lines.some((l) => l.includes('U-2 has no priority, which the board shows as Priority: add priority: 1 (1 means P1, 2 means P0)')), lines.join('\n'));
+  assert.ok(lines.some((l) => l.includes('U-2 has no board.effort, which the board shows as Effort: add board: { effort: <value> }')), lines.join('\n'));
+  assert.ok(!lines.some((l) => l.includes('board.wave')), 'the wave is derived');
+});

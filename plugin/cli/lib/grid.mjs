@@ -225,8 +225,17 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
     }
   }
   // With a board, each live unit carries the values it maps, except the derived wave (docs/design/board.md).
-  const planned = profile.github ? fieldPaths(profile.github.fields).filter((p) => p !== config.board.wave) : [];
-  for (const u of units) for (const path of planned.filter((p) => at(u.fm, p) === undefined)) add('PLAN-BOARD', u, 1, 'planBoard', { path });
+  // The example uses the profile's own map, so the lead writes a value the board knows.
+  const planned = Object.entries(profile.github?.fields ?? {}).map(([field, spec]) => ({ field, path: fieldPaths({ field: spec })[0], map: spec.map }))
+    .filter((f) => f.path !== config.board.wave);
+  for (const u of units) {
+    for (const { field, path, map } of planned.filter((f) => at(u.fm, f.path) === undefined)) {
+      const value = map ? Object.keys(map)[0] : msg('planBoardAny', {});
+      const example = path.split('.').reduceRight((inner, key, k) => (k ? `{ ${key}: ${inner} }` : `${key}: ${inner}`), value);
+      const mapping = map ? msg('planBoardMap', { pairs: Object.entries(map).map(([from, to]) => msg('planBoardPair', { from, to })).join(', ') }) : '';
+      add('PLAN-BOARD', u, 1, 'planBoard', { path, field, example, mapping });
+    }
+  }
   for (const c of cycles(units)) add('PLAN-DAG', c.unit, keyLine(c.unit, 'depends'), 'depCycle', { cycle: c.text });
 
   const held = new Map();

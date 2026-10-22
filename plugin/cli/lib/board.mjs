@@ -32,6 +32,8 @@ function pages(path) {
   }
 }
 
+const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+
 const github = (profile) => {
   if (!profile.github?.repo) throw new UsageError(msg('boardOff', {}));
   ghCommand = list(profile.github.gh ?? B.gh);
@@ -98,9 +100,19 @@ function issues(gh, docs, out) {
   const repo = `repos/${gh.repo}`;
   const assignees = gh.assignees ?? [rest('GET', 'user').login];
   const typed = rest('GET', repo).owner?.type === B.typedOwner; // issue types exist on organisation repositories only
-  const stones = milestones(repo, docs, out);
-  const list = () => pages(`${repo}/issues?state=all`).filter((i) => !i.pull_request).sort((a, b) => a.number - b.number); // the oldest copy wins
+  const [owner, name] = gh.repo.split('/');
+  // A list shorter than the repository's issue count is a lagging read: list again after a wait, and never create from it.
+  const list = () => {
+    for (let k = 0; ; k++) {
+      const got = pages(`${repo}/issues?state=all`).filter((i) => !i.pull_request).sort((a, b) => a.number - b.number); // the oldest copy wins
+      const count = graphql(B.queries.issueCount, { owner, name }).repository.issues.totalCount;
+      if (got.length >= count) return got;
+      if (k === B.backoff.length) throw new Error(msg('boardShort', { got: got.length, count }));
+      sleep(B.backoff[k]);
+    }
+  };
   let [all, relisted] = [list(), false];
+  const stones = milestones(repo, docs, out);
   const have = new Set(pages(`${repo}/labels`).map((l) => l.name));
   for (const name of [...new Set(docs.flatMap((d) => d.labels))].filter((n) => !have.has(n))) {
     rest('POST', `${repo}/labels`, { name });

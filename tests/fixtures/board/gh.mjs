@@ -18,7 +18,10 @@ if (args[1] === 'graphql') {
   const q = body.query;
   const v = body.variables;
   const p = s.project;
-  if (q.includes('projectV2(number')) {
+  if (q.includes('totalCount')) {
+    s.calls.push({ op: 'count' });
+    reply({ data: { repository: { issues: { totalCount: s.issues.filter((i) => !i.pull_request).length } } } });
+  } else if (q.includes('projectV2(number')) {
     s.calls.push({ op: 'project' });
     const owner = q.includes('organization(') ? 'organization' : 'user';
     const start = Number(v.cursor ?? 0);
