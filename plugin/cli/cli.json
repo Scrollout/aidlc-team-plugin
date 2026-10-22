@@ -247,6 +247,7 @@
     "nextDraftUnits": "draft the units of {{intent}} in {{dir}}/U-<n>-<slug>.md, then ask for the plan approval",
     "nextApprovePlan": "ask the owner to approve the plan: aidlc approve {{units}} (the owner confirms the prompt)",
     "nextMerge": "merge {{unit}}: aidlc merge {{unit}}",
+    "nextUntagged": "{{unit}} has no test tagged {{tags}} on its branch: send the builder back (card: aidlc card {{unit}})",
     "nextEscalated": "{{unit}} review escalated: the owner decides",
     "nextFixRound": "fix round for {{unit}}: builder (card: aidlc card {{unit}})",
     "nextReview": "review {{unit}}, focus {{focus}}: reviewer on {{model}} (card: aidlc card {{unit}})",
@@ -281,6 +282,7 @@
     "recorded": "recorded {{what}} for {{unit}}\n",
     "reviewUsage": "usage: review record <unit> <file|->",
     "cardFixes": "## Findings to fix\n{{list}}",
+    "cardAnswered": "## Findings answered by the spec change\nThe owner re-approved the spec after these; check the diff against the spec as it is now.\n{{list}}",
     "cardFinding": "- {{focus}} {{confidence}} {{path}}:{{line}}: {{claim}} ({{scenario}})\n",
     "cardRequirement": "{{id}} {{path}}",
     "reqNone": "{{doc}} cites no requirement",
@@ -310,6 +312,8 @@
     "gateShared": "{{path}} is written by merge, not by a builder",
     "gateLane": "the diff is {{lane}} lane ({{reason}}), the card {{card}}",
     "gateAc": "no test tagged {{tag}}",
+    "gateAcCommand": "{{ac}} names {{command}}, which fails on the merge result",
+    "gateRun": "level {{level}} run {{command}} fails on the merge result",
     "gateLevel": "{{tag}} is tested in {{files}}, outside the {{level}} paths",
     "gateCheck": "{{command}} failed",
     "gateReview": "no pass verdict for the current diff of {{unit}}",
@@ -327,7 +331,6 @@
     "ciCommit": "commit {{sha}} changes {{path}} outside a unit",
     "pushed": "pushed {{base}} to {{remote}}\n",
     "fixWrote": "wrote {{path}}, {{lane}} lane{{#each approve}}; the owner approves it: aidlc approve {{this}} (the owner confirms the prompt){{/each}}\n",
-    "fixFull": "{{title}} is full lane ({{reason}}): it needs an intent, like any feature\n",
     "fixUsage": "usage: fix \"<title>\"|--from-issue <n> --scope <glob>… [--requirement R-<n>…]",
     "hookDeny": "{{code}} {{message}} → {{fix}}",
     "hookEscalate": "escalate: {{reason}} (denied {{count}} times this turn; stop and tell the owner)",
@@ -546,6 +549,7 @@
       "Requirement"
     ],
     "focus": "general",
+    "answered": "answered",
     "stdin": "-",
     "stopped": "stopped",
     "off": "off",
@@ -688,6 +692,7 @@
       "card": "Card",
       "review": "Review"
     },
+    "tested": "Tested",
     "pass": "pass",
     "lanes": [
       "quick",
@@ -720,6 +725,9 @@
       },
       "GATE-CHECK": {
         "fix": "fix the module until its check passes"
+      },
+      "GATE-RUN": {
+        "fix": "the builder fixes the code or tests until the level's run passes on the base merged in"
       },
       "GATE-REVIEW": {
         "fix": "run the reviewer on the current diff and card: aidlc review record"

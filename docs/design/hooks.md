@@ -24,7 +24,7 @@ sources:
   - `git merge` of a `unit/*` branch, since `aidlc merge` does it;
   - the owner commands `aidlc approve`, `upgrade`, `delegate` and `mode` in any spelling: it asks the owner instead and records the prompt ([Approvals](approvals.md#owner-prompts)), a yes/no prompt on any device, and denies in `bypassPermissions` mode ([0009](../decisions/0009-approval-prompt.md)); `approve --auto` passes for what the owner delegated ([0008](../decisions/0008-delegated-approvals.md)).
 
-  `git tag` and `gh release` ask the owner.
+  `git tag` and `gh release` ask the owner. Redirects, pipes and `; echo $?` pass: the guard reads argv, not the shell. The pilot's refusals of `.github/scripts/x.sh > out; echo $?` came from Claude Code's worktree isolation, which refuses a compound command that names git and reads `.github` as git.
 - **scope** (Edit, Write): in a `unit/*` worktree, a path outside the scope on the unit's card (the approved doc at the base) or a merge-written file is denied. Anywhere, a write that changes a doc's `verified` events or its `verified_hash`, or the personal profile, is denied.
 - **secrets** (Edit, Write): new content matching a built-in secret pattern or one in `profile.security.secrets` is denied. Pattern lists sit in data, not in rules prose, so a project adds one without editing code.
 - **model** (Agent): a builder or reviewer (`subagent_type` ending in `:builder` or `:reviewer`) must name its unit `U-<n>` in the prompt and pass `model` equal to the card's (builder) or `models.review` (reviewer). It touches the unit's heartbeat (builder) or `reviewing` marker (reviewer) at launch, so `next` waits for an agent from its start.

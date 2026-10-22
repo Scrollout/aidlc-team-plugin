@@ -205,3 +205,16 @@ test('docs returns OKF errors for the edited file; heartbeat touches the unit fi
   hook('heartbeat', { cwd: wt, hook_event_name: 'PostToolUse', tool_name: 'Read', tool_input: {}, agent_type: 'team:reviewer' });
   assert.ok(Date.now() - statSync(beat).mtimeMs > 5 * 60 * 1000, 'a reviewer in the worktree keeps no builder alive');
 });
+
+test('U18/AC-4 guard allows a command that only redirects output or reads its exit code; a denied command stays denied', () => {
+  const dir = project();
+  for (const command of [
+    'bash .github/scripts/profile_test.sh > out.log 2>&1; echo $?',
+    'bash .github/scripts/profile_test.sh 2>&1 | tail -4; echo exit=${PIPESTATUS[0]}',
+    'node .aidlc/bin/aidlc.mjs check >/dev/null 2>&1; echo $?',
+  ]) assert.equal(decision(bash(dir, command)), 'allow', command);
+  assert.equal(decision(bash(dir, 'git push --force origin unit/U-1 > out.log 2>&1; echo $?')), 'deny');
+  write(dir, { 'src/a.mjs': '1;\n' });
+  git(dir, 'add', 'src/a.mjs');
+  assert.match(reason(bash(dir, 'git commit -m x > out.log; echo $?')), /GUARD-BASE-COMMIT/, 'code on the base is still refused');
+});
