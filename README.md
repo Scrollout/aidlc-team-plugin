@@ -10,7 +10,7 @@ A Claude Code plugin that runs the AI-DLC lifecycle (Inception, Construction, Op
 
 ```
 /plugin marketplace add Scrollout/aidlc-team-plugin
-/plugin install aidlc-team@aidlc-team
+/plugin install aidlc-team@scrollout.net
 ```
 
 ## How AI-DLC runs with the plugin

@@ -22,8 +22,8 @@ Zero model tokens. `aidlc sync` is CLI code calling `gh api` (REST for issues, G
 
 # Finding the issue
 - `board.issue` in the doc names the issue. Adopted projects link their existing issues this way, and `fix --from-issue` writes it.
-- Otherwise the marker in the body (`<!-- unit: U-3 -->`, `<!-- intent: I-1 -->`) finds it. No issue number is stored anywhere else.
-- Neither: `sync` creates the issue.
+- Otherwise the marker in the body (`<!-- unit: U-3 -->`, `<!-- intent: I-1 -->`) finds it; with several, the oldest wins. No issue number is stored anywhere else.
+- Neither: `sync` lists the issues once more, since GitHub's list can lag, and creates the issue only if it is still missing.
 
 # Closing
 `sync` closes the issue of a merged unit and of a merged or released intent, and reopens one that is no longer done. `merge` stays offline: with `profile.github` set it runs `sync` afterwards, and a sync failure is a warning, never a merge failure. No `Closes` trailer is written.

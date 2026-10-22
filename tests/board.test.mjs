@@ -108,6 +108,23 @@ test('U11/AC-1 board.issue links an existing issue; a held unit is On hold; boar
   assert.equal(item(ctx, 7).values.Effort, 'L');
 });
 
+test('U11/AC-1 a lagging issue list never duplicates the board; with duplicates, the oldest issue wins', () => {
+  const ctx = setup();
+  aidlc(ctx, 'sync');
+  const count = stub(ctx).issues.length;
+  writeFileSync(ctx.state, JSON.stringify({ ...stub(ctx), lag: 1 }));
+  assert.equal(aidlc(ctx, 'sync').out, 'the board is in sync\n');
+  assert.equal(stub(ctx).issues.length, count, 'the list is read again before creating');
+
+  const s = stub(ctx);
+  const u1 = s.issues.find((i) => i.title.startsWith('U-1'));
+  s.issues.unshift({ ...u1, number: 99, id: 1099, node_id: 'I_99', title: 'a newer copy' });
+  writeFileSync(ctx.state, JSON.stringify(s));
+  aidlc(ctx, 'sync');
+  assert.equal(stub(ctx).issues.find((i) => i.number === 99).title, 'a newer copy', 'the newer copy, listed first as GitHub does, is left alone');
+  assert.equal(stub(ctx).issues.find((i) => i.number === u1.number).title, 'U-1 Export');
+});
+
 test('U11/AC-2 sync uses no model: it calls only gh, and runs against the recorded stub', () => {
   const src = readFileSync(join(ROOT, 'plugin/cli/lib/board.mjs'), 'utf8');
   assert.equal([...src.matchAll(/execFileSync\(/g)].length, 1);

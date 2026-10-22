@@ -54,7 +54,8 @@ if (args[1] === 'graphql') {
   if (parts[0] === 'labels') {
     if (method === 'POST') { s.labels.push(body.name); reply({ name: body.name }); } else reply(slice(labels(s.labels)));
   } else if (parts.length === 1) {
-    if (method === 'GET') reply(slice(s.issues.map((i) => ({ ...i, labels: labels(i.labels) }))));
+    if (method === 'GET' && s.lag > 0) { s.lag--; reply([]); } // GitHub's list lagging behind its writes
+    else if (method === 'GET') reply(slice(s.issues.map((i) => ({ ...i, labels: labels(i.labels) }))));
     else {
       const number = Math.max(0, ...s.issues.map((i) => i.number)) + 1;
       const created = { number, id: 1000 + number, node_id: `I_${number}`, title: body.title, body: body.body, state: 'open', labels: body.labels ?? [], parent: null };

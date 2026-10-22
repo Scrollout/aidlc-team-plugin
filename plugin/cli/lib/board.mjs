@@ -13,9 +13,8 @@ const B = config.board;
 function api(args, body) {
   let out;
   try {
-    out = execFileSync(B.gh, ['api', ...args, ...(body ? ['--input', '-'] : [])], {
-      input: body ? JSON.stringify(body) : '', encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'],
-    });
+    const opts = { input: body ? JSON.stringify(body) : '', encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] };
+    out = execFileSync(B.gh, ['api', ...args, ...(body ? ['--input', '-'] : [])], opts);
   } catch (e) {
     // gh's own message (stderr, or the API's error body) says what failed; the command line does not.
     throw new Error(`${args.slice(0, 3).join(' ')}: ${(e.stderr || e.stdout || e.message).trim().split('\n').join(' ')}`);
@@ -68,16 +67,17 @@ function wanted(cwd, st, gh) {
 
 function issues(gh, docs, out) {
   const repo = `repos/${gh.repo}`;
-  const all = pages(`${repo}/issues?state=all`).filter((i) => !i.pull_request);
+  const list = () => pages(`${repo}/issues?state=all`).filter((i) => !i.pull_request).sort((a, b) => a.number - b.number); // the oldest copy wins
+  let [all, relisted] = [list(), false];
   const have = new Set(pages(`${repo}/labels`).map((l) => l.name));
-  for (const name of new Set(docs.flatMap((d) => d.labels))) {
-    if (have.has(name)) continue;
+  for (const name of [...new Set(docs.flatMap((d) => d.labels))].filter((n) => !have.has(n))) {
     rest('POST', `${repo}/labels`, { name });
     out.push(msg('boardLabel', { name }));
   }
   for (const d of docs) {
     const state = d.open ? 'open' : 'closed';
-    let issue = all.find((i) => d.issue !== undefined && i.number === Number(d.issue)) ?? all.find((i) => (i.body ?? '').includes(d.marker));
+    const find = () => all.find((i) => d.issue !== undefined && i.number === Number(d.issue)) ?? all.find((i) => (i.body ?? '').includes(d.marker));
+    let issue = find() ?? (relisted ? undefined : ((relisted = true), (all = list()), find())); // a lagging list must not duplicate
     if (!issue) {
       issue = rest('POST', `${repo}/issues`, { title: d.title, body: d.body, labels: d.labels });
       if (!d.open) issue = rest('PATCH', `${repo}/issues/${issue.number}`, { state });
