@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** A delegated re-approval of a stopped unit now restarts its builder, as an owner one does; answering an escalation still takes the owner (pilot finding). Release 0.13.2.
 - **Update** The card hash leaves out the base commit, so a base that moves for other units no longer makes a recorded review stale (pilot finding, [Unit card](design/unit-card.md)). Release 0.13.1.
 - **Creation** [0009 Owner commands by permission prompt](decisions/0009-approval-prompt.md), asked for by the owner: the lead runs `aidlc approve`, `upgrade` or the new `delegate`, and the guard asks the owner with a yes/no permission prompt, which also works from the mobile app, where `!` commands do not run. A reviewer in flight now keeps a `reviewing` marker fresh, so `next` and steer wait for it instead of asking for the same review again (pilot finding). Release 0.13.0.
 - **Update** Simpler and smaller, as the owner asked during the pilot:

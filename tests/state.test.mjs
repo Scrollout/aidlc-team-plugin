@@ -239,6 +239,17 @@ test('U4/AC-2 a stopped builder sends the unit back to the lead; re-approval res
   assert.match(run(dir, ['next']).out, /^restart the builder of U-1/);
 });
 
+test('U4/AC-2 a delegated re-approval of a stopped unit restarts its builder too', () => {
+  const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['src/**'] }) });
+  approve(dir, 'I-1', 'U-1');
+  branch(dir, 'U-1');
+  run(dir, ['report', 'U-1'], '{"status": "stopped", "stop": "AC-1 is ambiguous"}');
+  write(dir, { [U(1)]: read(dir, U(1)).replace('it works.', 'it returns 200.'), '.aidlc/local/profile.json': { approvals: { auto: ['reapprove'] } } });
+  commit(dir, 'clarify AC-1');
+  assert.equal(run(dir, ['approve', '--auto', 'U-1']).code, 0);
+  assert.match(run(dir, ['next']).out, /^restart the builder of U-1/);
+});
+
 test('U4/AC-2 hold and priority record the owner\'s word in the plan without staling it', () => {
   const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['a/**'] }), [U(2)]: unitDoc({ scope: ['b/**'] }) }, { parallel: { max: 1 } });
   approve(dir, 'I-1', 'U-1', 'U-2');
