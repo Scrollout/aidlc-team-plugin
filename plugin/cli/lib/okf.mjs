@@ -545,11 +545,7 @@ export const commands = {
 
   check(args, { cwd }) {
     const known = config.commands.find((c) => c.name === 'check').flags;
-    for (const flag of args.filter((a) => a.startsWith('--'))) {
-      if (!known.includes(flag)) throw new UsageError(msg('unknownFlag', { name: flag }));
-      // `--ci` is OKF validation plus plan lint until the gate adds its merge-commit checks.
-      if (flag !== '--ci') throw new Error(msg('flagNotBuilt', { name: flag }));
-    }
+    for (const flag of args.filter((a) => a.startsWith('--') && !known.includes(a))) throw new UsageError(msg('unknownFlag', { name: flag }));
     const { profile } = loadProfile(cwd);
     const rules = profile.docs?.rules ?? {};
     const bundle = bundleOf(cwd, profile);

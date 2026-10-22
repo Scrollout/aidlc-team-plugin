@@ -7,6 +7,12 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** Simpler and smaller, as the owner asked during the pilot:
+  - cut from M1 to M2: proof-revert, security content patterns, and the never-built `reserve`, `clean` and `check --staged`;
+  - an `except` decision covers only the edges it lists, and the gate reads boundaries from the merged tree ([Merge mechanics](design/gate.md), [Requirements and architecture checks](design/architecture.md));
+  - a merge the gate refused is not offered again until the base or the diff changes ([State](design/state.md));
+  - during the pilot, fixes ship in one release per pilot milestone instead of one per finding.
+  Release 0.12.0.
 - **Creation** [0008 Delegated approvals](decisions/0008-delegated-approvals.md), chosen by the owner during the pilot: the personal profile can delegate re-approvals and quick-lane units to the lead, which approves them with `aidlc approve --auto`, stamped `agent:auto`. Release 0.11.0 also blocks a unit whose dependencies are unmerged even when an earlier branch exists, and moves helpers shared by every module into `config`.
 - **Update** `hold` now also holds a reviewed unit's merge, not only its build (pilot finding). Release 0.10.8.
 - **Update** `steer` lets a turn end when any line of the last message ends with a question mark, so an owner question followed by its options no longer makes the lead loop (pilot finding, [Hook mechanics](design/hooks.md)). Release 0.10.7.

@@ -30,7 +30,7 @@ The profile describes the intended shape; the plugin enforces it without knowing
 - `graph` prints one dependency edge per line, `<from path> -> <to path>`. The project supplies it, e.g. from `go list -deps` or a bundler's module graph.
 - A boundary denies edges from paths matching `from` to paths matching `deny`. With `"same": false`, an edge between two paths the same `*` matched differently is denied, so one service may not import another.
 - Gate condition: no denied edge on the merged result (`ARCH-BOUNDARY`, naming the edge and the reason), and every `architecture.checks` command passes (`ARCH-CHECK`). Both run on every merge, whatever the unit touched, and in `check --ci`.
-- An exception is a decision doc the owner approves, listed under the boundary as `except: ["docs/decisions/0009-….md"]`.
+- An exception is a decision doc the owner approves, listed under the boundary as `except: ["docs/decisions/0009-….md"]`. It covers the edges it lists, one `<from> -> <to>` per line, so a baseline of known violations does not open the boundary to new ones; a decision listing no edge covers the whole boundary.
 
 # Review
 Every review of a unit reads the requirements the unit cites and the interface docs it links (both are listed on its card) and checks the diff against them. AWS AI-DLC works the same way: its code-generation reviewer always gets the shared contracts and the requirements. There is no separate `architecture` focus, because the boundaries and checks above already gate every merge ([Skill and agents](prompts.md#review)).

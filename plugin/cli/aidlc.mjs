@@ -28,7 +28,7 @@ const combine = (...handlers) => async (args, ctx) => {
 };
 
 // Each unit that builds a command adds its handler here, keyed by the command name in cli.json.
-const HANDLERS = { ...okf, ...state, ...card, ...init, ...gate, ...hooks, ...board, lane: grid.lane, check: combine(okf.check, grid.check, gate.check) };
+export const HANDLERS = { ...okf, ...state, ...card, ...init, ...gate, ...hooks, ...board, lane: grid.lane, check: combine(okf.check, grid.check, gate.check) };
 
 export function help() {
   const width = Math.max(...config.commands.map((c) => c.usage.length));
@@ -49,13 +49,8 @@ export async function main(argv, io = { out: process.stdout, err: process.stderr
     io.err.write(msg('unknownCommand', { name }));
     return EXIT.usage;
   }
-  const run = HANDLERS[name];
-  if (!run) {
-    io.err.write(msg('notBuilt', { name }));
-    return EXIT.internal;
-  }
   try {
-    const result = await run(args, { cwd: io.cwd ?? process.cwd() });
+    const result = await HANDLERS[name](args, { cwd: io.cwd ?? process.cwd() });
     io.out.write(result.output + result.findings.map((f) => msg('finding', f)).join(''));
     return result.code;
   } catch (e) {
