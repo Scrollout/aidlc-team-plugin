@@ -26,7 +26,7 @@ From the session transcripts; "processed" counts cache reads, "new" is input, ca
 | Reviewer, security | 9 | 1.3 M | 0.21 M | 134 k |
 | Lead (3 sessions) | - | 106.7 M | 0.91 M | - |
 
-The lead dominates: long sessions re-read their context every turn, so a lead that hands off sooner or clears more often is the largest saving left. Always-on context after U-2: `CLAUDE.md` and `AGENTS.md` 597 chars, the session status 267 chars, the skill and agent descriptions 620 chars; about 370 tokens, under the 1,500 budget.
+The lead dominates: a long session re-reads its context every turn. Always-on context after U-2: `CLAUDE.md` and `AGENTS.md` 597 chars, the session status 267 chars, the skill and agent descriptions 620 chars; about 370 tokens, under the 1,500 budget.
 
 # Denials
 - Hook denials, correct: the model hook refused a reviewer on the builder's model, and the guard turned owner commands into permission prompts.
@@ -39,7 +39,7 @@ Every manual step, by the owner or by the lead outside `next`, and the fix or M2
 # U9 criteria
 - AC-1 recorded here, with tokens from transcripts rather than per-card counters.
 - AC-2 met: see [Interventions](interventions.md).
-- AC-3 two `/clear`s, both while builders ran: no repeated question, no duplicate builder, no lost work. Standing run-mode instructions lived only in the conversation and had to be re-sent (M2). No clear was run mid-elaboration; the `elaborating` case is covered by the U4/AC-6 test only.
+- AC-3 two `/clear`s, both while builders ran: no repeated question, no duplicate builder, no lost work. Standing run-mode instructions lived only in the conversation and had to be re-sent (M2). A third clear, mid-elaboration in the eval fixture, failed: the second answer was never written to the draft intent, and after the clear the lead followed `next` into a fix round the owner had held instead of returning to the draft (M2).
 - AC-4 met: after adoption `check --ci` is green, the requirements are approved, and the baseline violations became units or the approved cleanup decision.
 - M1 exit "no hand edits to state": one, a stale review mark removed by hand (fixed 0.13.3).
 
