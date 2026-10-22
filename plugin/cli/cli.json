@@ -691,7 +691,8 @@
       "PUSH-COMMIT": {
         "fix": "move the change into a unit; direct commits may touch only docs and workflow files"
       }
-    }
+    },
+    "noReview": "none"
   },
   "hooks": {
     "names": [

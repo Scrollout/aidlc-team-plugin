@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** Second pilot fixes ([Team](design/team.md), [OKF](design/okf.md)): a quick-lane unit gets no review, as designed, and merges with `Review: none`; `aidlc index` moves prose under a vanished heading to the top instead of dropping it. Release 0.10.2.
 - **Update** First pilot fixes ([State](design/state.md), [Verification](design/verification.md)):
   - owner commands print the runnable `node .aidlc/bin/aidlc.mjs` form;
   - `next` asks for the migration intent in an adopted project with no intent;

@@ -34,7 +34,7 @@ sources:
 - Every child directory goes under `# Subdirectories` as `* [name](name/index.md) - description`, as in the reference.
 - No frontmatter, except `okf_version: "0.2"` kept in the root index.
 - Reserved files (`index.md`, `log.md`) are not listed.
-- Prose paragraphs already in an index are kept under the heading they sit under.
+- Prose paragraphs already in an index are kept under the heading they sit under; prose under a heading the new index no longer has moves to the top, so none is lost.
 - Subdirectory descriptions: the reference uses the child's description when a directory has one entry, otherwise an LLM. We do the same for one entry, otherwise keep the existing line, so generation stays deterministic.
 - The docs hook and `aidlc merge` run it; a hand edit is overwritten. Golden test: the output is byte-identical to the indexes in the official `ga4`, `stackoverflow` and `crypto_bitcoin` bundles.
 
