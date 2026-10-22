@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Creation** [M1 pilot report](pilot/report.md) and [Pilot interventions](pilot/interventions.md): wall time, tokens, fix rounds, denials, and each manual step mapped to its fix or an M2 item. [M2](roadmap/m2.md) collects those items; [M1](roadmap/m1.md) records the U9 result. The prompt evals are still pending.
 - **Update** `sync` creates the milestone of an intent with no target without a due date, which GitHub requires to be absent rather than null. Release 0.16.1.
 - **Update** [Board](design/board.md): plan lint requires the board values the profile maps (`PLAN-BOARD`), `board.wave` is derived from dependencies, and `sync` sets assignees, a milestone per intent and the issue type (owner's choices after the pilot board showed only Status). The CLI budget rises to 2,600 lines for it ([Overview](design/overview.md)). Release 0.16.0.
 - **Update** A hook whose `cwd` is outside any work tree (a shell left in `.git/aidlc`) judges from the project folder instead of failing, which had blocked every Bash call, `cd` included (pilot finding, [Hooks](design/hooks.md)). Release 0.15.1.
