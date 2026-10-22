@@ -11,9 +11,15 @@ import { git, readState } from './state.mjs';
 const B = config.board;
 
 function api(args, body) {
-  const out = execFileSync(B.gh, ['api', ...args, ...(body ? ['--input', '-'] : [])], {
-    input: body ? JSON.stringify(body) : '', encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'],
-  });
+  let out;
+  try {
+    out = execFileSync(B.gh, ['api', ...args, ...(body ? ['--input', '-'] : [])], {
+      input: body ? JSON.stringify(body) : '', encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'],
+    });
+  } catch (e) {
+    // gh's own message (stderr, or the API's error body) says what failed; the command line does not.
+    throw new Error(`${args.slice(0, 3).join(' ')}: ${(e.stderr || e.stdout || e.message).trim().split('\n').join(' ')}`);
+  }
   return out.trim() ? JSON.parse(out) : null;
 }
 const rest = (method, path, body) => api(['-X', method, path], body);

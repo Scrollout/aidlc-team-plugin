@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** A failing `gh` call during `sync` now reports gh's own error, not just the command line (pilot finding). Release 0.10.4.
 - **Update** Third pilot fixes ([Grid](design/grid.md)): plan lint `PLAN-SHARED` flags a scope naming a bundle index, a log or a shared file, which only merge writes; an empty unit diff no longer raises the lane at the gate; a test catches duplicate keys in `cli.json`. Release 0.10.3.
 - **Update** Second pilot fixes ([Team](design/team.md), [OKF](design/okf.md)): a quick-lane unit gets no review, as designed, and merges with `Review: none`; `aidlc index` moves prose under a vanished heading to the top instead of dropping it. Release 0.10.2.
 - **Update** First pilot fixes ([State](design/state.md), [Verification](design/verification.md)):

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { approve, branch, CLI, commit, git, intentDoc, makeRepo, merge, read, unitDoc, write } from './state-repo.mjs';
@@ -158,4 +158,13 @@ test('U11/AC-4 fix --from-issue creates a fix unit linked to the issue; board ed
   aidlc(ctx, 'sync');
   assert.equal(git(ctx.dir, 'status', '--porcelain'), '', 'sync writes no file');
   assert.match(stub(ctx).issues.find((i) => i.number === 12).title, /^U-\d+ Export drops the last row$/, 'the doc wins over the board');
+});
+
+test('U11/AC-2 a failing gh call reports gh\'s own error', () => {
+  const ctx = setup();
+  rmSync(join(ctx.bin, 'gh')); // a symlink to the stub: replace the link, never the stub
+  writeFileSync(join(ctx.bin, 'gh'), '#!/bin/sh\necho "HTTP 502: Bad gateway (https://api.github.com/graphql)" >&2\nexit 1\n', { mode: 0o755 });
+  const r = aidlc(ctx, 'sync');
+  assert.equal(r.code, 70);
+  assert.match(r.err, /HTTP 502: Bad gateway/);
 });
