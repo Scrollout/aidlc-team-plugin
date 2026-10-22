@@ -59,7 +59,7 @@ const CHECKS = {
   },
   'Unit card': {
     check: (items, limit) => sizes(items, limit, 'chars', (t) => t.length),
-    real: () => [], // U4 wires rendered cards.
+    real: () => files('plugin/cli', /^card.*\.md$/).map((f) => ({ name: f, text: read(f) })), // templates; rendered cards are capped at runtime
   },
   'CLI source (`plugin/cli/`)': {
     check: (items, limit) => sizes([{ name: 'plugin/cli', text: items.map((i) => i.text.replace(/\n$/, '')).join('\n') }], limit, 'lines', (t) => t.split('\n').length),

@@ -1,0 +1,287 @@
+// State: derives unit and intent states from git and the bundle, stamps approvals, picks the next action
+// and records builder reports and reviewer verdicts (docs/design/state.md). Nothing here is a ledger.
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { dirname, join, relative, resolve } from 'node:path';
+import { config, UsageError } from './config.mjs';
+import { msg } from './template.mjs';
+import { loadProfile } from './profile.mjs';
+import { parseDoc } from './okf.mjs';
+import { computeLane, overlaps, readPlan } from './grid.mjs';
+
+const S = config.state;
+
+// ---- git ----
+
+export const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+export const tryGit = (cwd, ...args) => {
+  try { return git(cwd, ...args); } catch { return null; }
+};
+
+export const aidlcDir = (cwd) => join(resolve(cwd, git(cwd, 'rev-parse', '--git-common-dir')), S.dir);
+export const runtimeFile = (cwd, kind, unit) => join(aidlcDir(cwd), S[kind], `${unit}.json`);
+export const branchOf = (unit) => S.branchPrefix + unit;
+export const baseOf = (profile) => profile.base ?? S.base;
+export const bundleOf = (cwd, profile) => resolve(cwd, profile.docs?.bundle ?? config.okf.bundle);
+
+const readJson = (file) => (existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null);
+export function writeJson(file, data) {
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, JSON.stringify(data, null, 2) + '\n');
+}
+export const sha256 = (text) => createHash('sha256').update(text).digest('hex');
+
+// Diff of a unit branch against its merge base with the base branch.
+export const diffHash = (cwd, base, unit) => sha256(git(cwd, 'diff', `${base}...${branchOf(unit)}`));
+
+// ---- Approvals ----
+
+const isMap = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+const sortKeys = (v) => (Array.isArray(v) ? v.map(sortKeys) : isMap(v) ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, sortKeys(v[k])])) : v);
+const events = (fm) => (isMap(fm.verified) ? [fm.verified] : Array.isArray(fm.verified) ? fm.verified.filter(isMap) : []);
+
+export function hashDoc(doc) {
+  const fm = Object.fromEntries(Object.entries(doc.fm ?? {}).filter(([k]) => !S.hashExclude.includes(k)));
+  return sha256(JSON.stringify(sortKeys(fm)) + '\n' + doc.lines.slice(doc.body).join('\n'));
+}
+
+// approved: a human `verified` event and a matching hash; stale: approved once, changed since.
+export function approval(doc) {
+  const human = events(doc.fm).some((e) => String(e.by ?? '').startsWith(S.human));
+  if (!human) return 'draft';
+  return doc.fm.verified_hash === hashDoc(doc) ? 'approved' : 'stale';
+}
+
+const plain = (v) => /^[A-Za-z0-9_@.+/][A-Za-z0-9_@:.+/ -]*$/.test(v) && !/:(\s|$)/.test(v) && !/^\d+$/.test(v);
+const scalar = (v) => (typeof v === 'string' && plain(v) ? v : JSON.stringify(v));
+const flowMap = (e) => `{ ${Object.entries(e).map(([k, v]) => `${k}: ${scalar(v)}`).join(', ')} }`;
+
+// Returns the doc text with the owner's stamp: earlier events kept, one appended, status and hash set.
+export function stamp(text, by, at) {
+  const doc = parseDoc(text);
+  if (doc.error || !doc.fm) throw new UsageError(msg('fmYaml', { error: doc.error ?? '' }));
+  const drop = ['verified', 'verified_hash', 'status'];
+  const kept = [];
+  let skipping = false;
+  for (const line of doc.fmLines.slice(1, -1)) {
+    const key = line.match(/^([A-Za-z_][\w-]*):/)?.[1];
+    if (key) skipping = drop.includes(key);
+    else if (!/^(\s|-)/.test(line) && line.trim()) skipping = false;
+    if (!skipping) kept.push(line);
+  }
+  const all = [...events(doc.fm), { by, at }];
+  const body = doc.lines.slice(doc.body).join('\n');
+  const draft = ['---', ...kept, `status: ${S.stable}`, 'verified:', ...all.map((e) => `  - ${flowMap(e)}`), '---', body].join('\n');
+  const hash = hashDoc(parseDoc(draft));
+  return draft.replace(/\nverified:\n/, `\nverified_hash: ${hash}\nverified:\n`);
+}
+
+// ---- State ----
+
+function mergedUnits(cwd, base) {
+  const out = new Map();
+  const log = tryGit(cwd, 'log', base, `--format=%H%x1f%(trailers:key=${S.trailer},valueonly,separator=%x1e)%x1d`);
+  for (const rec of (log ?? '').split('\x1d')) {
+    const [sha, values] = rec.trim().split('\x1f');
+    for (const v of (values ?? '').split('\x1e').map((x) => x.trim()).filter(Boolean)) if (!out.has(v)) out.set(v, sha);
+  }
+  return out;
+}
+
+function heartbeatFresh(cwd, unit, now) {
+  const file = join(aidlcDir(cwd), S.heartbeats, unit);
+  return existsSync(file) && now - statSync(file).mtimeMs < S.heartbeatMs;
+}
+
+function mergeInProgress(cwd, units) {
+  const head = tryGit(cwd, 'rev-parse', '-q', '--verify', 'MERGE_HEAD');
+  if (!head) return null;
+  return units.find((u) => tryGit(cwd, 'rev-parse', branchOf(u.id)) === head)?.id ?? null;
+}
+
+const num = (id) => Number(id.split('-')[1]);
+const byId = (a, b) => num(a.id) - num(b.id);
+
+// Every intent and live unit with its derived state, plus what next needs.
+export function readState(cwd, { now = Date.now() } = {}) {
+  const { profile } = loadProfile(cwd);
+  const base = baseOf(profile);
+  const bundle = bundleOf(cwd, profile);
+  const plan = readPlan(bundle);
+  const merged = mergedUnits(cwd, base);
+  const branches = new Set((tryGit(cwd, 'for-each-ref', '--format=%(refname:short)', `refs/heads/${S.branchPrefix}`) ?? '').split('\n').filter(Boolean));
+  const live = plan.units.filter((u) => u.fm.status !== config.grid.dropped).sort(byId);
+
+  const units = live.map((u) => {
+    const lane = computeLane(u.scope, profile).lane;
+    const needsApproval = Boolean(u.fm.intent) || lane !== 'quick';
+    const approvalState = approval(u.doc);
+    const report = readJson(runtimeFile(cwd, 'reports', u.id));
+    const review = readJson(runtimeFile(cwd, 'reviews', u.id));
+    let state;
+    if (merged.has(u.id)) state = 'merged';
+    else if (needsApproval && approvalState !== 'approved') state = approvalState;
+    else if (branches.has(branchOf(u.id))) {
+      const last = review?.rounds?.at(-1);
+      const current = last && last.diffHash === diffHash(cwd, base, u.id);
+      if (current && last.verdict === 'pass') state = 'reviewed';
+      else if (current && last.verdict === 'escalate') state = 'escalated';
+      else if (current && last.verdict === 'fix') state = 'fix';
+      else if (report && (!last || report.at > last.at)) state = 'reported';
+      else state = 'building';
+    } else state = u.depends.every((d) => merged.has(d)) ? 'approved' : 'blocked';
+    return { ...u, lane, state, fresh: heartbeatFresh(cwd, u.id, now), report, review };
+  });
+
+  const intents = plan.intents.sort(byId).map((i) => {
+    const own = units.filter((u) => u.fm.intent === i.id);
+    const complete = own.length > 0 && own.every((u) => u.state === 'merged');
+    const released = complete && own.every((u) => (tryGit(cwd, 'tag', '--contains', merged.get(u.id)) ?? '') !== '');
+    return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own };
+  });
+  return { cwd, profile, base, bundle, intents, units, mergeUnit: mergeInProgress(cwd, units) };
+}
+
+// ---- next ----
+
+const ids = (list) => list.map((u) => u.id).join(' ');
+const action = (kind, key, data = {}) => ({ kind, key, line: msg(key, data) });
+const priorityOf = (u) => Number(u.fm.priority ?? 0);
+
+export function nextAction(st) {
+  const rel = (dir) => relative(st.cwd, join(st.bundle, dir)) || dir;
+  if (st.mergeUnit) return action('act', 'nextContinueMerge', { unit: st.mergeUnit });
+
+  const stale = [...st.intents, ...st.units].filter((d) => d.state === 'stale');
+  if (stale.length) return action('human', 'nextReapprove', { docs: ids(stale) });
+
+  const intent = st.intents.find((i) => i.state !== 'released');
+  if (!intent && !st.intents.length && !st.units.length) return action('human', 'nextNoIntent', { dir: rel(config.grid.intents) });
+  if (intent && intent.state === 'draft') return action('human', 'nextApproveIntent', { intent: intent.id });
+  if (intent && intent.state === 'approved' && !intent.units.length) return action('act', 'nextDraftUnits', { intent: intent.id, dir: rel(config.grid.units) });
+
+  const scope = st.units.filter((u) => !u.fm.intent || u.fm.intent === intent?.id);
+  const drafts = scope.filter((u) => u.state === 'draft');
+  if (drafts.length) return action('human', 'nextApprovePlan', { units: ids(drafts) });
+
+  const merged = (id) => st.units.find((x) => x.id === id)?.state === 'merged';
+  const reviewed = scope.find((u) => u.state === 'reviewed' && u.depends.every(merged));
+  if (reviewed) return action('act', 'nextMerge', { unit: reviewed.id });
+  const escalated = scope.find((u) => u.state === 'escalated');
+  if (escalated) return action('human', 'nextEscalated', { unit: escalated.id });
+  const fix = scope.find((u) => u.state === 'fix');
+  if (fix) return action('act', 'nextFixRound', { unit: fix.id });
+  const reported = scope.find((u) => u.state === 'reported');
+  if (reported) return action('act', 'nextReview', { unit: reported.id });
+  const lost = scope.find((u) => u.state === 'building' && !u.fresh);
+  if (lost) return action('act', 'nextRestart', { unit: lost.id, branch: branchOf(lost.id) });
+
+  const inFlight = scope.filter((u) => u.state === 'building');
+  const max = st.profile.parallel?.max ?? S.parallel;
+  const picked = [];
+  const ready = scope.filter((u) => u.state === 'approved').sort((a, b) => priorityOf(b) - priorityOf(a) || byId(a, b));
+  for (const u of ready.filter((x) => !x.fm.hold)) {
+    if (inFlight.length + picked.length >= max) break;
+    const clash = [...inFlight, ...picked].some((o) => u.scope.some((g) => o.scope.some((h) => overlaps(g, h))));
+    if (!clash) picked.push(u);
+  }
+  if (picked.length) return action('act', 'nextBuild', { units: picked.map((u) => u.id).join(', '), cards: picked.map((u) => `aidlc card ${u.id}`).join(', ') });
+  if (inFlight.length) return action('wait', 'nextWait', { units: inFlight.map((u) => u.id).join(', ') });
+  const held = ready.filter((u) => u.fm.hold);
+  if (held.length) return action('human', 'nextHeld', { units: held.map((u) => u.id).join(', ') });
+  if (intent?.state === 'merged') return action('human', 'nextRelease', { intent: intent.id });
+  return action('human', 'nextIdle');
+}
+
+// ---- Commands ----
+
+function findDoc(cwd, bundle, name) {
+  const path = resolve(cwd, name);
+  if (existsSync(path)) return path;
+  const plan = readPlan(bundle);
+  const hit = [...plan.units, ...plan.intents].find((d) => d.id === name);
+  if (!hit) throw new UsageError(msg('noDoc', { name }));
+  return hit.file;
+}
+
+function readStdin(ctx) {
+  return ctx.stdin ? ctx.stdin() : readFileSync(0, 'utf8');
+}
+
+function parseObject(text, name) {
+  let data;
+  try { data = JSON.parse(text); } catch { data = null; }
+  if (!isMap(data)) throw new UsageError(msg('badJson', { name }));
+  return data;
+}
+
+const humanGate = (a) => (a.kind === 'human' ? config.exit.blocked : config.exit.ok);
+const done = (output, code = config.exit.ok) => ({ code, findings: [], output });
+
+export const commands = {
+  status(args, { cwd }) {
+    const st = readState(cwd);
+    const next = nextAction(st);
+    const lines = [];
+    for (const i of st.intents) lines.push(msg('statusIntent', { id: i.id, state: i.state, title: i.fm.title ?? '' }));
+    for (const u of st.units.filter((x) => x.state !== 'merged' || !st.intents.some((i) => i.state === 'released' && i.id === x.fm.intent))) {
+      lines.push(msg('statusUnit', { id: u.id, state: u.state, title: u.fm.title ?? '' }));
+    }
+    const tail = msg('statusNext', { line: next.line });
+    let out = '';
+    for (let k = 0; k < lines.length; k++) {
+      const more = msg('statusMore', { count: lines.length - k });
+      if ((out + lines[k] + more + tail).length > S.statusMax) { out += more; break; }
+      out += lines[k];
+    }
+    return done(out + tail, humanGate(next));
+  },
+
+  next(args, { cwd }) {
+    const next = nextAction(readState(cwd));
+    return done(msg('nextLine', next), humanGate(next));
+  },
+
+  approve(args, { cwd }) {
+    const by = tryGit(cwd, 'config', 'user.email');
+    if (!by) throw new UsageError(msg('noEmail', {}));
+    const { profile } = loadProfile(cwd);
+    const bundle = bundleOf(cwd, profile);
+    const at = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
+    let out = '';
+    for (const name of args) {
+      const file = findDoc(cwd, bundle, name);
+      const text = readFileSync(file, 'utf8');
+      if (!S.approvable.includes(String(parseDoc(text).fm?.type))) throw new UsageError(msg('notApprovable', { name }));
+      writeFileSync(file, stamp(text, S.human + by, at));
+      out += msg('approved', { doc: relative(cwd, file) });
+    }
+    return done(out);
+  },
+
+  report(args, ctx) {
+    const unit = args[0];
+    if (!unit) throw new UsageError(msg('noDoc', { name: '' }));
+    const data = parseObject(readStdin(ctx), 'report');
+    writeJson(runtimeFile(ctx.cwd, 'reports', unit), { ...data, unit, at: new Date().toISOString() });
+    return done(msg('recorded', { what: 'report', unit }));
+  },
+
+  review(args, { cwd }) {
+    const [sub, unit, file] = args;
+    if (sub !== 'record' || !unit || !file) throw new UsageError(msg('reviewUsage', {}));
+    if (!existsSync(resolve(cwd, file))) throw new UsageError(msg('noSuchPath', { name: file }));
+    const data = parseObject(readFileSync(resolve(cwd, file), 'utf8'), file);
+    if (!S.verdicts.includes(data.verdict)) throw new UsageError(msg('badVerdict', { verdicts: S.verdicts.join(', ') }));
+    const { profile } = loadProfile(cwd);
+    if (!tryGit(cwd, 'rev-parse', '-q', '--verify', branchOf(unit))) throw new UsageError(msg('noBranch', { branch: branchOf(unit) }));
+    const target = runtimeFile(cwd, 'reviews', unit);
+    const prior = readJson(target)?.rounds ?? [];
+    // A second `fix` becomes `escalate`: the owner decides (docs/design/verification.md).
+    const verdict = data.verdict === 'fix' && prior.some((r) => r.verdict === 'fix') ? 'escalate' : data.verdict;
+    const round = { ...data, verdict, diffHash: diffHash(cwd, baseOf(profile), unit), at: new Date().toISOString() };
+    writeJson(target, { unit, rounds: [...prior, round] });
+    return done(msg('recorded', { what: verdict, unit }));
+  },
+};
