@@ -61,6 +61,7 @@ sequenceDiagram
 | Unit card | 6,000 chars |
 | CLI source (`plugin/cli/`) | 2,500 lines |
 | Hook timeout | 10 s explicit, `onFailure: "block"` on blocking hooks |
+| Blocking hook run time | 500 ms, median of 5 calls on a small project |
 
 # Repo layout
 - `plugin/.claude-plugin/plugin.json`: `name` is `aidlc-team` (kebab-case, no reserved prefix, and never `aidlc`, which projects use for the CLI and `.aidlc/`), the only `version`; users stay on a version until it is bumped.

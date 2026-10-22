@@ -15,7 +15,7 @@ function parseFlags(args, known) {
   for (let k = 0; k < args.length; k++) {
     const a = args[k];
     if (!known.includes(a)) throw new UsageError(msg('unknownFlag', { name: a }));
-    if (a === '--adopt') { out.adopt = true; continue; }
+    if (a === '--adopt' || a === '--downgrade') { out[a.slice(2)] = true; continue; }
     const v = args[++k];
     if (v === undefined || v.startsWith('--')) throw new UsageError(msg('badFlag', { name: a }));
     if (a === '--overwrite') out.overwrite.push(v);
@@ -152,19 +152,19 @@ export const commands = {
     if (flags.adopt) {
       const findings = checkBundle(join(root, bundle), { base: root });
       report.push(msg('initAdopted', { bundle, commit: adopted }));
-      report.push(msg('initFindings', {
-        errors: findings.filter((f) => f.level === 'error').length,
-        warnings: findings.filter((f) => f.level === 'warning').length,
-        bundle,
-      }));
+      const count = (level) => findings.filter((f) => f.level === level).length;
+      report.push(msg('initFindings', { errors: count('error'), warnings: count('warning'), bundle }));
       report.push(...leftovers(root));
     }
     return done(report.join(''), kept ? config.exit.blocked : config.exit.ok);
   },
 
-  // Replaces the pinned CLI with the installed plugin's, and nothing else.
+  // Replaces the pinned CLI with the installed plugin's, and nothing else; never with an older one by accident.
   upgrade(args, { cwd }) {
     const root = projectRoot(cwd);
-    return done(vendor(root, pluginVersion(root)));
+    const version = pluginVersion(root);
+    const pinned = existsSync(join(root, I.bin, I.version)) ? readFileSync(join(root, I.bin, I.version), 'utf8').trim() : '';
+    if (pinned.localeCompare(version, 'en', { numeric: true }) > 0 && !parseFlags(args, config.commands.find((c) => c.name === 'upgrade').flags).downgrade) throw new UsageError(msg('upgradeOlder', { version, pinned }));
+    return done(vendor(root, version));
   },
 };
