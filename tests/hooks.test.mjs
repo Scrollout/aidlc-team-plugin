@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, utimesSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { approve, commit, git, intentDoc, makeRepo, read, run, unitDoc, write } from './state-repo.mjs';
@@ -187,4 +187,8 @@ test('docs returns OKF errors for the edited file; heartbeat touches the unit fi
   hook('heartbeat', { cwd: wt, hook_event_name: 'PostToolUse', tool_name: 'Bash', tool_input: {} });
   const beat = join(dir, '.git/aidlc/heartbeats/U-1');
   assert.ok(Date.now() - statSync(beat).mtimeMs < 5000);
+  const old = new Date(Date.now() - 10 * 60 * 1000);
+  utimesSync(beat, old, old);
+  hook('heartbeat', { cwd: wt, hook_event_name: 'PostToolUse', tool_name: 'Read', tool_input: {}, agent_type: 'team:reviewer' });
+  assert.ok(Date.now() - statSync(beat).mtimeMs > 5 * 60 * 1000, 'a reviewer in the worktree keeps no builder alive');
 });

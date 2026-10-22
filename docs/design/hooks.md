@@ -29,7 +29,7 @@ sources:
 - **secrets** (Edit, Write): new content matching a built-in secret pattern or one in `profile.security.secrets` is denied. Pattern lists sit in data, not in rules prose, so a project adds one without editing code.
 - **model** (Agent): a builder or reviewer (`subagent_type` ending in `:builder` or `:reviewer`) must name its unit `U-<n>` in the prompt and pass `model` equal to the card's (builder) or `models.review` (reviewer).
 - **docs** (PostToolUse on a bundle file) returns that file's OKF errors as a block reason so the agent fixes them at once. Outside a `unit/*` worktree it also regenerates the indexes.
-- **heartbeat** (PostToolUse) touches `.git/aidlc/heartbeats/U-<n>` in a `unit/*` worktree. A reviewer's calls keep `.git/aidlc/reviewing/U-<n>` fresh, which the model hook creates when the reviewer starts and `review record` removes, so `next` waits for a review in flight and no longer.
+- **heartbeat** (PostToolUse) touches `.git/aidlc/heartbeats/U-<n>` for a call in a `unit/*` worktree, except a reviewer's. A reviewer's calls keep `.git/aidlc/reviewing/U-<n>` fresh, which the model hook creates when the reviewer starts and `review record` removes, so `next` waits for a review in flight and no longer.
 - **steer** (Stop) blocks with `next`'s line when the action is autonomous. It lets the stop through:
   - at a human gate, or while builders run;
   - when `stop_hook_active` is true;

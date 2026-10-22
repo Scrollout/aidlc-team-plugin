@@ -197,6 +197,7 @@ function heartbeat(input, cwd) {
   if (String(input.agent_type ?? '').endsWith(H.agents[1])) {
     const dir = join(aidlcDir(cwd), S.reviewing);
     for (const unit of existsSync(dir) ? readdirSync(dir) : []) if (heartbeatFresh(cwd, unit, Date.now(), S.reviewing)) touch(join(dir, unit));
+    return allow(); // a reviewer reading a builder's worktree must not keep that builder alive
   }
   const unit = unitOfBranch(cwd);
   if (unit) touch(join(aidlcDir(cwd), S.heartbeats, unit));
