@@ -123,8 +123,8 @@
     },
     {
       "name": "hold",
-      "usage": "hold <unit>",
-      "does": "record an owner hold in the plan"
+      "usage": "hold <unit> [off]",
+      "does": "record or release an owner hold in the plan"
     },
     {
       "name": "priority",
@@ -358,7 +358,10 @@
     "boardSet": "set {{field}} of #{{number}} to {{value}}\n",
     "boardInSync": "the board is in sync\n",
     "boardFailed": "warning: sync failed, run aidlc sync: {{error}}\n",
-    "nextMigrate": "elaborate the migration intent with the owner in {{dir}}/I-1-<slug>.md (adopted at {{commit}}): docs, always-on context, profile, architecture baseline, module audit, cleanup; then ask for approval"
+    "nextMigrate": "elaborate the migration intent with the owner in {{dir}}/I-1-<slug>.md (adopted at {{commit}}): docs, always-on context, profile, architecture baseline, module audit, cleanup; then ask for approval",
+    "nextStopped": "the builder of {{unit}} stopped ({{reason}}): fix the unit doc, then ask the owner to re-approve it",
+    "holdUsage": "usage: hold <unit> [off]",
+    "priorityUsage": "usage: priority <unit> <n>, a whole number; higher builds first"
   },
   "okf": {
     "index": "index.md",
@@ -510,7 +513,9 @@
       "Requirement"
     ],
     "focus": "general",
-    "stdin": "-"
+    "stdin": "-",
+    "stopped": "stopped",
+    "off": "off"
   },
   "card": {
     "template": "card.md",

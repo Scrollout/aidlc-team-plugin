@@ -113,7 +113,7 @@ export function stamp(text, by, at) {
 
 // ---- State ----
 
-function mergedUnits(cwd, base) {
+export function mergedUnits(cwd, base) {
   const out = new Map();
   const log = tryGit(cwd, 'log', base, `--format=%H%x1f%(trailers:key=${S.trailer},valueonly,separator=%x1e)%x1d`);
   for (const rec of (log ?? '').split('\x1d')) {
@@ -157,6 +157,9 @@ export function readState(cwd, { now = Date.now() } = {}) {
     let focus = null;
     if (merged.has(u.id)) state = 'merged';
     else if (needsApproval && approvalState !== 'approved') state = approvalState;
+    // A builder that stopped hands the unit back to the lead until the owner re-approves its fixed spec.
+    else if (report?.status === S.stopped && Date.parse(report.at) > approvedAt(u.doc)
+      && !(review?.rounds ?? []).some((r) => r.at > report.at)) state = 'stopped';
     else if (branches.has(branchOf(u.id))) {
       // The last verdict of each required focus, counted only while it is for the current diff.
       // A quick-lane unit gets no review: its report alone makes it ready to merge.
@@ -172,7 +175,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
       if (has('escalate')) state = 'escalated';
       else if (has('fix')) state = 'fix';
       else if (!focus && (!quick || report)) state = 'reviewed';
-      else if (has('pass') || (report && (!lastAt || report.at > lastAt))) state = 'reported';
+      else if (has('pass') || (report && (!lastAt || report.at > lastAt) && Date.parse(report.at) > approvedAt(u.doc))) state = 'reported';
       else state = 'building';
     } else state = u.depends.every((d) => merged.has(d)) ? 'approved' : 'blocked';
     return { ...u, lane, state, focus, fresh: heartbeatFresh(cwd, u.id, now), report, review };
@@ -221,6 +224,8 @@ export function nextAction(st) {
   if (reviewed) return action('act', 'nextMerge', { unit: reviewed.id });
   const escalated = scope.find((u) => u.state === 'escalated');
   if (escalated) return action('human', 'nextEscalated', { unit: escalated.id });
+  const stopped = scope.find((u) => u.state === 'stopped');
+  if (stopped) return action('act', 'nextStopped', { unit: stopped.id, reason: String(stopped.report.stop ?? stopped.report.summary ?? '') });
   const fix = scope.find((u) => u.state === 'fix');
   if (fix) return action('act', 'nextFixRound', { unit: fix.id });
   const reported = scope.find((u) => u.state === 'reported');
@@ -267,6 +272,18 @@ function parseObject(text, name) {
   return data;
 }
 
+// Sets or removes one top-level frontmatter field of a plan doc: an owner instruction (docs/design/state.md).
+function setField(cwd, name, key, value) {
+  const file = findDoc(cwd, bundleOf(cwd, loadProfile(cwd).profile), name);
+  const lines = readFileSync(file, 'utf8').split('\n');
+  const end = lines.indexOf('---', 1);
+  const kept = lines.filter((l, k) => !(k > 0 && k < end && l.startsWith(`${key}:`)));
+  if (value !== null) kept.splice(kept.indexOf('---', 1), 0, `${key}: ${value}`);
+  writeFileSync(file, kept.join('\n'));
+  return done(msg('recorded', { what: `${key} ${value ?? S.off}`, unit: name }));
+}
+
+const usage = (key) => { throw new UsageError(msg(key, {})); };
 const humanGate = (a) => (a.kind === 'human' ? config.exit.blocked : config.exit.ok);
 const done = (output, code = config.exit.ok) => ({ code, findings: [], output });
 
@@ -312,6 +329,9 @@ export const commands = {
     }
     return done(out);
   },
+
+  hold: ([unit, off], { cwd }) => (unit && [undefined, S.off].includes(off) ? setField(cwd, unit, 'hold', off ? null : true) : usage('holdUsage')),
+  priority: ([unit, n], { cwd }) => (unit && /^-?\d+$/.test(n ?? '') ? setField(cwd, unit, 'priority', Number(n)) : usage('priorityUsage')),
 
   report(args, ctx) {
     const unit = args[0];

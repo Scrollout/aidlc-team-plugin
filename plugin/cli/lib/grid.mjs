@@ -263,15 +263,16 @@ export const commands = {
   },
 
   // Plan lint for `check`: a directory is linted as a bundle; a file inside the profile's bundle reports only itself.
-  check(args, { cwd }) {
+  async check(args, { cwd }) {
     const { profile } = loadProfile(cwd);
     const bundle = bundleOf(cwd, profile);
+    const skip = [...(await import('./state.mjs')).mergedUnits(cwd, profile.base).keys()]; // merged units are history
     const paths = args.filter((a) => !a.startsWith('--')).map((a) => resolve(cwd, a));
     const findings = [];
     for (const p of paths.length ? paths : [bundle]) {
       if (!existsSync(p)) continue;
-      if (statSync(p).isDirectory()) findings.push(...lintPlan(p, profile, { base: cwd }));
-      else if (p.startsWith(bundle + sep)) findings.push(...lintPlan(bundle, profile, { base: cwd }).filter((f) => f.path === relative(cwd, p)));
+      if (statSync(p).isDirectory()) findings.push(...lintPlan(p, profile, { base: cwd, skip }));
+      else if (p.startsWith(bundle + sep)) findings.push(...lintPlan(bundle, profile, { base: cwd, skip }).filter((f) => f.path === relative(cwd, p)));
     }
     return { code: findings.length ? config.exit.findings : config.exit.ok, findings, output: '' };
   },
