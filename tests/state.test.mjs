@@ -254,6 +254,18 @@ test('U4/AC-2 hold and priority record the owner\'s word in the plan without sta
   assert.equal(run(dir, ['priority', 'U-2', 'high']).code, 64);
 });
 
+test('U4/AC-2 a hold also holds a reviewed unit\'s merge', () => {
+  const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['src/**'] }) });
+  approve(dir, 'I-1', 'U-1');
+  branch(dir, 'U-1');
+  review(dir, 'U-1', 'pass');
+  assert.match(run(dir, ['next']).out, /^merge U-1/);
+  run(dir, ['hold', 'U-1']);
+  const r = run(dir, ['next']);
+  assert.match(r.out, /^U-1 on hold: the owner releases them/);
+  assert.equal(r.code, 2);
+});
+
 test('U3/AC-3 check skips merged units in plan lint, as next does', () => {
   const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['src/**'] }) });
   approve(dir, 'I-1', 'U-1');

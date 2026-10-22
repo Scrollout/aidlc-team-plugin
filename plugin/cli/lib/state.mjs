@@ -220,7 +220,7 @@ export function nextAction(st) {
   if (drafts.length) return action('human', 'nextApprovePlan', { units: ids(drafts) });
 
   const merged = (id) => st.units.find((x) => x.id === id)?.state === 'merged';
-  const reviewed = scope.find((u) => u.state === 'reviewed' && u.depends.every(merged));
+  const reviewed = scope.find((u) => u.state === 'reviewed' && !u.fm.hold && u.depends.every(merged));
   if (reviewed) return action('act', 'nextMerge', { unit: reviewed.id });
   const escalated = scope.find((u) => u.state === 'escalated');
   if (escalated) return action('human', 'nextEscalated', { unit: escalated.id });
@@ -244,7 +244,7 @@ export function nextAction(st) {
   }
   if (picked.length) return action('act', 'nextBuild', { units: picked.map((u) => u.id).join(', '), cards: picked.map((u) => `aidlc card ${u.id}`).join(', ') });
   if (inFlight.length) return action('wait', 'nextWait', { units: inFlight.map((u) => u.id).join(', ') });
-  const held = ready.filter((u) => u.fm.hold);
+  const held = scope.filter((u) => u.fm.hold && ['approved', 'reviewed'].includes(u.state));
   if (held.length) return action('human', 'nextHeld', { units: held.map((u) => u.id).join(', ') });
   if (intent?.state === 'merged') return action('human', 'nextRelease', { intent: intent.id });
   return action('human', 'nextIdle');
