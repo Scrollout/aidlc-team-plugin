@@ -54,6 +54,10 @@ test('U7/AC-1 guard denies each listed command and allows the everyday ones', ()
     assert.match(reason(r), new RegExp(`^(escalate: )?${code} .+ → \\S`), command);
   }
   assert.equal(decision(bash(dir, 'git tag v1.0.0')), 'ask');
+  const inGit = bash(join(dir, '.git'), 'cd ..');
+  assert.equal(inGit.code, 0, `a shell left inside .git is not locked: ${inGit.err}`);
+  assert.equal(decision(inGit), 'allow');
+  assert.equal(decision(bash(join(dir, '.git'), 'git push --force origin unit/U-1')), 'deny', 'and is still guarded');
   for (const [command, shown] of [['node .aidlc/bin/aidlc.mjs approve U-1', 'approve U-1'], ['cd docs && aidlc approve U-1', 'approve U-1'], ['node .aidlc/bin/aidlc.mjs upgrade', 'upgrade'], ['aidlc delegate reapprove', 'delegate reapprove']]) {
     const r = bash(dir, command);
     assert.equal(decision(r), 'ask', `${command}: the owner answers a prompt (decision 0009)`);

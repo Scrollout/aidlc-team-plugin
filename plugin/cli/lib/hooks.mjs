@@ -237,7 +237,7 @@ export const commands = {
     const run = HOOKS[args[0]];
     if (!run) throw new UsageError(msg('unknownCommand', { name: args[0] ?? '' }));
     const input = JSON.parse(ctx.stdin ? ctx.stdin() : readFileSync(0, 'utf8'));
-    const cwd = input.cwd ?? ctx.cwd;
+    const cwd = input.cwd && tryGit(input.cwd, 'rev-parse', '--show-toplevel') ? input.cwd : ctx.cwd; // .git/aidlc is no work tree
     return { code: config.exit.ok, findings: [], output: run(input, cwd) + '\n' };
   },
 };
