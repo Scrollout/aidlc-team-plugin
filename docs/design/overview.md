@@ -4,6 +4,13 @@ title: Overview
 description: Goals, non-goals, budgets, repo layout and glossary of the plugin.
 status: draft
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
+sources:
+  - id: cc-host
+    resource: https://code.claude.com/docs/en/plugins/host-marketplace
+    title: Host and maintain a marketplace
+  - id: cc-tag
+    resource: https://code.claude.com/docs/en/plugins/cli-reference#plugin-tag
+    title: Plugin commands reference, plugin tag
 ---
 
 # Goals
@@ -40,9 +47,19 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 - `plugin/templates/`: everything `init` renders.
 - `.claude-plugin/marketplace.json`: marketplace `scrollout`, one entry `aidlc-team` with `source: "./plugin"`, so tests and docs never ship. Install id: `aidlc-team@scrollout`.
 
+# Releases
+- `version` lives only in `plugin/.claude-plugin/plugin.json`, never in the marketplace entry. Users stay on a version until it changes.[^cc-host]
+- A release is a git tag made with `claude plugin tag plugin --push`. It creates the annotated tag `aidlc-team--v<version>` after checking that the manifest and the marketplace entry agree and that the tree is clean.[^cc-tag] This is the convention plugin dependency ranges resolve against.
+- Release = bump `version`, commit, tag. CI checks on a tag push that the tag matches `plugin.json`. The owner approves each release (principle 5).
+- Users can pin a release with `/plugin marketplace add Scrollout/aidlc-team-plugin#aidlc-team--v<version>`.[^cc-host]
+- The vendored CLI's `VERSION` file holds the same version, so a project records which release judges it.
+
 # Glossary
 - **Intent:** a goal with its why and success measures.
 - **Unit:** an independently buildable slice of an intent, with acceptance criteria (ACs) and a write scope.
 - **Lane:** quick, standard or full; decides which grid rows run.
 - **Card:** the generated brief for one unit.
 - **Lead:** the main session running the loop. **Owner:** the human.
+
+[^cc-host]: Host and maintain a marketplace
+[^cc-tag]: Plugin commands reference, plugin tag

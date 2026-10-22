@@ -74,6 +74,14 @@ test('U1/AC-6 marketplace entry points at ./plugin with the manifest name', () =
   assert.equal(market.plugins[0].name, manifest.name);
   assert.match(manifest.name, /^[a-z0-9]+(-[a-z0-9]+)*$/);
   assert.notEqual(manifest.name, 'aidlc', 'aidlc is the CLI and folder name in every project');
+  assert.match(manifest.version, /^\d+\.\d+\.\d+$/);
+  assert.equal(market.plugins[0].version, undefined, 'version lives only in plugin.json');
+});
+
+test('a release tag matches the plugin.json version', (t) => {
+  if (process.env.GITHUB_REF_TYPE !== 'tag') return t.skip('not a tag build');
+  const { name, version } = readJson('plugin/.claude-plugin/plugin.json');
+  assert.equal(process.env.GITHUB_REF_NAME, `${name}--v${version}`);
 });
 
 test('U1/AC-6 claude plugin validate . passes', (t) => {
