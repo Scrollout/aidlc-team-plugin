@@ -73,6 +73,7 @@ test('U1/AC-5 CI runs the tests and the docs check on every branch push, not on 
 test('U1/AC-6 marketplace entry points at ./plugin with the manifest name', () => {
   const market = readJson('.claude-plugin/marketplace.json');
   const manifest = readJson('plugin/.claude-plugin/plugin.json');
+  assert.equal(market.name, 'scrollout.net', 'install id aidlc-team@scrollout.net');
   assert.equal(market.plugins.length, 1);
   assert.equal(market.plugins[0].source, './plugin');
   assert.equal(market.plugins[0].name, manifest.name);
