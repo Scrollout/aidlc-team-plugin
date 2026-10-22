@@ -3,13 +3,23 @@ type: Design
 title: Verification
 description: The inner loop (hooks), the merge gate, the reviewer's output contract and the CI mode.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T09:20:00Z }
+sources:
+  - id: cc-hooks
+    resource: https://code.claude.com/docs/en/hooks
+    title: Claude Code hooks reference
 ---
 
 **TL;DR:** Hooks block rule breaks as they happen; the merge gate checks the finished unit; a fresh reviewer checks intent; CI re-runs the gate so nothing bypasses it.
 
 ## Inner loop: hooks
-All hooks are thin wrappers that call the vendored CLI and fail closed (a crash denies).
+All hooks are thin wrappers in the plugin's `hooks/hooks.json`, run in exec form with `${CLAUDE_PLUGIN_ROOT}`, that call the vendored CLI.[^cc-hooks] They fail closed without relying on exit-code semantics: the wrapper catches any CLI crash or timeout and prints an explicit `permissionDecision: "deny"` (PreToolUse) or `decision: "block"` (Stop).
+
+Facts from the hooks reference this design relies on:[^cc-hooks]
+- Hooks fire for subagents' tool calls too; the input carries `agent_id`, `agent_type` and `cwd` (which follows the worktree), so the scope hook knows which builder and which unit it is judging.
+- The subagent tool is matched as `Agent`; its `tool_input` has `subagent_type` and `model`, which the model-routing check compares with the card.
+- SessionStart `source` is `startup`, `resume`, `clear`, `compact` or `fork`; context is returned as `additionalContext`.
+- PreToolUse runs only for Claude's tool calls, so an owner's `!` command is not subject to the guard (also observed in this repo on 2026-10-22).
 | Hook | Event | Blocks |
 |---|---|---|
 | guard | PreToolUse Bash | force push; `--no-verify` / `-n` on commit; `aidlc approve`; raw `git merge` of a `unit/*` branch into base; deleting the base |
@@ -17,7 +27,8 @@ All hooks are thin wrappers that call the vendored CLI and fail closed (a crash 
 | docs | PostToolUse Edit/Write under the bundle | returns OKF errors for the edited file so the agent fixes them at once |
 | secrets | PreToolUse Edit/Write | content matching secret patterns (keys, tokens, private keys); `.aidlc/rules` can add patterns |
 | steer | Stop | ends of turn while `next` has an autonomous action and no human gate is pending (see [Steering](steering.md)) |
-| status | SessionStart (startup, resume, clear, compact) | nothing; injects `aidlc status` and the resume line (≤ 1,000 chars) |
+| model | PreToolUse Agent | a builder or reviewer started with a `model` other than the card's |
+| status | SessionStart (startup, resume, clear, compact, fork) | nothing; injects `aidlc status` and the resume line (≤ 1,000 chars) |
 | heartbeat | PostToolUse, in a `unit/*` worktree | nothing; touches the unit's heartbeat file |
 
 The guard matches a short deny list on parsed argv; it does not try to model the shell.
@@ -45,3 +56,5 @@ The skill and agent prompts are code coupled to a model version. `tests/evals/` 
 ## Later
 - M2: proof-revert for the standard lane too, once the pilot shows its runtime cost.
 - M3: an optional CI evaluator agent on pushes.
+
+[^cc-hooks]: Claude Code hooks reference

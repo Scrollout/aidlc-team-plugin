@@ -3,7 +3,11 @@ type: Design
 title: Team
 description: The four roles, how parallel worktree workers are run and merged, and where tokens are spent.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T09:20:00Z }
+sources:
+  - id: cc-subagents
+    resource: https://code.claude.com/docs/en/sub-agents
+    title: Claude Code subagents
 ---
 
 **TL;DR:** The owner decides; the lead runs the loop; builders write one unit each in their own worktree; a fresh reviewer checks each unit against its card. Specialists are the reviewer with a different focus.
@@ -25,12 +29,14 @@ Every general review also runs a short security baseline (input handling, authz 
 
 ## Parallel work
 - `aidlc next` lists buildable units: approved, deps merged, scopes disjoint from units in flight, up to `parallel.max` (default 3).
-- The lead starts one builder per unit in a single message; each gets a fresh worktree on `unit/U-<n>` from the current base.
+- The lead starts one builder per unit in a single message. The builder agent's frontmatter sets `isolation: worktree`; Claude Code creates a temporary worktree branched from the default branch and removes it if nothing changed.[^cc-subagents] The builder's first command is `aidlc start U-<n>`, which names the branch `unit/U-<n>` and checks the base matches the card.
+- Builders and reviewers omit `Agent` from `tools`, so they cannot spawn further subagents (nesting is allowed by default and would multiply cost).[^cc-subagents]
+- Plugin agents ignore `hooks` and `permissionMode` in their frontmatter, so all enforcement lives in the plugin's `hooks/hooks.json`.[^cc-subagents]
 - The lead merges with `aidlc merge U-<n>` in DAG order. If the base moved, the gate merges the base into the unit branch and re-runs the checks before the `--no-ff` merge.
 - A builder that hits a "stop and report" condition returns without code; the lead fixes the spec and restarts it.
 
 ## Model routing
-The CLI picks the model; the lead passes it, and a PreToolUse hook on the Agent tool denies a builder or reviewer started with a different model than the card says.
+The CLI picks the model; the lead passes it as the Agent call's per-invocation `model`, which takes precedence over the agent's frontmatter.[^cc-subagents] A PreToolUse hook on the `Agent` tool denies a builder or reviewer started with a different model than the card says. If an environment sets `CLAUDE_CODE_SUBAGENT_MODEL_FORCE`, routing is overridden; `aidlc status` reports that.
 | Work | Default | Escalates to Opus when |
 |---|---|---|
 | Domain, Logical rows (when delegated) | Opus | - |
@@ -48,3 +54,5 @@ Thresholds and the table live in `profile.models`, so a project can shift the ba
 - Reviews are cached by diff hash; an unchanged diff is never reviewed twice.
 - Each subagent loads only its card and linked docs; it never inherits the lead's conversation.
 - Parallelism multiplies spend; `parallel.max` is a cost dial, not a speed setting.
+
+[^cc-subagents]: Claude Code subagents

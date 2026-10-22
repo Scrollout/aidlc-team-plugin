@@ -18,6 +18,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 | `next` | the single next action | lead |
 | `lane <unit>|--diff <range>` | the computed lane and why | lead, gate |
 | `card <unit>` | renders the unit card | lead |
+| `start <unit>` | in a builder's worktree: names the branch `unit/U-<n>`, checks the base matches the card | builder |
 | `reserve <kind> <area>` | next free number for a reservation, checked against the plan and the base | lead while planning |
 | `approve <doc>` | stamps approval | owner only (`!`) |
 | `review record <unit> <file>` | stores a reviewer verdict keyed by diff hash | reviewer |

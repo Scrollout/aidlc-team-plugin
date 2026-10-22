@@ -14,8 +14,8 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 - Repeated identical denials (same code, same target, 3 times in a turn) switch to `escalate`: stop and tell the owner, instead of looping.
 
 ## 2. Across a turn: stay on the grid
-- **SessionStart** injects `aidlc status` on startup, resume and compaction, so a fresh or compacted context re-reads the state instead of remembering it.
-- **Stop hook (`steer`):** when the lead tries to end its turn, the hook runs `aidlc next`. If the next action is autonomous (build, review, fix, merge) and no human gate is pending, it blocks the stop with that action. It lets the stop through when a human gate is pending, when the owner asked a question, or on the second consecutive block (`stop_hook_active`), so it can never loop.
+- **SessionStart** injects `aidlc status` on startup, resume, clear, compaction and fork, so a fresh or compacted context re-reads the state instead of remembering it.
+- **Stop hook (`steer`):** when the lead tries to end its turn, the hook runs `aidlc next`. If the next action is autonomous (build, review, fix, merge) and no human gate is pending, it returns `decision: "block"` with that action as the `reason`. It lets the stop through when a human gate is pending, when the owner asked a question, or when `stop_hook_active` is true (already continuing because of a stop hook), so it can never loop. Claude Code also caps consecutive stop-hook continuations at 8, per the hooks reference.
 - The lead never decides what comes next on its own; drift back to free-form work is corrected at the next `next`.
 
 ## 3. Across intents: the retro
