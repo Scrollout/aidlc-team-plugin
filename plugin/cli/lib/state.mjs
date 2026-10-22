@@ -187,7 +187,10 @@ export function nextAction(st) {
   if (stale.length) return action('human', 'nextReapprove', { docs: ids(stale) });
 
   const intent = st.intents.find((i) => i.state !== 'released');
-  if (!intent && !st.intents.length && !st.units.length) return action('human', 'nextNoIntent', { dir: rel(config.grid.intents) });
+  if (!intent && !st.intents.length && !st.units.length) {
+    if (st.profile.adopted) return action('human', 'nextMigrate', { dir: rel(config.grid.intents), commit: String(st.profile.adopted).slice(0, 12) });
+    return action('human', 'nextNoIntent', { dir: rel(config.grid.intents) });
+  }
   if (intent && intent.state === 'draft') return action('human', 'nextApproveIntent', { intent: intent.id });
   if (intent && intent.state === 'approved' && !intent.units.length) return action('act', 'nextDraftUnits', { intent: intent.id, dir: rel(config.grid.units) });
 

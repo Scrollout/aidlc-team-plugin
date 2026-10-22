@@ -7,6 +7,12 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** First pilot fixes ([State](design/state.md), [Verification](design/verification.md)):
+  - owner commands print the runnable `node .aidlc/bin/aidlc.mjs` form;
+  - `next` asks for the migration intent in an adopted project with no intent;
+  - the gate no longer asks quick-lane units for AC tests, and their card now carries the ACs as "done when" and the out of scope;
+  - bundle-root interface links (`/intents/…`) render as repo paths on the card.
+  Release 0.10.1.
 - **Update** U11 built ([Board](design/board.md)): `aidlc sync` projects intents and units onto issues, sub-issues, labels and Project fields through `gh api`, writing only differences; `merge` runs it best-effort; `fix --from-issue` links a fix unit to its issue. A YAML fix: only a leading `0` makes an integer octal, so `12` is no longer read as 10. Release 0.10.0.
 - **Update** U11 design settled with the owner ([Board](design/board.md)):
   - `sync` closes merged units' issues, and `merge` runs it best-effort instead of writing a `Closes` trailer;

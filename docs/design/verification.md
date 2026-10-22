@@ -43,7 +43,7 @@ The guard matches a short deny list on parsed argv; it does not try to model the
 Fails with one line per problem, each naming the fix, unless all hold:
 1. Unit approved and not stale; deps merged.
 2. Diff inside the card's scope; lane at merge ≥ lane at start.
-3. Every AC has a test tagged `U-<n>/AC-<k>` in the diff or the base, at the level the AC declares. Full lane adds proof-revert: with the unit's production changes reverted, every AC test must fail.
+3. Every AC has a test tagged `U-<n>/AC-<k>` in the diff or the base, at the level the AC declares; a quick-lane unit owes no AC tests ([Unit card](unit-card.md#quick-lane)). Full lane adds proof-revert: with the unit's production changes reverted, every AC test must fail.
 4. Profile checks for the touched modules pass on the merged result.
 5. Reviewer verdict `pass` for the current diff hash, plus each required specialist (security is required when a security glob or content pattern matches).
 6. Bundle passes OKF validation.

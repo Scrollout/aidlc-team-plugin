@@ -178,9 +178,17 @@ test('U6/AC-7 fix writes a one-unit plan with a regression AC; quick needs no ap
   assert.match(run(dir, ['next']).out, /^build U-1/, 'quick lane: no approval');
 
   r = run(dir, ['fix', 'Rounding bug', '--scope', 'src/math/**']);
-  assert.match(r.out, /U-2-rounding-bug\.md, standard lane; the owner approves it: ! aidlc approve U-2/);
+  assert.match(r.out, /U-2-rounding-bug\.md, standard lane; the owner approves it: ! node \.aidlc\/bin\/aidlc\.mjs approve U-2/);
   r = run(dir, ['fix', 'Bad migration', '--scope', 'src/db/**']);
   assert.equal(r.code, 2);
   assert.match(r.out, /needs an intent/);
   assert.equal(run(dir, ['fix', 'No scope']).code, 64);
+});
+
+test('U6/AC-1 a quick-lane unit owes no AC tests: its card carries no ACs', () => {
+  const dir = setup({ unit: { scope: ['docs/guide/**'], modules: [] }, files: { 'docs/guide/a.md': '---\ntype: Note\ntitle: A\ndescription: A note.\ngenerated: { by: x/1, at: 2026-01-01T00:00:00Z }\n---\n\nText.\n' } });
+  assert.equal(JSON.parse(read(dir, '.git/aidlc/cards/U-1.json')).lane, 'quick');
+  const r = merge(dir);
+  assert.doesNotMatch(r.out, /GATE-AC/);
+  assert.equal(r.code, 0, r.out + r.err);
 });
