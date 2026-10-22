@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, utimesSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, symlinkSync, utimesSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { approve, commit, git, intentDoc, makeRepo, read, run, unitDoc, write } from './state-repo.mjs';
@@ -85,6 +85,9 @@ test('U7/AC-2 scope: in-scope writes pass, out-of-scope and merge-written files 
   assert.equal(decision(hook('scope', writeTool(wt, 'lib/x.mjs', '1;\n'))), 'allow', 'the card\'s scope wins over an older doc on the branch');
   rmSync(join(dir, '.git/aidlc/cards/U-1.json'));
   assert.match(reason(hook('scope', writeTool(wt, 'docs/log.md', 'x\n'))), /^SCOPE-SHARED docs\/log\.md is written by merge/);
+  const link = join(mkdtempSync(join(tmpdir(), 'link-')), 'wt');
+  symlinkSync(wt, link);
+  assert.match(reason(hook('scope', writeTool(link, 'lib/x.mjs', '1;\n'))), /^SCOPE-OUT lib\/x\.mjs/, 'a symlink in the session\'s path does not escape the scope');
   assert.equal(decision(hook('scope', writeTool(dir, 'lib/x.mjs', '1;\n'))), 'allow', 'outside a unit worktree there is no scope');
   assert.match(reason(hook('scope', writeTool(dir, '.aidlc/local/profile.json', '{}'))), /^SCOPE-APPROVAL/, 'only the owner delegates approvals');
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Entry point and adapter: dispatches subcommands, renders their data and maps errors to exit codes.
-// Values and messages come from cli.json; handlers return { code, findings, output } (decision 0006).
+// Entry point: dispatches subcommands, renders their data, maps errors to exit codes; handlers return { code, findings, output } (decision 0006).
+import { realpathSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { config, UsageError } from './lib/config.mjs';
 import { msg } from './lib/template.mjs';
@@ -59,6 +59,6 @@ export async function main(argv, io = { out: process.stdout, err: process.stderr
   }
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) { // import.meta.url is the real path
   process.exitCode = await main(process.argv.slice(2));
 }
