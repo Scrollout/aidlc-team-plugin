@@ -8,7 +8,7 @@ description: Run the AI-DLC loop in this repo - set it up, elaborate intents and
 
 1. Run `aidlc next`. It prints one action.
 2. Do that action and nothing else, then run `aidlc next` again.
-3. Exit code 2: the owner decides. Show them the line, with the command when it names one (they type it with `!`), and end the turn.
+3. Exit code 2: the owner decides. When the line names an owner command (`aidlc approve`, `aidlc upgrade`, `aidlc delegate`), run it: the owner answers a yes/no prompt on any device. Otherwise show them the line and end the turn.
 
 When a command or hook refuses, its message names the fix: apply it. When it says `escalate`, stop and tell the owner.
 

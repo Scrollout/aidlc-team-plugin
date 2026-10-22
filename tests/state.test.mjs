@@ -71,12 +71,12 @@ const SCENARIOS = {
     branch(dir, 'U-1');
     git(dir, 'merge', '-q', '--no-ff', '--no-commit', 'unit/U-1');
   }],
-  'stale approval': [/^re-approve U-1 after their edits: ! node \.aidlc\/bin\/aidlc\.mjs approve U-1/, 2, (dir) => {
+  'stale approval': [/^re-approve U-1 after their edits: aidlc approve U-1/, 2, (dir) => {
     approve(dir, 'I-1', 'U-1');
     commit(dir, 'edit', { [U(1)]: read(dir, U(1)) + '\nMore text.\n' });
   }],
-  'elaborating (intent not approved)': [/^ask the owner to approve I-1: ! node \.aidlc\/bin\/aidlc\.mjs approve I-1/, 2, () => {}],
-  'plan pending': [/^ask the owner to approve the plan: ! node \.aidlc\/bin\/aidlc\.mjs approve U-1 U-2$/, 2, (dir) => approve(dir, 'I-1')],
+  'elaborating (intent not approved)': [/^ask the owner to approve I-1: aidlc approve I-1/, 2, () => {}],
+  'plan pending': [/^ask the owner to approve the plan: aidlc approve U-1 U-2 \(the owner confirms the prompt\)$/, 2, (dir) => approve(dir, 'I-1')],
   reviewed: [/^merge U-1: aidlc merge U-1/, 0, (dir) => {
     approve(dir, 'I-1', 'U-1', 'U-2');
     branch(dir, 'U-1');
@@ -103,7 +103,7 @@ const SCENARIOS = {
     branch(dir, 'U-1');
     heartbeat(dir, 'U-1', 5 * 60 * 1000);
   }],
-  'building, fresh heartbeat': [/^wait for the builders of U-1$/, 0, (dir) => {
+  'building, fresh heartbeat': [/^wait for the builders and reviewers of U-1$/, 0, (dir) => {
     approve(dir, 'I-1', 'U-1', 'U-2');
     branch(dir, 'U-1');
     heartbeat(dir, 'U-1');
@@ -280,7 +280,7 @@ test('U4/AC-3 delegated approvals: the lead re-approves and approves quick units
   approve(dir, 'I-1', 'U-1');
   write(dir, { [U(1)]: read(dir, U(1)).replace('it works.', 'it works well.') });
   commit(dir, 'edit U-1');
-  assert.match(run(dir, ['next']).out, /^re-approve U-1 after their edits: ! node/);
+  assert.match(run(dir, ['next']).out, /^re-approve U-1 after their edits: aidlc approve U-1 \(the owner confirms the prompt\)/);
   assert.equal(run(dir, ['approve', '--auto', 'U-1']).code, 64, 'nothing delegated yet');
 
   write(dir, { '.aidlc/local/profile.json': { approvals: { auto: ['reapprove', 'quick'] } } });
@@ -305,4 +305,27 @@ test('U4/AC-1 a unit whose dependencies are unmerged is blocked, even with a bra
   branch(dir, 'U-2', 'b/x.txt');
   assert.match(run(dir, ['status']).out, /U-2 blocked/);
   assert.match(run(dir, ['next']).out, /^build U-1 /);
+});
+
+test('U4/AC-6 a review in flight makes next wait instead of asking for it again', () => {
+  const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['src/**'] }) });
+  approve(dir, 'I-1', 'U-1');
+  branch(dir, 'U-1');
+  run(dir, ['report', 'U-1'], '{"status": "done"}');
+  assert.match(run(dir, ['next']).out, /^review U-1, focus general/);
+  write(dir, { '.git/aidlc/reviewing/U-1': '' });
+  assert.match(run(dir, ['next']).out, /^wait for the builders and reviewers of U-1/);
+  const old = new Date(Date.now() - 10 * 60 * 1000);
+  utimesSync(join(dir, '.git/aidlc/reviewing/U-1'), old, old);
+  assert.match(run(dir, ['next']).out, /^review U-1, focus general/, 'a reviewer that went quiet is started again');
+});
+
+test('U4/AC-3 delegate writes the owner\'s delegation into the personal profile only', () => {
+  const dir = makeRepo({ ...I1 });
+  assert.equal(run(dir, ['delegate', 'everything']).code, 64);
+  assert.equal(run(dir, ['delegate', 'reapprove', 'quick']).code, 0);
+  assert.deepEqual(JSON.parse(read(dir, '.aidlc/local/profile.json')).approvals.auto, ['reapprove', 'quick']);
+  run(dir, ['delegate', 'off']);
+  assert.deepEqual(JSON.parse(read(dir, '.aidlc/local/profile.json')).approvals.auto, []);
+  assert.doesNotMatch(read(dir, '.aidlc/profile.json'), /approvals/);
 });

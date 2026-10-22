@@ -38,7 +38,7 @@ stateDiagram-v2
 
 # Approvals
 - Approval uses OKF's own trust field rather than an invented one. The owner runs `! aidlc approve <doc>`. It takes several docs (IDs or paths), so a plan is approved in one command. It keeps earlier `verified` events, appends `{ by: human:<git user.email>, at }`, sets `status: stable`, and writes `verified_hash`: sha256 of the body plus the parsed frontmatter as sorted JSON, without `verified`, `verified_hash`, `status`, `hold`, `priority` and `board` ([Board](board.md)). So reformatting the YAML, an owner hold or a board field does not make the doc stale. A quick-lane fix unit needs no approval.
-- Agents cannot approve: the guard denies `aidlc approve` from a tool call, and the scope hook denies any edit to `verified` or `verified_hash`. The `!` prefix runs outside the agent, so only the owner can, unless they delegated re-approvals or quick-lane units ([0008](../decisions/0008-delegated-approvals.md)).
+- Agents cannot approve: the guard denies `aidlc approve` from a tool call, and the scope hook denies any edit to `verified` or `verified_hash`. Only the owner approves, by `!` or prompt ([0009](../decisions/0009-approval-prompt.md)), or a class they delegated ([0008](../decisions/0008-delegated-approvals.md)).
 - Editing an approved doc makes it `stale`; `next` then asks for re-approval. Only intents, plans (units) and one-way-door decisions carry approvals, so this stays rare.
 
 # next

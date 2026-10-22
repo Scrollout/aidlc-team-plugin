@@ -47,7 +47,7 @@ test('U8/AC-2 the skill acts on aidlc next and restates no rule the CLI enforces
   assert.match(body, /Run `aidlc next`\. It prints one action\./);
   const fixes = [CLI.hooks.codes, CLI.gate.codes, CLI.okf?.codes ?? {}, CLI.grid?.codes ?? {}].flatMap((c) => Object.values(c).map((v) => v.fix));
   for (const fix of fixes) assert.ok(!body.includes(fix), fix);
-  for (const rule of ['--no-verify', 'force', 'git merge', 'git push', 'verified', 'scope', 'aidlc approve', 'index.md by hand']) {
+  for (const rule of ['--no-verify', 'force', 'git merge', 'git push', 'verified', 'scope', 'index.md by hand']) {
     assert.ok(!body.includes(rule), rule);
   }
 });

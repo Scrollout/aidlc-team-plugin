@@ -174,7 +174,7 @@ test('U6/AC-7 fix writes a one-unit plan with a regression AC; quick needs no ap
   assert.match(run(dir, ['next']).out, /^build U-1/, 'quick lane: no approval');
 
   r = run(dir, ['fix', 'Rounding bug', '--scope', 'src/math/**']);
-  assert.match(r.out, /U-2-rounding-bug\.md, standard lane; the owner approves it: ! node \.aidlc\/bin\/aidlc\.mjs approve U-2/);
+  assert.match(r.out, /U-2-rounding-bug\.md, standard lane; the owner approves it: aidlc approve U-2/);
   r = run(dir, ['fix', 'Bad migration', '--scope', 'src/db/**']);
   assert.equal(r.code, 2);
   assert.match(r.out, /needs an intent/);
@@ -193,7 +193,7 @@ test('U6/AC-1 a quick-lane unit owes no AC tests: its card carries no ACs', () =
 test('U6/AC-1 a quick-lane unit needs no review: its report makes it ready to merge', () => {
   const doc = { 'docs/guide/a.md': '---\ntype: Note\ntitle: A\ndescription: A note.\ngenerated: { by: x/1, at: 2026-01-01T00:00:00Z }\n---\n\nText.\n' };
   const dir = setup({ unit: { scope: ['docs/guide/**'], modules: [] }, files: doc, verdict: null });
-  assert.match(run(dir, ['next']).out, /^wait for the builders of U-1|^restart the builder of U-1/);
+  assert.match(run(dir, ['next']).out, /^wait for the builders and reviewers of U-1|^restart the builder of U-1/);
   run(dir, ['report', 'U-1'], '{"status": "done"}');
   assert.match(run(dir, ['next']).out, /^merge U-1/);
   assert.equal(merge(dir).code, 0);

@@ -18,6 +18,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 | `lane <unit>|--diff <range>` | the computed lane and why | lead, gate |
 | `card <unit>` | renders the unit card | lead |
 | `start <unit>` | in a builder's worktree: names the branch `unit/U-<n>`, checks the base matches the card | builder |
+| `delegate <class>…\|off` | lets the lead approve re-approvals and quick-lane units ([0008](../decisions/0008-delegated-approvals.md)) | owner (prompt or `!`) |
 | `approve [--auto] <doc>` | stamps approval | owner (`!`); `--auto` the lead, for what the owner delegated ([0008](../decisions/0008-delegated-approvals.md)) |
 | `review record <unit> <file\|->` | stores a reviewer verdict keyed by diff hash; `-` reads it from stdin | reviewer |
 | `report <unit>` | stores the builder's report (JSON on stdin) | builder |

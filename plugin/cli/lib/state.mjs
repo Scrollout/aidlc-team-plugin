@@ -68,7 +68,8 @@ export function approval(doc) {
 }
 
 // Approval classes the owner delegated to the lead; only the untracked personal layer counts (decision 0008).
-const delegated = (cwd) => list(readJson(join(cwd, config.layers.find((l) => l.name === 'personal').path))?.approvals?.auto);
+const personal = (cwd) => join(cwd, config.layers.find((l) => l.name === 'personal').path);
+const delegated = (cwd) => list(readJson(personal(cwd))?.approvals?.auto);
 
 // The latest human approval of a doc, in epoch ms (0 when none).
 export const approvedAt = (doc) => Math.max(0, ...events(doc.fm).filter((e) => String(e.by ?? '').startsWith(S.human)).map((e) => Date.parse(String(e.at)) || 0));
@@ -119,8 +120,8 @@ export function mergedUnits(cwd, base) {
   return out;
 }
 
-export function heartbeatFresh(cwd, unit, now = Date.now()) {
-  const file = join(aidlcDir(cwd), S.heartbeats, unit);
+export function heartbeatFresh(cwd, unit, now = Date.now(), kind = S.heartbeats) {
+  const file = join(aidlcDir(cwd), kind, unit);
   return existsSync(file) && now - statSync(file).mtimeMs < S.heartbeatMs;
 }
 
@@ -175,7 +176,9 @@ export function readState(cwd, { now = Date.now() } = {}) {
         const gate = readJson(runtimeFile(cwd, 'gates', u.id));
         state = gate?.diffHash === hash && gate.base === tryGit(cwd, 'rev-parse', base) ? 'gated' : 'reviewed';
       }
-      else if (has('pass') || (report && (!lastAt || report.at > lastAt) && Date.parse(report.at) > approvedAt(u.doc))) state = 'reported';
+      else if (has('pass') || (report && (!lastAt || report.at > lastAt) && Date.parse(report.at) > approvedAt(u.doc))) {
+        state = heartbeatFresh(cwd, u.id, now, S.reviewing) ? 'reviewing' : 'reported';
+      }
       else state = 'building';
     } else state = 'approved';
     return { ...u, lane, state, focus, fresh: heartbeatFresh(cwd, u.id, now), report, review };
@@ -235,7 +238,7 @@ export function nextAction(st) {
   const lost = scope.find((u) => u.state === 'building' && !u.fresh);
   if (lost) return action('act', 'nextRestart', { unit: lost.id, branch: branchOf(lost.id) });
 
-  const inFlight = scope.filter((u) => u.state === 'building');
+  const inFlight = scope.filter((u) => ['building', 'reviewing'].includes(u.state));
   const max = st.profile.parallel.max;
   const picked = [];
   const ready = scope.filter((u) => u.state === 'approved').sort((a, b) => priorityOf(b) - priorityOf(a) || byId(a, b));
@@ -334,6 +337,14 @@ export const commands = {
       out += msg('approved', { doc: relative(cwd, file) });
     }
     return done(out);
+  },
+
+  delegate(args, { cwd }) {
+    if (!args.length || args.some((a) => ![...S.auto, S.off].includes(a))) usage('delegateUsage');
+    const data = readJson(personal(cwd)) ?? {};
+    const auto = args.includes(S.off) ? [] : args;
+    writeJson(personal(cwd), { ...data, approvals: { ...data.approvals, auto } });
+    return done(msg('delegated', { classes: auto.join(', ') || S.off }));
   },
 
   hold: ([unit, off], { cwd }) => (unit && [undefined, S.off].includes(off) ? setField(cwd, unit, 'hold', off ? null : true) : usage('holdUsage')),
