@@ -20,14 +20,14 @@ const shell = (cwd, command) => spawnSync(command, { cwd, shell: true, encoding:
 const readJson = (file) => (existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null);
 
 // Paths only `merge` writes: bundle indexes and logs, and the profile's shared files.
-function mergeWritten(path, bundleRel, profile) {
+export function mergeWritten(path, bundleRel, profile) {
   const name = basename(path);
   return ((name === config.okf.index || name === config.okf.log) && matches(path, `/${bundleRel}/**`))
     || list(profile.shared).some((g) => matches(path, g));
 }
 
 // Paths a direct (non-unit) commit may touch: the bundle, .aidlc and the files init writes.
-function directAllowed(path, bundleRel) {
+export function directAllowed(path, bundleRel) {
   const init = config.init.files.map((f) => render(f.to, { bundle: bundleRel }));
   return matches(path, `/${bundleRel}/**`) || G.direct.some((g) => matches(path, '/' + g))
     || init.includes(path) || [config.init.gitignore, config.init.settings].includes(path);

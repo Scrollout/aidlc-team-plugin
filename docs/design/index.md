@@ -4,6 +4,7 @@
 * [CLI](cli.md) - The aidlc commands, their exit codes and the terse output format.
 * [Everyday paths](paths.md) - Fixes without an intent, changes mid-flight, shared files, pushing and base health, cleanup, adopting an existing project, and removing the plugin.
 * [Grid](grid.md) - The AI-DLC rows, the plan-execute-validate loop in each cell, lanes and the doc types each row produces.
+* [Hook mechanics](hooks.md) - How the plugin's hooks reach the pinned CLI, what each one checks, and how repeated denials escalate.
 * [Merge mechanics](gate.md) - How aidlc merge, push, fix and check --ci carry out the gate in Verification - the trial merge, the codes, shared files, proof-revert, architecture rules and the CI history check.
 * [OKF](okf.md) - How the plugin writes, indexes and validates OKF v0.2 bundles, following the official spec and its reference implementation.
 * [Overview](overview.md) - Goals, non-goals, budgets, repo layout and glossary of the plugin.

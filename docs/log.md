@@ -7,6 +7,13 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** U7 built ([Hook mechanics](design/hooks.md)): eight hooks through a wrapper that calls the project's pinned CLI (guard, scope, secrets, model, docs, heartbeat, steer, status), with escalation after three identical denials. Release 0.8.0.
+- **Creation** [Hook mechanics](design/hooks.md):
+  - the wrapper allows in projects without a profile;
+  - the deny lists;
+  - secret patterns moved to `profile.security.secrets`;
+  - steer lets a question through;
+  - denial counting for escalation.
 - **Update** U6 built ([Merge mechanics](design/gate.md)):
   - `merge` runs every gate condition on a trial merge in a temporary worktree, then fast-forwards the base;
   - `push` checks each new base commit;

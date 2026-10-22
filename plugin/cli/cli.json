@@ -316,7 +316,25 @@
     "pushed": "pushed {{base}} to {{remote}}\n",
     "fixWrote": "wrote {{path}}, {{lane}} lane{{#each approve}}; the owner approves it: ! aidlc approve {{this}}{{/each}}\n",
     "fixFull": "{{title}} is full lane ({{reason}}): it needs an intent, like any feature\n",
-    "fixUsage": "usage: fix \"<title>\" --scope <glob>… [--requirement R-<n>…]"
+    "fixUsage": "usage: fix \"<title>\" --scope <glob>… [--requirement R-<n>…]",
+    "hookDeny": "{{code}} {{message}} → {{fix}}",
+    "hookEscalate": "escalate: {{reason}} (denied {{count}} times this turn; stop and tell the owner)",
+    "guardForce": "force push",
+    "guardPush": "raw push of {{base}}",
+    "guardDelete": "deleting {{base}}",
+    "guardNoVerify": "commit without hooks",
+    "guardBaseCommit": "commit on {{base}} stages {{path}}",
+    "guardMerge": "raw merge of {{branch}}",
+    "guardApprove": "approvals are the owner's",
+    "guardRelease": "{{what}} needs the owner",
+    "scopeOut": "{{path}} is outside the scope of {{unit}}",
+    "scopeShared": "{{path}} is written by merge",
+    "scopeApproval": "{{path}}: approvals and verified_hash are the owner's",
+    "secretFound": "{{path}} contains what looks like a secret",
+    "modelUnit": "{{agent}} prompt names no unit",
+    "modelMismatch": "{{agent}} for {{unit}} uses {{model}}, the card says {{expected}}",
+    "docsErrors": "fix these OKF errors now:\n{{errors}}",
+    "statusResume": "Load the aidlc skill and run aidlc next.\n"
   },
   "okf": {
     "index": "index.md",
@@ -647,6 +665,116 @@
       },
       "PUSH-COMMIT": {
         "fix": "move the change into a unit; direct commits may touch only docs and workflow files"
+      }
+    }
+  },
+  "hooks": {
+    "names": [
+      "guard",
+      "scope",
+      "secrets",
+      "model",
+      "docs",
+      "heartbeat",
+      "steer",
+      "status"
+    ],
+    "agents": [
+      ":builder",
+      ":reviewer"
+    ],
+    "unitPattern": "\\bU-\\d+\\b",
+    "denials": "denials.json",
+    "escalateAt": 3,
+    "git": {
+      "globalWithValue": [
+        "-C",
+        "-c",
+        "--git-dir",
+        "--work-tree",
+        "--namespace"
+      ]
+    },
+    "force": [
+      "--force",
+      "-f",
+      "--force-with-lease",
+      "--force-if-includes"
+    ],
+    "noVerify": [
+      "--no-verify"
+    ],
+    "noVerifyShort": "n",
+    "deleteFlags": [
+      "--delete",
+      "-d",
+      "-D"
+    ],
+    "ask": [
+      [
+        "git",
+        "tag"
+      ],
+      [
+        "gh",
+        "release"
+      ]
+    ],
+    "cli": [
+      "aidlc",
+      "aidlc.mjs"
+    ],
+    "secrets": [
+      "AKIA[0-9A-Z]{16}",
+      "-----BEGIN [A-Z ]*PRIVATE KEY-----",
+      "\\bgh[pousr]_[A-Za-z0-9]{36,}",
+      "\\bxox[abprs]-[A-Za-z0-9-]{10,}",
+      "\\bsk-ant-[A-Za-z0-9_-]{20,}",
+      "\\bsk-[A-Za-z0-9]{32,}",
+      "(?:api[_-]?key|secret|token|password)\\s*[:=]\\s*[\"'][A-Za-z0-9/+_=-]{16,}[\"']"
+    ],
+    "codes": {
+      "GUARD-FORCE": {
+        "fix": "push without force; history on shared branches is never rewritten"
+      },
+      "GUARD-PUSH": {
+        "fix": "push the base with aidlc push"
+      },
+      "GUARD-BASE-DELETE": {
+        "fix": "the base branch is never deleted"
+      },
+      "GUARD-NOVERIFY": {
+        "fix": "commit with hooks; fix what they report"
+      },
+      "GUARD-BASE-COMMIT": {
+        "fix": "commit code only in a unit worktree; on the base commit only docs"
+      },
+      "GUARD-MERGE": {
+        "fix": "merge units with aidlc merge"
+      },
+      "GUARD-APPROVE": {
+        "fix": "only the owner approves, with ! aidlc approve"
+      },
+      "GUARD-RELEASE": {
+        "fix": "the owner confirms tags and releases"
+      },
+      "SCOPE-OUT": {
+        "fix": "stop and report; the lead widens the scope"
+      },
+      "SCOPE-SHARED": {
+        "fix": "leave indexes, logs and shared files to aidlc merge"
+      },
+      "SCOPE-APPROVAL": {
+        "fix": "only the owner approves, with ! aidlc approve"
+      },
+      "SECRET": {
+        "fix": "keep secrets out of the repo; read them from the environment"
+      },
+      "MODEL-UNIT": {
+        "fix": "name the unit U-<n> in the prompt and start it from its card"
+      },
+      "MODEL-MISMATCH": {
+        "fix": "pass the model the card names (aidlc card)"
       }
     }
   }

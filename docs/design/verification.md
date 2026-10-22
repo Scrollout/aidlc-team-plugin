@@ -31,13 +31,13 @@ Facts from the hooks reference this design relies on:[^cc-hooks]
 | guard | PreToolUse Bash | force push; `--no-verify` / `-n` on commit; `aidlc approve`; raw `git merge` of a `unit/*` branch into base; deleting the base |
 | scope | PreToolUse Edit/Write | in a `unit/*` worktree: writes outside the card's scope; anywhere: an edit adding or changing a `human:` `verified` entry or `verified_hash` |
 | docs | PostToolUse Edit/Write under the bundle | returns OKF errors for the edited file so the agent fixes them at once |
-| secrets | PreToolUse Edit/Write | content matching secret patterns (keys, tokens, private keys); `.aidlc/rules` can add patterns |
+| secrets | PreToolUse Edit/Write | content matching secret patterns (keys, tokens, private keys); `profile.security.secrets` adds patterns |
 | steer | Stop | ends of turn while `next` has an autonomous action and no human gate is pending (see [Steering](steering.md)) |
 | model | PreToolUse Agent | a builder or reviewer started with a `model` other than the card's |
 | status | SessionStart (startup, resume, clear, compact, fork) | nothing; injects `aidlc status` and the resume line (≤ 1,000 chars) |
 | heartbeat | PostToolUse, in a `unit/*` worktree | nothing; touches the unit's heartbeat file |
 
-The guard matches a short deny list on parsed argv; it does not try to model the shell.
+The guard matches a short deny list on parsed argv; it does not try to model the shell. Details: [Hook mechanics](hooks.md).
 
 # Merge gate: `aidlc merge U-<n>`
 Fails with one line per problem, each naming the fix, unless all hold:
