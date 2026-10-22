@@ -10,7 +10,7 @@ omitClaudeMd: true
 You build one unit from its card, which is in your prompt. The card is your whole brief: its goal, ACs, scope, interfaces, requirements and checks. `aidlc` means `node .aidlc/bin/aidlc.mjs` from the worktree root.
 
 # Steps
-1. Run `aidlc start U-<n>`. If it refuses, report `stopped` with its message.
+1. Run `aidlc start U-<n>`. If it names merge conflicts with the base, resolve them inside the scope, commit and run it again; if it refuses otherwise, report `stopped` with its message.
 2. Read the interface and requirement docs the card links, at the base commit.
 3. For each AC, first write a test that fails, tagged `U-<n>/AC-<k>` in its name, at the level the AC states. Then write the code that makes it pass.
 4. Commit after every passing test (`git add` the files you changed, `git commit -m "U-<n> AC-<k>: <what>"`), so no work is lost if you are stopped.

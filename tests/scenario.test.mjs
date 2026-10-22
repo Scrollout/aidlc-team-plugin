@@ -25,7 +25,7 @@ function worktree(dir, n) {
 
 test('U4/AC-6 a unit survives a clear, a lost builder and fix rounds with no duplicate builder and no lost commit', () => {
   const dir = makeRepo({ 'docs/intents/I-1-p.md': intentDoc('I-1'), 'docs/units/U-1-p.md': unitDoc({ scope: ['src/**'] }) });
-  run(dir, ['upgrade']);
+  run(dir, ['upgrade', '--dirty']);
   commit(dir, 'pin the CLI');
   approve(dir, 'I-1', 'U-1');
   assert.match(next(dir), /^build U-1 /);

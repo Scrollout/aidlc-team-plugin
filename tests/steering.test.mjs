@@ -11,7 +11,7 @@ const I1 = { 'docs/intents/I-1-pricing.md': intentDoc('I-1') };
 
 function project(docs, profile) {
   const dir = makeRepo({ ...I1, ...docs, '.gitignore': '.aidlc/local/\n' }, profile); // as init writes it
-  assert.equal(run(dir, ['upgrade']).code, 0);
+  assert.equal(run(dir, ['upgrade', '--dirty']).code, 0);
   commit(dir, 'pin the CLI');
   return dir;
 }

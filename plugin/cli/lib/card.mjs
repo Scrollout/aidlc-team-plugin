@@ -157,6 +157,14 @@ export const commands = {
         git(cwd, 'switch', '-q', branch);
       } else git(cwd, 'branch', '-m', branch);
     }
+    // A restarted builder sees what was merged since: the card's base goes into an older branch first.
+    if (tryGit(cwd, 'merge-base', '--is-ancestor', record.base, 'HEAD') === null) {
+      if (tryGit(cwd, 'merge', '-q', '--no-edit', '-m', msg('startMergeMessage', { base: record.base.slice(0, 12), branch }), record.base) === null) {
+        const files = (tryGit(cwd, 'diff', '--name-only', '--diff-filter=U') ?? '').split('\n').filter(Boolean);
+        return done(msg('startConflict', { branch, base: record.base, files: files.join(', ') }), config.exit.findings);
+      }
+      return done(msg('startMerged', { branch, base: record.base }));
+    }
     return done(msg('started', { branch, base: record.base }));
   },
 };

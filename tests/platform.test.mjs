@@ -15,7 +15,7 @@ function spaced() {
   mkdirSync(parent);
   const dir = makeRepo({ 'docs/intents/I-1-pricing.md': intentDoc('I-1'), [U1]: unitDoc({ scope: ['src/**'] }) }, {}, parent);
   approve(dir, 'I-1', 'U-1');
-  assert.equal(run(dir, ['upgrade']).code, 0, 'pins the CLI for the hooks');
+  assert.equal(run(dir, ['upgrade', '--dirty']).code, 0, 'pins the CLI for the hooks');
   commit(dir, 'pin the CLI');
   return dir;
 }

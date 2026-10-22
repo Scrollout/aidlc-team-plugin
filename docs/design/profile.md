@@ -3,6 +3,10 @@ type: Design
 title: Profile and templates
 description: The project profile, rule layers, the template engine and how the CLI is vendored and pinned.
 status: draft
+sources:
+  - id: aws-aidlc
+    resource: https://github.com/awslabs/aidlc-workflows/blob/main/docs/guide/glossary.md
+    title: AWS AI-DLC glossary (copy and native channels)
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 ---
 
@@ -61,4 +65,6 @@ Merge rules:
 - Neutral by construction: templates never contain the plugin's name; a test greps rendered output.
 
 # Vendoring
-`init` and `upgrade` copy `plugin/cli/` to `.aidlc/bin/` with a `VERSION` file holding the plugin version. `upgrade` replaces `.aidlc/bin/` and nothing else, refuses to run from the pinned copy itself, and refuses an older plugin than the pinned `VERSION` unless the owner passes `--downgrade`. CI, git hooks and the plugin's own hooks run `node .aidlc/bin/aidlc.mjs`, so the project's pinned version is the one that judges it.
+`init` and `upgrade` copy `plugin/cli/` to `.aidlc/bin/` with a `VERSION` file holding the plugin version. `upgrade` replaces `.aidlc/bin/` and nothing else, refuses to run from the pinned copy itself, and refuses an older plugin than the pinned `VERSION` unless the owner passes `--downgrade`. It copies a release: the installed plugin, which Claude Code copies from a tagged version, or a plugin checkout with no uncommitted change under its plugin folder; a dirty checkout is refused unless the owner passes `--dirty`, as when developing the plugin itself. AWS AI-DLC likewise installs only from a versioned release.[^aws-aidlc] CI, git hooks and the plugin's own hooks run `node .aidlc/bin/aidlc.mjs`, so the project's pinned version is the one that judges it.
+
+[^aws-aidlc]: AWS AI-DLC glossary (copy and native channels)
