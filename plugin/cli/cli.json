@@ -197,7 +197,24 @@
     "yamlTrailing": "line {{line}}: unexpected text after a value",
     "yamlUnsupported": "line {{line}}: unsupported YAML feature {{char}}",
     "yamlBlock": "line {{line}}: bad block scalar",
-    "flagNotBuilt": "{{name}} is not implemented yet"
+    "flagNotBuilt": "{{name}} is not implemented yet",
+    "depUnknown": "{{unit}} depends on {{dep}}, which does not exist",
+    "depCycle": "depends cycle {{cycle}}",
+    "acDuplicate": "{{ac}} appears more than once in {{unit}}",
+    "acNoLevel": "{{ac}} has no level",
+    "acBadLevel": "{{ac}} level {{level}} is not one of {{levels}}",
+    "reserveMalformed": "reservation {{reserve}} is not <kind> <area>/<n>",
+    "reserveKind": "reservation kind {{kind}} is not in profile.reserve",
+    "reserveDuplicate": "{{reserve}} is also reserved by {{other}}",
+    "scopeMissing": "{{unit}} has no scope",
+    "scopeOverlap": "{{unit}} scope {{glob}} overlaps {{other}} scope {{otherGlob}} with no depends path between them",
+    "laneLine": "{{lane}} {{reason}}\n",
+    "laneFull": "{{item}} overlaps {{source}} {{glob}}",
+    "laneQuick": "every path is inside lanes.quick",
+    "laneStandard": "{{item}} is outside lanes.quick and overlaps no full or focus glob",
+    "laneEmpty": "nothing to match",
+    "laneUsage": "usage: lane <unit>|--diff <range>",
+    "unknownUnit": "no unit {{name}} in {{dir}}"
   },
   "okf": {
     "bundle": "docs",
@@ -275,6 +292,40 @@
       "PROFILE-RULE": {
         "level": "error",
         "fix": "set docs.rules entries to a HOUSE-* code and one of error, warning, off"
+      }
+    }
+  },
+  "grid": {
+    "units": "units",
+    "intents": "intents",
+    "unitFile": "^(U-\\d+)(?:-[^/]*)?\\.md$",
+    "intentFile": "^(I-\\d+)(?:-[^/]*)?\\.md$",
+    "dropped": "dropped",
+    "defaultLevels": [
+      "unit",
+      "integration",
+      "e2e"
+    ],
+    "codes": {
+      "PLAN-DAG": {
+        "level": "error",
+        "fix": "remove the cycle or point depends at an existing unit"
+      },
+      "PLAN-AC": {
+        "level": "error",
+        "fix": "give each AC in the unit its own AC-<k>"
+      },
+      "PLAN-LEVEL": {
+        "level": "error",
+        "fix": "write - AC-<k> (<level>): with a level from profile.levels"
+      },
+      "PLAN-RESERVE": {
+        "level": "error",
+        "fix": "use <kind> <area>/<n> with a kind from profile.reserve and a number no other unit holds"
+      },
+      "PLAN-SCOPE": {
+        "level": "error",
+        "fix": "give the unit a scope, narrow the scopes, or add a depends between the units"
       }
     }
   }

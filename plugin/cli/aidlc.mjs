@@ -5,12 +5,24 @@ import { pathToFileURL } from 'node:url';
 import { config, UsageError } from './lib/config.mjs';
 import { msg } from './lib/template.mjs';
 import { commands as okf } from './lib/okf.mjs';
+import { commands as grid } from './lib/grid.mjs';
 
 export const EXIT = config.exit;
 export { UsageError };
 
+// Runs handlers in order and merges their results; the highest exit code wins.
+const combine = (...handlers) => async (args, ctx) => {
+  const results = [];
+  for (const h of handlers) results.push(await h(args, ctx));
+  return {
+    code: Math.max(...results.map((r) => r.code)),
+    findings: results.flatMap((r) => r.findings),
+    output: results.map((r) => r.output).join(''),
+  };
+};
+
 // Each unit that builds a command adds its handler here, keyed by the command name in cli.json.
-const HANDLERS = { ...okf };
+const HANDLERS = { ...okf, lane: grid.lane, check: combine(okf.check, grid.check) };
 
 export function help() {
   const width = Math.max(...config.commands.map((c) => c.usage.length));

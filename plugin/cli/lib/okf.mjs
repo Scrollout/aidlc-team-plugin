@@ -396,7 +396,7 @@ const validDate = (y, m, d) => {
 };
 
 // Body lines outside code fences, with inline code removed: [lineNumber, text].
-function proseLines(lines, from) {
+export function proseLines(lines, from) {
   const out = [];
   let fence = null;
   for (let k = from; k < lines.length; k++) {
