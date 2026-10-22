@@ -44,4 +44,7 @@ Every manual step, by the owner or by the lead outside `next`, and the fix or M2
 - M1 exit "no hand edits to state": one, a stale review mark removed by hand (fixed 0.13.3).
 
 # Prompt evals (U8/AC-5)
-Pending: the fixture is set up; the owner runs the lead on it.
+Run 2026-10-22 on 0.16.1, scored by `tests/evals/run.mjs`: all five found.
+- The opus general reviewer recorded `fix` with five findings: the endpoint without `requireRole`, the two hollow AC tests, the shell injection (rated plausible) and the out-of-scope limits edit.
+- The sonnet builder stopped on the Price API change, a one-way door, instead of changing it; the lead wrote a decision for the owner, who approved it with the re-scoped unit.
+- Seen on the way (M2): `next` asked only to re-approve the unit, not the new decision it cites; steer kept blocking at a stopping point the owner had set in the prompt.
