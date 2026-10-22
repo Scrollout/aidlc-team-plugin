@@ -12,7 +12,7 @@ sources:
 
 # Wiring
 - `plugin/hooks/hooks.json` runs `node ${CLAUDE_PLUGIN_ROOT}/hooks/run.mjs <name>` in exec form.[^cc-hooks] The wrapper finds the project from the hook input's `cwd` (the folder holding `.aidlc/profile.json`) and runs `node .aidlc/bin/aidlc.mjs hook <name>` there, so the project's pinned CLI judges it. A `cwd` outside any work tree, such as `.git/aidlc`, is judged from the project folder, so a session that wandered there can still `cd` out.
-- A folder without `.aidlc/profile.json` is not managed: every hook allows. A managed project whose pinned CLI is missing gets a deny from every blocking hook.
+- A folder without `.aidlc/profile.json` is not managed: every hook allows. A managed project whose pinned CLI is missing gets a deny from every PreToolUse hook, naming the owner's `!` command that restores it from the plugin (a hook cannot judge it, and the lead cannot run it past the guard). The other hooks let the event pass, so the Stop hook cannot block every turn end.
 - Blocking hooks (guard, scope, secrets, model) set `timeout: 10` and `onFailure: "block"`; a hook that cannot run denies. Each prints JSON and exits 0: `permissionDecision: "deny"` with `CODE message → fix` as the reason.
 
 # Checks
