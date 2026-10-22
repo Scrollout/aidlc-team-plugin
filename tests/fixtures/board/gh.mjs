@@ -59,6 +59,7 @@ if (args[1] === 'graphql') {
   else if (path === `repos/${s.repo}`) reply({ owner: { type: s.ownerType ?? 'User' } });
   else if (parts[0] === 'milestones') {
     if (method === 'GET') reply(slice(s.milestones));
+    else if (method === 'POST' && body.due_on === null) { process.stderr.write("Invalid request. For 'properties/due_on', nil is not a string. (HTTP 422)\n"); process.exit(1); }
     else if (method === 'POST') { const m = { number: s.milestones.length + 1, ...body }; s.milestones.push(m); reply(m); }
     else { const m = s.milestones.find((x) => x.number === Number(parts[1])); Object.assign(m, body); reply(m); }
   } else if (parts[0] === 'labels') {

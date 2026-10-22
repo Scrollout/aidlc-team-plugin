@@ -143,7 +143,7 @@ test('U11/AC-1 sync sets assignees, a milestone per intent and the issue type; t
   assert.equal(item(ctx, u2.number).values.Wave, 2, 'U-2 depends on U-1');
 
   const user = setup();
-  aidlc(user, 'sync');
+  assert.equal(aidlc(user, 'sync').code, 0, 'an intent without a target gets a milestone with no due date');
   assert.ok(stub(user).issues.every((i) => !i.type), 'no issue types on a personal repository');
   assert.equal(aidlc(user, 'sync').out, 'the board is in sync\n');
 });

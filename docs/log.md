@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** `sync` creates the milestone of an intent with no target without a due date, which GitHub requires to be absent rather than null. Release 0.16.1.
 - **Update** [Board](design/board.md): plan lint requires the board values the profile maps (`PLAN-BOARD`), `board.wave` is derived from dependencies, and `sync` sets assignees, a milestone per intent and the issue type (owner's choices after the pilot board showed only Status). The CLI budget rises to 2,600 lines for it ([Overview](design/overview.md)). Release 0.16.0.
 - **Update** A hook whose `cwd` is outside any work tree (a shell left in `.git/aidlc`) judges from the project folder instead of failing, which had blocked every Bash call, `cd` included (pilot finding, [Hooks](design/hooks.md)). Release 0.15.1.
 - **Update** The marketplace is `scrollout.net`, so the install id is `aidlc-team@scrollout.net` (owner's request; remove the old `aidlc-team` marketplace and add the repo again). `sync` matches the oldest issue with a marker, and lists the issues once more before creating one, after a merge's sync duplicated a whole board (pilot finding, [Board](design/board.md)). Release 0.15.0.
