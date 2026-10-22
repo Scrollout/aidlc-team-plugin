@@ -22,6 +22,8 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
   "security": { "content": ["os/exec", "crypto/", "password", "jwt"], "threatModel": "docs/threat-model.md", "check": ["make gate-trivy"] },
   "reserve": { "migration": { "dir": "migrations/{area}", "pattern": "{n:4}_*.sql" } },
   "parallel": { "max": 3 },
+  "architecture": { "graph": "make deps-graph", "boundaries": [{ "from": "internal/core/**", "deny": ["internal/providers/**"] }], "checks": ["make contract-check"] },
+  "adopted": "<commit where init --adopt ran>",
   "deploy": { "check": ["make image"] },
   "release": "make release"
 }

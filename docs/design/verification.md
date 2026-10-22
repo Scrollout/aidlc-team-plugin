@@ -48,6 +48,7 @@ Fails with one line per problem, each naming the fix, unless all hold:
 5. Reviewer verdict `pass` for the current diff hash, plus each required specialist (security is required when a security glob or content pattern matches).
 6. Bundle passes OKF validation.
 7. Profile `security.check` commands pass when set (e.g. secret scan, SAST, dependency audit such as gitleaks, semgrep, govulncheck); the plugin runs them, it does not ship them.
+8. Architecture: no denied dependency edge and every `architecture.checks` command passes, on every merge ([Architecture](architecture.md)).
 On success: `git merge --no-ff` with trailers `Unit: U-<n>`, `Card: <hash>`, `Review: pass`.
 
 # Reviewer contract
