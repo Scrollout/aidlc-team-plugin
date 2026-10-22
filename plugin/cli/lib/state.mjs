@@ -8,7 +8,7 @@ import { config, done, isMap, list, readJson, UsageError, relPath } from './conf
 import { msg } from './template.mjs';
 import { loadProfile } from './profile.mjs';
 import { parseDoc } from './okf.mjs';
-import { computeLane, overlaps, readPlan, reqId as reqIdOf } from './grid.mjs';
+import { acsOf, computeLane, overlaps, readPlan, reqId as reqIdOf } from './grid.mjs';
 
 const S = config.state;
 
@@ -71,6 +71,25 @@ export function approval(doc) {
 const personal = (cwd) => join(cwd, config.layers.find((l) => l.name === 'personal').path);
 const delegated = (cwd) => list(readJson(personal(cwd))?.approvals?.auto);
 
+// The owner's run mode and the last owner prompt, as status shows them (docs/design/approvals.md#owner-prompts).
+export function ownerLines(cwd) {
+  const run = readJson(personal(cwd))?.run;
+  const prompt = readJson(join(aidlcDir(cwd), config.hooks.prompts))?.at(-1);
+  return (run ? msg('statusRun', { run: msg('runLine', { mode: run.mode, stop: list(run.stop), report: list(run.report) }) }) : '')
+    + (prompt ? msg('statusPrompt', { command: prompt.command, state: prompt.ran ? config.hooks.promptStates[1] : config.hooks.promptStates[0], at: prompt.ran ?? prompt.at }) : '');
+}
+
+// The text of a doc as last approved: the newest commit of it whose content matches its verified_hash.
+function approvedText(cwd, file, hash) {
+  const path = relPath(git(cwd, 'rev-parse', '--show-toplevel'), file);
+  for (const sha of (tryGit(cwd, 'log', '--format=%H', '--', path) ?? '').split('\n').filter(Boolean)) {
+    const text = execFileSync('git', ['show', `${sha}:${path}`], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }); // untrimmed: the hash covers the last newline
+    if (hashDoc(parseDoc(text)) === hash) return text;
+  }
+  return null;
+}
+const acLines = (doc) => acsOf(doc).map((a) => a.text.trim()).join('\n');
+
 // The latest approval of a doc by one of `by`, in epoch ms (0 when none). Answering an escalation takes the
 // owner (human: only); a delegated re-approval of a fixed spec is enough to restart a stopped builder.
 export const approvedAt = (doc, by = S.approvers) => Math.max(0, ...events(doc.fm).filter((e) => by.some((b) => String(e.by ?? '').startsWith(b))).map((e) => Date.parse(String(e.at)) || 0));
@@ -121,10 +140,11 @@ export function mergedUnits(cwd, base) {
   return out;
 }
 
-export function heartbeatFresh(cwd, unit, now = Date.now(), kind = S.heartbeats) {
+export const heartbeatAt = (cwd, unit, kind = S.heartbeats) => {
   const file = join(aidlcDir(cwd), kind, unit);
-  return existsSync(file) && now - statSync(file).mtimeMs < S.heartbeatMs;
-}
+  return existsSync(file) ? statSync(file).mtimeMs : 0;
+};
+export const heartbeatFresh = (cwd, unit, now = Date.now(), kind = S.heartbeats) => now - heartbeatAt(cwd, unit, kind) < S.heartbeatMs;
 
 function mergeInProgress(cwd, units) {
   const head = tryGit(cwd, 'rev-parse', '-q', '--verify', 'MERGE_HEAD');
@@ -156,8 +176,10 @@ export function readState(cwd, { now = Date.now() } = {}) {
     if (merged.has(u.id)) state = 'merged';
     else if (needsApproval && approvalState !== 'approved') state = approvalState;
     // A builder that stopped hands the unit back to the lead until the owner re-approves its fixed spec.
+    // A builder launched after the stop report has taken over: the unit reads as building.
     else if (report?.status === S.stopped && Date.parse(report.at) > approvedAt(u.doc)
-      && !(review?.rounds ?? []).some((r) => r.at > report.at)) state = 'stopped';
+      && !(review?.rounds ?? []).some((r) => r.at > report.at)
+      && !(heartbeatFresh(cwd, u.id, now) && heartbeatAt(cwd, u.id) > Date.parse(report.at))) state = 'stopped';
     else if (!u.depends.every((d) => merged.has(d))) state = 'blocked';
     else if (branches.has(branchOf(u.id))) {
       // The last verdict of each required focus, counted only while it is for the current diff.
@@ -177,7 +199,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
         const gate = readJson(runtimeFile(cwd, 'gates', u.id));
         state = gate?.diffHash === hash && gate.base === tryGit(cwd, 'rev-parse', base) ? 'gated' : 'reviewed';
       }
-      else if (has('pass') || (report && (!lastAt || report.at > lastAt) && Date.parse(report.at) > approvedAt(u.doc))) {
+      else if (has('pass') || (report && report.status !== S.stopped && (!lastAt || report.at > lastAt) && Date.parse(report.at) > approvedAt(u.doc))) {
         state = heartbeatFresh(cwd, u.id, now, S.reviewing) ? 'reviewing' : 'reported';
       }
       else state = 'building';
@@ -216,60 +238,99 @@ export function openPoints(doc) {
   return [...points];
 }
 
-export function nextAction(st) {
-  const rel = (dir) => relPath(st.cwd, join(st.bundle, dir)) || dir;
-  if (st.mergeUnit) return action('act', 'nextContinueMerge', { unit: st.mergeUnit });
-
-  const stale = [...st.requirements, ...st.intents, ...st.units].filter((d) => d.state === 'stale');
-  if (stale.length) return action(...(st.auto.includes(S.auto[0]) ? ['act', 'nextAutoApprove'] : ['human', 'nextReapprove']), { docs: ids(stale) });
-  const open = [...st.requirements, ...st.intents, ...st.units].filter((d) => d.state === 'draft').map((d) => ({ d, points: openPoints(d.doc) })).find((x) => x.points.length);
-  if (open) return action('human', 'nextOpenDraft', { doc: open.d.id, points: open.points.join(', '), file: relPath(st.cwd, open.d.file) });
-
-  const unreleased = st.intents.find((i) => i.state === 'merged'); // its release does not hold back the next intent
-  const intent = st.intents.find((i) => !['released', 'merged'].includes(i.state)) ?? unreleased;
-  if (!intent && !st.intents.length && !st.units.length) {
-    if (st.profile.adopted) return action('human', 'nextMigrate', { dir: rel(config.grid.intents), commit: String(st.profile.adopted).slice(0, 12) });
-    return action('human', 'nextNoIntent', { dir: rel(config.grid.intents) });
+// Draft Decision docs the units' bodies link to: approved with the units (docs/design/approvals.md).
+function citedDecisions(st, units) {
+  const out = new Set();
+  for (const u of units) {
+    for (const [, link] of u.doc.lines.slice(u.doc.body).join('\n').matchAll(/\]\(([^)#\s]+\.md)(?:#[^)]*)?\)/g)) {
+      const file = link.startsWith('/') ? join(st.bundle, link) : resolve(dirname(u.file), link);
+      const doc = existsSync(file) ? parseDoc(readFileSync(file, 'utf8')) : null;
+      if (doc?.fm?.type === S.decisionType && approval(doc) === 'draft') out.add(relPath(st.cwd, file));
+    }
   }
-  if (intent && intent.state === 'draft') return action('human', 'nextApproveIntent', { intent: intent.id });
-  if (intent && intent.state === 'approved' && !intent.units.length) return action('act', 'nextDraftUnits', { intent: intent.id, dir: rel(config.grid.units) });
+  return [...out];
+}
 
-  const scope = st.units.filter((u) => !u.fm.intent || u.fm.intent === intent?.id);
+// The owner gate of steps 2-5 (docs/design/state.md#next) and the docs it waits on, or the lead's own step.
+function gateOf(st, intent, scope) {
+  const rel = (dir) => relPath(st.cwd, join(st.bundle, dir)) || dir;
+  const gate = (key, docs, data, kind = 'human') => ({ action: action(kind, key, data), docs: new Set(docs) });
+  const stale = [...st.requirements, ...st.intents, ...st.units].filter((d) => d.state === 'stale');
+  if (stale.length) {
+    const decisions = citedDecisions(st, stale.filter((d) => st.units.includes(d)));
+    const docs = [ids(stale), ...decisions].join(' ');
+    return gate(...(st.auto.includes(S.auto[0]) && !decisions.length ? ['nextAutoApprove', stale.map((d) => d.id), { docs }, 'act'] : ['nextReapprove', stale.map((d) => d.id), { docs }]));
+  }
+  const open = [...st.requirements, ...st.intents, ...st.units].filter((d) => d.state === 'draft').map((d) => ({ d, points: openPoints(d.doc) })).find((x) => x.points.length);
+  // An open conversation with the owner comes before any unit work: no docs, so nothing counts as independent.
+  if (open) return gate('nextOpenDraft', [], { doc: open.d.id, points: open.points.join(', '), file: relPath(st.cwd, open.d.file) });
+  if (!intent && !st.intents.length && !st.units.length) {
+    if (st.profile.adopted) return gate('nextMigrate', [], { dir: rel(config.grid.intents), commit: String(st.profile.adopted).slice(0, 12) });
+    return gate('nextNoIntent', [], { dir: rel(config.grid.intents) });
+  }
+  if (intent && intent.state === 'draft') return gate('nextApproveIntent', [intent.id], { intent: intent.id });
+  if (intent && intent.state === 'approved' && !intent.units.length) return gate('nextDraftUnits', [], { intent: intent.id, dir: rel(config.grid.units) }, 'act');
   const cited = new Set([...(intent?.requirements ?? []), ...scope.filter((u) => u.state !== 'merged').flatMap((u) => u.requirements)]);
   const draftReqs = st.requirements.filter((r) => r.state === 'draft' && cited.has(r.id));
-  if (draftReqs.length) return action('human', 'nextApproveRequirements', { reqs: ids(draftReqs) });
+  if (draftReqs.length) return gate('nextApproveRequirements', draftReqs.map((r) => r.id), { reqs: ids(draftReqs) });
   const drafts = scope.filter((u) => u.state === 'draft');
-  if (drafts.length) return action(...(st.auto.includes(S.auto[1]) && drafts.every((u) => u.lane === 'quick') ? ['act', 'nextAutoApprove'] : ['human', 'nextApprovePlan']), { docs: ids(drafts), units: ids(drafts) });
+  if (!drafts.length) return null;
+  const decisions = citedDecisions(st, drafts);
+  const docs = [ids(drafts), ...decisions].join(' ');
+  const auto = st.auto.includes(S.auto[1]) && drafts.every((u) => u.lane === 'quick') && !decisions.length;
+  return gate(auto ? 'nextAutoApprove' : 'nextApprovePlan', drafts.map((u) => u.id), { docs, units: docs }, auto ? 'act' : 'human');
+}
 
+// Steps 6-12 for the given units; a held unit gets no action until the hold is released.
+function unitWork(st, scope) {
   const merged = (id) => st.units.find((x) => x.id === id)?.state === 'merged';
-  const reviewed = scope.find((u) => u.state === 'reviewed' && !u.fm.hold && u.depends.every(merged));
+  const live = scope.filter((u) => !u.fm.hold);
+  const reviewed = live.find((u) => u.state === 'reviewed' && u.depends.every(merged));
   if (reviewed) return action('act', 'nextMerge', { unit: reviewed.id });
-  const gated = scope.find((u) => u.state === 'gated');
+  const gated = live.find((u) => u.state === 'gated');
   if (gated) return action('human', 'nextGated', { unit: gated.id, codes: readJson(runtimeFile(st.cwd, 'gates', gated.id)).codes.join(', ') });
-  const escalated = scope.find((u) => u.state === 'escalated');
+  const escalated = live.find((u) => u.state === 'escalated');
   if (escalated) return action('human', 'nextEscalated', { unit: escalated.id });
-  const stopped = scope.find((u) => u.state === 'stopped');
+  const stopped = live.find((u) => u.state === 'stopped');
   if (stopped) return action('act', 'nextStopped', { unit: stopped.id, reason: String(stopped.report.stop ?? stopped.report.summary ?? '') });
-  const fix = scope.find((u) => u.state === 'fix');
+  const fix = live.find((u) => u.state === 'fix');
   if (fix) return action('act', 'nextFixRound', { unit: fix.id });
-  const reported = scope.find((u) => u.state === 'reported');
+  const reported = live.find((u) => u.state === 'reported');
   if (reported) return action('act', 'nextReview', { unit: reported.id, focus: reported.focus, model: st.profile.models.review });
-  const lost = scope.find((u) => u.state === 'building' && !u.fresh);
+  const lost = live.find((u) => u.state === 'building' && !u.fresh);
   if (lost) return action('act', 'nextRestart', { unit: lost.id, branch: branchOf(lost.id) });
 
   const inFlight = scope.filter((u) => ['building', 'reviewing'].includes(u.state));
   const max = st.profile.parallel.max;
   const picked = [];
-  const ready = scope.filter((u) => u.state === 'approved').sort((a, b) => priorityOf(b) - priorityOf(a) || byId(a, b));
-  for (const u of ready.filter((x) => !x.fm.hold)) {
+  const ready = live.filter((u) => u.state === 'approved').sort((a, b) => priorityOf(b) - priorityOf(a) || byId(a, b));
+  for (const u of ready) {
     if (inFlight.length + picked.length >= max) break;
     const clash = [...inFlight, ...picked].some((o) => u.scope.some((g) => o.scope.some((h) => overlaps(g, h))));
     if (!clash) picked.push(u);
   }
   if (picked.length) return action('act', 'nextBuild', { units: picked.map((u) => u.id).join(', '), cards: picked.map((u) => `aidlc card ${u.id}`).join(', ') });
   if (inFlight.length) return action('wait', 'nextWait', { units: inFlight.map((u) => u.id).join(', ') });
-  const held = scope.filter((u) => u.fm.hold && ['approved', 'reviewed'].includes(u.state));
-  if (held.length) return action('human', 'nextHeld', { units: held.map((u) => u.id).join(', ') });
+  const held = scope.filter((u) => u.fm.hold && u.state !== 'merged');
+  if (held.length) return action('human', 'nextHeld', { units: held.map((u) => (u.fm.hold === true ? u.id : msg('heldReason', { unit: u.id, reason: u.fm.hold }))).join(', ') });
+  return null;
+}
+
+export function nextAction(st) {
+  if (st.mergeUnit) return action('act', 'nextContinueMerge', { unit: st.mergeUnit });
+  const unreleased = st.intents.find((i) => i.state === 'merged'); // its release does not hold back the next intent
+  const intent = st.intents.find((i) => !['released', 'merged'].includes(i.state)) ?? unreleased;
+  const scope = st.units.filter((u) => !u.fm.intent || u.fm.intent === intent?.id);
+  const gate = gateOf(st, intent, scope);
+  if (gate?.action.kind === 'act') return gate.action;
+  if (gate) {
+    // Units that do not wait on the gate's docs go first, so builders run while the owner answers.
+    const waits = (u) => [u.id, u.fm.intent, ...u.requirements, ...u.depends].some((d) => gate.docs.has(d));
+    const work = unitWork(st, gate.docs.size ? scope.filter((u) => !waits(u)) : []);
+    return work?.kind === 'act' ? work : gate.action;
+  }
+  const work = unitWork(st, scope);
+  if (work) return work;
   if (unreleased) return action('human', 'nextRelease', { intent: unreleased.id });
   return action('human', 'nextIdle');
 }
@@ -322,7 +383,7 @@ export const commands = {
     const delivered = new Set(st.units.filter((u) => u.state === 'merged').flatMap((u) => u.requirements));
     const open = st.requirements.filter((r) => !delivered.has(r.id));
     const tail = (open.length ? msg('statusUncovered', { reqs: ids(open) }) : '') + msg('statusNext', { line: next.line });
-    let out = '';
+    let out = ownerLines(cwd);
     for (let k = 0; k < lines.length; k++) {
       const more = msg('statusMore', { count: lines.length - k });
       if ((out + lines[k] + more + tail).length > S.statusMax) { out += more; break; }
@@ -352,6 +413,10 @@ export const commands = {
       const quick = doc.fm.type === S.unitType && approval(doc) === 'draft' && computeLane(list(doc.fm.scope), profile).lane === 'quick';
       const cls = approval(doc) === 'stale' ? S.auto[0] : quick ? S.auto[1] : null;
       if (auto && !auto.includes(cls)) throw new UsageError(msg('notDelegated', { name }));
+      if (auto && cls === S.auto[0] && doc.fm.type === S.unitType) {
+        const before = approvedText(cwd, file, doc.fm.verified_hash);
+        if (before === null || acLines(parseDoc(before)) !== acLines(doc)) throw new UsageError(msg('notDelegatedAcs', { name })); // what done means is the owner's
+      }
       writeFileSync(file, stamp(text, auto ? S.agent : S.human + by, at));
       out += msg('approved', { doc: relPath(cwd, file) });
     }
@@ -366,7 +431,23 @@ export const commands = {
     return done(msg('delegated', { classes: auto.join(', ') || S.off }));
   },
 
-  hold: ([unit, off], { cwd }) => (unit && [undefined, S.off].includes(off) ? setField(cwd, unit, 'hold', off ? null : true) : usage('holdUsage')),
+  mode(args, { cwd }) {
+    const [mode, ...rest] = args;
+    const opt = (flag) => { const k = rest.indexOf(flag); return k >= 0 ? rest[k + 1] : undefined; };
+    const stop = opt('--stop');
+    const data = readJson(personal(cwd)) ?? {};
+    if (mode === S.off) {
+      writeJson(personal(cwd), { ...data, run: undefined });
+      return done(msg('modeSet', { run: S.off }));
+    }
+    const flags = rest.filter((_, k) => k % 2 === 0);
+    if (!S.modes.includes(mode) || (stop !== undefined && !S.stops[stop]) || rest.length % 2 || flags.some((f) => !['--stop', '--report'].includes(f))) usage('modeUsage');
+    const run = { mode, stop, report: opt('--report') };
+    writeJson(personal(cwd), { ...data, run });
+    return done(msg('modeSet', { run: msg('runLine', { mode, stop: list(stop), report: list(run.report) }) }));
+  },
+
+  hold: ([unit, ...why], { cwd }) => (unit ? setField(cwd, unit, 'hold', why[0] === S.off ? null : why.length ? JSON.stringify(why.join(' ')) : true) : usage('holdUsage')),
   priority: ([unit, n], { cwd }) => (unit && /^-?\d+$/.test(n ?? '') ? setField(cwd, unit, 'priority', Number(n)) : usage('priorityUsage')),
 
   report(args, ctx) {

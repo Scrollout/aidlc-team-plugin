@@ -22,7 +22,7 @@ sources:
   - `--no-verify` or `-n` on a commit;
   - a commit on the base that stages files outside the bundle, `.aidlc/**` and the files `init` writes;
   - `git merge` of a `unit/*` branch, since `aidlc merge` does it;
-  - the owner commands `aidlc approve`, `upgrade` and `delegate` in any spelling: it asks the owner instead, a yes/no prompt on any device, and denies in `bypassPermissions` mode ([0009](../decisions/0009-approval-prompt.md)); `approve --auto` passes for what the owner delegated ([0008](../decisions/0008-delegated-approvals.md)).
+  - the owner commands `aidlc approve`, `upgrade`, `delegate` and `mode` in any spelling: it asks the owner instead and records the prompt ([Approvals](approvals.md#owner-prompts)), a yes/no prompt on any device, and denies in `bypassPermissions` mode ([0009](../decisions/0009-approval-prompt.md)); `approve --auto` passes for what the owner delegated ([0008](../decisions/0008-delegated-approvals.md)).
 
   `git tag` and `gh release` ask the owner.
 - **scope** (Edit, Write): in a `unit/*` worktree, a path outside the scope on the unit's card (the approved doc at the base) or a merge-written file is denied. Anywhere, a write that changes a doc's `verified` events or its `verified_hash`, or the personal profile, is denied.
@@ -33,8 +33,10 @@ sources:
 - **steer** (Stop) blocks with `next`'s line when the action is autonomous. It lets the stop through:
   - at a human gate, or while builders run;
   - when `stop_hook_active` is true;
-  - when a line of the last message ends with a question mark, so a question followed by its options counts.
-- **status** (SessionStart) returns `aidlc status` and one resume line, at most 1,000 chars.
+  - when a line of the last message ends with a question mark, so a question followed by its options counts;
+  - when `next`'s action is the stopping point the owner set with `aidlc mode --stop`.
+- **status** (SessionStart) returns `aidlc status` and one resume line, at most 1,000 chars: the run mode and the last owner prompt come first.
+- **heartbeat** (PostToolUse) also marks an owner prompt the guard recorded as `ran` ([Approvals](approvals.md#owner-prompts)).
 
 # Escalation
 Denials are counted per session, code and target in `.git/aidlc/denials.json`; `steer` clears the session's counts at the end of each turn. The third identical denial in a turn says `escalate`: stop and tell the owner.

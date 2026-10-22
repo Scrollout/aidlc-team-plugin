@@ -36,7 +36,7 @@ const repo = () => makeRepo({
   'docs/units/U-2-b.md': cite(unitDoc({ scope: ['b/**'] }), 'R-2'),
 });
 
-test('U10/AC-2 requirements are approved by ID; an edited one is stale and blocks any build', () => {
+test('U10/AC-2 requirements are approved by ID; an edited one is stale and blocks the units that cite it', () => {
   const dir = repo();
   approve(dir, 'I-1');
   let r = run(dir, ['next']);
@@ -47,8 +47,11 @@ test('U10/AC-2 requirements are approved by ID; an edited one is stale and block
   assert.match(run(dir, ['next']).out, /^build U-1, U-2/);
 
   commit(dir, 'edit R-2', { 'docs/requirements/R-002.md': read(dir, 'docs/requirements/R-002.md').replace('holds.', 'holds always.') });
+  assert.match(run(dir, ['next']).out, /^build U-1 \(/, 'U-1 does not cite R-2, so it builds meanwhile');
+  branch(dir, 'U-1', 'a/x.txt');
+  write(dir, { '.git/aidlc/heartbeats/U-1': '' });
   r = run(dir, ['next']);
-  assert.equal(r.code, 2);
+  assert.equal(r.code, 2, r.out);
   assert.match(r.out, /^re-approve R-2 after their edits: aidlc approve R-2/);
 });
 

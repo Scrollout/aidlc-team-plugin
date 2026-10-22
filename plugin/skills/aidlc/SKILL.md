@@ -24,7 +24,7 @@ When a command or hook refuses, its message names the fix: apply it. When it say
 Builders and reviewers record their own results; never relay or rewrite them.
 
 # Owner instructions
-"Hold U-4" or "U-2 first": record it with `aidlc hold U-4` or `aidlc priority U-2 <n>`, never in chat memory.
+"Hold U-4" or "U-2 first": record it with `aidlc hold U-4` or `aidlc priority U-2 <n>`, never in chat memory. A run mode ("run unattended", "stop at the merge", "report to X") is the owner command `aidlc mode`; `status` shows it after a clear. When you park a step to ask the owner something `next` did not, run `aidlc hold U-<n> <the question>`; release it only on their word. A stamp whose owner prompt `status` shows as ran is the owner's: never revert it.
 
 # Setup
 In a repo without `.aidlc/profile.json`, ask the owner for the project name, base branch and docs folder, offering what you detect. Then run `node ${CLAUDE_PLUGIN_ROOT}/cli/aidlc.mjs init --name <name> --base <branch> --bundle <dir>`, adding `--adopt` when a docs folder with `okf_version` in its `index.md` exists. Exit 2 lists files it kept: ask the owner before rerunning with `--overwrite <path>`. Commit what it wrote, then start the loop.

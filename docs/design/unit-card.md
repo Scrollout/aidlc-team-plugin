@@ -26,7 +26,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 - The template is `plugin/cli/card.md`, copied into projects with the CLI. A project's `.aidlc/templates/card.md` overrides it.
 - Card hash: sha256 of the unit doc at the base plus the rendered card without its base line, so a base that moved for other units leaves the hash, and the reviews made against it, current.
 - `aidlc card` also writes `.git/aidlc/cards/U-<n>.json` (hash, base, lane, model). This is runtime data, never committed, and re-rendering rewrites it. `start` checks its base and the model hook compares against its model.
-- Model routing defaults sit in `cli.json`; `profile.models` overrides them, including `complex` globs.
+- Model routing defaults sit in `cli.json`; `profile.models` overrides them, including `complex` globs. The card prints the builder's `Model:` and, on the standard card, the `Review model:` from `models.review`.
 
 # Rules the CLI enforces
 - Rendered from `git show <base>:<unit doc>`, so worktree edits cannot change a card.

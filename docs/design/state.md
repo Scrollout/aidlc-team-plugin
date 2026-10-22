@@ -37,9 +37,7 @@ stateDiagram-v2
 ```
 
 # Approvals
-- Approval uses OKF's own trust field. `aidlc approve` takes one or more docs (IDs or paths). It keeps earlier `verified` events, appends `{ by: human:<git user.email>, at }`, sets `status: stable`, and writes `verified_hash`: sha256 of the body plus the parsed frontmatter as sorted JSON, without `verified`, `verified_hash`, `status`, `hold`, `priority` and `board` ([Board](board.md)). So YAML formatting, a hold or a board field never stales a doc. A quick-lane fix unit needs no approval.
-- Agents cannot approve: the guard denies `aidlc approve` from a tool call, and the scope hook denies any edit to `verified` or `verified_hash`. Only the owner approves, by `!` or prompt ([0009](../decisions/0009-approval-prompt.md)), or a class they delegated ([0008](../decisions/0008-delegated-approvals.md)).
-- Editing an approved doc makes it `stale`; `next` then asks for re-approval.
+Intents, requirements, units and one-way-door decisions carry the owner's approval; editing one makes it `stale` ([Approvals](approvals.md)).
 
 # next
 `aidlc next` prints one line: the single next action and the command or agent that performs it, e.g. `build U-3 (card: aidlc card U-3)`. It exits 2 when the action waits on the owner, and prints an owner command runnable as is (`aidlc` is shorthand in the docs). Order:
@@ -57,6 +55,8 @@ stateDiagram-v2
 12. Builders running → wait.
 13. Intent merged, untagged → release with the owner; meanwhile 4–12 serve the next one.
 
+An owner gate in steps 2–5 holds back only the units that wait on its docs (the docs themselves, their intent, requirements or dependencies): `next` first returns an action of steps 6–11 for the other units, then the gate. A held unit (`hold`, by the owner, or by the lead with a reason while it parks a question) gets no action until the hold is released. A builder launched after a `stopped` report reads as building.
+
 `aidlc status` prints the same state as a short table; SessionStart injects it (max 1,000 chars) in place of handoff files.
 
 # Surviving a clear, crash or new session
@@ -65,6 +65,7 @@ Rule: nothing that matters lives only in the conversation. Everything below is o
 |---|---|
 | Owner's answers during elaboration | the draft intent/unit doc: the lead writes each answer before asking the next question; open ones stay under `## Open questions` |
 | Owner instructions about the plan ("hold U-4", "U-2 first") | plan fields set by `aidlc hold`, `aidlc priority`, never chat memory |
+| Owner run mode (unattended, a stopping point, where to report) | `run` in the personal profile, set by the owner command `aidlc mode`; `status` shows it |
 | Builder's work | WIP commits on `unit/U-<n>` after every passing test; the worktree is on disk |
 | Builder's report | `aidlc report U-<n>` writes `.git/aidlc/reports/U-<n>.json`; the builder runs it before returning |
 | Reviewer's verdict | the reviewer runs `aidlc review record` itself; the lead never relays it |

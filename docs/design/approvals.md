@@ -1,0 +1,20 @@
+---
+type: Design
+title: Approvals
+description: How the owner approves intents, requirements, units and decisions, what makes an approval stale, what the lead may approve for them, and how owner prompts are recorded.
+status: draft
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T18:10:00Z }
+---
+
+# Stamp
+- Approval uses OKF's own trust field. `aidlc approve` takes one or more docs (IDs or paths). It keeps earlier `verified` events, appends `{ by: human:<git user.email>, at }`, sets `status: stable`, and writes `verified_hash`: sha256 of the body plus the parsed frontmatter as sorted JSON, without `verified`, `verified_hash`, `status`, `hold`, `priority` and `board` ([Board](board.md)). So YAML formatting, a hold or a board field never stales a doc. A quick-lane fix unit needs no approval.
+- Editing an approved doc makes it `stale`; `next` then asks for re-approval ([State](state.md#next)).
+- A unit's approval covers the decisions it links to: when `next` asks to approve or re-approve units, it adds every draft Decision doc their bodies link to.
+
+# Who approves
+- Agents cannot approve: the guard denies `aidlc approve` from a tool call, and the scope hook denies any edit to `verified` or `verified_hash`. Only the owner approves, by `!` or prompt ([0009](../decisions/0009-approval-prompt.md)), or a class they delegated ([0008](../decisions/0008-delegated-approvals.md)).
+- A delegated `reapprove` refuses an edit that changes a unit's acceptance criteria: the CLI finds the approved version in git history (the commit whose content matches `verified_hash`) and compares the AC lines; without that version it refuses too.
+
+# Owner prompts
+- When the guard raises a permission prompt for an owner command, it records the command and the tool call in `.git/aidlc/prompts.json` (the last five). The PostToolUse hook marks it `ran` when that call completes, which happens only after the owner said yes.
+- `status` shows the last prompt and whether it ran, so after a clear or on another device the lead can tell an answered prompt from a pending one. A stamp whose prompt ran is the owner's: the lead never reverts it.
