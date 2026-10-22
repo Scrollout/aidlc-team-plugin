@@ -181,3 +181,13 @@ test('U8/AC-7 start takes over the branch from a clean, stale earlier worktree a
   assert.equal(read(wt2, 'src/pricing/a.txt'), 'a\n');
   assert.ok(!existsSync(wt1));
 });
+
+test('U4/AC-4 the card hash ignores a base that moved for other units', () => {
+  const dir = repo();
+  approve(dir, 'I-1', 'U-1');
+  const before = hashOf(run(dir, ['card', 'U-1']).out);
+  commit(dir, 'another unit merged', { 'README.md': 'x\n' });
+  const after = run(dir, ['card', 'U-1']).out;
+  assert.notEqual(after.match(/^Base: (\w+)$/m)[1], git(dir, 'rev-parse', 'HEAD~1'));
+  assert.equal(hashOf(after), before);
+});
