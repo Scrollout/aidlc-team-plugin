@@ -191,4 +191,14 @@ test('U6/AC-1 a quick-lane unit owes no AC tests: its card carries no ACs', () =
   const r = merge(dir);
   assert.doesNotMatch(r.out, /GATE-AC/);
   assert.equal(r.code, 0, r.out + r.err);
+  assert.match(git(dir, 'log', '-1', '--format=%(trailers:only,unfold)'), /^Review: none$/m);
+});
+
+test('U6/AC-1 a quick-lane unit needs no review: its report makes it ready to merge', () => {
+  const doc = { 'docs/guide/a.md': '---\ntype: Note\ntitle: A\ndescription: A note.\ngenerated: { by: x/1, at: 2026-01-01T00:00:00Z }\n---\n\nText.\n' };
+  const dir = setup({ unit: { scope: ['docs/guide/**'], modules: [] }, files: doc, verdict: null });
+  assert.match(run(dir, ['next']).out, /^wait for the builders of U-1|^restart the builder of U-1/);
+  run(dir, ['report', 'U-1'], '{"status": "done"}');
+  assert.match(run(dir, ['next']).out, /^merge U-1/);
+  assert.equal(merge(dir).code, 0);
 });

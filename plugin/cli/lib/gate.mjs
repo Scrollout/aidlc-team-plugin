@@ -120,14 +120,17 @@ function runGate(cwd, st, unit) {
   if (card && G.lanes.indexOf(diffLane.lane) > G.lanes.indexOf(card.lane)) add('GATE-LANE', 'gateLane', { lane: diffLane.lane, reason: diffLane.reason, card: card.lane });
 
   const hash = diffHash(cwd, base, unit.id);
-  const general = roundsOf(unit.review).at(-1);
-  if (!general || general.verdict !== G.pass || general.diffHash !== hash) add('GATE-REVIEW', 'gateReview', {});
-  else if (card && general.card !== card.hash) add('GATE-CARD', 'gateCardStale', { reviewed: general.card, card: card.hash });
-  const needed = reviewFocuses(cwd, p, base, unit.id);
-  needed.delete(config.state.focus);
-  for (const [focus, why] of needed) {
-    const last = roundsOf(unit.review, focus).at(-1);
-    if (!last || last.verdict !== G.pass || last.diffHash !== hash) add('GATE-SPECIALIST', 'gateSpecialist', { focus, why });
+  // Quick lane: no reviewer (docs/design/team.md#cost); the diff's own lane is checked above.
+  if (card?.lane !== 'quick') {
+    const general = roundsOf(unit.review).at(-1);
+    if (!general || general.verdict !== G.pass || general.diffHash !== hash) add('GATE-REVIEW', 'gateReview', {});
+    else if (card && general.card !== card.hash) add('GATE-CARD', 'gateCardStale', { reviewed: general.card, card: card.hash });
+    const needed = reviewFocuses(cwd, p, base, unit.id);
+    needed.delete(config.state.focus);
+    for (const [focus, why] of needed) {
+      const last = roundsOf(unit.review, focus).at(-1);
+      if (!last || last.verdict !== G.pass || last.diffHash !== hash) add('GATE-SPECIALIST', 'gateSpecialist', { focus, why });
+    }
   }
 
   const tree = trialWorktree(cwd, base);
@@ -231,7 +234,7 @@ export const commands = {
     const card = readJson(runtimeFile(cwd, 'cards', unit.id));
     git(tree, 'add', '-A');
     git(tree, 'commit', '-q', '-m', `Merge ${unit.id}: ${unit.fm.title ?? ''}`,
-      '-m', `${G.trailers.unit}: ${unit.id}\n${G.trailers.card}: ${card.hash}\n${G.trailers.review}: ${G.pass}`);
+      '-m', `${G.trailers.unit}: ${unit.id}\n${G.trailers.card}: ${card.hash}\n${G.trailers.review}: ${card.lane === 'quick' ? G.noReview : G.pass}`);
     const sha = git(tree, 'rev-parse', 'HEAD');
     dropWorktree(cwd, tree);
     git(cwd, 'merge', '-q', '--ff-only', sha);

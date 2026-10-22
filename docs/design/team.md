@@ -54,7 +54,7 @@ Thresholds and the table live in `profile.models`, so a project can shift the ba
 
 # Cost
 - Builders default to Sonnet; Opus where the table above says so.
-- Quick lane: no reviewer. Standard: one review. Full: one review plus specialists.
+- Quick lane: no reviewer; the report makes the unit ready to merge, and the merge trailer says `Review: none`. Standard: one review. Full: one review plus specialists.
 - Reviews are cached by diff hash; an unchanged diff is never reviewed twice.
 - Each subagent loads only its card and linked docs; it never inherits the lead's conversation.
 - Parallelism multiplies spend; `parallel.max` is a cost dial, not a speed setting.

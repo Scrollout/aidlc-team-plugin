@@ -146,8 +146,10 @@ export function readState(cwd, { now = Date.now() } = {}) {
     else if (needsApproval && approvalState !== 'approved') state = approvalState;
     else if (branches.has(branchOf(u.id))) {
       // The last verdict of each required focus, counted only while it is for the current diff.
+      // A quick-lane unit gets no review: its report alone makes it ready to merge.
+      const quick = lane === 'quick';
       const hash = diffHash(cwd, base, u.id);
-      const verdicts = [...reviewFocuses(cwd, profile, base, u.id).keys()].map((f) => {
+      const verdicts = (quick ? [] : [...reviewFocuses(cwd, profile, base, u.id).keys()]).map((f) => {
         const last = roundsOf(review, f).at(-1);
         return { focus: f, verdict: last?.diffHash === hash ? last.verdict : null };
       });
@@ -156,7 +158,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
       focus = verdicts.find((x) => x.verdict !== 'pass')?.focus ?? null;
       if (has('escalate')) state = 'escalated';
       else if (has('fix')) state = 'fix';
-      else if (!focus) state = 'reviewed';
+      else if (!focus && (!quick || report)) state = 'reviewed';
       else if (has('pass') || (report && (!lastAt || report.at > lastAt))) state = 'reported';
       else state = 'building';
     } else state = u.depends.every((d) => merged.has(d)) ? 'approved' : 'blocked';

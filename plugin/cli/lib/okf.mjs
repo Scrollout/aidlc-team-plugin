@@ -387,8 +387,10 @@ export function buildIndexes(root) {
     if (!entries.length) continue;
     const prefix = dir === root ? rootFrontmatter(join(dir, OKF.index)) : '';
     const prose = existingProse(join(dir, OKF.index));
-    const top = prose.get('');
-    out.set(dir, prefix + (top ? top.join('\n') + '\n\n' : '') + indexText(entries, prose));
+    // Prose under a heading the new index no longer has moves to the top, so none is lost.
+    const types = new Set(entries.map((e) => e.type || OKF.otherType));
+    const top = [...prose].filter(([h]) => h === '' || !types.has(h)).flatMap(([h, block], k) => (k && h !== '' ? ['', ...block] : block));
+    out.set(dir, prefix + (top.length ? top.join('\n') + '\n\n' : '') + indexText(entries, prose));
     if (dir === root) continue;
     // One entry: its description, as the reference. Otherwise keep the parent's existing line instead of an LLM.
     descs.set(dir, entries.length === 1 && entries[0].desc
