@@ -17,7 +17,7 @@ In the pilot most owner gates were re-approvals of a doc the lead had just edite
 
 # Decision
 Option 2, chosen by the owner on 2026-10-22.
-- `.aidlc/local/profile.json` (untracked) may set `"approvals": { "auto": ["reapprove", "quick"] }`. Only this file counts, so a commit cannot delegate for the owner.
+- `.aidlc/local/profile.json` (untracked) may set `"approvals": { "auto": ["reapprove", "quick"] }`, written by the owner command `aidlc delegate reapprove quick` (`off` clears it). Only this file counts, so a commit cannot delegate for the owner.
 - `reapprove`: a doc approved by a human before and edited since (`stale`). `quick`: a draft unit in the quick lane.
 - When every doc a gate waits on is delegated, `next` prints an action instead of a gate: `aidlc approve --auto <docs>`. The CLI checks each doc's class and refuses the rest.
 - The stamp is `{ by: agent:auto, at }`, so history shows who approved. An approval counts with a `human:` or `agent:` event.

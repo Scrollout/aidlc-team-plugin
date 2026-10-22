@@ -46,8 +46,6 @@ test('U7/AC-1 guard denies each listed command and allows the everyday ones', ()
     'git commit --no-verify -m x': 'GUARD-NOVERIFY',
     'git commit -nm x': 'GUARD-NOVERIFY',
     'git merge --no-ff unit/U-1': 'GUARD-MERGE',
-    'node .aidlc/bin/aidlc.mjs approve U-1': 'GUARD-APPROVE',
-    'cd docs && aidlc approve U-1': 'GUARD-APPROVE',
     'FOO=1 git -C . push -f': 'GUARD-FORCE',
   };
   for (const [command, code] of Object.entries(denied)) {
@@ -56,6 +54,13 @@ test('U7/AC-1 guard denies each listed command and allows the everyday ones', ()
     assert.match(reason(r), new RegExp(`^(escalate: )?${code} .+ → \\S`), command);
   }
   assert.equal(decision(bash(dir, 'git tag v1.0.0')), 'ask');
+  for (const [command, shown] of [['node .aidlc/bin/aidlc.mjs approve U-1', 'approve U-1'], ['cd docs && aidlc approve U-1', 'approve U-1'], ['node .aidlc/bin/aidlc.mjs upgrade', 'upgrade'], ['aidlc delegate reapprove', 'delegate reapprove']]) {
+    const r = bash(dir, command);
+    assert.equal(decision(r), 'ask', `${command}: the owner answers a prompt (decision 0009)`);
+    assert.match(reason(r), new RegExp(`^GUARD-OWNER ${shown}: the owner answers this prompt`));
+  }
+  const bypass = hook('guard', { cwd: dir, hook_event_name: 'PreToolUse', tool_name: 'Bash', permission_mode: 'bypassPermissions', tool_input: { command: 'aidlc approve U-1' } });
+  assert.equal(decision(bypass), 'deny', 'no prompt is guaranteed in bypass mode');
   for (const command of ['git status', 'git commit -m "docs: notes"', 'node .aidlc/bin/aidlc.mjs next', 'node .aidlc/bin/aidlc.mjs approve --auto U-1', 'git push origin unit/U-1', 'git log --oneline | head', 'echo "git push --force"']) {
     assert.equal(decision(bash(dir, command)), 'allow', command);
   }

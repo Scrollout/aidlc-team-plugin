@@ -1,13 +1,13 @@
 // Hook entry points: `aidlc hook <name>` reads the hook JSON on stdin and prints the decision JSON
 // (docs/design/hooks.md). Deny lists, patterns, codes and messages come from cli.json.
-import { existsSync, mkdirSync, readFileSync, utimesSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, utimesSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { config, readJson, UsageError } from './config.mjs';
 import { msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
 import { inside, readPlan } from './grid.mjs';
-import { aidlcDir, baseOf, bundleOf, git, nextAction, readState, runtimeFile, tryGit, writeJson } from './state.mjs';
+import { aidlcDir, baseOf, bundleOf, git, heartbeatFresh, nextAction, readState, runtimeFile, tryGit, writeJson } from './state.mjs';
 import { directAllowed, mergeWritten } from './gate.mjs';
 
 const H = config.hooks;
@@ -49,7 +49,8 @@ function gitCall(argv) {
   return { sub: argv[k], args: argv.slice(k + 1) };
 }
 
-const isCli = (argv) => argv.some((a, k) => H.cli.some((c) => a === c || a.endsWith('/' + c)) && argv[k + 1] === 'approve') && !argv.includes(S.autoFlag);
+// The owner command an argv runs (approve without --auto, upgrade, delegate), or undefined.
+const ownerCommand = (argv) => H.owner.find((o) => argv.some((a, k) => H.cli.some((c) => a === c || a.endsWith('/' + c)) && argv[k + 1] === o) && !argv.includes(S.autoFlag));
 
 // ---- Decisions ----
 
@@ -76,7 +77,9 @@ function guard(input, cwd) {
   const bundleRel = relative(top, bundleOf(top, profile)).split('\\').join('/');
   const branch = tryGit(cwd, 'rev-parse', '--abbrev-ref', 'HEAD');
   for (const argv of segments(String(input.tool_input?.command ?? ''))) {
-    if (isCli(argv)) return deny(cwd, input, 'GUARD-APPROVE', 'guardApprove', {});
+    // The owner answers a permission prompt for an owner command; without prompts (bypass) it stays a `!` command (decision 0009).
+    const owner = ownerCommand(argv);
+    if (owner) return deny(cwd, input, 'GUARD-OWNER', 'guardOwner', { command: argv.slice(argv.indexOf(owner)).join(' ') }, input.permission_mode === H.noPrompt ? 'deny' : 'ask');
     for (const [tool, sub] of H.ask) if (argv[0]?.split('/').pop() === tool && argv.includes(sub)) return deny(cwd, input, 'GUARD-RELEASE', 'guardRelease', { what: `${tool} ${sub}` }, 'ask');
     const g = gitCall(argv);
     if (!g) continue;
@@ -166,6 +169,7 @@ function model(input, cwd) {
   const expected = role === H.agents[0] ? card?.model : withDefaults(loadProfile(cwd).profile).models.review;
   if (!expected) return deny(cwd, input, 'MODEL-UNIT', 'modelUnit', { agent });
   if (t.model !== expected) return deny(cwd, input, 'MODEL-MISMATCH', 'modelMismatch', { agent, unit, model: t.model ?? 'none', expected });
+  if (role === H.agents[1]) touch(join(aidlcDir(cwd), S.reviewing, unit)); // a review in flight: next waits for it
   return allow();
 }
 
@@ -181,14 +185,21 @@ function docs(input, cwd) {
   return JSON.stringify({ decision: 'block', reason: msg('docsErrors', { errors: errors.map((f) => msg('finding', f).trim()).join('\n') }) });
 }
 
-function heartbeat(input, cwd) {
-  const unit = unitOfBranch(cwd);
-  if (!unit) return allow();
-  const file = join(aidlcDir(cwd), S.heartbeats, unit);
+function touch(file) {
   mkdirSync(dirname(file), { recursive: true });
   if (!existsSync(file)) writeFileSync(file, '');
   const now = new Date();
   utimesSync(file, now, now);
+}
+
+// A builder's tool call keeps its unit's heartbeat fresh; a reviewer's keeps the reviews in flight fresh.
+function heartbeat(input, cwd) {
+  if (String(input.agent_type ?? '').endsWith(H.agents[1])) {
+    const dir = join(aidlcDir(cwd), S.reviewing);
+    for (const unit of existsSync(dir) ? readdirSync(dir) : []) if (heartbeatFresh(cwd, unit, Date.now(), S.reviewing)) touch(join(dir, unit));
+  }
+  const unit = unitOfBranch(cwd);
+  if (unit) touch(join(aidlcDir(cwd), S.heartbeats, unit));
   return allow();
 }
 

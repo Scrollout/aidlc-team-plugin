@@ -41,7 +41,7 @@ test('U10/AC-2 requirements are approved by ID; an edited one is stale and block
   approve(dir, 'I-1');
   let r = run(dir, ['next']);
   assert.equal(r.code, 2);
-  assert.match(r.out, /^ask the owner to approve the requirements the plan cites: ! node \.aidlc\/bin\/aidlc\.mjs approve R-1 R-2$/m);
+  assert.match(r.out, /^ask the owner to approve the requirements the plan cites: aidlc approve R-1 R-2 \(the owner confirms the prompt\)$/m);
 
   approve(dir, 'R-001', 'R-2', 'U-1', 'U-2');
   assert.match(run(dir, ['next']).out, /^build U-1, U-2/);
@@ -49,7 +49,7 @@ test('U10/AC-2 requirements are approved by ID; an edited one is stale and block
   commit(dir, 'edit R-2', { 'docs/requirements/R-002.md': read(dir, 'docs/requirements/R-002.md').replace('holds.', 'holds always.') });
   r = run(dir, ['next']);
   assert.equal(r.code, 2);
-  assert.match(r.out, /^re-approve R-2 after their edits: ! node \.aidlc\/bin\/aidlc\.mjs approve R-2/);
+  assert.match(r.out, /^re-approve R-2 after their edits: aidlc approve R-2/);
 });
 
 test('U10/AC-3 status lists requirements no merged unit cites', () => {
