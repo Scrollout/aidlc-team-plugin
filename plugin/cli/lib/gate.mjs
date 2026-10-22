@@ -137,11 +137,11 @@ function runGate(cwd, st, unit) {
     return { findings: out, tree };
   }
 
-  const levelPaths = (level) => list(p.levels?.[level]?.paths);
-  // A quick-lane card carries no ACs, so its unit owes no AC tests (docs/design/verification.md).
-  for (const ac of card?.lane === 'quick' ? [] : unit.acs) {
+  const { levels } = withDefaults(loadProfile(tree).profile); // from the merge result: a unit may add a test location
+  const levelPaths = (level) => list(levels?.[level]?.paths);
+  for (const ac of card?.lane === 'quick' ? [] : unit.acs) { // a quick-lane card carries no ACs, so no AC tests
     const tag = `${unit.id}/${ac.id}`;
-    const files = (tryGit(tree, 'grep', '-l', '-F', tag) ?? '').split('\n').filter(Boolean);
+    const files = (tryGit(tree, 'grep', '-l', '-F', tag) ?? '').split('\n').filter((f) => f && !f.startsWith(bundleRel + '/'));
     if (!files.length) add('GATE-AC', 'gateAc', { tag });
     else if (levelPaths(ac.level).length && !files.some((f) => levelPaths(ac.level).some((g) => matches(f, g)))) {
       add('GATE-LEVEL', 'gateLevel', { tag, files: files.join(', '), level: ac.level });
