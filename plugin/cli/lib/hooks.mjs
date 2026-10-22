@@ -1,7 +1,7 @@
 // Hook entry points: `aidlc hook <name>` reads the hook JSON on stdin and prints the decision JSON
 // (docs/design/hooks.md). Deny lists, patterns, codes and messages come from cli.json.
-import { existsSync, mkdirSync, readdirSync, readFileSync, utimesSync, writeFileSync } from 'node:fs';
-import { dirname, join, relative, resolve } from 'node:path';
+import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, utimesSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join, relative, resolve } from 'node:path';
 import { config, readJson, UsageError } from './config.mjs';
 import { msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
@@ -131,8 +131,9 @@ const unitOfBranch = (cwd) => {
   return b.startsWith(S.branchPrefix) ? b.slice(S.branchPrefix.length) : null;
 };
 
+const real = (p) => (existsSync(p) ? realpathSync(p) : join(real(dirname(p)), basename(p))); // as git's top level: no symlink escape
 function scope(input, cwd) {
-  const file = resolve(cwd, String(input.tool_input?.file_path ?? input.tool_input?.notebook_path ?? ''));
+  const file = real(resolve(cwd, String(input.tool_input?.file_path ?? input.tool_input?.notebook_path ?? '')));
   const top = git(cwd, 'rev-parse', '--show-toplevel');
   const path = relative(top, file).split('\\').join('/');
   const before = existsSync(file) ? readFileSync(file, 'utf8') : '';
@@ -177,7 +178,7 @@ function docs(input, cwd) {
   const top = git(cwd, 'rev-parse', '--show-toplevel');
   const { profile } = loadProfile(top);
   const bundle = bundleOf(top, profile);
-  const file = resolve(cwd, String(input.tool_input?.file_path ?? ''));
+  const file = real(resolve(cwd, String(input.tool_input?.file_path ?? '')));
   if (!file.startsWith(bundle + '/')) return allow();
   if (!unitOfBranch(cwd)) writeIndexes(bundle);
   const errors = checkBundle(bundle, { rules: profile.docs?.rules ?? {}, base: top }).filter((f) => f.level === 'error' && f.path === relative(top, file));
@@ -187,9 +188,8 @@ function docs(input, cwd) {
 
 function touch(file) {
   mkdirSync(dirname(file), { recursive: true });
-  if (!existsSync(file)) writeFileSync(file, '');
-  const now = new Date();
-  utimesSync(file, now, now);
+  writeFileSync(file, '', { flag: 'a' }); // creates it, never truncates
+  utimesSync(file, new Date(), new Date());
 }
 
 // A builder's tool call keeps its unit's heartbeat fresh; a reviewer's keeps the reviews in flight fresh.
