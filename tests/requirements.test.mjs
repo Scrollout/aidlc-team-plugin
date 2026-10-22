@@ -1,0 +1,81 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { cpSync, mkdtempSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { lintPlan, readPlan } from '../plugin/cli/lib/grid.mjs';
+import { checkBundle, writeIndexes } from '../plugin/cli/lib/okf.mjs';
+import { approve, branch, commit, intentDoc, makeRepo, merge, read, run, unitDoc, write } from './state-repo.mjs';
+
+const ROOT = join(import.meta.dirname, '..');
+const FX = join(ROOT, 'tests/fixtures/requirements');
+const lint = (name) => lintPlan(join(FX, name), {}, { base: FX });
+
+test('U10/AC-1 requirements are read by ID number; PLAN-REQ fires on none or unknown citations', () => {
+  const plan = readPlan(join(FX, 'cited'));
+  assert.deepEqual(plan.requirements.map((r) => r.id), ['R-4', 'R-18'], 'register.md is not a requirement');
+  assert.deepEqual(plan.units[0].requirements, ['R-4', 'R-18']);
+  assert.deepEqual(lint('cited'), []);
+
+  const found = lint('uncited').map((f) => [f.code, f.message]);
+  assert.deepEqual(found, [
+    ['PLAN-REQ', 'I-1 cites no requirement'],
+    ['PLAN-REQ', 'U-1 cites no requirement'],
+    ['PLAN-REQ', 'U-2 cites R-7, which does not exist'],
+  ]);
+  assert.deepEqual(lint('none'), [], 'a bundle without requirements opts out');
+});
+
+const reqDoc = (title) => `---\ntype: Requirement\ntitle: ${title}\ndescription: ${title}.\n---\n\n- AC-1 (integration): holds.\n`;
+const cite = (doc, reqs) => doc.replace('---\n\n', `requirements: [${reqs}]\n---\n\n`);
+const repo = () => makeRepo({
+  'docs/requirements/R-001.md': reqDoc('Platform'),
+  'docs/requirements/R-002.md': reqDoc('Standalone services'),
+  'docs/intents/I-1-pricing.md': cite(intentDoc('I-1'), 'R-1'),
+  'docs/units/U-1-a.md': cite(unitDoc({ scope: ['a/**'] }), 'R-1'),
+  'docs/units/U-2-b.md': cite(unitDoc({ scope: ['b/**'] }), 'R-2'),
+});
+
+test('U10/AC-2 requirements are approved by ID; an edited one is stale and blocks any build', () => {
+  const dir = repo();
+  approve(dir, 'I-1');
+  let r = run(dir, ['next']);
+  assert.equal(r.code, 2);
+  assert.match(r.out, /^ask the owner to approve the requirements the plan cites: ! aidlc approve R-1 R-2$/m);
+
+  approve(dir, 'R-001', 'R-2', 'U-1', 'U-2');
+  assert.match(run(dir, ['next']).out, /^build U-1, U-2/);
+
+  commit(dir, 'edit R-2', { 'docs/requirements/R-002.md': read(dir, 'docs/requirements/R-002.md').replace('holds.', 'holds always.') });
+  r = run(dir, ['next']);
+  assert.equal(r.code, 2);
+  assert.match(r.out, /^re-approve R-2 after their edits: ! aidlc approve R-2/);
+});
+
+test('U10/AC-3 status lists requirements no merged unit cites', () => {
+  const dir = repo();
+  approve(dir, 'I-1', 'R-1', 'R-2', 'U-1', 'U-2');
+  assert.match(run(dir, ['status']).out, /^not yet delivered: R-1 R-2$/m);
+  branch(dir, 'U-1', 'a/x.txt');
+  merge(dir, 'U-1');
+  assert.match(run(dir, ['status']).out, /^not yet delivered: R-2$/m);
+  branch(dir, 'U-2', 'b/x.txt');
+  merge(dir, 'U-2');
+  assert.doesNotMatch(run(dir, ['status']).out, /not yet delivered/);
+});
+
+test('U10/AC-4 OKF-INDEX allows prose paragraphs, keeps them on regeneration, and fails a malformed entry', () => {
+  const spec = join(ROOT, 'tests/fixtures/okf/spec');
+  assert.deepEqual(checkBundle(join(spec, 'index-prose')).filter((f) => f.level === 'error'), []);
+  const malformed = checkBundle(join(spec, 'OKF-INDEX-entry'), { base: spec }).filter((f) => f.code === 'OKF-INDEX');
+  assert.deepEqual(malformed.map((f) => [f.path, f.line]), [[join('OKF-INDEX-entry', 'index.md'), 5]]);
+
+  const dir = mkdtempSync(join(tmpdir(), 'prose-'));
+  cpSync(join(spec, 'index-prose'), dir, { recursive: true });
+  const before = readFileSync(join(dir, 'index.md'), 'utf8');
+  writeIndexes(dir);
+  assert.equal(readFileSync(join(dir, 'index.md'), 'utf8'), before, 'prose survives aidlc index');
+  write(dir, { 'b.md': '---\ntype: Note\ntitle: B\ndescription: Another.\n---\n' });
+  writeIndexes(dir);
+  assert.match(readFileSync(join(dir, 'index.md'), 'utf8'), /^# Note\n\nContext: every concept here is checked by hand\.\nA second prose line\.\n\n\* \[A\]\(a\.md\) - A valid concept\.\n\* \[B\]\(b\.md\) - Another\.\n$/);
+});

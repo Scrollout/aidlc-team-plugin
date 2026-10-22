@@ -11,8 +11,8 @@ Units and their ACs are short-lived. A project's lasting constraints are not: se
 
 # Requirements
 - `requirements/R-<n>-<slug>.md`, `type: Requirement`, with acceptance criteria like a unit. IDs compare by number, so `R-018` and `R-18` are the same.
-- Intents and units cite them: `requirements: [R-4, R-18]`. Plan lint `PLAN-REQ`: an intent or unit that cites none, or cites one that does not exist.
-- A requirement is approved like an intent; editing it makes it `stale`, and `next` asks for re-approval before any build.
+- Intents and units cite them: `requirements: [R-4, R-18]`. Plan lint `PLAN-REQ`: an intent or unit that cites none, or cites one that does not exist. The rule applies once the bundle holds a requirement, so a project opts in by writing its first one.
+- A requirement is approved like an intent; editing it makes it `stale`, and `next` asks for re-approval before any build. Draft requirements cited by the current plan are approved before the plan.
 - `aidlc status` lists requirements that no merged unit cites yet.
 
 # Architecture rules
