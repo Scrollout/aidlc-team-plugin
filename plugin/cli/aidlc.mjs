@@ -6,6 +6,8 @@ import { config, UsageError } from './lib/config.mjs';
 import { msg } from './lib/template.mjs';
 import { commands as okf } from './lib/okf.mjs';
 import { commands as grid } from './lib/grid.mjs';
+import { commands as state } from './lib/state.mjs';
+import { commands as card } from './lib/card.mjs';
 
 export const EXIT = config.exit;
 export { UsageError };
@@ -22,7 +24,7 @@ const combine = (...handlers) => async (args, ctx) => {
 };
 
 // Each unit that builds a command adds its handler here, keyed by the command name in cli.json.
-const HANDLERS = { ...okf, lane: grid.lane, check: combine(okf.check, grid.check) };
+const HANDLERS = { ...okf, ...state, ...card, lane: grid.lane, check: combine(okf.check, grid.check) };
 
 export function help() {
   const width = Math.max(...config.commands.map((c) => c.usage.length));

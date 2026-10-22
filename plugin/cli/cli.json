@@ -214,7 +214,51 @@
     "laneStandard": "{{item}} is outside lanes.quick and overlaps no full or focus glob",
     "laneEmpty": "nothing to match",
     "laneUsage": "usage: lane <unit>|--diff <range>",
-    "unknownUnit": "no unit {{name}} in {{dir}}"
+    "unknownUnit": "no unit {{name}} in {{dir}}",
+    "noEmail": "git config user.email is not set",
+    "notApprovable": "{{name}} is not an intent, unit or decision doc",
+    "approved": "approved {{doc}}\n",
+    "noDoc": "no doc {{name}}",
+    "nextContinueMerge": "finish the merge of {{unit}}: aidlc merge {{unit}}, or git merge --abort",
+    "nextReapprove": "re-approve {{docs}} after their edits: ! aidlc approve {{docs}}",
+    "nextNoIntent": "elaborate an intent with the owner in {{dir}}/I-1-<slug>.md, then ask for approval",
+    "nextApproveIntent": "ask the owner to approve {{intent}}: ! aidlc approve {{intent}}",
+    "nextDraftUnits": "draft the units of {{intent}} in {{dir}}/U-<n>-<slug>.md, then ask for the plan approval",
+    "nextApprovePlan": "ask the owner to approve the plan: ! aidlc approve {{units}}",
+    "nextMerge": "merge {{unit}}: aidlc merge {{unit}}",
+    "nextEscalated": "{{unit}} review escalated: the owner decides",
+    "nextFixRound": "fix round for {{unit}}: builder (card: aidlc card {{unit}})",
+    "nextReview": "review {{unit}}: reviewer (card: aidlc card {{unit}})",
+    "nextRestart": "restart the builder of {{unit}} from branch {{branch}} (card: aidlc card {{unit}})",
+    "nextBuild": "build {{units}} (cards: {{cards}})",
+    "nextWait": "wait for the builders of {{units}}",
+    "nextHeld": "{{units}} on hold: the owner releases them",
+    "nextRelease": "{{intent}} is merged: release with the owner",
+    "nextIdle": "all intents released: elaborate the next intent with the owner",
+    "nextLine": "{{line}}\n",
+    "statusIntent": "{{id}} {{state}} {{title}}\n",
+    "statusUnit": "  {{id}} {{state}} {{title}}\n",
+    "statusMore": "  … {{count}} more\n",
+    "statusNext": "next: {{line}}\n",
+    "cardRefused": "{{unit}} is {{state}}: the owner approves it before a card is rendered\n",
+    "cardTooLong": "card for {{unit}} is {{size}} chars, over {{max}}: shorten the unit doc\n",
+    "noBase": "base branch {{base}} has no commits",
+    "laneModel": "lane {{lane}}",
+    "modelEscalated": "escalated: {{reason}}",
+    "modelModules": "{{count}} modules",
+    "modelAcs": "{{count}} ACs",
+    "modelComplex": "{{glob}} is complex",
+    "modelFix": "fix round after a CONFIRMED finding",
+    "notWorktree": "start runs in a builder's worktree, not the main checkout",
+    "noCard": "no card for {{unit}}: the lead runs aidlc card {{unit}} first\n",
+    "baseMismatch": "worktree is at {{head}}, the card of {{unit}} at {{base}}: restart the builder from a fresh card\n",
+    "branchTaken": "{{branch}} is checked out in {{path}}: continue there or remove that worktree\n",
+    "started": "on {{branch}} at {{base}}\n",
+    "badJson": "{{name}}: not a JSON object",
+    "badVerdict": "verdict must be one of {{verdicts}}",
+    "noBranch": "no branch {{branch}}",
+    "recorded": "recorded {{what}} for {{unit}}\n",
+    "reviewUsage": "usage: review record <unit> <file>"
   },
   "okf": {
     "bundle": "docs",
@@ -328,5 +372,54 @@
         "fix": "give the unit a scope, narrow the scopes, or add a depends between the units"
       }
     }
+  },
+  "state": {
+    "dir": "aidlc",
+    "reports": "reports",
+    "reviews": "reviews",
+    "cards": "cards",
+    "heartbeats": "heartbeats",
+    "heartbeatMs": 120000,
+    "base": "main",
+    "parallel": 3,
+    "branchPrefix": "unit/",
+    "trailer": "Unit",
+    "human": "human:",
+    "stable": "stable",
+    "hashExclude": [
+      "verified",
+      "verified_hash",
+      "status",
+      "hold",
+      "priority"
+    ],
+    "verdicts": [
+      "pass",
+      "fix",
+      "escalate"
+    ],
+    "confirmed": "CONFIRMED",
+    "statusMax": 1000,
+    "approvable": [
+      "Intent",
+      "Unit",
+      "Decision"
+    ]
+  },
+  "card": {
+    "template": "card.md",
+    "quickTemplate": "card-quick.md",
+    "max": 6000,
+    "hashLength": 16
+  },
+  "models": {
+    "quick": "sonnet",
+    "standard": "sonnet",
+    "full": "opus",
+    "escalate": "opus",
+    "review": "opus",
+    "modules": 2,
+    "acs": 6,
+    "complex": []
   }
 }

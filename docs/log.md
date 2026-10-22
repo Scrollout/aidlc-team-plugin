@@ -7,6 +7,11 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** U4 built:
+  - `status`, `next`, `approve`, `card`, `start`, `report` and `review record` work, all derived from git and the bundle;
+  - `approve` accepts only Intent, Unit and Decision docs;
+  - the card templates sit beside the CLI.
+  Release 0.4.0.
 - **Update** U4 settled with the owner ([State](design/state.md), [Unit card](design/unit-card.md)):
   - approval hashing, and approving several docs in one command;
   - the full `next` order, which exits 2 at owner gates;
