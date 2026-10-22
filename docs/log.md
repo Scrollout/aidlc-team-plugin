@@ -7,6 +7,15 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** U5 built:
+  - `init` renders the profile, AGENTS.md, CLAUDE.md, the bundle root, doc templates and CI, adds `.gitignore` lines and the worktree setting, and pins the CLI;
+  - `--adopt` records the adoption commit and lists leftovers;
+  - `upgrade` replaces only `.aidlc/bin`;
+  - `check --ci` runs OKF validation and plan lint.
+  Release 0.6.0.
+- **Update** U5 design:
+  - the plugin defaults move beside the CLI (`plugin/cli/defaults.json`), so a pinned copy carries them, and `levels` is replaced whole;
+  - `init` takes flags, never overwrites without `--overwrite`, and lists what `--adopt` finds ([Profile and templates](design/profile.md)).
 - **Creation** README with two diagrams: the whole AI-DLC lifecycle with the plugin's enforcement points, and the plugin's parts with what they write into a project. Linked from [Overview](design/overview.md).
 - **Update** U10 built:
   - requirement docs are read by ID number;

@@ -1,0 +1,9 @@
+{
+  "name": {{name}},
+  "base": {{base}},
+  "docs": { "bundle": {{bundle}} },
+  "modules": [],
+  "lanes": { "quick": [{{quick}}], "full": [] },
+  "focus": {}{{#each extra}},
+  "{{key}}": {{value}}{{/each}}
+}
