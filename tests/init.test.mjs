@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { cpSync, existsSync, mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, relative } from 'node:path';
+import { join, relative, sep } from 'node:path';
 import { commit, git, makeRepo, run, write } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -22,7 +22,7 @@ function tree(dir, skip = []) {
   const walk = (d) => {
     for (const name of readdirSync(d)) {
       const p = join(d, name);
-      const rel = relative(dir, p);
+      const rel = relative(dir, p).split(sep).join('/');
       if (name === '.git' || skip.some((s) => rel === s || rel.startsWith(s + '/'))) continue;
       if (statSync(p).isDirectory()) walk(p);
       else out[rel] = readFileSync(p, 'utf8');
