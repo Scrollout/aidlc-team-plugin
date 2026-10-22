@@ -347,7 +347,7 @@
     "boardInSync": "the board is in sync\n",
     "boardFailed": "warning: sync failed, run aidlc sync: {{error}}\n",
     "nextMigrate": "elaborate the migration intent with the owner in {{dir}}/I-1-<slug>.md (adopted at {{commit}}): docs, always-on context, profile, architecture baseline, module audit, cleanup; then ask for approval",
-    "nextStopped": "the builder of {{unit}} stopped ({{reason}}): fix the unit doc, then ask the owner to re-approve it",
+    "nextStopped": "the builder of {{unit}} stopped ({{reason}}): if the unit doc is wrong, fix it and ask the owner to re-approve it; otherwise remove the cause and start its builder again (card: aidlc card {{unit}})",
     "holdUsage": "usage: hold <unit> [off]",
     "priorityUsage": "usage: priority <unit> <n>, a whole number; higher builds first",
     "nextAutoApprove": "approve {{docs}}, delegated by the owner: aidlc approve --auto {{docs}}",

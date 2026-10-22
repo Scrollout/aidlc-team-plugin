@@ -231,7 +231,7 @@ test('U4/AC-2 a stopped builder sends the unit back to the lead; re-approval res
   branch(dir, 'U-1');
   run(dir, ['report', 'U-1'], '{"status": "stopped", "stop": "the scope is too small"}');
   const r = run(dir, ['next']);
-  assert.match(r.out, /^the builder of U-1 stopped \(the scope is too small\): fix the unit doc, then ask the owner to re-approve it/);
+  assert.match(r.out, /^the builder of U-1 stopped \(the scope is too small\): if the unit doc is wrong, fix it and ask the owner to re-approve it; otherwise remove the cause and start its builder again/);
   assert.equal(r.code, 0);
   write(dir, { [U(1)]: read(dir, U(1)).replace('src/**', 'src/**", "lib/**') });
   commit(dir, 'widen U-1');
