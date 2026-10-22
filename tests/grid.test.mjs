@@ -132,3 +132,53 @@ test('U3/AC-3 PLAN-SHARED: a scope naming a bundle index or log, or a shared fil
   const dir = project({ 'docs/units/U-1-a.md': '---\ntype: Unit\ntitle: A\ndescription: A.\nscope: ["go.sum", "web/index.md"]\n---\n\n- AC-1 (unit): x.\n' });
   assert.deepEqual(lintPlan(join(dir, 'docs'), { shared: ['go.sum'] }, { base: dir }).map((f) => f.code), ['PLAN-SHARED'], 'an index.md outside the bundle is fine');
 });
+
+const unitDoc = (fm, acs) => `---\ntype: Unit\ntitle: A\ndescription: A.\n${fm}\n---\n\n# Acceptance criteria\n\n${acs}\n`;
+
+test('U17/AC-1 a non-quick unit whose scope cannot hold an AC test is PLAN-TEST naming the AC and level', () => {
+  const profile = { lanes: { quick: ['docs/**'] }, levels: { unit: { paths: ['**/*_test.go'] }, integration: { paths: ['tests/integration/**'] }, e2e: {} } };
+  const dir = project({
+    'docs/units/U-1-a.md': unitDoc('scope: ["internal/pricing/**"]', '- AC-1 (unit): rounds.\n- AC-2 (integration): reads rates.\n- AC-3 (e2e): renders.'),
+    'docs/units/U-2-b.md': unitDoc('scope: ["internal/rates/**", "tests/integration/rates/**"]', '- AC-1 (integration): reads rates.'),
+    'docs/units/U-3-c.md': unitDoc('scope: ["docs/guide/**"]', '- AC-1 (integration): the guide renders.'),
+  });
+  const found = lintPlan(join(dir, 'docs'), profile, { base: dir });
+  assert.deepEqual(found.map((f) => [f.code, f.path, f.line, f.message]), [
+    ['PLAN-TEST', 'docs/units/U-1-a.md', 11, 'AC-2 (integration) has no test location: no scope glob overlaps levels.integration.paths tests/integration/**'],
+  ], 'unit tests fit internal/**, e2e has no paths, U-2 holds its test, quick U-3 adds none');
+});
+
+test('U17/AC-2 a bare root-file scope overlapping a ** glob suggests the leading /', () => {
+  const dir = project({
+    'docs/units/U-1-a.md': unitDoc('scope: ["build/**"]', '- AC-1 (unit): x.'),
+    'docs/units/U-2-b.md': unitDoc('scope: ["Makefile"]', '- AC-1 (unit): x.'),
+    'docs/units/U-3-c.md': unitDoc('depends: [U-1]\nscope: ["go.mod"]', '- AC-1 (unit): x.'),
+    'docs/units/U-4-d.md': unitDoc('depends: [U-1]\nscope: ["go.mod"]', '- AC-1 (unit): x.'),
+    'docs/units/U-5-e.md': unitDoc('scope: ["/README.md"]', '- AC-1 (unit): x.'),
+  });
+  const found = lintPlan(join(dir, 'docs'), {}, { base: dir }).map((f) => f.message);
+  assert.deepEqual(found, [
+    'U-2 scope Makefile overlaps U-1 scope build/** with no depends path between them; a name without / matches at any depth, write /Makefile for the root file',
+    'U-4 scope go.mod overlaps U-3 scope go.mod with no depends path between them',
+  ], 'the same bare name in two units is a real overlap; /README.md overlaps nothing');
+});
+
+test('U17/AC-3 an AC naming another unit\'s file or target needs a depends path to it', () => {
+  const found = lint('PLAN-DEPENDS');
+  assert.deepEqual(found.map((f) => [f.path, f.line, f.message]), [
+    ['PLAN-DEPENDS/units/U-2-b.md', 11, 'AC-1 names tools/check.mjs, an output of U-1, with no depends path to it'],
+  ]);
+  const files = {
+    'Makefile': 'test:\n\tgo test ./...\n',
+    'docs/units/U-6-a.md': unitDoc('scope: ["docs/guide/**"]', '- AC-3 (unit): `make docs-check` and `make test` pass.'),
+    'docs/units/U-9-b.md': unitDoc('scope: ["/Makefile", "tools/**"]', '- AC-1 (unit): `make docs-check` runs the link check.'),
+    'docs/units/U-10-c.md': unitDoc('depends: [U-9]\nscope: ["/Makefile"]', '- AC-1 (unit): `make lint` runs.'),
+  };
+  const dir = project(files);
+  assert.deepEqual(lintPlan(join(dir, 'docs'), {}, { base: dir }).map((f) => f.message), [
+    'AC-3 names make docs-check, an output of U-9, with no depends path to it',
+  ], 'make test is on the base Makefile; U-10 edits the Makefile but never names docs-check');
+  writeFileSync(join(dir, 'docs/units/U-6-a.md'), unitDoc('depends: [U-9]\nscope: ["docs/guide/**"]', '- AC-3 (unit): `make docs-check` passes.'));
+  assert.deepEqual(lintPlan(join(dir, 'docs'), {}, { base: dir }), [], 'a depends path clears it');
+  assert.deepEqual(lint('PLAN-DEPENDS', {}, { skip: ['U-1'] }), [], 'a merged unit\'s output is on the base');
+});

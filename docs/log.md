@@ -5,6 +5,10 @@ title: aidlc-team-plugin docs history
 
 # Bundle history
 
+## 2026-10-23
+
+- **Update** M2 U17 built (owner's choice for AC-3): plan lint flags a non-quick unit whose scope cannot hold an AC's test (`PLAN-TEST`), suggests the leading `/` when a bare file name causes a scope overlap, and flags an AC that names another unit's output with no dependency path to it (`PLAN-DEPENDS`) ([Grid](design/grid.md)). Release 0.20.0.
+
 ## 2026-10-22
 
 - **Creation** [Approvals](design/approvals.md), split out of [State](design/state.md): stamps, who approves, and owner prompts.

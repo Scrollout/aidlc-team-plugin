@@ -56,10 +56,12 @@ Plan lint compares every unit except `status: dropped` and the IDs its caller sk
 - `PLAN-AC` a duplicate AC ID in a unit.
 - `PLAN-LEVEL` an AC without a level, or with one `profile.levels` does not define.
 - `PLAN-RESERVE` a malformed reservation (`<kind> <area>/<n>`), a kind `profile.reserve` lacks, or the same one in two units.
-- `PLAN-SCOPE` a unit without `scope`, or two units whose scopes overlap with no `depends` path between them.
+- `PLAN-SCOPE` a unit without `scope`, or two units whose scopes overlap with no `depends` path between them. When a bare file name (`Makefile`) overlaps only because it matches at any depth, the message suggests `/Makefile`.
 - `PLAN-SHARED` a scope naming a file only merge writes: a bundle `index.md` or `log.md`, or a `profile.shared` entry.
 - `PLAN-REQ` an intent or unit citing no requirement, or an unknown one ([Architecture](architecture.md)).
 - `PLAN-BOARD` a unit missing a planned board value ([Board](board.md)).
+- `PLAN-TEST` a non-quick unit whose scope overlaps none of an AC level's `paths`, so the AC's test has nowhere to go.
+- `PLAN-DEPENDS` an AC whose code span names another unit's output with no `depends` path to it: a path in that unit's scope, or a `make`/`npm run`/`just` target (`grid.runners`) the base build file lacks, whose build file is in that unit's scope and whose doc names it.
 
 # Plan, execute, validate
 Every cell runs the same loop:

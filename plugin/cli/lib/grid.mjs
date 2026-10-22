@@ -11,6 +11,7 @@ import { parseDoc, proseLines } from './okf.mjs';
 const GRID = config.grid;
 const AC = /^\s*[-*]\s+(AC-\d+)\b\s*(?:\(([^)]*)\))?\s*:/;
 const RESERVE = /^(\S+)\s+(\S+)\/(\d+)$/;
+const SPAN = /`([^`]+)`/g;
 
 
 // Requirement IDs compare by number: R-018 and R-18 are the same.
@@ -132,6 +133,28 @@ function reachable(units) {
   return reach;
 }
 
+const spansOf = (line) => [...line.matchAll(SPAN)].map((m) => m[1].trim());
+
+// `make docs-check` and the like: the build file (grid.runners) and the target.
+function runTarget(span) {
+  for (const [runner, file] of Object.entries(GRID.runners)) {
+    const m = span.match(new RegExp(`^${runner.replace(/ /g, '\\s+')}\\s+([\\w:.-]+)`));
+    if (m) return { file, name: m[1] };
+  }
+}
+
+function definedOnBase(root, t) {
+  const file = join(root, t.file);
+  const name = t.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return existsSync(file) && new RegExp(`^\\s*"?${name}"?(?=[\\s:])[^\\n=]*:`, 'm').test(readFileSync(file, 'utf8'));
+}
+
+// The unit makes what the span names: a path in its scope, or a target its doc names whose build file it may write.
+function makes(u, span, t, spans) {
+  if (t) return u.scope.some((g) => overlaps('/' + t.file, g)) && spans.some((s) => runTarget(s)?.file === t.file && runTarget(s).name === t.name);
+  return /^[^\s]*[/.][^\s]*$/.test(span) && u.scope.some((g) => inside('/' + span.replace(/^\.?\//, ''), g));
+}
+
 function cycles(units) {
   const byId = new Map(units.map((u) => [u.id, u]));
   const found = new Map();
@@ -162,6 +185,7 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   const known = new Set(all.map((u) => u.id));
   const levels = Object.keys(withDefaults(profile).levels);
   const kinds = profile.reserve ? Object.keys(profile.reserve) : null;
+  const levelDefs = withDefaults(profile).levels;
   const out = [];
   const add = (code, u, line, key, data) => out.push(finding(code, u.file, line, key, { unit: u.id, ...data }, base));
   const bundleRel = relPath(base, bundle);
@@ -176,6 +200,13 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
       else if (!levels.includes(ac.level)) add('PLAN-LEVEL', u, ac.line, 'acBadLevel', { ac: ac.id, level: ac.level, levels: levels.join(', ') });
     }
     if (!u.scope.length) add('PLAN-SCOPE', u, 1, 'scopeMissing', {});
+    // Each AC's test must have a place in the scope, unless the quick lane adds no tests.
+    else if (computeLane(u.scope, profile).lane !== 'quick') {
+      for (const ac of u.acs.filter((a) => levels.includes(a.level))) {
+        const paths = list(levelDefs[ac.level].paths);
+        if (paths.length && !u.scope.some((g) => paths.some((p) => overlaps(g, p)))) add('PLAN-TEST', u, ac.line, 'acNoTestPath', { ac: ac.id, level: ac.level, paths: paths.join(', ') });
+      }
+    }
     // Builders never write what merge writes: bundle indexes and logs, and profile.shared files.
     for (const glob of u.scope) {
       const last = glob.split('/').at(-1);
@@ -210,13 +241,30 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
     }
   }
 
+  // An AC that names another unit's output needs that unit merged first.
   const reach = reachable(units);
+  const spans = new Map(units.map((u) => [u.id, proseLines(u.doc.lines, u.doc.body).flatMap(([n]) => spansOf(u.doc.lines[n - 1]))]));
+  for (const u of units) {
+    for (const ac of u.acs) {
+      for (const span of spansOf(u.doc.lines[ac.line - 1])) {
+        const t = runTarget(span);
+        if ((t && definedOnBase(base, t)) || makes(u, span, t, spans.get(u.id))) continue;
+        for (const o of units.filter((x) => x !== u && !reach(u.id).has(x.id) && makes(x, span, t, spans.get(x.id)))) {
+          add('PLAN-DEPENDS', u, ac.line, 'acNeedsUnit', { ac: ac.id, span, other: o.id });
+        }
+      }
+    }
+  }
+  const bare = (g) => !/[/*?[]/.test(g);
   for (let i = 0; i < units.length; i++) {
     for (let j = i + 1; j < units.length; j++) {
       const [a, b] = [units[i], units[j]];
       if (reach(a.id).has(b.id) || reach(b.id).has(a.id)) continue;
       const pair = a.scope.flatMap((g) => b.scope.filter((h) => overlaps(g, h)).map((h) => [g, h]))[0];
-      if (pair) add('PLAN-SCOPE', b, keyLine(b, 'scope'), 'scopeOverlap', { glob: pair[1], other: a.id, otherGlob: pair[0] });
+      if (!pair) continue;
+      // A bare name matches at any depth; anchored with `/` it may no longer overlap.
+      const loose = [[pair[1], pair[0]], pair].find(([x, y]) => bare(x) && !overlaps('/' + x, y));
+      add('PLAN-SCOPE', b, keyLine(b, 'scope'), loose ? 'scopeOverlapRoot' : 'scopeOverlap', { glob: pair[1], other: a.id, otherGlob: pair[0], root: loose && '/' + loose[0] });
     }
   }
   return out;
