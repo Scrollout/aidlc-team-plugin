@@ -28,12 +28,12 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 | Skill body / agent prompt | 3 KB each |
 | Skill and agent descriptions | 300 chars each |
 | Unit card | 6,000 chars |
-| CLI source (`plugin/bin`, `plugin/lib`) | 2,500 lines |
-| Hook wall time | 300 ms typical, fail closed |
+| CLI source (`plugin/cli/`) | 2,500 lines |
+| Hook timeout | 10 s explicit, `onFailure: "block"` on blocking hooks |
 
 # Repo layout
-- `plugin/.claude-plugin/plugin.json`: the only version number.
-- `plugin/bin/aidlc.mjs`, `plugin/lib/*.mjs`: the CLI.
+- `plugin/.claude-plugin/plugin.json`: kebab-case `name` (no reserved prefix), the only `version`; users stay on a version until it is bumped.
+- `plugin/cli/aidlc.mjs`, `plugin/cli/lib/*.mjs`: the CLI.
 - `plugin/hooks/`: thin wrappers that call the CLI.
 - `plugin/agents/`: `builder.md`, `reviewer.md`.
 - `plugin/skills/aidlc/SKILL.md`: the lead's loop.

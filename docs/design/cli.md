@@ -38,5 +38,5 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 
 # Implementation limits
 - Node 20+, ESM, no dependencies; git through `execFileSync`, never a shell.
-- `plugin/lib/` one module per concern: `profile`, `template`, `okf`, `grid`, `state`, `card`, `gate`, `hooks`, `init`.
+- `plugin/cli/lib/` one module per concern: `profile`, `template`, `okf`, `grid`, `state`, `card`, `gate`, `hooks`, `init`.
 - Every module is tested with `node:test` against fixture repos created in a temp dir.

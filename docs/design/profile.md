@@ -40,4 +40,4 @@ Merged in order, later wins, except that a `deny` in an earlier layer cannot be 
 - Neutral by construction: templates never contain the plugin's name; a test greps rendered output.
 
 # Vendoring
-`init` and `upgrade` copy `plugin/bin` and `plugin/lib` to `.aidlc/bin/` with a `VERSION` file. CI, git hooks and the plugin's own hooks run `node .aidlc/bin/aidlc.mjs`, so the project's pinned version is the one that judges it.
+`init` and `upgrade` copy `plugin/cli/` to `.aidlc/bin/` with a `VERSION` file. CI, git hooks and the plugin's own hooks run `node .aidlc/bin/aidlc.mjs`, so the project's pinned version is the one that judges it.

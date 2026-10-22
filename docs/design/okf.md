@@ -41,8 +41,10 @@ sources:
 As in the sample bundles: optional frontmatter `type: Log`, `title`; date headings `## YYYY-MM-DD`, newest first; entries `- **Verb** text` (Creation, Update, Deprecation, Verified, …).
 
 # Validation
+The official sources ship no validator tool. They provide the conformance rules (spec §11) and, in the reference implementation, `OKFDocument.parse` and `validate()`, which reject an unterminated frontmatter block, invalid YAML, a frontmatter that is not a mapping, and a missing `type`; the reference agent calls it before writing a doc.[^okf-ref] Third-party validators exist but are not official. Our validator implements exactly those checks as errors, adds the index and log structure rules from §8 and §9, and is golden-tested against the official sample bundles.
+
 Errors (spec conformance):[^okf-spec]
-- `OKF-FM` every non-reserved `.md` has parseable YAML frontmatter.
+- `OKF-FM` every non-reserved `.md` has a frontmatter block that is terminated, valid YAML and a mapping (timestamps kept as strings, as the reference loader does).
 - `OKF-TYPE` non-empty `type`.
 - `OKF-INDEX` an `index.md` has no frontmatter except `okf_version` at the root, and only headed `* [Title](url) - description` lists.
 - `OKF-LOG` `log.md` date headings are `YYYY-MM-DD`.

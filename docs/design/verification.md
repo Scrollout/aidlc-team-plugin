@@ -11,7 +11,14 @@ sources:
 ---
 
 # Inner loop: hooks
-All hooks are thin wrappers in the plugin's `hooks/hooks.json`, run in exec form with `${CLAUDE_PLUGIN_ROOT}`, that call the vendored CLI.[^cc-hooks] They fail closed without relying on exit-code semantics: the wrapper catches any CLI crash or timeout and prints an explicit `permissionDecision: "deny"` (PreToolUse) or `decision: "block"` (Stop).
+All hooks are thin wrappers in the plugin's `hooks/hooks.json`, run in exec form with `${CLAUDE_PLUGIN_ROOT}`, that call the vendored CLI.[^cc-hooks]
+
+Failure handling, per the hooks reference:[^cc-hooks]
+- By default a hook that cannot start, exits with a code other than 0 or 2, times out or prints invalid JSON is a non-blocking error: the action goes ahead (fail open). A wrapper alone cannot catch a missing `node` or a timeout.
+- Every blocking hook (guard, scope, secrets, model) therefore sets `"onFailure": "block"` (Claude Code v2.1.295+) and an explicit `timeout` of 10 seconds instead of the 600-second default. `aidlc init` and `aidlc status` warn when the installed Claude Code is older.
+- Decisions are returned with exit 0 and JSON: `hookSpecificOutput.permissionDecision: "deny"` with a reason for PreToolUse; top-level `decision: "block"` with `reason` for Stop.
+- `onFailure` has no effect on Stop hooks, so `steer` is advisory by design: if it fails, the lead simply stops.
+- Matching hooks run in parallel, so no hook depends on another's result.
 
 Facts from the hooks reference this design relies on:[^cc-hooks]
 - Hooks fire for subagents' tool calls too; the input carries `agent_id`, `agent_type` and `cwd` (which follows the worktree), so the scope hook knows which builder and which unit it is judging.
