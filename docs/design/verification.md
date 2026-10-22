@@ -49,7 +49,7 @@ Fails with one line per problem, each naming the fix, unless all hold:
 6. Bundle passes OKF validation.
 7. Profile `security.check` commands pass when set (e.g. secret scan, SAST, dependency audit such as gitleaks, semgrep, govulncheck); the plugin runs them, it does not ship them.
 8. Architecture: no denied dependency edge and every `architecture.checks` command passes, on every merge ([Architecture](architecture.md)).
-On success: `git merge --no-ff` with trailers `Unit: U-<n>`, `Card: <hash>`, `Review: pass`.
+On success: `git merge --no-ff` with trailers `Unit: U-<n>`, `Card: <hash>`, `Review: pass`. How it runs: [Merge mechanics](gate.md).
 
 # Reviewer contract
 Returns JSON only: `{verdict: pass|fix|escalate, findings: [{path, line, ac?, claim, scenario, confidence: CONFIRMED|PLAUSIBLE}]}`, at most 10 findings. Round 1 `fix` → builder fixes → round 2. A second `fix` becomes `escalate`: the owner decides. The reviewer reads tests first: tests are what the owner samples.

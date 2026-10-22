@@ -7,7 +7,7 @@ import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { parseDoc, proseLines } from './okf.mjs';
 import { computeLane, overlaps, readPlan } from './grid.mjs';
-import { aidlcDir, approval, baseOf, branchOf, bundleOf, diffHash, git, runtimeFile, sha256, tryGit, writeJson } from './state.mjs';
+import { aidlcDir, approval, baseOf, branchOf, bundleOf, diffHash, git, roundsOf, runtimeFile, sha256, tryGit, writeJson } from './state.mjs';
 
 const C = config.card;
 const AC_LINE = /^\s*[-*]\s+AC-\d+\b/;
@@ -25,7 +25,7 @@ export function routeModel(unit, lane, profile = {}, review = null) {
       : complex ? msg('modelComplex', { glob: complex }) : null;
     if (why) [model, reason] = [m.escalate, msg('modelEscalated', { reason: why })];
   }
-  const last = review?.rounds?.at(-1);
+  const last = roundsOf(review).at(-1);
   if (last?.verdict === 'fix' && model !== m.escalate && (last.findings ?? []).some((f) => f.confidence === config.state.confirmed)) {
     [model, reason] = [m.escalate, msg('modelFix', {})];
   }
@@ -66,7 +66,7 @@ export function renderCard(cwd, unitId) {
   if (state !== 'approved') return { code: config.exit.blocked, output: msg('cardRefused', { unit: unitId, state }) };
 
   const review = existsSync(runtimeFile(cwd, 'reviews', unitId)) ? JSON.parse(readFileSync(runtimeFile(cwd, 'reviews', unitId), 'utf8')) : null;
-  const current = review && tryGit(cwd, 'rev-parse', '-q', '--verify', branchOf(unitId)) && review.rounds?.at(-1)?.diffHash === diffHash(cwd, base, unitId);
+  const current = review && tryGit(cwd, 'rev-parse', '-q', '--verify', branchOf(unitId)) && roundsOf(review).at(-1)?.diffHash === diffHash(cwd, base, unitId);
   const { model, reason } = routeModel(atBase, lane.lane, profile, current ? review : null);
   const modules = new Set(atBase.modules);
   const data = {

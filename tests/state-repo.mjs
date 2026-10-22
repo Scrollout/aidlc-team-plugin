@@ -9,7 +9,9 @@ export const CLI = join(import.meta.dirname, '..', 'plugin/cli/aidlc.mjs');
 export const git = (dir, ...args) => execFileSync('git', args, { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 
 export function run(dir, args, input) {
-  const r = spawnSync(process.execPath, [CLI, ...args], { cwd: dir, encoding: 'utf8', input });
+  // Without NODE_TEST_CONTEXT, project commands that run `node --test` behave as they would outside this suite.
+  const { NODE_TEST_CONTEXT, ...env } = process.env;
+  const r = spawnSync(process.execPath, [CLI, ...args], { cwd: dir, encoding: 'utf8', input, env });
   return { code: r.status, out: r.stdout, err: r.stderr };
 }
 

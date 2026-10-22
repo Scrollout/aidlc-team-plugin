@@ -7,6 +7,14 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** U6 built ([Merge mechanics](design/gate.md)):
+  - `merge` runs every gate condition on a trial merge in a temporary worktree, then fast-forwards the base;
+  - `push` checks each new base commit;
+  - `fix` writes a one-unit plan;
+  - `check --ci` checks the base history since `adopted` and the architecture;
+  - verdicts record their focus and card.
+  Release 0.7.0.
+- **Creation** [Merge mechanics](design/gate.md): the trial merge in a temporary worktree, gate codes, shared files, proof-revert, architecture edges, `push`, `fix` and the CI history check.
 - **Creation** [Board](design/board.md): an optional, one-way GitHub issues and Project projection. It costs zero model tokens and has no scrum-master agent, because `next` already does that job. M1 gains U11.
 - **Update** U5 built:
   - `init` renders the profile, AGENTS.md, CLAUDE.md, the bundle root, doc templates and CI, adds `.gitignore` lines and the worktree setting, and pins the CLI;
