@@ -143,8 +143,8 @@ function scope(input, cwd) {
   const { profile } = loadProfile(top);
   const bundleRel = relative(top, bundleOf(top, profile)).split('\\').join('/');
   if (mergeWritten(path, bundleRel, profile)) return deny(cwd, input, 'SCOPE-SHARED', 'scopeShared', { path });
-  const doc = readPlan(bundleOf(top, profile)).units.find((u) => u.id === unit);
-  if (!doc || !doc.scope.some((g) => inside('/' + path, g))) return deny(cwd, input, 'SCOPE-OUT', 'scopeOut', { path, unit });
+  const scope = readJson(runtimeFile(cwd, 'cards', unit))?.scope ?? readPlan(bundleOf(top, profile)).units.find((u) => u.id === unit)?.scope ?? [];
+  if (!scope.some((g) => inside('/' + path, g))) return deny(cwd, input, 'SCOPE-OUT', 'scopeOut', { path, unit });
   return allow();
 }
 

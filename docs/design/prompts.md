@@ -26,7 +26,7 @@ The lead's loop: run `aidlc next`, do the one action it prints, run it again. It
 - Plugin agents are named `aidlc-team:builder` and `aidlc-team:reviewer`.[^cc-subagents] Both set `omitClaudeMd`, omit `Agent` from `tools`, and say that `aidlc` means `node .aidlc/bin/aidlc.mjs`.
 - The lead passes each one the card text, the unit ID and, as the Agent call's `model`, the card's model (builder) or `models.review` (reviewer). The model hook checks both.
 - **Builder** (`isolation: worktree`): `aidlc start U-<n>` first; for each AC a failing test tagged `U-<n>/AC-<k>`, then the code; a commit after every passing test; the card's checks; `aidlc report`. It stops and reports on the card's stop conditions instead of working around them. A fix round works through the card's findings.
-- A restarted or fix-round builder gets a new worktree. `aidlc start` switches it to the existing `unit/U-<n>` branch, first removing the earlier worktree of that branch when it is clean and its heartbeat is stale; otherwise it refuses and names the worktree.
+- A restarted or fix-round builder gets a new worktree. `aidlc start` switches it to the existing `unit/U-<n>` branch, first removing the earlier worktree of that branch when it is clean; one with uncommitted work is refused and named. The lead never runs two builders for a unit, since `next` waits while one is in flight.
 - **Reviewer**: reads and runs, never edits.
 
 # Review

@@ -40,7 +40,7 @@ test('U4/AC-4 card renders from the base commit with the unit fields', () => {
   assert.doesNotMatch(r.out, /As a buyer/);
   assert.ok(r.out.length <= 6000);
   const record = JSON.parse(read(dir, '.git/aidlc/cards/U-1.json'));
-  assert.deepEqual(record, { unit: 'U-1', hash: hashOf(r.out), base, lane: 'standard', model: 'sonnet' });
+  assert.deepEqual(record, { unit: 'U-1', hash: hashOf(r.out), base, lane: 'standard', model: 'sonnet', scope: ['src/pricing/**'] });
 });
 
 test('U4/AC-4 card refuses an unapproved or stale unit, and one over 6,000 chars', () => {
@@ -153,7 +153,7 @@ test('U4/AC-7 start renames the worktree branch to unit/U-<n> and refuses a diff
   assert.match(taken.out, /unit\/U-1 is checked out in /);
 });
 
-test('U8/AC-7 start takes over the branch from a clean, stale earlier worktree and refuses a dirty or live one', () => {
+test('U8/AC-7 start takes over the branch from a clean earlier worktree, even with a fresh heartbeat, and refuses a dirty one', () => {
   const dir = repo();
   approve(dir, 'I-1', 'U-1');
   run(dir, ['card', 'U-1']);
@@ -172,9 +172,7 @@ test('U8/AC-7 start takes over the branch from a clean, stale earlier worktree a
   rmSync(join(wt1, 'src/pricing/b.txt'));
   const beat = join(dir, '.git/aidlc/heartbeats/U-1');
   mkdirSync(join(beat, '..'), { recursive: true });
-  writeFileSync(beat, '');
-  assert.equal(run(wt2, ['start', 'U-1']).code, 1, 'live builder');
-  utimesSync(beat, new Date(0), new Date(0));
+  writeFileSync(beat, ''); // the new builder's own launch mark
   const r = run(wt2, ['start', 'U-1']);
   assert.equal(r.code, 0, r.err + r.out);
   assert.equal(git(wt2, 'rev-parse', '--abbrev-ref', 'HEAD'), 'unit/U-1');

@@ -25,7 +25,7 @@ sources:
   - the owner commands `aidlc approve`, `upgrade` and `delegate` in any spelling: it asks the owner instead, a yes/no prompt on any device, and denies in `bypassPermissions` mode ([0009](../decisions/0009-approval-prompt.md)); `approve --auto` passes for what the owner delegated ([0008](../decisions/0008-delegated-approvals.md)).
 
   `git tag` and `gh release` ask the owner.
-- **scope** (Edit, Write): in a `unit/*` worktree, a path outside the unit's scope or a merge-written file is denied. Anywhere, a write that changes a doc's `verified` events or its `verified_hash`, or the personal profile, is denied.
+- **scope** (Edit, Write): in a `unit/*` worktree, a path outside the scope on the unit's card (the approved doc at the base) or a merge-written file is denied. Anywhere, a write that changes a doc's `verified` events or its `verified_hash`, or the personal profile, is denied.
 - **secrets** (Edit, Write): new content matching a built-in secret pattern or one in `profile.security.secrets` is denied. Pattern lists sit in data, not in rules prose, so a project adds one without editing code.
 - **model** (Agent): a builder or reviewer (`subagent_type` ending in `:builder` or `:reviewer`) must name its unit `U-<n>` in the prompt and pass `model` equal to the card's (builder) or `models.review` (reviewer). It touches the unit's heartbeat (builder) or `reviewing` marker (reviewer) at launch, so `next` waits for an agent from its start.
 - **docs** (PostToolUse on a bundle file) returns that file's OKF errors as a block reason so the agent fixes them at once. Outside a `unit/*` worktree it also regenerates the indexes.

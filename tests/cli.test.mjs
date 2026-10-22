@@ -63,8 +63,9 @@ test('U1/AC-5 CI runs the tests and the docs check on every branch push, not on 
   const yml = readFileSync(join(ROOT, '.github/workflows/ci.yml'), 'utf8');
   assert.match(yml, /^on:\s*\n(\s+[\w_]+:\s*\n)*\s+push:\n\s+branches: \['\*\*'\]/m, 'every branch, and so no tag');
   assert.doesNotMatch(yml, /tags:/);
-  assert.match(yml, /run: node --test$/m);
-  assert.match(yml, /run: node plugin\/cli\/aidlc\.mjs check docs$/m);
+  assert.match(yml, /run: node --test\b/);
+  assert.match(yml, /run: node plugin\/cli\/aidlc\.mjs check docs\b/);
+  assert.match(yml, /GITHUB_STEP_SUMMARY/, 'each run writes a job summary');
   assert.match(yml, /node-version: 20/);
 });
 

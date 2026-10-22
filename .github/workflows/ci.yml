@@ -16,6 +16,31 @@ jobs:
         with:
           node-version: 20
       - name: Tests
-        run: node --test
+        run: node --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=tap --test-reporter-destination=tests.tap
       - name: Docs check
-        run: node plugin/cli/aidlc.mjs check docs
+        run: node plugin/cli/aidlc.mjs check docs 2>&1 | tee check.txt
+      - name: Summary
+        if: always()
+        run: |
+          count() { grep -m1 "^# $1 " tests.tap 2>/dev/null | awk '{print $3}'; }
+          {
+            echo "## CI: plugin $(node -p "require('./plugin/.claude-plugin/plugin.json').version")"
+            echo
+            echo "| Check | Result |"
+            echo "|---|---|"
+            echo "| Tests | $(count pass) passed, $(count fail) failed, $(count skipped) skipped |"
+            echo "| Docs check | $([ -s check.txt ] && echo "$(wc -l < check.txt) finding(s)" || echo clean) |"
+            echo "| CLI source | $(cat plugin/cli/*.mjs plugin/cli/lib/*.mjs | wc -l) lines |"
+            if grep -q "^not ok" tests.tap 2>/dev/null; then
+              echo
+              echo "### Failing tests"
+              grep "^not ok" tests.tap | sed 's/^not ok [0-9]* - /- /'
+            fi
+            if [ -s check.txt ]; then
+              echo
+              echo "### Docs check"
+              echo '```'
+              cat check.txt
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
