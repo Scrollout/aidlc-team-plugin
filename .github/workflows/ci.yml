@@ -1,6 +1,7 @@
 name: ci
 on:
   push:
+    branches: ['**'] # branch pushes only: release tags point at commits CI already tested
   pull_request:
 permissions:
   contents: read
