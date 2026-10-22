@@ -2,7 +2,7 @@
 // and records builder reports and reviewer verdicts (docs/design/state.md). Nothing here is a ledger.
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { config, done, isMap, list, readJson, UsageError } from './config.mjs';
 import { msg } from './template.mjs';
@@ -379,6 +379,7 @@ export const commands = {
     const card = readJson(runtimeFile(cwd, 'cards', unit))?.hash ?? null;
     const round = { ...data, focus, verdict, card, diffHash: diffHash(cwd, baseOf(profile), unit), at: new Date().toISOString() };
     writeJson(target, { unit, rounds: [...prior, round] });
+    rmSync(join(aidlcDir(cwd), S.reviewing, unit), { force: true }); // the review is no longer in flight
     return done(msg('recorded', { what: verdict, unit }));
   },
 };

@@ -329,6 +329,9 @@ test('U4/AC-6 a review in flight makes next wait instead of asking for it again'
   const old = new Date(Date.now() - 10 * 60 * 1000);
   utimesSync(join(dir, '.git/aidlc/reviewing/U-1'), old, old);
   assert.match(run(dir, ['next']).out, /^review U-1, focus general/, 'a reviewer that went quiet is started again');
+  write(dir, { '.git/aidlc/reviewing/U-1': '' });
+  run(dir, ['review', 'record', 'U-1', '-'], '{"verdict": "pass", "findings": []}');
+  assert.doesNotMatch(run(dir, ['next']).out, /^wait/, 'a recorded verdict ends the review in flight');
 });
 
 test('U4/AC-3 delegate writes the owner\'s delegation into the personal profile only', () => {
