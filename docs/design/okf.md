@@ -1,47 +1,60 @@
 ---
 type: Design
 title: OKF
-description: What the OKF v0.2 spec requires, what this plugin adds as house rules, and how the validator reports each.
+description: How the plugin writes, indexes and validates OKF v0.2 bundles, following the official spec and its reference implementation.
 status: draft
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T09:45:00Z }
 sources:
   - id: okf-spec
     resource: https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md
     title: Open Knowledge Format v0.2 specification
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
+  - id: okf-ref
+    resource: https://github.com/GoogleCloudPlatform/open-knowledge-format/tree/main/src/reference_agent/bundle
+    title: OKF reference implementation (document.py, index.py)
+  - id: okf-bundles
+    resource: https://github.com/GoogleCloudPlatform/open-knowledge-format/tree/main/bundles
+    title: OKF sample bundles (acme_retail, ga4, stackoverflow, crypto_bitcoin)
 ---
 
-**TL;DR:** Spec conformance is the error set: frontmatter with a `type`, and well-formed `index.md` and `log.md`. Everything else, including per-folder indexes, is a house rule the profile can switch between warning and error.
+# Official sources
+- The canonical home is `GoogleCloudPlatform/open-knowledge-format`. The copy under `knowledge-catalog/okf` is a frozen snapshot; its `SPEC.md` is identical to the canonical one.[^okf-spec]
+- The reference implementation[^okf-ref] and the sample bundles[^okf-bundles] are the conventions this plugin copies. Where they differ from earlier house rules, they win.
 
-## Spec conformance (errors)
-From the spec's conformance section:[^okf-spec]
-- `OKF-FM` every non-reserved `.md` has a parseable YAML frontmatter block.
-- `OKF-TYPE` every frontmatter block has a non-empty `type`.
-- `OKF-INDEX-FORM` an `index.md` has no frontmatter, except `okf_version` in the bundle-root index; its body is headed sections of `* [Title](url) - description` lines.
-- `OKF-LOG-FORM` `log.md` date headings are `## YYYY-MM-DD`, newest first.
-- `OKF-RUNTIME` a `type: Attested Computation` doc has `runtime` (required for that type).
+# Concept docs
+- Frontmatter: `type` (required), then `title`, `description` (one sentence), `tags`, `status`, `generated`, `verified`, `stale_after`, `sources`, as in the sample bundles. Producer keys are allowed (we add `verified_hash` and unit fields).
+- `generated: { by: <producer>/<version>, at: <ISO 8601 with offset> }` on every doc an agent writes; `verified` with a `human:<id>` actor for owner approvals ([State](state.md)).
+- Body: structural markdown with top-level `#` sections (`# Definition`, `# Rows`, …), no required sections. Citations are `[^id]` footnotes keyed to `sources`.
+- Links: bundle-relative `/dir/doc.md` (recommended) or relative.
+- File names are concept IDs: segments match `[A-Za-z0-9_][A-Za-z0-9_.-]*`.
 
-Index files and links are optional in the spec: a consumer must not reject a bundle for missing indexes or broken links. The validator therefore never treats those as spec errors.
+# Index files (generated, never hand-written)
+`aidlc index` regenerates every `index.md` the way the reference `index.py` does:[^okf-ref]
+- Every directory that contains docs gets one; empty directories get none.
+- Entries are grouped under `# <type>` headings, headings sorted; entries sorted by title, case-insensitive: `* [Title](file.md) - description`, with the description taken from frontmatter.
+- Child directories go under `# Subdirectories` as `* [name](name/index.md) - description`.
+- No frontmatter, except `okf_version: "0.2"` kept in the root index.
+- Reserved files (`index.md`, `log.md`) are not listed.
+- Subdirectory descriptions: the reference writes them with an LLM. We keep the existing line, or use the child's description when a directory has one child, so generation stays deterministic.
+- The docs hook and `aidlc merge` run it; a hand edit is overwritten. Golden test: the output is byte-identical to the indexes in the official `ga4`, `stackoverflow` and `crypto_bitcoin` bundles.
 
-## Spec fields we use
-- `title`, `description` (one sentence), `tags`: recommended by the spec; we always write them.
-- `status`: `draft` until the owner reviews, then `stable`; `deprecated` instead of deleting.
-- `generated: { by, at }`: every doc an agent writes, with `by` in the actor form `<producer>/<version>` (e.g. `claude-code/claude-opus-5-5`).
-- `verified: { by: human:<id>, at }`: an owner approval; it puts the doc in the human-reviewed trust tier. See [State](state.md).
-- `sources` with `[^id]` footnotes when a doc derives from external material.
-- Links: bundle-relative (`/design/grid.md`) or relative; the spec recommends bundle-relative.
+# Log files
+As in the sample bundles: optional frontmatter `type: Log`, `title`; date headings `## YYYY-MM-DD`, newest first; entries `- **Verb** text` (Creation, Update, Deprecation, Verified, …).
 
-## House rules (warning by default, `profile.docs.rules` can raise to error)
-- `HOUSE-INDEX` every folder has an `index.md`; the parent index lists it (`* [Design](design/) - …`); each doc is listed in its folder's index. Agents load one index, then one doc. This bundle runs it as an error.
-- `HOUSE-LINK` links resolve.
-- `HOUSE-TLDR` body starts with `**TL;DR:**`.
-- `HOUSE-LOG` the change adds a log entry for each doc it creates or updates.
-- `HOUSE-LOAD` index lines end with `Load when …`.
-- `HOUSE-SIZE` size caps per type: Unit, Plan, Intent 12,000 chars; Design, Decision 6,000; others 4,000.
+# Validation
+Errors (spec conformance):[^okf-spec]
+- `OKF-FM` every non-reserved `.md` has parseable YAML frontmatter.
+- `OKF-TYPE` non-empty `type`.
+- `OKF-INDEX` an `index.md` has no frontmatter except `okf_version` at the root, and only headed `* [Title](url) - description` lists.
+- `OKF-LOG` `log.md` date headings are `YYYY-MM-DD`.
+- `OKF-RUNTIME` an `Attested Computation` has `runtime`.
 
-## Kept out of the hot path
-`research/` and `archive/` have their own index, but the root index lists only the folder, so notes never bloat what agents load first.
-
-## Source
-Validator ported from a previous tool's `validate-okf.mjs`, with its house rules separated from spec conformance and its row hashes and timestamp rules dropped.
+Warnings (house rules; `profile.docs.rules` can raise them to errors):
+- `HOUSE-INDEX-STALE` an index differs from what `aidlc index` would generate.
+- `HOUSE-DESC` missing `title` or `description`.
+- `HOUSE-GENERATED` an agent-written doc without `generated`.
+- `HOUSE-LINK` a link that does not resolve (the spec says consumers must tolerate these).
+- `HOUSE-SIZE` a doc over its type's cap: Unit, Plan, Intent 12,000 chars; Design, Decision 6,000; others 4,000.
 
 [^okf-spec]: Open Knowledge Format v0.2 specification
+[^okf-ref]: OKF reference implementation (document.py, index.py)
+[^okf-bundles]: OKF sample bundles (acme_retail, ga4, stackoverflow, crypto_bitcoin)

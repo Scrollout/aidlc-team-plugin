@@ -1,10 +1,14 @@
-# Log
+---
+type: Log
+title: aidlc-team-plugin docs history
+---
+
+# Bundle history
 
 ## 2026-10-22
-* **Update**: Checked the Claude Code assumptions against the official hooks, subagents and plugin-marketplace docs. [Team](design/team.md) now names the builder branch with `aidlc start`, forbids nested subagents, and keeps enforcement out of plugin-agent frontmatter. [Verification](design/verification.md) now fails closed explicitly, adds a model hook on the `Agent` tool, and cites its sources. [Steering](design/steering.md) uses the documented Stop-hook fields. [CLI](design/cli.md) and [M1](roadmap/m1.md) follow.
-* **Update**: Aligned the bundle with the official OKF v0.2 spec. Added a per-folder index for constitution, design, decisions and roadmap (house rule); rewrote [OKF](design/okf.md) to separate spec conformance from house rules; approvals now use the spec's `verified` field ([State](design/state.md)); every doc carries `generated`.
-* **Update** [Grid](design/grid.md) with test levels per AC; [Verification](design/verification.md) and [M1](roadmap/m1.md) with proof-revert in the full lane and CI for this repo.
-* **Update** [State](design/state.md) with surviving a clear or crash; [Verification](design/verification.md), [CLI](design/cli.md) and [M1](roadmap/m1.md) to match.
-* **Creation** [Everyday paths](design/paths.md); **Update** [Verification](design/verification.md) with prompt evals and [M1](roadmap/m1.md) with their acceptance criteria.
-* **Creation** [Steering](design/steering.md); **Update** [Verification](design/verification.md), [Team](design/team.md), [Profile](design/profile.md) and [M1](roadmap/m1.md) for security coverage and self-correction; model routing added to [Team](design/team.md) and the card.
-* **Creation** [Principles](constitution/principles.md), the design set under `design/`, decisions 0001-0004 and the [M1 plan](roadmap/m1.md), from the review of a previous tool, a pilot project, AWS aidlc-workflows and the AI-DLC video series.
+
+- **Update** Aligned the bundle with the official OKF repository (spec, reference implementation, sample bundles). Indexes are now generated per directory, grouped by `type`, like the reference `index.py`. Bodies use top-level `#` sections, and the TL;DR lines are gone. [OKF](design/okf.md) is rewritten to cite the official sources.
+- **Update** Checked the Claude Code assumptions against the official hooks, subagents and plugin-marketplace docs. Changed [Team](design/team.md), [Verification](design/verification.md), [Steering](design/steering.md), [CLI](design/cli.md) and [M1](roadmap/m1.md).
+- **Update** [State](design/state.md) now covers surviving a clear or crash. Added test levels and proof-revert to [Grid](design/grid.md) and [Verification](design/verification.md), and model routing to [Team](design/team.md).
+- **Creation** [Everyday paths](design/paths.md) and [Steering](design/steering.md). Security coverage added to [Team](design/team.md) and [Verification](design/verification.md).
+- **Creation** [Principles](constitution/principles.md), the design set, decisions 0001-0005 and the [M1 plan](roadmap/m1.md). They draw on the review of a previous workflow tool, a pilot project, AWS aidlc-workflows and the AI-DLC video series.

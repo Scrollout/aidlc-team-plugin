@@ -6,9 +6,7 @@ status: draft
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 ---
 
-**TL;DR:** Nothing records progress. `aidlc next` recomputes it from the bundle, branches and merge trailers every time; only throwaway runtime data lives in `.git/aidlc/`.
-
-## Sources of truth
+# Sources of truth
 | Fact | Where it comes from |
 |---|---|
 | Intent and plan approved | a `human:` entry in the doc's OKF `verified` field, with `verified_hash` still matching the content |
@@ -20,15 +18,15 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 
 `.git/aidlc/` sits in git's common dir, so every worktree sees the same runtime data, and it is never committed.
 
-## Unit states
+# Unit states
 `draft → approved → building → reviewed → merged`, plus `blocked` (a dependency not merged) and `stale` (its approval no longer matches its content).
 
-## Approvals
+# Approvals
 - Approval uses OKF's own trust field rather than an invented one. The owner runs `! aidlc approve <doc>`. It appends `{ by: human:<git user.email>, at }` to `verified`, sets `status: stable`, and writes the extension key `verified_hash`, covering the body and the frontmatter except `verified`, `verified_hash` and `status`.
 - Agents cannot approve: the guard denies `aidlc approve` from a tool call, and the scope hook denies any edit that adds or changes a `human:` entry in `verified` or changes `verified_hash`. The `!` prefix runs outside the agent, so only the owner can.
 - Editing an approved doc makes it `stale`; `next` then asks for re-approval. Only intents, plans (units) and one-way-door decisions carry approvals, so this stays rare.
 
-## next
+# next
 `aidlc next` prints one line: the single next action and the command or agent that performs it, e.g. `build U-3 (card: aidlc card U-3)`. Order:
 1. Any `stale` approval → re-approve.
 2. Intent not approved → elaborate and request approval.
@@ -39,7 +37,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 
 `aidlc status` prints the same state as a short table; the SessionStart hook injects it, capped at 1,000 chars. This replaces handoff files.
 
-## Surviving a clear, crash or new session
+# Surviving a clear, crash or new session
 Rule: nothing that matters lives only in the conversation. Everything below is on disk before the turn that produced it ends.
 | Could be lost | Where it lives instead |
 |---|---|

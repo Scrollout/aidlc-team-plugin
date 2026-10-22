@@ -1,13 +1,13 @@
 # Design
 
-* [Overview](overview.md) - goals, non-goals, budgets, repo layout, glossary. Load first.
-* [Grid](grid.md) - the AI-DLC rows, the plan-execute-validate loop, lanes, tests and doc types. Load when touching workflow logic.
-* [State](state.md) - how progress is derived from git and docs, approvals, `next`, surviving a clear. Load when touching state or approvals.
-* [Unit card](unit-card.md) - the generated brief each worker builds from. Load when touching cards or workers.
-* [Team](team.md) - owner, lead, builder, reviewer, specialists; parallel rules, model routing and cost. Load when touching agents.
-* [Verification](verification.md) - hooks, merge gate, reviewer contract, prompt evals, CI mode. Load when touching checks.
-* [Steering](steering.md) - how blocks name their fix, the Stop hook keeps the lead on `next`, and retros improve rules. Load when touching hooks or retros.
-* [Everyday paths](paths.md) - fixes, mid-flight changes, shared files, pushing, cleanup, adopting a project, removal. Load when touching merge, push or init.
-* [Profile and templates](profile.md) - project profile, rule layers, templating, vendoring. Load when touching init or config.
-* [CLI](cli.md) - commands, exit codes, output format. Load when touching the CLI.
-* [OKF](okf.md) - the OKF rules the validator enforces and the configurable extras. Load when touching docs checks.
+* [CLI](cli.md) - The aidlc commands, their exit codes and the terse output format.
+* [Everyday paths](paths.md) - Fixes without an intent, changes mid-flight, shared files, pushing and base health, cleanup, adopting an existing project, and removing the plugin.
+* [Grid](grid.md) - The AI-DLC rows, the plan-execute-validate loop in each cell, lanes and the doc types each row produces.
+* [OKF](okf.md) - How the plugin writes, indexes and validates OKF v0.2 bundles, following the official spec and its reference implementation.
+* [Overview](overview.md) - Goals, non-goals, budgets, repo layout and glossary of the plugin.
+* [Profile and templates](profile.md) - The project profile, rule layers, the template engine and how the CLI is vendored and pinned.
+* [State](state.md) - How the CLI derives progress from git and docs, how approvals work, and how next picks the one allowed step.
+* [Steering](steering.md) - How the plugin corrects the agent during work, keeps it moving, and improves its rules over time without growing.
+* [Team](team.md) - The four roles, how parallel worktree workers are run and merged, and where tokens are spent.
+* [Unit card](unit-card.md) - The generated, read-only brief one builder works from and one reviewer checks against.
+* [Verification](verification.md) - The inner loop (hooks), the merge gate, the reviewer's output contract and the CI mode.

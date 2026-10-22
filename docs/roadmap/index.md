@@ -1,3 +1,3 @@
-# Roadmap
+# Plan
 
-* [M1 Core loop](m1.md) - the first usable plugin and its nine units. Load when planning or building M1.
+* [M1 Core loop](m1.md) - The first usable plugin - CLI, grid state, cards, merge gate, six hooks, builder and reviewer - piloted on a copy of a real project.

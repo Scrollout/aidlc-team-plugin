@@ -10,9 +10,7 @@ sources:
     title: Claude Code hooks reference
 ---
 
-**TL;DR:** Hooks block rule breaks as they happen; the merge gate checks the finished unit; a fresh reviewer checks intent; CI re-runs the gate so nothing bypasses it.
-
-## Inner loop: hooks
+# Inner loop: hooks
 All hooks are thin wrappers in the plugin's `hooks/hooks.json`, run in exec form with `${CLAUDE_PLUGIN_ROOT}`, that call the vendored CLI.[^cc-hooks] They fail closed without relying on exit-code semantics: the wrapper catches any CLI crash or timeout and prints an explicit `permissionDecision: "deny"` (PreToolUse) or `decision: "block"` (Stop).
 
 Facts from the hooks reference this design relies on:[^cc-hooks]
@@ -33,7 +31,7 @@ Facts from the hooks reference this design relies on:[^cc-hooks]
 
 The guard matches a short deny list on parsed argv; it does not try to model the shell.
 
-## Merge gate: `aidlc merge U-<n>`
+# Merge gate: `aidlc merge U-<n>`
 Fails with one line per problem, each naming the fix, unless all hold:
 1. Unit approved and not stale; deps merged.
 2. Diff inside the card's scope; lane at merge ≥ lane at start.
@@ -44,16 +42,16 @@ Fails with one line per problem, each naming the fix, unless all hold:
 7. Profile `security.check` commands pass when set (e.g. secret scan, SAST, dependency audit such as gitleaks, semgrep, govulncheck); the plugin runs them, it does not ship them.
 On success: `git merge --no-ff` with trailers `Unit: U-<n>`, `Card: <hash>`, `Review: pass`.
 
-## Reviewer contract
+# Reviewer contract
 Returns JSON only: `{verdict: pass|fix|escalate, findings: [{path, line, ac?, claim, scenario, confidence: CONFIRMED|PLAUSIBLE}]}`, at most 10 findings. Round 1 `fix` → builder fixes → round 2. A second `fix` becomes `escalate`: the owner decides. The reviewer reads tests first: tests are what the owner samples.
 
-## CI mode
+# CI mode
 `aidlc check --ci` runs OKF validation, plan lint and, for each merge commit on the base, its trailers and scope. It needs only Node and the vendored CLI. A human samples about one merged unit in ten to audit the reviewer.
 
-## Prompt evals
+# Prompt evals
 The skill and agent prompts are code coupled to a model version. `tests/evals/` holds a fixture project with seeded defects (an AC without a real test, an out-of-scope edit, an injection, a missing authz check). The reviewer must find each one; the builder must stop on the interface-change fixture. Run before every release and on every model change; a miss blocks the release.
 
-## Later
+# Later
 - M2: proof-revert for the standard lane too, once the pilot shows its runtime cost.
 - M3: an optional CI evaluator agent on pushes.
 

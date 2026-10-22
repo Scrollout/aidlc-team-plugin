@@ -3,7 +3,7 @@
 A Claude Code plugin that brings AI-DLC (Intent → Units → Design → Code → Deployment → Operation), OKF docs and a small team of agents to any project, with every rule that matters enforced by a CLI or a hook.
 
 ## Read first
-- `docs/index.md`: the docs bundle (OKF v0.2). Load docs from its index, not by browsing.
+- `docs/index.md`: the docs bundle (OKF v0.2). Read an index, then one doc. Indexes are generated; never edit them by hand.
 - `docs/constitution/principles.md`: the rules every change is checked against.
 - `docs/roadmap/m1.md`: the current plan.
 

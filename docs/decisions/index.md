@@ -1,7 +1,7 @@
-# Decisions
+# Decision
 
-* [0001 Derived state](0001-derived-state.md) - no ledger or handoff file; state comes from git and docs. Load when touching state.
-* [0002 Worktree subagents](0002-worktree-subagents.md) - parallel workers are worktree subagents of one lead session. Load when touching parallelism.
-* [0003 Claude Code first](0003-claude-code-first.md) - Claude Code plugin first, AGENTS.md portable. Load when adding another agent host.
-* [0004 Vendored CLI](0004-vendored-cli.md) - a zero-dependency Node CLI copied into each project and pinned. Load when touching install or CI.
-* [0005 One repo](0005-one-repo.md) - develop and ship from one repo; only `plugin/` is installed. Load when touching packaging.
+* [0001 Derived state](0001-derived-state.md) - Progress is computed from git and the docs bundle; there is no ledger, event log or handoff file.
+* [0002 Worktree subagents](0002-worktree-subagents.md) - Parallel workers are worktree-isolated subagents of one lead session, not peer sessions.
+* [0003 Claude Code first](0003-claude-code-first.md) - Ship as a Claude Code plugin first; keep AGENTS.md and the CLI portable so other agent hosts can follow later.
+* [0004 Vendored CLI](0004-vendored-cli.md) - The CLI is zero-dependency Node, copied into each project at .aidlc/bin and pinned there.
+* [0005 One repo](0005-one-repo.md) - Develop and ship from one repo; the installable plugin is the plugin/ folder only.

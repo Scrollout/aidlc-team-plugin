@@ -6,9 +6,7 @@ status: draft
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 ---
 
-**TL;DR:** `init` asks a few questions, writes `.aidlc/profile.json` and renders templates from it. Projects override templates and add rules without forking the plugin.
-
-## Profile (`.aidlc/profile.json`, tracked)
+# Profile (`.aidlc/profile.json`, tracked)
 ```json
 {
   "name": "example",
@@ -28,18 +26,18 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 }
 ```
 
-## Rule layers
+# Rule layers
 Merged in order, later wins, except that a `deny` in an earlier layer cannot be removed:
 1. plugin defaults (`plugin/templates/defaults.json`)
 2. org pack: a git repo pinned by tag in `profile.org`, cached under `.git/aidlc/org/` (M2)
 3. project: `.aidlc/profile.json`, `.aidlc/rules/*.md`
 4. personal: `.aidlc/local/` (untracked)
 
-## Templates
+# Templates
 - Files under `plugin/templates/` with `{{path.to.value}}` and `{{#each list}}…{{/each}}`; nothing more.
 - A project file `.aidlc/templates/<same path>` overrides the plugin's.
 - Rendered: AGENTS.md, CLAUDE.md (one line: `@AGENTS.md`), the bundle skeleton, intent/unit/decision doc templates, a CI snippet, `.gitignore` lines.
 - Neutral by construction: templates never contain the plugin's name; a test greps rendered output.
 
-## Vendoring
+# Vendoring
 `init` and `upgrade` copy `plugin/bin` and `plugin/lib` to `.aidlc/bin/` with a `VERSION` file. CI, git hooks and the plugin's own hooks run `node .aidlc/bin/aidlc.mjs`, so the project's pinned version is the one that judges it.

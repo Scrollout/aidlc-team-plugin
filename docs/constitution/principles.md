@@ -6,8 +6,6 @@ status: draft
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 ---
 
-**TL;DR:** The workflow lives in code; prose explains it. State is derived, specs come first, humans decide only what is strategic, and everything stays small.
-
 1. **Enforce at the action.** A rule that matters is a CLI check or a hook that blocks when it is broken. A rule no script can check is advice, and is written as advice.
    *Why:* a previous tool's prose gates and self-reported ledger let the model drift unnoticed.
 2. **Derive state, don't record it.** Progress is computed from git and the docs bundle. There is no ledger, no event log, no handoff file.

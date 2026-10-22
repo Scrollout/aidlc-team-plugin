@@ -1,3 +1,3 @@
-# Constitution
+# Principles
 
-* [Principles](principles.md) - the ten rules every design choice is checked against. Load before any design or review.
+* [Principles](principles.md) - The ten rules every design choice in this plugin is checked against.
