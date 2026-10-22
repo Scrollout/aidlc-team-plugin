@@ -1,39 +1,154 @@
 {
   "pluginRoot": "..",
-  "exit": { "ok": 0, "findings": 1, "blocked": 2, "usage": 64, "internal": 70 },
-  "helpFlags": ["--help", "-h", "help"],
+  "exit": {
+    "ok": 0,
+    "findings": 1,
+    "blocked": 2,
+    "usage": 64,
+    "internal": 70
+  },
+  "helpFlags": [
+    "--help",
+    "-h",
+    "help"
+  ],
   "layers": [
-    { "name": "plugin", "from": "plugin", "path": "templates/defaults.json" },
-    { "name": "project", "from": "project", "path": ".aidlc/profile.json" },
-    { "name": "personal", "from": "project", "path": ".aidlc/local/profile.json" }
+    {
+      "name": "plugin",
+      "from": "plugin",
+      "path": "templates/defaults.json"
+    },
+    {
+      "name": "project",
+      "from": "project",
+      "path": ".aidlc/profile.json"
+    },
+    {
+      "name": "personal",
+      "from": "project",
+      "path": ".aidlc/local/profile.json"
+    }
   ],
   "unionKey": "deny",
-  "rules": { "dir": ".aidlc/rules", "ext": ".md" },
+  "rules": {
+    "dir": ".aidlc/rules",
+    "ext": ".md"
+  },
   "templates": [
-    { "from": "project", "path": ".aidlc/templates" },
-    { "from": "plugin", "path": "templates" }
+    {
+      "from": "project",
+      "path": ".aidlc/templates"
+    },
+    {
+      "from": "plugin",
+      "path": "templates"
+    }
   ],
   "commands": [
-    { "name": "init", "usage": "init", "does": "ask questions, write the profile, render templates, vendor the CLI" },
-    { "name": "upgrade", "usage": "upgrade", "does": "re-vendor the CLI from the installed plugin" },
-    { "name": "index", "usage": "index", "does": "regenerate every index.md in the bundle" },
-    { "name": "check", "usage": "check [--ci] [--staged] [path…]", "does": "OKF validation, plan lint, profile lint" },
-    { "name": "status", "usage": "status", "does": "print the state table" },
-    { "name": "next", "usage": "next", "does": "print the single next action" },
-    { "name": "lane", "usage": "lane <unit>|--diff <range>", "does": "print the computed lane and why" },
-    { "name": "card", "usage": "card <unit>", "does": "render the unit card" },
-    { "name": "start", "usage": "start <unit>", "does": "name the worktree branch unit/U-<n> and check its base" },
-    { "name": "reserve", "usage": "reserve <kind> <area>", "does": "next free number for a reservation" },
-    { "name": "approve", "usage": "approve <doc>", "does": "stamp approval (owner only)" },
-    { "name": "review", "usage": "review record <unit> <file>", "does": "store a reviewer verdict keyed by diff hash" },
-    { "name": "report", "usage": "report <unit>", "does": "store the builder's report (JSON on stdin)" },
-    { "name": "hold", "usage": "hold <unit>", "does": "record an owner hold in the plan" },
-    { "name": "priority", "usage": "priority <unit> <n>", "does": "record an owner priority in the plan" },
-    { "name": "fix", "usage": "fix \"<title>\"", "does": "create a one-unit plan without an intent" },
-    { "name": "push", "usage": "push", "does": "push the base after checking its new commits" },
-    { "name": "clean", "usage": "clean", "does": "remove orphan worktrees and branches" },
-    { "name": "merge", "usage": "merge <unit>", "does": "run the merge gate, then merge --no-ff with trailers" },
-    { "name": "hook", "usage": "hook <name>", "does": "entry point for hooks; reads the hook JSON on stdin" }
+    {
+      "name": "init",
+      "usage": "init",
+      "does": "ask questions, write the profile, render templates, vendor the CLI"
+    },
+    {
+      "name": "upgrade",
+      "usage": "upgrade",
+      "does": "re-vendor the CLI from the installed plugin"
+    },
+    {
+      "name": "index",
+      "usage": "index [bundle]",
+      "does": "regenerate every index.md in the bundle"
+    },
+    {
+      "name": "check",
+      "usage": "check [--ci] [--staged] [path…]",
+      "does": "OKF validation, plan lint, profile lint",
+      "flags": [
+        "--ci",
+        "--staged"
+      ]
+    },
+    {
+      "name": "status",
+      "usage": "status",
+      "does": "print the state table"
+    },
+    {
+      "name": "next",
+      "usage": "next",
+      "does": "print the single next action"
+    },
+    {
+      "name": "lane",
+      "usage": "lane <unit>|--diff <range>",
+      "does": "print the computed lane and why"
+    },
+    {
+      "name": "card",
+      "usage": "card <unit>",
+      "does": "render the unit card"
+    },
+    {
+      "name": "start",
+      "usage": "start <unit>",
+      "does": "name the worktree branch unit/U-<n> and check its base"
+    },
+    {
+      "name": "reserve",
+      "usage": "reserve <kind> <area>",
+      "does": "next free number for a reservation"
+    },
+    {
+      "name": "approve",
+      "usage": "approve <doc>",
+      "does": "stamp approval (owner only)"
+    },
+    {
+      "name": "review",
+      "usage": "review record <unit> <file>",
+      "does": "store a reviewer verdict keyed by diff hash"
+    },
+    {
+      "name": "report",
+      "usage": "report <unit>",
+      "does": "store the builder's report (JSON on stdin)"
+    },
+    {
+      "name": "hold",
+      "usage": "hold <unit>",
+      "does": "record an owner hold in the plan"
+    },
+    {
+      "name": "priority",
+      "usage": "priority <unit> <n>",
+      "does": "record an owner priority in the plan"
+    },
+    {
+      "name": "fix",
+      "usage": "fix \"<title>\"",
+      "does": "create a one-unit plan without an intent"
+    },
+    {
+      "name": "push",
+      "usage": "push",
+      "does": "push the base after checking its new commits"
+    },
+    {
+      "name": "clean",
+      "usage": "clean",
+      "does": "remove orphan worktrees and branches"
+    },
+    {
+      "name": "merge",
+      "usage": "merge <unit>",
+      "does": "run the merge gate, then merge --no-ff with trailers"
+    },
+    {
+      "name": "hook",
+      "usage": "hook <name>",
+      "does": "entry point for hooks; reads the hook JSON on stdin"
+    }
   ],
   "messages": {
     "help": "usage: aidlc <command> [args]\n\n{{#each commands}}  {{usage}}  {{does}}\n{{/each}}",
@@ -49,6 +164,118 @@
     "notScalar": "{{file}}: {{name}} is not a scalar",
     "unclosedEach": "{{file}}: each block {{name}} is not closed",
     "strayEnd": "{{file}}: end of each block without a start",
-    "templateNotFound": "template not found: {{name}}"
+    "templateNotFound": "template not found: {{name}}",
+    "finding": "{{path}}:{{line}} {{code}} {{message}} → {{fix}}\n",
+    "noSuchPath": "no such file or directory: {{name}}",
+    "unknownFlag": "unknown flag {{name}} → run aidlc --help",
+    "fmMissing": "no frontmatter block",
+    "fmUnterminated": "frontmatter block is not terminated",
+    "fmYaml": "frontmatter is not valid YAML: {{error}}",
+    "fmMapping": "frontmatter is not a mapping",
+    "typeMissing": "type is missing or empty",
+    "runtimeMissing": "{{type}} has no {{field}}",
+    "indexFrontmatter": "index.md may carry frontmatter only at the bundle root, with only {{keys}}",
+    "indexLine": "not a heading or a * [Title](url) - description entry",
+    "indexUnheaded": "entry before any heading",
+    "logFrontmatter": "log.md frontmatter is not a valid YAML mapping",
+    "logHeading": "date heading is not YYYY-MM-DD",
+    "indexStale": "index differs from what aidlc index generates",
+    "descMissing": "missing {{fields}}",
+    "generatedMissing": "no generated:",
+    "linkBroken": "link target {{target}} does not exist",
+    "sizeOver": "{{size}} chars over the {{cap}} cap for {{type}}",
+    "ruleUnknown": "docs.rules.{{code}}: unknown code",
+    "ruleFixed": "docs.rules.{{code}}: spec codes cannot be changed",
+    "ruleLevel": "docs.rules.{{code}}: level must be error, warning or off",
+    "yamlTab": "line {{line}}: tab in indentation",
+    "yamlIndent": "line {{line}}: bad indentation",
+    "yamlKey": "line {{line}}: expected a key: value pair",
+    "yamlQuote": "line {{line}}: unterminated quoted scalar",
+    "yamlEscape": "line {{line}}: unknown escape \\{{char}}",
+    "yamlFlow": "line {{line}}: malformed flow collection",
+    "yamlColon": "line {{line}}: mapping values are not allowed here",
+    "yamlTrailing": "line {{line}}: unexpected text after a value",
+    "yamlUnsupported": "line {{line}}: unsupported YAML feature {{char}}",
+    "yamlBlock": "line {{line}}: bad block scalar",
+    "flagNotBuilt": "{{name}} is not implemented yet"
+  },
+  "okf": {
+    "bundle": "docs",
+    "index": "index.md",
+    "log": "log.md",
+    "ext": ".md",
+    "rootIndexKeys": [
+      "okf_version"
+    ],
+    "subdirType": "Subdirectories",
+    "otherType": "Other",
+    "attested": {
+      "type": "Attested Computation",
+      "field": "runtime"
+    },
+    "sizeCaps": {
+      "Unit": 12000,
+      "Plan": 12000,
+      "Intent": 12000,
+      "Design": 6000,
+      "Decision": 6000
+    },
+    "sizeCapDefault": 4000,
+    "levels": [
+      "error",
+      "warning",
+      "off"
+    ],
+    "codes": {
+      "OKF-FM": {
+        "level": "error",
+        "fix": "give the file a terminated --- block of YAML key: value pairs"
+      },
+      "OKF-TYPE": {
+        "level": "error",
+        "fix": "add a non-empty type: to the frontmatter"
+      },
+      "OKF-INDEX": {
+        "level": "error",
+        "fix": "run aidlc index"
+      },
+      "OKF-LOG": {
+        "level": "error",
+        "fix": "use ## YYYY-MM-DD date headings"
+      },
+      "OKF-RUNTIME": {
+        "level": "error",
+        "fix": "add runtime: (e.g. bigquery, python)"
+      },
+      "HOUSE-INDEX-STALE": {
+        "level": "warning",
+        "house": true,
+        "fix": "run aidlc index"
+      },
+      "HOUSE-DESC": {
+        "level": "warning",
+        "house": true,
+        "fix": "add title: and a one-sentence description:"
+      },
+      "HOUSE-GENERATED": {
+        "level": "warning",
+        "house": true,
+        "fix": "add generated: { by: <producer>/<version>, at: <ISO 8601> }"
+      },
+      "HOUSE-LINK": {
+        "level": "warning",
+        "house": true,
+        "fix": "point the link at an existing file or remove it"
+      },
+      "HOUSE-SIZE": {
+        "level": "warning",
+        "house": true,
+        "fix": "split the doc or move detail into linked docs"
+      },
+      "PROFILE-RULE": {
+        "level": "error",
+        "fix": "set docs.rules entries to a HOUSE-* code and one of error, warning, off"
+      }
+    }
   }
 }

@@ -39,11 +39,11 @@ test('U1/AC-1 cli.json matches the CLI design: commands and exit codes', () => {
 
 test('every message the CLI uses is defined in cli.json, and none is unused', () => {
   const { messages } = readJson('plugin/cli/cli.json');
-  const used = new Set();
-  for (const f of ['plugin/cli/aidlc.mjs', ...readdirSync(join(ROOT, 'plugin/cli/lib')).map((f) => `plugin/cli/lib/${f}`)]) {
-    for (const m of readFileSync(join(ROOT, f), 'utf8').matchAll(/(?:msg|fail)\('(\w+)'/g)) used.add(m[1]);
-  }
-  assert.deepEqual([...used].sort(), Object.keys(messages).sort());
+  const files = ['plugin/cli/aidlc.mjs', ...readdirSync(join(ROOT, 'plugin/cli/lib')).map((f) => `plugin/cli/lib/${f}`)];
+  const code = files.map((f) => readFileSync(join(ROOT, f), 'utf8')).join('\n');
+  const used = [...code.matchAll(/(?:msg|fail|yerr)\('(\w+)'|add\([^;]*?'[A-Z]+-[A-Z-]+', '(\w+)'/g)].map((m) => m[1] ?? m[2]);
+  for (const key of used) assert.ok(key in messages, `${key} is used but not defined`);
+  for (const key of Object.keys(messages)) assert.ok(code.includes(`'${key}'`), `${key} is defined but never used`);
 });
 
 test('U1/AC-1 unknown command exits 64', () => {
@@ -81,7 +81,14 @@ test('U1/AC-6 marketplace entry points at ./plugin with the manifest name', () =
 test('a release tag matches the plugin.json version', (t) => {
   if (process.env.GITHUB_REF_TYPE !== 'tag') return t.skip('not a tag build');
   const { name, version } = readJson('plugin/.claude-plugin/plugin.json');
-  assert.equal(process.env.GITHUB_REF_NAME, `${name}--v${version}`);
+  assert.ok([`v${version}`, `${name}--v${version}`].includes(process.env.GITHUB_REF_NAME), process.env.GITHUB_REF_NAME);
+});
+
+test('plugin/ never changes under an already tagged version', (t) => {
+  const { version } = readJson('plugin/.claude-plugin/plugin.json');
+  const git = (...args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  try { git('rev-parse', '-q', '--verify', `refs/tags/v${version}`); } catch { return t.skip(`v${version} not tagged yet`); }
+  assert.equal(git('diff', '--name-only', `v${version}`, '--', 'plugin/'), '', `plugin/ changed since v${version}; bump version in plugin.json`);
 });
 
 test('U1/AC-6 claude plugin validate . passes', (t) => {

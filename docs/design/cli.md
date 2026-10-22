@@ -11,8 +11,8 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 |---|---|---|
 | `init` | asks questions, writes profile, renders templates, vendors itself | owner via the `aidlc` skill |
 | `upgrade` | re-vendors the CLI from the installed plugin | owner |
-| `index` | regenerates every `index.md` in the bundle like the OKF reference implementation | docs hook, merge, anyone |
-| `check [--ci] [--staged] [path…]` | OKF validation, plan lint, profile lint; `--ci` adds merge-trailer checks | hooks, CI, anyone |
+| `index [bundle]` | regenerates every `index.md` in the bundle like the OKF reference implementation | docs hook, merge, anyone |
+| `check [--ci] [--staged] [path…]` | OKF validation, plan lint, profile lint; `--ci` adds merge-trailer checks. A directory is checked as a bundle; a file reports only its own findings | hooks, CI, anyone |
 | `status` | the state table | SessionStart hook, anyone |
 | `next` | the single next action | lead |
 | `lane <unit>|--diff <range>` | the computed lane and why | lead, gate |

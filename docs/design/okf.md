@@ -31,10 +31,10 @@ sources:
 `aidlc index` regenerates every `index.md` the way the reference `index.py` does:[^okf-ref]
 - Every directory that contains docs gets one; empty directories get none.
 - Entries are grouped under `# <type>` headings, headings sorted; entries sorted by title, case-insensitive: `* [Title](file.md) - description`, with the description taken from frontmatter.
-- Child directories go under `# Subdirectories` as `* [name](name/index.md) - description`.
+- Every child directory goes under `# Subdirectories` as `* [name](name/index.md) - description`, as in the reference.
 - No frontmatter, except `okf_version: "0.2"` kept in the root index.
 - Reserved files (`index.md`, `log.md`) are not listed.
-- Subdirectory descriptions: the reference writes them with an LLM. We keep the existing line, or use the child's description when a directory has one child, so generation stays deterministic.
+- Subdirectory descriptions: the reference uses the child's description when a directory has one entry, otherwise an LLM. We do the same for one entry, otherwise keep the existing line, so generation stays deterministic.
 - The docs hook and `aidlc merge` run it; a hand edit is overwritten. Golden test: the output is byte-identical to the indexes in the official `ga4`, `stackoverflow` and `crypto_bitcoin` bundles.
 
 # Log files
@@ -43,6 +43,8 @@ As in the sample bundles: optional frontmatter `type: Log`, `title`; date headin
 # Validation
 The official sources ship no validator tool. They provide the conformance rules (spec §11) and, in the reference implementation, `OKFDocument.parse` and `validate()`, which reject an unterminated frontmatter block, invalid YAML, a frontmatter that is not a mapping, and a missing `type`; the reference agent calls it before writing a doc.[^okf-ref] Third-party validators exist but are not official. Our validator implements exactly those checks as errors, adds the index and log structure rules from §8 and §9, and is golden-tested against the official sample bundles.
 
+Frontmatter is read by a zero-dependency YAML subset: block and flow mappings and sequences, plain (multi-line), quoted and `|`/`>` scalars, comments. Anchors, aliases, tags and directives are reported as `OKF-FM`.
+
 Errors (spec conformance):[^okf-spec]
 - `OKF-FM` every non-reserved `.md` has a frontmatter block that is terminated, valid YAML and a mapping (timestamps kept as strings, as the reference loader does).
 - `OKF-TYPE` non-empty `type`.
@@ -50,10 +52,10 @@ Errors (spec conformance):[^okf-spec]
 - `OKF-LOG` `log.md` date headings are `YYYY-MM-DD`.
 - `OKF-RUNTIME` an `Attested Computation` has `runtime`.
 
-Warnings (house rules; `profile.docs.rules` can raise them to errors):
+Warnings (house rules; `profile.docs.rules` sets each to `error`, `warning` or `off`; spec codes cannot be changed):
 - `HOUSE-INDEX-STALE` an index differs from what `aidlc index` would generate.
 - `HOUSE-DESC` missing `title` or `description`.
-- `HOUSE-GENERATED` an agent-written doc without `generated`.
+- `HOUSE-GENERATED` a doc without `generated` (authorship is not detectable, so owner-written bundles set it `off`).
 - `HOUSE-LINK` a link that does not resolve (the spec says consumers must tolerate these).
 - `HOUSE-SIZE` a doc over its type's cap: Unit, Plan, Intent 12,000 chars; Design, Decision 6,000; others 4,000.
 

@@ -49,9 +49,11 @@ sources:
 
 # Releases
 - `version` lives only in `plugin/.claude-plugin/plugin.json`, never in the marketplace entry. Users stay on a version until it changes.[^cc-host]
-- A release is a git tag made with `claude plugin tag plugin --push`. It creates the annotated tag `aidlc-team--v<version>` after checking that the manifest and the marketplace entry agree and that the tree is clean.[^cc-tag] This is the convention plugin dependency ranges resolve against.
-- Release = bump `version`, commit, tag. CI checks on a tag push that the tag matches `plugin.json`. The owner approves each release (principle 5).
-- Users can pin a release with `/plugin marketplace add Scrollout/aidlc-team-plugin#aidlc-team--v<version>`.[^cc-host]
+- A release carries two annotated tags on the same commit, chosen by the owner:
+  - `v<version>`, the standard semver tag for people and GitHub Releases.
+  - `aidlc-team--v<version>`, made by `claude plugin tag plugin --push`. The command first checks that the manifest and the marketplace entry agree and that the tree is clean.[^cc-tag] Plugin dependency ranges resolve against this form.
+- The version always matches a tag. A commit that changes `plugin/` also bumps `version` (semver: new commands or rules are minor, fixes are patch), and is tagged once it is on `main`. A test fails when `plugin/` differs from the tag of the current version. CI checks on a tag push that either tag matches `plugin.json`. The owner approves each release (principle 5).
+- Users can pin a release with `/plugin marketplace add Scrollout/aidlc-team-plugin#v<version>`.[^cc-host]
 - The vendored CLI's `VERSION` file holds the same version, so a project records which release judges it.
 
 # Glossary

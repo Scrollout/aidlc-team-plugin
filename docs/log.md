@@ -7,6 +7,8 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** U2 built: [OKF](design/okf.md) now records the YAML subset, rule levels including `off`, and the exact subdirectory-description and listing behaviour of the index generator. Indexes were regenerated, so one-entry folders now show their entry's description, as in the reference.
+- **Update** Each release gets both `v<version>` and `aidlc-team--v<version>` tags, and `plugin/` may not change without a version bump ([Overview](design/overview.md)).
 - **Update** Versions are released as git tags `aidlc-team--v<version>`, made with `claude plugin tag`. CI checks that a tag matches `plugin.json` ([Overview](design/overview.md)).
 - **Creation** [0006 Engine behind adapters](decisions/0006-engine-behind-adapters.md): command handlers and hook rules return data, so MCP, HTTP hooks and A2A can be added later. Owner actions stay off agent-facing adapters. [CLI](design/cli.md) and [Verification](design/verification.md) updated to match.
 - **Update** No hand-coded values in the CLI. Commands, exit codes, paths, layers and messages now live in `plugin/cli/cli.json`, read by a new `config` module ([CLI](design/cli.md), [M1](roadmap/m1.md)).

@@ -1,22 +1,23 @@
 #!/usr/bin/env node
-// Entry point: dispatches subcommands and maps errors to exit codes. Values and messages come from cli.json.
+// Entry point and adapter: dispatches subcommands, renders their data and maps errors to exit codes.
+// Values and messages come from cli.json; handlers return { code, findings, output } (decision 0006).
 import { pathToFileURL } from 'node:url';
-import { config } from './lib/config.mjs';
+import { config, UsageError } from './lib/config.mjs';
 import { msg } from './lib/template.mjs';
+import { commands as okf } from './lib/okf.mjs';
 
 export const EXIT = config.exit;
-
-export class UsageError extends Error {}
+export { UsageError };
 
 // Each unit that builds a command adds its handler here, keyed by the command name in cli.json.
-const HANDLERS = {};
+const HANDLERS = { ...okf };
 
 export function help() {
   const width = Math.max(...config.commands.map((c) => c.usage.length));
   return msg('help', { commands: config.commands.map((c) => ({ ...c, usage: c.usage.padEnd(width) })) });
 }
 
-export async function main(argv, io = { out: process.stdout, err: process.stderr }) {
+export async function main(argv, io = { out: process.stdout, err: process.stderr, cwd: process.cwd() }) {
   const [name, ...args] = argv;
   if (config.helpFlags.includes(name)) {
     io.out.write(help());
@@ -36,7 +37,9 @@ export async function main(argv, io = { out: process.stdout, err: process.stderr
     return EXIT.internal;
   }
   try {
-    return await run(args, io);
+    const result = await run(args, { cwd: io.cwd ?? process.cwd() });
+    io.out.write(result.output + result.findings.map((f) => msg('finding', f)).join(''));
+    return result.code;
   } catch (e) {
     io.err.write(msg('failed', { name, error: e.message }));
     return e instanceof UsageError ? EXIT.usage : EXIT.internal;
