@@ -59,10 +59,10 @@ test('U1/AC-1 every documented command is built', async () => {
   assert.deepEqual(config.commands.map((c) => c.name).filter((n) => !HANDLERS[n]), []);
 });
 
-test('U1/AC-5 CI runs the tests and the docs check on every push', () => {
+test('U1/AC-5 CI runs the tests and the docs check on every branch push, not on release tags', () => {
   const yml = readFileSync(join(ROOT, '.github/workflows/ci.yml'), 'utf8');
-  assert.match(yml, /^on:\s*\n(\s+[\w_]+:\s*\n)*\s+push:/m);
-  assert.doesNotMatch(yml, /branches/, 'push must not be limited to branches');
+  assert.match(yml, /^on:\s*\n(\s+[\w_]+:\s*\n)*\s+push:\n\s+branches: \['\*\*'\]/m, 'every branch, and so no tag');
+  assert.doesNotMatch(yml, /tags:/);
   assert.match(yml, /run: node --test$/m);
   assert.match(yml, /run: node plugin\/cli\/aidlc\.mjs check docs$/m);
   assert.match(yml, /node-version: 20/);
