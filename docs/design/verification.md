@@ -57,7 +57,7 @@ Returns JSON only: `{verdict: pass|fix|escalate, focus?, findings: [{path, line,
 How a review runs, and why there is no separate architecture focus: [Skill and agents](prompts.md#review).
 
 # CI mode
-`aidlc check --ci` runs OKF validation, plan lint and, for each merge commit on the base, its trailers and scope. It needs only Node and the vendored CLI. The owner audits one merged unit in ten.
+`aidlc check --ci` runs OKF validation, plan lint and, for each merge commit on the base, its trailers and scope. It needs only Node and the vendored CLI. The owner audits 1 merged unit in 10.
 
 # Prompt evals
 The skill and agent prompts are code coupled to a model version. `tests/evals/` holds a fixture project with seeded defects (an AC without a real test, an out-of-scope edit, an injection, a missing authz check). The reviewer must find each one; the builder must stop on the interface-change fixture. Run before every release and on every model change; a miss blocks the release.
