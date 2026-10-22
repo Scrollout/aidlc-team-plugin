@@ -299,7 +299,7 @@ test('U4/AC-3 delegated approvals: the lead re-approves and approves quick units
   assert.match(r.out, /^approve U-1, delegated by the owner: aidlc approve --auto U-1/);
   assert.equal(r.code, 0, 'an action, not an owner gate');
   assert.equal(run(dir, ['approve', '--auto', 'U-1']).code, 0);
-  assert.match(read(dir, U(1)), /by: agent:auto/);
+  assert.match(read(dir, U(1)), /by: process:delegated/);
   commit(dir, 're-approve U-1');
   assert.match(run(dir, ['next']).out, /^approve U-2, delegated by the owner: aidlc approve --auto U-2/, 'a quick-lane draft');
   assert.equal(run(dir, ['approve', '--auto', 'U-2']).code, 0);
