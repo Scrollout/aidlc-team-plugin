@@ -57,6 +57,7 @@ Plan lint compares every unit except `status: dropped` and the IDs its caller sk
 - `PLAN-LEVEL` an AC without a level, or with one `profile.levels` does not define.
 - `PLAN-RESERVE` a malformed reservation (`<kind> <area>/<n>`), a kind `profile.reserve` lacks, or the same one in two units.
 - `PLAN-SCOPE` a unit without `scope`, or two units whose scopes overlap with no `depends` path between them.
+- `PLAN-REQ` an intent or unit citing no requirement, or an unknown one ([Architecture](architecture.md)).
 
 # Plan, execute, validate
 Every cell runs the same loop:

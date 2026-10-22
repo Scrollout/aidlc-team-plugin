@@ -7,6 +7,11 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Creation** [Requirements and architecture checks](design/architecture.md) and decision [0007](decisions/0007-requirements-and-architecture-checks.md):
+  - lasting requirements are cited docs;
+  - architecture boundaries and checks run on every merge;
+  - adoption records a boundary commit.
+  The M1 plan gains U10 and new ACs in U5, U6 and U8. The pilot becomes the migration of a real multi-service project. `OKF-INDEX` now allows prose, as the spec does.
 - **Update** U4 built:
   - `status`, `next`, `approve`, `card`, `start`, `report` and `review record` work, all derived from git and the bundle;
   - `approve` accepts only Intent, Unit and Decision docs;

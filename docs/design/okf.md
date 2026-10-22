@@ -48,7 +48,7 @@ Frontmatter is read by a zero-dependency YAML subset: block and flow mappings an
 Errors (spec conformance):[^okf-spec]
 - `OKF-FM` every non-reserved `.md` has a frontmatter block that is terminated, valid YAML and a mapping (timestamps kept as strings, as the reference loader does).
 - `OKF-TYPE` non-empty `type`.
-- `OKF-INDEX` an `index.md` has no frontmatter except `okf_version` at the root, and only headed `* [Title](url) - description` lists.
+- `OKF-INDEX` an `index.md` has frontmatter other than `okf_version` at the root, or an entry line that is not `* [Title](url) - description` under a heading. Prose paragraphs are allowed: the spec does not forbid them, and real bundles use them.
 - `OKF-LOG` `log.md` date headings are `YYYY-MM-DD`.
 - `OKF-RUNTIME` an `Attested Computation` has `runtime`.
 
