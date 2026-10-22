@@ -32,6 +32,9 @@ export function writeJson(file, data) {
 }
 export const sha256 = (text) => createHash('sha256').update(text).digest('hex');
 
+// Review rounds of one focus; a verdict without `focus` is the general review.
+export const roundsOf = (review, focus = S.focus) => (review?.rounds ?? []).filter((r) => (r.focus ?? S.focus) === focus);
+
 // Diff of a unit branch against its merge base with the base branch.
 export const diffHash = (cwd, base, unit) => sha256(git(cwd, 'diff', `${base}...${branchOf(unit)}`));
 
@@ -123,7 +126,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
     if (merged.has(u.id)) state = 'merged';
     else if (needsApproval && approvalState !== 'approved') state = approvalState;
     else if (branches.has(branchOf(u.id))) {
-      const last = review?.rounds?.at(-1);
+      const last = roundsOf(review).at(-1);
       const current = last && last.diffHash === diffHash(cwd, base, u.id);
       if (current && last.verdict === 'pass') state = 'reviewed';
       else if (current && last.verdict === 'escalate') state = 'escalated';
@@ -284,9 +287,11 @@ export const commands = {
     if (!tryGit(cwd, 'rev-parse', '-q', '--verify', branchOf(unit))) throw new UsageError(msg('noBranch', { branch: branchOf(unit) }));
     const target = runtimeFile(cwd, 'reviews', unit);
     const prior = readJson(target)?.rounds ?? [];
-    // A second `fix` becomes `escalate`: the owner decides (docs/design/verification.md).
-    const verdict = data.verdict === 'fix' && prior.some((r) => r.verdict === 'fix') ? 'escalate' : data.verdict;
-    const round = { ...data, verdict, diffHash: diffHash(cwd, baseOf(profile), unit), at: new Date().toISOString() };
+    const focus = data.focus ?? S.focus;
+    // A second `fix` in the same focus becomes `escalate`: the owner decides (docs/design/verification.md).
+    const verdict = data.verdict === 'fix' && roundsOf({ rounds: prior }, focus).some((r) => r.verdict === 'fix') ? 'escalate' : data.verdict;
+    const card = readJson(runtimeFile(cwd, 'cards', unit))?.hash ?? null;
+    const round = { ...data, focus, verdict, card, diffHash: diffHash(cwd, baseOf(profile), unit), at: new Date().toISOString() };
     writeJson(target, { unit, rounds: [...prior, round] });
     return done(msg('recorded', { what: verdict, unit }));
   },

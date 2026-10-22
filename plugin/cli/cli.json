@@ -133,8 +133,12 @@
     },
     {
       "name": "fix",
-      "usage": "fix \"<title>\"",
-      "does": "create a one-unit plan without an intent"
+      "usage": "fix \"<title>\" --scope <glob>… [--requirement R-<n>…]",
+      "does": "create a one-unit plan without an intent",
+      "flags": [
+        "--scope",
+        "--requirement"
+      ]
     },
     {
       "name": "push",
@@ -282,7 +286,37 @@
     "initVendored": "pinned the CLI {{version}} in {{path}}\n",
     "initNotPlugin": "init and upgrade run from the installed plugin, not from {{path}}",
     "initNeedsRepo": "init runs in a git repository",
-    "badFlag": "{{name}} needs a value"
+    "badFlag": "{{name}} needs a value",
+    "gateNotBase": "merge runs in the checkout of {{base}}",
+    "gateApproval": "{{unit}} is {{state}}",
+    "gateDeps": "{{unit}} depends on {{dep}}, which is not merged",
+    "gateNoCard": "no card for {{unit}}",
+    "gateScope": "{{path}} is outside the scope of {{unit}}",
+    "gateShared": "{{path}} is written by merge, not by a builder",
+    "gateLane": "the diff is {{lane}} lane ({{reason}}), the card {{card}}",
+    "gateAc": "no test tagged {{tag}}",
+    "gateLevel": "{{tag}} is tested in {{files}}, outside the {{level}} paths",
+    "gateProof": "{{level}} tests pass with the production change reverted",
+    "gateNoRun": "level {{level}} has no run command for proof-revert",
+    "gateCheck": "{{command}} failed",
+    "gateReview": "no pass verdict for the current diff of {{unit}}",
+    "gateCardStale": "the review was made against card {{reviewed}}, the current card is {{card}}",
+    "gateSpecialist": "{{focus}} review required ({{why}}), no pass verdict for the current diff",
+    "gateFocusPath": "{{path}} matches focus.{{focus}}",
+    "gateFocusContent": "an added line contains {{pattern}}",
+    "gateOkf": "{{path}}:{{line}} {{code}} {{message}}",
+    "gateConflict": "unit/{{unit}} conflicts with {{base}}",
+    "archEdge": "{{from}} -> {{to}}: {{reason}}",
+    "gateMerged": "merged {{unit}} as {{sha}}\n",
+    "gateKept": "kept {{path}}: {{error}}\n",
+    "gateLogEntry": "- **Update** {{unit}} {{title}} merged.",
+    "ciTrailer": "merge {{sha}} lacks the {{trailer}} trailer",
+    "ciScope": "merge {{sha}} of {{unit}} changes {{path}}, outside its scope",
+    "ciCommit": "commit {{sha}} changes {{path}} outside a unit",
+    "pushed": "pushed {{base}} to {{remote}}\n",
+    "fixWrote": "wrote {{path}}, {{lane}} lane{{#each approve}}; the owner approves it: ! aidlc approve {{this}}{{/each}}\n",
+    "fixFull": "{{title}} is full lane ({{reason}}): it needs an intent, like any feature\n",
+    "fixUsage": "usage: fix \"<title>\" --scope <glob>… [--requirement R-<n>…]"
   },
   "okf": {
     "index": "index.md",
@@ -427,7 +461,8 @@
       "Unit",
       "Decision",
       "Requirement"
-    ]
+    ],
+    "focus": "general"
   },
   "card": {
     "template": "card.md",
@@ -532,5 +567,87 @@
     "trailerDepth": 500,
     "okfMarker": "okf_version",
     "searchDepth": 3
+  },
+  "gate": {
+    "remote": "origin",
+    "fixTemplate": "fix.md",
+    "trailers": {
+      "unit": "Unit",
+      "card": "Card",
+      "review": "Review"
+    },
+    "pass": "pass",
+    "lanes": [
+      "quick",
+      "standard",
+      "full"
+    ],
+    "security": "security",
+    "edge": " -> ",
+    "direct": [
+      ".aidlc/**"
+    ],
+    "codes": {
+      "GATE-APPROVAL": {
+        "fix": "the owner approves the unit: ! aidlc approve <unit>"
+      },
+      "GATE-DEPS": {
+        "fix": "merge its dependencies first"
+      },
+      "SCOPE-OUT": {
+        "fix": "move the change into scope, or the lead widens the scope and the owner re-approves"
+      },
+      "GATE-LANE": {
+        "fix": "the lead raises the unit's lane, re-renders the card and restarts the review"
+      },
+      "GATE-AC": {
+        "fix": "add a test tagged with the AC"
+      },
+      "GATE-LEVEL": {
+        "fix": "move the test under the level's paths in profile.levels"
+      },
+      "GATE-PROOF": {
+        "fix": "make the AC test fail without the production change"
+      },
+      "GATE-CHECK": {
+        "fix": "fix the module until its check passes"
+      },
+      "GATE-REVIEW": {
+        "fix": "run the reviewer on the current diff and card: aidlc review record"
+      },
+      "GATE-CARD": {
+        "fix": "render the card (aidlc card) and review against it"
+      },
+      "GATE-SPECIALIST": {
+        "fix": "run the reviewer with that focus on the current diff"
+      },
+      "GATE-OKF": {
+        "fix": "fix the doc, then run aidlc check"
+      },
+      "GATE-SECURITY": {
+        "fix": "fix what the security check reports"
+      },
+      "ARCH-BOUNDARY": {
+        "fix": "remove the dependency, or the owner approves an exception decision"
+      },
+      "ARCH-CHECK": {
+        "fix": "fix what the architecture check reports"
+      },
+      "GATE-SHARED": {
+        "fix": "revert the change; merge writes indexes, logs and shared files"
+      },
+      "GATE-CONFLICT": {
+        "fix": "merge the base into the unit branch, resolve, and report again"
+      },
+      "CI-MERGE": {
+        "fix": "merge units only with aidlc merge"
+      },
+      "CI-COMMIT": {
+        "fix": "commit code only through units; direct commits may touch only docs and workflow files"
+      },
+      "PUSH-COMMIT": {
+        "fix": "move the change into a unit; direct commits may touch only docs and workflow files"
+      }
+    }
   }
 }
