@@ -166,13 +166,13 @@ export function readState(cwd, { now = Date.now() } = {}) {
       const hash = diffHash(cwd, base, u.id);
       const verdicts = (quick ? [] : [...reviewFocuses(cwd, profile, base, u.id).keys()]).map((f) => {
         const last = roundsOf(review, f).at(-1);
-        return { focus: f, verdict: last?.diffHash === hash ? last.verdict : null };
+        return { focus: f, verdict: last?.diffHash === hash && !(report?.at > last.at) ? last.verdict : null }; // a later report asks for a new verdict
       });
       const has = (v) => verdicts.some((x) => x.verdict === v);
       const lastAt = review?.rounds?.at(-1)?.at;
       focus = verdicts.find((x) => x.verdict !== 'pass')?.focus ?? null;
       if (has('escalate')) state = 'escalated';
-      else if (has('fix')) state = 'fix';
+      else if (has('fix')) state = heartbeatFresh(cwd, u.id, now) ? 'building' : 'fix';
       else if (!focus && (!quick || report)) {
         const gate = readJson(runtimeFile(cwd, 'gates', u.id));
         state = gate?.diffHash === hash && gate.base === tryGit(cwd, 'rev-parse', base) ? 'gated' : 'reviewed';
@@ -181,7 +181,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
         state = heartbeatFresh(cwd, u.id, now, S.reviewing) ? 'reviewing' : 'reported';
       }
       else state = 'building';
-    } else state = 'approved';
+    } else state = heartbeatFresh(cwd, u.id, now) ? 'building' : 'approved';
     return { ...u, lane, state, focus, fresh: heartbeatFresh(cwd, u.id, now), report, review };
   });
 

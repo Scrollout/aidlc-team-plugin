@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** The model hook marks a builder in flight at launch, and a fix round whose builder runs reads as building, so `next` and the Stop hook stop re-offering it; a verdict older than the builder's last report no longer counts, so a fix round reported without a new commit gets a new review (pilot findings, [Hooks](design/hooks.md), [State](design/state.md)). Release 0.14.1.
 - **Update** [M1](roadmap/m1.md) U1/AC-5: CI runs on every branch push but no longer on release tags, which point at commits CI already tested (owner's request).
 - **Update** [0008 Delegated approvals](decisions/0008-delegated-approvals.md): delegated approvals are stamped `process:delegated`, an OKF v0.2 actor, instead of `agent:auto`, which OKF has no prefix for (pilot finding, owner's choice); earlier `agent:auto` stamps still count. Release 0.14.0.
 - **Update** An intent that is merged but not yet released no longer holds back the next intent: `next` serves the next intent's work and offers the release once that is idle (pilot finding, [State](design/state.md)). Release 0.14.0.

@@ -37,7 +37,7 @@ stateDiagram-v2
 ```
 
 # Approvals
-- Approval uses OKF's own trust field rather than an invented one. The owner runs `! aidlc approve <doc>`. It takes several docs (IDs or paths), so a plan is approved in one command. It keeps earlier `verified` events, appends `{ by: human:<git user.email>, at }`, sets `status: stable`, and writes `verified_hash`: sha256 of the body plus the parsed frontmatter as sorted JSON, without `verified`, `verified_hash`, `status`, `hold`, `priority` and `board` ([Board](board.md)). So reformatting the YAML, an owner hold or a board field does not make the doc stale. A quick-lane fix unit needs no approval.
+- Approval uses OKF's own trust field. The owner runs `! aidlc approve <doc>`, with several docs (IDs or paths) at once. It keeps earlier `verified` events, appends `{ by: human:<git user.email>, at }`, sets `status: stable`, and writes `verified_hash`: sha256 of the body plus the parsed frontmatter as sorted JSON, without `verified`, `verified_hash`, `status`, `hold`, `priority` and `board` ([Board](board.md)). So reformatting the YAML, an owner hold or a board field does not make the doc stale. A quick-lane fix unit needs no approval.
 - Agents cannot approve: the guard denies `aidlc approve` from a tool call, and the scope hook denies any edit to `verified` or `verified_hash`. Only the owner approves, by `!` or prompt ([0009](../decisions/0009-approval-prompt.md)), or a class they delegated ([0008](../decisions/0008-delegated-approvals.md)).
 - Editing an approved doc makes it `stale`; `next` then asks for re-approval. Only intents, plans (units) and one-way-door decisions carry approvals, so this stays rare.
 
@@ -48,7 +48,7 @@ stateDiagram-v2
 3. No intent yet: elaborate one; in an adopted project with none, the migration intent ([Everyday paths](paths.md#adopting-an-existing-project)). Intent not approved → request approval; then the draft requirements it and its units cite.
 4. Plan not approved → draft units and request approval.
 5. Reviewed units → merge in DAG order; a held unit waits; a refused one is not offered again for the same base and diff.
-6. Verdict `escalate` in any focus → the owner decides; once they re-approve the edited unit, it counts as `fix` and the round count restarts. Verdict `fix` in any focus → fix round; the card lists the findings.
+6. Verdict `escalate` in any focus → the owner decides; their re-approval turns it into `fix` and restarts the count. Verdict `fix` → fix round (none while its builder runs); the card lists the findings. A verdict older than the builder's last report no longer counts.
 7. A builder that reported `stopped` → the lead fixes the spec (re-approved) or the cause; the builder restarts from the card.
 8. Reported, not reviewed → review, naming the first required focus without a `pass` for the current diff ([Skill and agents](prompts.md#review)).
 9. Building with a stale heartbeat (over 2 min) and no report → restart its builder.

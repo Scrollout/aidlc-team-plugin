@@ -169,7 +169,7 @@ function model(input, cwd) {
   const expected = role === H.agents[0] ? card?.model : withDefaults(loadProfile(cwd).profile).models.review;
   if (!expected) return deny(cwd, input, 'MODEL-UNIT', 'modelUnit', { agent });
   if (t.model !== expected) return deny(cwd, input, 'MODEL-MISMATCH', 'modelMismatch', { agent, unit, model: t.model ?? 'none', expected });
-  if (role === H.agents[1]) touch(join(aidlcDir(cwd), S.reviewing, unit)); // a review in flight: next waits for it
+  touch(join(aidlcDir(cwd), role === H.agents[1] ? S.reviewing : S.heartbeats, unit)); // in flight from launch: next waits for it
   return allow();
 }
 
