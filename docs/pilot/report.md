@@ -39,7 +39,7 @@ Every manual step, by the owner or by the lead outside `next`, and the fix or M2
 # U9 criteria
 - AC-1 recorded here, with tokens from transcripts rather than per-card counters.
 - AC-2 met: see [Interventions](interventions.md).
-- AC-3 two `/clear`s, both while builders ran: no repeated question, no duplicate builder, no lost work. Standing run-mode instructions lived only in the conversation and had to be re-sent (M2). A third clear, mid-elaboration in the eval fixture, failed: the second answer was never written to the draft intent, and after the clear the lead followed `next` into a fix round the owner had held instead of returning to the draft (M2).
+- AC-3 two `/clear`s, both while builders ran: no repeated question, no duplicate builder, no lost work. Standing run-mode instructions lived only in the conversation and had to be re-sent (M2). A third clear, mid-elaboration in the eval fixture, failed: the owner interrupted the write of an answer, and `next` led back to unit work, not to the draft. Since 0.17.0 `next` sends the lead back to a draft with open points first; no answer log (owner).
 - AC-4 met: after adoption `check --ci` is green, the requirements are approved, and the baseline violations became units or the approved cleanup decision.
 - M1 exit "no hand edits to state": one, a stale review mark removed by hand (fixed 0.13.3).
 

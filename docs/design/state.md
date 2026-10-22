@@ -37,24 +37,25 @@ stateDiagram-v2
 ```
 
 # Approvals
-- Approval uses OKF's own trust field. The owner runs `! aidlc approve <doc>`, with several docs (IDs or paths) at once. It keeps earlier `verified` events, appends `{ by: human:<git user.email>, at }`, sets `status: stable`, and writes `verified_hash`: sha256 of the body plus the parsed frontmatter as sorted JSON, without `verified`, `verified_hash`, `status`, `hold`, `priority` and `board` ([Board](board.md)). So reformatting the YAML, an owner hold or a board field does not make the doc stale. A quick-lane fix unit needs no approval.
+- Approval uses OKF's own trust field. `aidlc approve` takes one or more docs (IDs or paths). It keeps earlier `verified` events, appends `{ by: human:<git user.email>, at }`, sets `status: stable`, and writes `verified_hash`: sha256 of the body plus the parsed frontmatter as sorted JSON, without `verified`, `verified_hash`, `status`, `hold`, `priority` and `board` ([Board](board.md)). So YAML formatting, a hold or a board field never stales a doc. A quick-lane fix unit needs no approval.
 - Agents cannot approve: the guard denies `aidlc approve` from a tool call, and the scope hook denies any edit to `verified` or `verified_hash`. Only the owner approves, by `!` or prompt ([0009](../decisions/0009-approval-prompt.md)), or a class they delegated ([0008](../decisions/0008-delegated-approvals.md)).
-- Editing an approved doc makes it `stale`; `next` then asks for re-approval. Only intents, plans (units) and one-way-door decisions carry approvals, so this stays rare.
+- Editing an approved doc makes it `stale`; `next` then asks for re-approval.
 
 # next
-`aidlc next` prints one line: the single next action and the command or agent that performs it, e.g. `build U-3 (card: aidlc card U-3)`. It exits 2 when the action waits on the owner. An owner command is printed as the owner types it, e.g. `! node .aidlc/bin/aidlc.mjs approve I-1`: `aidlc` is shorthand in the docs, not a shell command. Order:
+`aidlc next` prints one line: the single next action and the command or agent that performs it, e.g. `build U-3 (card: aidlc card U-3)`. It exits 2 when the action waits on the owner, and prints an owner command runnable as is (`aidlc` is shorthand in the docs). Order:
 1. A merge cut off midway → continue it.
 2. Any `stale` approval → re-approve.
-3. No intent yet: elaborate one; in an adopted project with none, the migration intent ([Everyday paths](paths.md#adopting-an-existing-project)). Intent not approved → request approval; then the draft requirements it and its units cite.
-4. Plan not approved → draft units and request approval.
-5. Reviewed units → merge in DAG order; a held unit waits; a refused one is not offered again for the same base and diff.
-6. Verdict `escalate` in any focus → the owner decides; their re-approval turns it into `fix` and restarts the count. Verdict `fix` → fix round (none while its builder runs); the card lists the findings. A verdict older than the builder's last report no longer counts.
-7. A builder that reported `stopped` → the lead fixes the spec (re-approved) or the cause; the builder restarts from the card.
-8. Reported, not reviewed → review, naming the first required focus without a `pass` for the current diff ([Skill and agents](prompts.md#review)).
-9. Building with a stale heartbeat (over 2 min) and no report → restart its builder.
-10. Approved, unblocked units → build, on one line; up to `parallel.max` in flight, with scopes disjoint from units in flight.
-11. Builders running → wait.
-12. Intent merged, untagged → release with the owner; meanwhile 3–11 serve the next one.
+3. A draft intent, requirement or unit with open points (a `<…>` placeholder left from its template, or an item under `Open questions`) → finish elaborating it with the owner, naming them; no approval or unit work before that.
+4. No intent yet: elaborate one; in an adopted project with none, the migration intent ([Everyday paths](paths.md#adopting-an-existing-project)). Intent not approved → request approval; then the draft requirements it and its units cite.
+5. Plan not approved → draft units and request approval.
+6. Reviewed units → merge in DAG order; a held unit waits; a refused one is not offered again for the same base and diff.
+7. Verdict `escalate` in any focus → the owner decides; their re-approval turns it into `fix` and restarts the count. Verdict `fix` → fix round (none while its builder runs); the card lists the findings. A verdict older than the builder's last report no longer counts.
+8. A builder that reported `stopped` → the lead fixes the spec (re-approved) or the cause; the builder restarts from the card.
+9. Reported, not reviewed → review, naming the first required focus without a `pass` for the current diff ([Skill and agents](prompts.md#review)).
+10. Building with a stale heartbeat (over 2 min) and no report → restart its builder.
+11. Approved, unblocked units → build, on one line; up to `parallel.max` in flight, with scopes disjoint from units in flight.
+12. Builders running → wait.
+13. Intent merged, untagged → release with the owner; meanwhile 4–12 serve the next one.
 
 `aidlc status` prints the same state as a short table; SessionStart injects it (max 1,000 chars) in place of handoff files.
 
@@ -74,6 +75,6 @@ On resume (SessionStart `startup`, `resume`, `clear`, `compact`):
 1. The hook injects `aidlc status` plus one line: load the `aidlc` skill and run `aidlc next`.
 2. A unit with a fresh heartbeat (under 2 min) is still running: wait, don't start a second builder.
 3. A unit with a stale heartbeat and no report is interrupted: `next` restarts its builder from the same card, told to continue from the branch's last commit.
-4. Reports and verdicts already on disk are picked up as if the old session had received them.
+4. Reports and verdicts on disk are picked up as if the old session had received them.
 
 Result: after a clear, `next` returns the same action it would have returned before, with no duplicate builder and no lost work.

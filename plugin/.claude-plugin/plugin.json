@@ -1,6 +1,6 @@
 {
   "name": "aidlc-team",
-  "version": "0.16.1",
+  "version": "0.17.0",
   "license": "MIT",
   "description": "AI-DLC grid, OKF docs and a builder/reviewer team, with every rule enforced by a CLI or a hook.",
   "author": { "name": "Scrollout" },

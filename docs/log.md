@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** [State](design/state.md): `next` sends the lead back to a draft intent, requirement or unit that still has a template placeholder or an open question, before approvals and unit work, and never offers such a doc for approval; a clear mid-elaboration had led back to unit work (prompt evals, owner's choice). Release 0.17.0.
 - **Update** [M1 pilot report](pilot/report.md): a `/clear` mid-elaboration lost an owner answer and the lead did not return to the draft intent; both are in [M2](roadmap/m2.md).
 - **Update** [M1 pilot report](pilot/report.md): prompt evals on 0.16.1 found all four seeded defects and the builder stopped on the interface change (U8/AC-5); two findings went to [M2](roadmap/m2.md).
 - **Creation** [M1 pilot report](pilot/report.md) and [Pilot interventions](pilot/interventions.md): wall time, tokens, fix rounds, denials, and each manual step mapped to its fix or an M2 item. [M2](roadmap/m2.md) collects those items; [M1](roadmap/m1.md) records the U9 result. The prompt evals are still pending.
