@@ -20,6 +20,12 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 - **Out of scope** and **stop and report if** (interface change, scope too small, AC ambiguous).
 - **Report format:** what the builder returns.
 
+# Rendering
+- The template is `plugin/cli/card.md`, copied into projects with the CLI. A project's `.aidlc/templates/card.md` overrides it.
+- Card hash: sha256 of the unit doc at the base plus the rendered card.
+- `aidlc card` also writes `.git/aidlc/cards/U-<n>.json` (hash, base, lane, model). This is runtime data, never committed, and re-rendering rewrites it. `start` checks its base and the model hook compares against its model.
+- Model routing defaults sit in `cli.json`; `profile.models` overrides them, including `complex` globs.
+
 # Rules the CLI enforces
 - Rendered from `git show <base>:<unit doc>`, so worktree edits cannot change a card.
 - `aidlc card` refuses an unapproved or stale unit.

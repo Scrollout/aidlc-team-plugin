@@ -20,6 +20,27 @@ sources:
 - Autonomous: the owner approves intent, plan, one-way doors and release; agents do the rest.
 - Extensible: rule layers (plugin, org, project, personal) and overridable templates.
 
+# How a unit flows
+```mermaid
+sequenceDiagram
+  actor O as Owner
+  participant L as Lead
+  participant C as aidlc CLI + hooks
+  participant B as Builder (worktree)
+  participant R as Reviewer
+  L->>C: aidlc next
+  C-->>L: plan pending (exit 2)
+  O->>C: ! aidlc approve U-1 U-2
+  L->>C: aidlc next
+  C-->>L: build U-1, U-2
+  L->>B: one builder per card
+  B->>C: aidlc start, tests first, aidlc report
+  L->>R: same card, fresh context
+  R->>C: aidlc review record
+  L->>C: aidlc merge U-1
+  C-->>L: gate passes, merge --no-ff
+```
+
 # Non-goals
 - Sandboxing the shell. The guard stops mistakes, not attackers.
 - Built-in deployment pipelines. Operation commands come from the project profile.

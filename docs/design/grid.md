@@ -7,6 +7,25 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 ---
 
 # Rows
+```mermaid
+flowchart LR
+  owner([Owner])
+  subgraph Inception
+    I[Intent] --> U[Units]
+  end
+  subgraph Construction
+    D[Domain] --> L[Logical] --> S[Source]
+  end
+  subgraph Operations
+    P[Deployment] --> O[Operation]
+  end
+  U --> D
+  S --> P
+  owner -. approves .-> I
+  owner -. approves the plan .-> U
+  owner -. one-way doors .-> L
+  owner -. release .-> O
+```
 | Row | Output | Deterministic check | Owner approves |
 |---|---|---|---|
 | Intent | `intents/I-<n>-<slug>.md`: goal, why, success measures, out of scope | required sections | yes |
