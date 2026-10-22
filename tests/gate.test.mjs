@@ -47,7 +47,7 @@ test('U6/AC-2 a passing gate merges --no-ff with trailers, writes index and log,
   assert.equal(r.code, 0, r.out + r.err);
   assert.match(r.out, /^merged U-1 as [0-9a-f]{40}$/m);
   const card = JSON.parse(read(dir, '.git/aidlc/cards/U-1.json')).hash;
-  assert.equal(git(dir, 'log', '-1', '--format=%(trailers:only,unfold)').trim(), `Unit: U-1\nCard: ${card}\nReview: pass`);
+  assert.equal(git(dir, 'log', '-1', '--format=%(trailers:only,unfold)').trim(), `Unit: U-1\nCard: ${card}\nReview: pass\nTested: unit`);
   assert.equal(git(dir, 'rev-list', '--parents', '-n', '1', 'HEAD').split(' ').length, 3, 'a merge commit');
   assert.match(read(dir, 'docs/log.md'), /- \*\*Update\*\* U-1 Unit merged\./);
   assert.ok(existsSync(join(dir, 'docs/units/index.md')), 'indexes written');
@@ -67,6 +67,7 @@ const BROKEN = {
   'GATE-AC': () => setup({ files: { ...CODE, 'tests/add.test.mjs': "import { test } from 'node:test';\ntest('adds', () => {});\n" } }),
   'GATE-LEVEL': () => setup({ files: { ...CODE, 'src/add.check.mjs': '// U-1/AC-1\n' } }),
   'GATE-CHECK': () => setup({ profile: { ...PROFILE, modules: [{ id: 'core', paths: ['src/**'], check: FAIL }] } }),
+  'GATE-RUN': () => setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: FAIL } } } }),
   'GATE-REVIEW': () => setup({ verdict: 'fix' }),
   'GATE-CARD': () => {
     const d = setup();
@@ -170,7 +171,7 @@ test('U6/AC-6 push refuses a base commit that is neither a gate merge nor docs-o
   assert.notEqual(git(remote, 'rev-parse', 'main'), git(dir, 'rev-parse', 'main'));
 });
 
-test('U6/AC-7 fix writes a one-unit plan with a regression AC; quick needs no approval, standard does, full is refused', () => {
+test('U6/AC-7 U18/AC-5 fix writes a one-unit plan with a regression AC; quick needs no approval, standard and full do', () => {
   const dir = makeRepo({}, { lanes: { quick: ['docs/**'], full: ['src/db/**'] } });
   let r = run(dir, ['fix', 'Typo in guide', '--scope', 'docs/guide/**']);
   assert.equal(r.code, 0, r.err);
@@ -185,8 +186,10 @@ test('U6/AC-7 fix writes a one-unit plan with a regression AC; quick needs no ap
   r = run(dir, ['fix', 'Rounding bug', '--scope', 'src/math/**']);
   assert.match(r.out, /U-2-rounding-bug\.md, standard lane; the owner approves it: aidlc approve U-2/);
   r = run(dir, ['fix', 'Bad migration', '--scope', 'src/db/**']);
-  assert.equal(r.code, 2);
-  assert.match(r.out, /needs an intent/);
+  assert.equal(r.code, 0, r.err);
+  assert.match(r.out, /U-3-bad-migration\.md, full lane; the owner approves it: aidlc approve U-3/);
+  commit(dir, 'full fix');
+  assert.match(run(dir, ['status']).out, /^ {2}U-3 draft/m, 'the full-lane fix waits for the owner');
   assert.equal(run(dir, ['fix', 'No scope']).code, 64);
 });
 
@@ -222,4 +225,27 @@ test('U6/AC-1 a refused merge is not offered again until the base or the diff ch
   assert.equal(r.code, 2);
   commit(dir, 'the base moves', { 'docs/note.md': 'x\n' });
   assert.match(run(dir, ['next']).out, /^merge U-1/);
+});
+
+test('U18/AC-1 the card lists every level run; the gate runs them on the merge result and records them', () => {
+  const card = run(setup(), ['card', 'U-1']).out;
+  assert.match(card, /^## Test runs \(each in full, as one plain command\)\n- unit: node --test$/m);
+  const failing = setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: 'node --test' }, e2e: { run: FAIL } } } });
+  assert.match(merge(failing).out, /GATE-RUN level e2e run node -e "process\.exit\(1\)" fails on the merge result/);
+  const none = setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'] } } } });
+  assert.equal(merge(none).code, 0);
+  assert.match(git(none, 'log', '-1', '--format=%(trailers:only,unfold)'), /^Tested: none$/m);
+});
+
+test('U18/AC-2 a quick unit passes the gate only when the commands its ACs name pass on the merge result', () => {
+  const quick = (ac) => setup({
+    unit: { scope: ['docs/guide/**'], modules: [], acs: [`- AC-1 (unit): \`${ac}\` passes.`] },
+    files: { 'docs/guide/a.md': '---\ntype: Note\ntitle: A\ndescription: A note.\ngenerated: { by: x/1, at: 2026-01-01T00:00:00Z }\n---\n\nText.\n' },
+    beforeReview: (d) => commit(d, 'scripts', { 'package.json': JSON.stringify({ scripts: { 'docs-ok': OK, 'docs-bad': FAIL } }) }),
+  });
+  const bad = merge(quick('npm run docs-bad'));
+  assert.equal(bad.code, 1, bad.out);
+  assert.match(bad.out, /GATE-AC AC-1 names npm run docs-bad, which fails on the merge result/);
+  const good = merge(quick('npm run docs-ok'));
+  assert.equal(good.code, 0, good.out + good.err);
 });

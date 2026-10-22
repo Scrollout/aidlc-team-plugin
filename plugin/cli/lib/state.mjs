@@ -100,8 +100,9 @@ const beforeApproval = (round, at) => Date.parse(round.at) < at;
 export function readReview(cwd, unit, doc) {
   const review = readJson(runtimeFile(cwd, 'reviews', unit));
   const at = doc ? approvedAt(doc, [S.human]) : 0;
-  const [, fix, escalate] = S.verdicts;
-  return review && { ...review, rounds: review.rounds.map((r) => (r.verdict === escalate && at && beforeApproval(r, at) ? { ...r, verdict: fix } : r)) };
+  const escalate = S.verdicts[2];
+  // The owner's re-approval answers an escalation: its findings are answered by the spec change, and a review follows.
+  return review && { ...review, rounds: review.rounds.map((r) => (r.verdict === escalate && at && beforeApproval(r, at) ? { ...r, verdict: S.answered } : r)) };
 }
 
 const plain = (v) => /^[A-Za-z0-9_@.+/][A-Za-z0-9_@:.+/ -]*$/.test(v) && !/:(\s|$)/.test(v) && !/^\d+$/.test(v);
@@ -199,7 +200,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
         const gate = readJson(runtimeFile(cwd, 'gates', u.id));
         state = gate?.diffHash === hash && gate.base === tryGit(cwd, 'rev-parse', base) ? 'gated' : 'reviewed';
       }
-      else if (has('pass') || (report && report.status !== S.stopped && (!lastAt || report.at > lastAt) && Date.parse(report.at) > approvedAt(u.doc))) {
+      else if (has('pass') || has(S.answered) || (report && report.status !== S.stopped && (!lastAt || report.at > lastAt) && Date.parse(report.at) > approvedAt(u.doc))) {
         state = heartbeatFresh(cwd, u.id, now, S.reviewing) ? 'reviewing' : 'reported';
       }
       else state = 'building';
@@ -281,12 +282,29 @@ function gateOf(st, intent, scope) {
   return gate(auto ? 'nextAutoApprove' : 'nextApprovePlan', drafts.map((u) => u.id), { docs, units: docs }, auto ? 'act' : 'human');
 }
 
+// AC tags that no file on the unit branch carries outside the bundle, as the gate looks for them.
+function untagged(st, u) {
+  const tags = u.acs.map((a) => `${u.id}/${a.id}`);
+  if (!tags.length) return [];
+  const top = git(st.cwd, 'rev-parse', '--show-toplevel');
+  const bundle = relPath(top, st.bundle);
+  const out = tryGit(top, 'grep', '-h', '-o', '-F', ...tags.flatMap((t) => ['-e', t]), branchOf(u.id), '--', '.', ...(bundle ? [`:(exclude)${bundle}/**`] : []));
+  const found = new Set((out ?? '').split('\n'));
+  return tags.filter((t) => !found.has(t));
+}
+
 // Steps 6-12 for the given units; a held unit gets no action until the hold is released.
 function unitWork(st, scope) {
   const merged = (id) => st.units.find((x) => x.id === id)?.state === 'merged';
   const live = scope.filter((u) => !u.fm.hold);
-  const reviewed = live.find((u) => u.state === 'reviewed' && u.depends.every(merged));
-  if (reviewed) return action('act', 'nextMerge', { unit: reviewed.id });
+  // A merge is offered only when each AC has a tagged test on the branch; a builder sent back for one is waited for.
+  const backAtWork = [];
+  for (const u of live.filter((x) => x.state === 'reviewed' && x.depends.every(merged))) {
+    const missing = u.lane === 'quick' ? [] : untagged(st, u);
+    if (!missing.length) return action('act', 'nextMerge', { unit: u.id });
+    if (!u.fresh) return action('act', 'nextUntagged', { unit: u.id, tags: missing.join(', ') });
+    backAtWork.push(u);
+  }
   const gated = live.find((u) => u.state === 'gated');
   if (gated) return action('human', 'nextGated', { unit: gated.id, codes: readJson(runtimeFile(st.cwd, 'gates', gated.id)).codes.join(', ') });
   const escalated = live.find((u) => u.state === 'escalated');
@@ -300,7 +318,7 @@ function unitWork(st, scope) {
   const lost = live.find((u) => u.state === 'building' && !u.fresh);
   if (lost) return action('act', 'nextRestart', { unit: lost.id, branch: branchOf(lost.id) });
 
-  const inFlight = scope.filter((u) => ['building', 'reviewing'].includes(u.state));
+  const inFlight = [...scope.filter((u) => ['building', 'reviewing'].includes(u.state)), ...backAtWork];
   const max = st.profile.parallel.max;
   const picked = [];
   const ready = live.filter((u) => u.state === 'approved').sort((a, b) => priorityOf(b) - priorityOf(a) || byId(a, b));

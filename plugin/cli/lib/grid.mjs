@@ -133,13 +133,13 @@ function reachable(units) {
   return reach;
 }
 
-const spansOf = (line) => [...line.matchAll(SPAN)].map((m) => m[1].trim());
+export const spansOf = (line) => [...line.matchAll(SPAN)].map((m) => m[1].trim());
 
-// `make docs-check` and the like: the build file (grid.runners) and the target.
-function runTarget(span) {
+// `make docs-check` and the like: the runner, its build file (grid.runners) and the target.
+export function runTarget(span) {
   for (const [runner, file] of Object.entries(GRID.runners)) {
     const m = span.match(new RegExp(`^${runner.replace(/ /g, '\\s+')}\\s+([\\w:.-]+)`));
-    if (m) return { file, name: m[1] };
+    if (m) return { runner, file, name: m[1] };
   }
 }
 

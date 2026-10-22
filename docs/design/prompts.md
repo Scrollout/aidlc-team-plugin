@@ -25,9 +25,9 @@ The lead's loop: run `aidlc next`, do the one action it prints, run it again. It
 # Agents
 - Plugin agents are named `aidlc-team:builder` and `aidlc-team:reviewer`.[^cc-subagents] Both set `omitClaudeMd`, omit `Agent` from `tools`, and say that `aidlc` means `node .aidlc/bin/aidlc.mjs`.
 - The lead passes each one the card text, the unit ID and, as the Agent call's `model`, the card's model (builder) or `models.review` (reviewer). The model hook checks both.
-- **Builder** (`isolation: worktree`): `aidlc start U-<n>` first; for each AC a failing test tagged `U-<n>/AC-<k>`, then the code; a commit after every passing test; the card's checks; `aidlc report`. It stops and reports on the card's stop conditions instead of working around them. A fix round works through the card's findings.
+- **Builder** (`isolation: worktree`): `aidlc start U-<n>` first; for each AC a failing test tagged `U-<n>/AC-<k>`, then the code; a commit after every passing test; the card's checks and test runs, each as one plain command, since the host's worktree isolation refuses a compound command that names git, `.github` included, and the tool result shows a non-zero exit code; `aidlc report`. It stops and reports on the card's stop conditions instead of working around them. A fix round works through the card's findings.
 - A restarted or fix-round builder gets a new worktree. `aidlc start` switches it to the existing `unit/U-<n>` branch, first removing the earlier worktree of that branch when it is clean; one with uncommitted work is refused and named. The lead never runs two builders for a unit, since `next` waits while one is in flight.
-- **Reviewer**: reads and runs, never edits.
+- **Reviewer**: reads and runs, never edits. It runs the card's test runs and quotes each result; one it could not run is a finding, as in AWS AI-DLC's unit review.[^aws-aidlc]
 
 # Review
 - The CLI picks the reviews; the lead only runs them. A unit needs a `general` review plus one per focus the gate requires (focus globs the diff touches, `security` on a content match). `next` names the first one without a `pass` for the current diff, e.g. `review U-3, focus security`, and the unit is `reviewed` once all have passed. AWS AI-DLC does the same: its engine resolves the reviewer and the review class, and the orchestrator only invokes what the directive names.[^aws-aidlc]

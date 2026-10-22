@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-23
 
+- **Update** M2 U18 built, from AWS AI-DLC's verification command, unit review and loop-back (owner asked for the research): every level `run` is on the card, run by the reviewer and by the gate on the merge result (`GATE-RUN`, `Tested` trailer); a quick unit's AC commands run at merge; `next` offers a merge only when each AC has a tagged test; an owner re-approval after an escalation marks its findings answered and goes straight to review; `fix` on a full-lane path writes a unit for the owner to approve; builders run checks as one plain command, since the host's worktree isolation refused the pilot's compound ones ([Merge mechanics](design/gate.md), [State](design/state.md), [Unit card](design/unit-card.md), [Skill and agents](design/prompts.md), [Hooks](design/hooks.md)). Release 0.21.0.
 - **Update** M2 U17 built (owner's choice for AC-3): plan lint flags a non-quick unit whose scope cannot hold an AC's test (`PLAN-TEST`), suggests the leading `/` when a bare file name causes a scope overlap, and flags an AC that names another unit's output with no dependency path to it (`PLAN-DEPENDS`) ([Grid](design/grid.md)). Release 0.20.0.
 
 ## 2026-10-22

@@ -70,10 +70,12 @@ export function renderCard(cwd, unitId) {
   const hashNow = review && tryGit(cwd, 'rev-parse', '-q', '--verify', branchOf(unitId)) ? diffHash(cwd, base, unitId) : null;
   const current = hashNow !== null && roundsOf(review).at(-1)?.diffHash === hashNow;
   const { model, reason } = routeModel(atBase, lane.lane, profile, current ? review : null);
-  // A fix round lists the findings of every focus whose last verdict for the current diff is `fix`.
+  // A fix round lists the findings of every focus whose last verdict for the current diff is `fix`; answered ones follow.
   const focuses = [...new Set((review?.rounds ?? []).map((r) => r.focus ?? config.state.focus))];
-  const fixes = focuses.map((f) => roundsOf(review, f).at(-1)).filter((r) => hashNow !== null && r.diffHash === hashNow && r.verdict === 'fix')
+  const listed = (verdict) => focuses.map((f) => roundsOf(review, f).at(-1)).filter((r) => hashNow !== null && r.diffHash === hashNow && r.verdict === verdict)
     .flatMap((r) => (r.findings ?? []).map((f) => msg('cardFinding', { path: '', line: '', claim: '', scenario: '', confidence: '', ...f, focus: r.focus ?? config.state.focus })));
+  const fixes = listed('fix');
+  const answered = listed(config.state.answered); // an escalation the owner's re-approval answered
   const modules = new Set(atBase.modules);
   const data = {
     id: unitId,
@@ -93,7 +95,8 @@ export function renderCard(cwd, unitId) {
     reserves: atBase.reserves,
     requirements: list(doc.fm.requirements).map(reqId).flatMap((id) => plan.requirements.filter((r) => r.id === id)
       .map((r) => msg('cardRequirement', { id, path: relPath(top, r.file) }))),
-    fixes: fixes.length ? msg('cardFixes', { list: fixes.join('') }) : '',
+    fixes: [fixes.length ? msg('cardFixes', { list: fixes.join('') }) : '', answered.length ? msg('cardAnswered', { list: answered.join('') }) : ''].join(''),
+    runs: Object.entries(withDefaults(profile).levels).filter(([, l]) => l?.run).map(([level, l]) => ({ level, run: l.run })),
     checks: (profile.modules ?? []).filter((m) => modules.has(m.id) && m.check).map((m) => ({ module: m.id, check: m.check })),
     outOfScope: section(doc, 'Out of scope'),
   };

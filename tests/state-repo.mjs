@@ -62,10 +62,10 @@ export function approve(dir, ...ids) {
   return commit(dir, `approve ${ids.join(' ')}`);
 }
 
-// A unit branch with one commit, then back on main.
+// A unit branch with one commit carrying the AC-1 tag, then back on main.
 export function branch(dir, unit, file = `src/${unit}.txt`) {
   git(dir, 'switch', '-q', '-c', `unit/${unit}`);
-  commit(dir, `work on ${unit}`, { [file]: `${unit}\n` });
+  commit(dir, `work on ${unit}`, { [file]: `${unit}/AC-1\n` });
   git(dir, 'switch', '-q', 'main');
 }
 

@@ -8,7 +8,7 @@ import { CLI_DIR, config, done, list, readJson, UsageError, relPath } from './co
 import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
-import { computeLane, inside, readPlan } from './grid.mjs';
+import { computeLane, inside, readPlan, runTarget, spansOf } from './grid.mjs';
 import { issueTitle, sync } from './board.mjs';
 import { approval, baseOf, branchOf, bundleOf, diffHash, git, readState, reviewFocuses, roundsOf, runtimeFile, tryGit, writeJson } from './state.mjs';
 
@@ -134,7 +134,7 @@ function runGate(cwd, st, unit) {
   if (tryGit(tree, 'merge', '-q', '--no-ff', '--no-commit', branchOf(unit.id)) === null) {
     tryGit(tree, 'merge', '--abort');
     add('GATE-CONFLICT', 'gateConflict', { base });
-    return { findings: out, tree };
+    return { findings: out, tree, tested: [] };
   }
 
   const { levels } = withDefaults(loadProfile(tree).profile); // from the merge result: a unit may add a test location
@@ -145,6 +145,16 @@ function runGate(cwd, st, unit) {
     if (!files.length) add('GATE-AC', 'gateAc', { tag });
     else if (levelPaths(ac.level).length && !files.some((f) => levelPaths(ac.level).some((g) => matches(f, g)))) {
       add('GATE-LEVEL', 'gateLevel', { tag, files: files.join(', '), level: ac.level });
+    }
+  }
+
+  // Every level's run in full, as the owner's verification of each unit; a quick unit's ACs name their own commands.
+  const tested = Object.entries(levels ?? {}).filter(([, l]) => l?.run);
+  for (const [level, l] of tested) if (!shell(tree, l.run)) add('GATE-RUN', 'gateRun', { level, command: l.run });
+  for (const ac of card?.lane === 'quick' ? unit.acs : []) {
+    for (const t of spansOf(unit.doc.lines[ac.line - 1]).map(runTarget).filter(Boolean)) {
+      const command = `${t.runner} ${t.name}`;
+      if (!shell(tree, command)) add('GATE-AC', 'gateAcCommand', { ac: ac.id, command });
     }
   }
 
@@ -160,7 +170,7 @@ function runGate(cwd, st, unit) {
   for (const f of checkBundle(treeBundle, { rules: p.docs?.rules ?? {}, base: tree }).filter((x) => x.level === 'error')) {
     out.push(finding('GATE-OKF', f.path, f.line, 'gateOkf', f));
   }
-  return { findings: out, tree };
+  return { findings: out, tree, tested: tested.map(([level]) => level) };
 }
 
 // Base commits in `range` that are neither gate merges in scope nor direct commits on allowed paths.
@@ -202,7 +212,7 @@ export const commands = {
     if (!unit) throw new UsageError(msg('unknownUnit', { name: args[0] ?? '', dir: relPath(cwd, join(st.bundle, config.grid.units)) }));
     if (git(cwd, 'rev-parse', '--abbrev-ref', 'HEAD') !== st.base) throw new UsageError(msg('gateNotBase', { base: st.base }));
     if (!tryGit(cwd, 'rev-parse', '-q', '--verify', branchOf(unit.id))) throw new UsageError(msg('noBranch', { branch: branchOf(unit.id) }));
-    const { findings, tree } = runGate(cwd, st, unit);
+    const { findings, tree, tested } = runGate(cwd, st, unit);
     if (findings.length) {
       tryGit(tree, 'merge', '--abort');
       dropWorktree(cwd, tree);
@@ -213,7 +223,7 @@ export const commands = {
     const card = readJson(runtimeFile(cwd, 'cards', unit.id));
     git(tree, 'add', '-A');
     git(tree, 'commit', '-q', '-m', `Merge ${unit.id}: ${unit.fm.title ?? ''}`,
-      '-m', `${G.trailers.unit}: ${unit.id}\n${G.trailers.card}: ${card.hash}\n${G.trailers.review}: ${card.lane === 'quick' ? G.noReview : G.pass}`);
+      '-m', `${G.trailers.unit}: ${unit.id}\n${G.trailers.card}: ${card.hash}\n${G.trailers.review}: ${card.lane === 'quick' ? G.noReview : G.pass}\n${G.tested}: ${tested.join(', ') || G.noReview}`);
     const sha = git(tree, 'rev-parse', 'HEAD');
     dropWorktree(cwd, tree);
     git(cwd, 'merge', '-q', '--ff-only', sha);
@@ -255,8 +265,7 @@ export const commands = {
     const issue = flags['from-issue'].map(Number);
     if (issue.length) title = issueTitle(profile, issue[0]);
     if (!title || !flags.scope.length) throw new UsageError(msg('fixUsage', {}));
-    const lane = computeLane(flags.scope, profile);
-    if (lane.lane === 'full') return done(msg('fixFull', { title, reason: lane.reason }), config.exit.blocked);
+    const lane = computeLane(flags.scope, profile); // a full-lane fix waits for the owner's approval like any other unit
     const bundle = bundleOf(cwd, profile);
     const id = nextUnitId(bundle);
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);

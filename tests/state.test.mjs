@@ -238,7 +238,7 @@ test('U5/AC-4 an adopted project with no intent is asked for the migration inten
   assert.equal(r.code, 2);
 });
 
-test('U8/AC-6 re-approving an escalated unit turns the escalation into a fix round, and the count restarts', () => {
+test('U8/AC-6 U18/AC-3 re-approving an escalated unit marks its findings answered and sends it to review; the count restarts', () => {
   const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['src/**'] }) });
   approve(dir, 'I-1', 'U-1');
   branch(dir, 'U-1');
@@ -249,10 +249,10 @@ test('U8/AC-6 re-approving an escalated unit turns the escalation into a fix rou
   write(dir, { [U(1)]: read(dir, U(1)).replace('it works.', 'it works at the unit level.') });
   commit(dir, 'owner widens U-1');
   approve(dir, 'U-1');
-  assert.match(run(dir, ['next']).out, /^fix round for U-1/);
+  assert.match(run(dir, ['next']).out, /^review U-1, focus general/, 'no fix round: the re-review runs directly');
   const card = run(dir, ['card', 'U-1']).out;
-  assert.match(card, /^- general CONFIRMED src\/U-1\.txt:1: wrong level \(gate fails\)$/m);
-  assert.match(card, /^Model: opus \(fix round after a CONFIRMED finding\)$/m);
+  assert.match(card, /## Findings answered by the spec change\n.*\n- general CONFIRMED src\/U-1\.txt:1: wrong level \(gate fails\)$/m);
+  assert.doesNotMatch(card, /Findings to fix/);
   review(dir, 'U-1', 'fix', [finding]);
   assert.equal(JSON.parse(read(dir, '.git/aidlc/reviews/U-1.json')).rounds.at(-1).verdict, 'fix', 'the first fix after re-approval');
 });
@@ -376,4 +376,22 @@ test('U4/AC-3 delegate writes the owner\'s delegation into the personal profile 
   run(dir, ['delegate', 'off']);
   assert.deepEqual(JSON.parse(read(dir, '.aidlc/local/profile.json')).approvals.auto, []);
   assert.doesNotMatch(read(dir, '.aidlc/profile.json'), /approvals/);
+});
+
+test('U18/AC-2 next offers a merge only when each AC has a tagged test on the branch, outside the bundle', () => {
+  const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['src/**', 'docs/notes/**'], acs: ['- AC-1 (unit): it works.', '- AC-2 (unit): it rounds.'] }) });
+  approve(dir, 'I-1', 'U-1');
+  branch(dir, 'U-1');
+  git(dir, 'switch', '-q', 'unit/U-1');
+  commit(dir, 'a note naming the tag', { 'docs/notes/n.md': 'see U-1/AC-2\n' });
+  git(dir, 'switch', '-q', 'main');
+  review(dir, 'U-1', 'pass');
+  assert.match(run(dir, ['next']).out, /^U-1 has no test tagged U-1\/AC-2 on its branch: send the builder back/);
+  write(dir, { '.git/aidlc/heartbeats/U-1': '' });
+  assert.match(run(dir, ['next']).out, /^wait for the builders and reviewers of U-1/, 'the builder sent back is waited for');
+  git(dir, 'switch', '-q', 'unit/U-1');
+  commit(dir, 'tag AC-2', { 'src/round.txt': 'U-1/AC-2\n' });
+  git(dir, 'switch', '-q', 'main');
+  review(dir, 'U-1', 'pass');
+  assert.match(run(dir, ['next']).out, /^merge U-1/);
 });

@@ -8,7 +8,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 
 # Fixes without an intent
 - `aidlc fix "<title>"` creates a one-unit plan with no intent.
-- Quick lane: no approval. Standard lane: the owner approves the single unit (one line). Full lane: needs an intent, like any feature.
+- Quick lane: no approval. Standard lane: the owner approves the single unit (one line). Full lane: the owner approves the single unit too, and the full lane's reviews run.
 - Production incidents enter here, with the incident linked from the unit.
 
 # Change mid-flight

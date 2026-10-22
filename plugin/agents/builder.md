@@ -14,7 +14,7 @@ You build one unit from its card, which is in your prompt. The card is your whol
 2. Read the interface and requirement docs the card links, at the base commit.
 3. For each AC, first write a test that fails, tagged `U-<n>/AC-<k>` in its name, at the level the AC states. Then write the code that makes it pass.
 4. Commit after every passing test (`git add` the files you changed, `git commit -m "U-<n> AC-<k>: <what>"`), so no work is lost if you are stopped.
-5. Run the card's checks. Fix until they pass.
+5. Run the card's checks and test runs, each as one plain command: no `; echo $?`, redirect or pipe, which worktree isolation refuses when the command names `.github`. A failing command shows its exit code. Fix until all pass.
 6. Report (below) and return its one-line summary.
 
 A fix round's card lists `Findings to fix`: fix each one with a test that shows it, then do steps 4 to 6. When told to continue, read `git log` on your branch and pick up after the last commit.
