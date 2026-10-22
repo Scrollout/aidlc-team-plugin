@@ -106,7 +106,7 @@ test('U7/AC-2 scope: in-scope writes pass, out-of-scope and merge-written files 
   assert.match(reason(hook('scope', writeTool(dir, 'docs/units/U-3-c.md', fresh))), /^SCOPE-APPROVAL/);
 });
 
-test('U7/AC-3 blocking hooks fail closed; unmanaged folders are left alone; a missing CLI denies', () => {
+test('U7/AC-3 blocking hooks fail closed; unmanaged folders are left alone; a missing CLI denies tool calls only', () => {
   for (const group of HOOKS.hooks.PreToolUse) {
     for (const h of group.hooks) {
       assert.equal(h.onFailure, 'block');
@@ -123,7 +123,9 @@ test('U7/AC-3 blocking hooks fail closed; unmanaged folders are left alone; a mi
   rmSync(join(dir, '.aidlc/bin'), { recursive: true });
   const r = bash(dir, 'git status');
   assert.equal(r.code, 2, 'exit 2 blocks the tool call');
-  assert.match(r.err, /pinned CLI .* is missing/);
+  assert.match(r.err, /pinned CLI .* is missing → ask the owner to restore it: ! node \S+cli\/aidlc\.mjs upgrade/);
+  const stop = hook('steer', { cwd: dir, hook_event_name: 'Stop' });
+  assert.equal(stop.code, 0, 'a Stop hook lets the turn end, so it cannot block every stop');
 });
 
 test('U7/AC-4 the status injection stays within 1,000 chars', () => {

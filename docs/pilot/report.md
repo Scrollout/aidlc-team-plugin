@@ -39,12 +39,13 @@ Every manual step, by the owner or by the lead outside `next`, and the fix or M2
 # U9 criteria
 - AC-1 recorded here, with tokens from transcripts rather than per-card counters.
 - AC-2 met: see [Interventions](interventions.md).
-- AC-3 two `/clear`s, both while builders ran: no repeated question, no duplicate builder, no lost work. Standing run-mode instructions lived only in the conversation and had to be re-sent (M2). A third clear, mid-elaboration in the eval fixture, failed: the owner interrupted the write of an answer, and `next` led back to unit work, not to the draft. Since 0.17.0 `next` sends the lead back to a draft with open points first; no answer log (owner).
+- AC-3 met. Two `/clear`s while builders ran: no repeated question, no duplicate builder, no lost work; run-mode instructions had to be re-sent (M2). A clear mid-elaboration in the eval fixture first led back to unit work; with 0.17.0 the retest resumed at the draft's open points and asked no answered question.
 - AC-4 met: after adoption `check --ci` is green, the requirements are approved, and the baseline violations became units or the approved cleanup decision.
 - M1 exit "no hand edits to state": one, a stale review mark removed by hand (fixed 0.13.3).
+- U7/AC-3 checked on Claude Code 2.1.308: with the CLI moved away, the guard denied `git push`. The Stop hook then blocked every turn end until the owner stepped in (fixed 0.17.1).
 
 # Prompt evals (U8/AC-5)
 Run 2026-10-22 on 0.16.1, scored by `tests/evals/run.mjs`: all five found.
-- The opus general reviewer recorded `fix` with five findings: the endpoint without `requireRole`, the two hollow AC tests, the shell injection (rated plausible) and the out-of-scope limits edit.
-- The sonnet builder stopped on the Price API change, a one-way door, instead of changing it; the lead wrote a decision for the owner, who approved it with the re-scoped unit.
+- The opus reviewer recorded `fix` with five findings: the endpoint without `requireRole`, two hollow AC tests, the shell injection (rated plausible), the out-of-scope edit.
+- The sonnet builder stopped on the Price API change, a one-way door, instead of changing it; the owner approved the decision the lead wrote.
 - Seen on the way (M2): `next` asked only to re-approve the unit, not the new decision it cites; steer kept blocking at a stopping point the owner had set in the prompt.
