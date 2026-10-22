@@ -512,9 +512,10 @@
     "off": "off",
     "approvers": [
       "human:",
+      "process:",
       "agent:"
     ],
-    "agent": "agent:auto",
+    "agent": "process:delegated",
     "autoFlag": "--auto",
     "auto": [
       "reapprove",

@@ -7,6 +7,9 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** [0008 Delegated approvals](decisions/0008-delegated-approvals.md): delegated approvals are stamped `process:delegated`, an OKF v0.2 actor, instead of `agent:auto`, which OKF has no prefix for (pilot finding, owner's choice); earlier `agent:auto` stamps still count. Release 0.14.0.
+- **Update** A reviewer's tool calls no longer keep a builder's heartbeat fresh, so a fix-round builder takes over the clean worktree; a stopped builder's advice asks for a re-approval only when the unit doc is wrong (pilot findings, [Hooks](design/hooks.md), [State](design/state.md)). Release 0.13.4.
+- **Update** `review record` ends the review in flight, so a unit's next focus is offered while another unit's reviewer runs (pilot finding, [Hooks](design/hooks.md)). Release 0.13.3.
 - **Update** A delegated re-approval of a stopped unit now restarts its builder, as an owner one does; answering an escalation still takes the owner (pilot finding). Release 0.13.2.
 - **Update** The card hash leaves out the base commit, so a base that moves for other units no longer makes a recorded review stale (pilot finding, [Unit card](design/unit-card.md)). Release 0.13.1.
 - **Creation** [0009 Owner commands by permission prompt](decisions/0009-approval-prompt.md), asked for by the owner: the lead runs `aidlc approve`, `upgrade` or the new `delegate`, and the guard asks the owner with a yes/no permission prompt, which also works from the mobile app, where `!` commands do not run. A reviewer in flight now keeps a `reviewing` marker fresh, so `next` and steer wait for it instead of asking for the same review again (pilot finding). Release 0.13.0.
