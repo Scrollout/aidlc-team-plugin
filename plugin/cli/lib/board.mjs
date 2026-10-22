@@ -83,7 +83,7 @@ function milestones(repo, docs, out) {
     let m = have.find((x) => x.title === title);
     const due_on = due ? `${due}${B.dueTime}` : null;
     if (!m) {
-      m = rest('POST', `${repo}/milestones`, { title, due_on });
+      m = rest('POST', `${repo}/milestones`, due ? { title, due_on } : { title }); // GitHub refuses a null due_on
       out.push(msg('boardMilestoneCreated', { title }));
     } else if (due && (m.due_on ?? '').slice(0, 10) !== String(due)) {
       rest('PATCH', `${repo}/milestones/${m.number}`, { due_on });
