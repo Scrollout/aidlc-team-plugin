@@ -274,3 +274,35 @@ test('U3/AC-3 check skips merged units in plan lint, as next does', () => {
   commit(dir, 'U-2 overlaps the merged U-1', { [U(2)]: unitDoc({ scope: ['src/b/**'] }) });
   assert.doesNotMatch(run(dir, ['check']).out, /PLAN-SCOPE/);
 });
+
+test('U4/AC-3 delegated approvals: the lead re-approves and approves quick units only when the personal profile says so', () => {
+  const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['src/**'] }), [U(2)]: unitDoc({ scope: ['docs/guide/**'] }) }, { lanes: { quick: ['docs/**'] } });
+  approve(dir, 'I-1', 'U-1');
+  write(dir, { [U(1)]: read(dir, U(1)).replace('it works.', 'it works well.') });
+  commit(dir, 'edit U-1');
+  assert.match(run(dir, ['next']).out, /^re-approve U-1 after their edits: ! node/);
+  assert.equal(run(dir, ['approve', '--auto', 'U-1']).code, 64, 'nothing delegated yet');
+
+  write(dir, { '.aidlc/local/profile.json': { approvals: { auto: ['reapprove', 'quick'] } } });
+  const r = run(dir, ['next']);
+  assert.match(r.out, /^approve U-1, delegated by the owner: aidlc approve --auto U-1/);
+  assert.equal(r.code, 0, 'an action, not an owner gate');
+  assert.equal(run(dir, ['approve', '--auto', 'U-1']).code, 0);
+  assert.match(read(dir, U(1)), /by: agent:auto/);
+  commit(dir, 're-approve U-1');
+  assert.match(run(dir, ['next']).out, /^approve U-2, delegated by the owner: aidlc approve --auto U-2/, 'a quick-lane draft');
+  assert.equal(run(dir, ['approve', '--auto', 'U-2']).code, 0);
+  assert.match(run(dir, ['status']).out, /U-2 approved/);
+
+  commit(dir, 'a standard draft', { [U(3)]: unitDoc({ scope: ['lib/**'] }) });
+  assert.equal(run(dir, ['approve', '--auto', 'U-3']).code, 64, 'a first approval of a standard unit is never delegated');
+  assert.match(run(dir, ['next']).out, /^ask the owner to approve the plan/);
+});
+
+test('U4/AC-1 a unit whose dependencies are unmerged is blocked, even with a branch from an earlier run', () => {
+  const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['a/**'] }), [U(2)]: unitDoc({ scope: ['b/**'], depends: ['U-1'] }) });
+  approve(dir, 'I-1', 'U-1', 'U-2');
+  branch(dir, 'U-2', 'b/x.txt');
+  assert.match(run(dir, ['status']).out, /U-2 blocked/);
+  assert.match(run(dir, ['next']).out, /^build U-1 /);
+});

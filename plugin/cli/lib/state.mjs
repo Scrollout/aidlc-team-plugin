@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
-import { config, UsageError } from './config.mjs';
+import { config, done, isMap, list, readJson, UsageError } from './config.mjs';
 import { msg } from './template.mjs';
 import { loadProfile } from './profile.mjs';
 import { parseDoc } from './okf.mjs';
@@ -25,7 +25,6 @@ export const branchOf = (unit) => S.branchPrefix + unit;
 export const baseOf = (profile) => profile.base;
 export const bundleOf = (cwd, profile) => resolve(cwd, profile.docs.bundle);
 
-const readJson = (file) => (existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null);
 export function writeJson(file, data) {
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, JSON.stringify(data, null, 2) + '\n');
@@ -38,7 +37,6 @@ export const roundsOf = (review, focus = S.focus) => (review?.rounds ?? []).filt
 // Diff of a unit branch against its merge base with the base branch.
 export const diffHash = (cwd, base, unit) => sha256(git(cwd, 'diff', `${base}...${branchOf(unit)}`));
 
-const listOf = (v) => (v === undefined || v === null ? [] : Array.isArray(v) ? v : [v]).map(String);
 
 // Focuses the unit's diff needs a review in, each with why: general first, then each focus whose globs
 // the diff touches, and security when an added line matches security.content (docs/design/prompts.md).
@@ -48,17 +46,16 @@ export function reviewFocuses(cwd, profile, base, unit) {
   const added = git(cwd, 'diff', '-U0', range).split('\n').filter((l) => l.startsWith('+') && !l.startsWith('+++'));
   const needed = new Map([[S.focus, '']]);
   for (const [focus, globs] of Object.entries(profile.focus ?? {})) {
-    const path = paths.find((x) => listOf(globs).some((g) => overlaps('/' + x, g)));
+    const path = paths.find((x) => list(globs).some((g) => overlaps('/' + x, g)));
     if (path) needed.set(focus, msg('gateFocusPath', { path, focus }));
   }
-  const pattern = listOf(profile.security?.content).find((c) => added.some((l) => l.includes(c)));
+  const pattern = list(profile.security?.content).find((c) => added.some((l) => l.includes(c)));
   if (pattern && !needed.has(config.gate.security)) needed.set(config.gate.security, msg('gateFocusContent', { pattern }));
   return needed;
 }
 
 // ---- Approvals ----
 
-const isMap = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const sortKeys = (v) => (Array.isArray(v) ? v.map(sortKeys) : isMap(v) ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, sortKeys(v[k])])) : v);
 const events = (fm) => (isMap(fm.verified) ? [fm.verified] : Array.isArray(fm.verified) ? fm.verified.filter(isMap) : []);
 
@@ -69,10 +66,13 @@ export function hashDoc(doc) {
 
 // approved: a human `verified` event and a matching hash; stale: approved once, changed since.
 export function approval(doc) {
-  const human = events(doc.fm).some((e) => String(e.by ?? '').startsWith(S.human));
+  const human = events(doc.fm).some((e) => S.approvers.some((a) => String(e.by ?? '').startsWith(a)));
   if (!human) return 'draft';
   return doc.fm.verified_hash === hashDoc(doc) ? 'approved' : 'stale';
 }
+
+// Approval classes the owner delegated to the lead; only the untracked personal layer counts (decision 0008).
+const delegated = (cwd) => list(readJson(join(cwd, config.layers.find((l) => l.name === 'personal').path))?.approvals?.auto);
 
 // The latest human approval of a doc, in epoch ms (0 when none).
 export const approvedAt = (doc) => Math.max(0, ...events(doc.fm).filter((e) => String(e.by ?? '').startsWith(S.human)).map((e) => Date.parse(String(e.at)) || 0));
@@ -160,6 +160,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
     // A builder that stopped hands the unit back to the lead until the owner re-approves its fixed spec.
     else if (report?.status === S.stopped && Date.parse(report.at) > approvedAt(u.doc)
       && !(review?.rounds ?? []).some((r) => r.at > report.at)) state = 'stopped';
+    else if (!u.depends.every((d) => merged.has(d))) state = 'blocked';
     else if (branches.has(branchOf(u.id))) {
       // The last verdict of each required focus, counted only while it is for the current diff.
       // A quick-lane unit gets no review: its report alone makes it ready to merge.
@@ -177,7 +178,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
       else if (!focus && (!quick || report)) state = 'reviewed';
       else if (has('pass') || (report && (!lastAt || report.at > lastAt) && Date.parse(report.at) > approvedAt(u.doc))) state = 'reported';
       else state = 'building';
-    } else state = u.depends.every((d) => merged.has(d)) ? 'approved' : 'blocked';
+    } else state = 'approved';
     return { ...u, lane, state, focus, fresh: heartbeatFresh(cwd, u.id, now), report, review };
   });
 
@@ -188,12 +189,12 @@ export function readState(cwd, { now = Date.now() } = {}) {
     return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own };
   });
   const requirements = plan.requirements.map((r) => ({ ...r, state: approval(r.doc) }));
-  return { cwd, profile, base, bundle, intents, units, requirements, mergeUnit: mergeInProgress(cwd, units) };
+  return { cwd, profile, base, bundle, intents, units, requirements, auto: delegated(cwd), mergeUnit: mergeInProgress(cwd, units) };
 }
 
 // ---- next ----
 
-const ids = (list) => list.map((u) => u.id).join(' ');
+const ids = (docs) => docs.map((u) => u.id).join(' ');
 const action = (kind, key, data = {}) => ({ kind, key, line: msg(key, data) });
 const priorityOf = (u) => Number(u.fm.priority ?? 0);
 
@@ -202,7 +203,7 @@ export function nextAction(st) {
   if (st.mergeUnit) return action('act', 'nextContinueMerge', { unit: st.mergeUnit });
 
   const stale = [...st.requirements, ...st.intents, ...st.units].filter((d) => d.state === 'stale');
-  if (stale.length) return action('human', 'nextReapprove', { docs: ids(stale) });
+  if (stale.length) return action(...(st.auto.includes(S.auto[0]) ? ['act', 'nextAutoApprove'] : ['human', 'nextReapprove']), { docs: ids(stale) });
 
   const intent = st.intents.find((i) => i.state !== 'released');
   if (!intent && !st.intents.length && !st.units.length) {
@@ -217,7 +218,7 @@ export function nextAction(st) {
   const draftReqs = st.requirements.filter((r) => r.state === 'draft' && cited.has(r.id));
   if (draftReqs.length) return action('human', 'nextApproveRequirements', { reqs: ids(draftReqs) });
   const drafts = scope.filter((u) => u.state === 'draft');
-  if (drafts.length) return action('human', 'nextApprovePlan', { units: ids(drafts) });
+  if (drafts.length) return action(...(st.auto.includes(S.auto[1]) && drafts.every((u) => u.lane === 'quick') ? ['act', 'nextAutoApprove'] : ['human', 'nextApprovePlan']), { docs: ids(drafts), units: ids(drafts) });
 
   const merged = (id) => st.units.find((x) => x.id === id)?.state === 'merged';
   const reviewed = scope.find((u) => u.state === 'reviewed' && !u.fm.hold && u.depends.every(merged));
@@ -285,7 +286,6 @@ function setField(cwd, name, key, value) {
 
 const usage = (key) => { throw new UsageError(msg(key, {})); };
 const humanGate = (a) => (a.kind === 'human' ? config.exit.blocked : config.exit.ok);
-const done = (output, code = config.exit.ok) => ({ code, findings: [], output });
 
 export const commands = {
   status(args, { cwd }) {
@@ -319,12 +319,17 @@ export const commands = {
     const { profile } = loadProfile(cwd);
     const bundle = bundleOf(cwd, profile);
     const at = new Date().toISOString(); // to the millisecond: review rounds are compared with it
+    const auto = args.includes(S.autoFlag) && delegated(cwd);
     let out = '';
-    for (const name of args) {
+    for (const name of args.filter((a) => a !== S.autoFlag)) {
       const file = findDoc(cwd, bundle, name);
       const text = readFileSync(file, 'utf8');
-      if (!S.approvable.includes(String(parseDoc(text).fm?.type))) throw new UsageError(msg('notApprovable', { name }));
-      writeFileSync(file, stamp(text, S.human + by, at));
+      const doc = parseDoc(text);
+      if (!S.approvable.includes(String(doc.fm?.type))) throw new UsageError(msg('notApprovable', { name }));
+      const quick = doc.fm.type === S.unitType && approval(doc) === 'draft' && computeLane(list(doc.fm.scope), profile).lane === 'quick';
+      const cls = approval(doc) === 'stale' ? S.auto[0] : quick ? S.auto[1] : null;
+      if (auto && !auto.includes(cls)) throw new UsageError(msg('notDelegated', { name }));
+      writeFileSync(file, stamp(text, auto ? S.agent : S.human + by, at));
       out += msg('approved', { doc: relative(cwd, file) });
     }
     return done(out);

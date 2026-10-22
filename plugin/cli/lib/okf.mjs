@@ -1,7 +1,7 @@
 // OKF v0.2 validator and index generator (docs/design/okf.md). Settings, codes and messages come from cli.json.
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
-import { config, UsageError } from './config.mjs';
+import { config, isMap, UsageError } from './config.mjs';
 import { msg } from './template.mjs';
 import { loadProfile } from './profile.mjs';
 
@@ -259,7 +259,6 @@ export function parseYaml(text, first = 1) {
 
 // ---- Documents ----
 
-const isMap = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const truthy = (v) => !(v === null || v === undefined || v === false || v === 0 || v === '' || (Array.isArray(v) && !v.length) || (isMap(v) && !Object.keys(v).length));
 const pyStr = (v) => (v === true ? 'True' : v === false ? 'False' : String(v));
 

@@ -7,3 +7,4 @@
 * [0005 One repo](0005-one-repo.md) - Develop and ship from one repo; the installable plugin is the plugin/ folder only.
 * [0006 Engine behind adapters](0006-engine-behind-adapters.md) - Commands and hook rules are pure functions returning data; the CLI and hooks are adapters now, and MCP, HTTP hooks and A2A can be added later without changing the engine.
 * [0007 Requirements and architecture as checks](0007-requirements-and-architecture-checks.md) - Lasting requirements become cited docs and architecture rules become gate checks, so a project cannot drift from its intended shape unit by unit.
+* [0008 Delegated approvals](0008-delegated-approvals.md) - The owner can let the lead approve two classes of docs itself, re-approvals and quick-lane units, through an untracked personal setting; first approvals of intents, plans, requirements and one-way doors stay with the owner.

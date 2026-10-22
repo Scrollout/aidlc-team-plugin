@@ -56,7 +56,7 @@ test('U7/AC-1 guard denies each listed command and allows the everyday ones', ()
     assert.match(reason(r), new RegExp(`^(escalate: )?${code} .+ → \\S`), command);
   }
   assert.equal(decision(bash(dir, 'git tag v1.0.0')), 'ask');
-  for (const command of ['git status', 'git commit -m "docs: notes"', 'node .aidlc/bin/aidlc.mjs next', 'git push origin unit/U-1', 'git log --oneline | head', 'echo "git push --force"']) {
+  for (const command of ['git status', 'git commit -m "docs: notes"', 'node .aidlc/bin/aidlc.mjs next', 'node .aidlc/bin/aidlc.mjs approve --auto U-1', 'git push origin unit/U-1', 'git log --oneline | head', 'echo "git push --force"']) {
     assert.equal(decision(bash(dir, command)), 'allow', command);
   }
   write(dir, { 'src/a.mjs': '1;\n' });
@@ -78,6 +78,7 @@ test('U7/AC-2 scope: in-scope writes pass, out-of-scope and merge-written files 
   assert.match(reason(hook('scope', writeTool(wt, 'lib/x.mjs', '1;\n'))), /^SCOPE-OUT lib\/x\.mjs is outside the scope of U-1/);
   assert.match(reason(hook('scope', writeTool(wt, 'docs/log.md', 'x\n'))), /^SCOPE-SHARED docs\/log\.md is written by merge/);
   assert.equal(decision(hook('scope', writeTool(dir, 'lib/x.mjs', '1;\n'))), 'allow', 'outside a unit worktree there is no scope');
+  assert.match(reason(hook('scope', writeTool(dir, '.aidlc/local/profile.json', '{}'))), /^SCOPE-APPROVAL/, 'only the owner delegates approvals');
 
   approve(dir, 'U-1');
   const doc = read(dir, U1);

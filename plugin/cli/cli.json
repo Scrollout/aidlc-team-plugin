@@ -108,7 +108,7 @@
     },
     {
       "name": "approve",
-      "usage": "approve <doc>",
+      "usage": "approve [--auto] <doc>…",
       "does": "stamp approval (owner only)"
     },
     {
@@ -361,7 +361,9 @@
     "nextMigrate": "elaborate the migration intent with the owner in {{dir}}/I-1-<slug>.md (adopted at {{commit}}): docs, always-on context, profile, architecture baseline, module audit, cleanup; then ask for approval",
     "nextStopped": "the builder of {{unit}} stopped ({{reason}}): fix the unit doc, then ask the owner to re-approve it",
     "holdUsage": "usage: hold <unit> [off]",
-    "priorityUsage": "usage: priority <unit> <n>, a whole number; higher builds first"
+    "priorityUsage": "usage: priority <unit> <n>, a whole number; higher builds first",
+    "nextAutoApprove": "approve {{docs}}, delegated by the owner: aidlc approve --auto {{docs}}",
+    "notDelegated": "{{name}} is not in a class the owner delegated (approvals.auto in .aidlc/local/profile.json): the owner approves it"
   },
   "okf": {
     "index": "index.md",
@@ -515,7 +517,18 @@
     "focus": "general",
     "stdin": "-",
     "stopped": "stopped",
-    "off": "off"
+    "off": "off",
+    "approvers": [
+      "human:",
+      "agent:"
+    ],
+    "agent": "agent:auto",
+    "autoFlag": "--auto",
+    "auto": [
+      "reapprove",
+      "quick"
+    ],
+    "unitType": "Unit"
   },
   "card": {
     "template": "card.md",

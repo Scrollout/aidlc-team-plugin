@@ -3,7 +3,7 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve, sep } from 'node:path';
-import { config, UsageError } from './config.mjs';
+import { config, list, UsageError } from './config.mjs';
 import { msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { parseDoc, proseLines } from './okf.mjs';
@@ -12,7 +12,6 @@ const GRID = config.grid;
 const AC = /^\s*[-*]\s+(AC-\d+)\b\s*(?:\(([^)]*)\))?\s*:/;
 const RESERVE = /^(\S+)\s+(\S+)\/(\d+)$/;
 
-const list = (v) => (v === undefined || v === null ? [] : Array.isArray(v) ? v : [v]).map(String);
 
 // Requirement IDs compare by number: R-018 and R-18 are the same.
 export const reqId = (id) => id.replace(/^(R-)0*(\d)/, '$1$2');
