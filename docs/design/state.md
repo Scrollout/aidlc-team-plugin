@@ -48,7 +48,7 @@ stateDiagram-v2
 3. No intent yet: elaborate one; in an adopted project with none, the migration intent ([Everyday paths](paths.md#adopting-an-existing-project)). Intent not approved → request approval; then the draft requirements it and its units cite.
 4. Plan not approved → draft units and request approval.
 5. Reviewed units → merge in DAG order.
-6. Verdict `escalate` in any focus → the owner decides. Verdict `fix` in any focus → fix round; the card lists the findings.
+6. Verdict `escalate` in any focus → the owner decides; once they re-approve the edited unit, it counts as `fix` and the round count restarts. Verdict `fix` in any focus → fix round; the card lists the findings.
 7. Reported, not reviewed → review, naming the first required focus without a `pass` for the current diff ([Skill and agents](prompts.md#review)).
 8. Building with a stale heartbeat (over 2 min) and no report → restart its builder.
 9. Approved, unblocked units → build, on one line; up to `parallel.max` in flight, with scopes disjoint from units in flight.

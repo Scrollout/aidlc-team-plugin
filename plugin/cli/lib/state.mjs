@@ -74,6 +74,19 @@ export function approval(doc) {
   return doc.fm.verified_hash === hashDoc(doc) ? 'approved' : 'stale';
 }
 
+// The latest human approval of a doc, in epoch ms (0 when none).
+export const approvedAt = (doc) => Math.max(0, ...events(doc.fm).filter((e) => String(e.by ?? '').startsWith(S.human)).map((e) => Date.parse(String(e.at)) || 0));
+const beforeApproval = (round, at) => Date.parse(round.at) < at;
+
+// A unit's review rounds. An escalation the owner answered by re-approving the unit counts as a `fix`:
+// the spec changed, so the builder gets a fix round with those findings (docs/design/verification.md).
+export function readReview(cwd, unit, doc) {
+  const review = readJson(runtimeFile(cwd, 'reviews', unit));
+  const at = doc ? approvedAt(doc) : 0;
+  const [, fix, escalate] = S.verdicts;
+  return review && { ...review, rounds: review.rounds.map((r) => (r.verdict === escalate && at && beforeApproval(r, at) ? { ...r, verdict: fix } : r)) };
+}
+
 const plain = (v) => /^[A-Za-z0-9_@.+/][A-Za-z0-9_@:.+/ -]*$/.test(v) && !/:(\s|$)/.test(v) && !/^\d+$/.test(v);
 const scalar = (v) => (typeof v === 'string' && plain(v) ? v : JSON.stringify(v));
 const flowMap = (e) => `{ ${Object.entries(e).map(([k, v]) => `${k}: ${scalar(v)}`).join(', ')} }`;
@@ -139,7 +152,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
     const needsApproval = Boolean(u.fm.intent) || lane !== 'quick';
     const approvalState = approval(u.doc);
     const report = readJson(runtimeFile(cwd, 'reports', u.id));
-    const review = readJson(runtimeFile(cwd, 'reviews', u.id));
+    const review = readReview(cwd, u.id, u.doc);
     let state;
     let focus = null;
     if (merged.has(u.id)) state = 'merged';
@@ -288,7 +301,7 @@ export const commands = {
     if (!by) throw new UsageError(msg('noEmail', {}));
     const { profile } = loadProfile(cwd);
     const bundle = bundleOf(cwd, profile);
-    const at = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
+    const at = new Date().toISOString(); // to the millisecond: review rounds are compared with it
     let out = '';
     for (const name of args) {
       const file = findDoc(cwd, bundle, name);
@@ -320,8 +333,11 @@ export const commands = {
     const target = runtimeFile(cwd, 'reviews', unit);
     const prior = readJson(target)?.rounds ?? [];
     const focus = data.focus ?? S.focus;
-    // A second `fix` in the same focus becomes `escalate`: the owner decides (docs/design/verification.md).
-    const verdict = data.verdict === 'fix' && roundsOf({ rounds: prior }, focus).some((r) => r.verdict === 'fix') ? 'escalate' : data.verdict;
+    // A second `fix` in the same focus since the unit's last approval becomes `escalate`: the owner decides.
+    const doc = readPlan(bundleOf(cwd, profile)).units.find((u) => u.id === unit)?.doc;
+    const since = doc ? approvedAt(doc) : 0;
+    const again = roundsOf({ rounds: prior }, focus).some((r) => r.verdict === 'fix' && !beforeApproval(r, since));
+    const verdict = data.verdict === 'fix' && again ? 'escalate' : data.verdict;
     const card = readJson(runtimeFile(cwd, 'cards', unit))?.hash ?? null;
     const round = { ...data, focus, verdict, card, diffHash: diffHash(cwd, baseOf(profile), unit), at: new Date().toISOString() };
     writeJson(target, { unit, rounds: [...prior, round] });

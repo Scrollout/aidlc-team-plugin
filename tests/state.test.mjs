@@ -164,7 +164,7 @@ test('U4/AC-3 approve writes the stamp; editing makes it stale; reformatting or 
   const doc = parseDoc(read(dir, U(1)));
   assert.equal(doc.fm.status, 'stable');
   assert.deepEqual(doc.fm.verified.map((e) => e.by), ['human:owner@example.com']);
-  assert.match(doc.fm.verified[0].at, /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/);
+  assert.match(doc.fm.verified[0].at, /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/);
   assert.equal(doc.fm.verified_hash, hashDoc(doc));
   assert.equal(approval(doc), 'approved');
   assert.equal(approval(parseDoc(before)), 'draft');
@@ -204,4 +204,23 @@ test('U5/AC-4 an adopted project with no intent is asked for the migration inten
   const r = run(dir, ['next']);
   assert.match(r.out, /^elaborate the migration intent with the owner in docs\/intents\/I-1-<slug>\.md \(adopted at 0123456789ab\)/);
   assert.equal(r.code, 2);
+});
+
+test('U8/AC-6 re-approving an escalated unit turns the escalation into a fix round, and the count restarts', () => {
+  const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['src/**'] }) });
+  approve(dir, 'I-1', 'U-1');
+  branch(dir, 'U-1');
+  const finding = { path: 'src/U-1.txt', line: 1, claim: 'wrong level', scenario: 'gate fails', confidence: 'CONFIRMED' };
+  review(dir, 'U-1', 'fix', [finding]);
+  review(dir, 'U-1', 'fix', [finding]);
+  assert.match(run(dir, ['next']).out, /^U-1 review escalated/);
+  write(dir, { [U(1)]: read(dir, U(1)).replace('it works.', 'it works at the unit level.') });
+  commit(dir, 'owner widens U-1');
+  approve(dir, 'U-1');
+  assert.match(run(dir, ['next']).out, /^fix round for U-1/);
+  const card = run(dir, ['card', 'U-1']).out;
+  assert.match(card, /^- general CONFIRMED src\/U-1\.txt:1: wrong level \(gate fails\)$/m);
+  assert.match(card, /^Model: opus \(fix round after a CONFIRMED finding\)$/m);
+  review(dir, 'U-1', 'fix', [finding]);
+  assert.equal(JSON.parse(read(dir, '.git/aidlc/reviews/U-1.json')).rounds.at(-1).verdict, 'fix', 'the first fix after re-approval');
 });
