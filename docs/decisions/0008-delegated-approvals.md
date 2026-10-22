@@ -23,6 +23,7 @@ Option 2, chosen by the owner on 2026-10-22.
 - The stamp is `{ by: process:delegated, at }`, an OKF actor (§7) that marks it machine-confirmed, so history shows who approved. An approval counts with a `human:` or `process:` event, or an `agent:auto` one from before 0.14.
 - The guard still denies `aidlc approve` without `--auto`; the scope hook denies agent writes to the personal profile and to any `verified` entry.
 - First approvals of intents, plans, requirements and one-way-door decisions are never delegated.
+- A `reapprove` does not cover an edit that changes a unit's acceptance criteria: that changes what done means, so it goes back to the owner (owner, after the pilot; built in [M2](../roadmap/m2.md) U15).
 
 # Why
 Principle 5 keeps the decisions with the owner; a re-approval of an edit that carries out an owner answer is bookkeeping, not a decision. A quick-lane unit touches only paths the owner has already declared low risk.

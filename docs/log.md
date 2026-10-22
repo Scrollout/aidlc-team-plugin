@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** [M2](roadmap/m2.md) planned with the owner: hardening from the pilot plus `aidlc retro`, in eight units U12–U19; the other work cut from M1 moves to M3. The CLI budget rises to 3,000 lines ([Overview](design/overview.md)), and a delegated re-approval no longer covers a change to acceptance criteria ([0008](decisions/0008-delegated-approvals.md)).
 - **Update** [M1](roadmap/m1.md) is closed: every exit criterion has its evidence in the [pilot report](pilot/report.md). Next is [M2](roadmap/m2.md).
 - **Update** [Hooks](design/hooks.md): with the pinned CLI missing, only tool calls are denied, and the message names the owner's `!` upgrade command; the Stop hook had blocked every turn end (U7/AC-3 check). [M1 pilot report](pilot/report.md) records the check and the passing mid-elaboration clear. Release 0.17.1.
 - **Update** [State](design/state.md): `next` sends the lead back to a draft intent, requirement or unit that still has a template placeholder or an open question, before approvals and unit work, and never offers such a doc for approval; a clear mid-elaboration had led back to unit work (prompt evals, owner's choice). Release 0.17.0.
