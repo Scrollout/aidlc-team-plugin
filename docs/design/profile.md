@@ -31,10 +31,16 @@ Merged in order, later wins, except that a `deny` in an earlier layer cannot be 
 1. plugin defaults (`plugin/templates/defaults.json`)
 2. org pack: a git repo pinned by tag in `profile.org`, cached under `.git/aidlc/org/` (M2)
 3. project: `.aidlc/profile.json`, `.aidlc/rules/*.md`
-4. personal: `.aidlc/local/` (untracked)
+4. personal: `.aidlc/local/profile.json` (untracked)
+
+Merge rules:
+- Objects merge key by key; any other value from a later layer replaces the earlier one.
+- An array under a key named `deny`, at any depth, is a union: later layers add entries, never remove them. A later layer that sets a `deny` to a non-array, or replaces an object holding a `deny` with a non-object, is refused with the layer and key it conflicts with.
+- A missing layer file is an empty layer; invalid JSON is an error naming the file.
+- `.aidlc/rules/*.md` are not merged; the loader returns their paths for the hooks and agents that read them.
 
 # Templates
-- Files under `plugin/templates/` with `{{path.to.value}}` and `{{#each list}}…{{/each}}`; nothing more.
+- Files under `plugin/templates/` with `{{path.to.value}}` and `{{#each list}}…{{/each}}`; nothing more. Inside `#each`, `{{this}}` is the item and names resolve on the item first, then outside it. A missing or non-scalar value is an error naming the variable and the file.
 - A project file `.aidlc/templates/<same path>` overrides the plugin's.
 - Rendered: AGENTS.md, CLAUDE.md (one line: `@AGENTS.md`), the bundle skeleton, intent/unit/decision doc templates, a CI snippet, `.gitignore` lines.
 - Neutral by construction: templates never contain the plugin's name; a test greps rendered output.

@@ -9,7 +9,7 @@ A Claude Code plugin that brings AI-DLC (Intent → Units → Design → Code �
 
 ## Layout
 - `plugin/`: what ships (CLI, hooks, agents, skill, templates). Nothing else is installed.
-- `tests/`: `node --test tests/`. Fixtures under `tests/fixtures/`.
+- `tests/`: `*.test.mjs`, run with `node --test`. Fixtures under `tests/fixtures/`, never named like a test file.
 - `docs/`: design, decisions, roadmap.
 
 ## Rules
@@ -17,4 +17,4 @@ A Claude Code plugin that brings AI-DLC (Intent → Units → Design → Code �
 - Keep the budgets in `docs/design/overview.md`; CI fails when one is exceeded.
 - Nothing the plugin writes into a project may name the plugin.
 - Docs change before code; a design change updates its doc in the same commit.
-- Run `node --test tests/` before every commit.
+- Run `node --test` before every commit.

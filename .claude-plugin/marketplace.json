@@ -1,0 +1,12 @@
+{
+  "name": "scrollout",
+  "description": "Scrollout's Claude Code plugins",
+  "owner": { "name": "Scrollout" },
+  "plugins": [
+    {
+      "name": "aidlc-team",
+      "source": "./plugin",
+      "description": "AI-DLC grid, OKF docs and a builder/reviewer team, with every rule enforced by a CLI or a hook."
+    }
+  ]
+}

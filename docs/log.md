@@ -7,6 +7,13 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** Settled the open points of U1 with the owner:
+  - The plugin is `aidlc-team` in the `scrollout` marketplace ([Overview](design/overview.md)).
+  - `deny` arrays at any depth are unions across layers, and the personal layer is `.aidlc/local/profile.json` ([Profile and templates](design/profile.md)).
+  - `#each` scoping and template errors are defined ([Profile and templates](design/profile.md)).
+  - Tests run with `node --test` (no argument): from Node 22 on, `node --test tests/` loads the directory as a module and fails.
+  - U1 scope adds `tests/cli*` for the CLI tests. CI runs `check docs` from U1 on; until U2 builds it, the command exits 70 and that step stays red ([M1](roadmap/m1.md)).
+
 - **Update** Corrected the design against the official Claude Code docs:
   - Hooks fail open by default, so blocking hooks now set `onFailure: "block"` and an explicit timeout ([Verification](design/verification.md)).
   - Builders branch from the remote default branch unless `worktree.baseRef: "head"` is set ([Team](design/team.md)).
