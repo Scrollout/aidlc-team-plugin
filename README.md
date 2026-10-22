@@ -1,5 +1,11 @@
 # aidlc-team
 
+[![CI](https://github.com/Scrollout/aidlc-team-plugin/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Scrollout/aidlc-team-plugin/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/tag/Scrollout/aidlc-team-plugin?filter=v*&sort=semver&label=release)](https://github.com/Scrollout/aidlc-team-plugin/tags)
+[![Node](https://img.shields.io/badge/node-%E2%89%A522-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/en/about/previous-releases)
+[![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](plugin/cli)
+[![License](https://img.shields.io/github/license/Scrollout/aidlc-team-plugin)](LICENSE)
+
 A Claude Code plugin that runs the AI-DLC lifecycle (Inception, Construction, Operations) in any project. It uses an OKF docs bundle and a small team of agents, and every rule that matters is enforced by a CLI or a hook, not by prose.
 
 ```
