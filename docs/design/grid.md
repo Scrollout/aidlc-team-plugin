@@ -56,7 +56,7 @@ The owner's checkpoint is the plan of an approval row, where a correction is che
 
 The CLI computes the lane from the unit's `scope` before work and from the diff at merge; the higher wins. The model may raise a lane, never lower it.
 
-Globs: `**` spans folders, `*` and `?` stay inside one, and a pattern without `/` matches the file name at any depth, as in `.gitignore`. A scope or path is quick when it lies inside a `lanes.quick` glob, and full when it overlaps a `lanes.full` or `focus` glob (scope `internal/**` overlaps `internal/auth/**`). `lane` prints the lane and the glob or path that decided it.
+Globs: `**` spans folders, `*` and `?` stay inside one, and a pattern without `/` matches the file name at any depth unless it starts with `/`, as in `.gitignore`. Diff paths are anchored at the root. A scope or path is quick when it lies inside a `lanes.quick` glob, and full when it overlaps a `lanes.full` or `focus` glob (scope `internal/**` overlaps `internal/auth/**`). `lane` prints the lane and the glob or path that decided it.
 
 # Tests
 Tests are the Source row's second output, derived from the ACs written in Units, so they are planned before any code exists.
