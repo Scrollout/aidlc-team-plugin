@@ -119,6 +119,11 @@ const SCENARIOS = {
     branch(dir, 'U-2', 'b/x.txt');
     merge(dir, 'U-2');
   }],
+  'merged and unreleased, a next intent with work': [/^build U-3 /, 0, (dir) => {
+    commit(dir, 'next intent', { 'docs/intents/I-2-p.md': intentDoc('I-2'), [U(3)]: unitDoc({ intent: 'I-2', scope: ['c/**'] }) });
+    approve(dir, 'I-1', 'U-1', 'U-2', 'I-2', 'U-3');
+    for (const [u, f] of [['U-1', 'a/x.txt'], ['U-2', 'b/x.txt']]) { branch(dir, u, f); merge(dir, u); }
+  }],
   released: [/^all intents released/, 2, (dir) => {
     approve(dir, 'I-1', 'U-1', 'U-2');
     for (const [u, f] of [['U-1', 'a/x.txt'], ['U-2', 'b/x.txt']]) { branch(dir, u, f); merge(dir, u); }
