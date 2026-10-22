@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** A hook whose `cwd` is outside any work tree (a shell left in `.git/aidlc`) judges from the project folder instead of failing, which had blocked every Bash call, `cd` included (pilot finding, [Hooks](design/hooks.md)). Release 0.15.1.
 - **Update** The marketplace is `scrollout.net`, so the install id is `aidlc-team@scrollout.net` (owner's request; remove the old `aidlc-team` marketplace and add the repo again). `sync` matches the oldest issue with a marker, and lists the issues once more before creating one, after a merge's sync duplicated a whole board (pilot finding, [Board](design/board.md)). Release 0.15.0.
 - **Update** The AC-test gate reads `levels` from the merged tree's profile, so a unit that adds a test location passes it, and a doc in the bundle that names an AC tag no longer counts as its test (pilot findings, owner's decision, [Gate](design/gate.md)). Release 0.14.5.
 - **Update** Node 22 is the minimum, since Node 20 reached end of life on 2026-04-30; CI tests Node 22, 24 and 26 with `actions/checkout@v7` and `actions/setup-node@v7`, and the project CI template uses the same actions on the latest LTS (owner's request). Release 0.14.4.
