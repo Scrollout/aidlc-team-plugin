@@ -47,7 +47,7 @@ stateDiagram-v2
 2. Any `stale` approval → re-approve.
 3. No intent yet: elaborate one; in an adopted project with none, the migration intent ([Everyday paths](paths.md#adopting-an-existing-project)). Intent not approved → request approval; then the draft requirements it and its units cite.
 4. Plan not approved → draft units and request approval.
-5. Reviewed units → merge in DAG order; a held unit waits; one the gate refused is not offered again for the same base and diff.
+5. Reviewed units → merge in DAG order; a held unit waits; a refused one is not offered again for the same base and diff.
 6. Verdict `escalate` in any focus → the owner decides; once they re-approve the edited unit, it counts as `fix` and the round count restarts. Verdict `fix` in any focus → fix round; the card lists the findings.
 7. A builder that reported `stopped` → the lead fixes the unit doc and the owner re-approves it; the builder then restarts from the new card.
 8. Reported, not reviewed → review, naming the first required focus without a `pass` for the current diff ([Skill and agents](prompts.md#review)).
