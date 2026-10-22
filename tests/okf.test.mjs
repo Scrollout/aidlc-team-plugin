@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { cpSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildIndexes, checkBundle, parseYaml, writeIndexes } from '../plugin/cli/lib/okf.mjs';
+import { tempDir } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const SPEC = join(ROOT, 'tests/fixtures/okf/spec');
@@ -14,7 +14,7 @@ const errors = (findings) => findings.filter((f) => f.level === 'error');
 const run = (cwd, ...args) => spawnSync(process.execPath, [CLI, ...args], { cwd, encoding: 'utf8' });
 
 function bundle(files) {
-  const dir = mkdtempSync(join(tmpdir(), 'okf-'));
+  const dir = tempDir('okf-');
   for (const [rel, text] of Object.entries(files)) {
     mkdirSync(join(dir, rel, '..'), { recursive: true });
     writeFileSync(join(dir, rel), text);
@@ -106,7 +106,7 @@ test('U2/AC-3 size caps follow the doc type', () => {
 
 for (const name of ['ga4', 'stackoverflow', 'crypto_bitcoin']) {
   test(`U2/AC-4 aidlc index reproduces the official ${name} indexes byte for byte`, () => {
-    const dir = mkdtempSync(join(tmpdir(), `okf-${name}-`));
+    const dir = tempDir(`okf-${name}-`);
     cpSync(join(OFFICIAL, name), dir, { recursive: true });
     const indexes = [...buildIndexes(dir).keys()].map((d) => join(d, 'index.md'));
     const originals = new Map(indexes.map((f) => [f, readFileSync(f, 'utf8')]));

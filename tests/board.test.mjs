@@ -1,10 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { approve, branch, CLI, commit, git, intentDoc, makeRepo, merge, read, unitDoc, write } from './state-repo.mjs';
+import { approve, branch, CLI, commit, git, intentDoc, makeRepo, merge, read, tempDir, unitDoc, write } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const STUB = join(import.meta.dirname, 'fixtures/board/gh.mjs');
@@ -36,7 +35,7 @@ function setup({ github = GITHUB, issues = [], u2 = '' } = {}) {
     [U(2)]: withFm(unitDoc({ title: 'Currency', scope: ['src/b/**'] }), u2),
   }, { github: github && { gh: [process.execPath, STUB], ...github } }); // the stub, through github.gh on every platform
   approve(dir, 'I-1', 'U-1');
-  const bin = mkdtempSync(join(tmpdir(), 'gh-'));
+  const bin = tempDir('gh-');
   const state = join(bin, 'state.json');
   writeFileSync(state, JSON.stringify({ repo: REPO, issues, labels: [], calls: [], project: { id: 'PVT_1', fields: FIELDS, items: [] } }));
   return { dir, bin, state };

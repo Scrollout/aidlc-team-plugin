@@ -2,10 +2,9 @@
 // contract, the review focuses `next` names, and the eval fixture.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { approve, branch, commit, git, intentDoc, makeRepo, review, run, unitDoc } from './state-repo.mjs';
+import { approve, branch, commit, git, intentDoc, makeRepo, review, run, tempDir, unitDoc } from './state-repo.mjs';
 import { DEFECTS, score, setup } from './evals/run.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -138,7 +137,7 @@ test('U8/AC-6 the card lists cited requirements, next names each required focus,
 });
 
 test('U8/AC-5 the eval fixture seeds each defect and scores found and missed', () => {
-  const dir = join(mkdtempSync(join(tmpdir(), 'evals-')), 'p');
+  const dir = join(tempDir('evals-'), 'p');
   setup(dir);
   assert.equal(git(dir, 'rev-parse', '--abbrev-ref', 'HEAD'), 'main');
   assert.equal(run(dir, ['check']).code, 0, 'the fixture bundle is clean');

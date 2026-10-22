@@ -57,7 +57,8 @@ Merge rules:
   - requirement, intent, unit and decision templates in `.aidlc/templates/docs/`;
   - `.github/workflows/aidlc.yml`.
 
-  It also adds `.aidlc/local/` to `.gitignore` and sets `worktree.baseRef: "head"` in `.claude/settings.json`.
+  It also adds `.aidlc/local/` and the builders' worktree folder `.claude/worktrees/` to `.gitignore`, adds the worktree folder to every other ignore file the project has (`init.ignoreFiles`: `.dockerignore`, `.prettierignore`, …) so tree-walking tools and tests skip it, and sets `worktree.baseRef: "head"` in `.claude/settings.json`.
+- When the project has a lint target (`make lint`, `npm run lint` or `just lint`, from `grid.runners` and `init.lintTargets`), `init` offers it as a module check, for the owner to add to `modules[].check`; it writes nothing for it.
 - `init` takes its answers as flags (`--name`, `--base`, `--bundle`); the skill asks the owner first. It never overwrites: an existing file is left alone and listed, and `init` exits 2 until the owner reruns with `--overwrite <path>` for each file to replace. Adding lines to `.gitignore` or a missing key to `.claude/settings.json` is not an overwrite.
 - `init --adopt` keeps an existing bundle (the folder whose `index.md` has `okf_version`), records `adopted: <HEAD>` and reports, without changing anything:
   - spec errors and house-rule warnings;

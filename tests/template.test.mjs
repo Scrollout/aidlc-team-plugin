@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { render, renderFile, TemplateError } from '../plugin/cli/lib/template.mjs';
+import { tempDir } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 
@@ -29,7 +29,7 @@ test('U1/AC-3 a missing variable is an error naming it', () => {
 });
 
 test('U1/AC-3 a project override file wins over the plugin template', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'template-'));
+  const dir = tempDir('template-');
   const pluginDir = join(dir, 'plugin');
   const root = join(dir, 'repo');
   mkdirSync(join(pluginDir, 'templates/docs'), { recursive: true });

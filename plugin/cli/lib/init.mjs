@@ -7,6 +7,7 @@ import { msg, render, renderFile } from './template.mjs';
 import { DEFAULTS } from './profile.mjs';
 import { checkBundle, parseDoc } from './okf.mjs';
 import { git, tryGit } from './state.mjs';
+import { definedOnBase } from './grid.mjs';
 
 const I = config.init;
 
@@ -136,12 +137,20 @@ export const commands = {
       report.push(msg('initWrote', { path: to }));
     }
 
-    const ignore = join(root, I.gitignore);
-    const have = existsSync(ignore) ? readFileSync(ignore, 'utf8') : '';
-    const missing = I.ignoreLines.filter((l) => !have.split('\n').includes(l));
-    if (missing.length) {
+    // The builders' worktrees go into every ignore file the project has, so its tree-walking tools skip them.
+    for (const [path, lines] of [[I.gitignore, I.ignoreLines], ...I.ignoreFiles.filter((f) => existsSync(join(root, f))).map((f) => [f, [I.worktrees]])]) {
+      const ignore = join(root, path);
+      const have = existsSync(ignore) ? readFileSync(ignore, 'utf8') : '';
+      const missing = lines.filter((l) => !have.split(/\r?\n/).includes(l));
+      if (!missing.length) continue;
       writeFileSync(ignore, have + (have && !have.endsWith('\n') ? '\n' : '') + missing.join('\n') + '\n');
-      report.push(msg('initAdded', { what: missing.join(' '), path: I.gitignore }));
+      report.push(msg('initAdded', { what: missing.join(' '), path }));
+    }
+    // The project's lint target, offered as a module check; the owner adds it.
+    for (const name of I.lintTargets) {
+      for (const [runner, file] of Object.entries(config.grid.runners)) {
+        if (definedOnBase(root, { file, name })) report.push(msg('initLint', { command: `${runner} ${name}` }));
+      }
     }
 
     const settingsFile = join(root, I.settings);

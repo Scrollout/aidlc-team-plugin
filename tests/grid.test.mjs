@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readdirSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { computeLane, inside, lintPlan, overlaps, readPlan } from '../plugin/cli/lib/grid.mjs';
+import { tempDir } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const PLAN = join(ROOT, 'tests/fixtures/plan');
@@ -13,7 +13,7 @@ const lint = (name, profile = {}, opts = {}) => lintPlan(join(PLAN, name), profi
 const codes = (findings) => [...new Set(findings.map((f) => f.code))];
 
 function project(files) {
-  const dir = mkdtempSync(join(tmpdir(), 'grid-'));
+  const dir = tempDir('grid-');
   for (const [rel, text] of Object.entries(files)) {
     mkdirSync(join(dir, rel, '..'), { recursive: true });
     writeFileSync(join(dir, rel), typeof text === 'string' ? text : JSON.stringify(text));

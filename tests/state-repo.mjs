@@ -1,17 +1,24 @@
 // Builds throwaway git repos in a temp dir for the state and card tests.
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 export const CLI = join(import.meta.dirname, '..', 'plugin/cli/aidlc.mjs');
+
+// Every temp folder of a test process, and of the CLI it runs, sits under one root removed when the process ends,
+// also after a failure, so a run leaves none behind.
+export const TMP = mkdtempSync(join(tmpdir(), 'aidlc-test-'));
+process.on('exit', () => rmSync(TMP, { recursive: true, force: true, maxRetries: 5 }));
+export const tempDir = (prefix) => mkdtempSync(join(TMP, prefix));
+const TMP_ENV = { TMPDIR: TMP, TMP, TEMP: TMP };
 
 export const git = (dir, ...args) => execFileSync('git', args, { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 
 export function run(dir, args, input) {
   // Without NODE_TEST_CONTEXT, project commands that run `node --test` behave as they would outside this suite.
   const { NODE_TEST_CONTEXT, ...env } = process.env;
-  const r = spawnSync(process.execPath, [CLI, ...args], { cwd: dir, encoding: 'utf8', input, env });
+  const r = spawnSync(process.execPath, [CLI, ...args], { cwd: dir, encoding: 'utf8', input, env: { ...env, ...TMP_ENV } });
   return { code: r.status, out: r.stdout, err: r.stderr };
 }
 
@@ -45,7 +52,7 @@ export function unitDoc({ intent = 'I-1', depends = [], scope = ['src/**'], modu
 }
 
 // A repo on `main` with a profile, the given docs committed, and a git identity.
-export function makeRepo(docs = {}, profile = {}, parent = tmpdir()) {
+export function makeRepo(docs = {}, profile = {}, parent = TMP) {
   const dir = mkdtempSync(join(parent, 'state-'));
   git(dir, 'init', '-q', '-b', 'main');
   git(dir, 'config', 'user.email', 'owner@example.com');
@@ -74,7 +81,7 @@ export function merge(dir, unit) {
 }
 
 export function review(dir, unit, verdict, findings = []) {
-  const file = join(mkdtempSync(join(tmpdir(), 'verdict-')), 'verdict.json');
+  const file = join(tempDir('verdict-'), 'verdict.json');
   writeFileSync(file, JSON.stringify({ verdict, findings }));
   const r = run(dir, ['review', 'record', unit, file]);
   if (r.code !== 0) throw new Error(r.err);

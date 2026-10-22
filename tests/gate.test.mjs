@@ -1,9 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { approve, commit, git, intentDoc, makeRepo, read, review, run, unitDoc, write } from './state-repo.mjs';
+import { approve, commit, git, intentDoc, makeRepo, read, review, run, tempDir, unitDoc, write } from './state-repo.mjs';
 import { boundaryFindings } from '../plugin/cli/lib/gate.mjs';
 
 const OK = 'node -e "process.exit(0)"';
@@ -41,7 +40,7 @@ const codes = (r) => [...new Set([...r.out.matchAll(/^\S+:\d+ (\S+) /gm)].map((m
 
 test('U6/AC-2 a passing gate merges --no-ff with trailers, writes index and log, removes the branch', () => {
   const dir = setup();
-  const wt = join(mkdtempSync(join(tmpdir(), 'wt-')), 'w');
+  const wt = join(tempDir('wt-'), 'w');
   git(dir, 'worktree', 'add', '-q', wt, 'unit/U-1');
   const r = merge(dir);
   assert.equal(r.code, 0, r.out + r.err);
@@ -154,7 +153,7 @@ test('U6/AC-3 and AC-10 check --ci flags merges without trailers or out of scope
 });
 
 test('U6/AC-6 push refuses a base commit that is neither a gate merge nor docs-only', () => {
-  const remote = mkdtempSync(join(tmpdir(), 'remote-'));
+  const remote = tempDir('remote-');
   git(remote, 'init', '-q', '--bare', '-b', 'main');
   const dir = setup();
   git(dir, 'remote', 'add', 'origin', remote);
@@ -248,4 +247,19 @@ test('U18/AC-2 a quick unit passes the gate only when the commands its ACs name 
   assert.match(bad.out, /GATE-AC AC-1 names npm run docs-bad, which fails on the merge result/);
   const good = merge(quick('npm run docs-ok'));
   assert.equal(good.code, 0, good.out + good.err);
+});
+
+test('U13/AC-4 push on a base never pushed checks only the commits after the one that added the profile', () => {
+  const remote = tempDir('remote-');
+  git(remote, 'init', '-q', '--bare', '-b', 'main');
+  const dir = tempDir('history-');
+  git(dir, 'init', '-q', '-b', 'main');
+  for (const [k, v] of [['user.email', 'owner@example.com'], ['user.name', 'Owner'], ['commit.gpgsign', 'false'], ['core.autocrlf', 'false']]) git(dir, 'config', k, v);
+  commit(dir, 'code from before the plugin', { 'src/old.mjs': '1;\n' });
+  commit(dir, 'adopt', { '.aidlc/profile.json': JSON.stringify(PROFILE), ...LOG });
+  commit(dir, 'docs only', { 'docs/notes.md': '---\ntype: Note\n---\n' });
+  git(dir, 'remote', 'add', 'origin', remote);
+  const r = run(dir, ['push']);
+  assert.equal(r.code, 0, r.out + r.err);
+  assert.equal(git(remote, 'rev-parse', 'main'), git(dir, 'rev-parse', 'main'));
 });

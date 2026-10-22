@@ -1,15 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cpSync, existsSync, mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { cpSync, existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
-import { commit, git, makeRepo, run, write } from './state-repo.mjs';
+import { commit, git, makeRepo, run, tempDir, write } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const PLUGIN = JSON.parse(readFileSync(join(ROOT, 'plugin/.claude-plugin/plugin.json'), 'utf8'));
 
 function emptyRepo() {
-  const dir = mkdtempSync(join(tmpdir(), 'init-'));
+  const dir = tempDir('init-');
   git(dir, 'init', '-q', '-b', 'main');
   git(dir, 'config', 'user.email', 'owner@example.com');
   git(dir, 'config', 'user.name', 'Owner');
@@ -140,7 +139,7 @@ test('U5/AC-5 with the plugin removed, the pinned CLI still checks the project',
   const dir = emptyRepo();
   run(dir, ['init', '--name', 'demo']);
   commit(dir, 'adopt the workflow');
-  const copy = join(mkdtempSync(join(tmpdir(), 'noplugin-')), 'p');
+  const copy = join(tempDir('noplugin-'), 'p');
   cpSync(dir, copy, { recursive: true });
   const { spawnSync } = process.getBuiltinModule('node:child_process');
   const r = spawnSync(process.execPath, ['.aidlc/bin/aidlc.mjs', 'check', '--ci'], { cwd: copy, encoding: 'utf8' });
@@ -154,11 +153,11 @@ test('U16/AC-2 upgrade copies a release: the installed copy or a clean checkout;
   const { spawnSync } = process.getBuiltinModule('node:child_process');
   const from = (cli, ...args) => spawnSync(process.execPath, [join(cli, 'cli/aidlc.mjs'), 'upgrade', ...args], { cwd: dir, encoding: 'utf8' });
 
-  const installed = join(mkdtempSync(join(tmpdir(), 'cache-')), PLUGIN.version);
+  const installed = join(tempDir('cache-'), PLUGIN.version);
   cpSync(join(ROOT, 'plugin'), installed, { recursive: true });
   assert.equal(from(installed).status, 0, 'the installed plugin is a release copy');
 
-  const checkout = mkdtempSync(join(tmpdir(), 'checkout-'));
+  const checkout = tempDir('checkout-');
   cpSync(join(ROOT, 'plugin'), join(checkout, 'plugin'), { recursive: true });
   for (const args of [['init', '-q'], ['add', '-A'], ['-c', 'user.email=t@example.com', '-c', 'user.name=t', 'commit', '-q', '-m', 'release']]) git(checkout, ...args);
   assert.equal(from(join(checkout, 'plugin')).status, 0, 'a clean checkout');
@@ -169,4 +168,20 @@ test('U16/AC-2 upgrade copies a release: the installed copy or a clean checkout;
   assert.ok(!existsSync(join(dir, '.aidlc/bin/lib/wip.mjs')), 'nothing copied');
   assert.equal(from(join(checkout, 'plugin'), '--dirty').status, 0);
   assert.ok(existsSync(join(dir, '.aidlc/bin/lib/wip.mjs')));
+});
+
+test('U13/AC-2 U13/AC-3 init adds the worktree folder to the ignore files the project has and offers its lint target', () => {
+  const dir = emptyRepo();
+  writeFileSync(join(dir, '.dockerignore'), 'node_modules\r\n');
+  writeFileSync(join(dir, 'Makefile'), 'test:\n\tgo test ./...\nlint: vet\n\tgolangci-lint run\n');
+  writeFileSync(join(dir, 'package.json'), JSON.stringify({ scripts: { lint: 'eslint .' } }));
+  const r = run(dir, ['init']);
+  assert.equal(r.code, 0, r.err);
+  assert.equal(readFileSync(join(dir, '.dockerignore'), 'utf8'), 'node_modules\r\n.claude/worktrees/\n');
+  assert.match(readFileSync(join(dir, '.gitignore'), 'utf8'), /^\.claude\/worktrees\/$/m);
+  assert.ok(!existsSync(join(dir, '.prettierignore')), 'no ignore file is created');
+  assert.match(r.out, /^make lint is the project's lint target → add it as a module check/m);
+  assert.match(r.out, /^npm run lint is the project's lint target/m);
+  assert.doesNotMatch(readFileSync(join(dir, '.aidlc/profile.json'), 'utf8'), /lint/, 'the owner adds it');
+  assert.doesNotMatch(run(dir, ['init']).out, /added \.claude\/worktrees\/ to \.dockerignore/, 'once');
 });

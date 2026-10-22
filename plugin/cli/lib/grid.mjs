@@ -143,10 +143,13 @@ export function runTarget(span) {
   }
 }
 
-function definedOnBase(root, t) {
+export function definedOnBase(root, t) {
   const file = join(root, t.file);
   const name = t.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return existsSync(file) && new RegExp(`^\\s*"?${name}"?(?=[\\s:])[^\\n=]*:`, 'm').test(readFileSync(file, 'utf8'));
+  if (!existsSync(file)) return false;
+  const text = readFileSync(file, 'utf8');
+  if (file.endsWith('.json')) { try { return JSON.parse(text).scripts?.[t.name] !== undefined; } catch { return false; } } // package.json scripts
+  return new RegExp(`^\\s*"?${name}"?(?=[\\s:])[^\\n=]*:`, 'm').test(text);
 }
 
 // The unit makes what the span names: a path in its scope, or a target its doc names whose build file it may write.

@@ -1,11 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cpSync, mkdtempSync, readFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { cpSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { lintPlan, readPlan } from '../plugin/cli/lib/grid.mjs';
 import { checkBundle, writeIndexes } from '../plugin/cli/lib/okf.mjs';
-import { approve, branch, commit, intentDoc, makeRepo, merge, read, run, unitDoc, write } from './state-repo.mjs';
+import { approve, branch, commit, intentDoc, makeRepo, merge, read, run, tempDir, unitDoc, write } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const FX = join(ROOT, 'tests/fixtures/requirements');
@@ -73,7 +72,7 @@ test('U10/AC-4 OKF-INDEX allows prose paragraphs, keeps them on regeneration, an
   const malformed = checkBundle(join(spec, 'OKF-INDEX-entry'), { base: spec }).filter((f) => f.code === 'OKF-INDEX');
   assert.deepEqual(malformed.map((f) => [f.path, f.line]), [['OKF-INDEX-entry/index.md', 5]]);
 
-  const dir = mkdtempSync(join(tmpdir(), 'prose-'));
+  const dir = tempDir('prose-');
   cpSync(join(spec, 'index-prose'), dir, { recursive: true });
   const before = readFileSync(join(dir, 'index.md'), 'utf8');
   writeIndexes(dir);
@@ -84,7 +83,7 @@ test('U10/AC-4 OKF-INDEX allows prose paragraphs, keeps them on regeneration, an
 });
 
 test('U10/AC-4 U19/AC-3 prose under a heading the new index lacks moves to the top, and an entry keeps its hint', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'prose-'));
+  const dir = tempDir('prose-');
   write(dir, {
     'a.md': '---\ntype: Design\ntitle: A\ndescription: A design.\n---\n',
     'index.md': '# Architecture\n\nContext map: every Uses line names an Exposes entry.\n\n* [A](a.md) - A design. Load when designing.\n',

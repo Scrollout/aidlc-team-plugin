@@ -301,6 +301,7 @@
     "nextApproveRequirements": "ask the owner to approve the requirements the plan cites: aidlc approve {{reqs}} (the owner confirms the prompt)",
     "statusUncovered": "not yet delivered: {{reqs}}\n",
     "initWrote": "wrote {{path}}\n",
+    "initLint": "{{command}} is the project's lint target → add it as a module check (modules[].check in .aidlc/profile.json), so the gate runs it\n",
     "initKept": "kept {{path}}: it exists; rerun with --overwrite {{path}} to replace it\n",
     "initAdded": "added {{what}} to {{path}}\n",
     "initSettingKept": "kept {{key}} in {{path}}: it is set to {{value}}\n",
@@ -680,6 +681,9 @@
       ".aidlc/local/",
       ".claude/worktrees/"
     ],
+    "worktrees": ".claude/worktrees/",
+    "ignoreFiles": [".dockerignore", ".prettierignore", ".eslintignore", ".stylelintignore", ".markdownlintignore", ".npmignore", ".vscodeignore"],
+    "lintTargets": ["lint"],
     "settings": ".claude/settings.json",
     "settingsKeys": {
       "worktree": {
