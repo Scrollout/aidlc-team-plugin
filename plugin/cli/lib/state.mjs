@@ -71,15 +71,16 @@ export function approval(doc) {
 const personal = (cwd) => join(cwd, config.layers.find((l) => l.name === 'personal').path);
 const delegated = (cwd) => list(readJson(personal(cwd))?.approvals?.auto);
 
-// The latest human approval of a doc, in epoch ms (0 when none).
-export const approvedAt = (doc) => Math.max(0, ...events(doc.fm).filter((e) => String(e.by ?? '').startsWith(S.human)).map((e) => Date.parse(String(e.at)) || 0));
+// The latest approval of a doc by one of `by`, in epoch ms (0 when none). Answering an escalation takes the
+// owner (human: only); a delegated re-approval of a fixed spec is enough to restart a stopped builder.
+export const approvedAt = (doc, by = S.approvers) => Math.max(0, ...events(doc.fm).filter((e) => by.some((b) => String(e.by ?? '').startsWith(b))).map((e) => Date.parse(String(e.at)) || 0));
 const beforeApproval = (round, at) => Date.parse(round.at) < at;
 
 // A unit's review rounds. An escalation the owner answered by re-approving the unit counts as a `fix`:
 // the spec changed, so the builder gets a fix round with those findings (docs/design/verification.md).
 export function readReview(cwd, unit, doc) {
   const review = readJson(runtimeFile(cwd, 'reviews', unit));
-  const at = doc ? approvedAt(doc) : 0;
+  const at = doc ? approvedAt(doc, [S.human]) : 0;
   const [, fix, escalate] = S.verdicts;
   return review && { ...review, rounds: review.rounds.map((r) => (r.verdict === escalate && at && beforeApproval(r, at) ? { ...r, verdict: fix } : r)) };
 }
@@ -372,7 +373,7 @@ export const commands = {
     const focus = data.focus ?? S.focus;
     // A second `fix` in the same focus since the unit's last approval becomes `escalate`: the owner decides.
     const doc = readPlan(bundleOf(cwd, profile)).units.find((u) => u.id === unit)?.doc;
-    const since = doc ? approvedAt(doc) : 0;
+    const since = doc ? approvedAt(doc, [S.human]) : 0;
     const again = roundsOf({ rounds: prior }, focus).some((r) => r.verdict === 'fix' && !beforeApproval(r, since));
     const verdict = data.verdict === 'fix' && again ? 'escalate' : data.verdict;
     const card = readJson(runtimeFile(cwd, 'cards', unit))?.hash ?? null;
