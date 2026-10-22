@@ -3,6 +3,10 @@ type: Design
 title: Steering
 description: How the plugin corrects the agent during work, keeps it moving, and improves its rules over time without growing.
 status: draft
+sources:
+  - id: aws-learnings
+    resource: https://github.com/awslabs/aidlc-workflows/blob/main/core/aidlc-common/protocols/stage-protocol-learnings.md
+    title: AWS AI-DLC learnings protocol
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 ---
 
@@ -17,11 +21,13 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 - The lead never decides what comes next on its own; drift back to free-form work is corrected at the next `next`.
 
 # 3. Across intents: the retro
-- Runtime counters in `.git/aidlc/stats.json` (bounded: one counter per finding code and per escalation reason, reset by the retro).
-- `aidlc retro` at the end of an intent lists codes that fired 3+ times and every escalation and owner intervention, and proposes at most three concrete changes: a profile glob, a project rule in `.aidlc/rules/`, a template tweak, or a new check.
-- The owner accepts or rejects each. Accepted changes are ordinary commits to the project; the plugin never edits itself or its rules unasked.
+- Runtime counters in `.git/aidlc/stats.json`, bounded: one counter per finding code (hook denials, gate refusals), one per escalation reason (`review`, `stopped`, `denials`), and the last owner commands that ran (`retro.keep`). The retro resets them.
+- `aidlc retro I-<n>` at the end of an intent lists the codes that fired 3+ times since the last retro, each escalation of the intent's units (review verdicts and stop reports on disk), and the owner commands that ran. It proposes at most three changes, one per most frequent code, from the `retro.proposals` map: a profile glob, a project rule in `.aidlc/rules/`, a template tweak, or a new check.
+- As in AWS AI-DLC's learnings ritual, a deterministic tool surfaces and the person decides: framework files never change, and a kept learning becomes a project rule or a new check.[^aws-learnings] The owner accepts or rejects each. Accepted changes are ordinary commits to the project; the plugin never edits itself or its rules unasked.
 - Personal preferences the owner states repeatedly go to `.aidlc/local/` (untracked). A preference that conflicts with a `deny` from a higher layer is refused, with the rule it conflicts with.
 - A proposal that belongs in the plugin (not the project) becomes an issue draft for the plugin repo, which the owner files.
 
 # Why
 The AI-DLC video series stresses that skills can be skipped and context drifts, so deterministic hooks and fresh-context checks must catch what guidance misses, and that a harness should learn from repeated corrections. Bounded counters and owner-approved proposals give that learning without a ledger or self-growing prose.
+
+[^aws-learnings]: AWS AI-DLC learnings protocol

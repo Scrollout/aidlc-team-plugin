@@ -12,7 +12,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 | `init` | asks questions, writes profile, renders templates, vendors itself | owner via the `aidlc` skill |
 | `upgrade` | re-vendors the CLI from the installed plugin | owner |
 | `index [bundle]` | regenerates every `index.md` in the bundle like the OKF reference implementation | docs hook, merge, anyone |
-| `check [--ci] [path…]` | OKF validation, plan lint, profile lint; `--ci` adds merge-trailer checks. A directory is checked as a bundle; a file reports only its own findings | hooks, CI, anyone |
+| `check [--ci] [path…]` | OKF validation, plan lint, profile lint; `--ci` adds merge-trailer checks. A directory is checked as a bundle, or within the profile's bundle when it lies below its root; a file reports only its own findings | hooks, CI, anyone |
 | `status` | the state table | SessionStart hook, anyone |
 | `next` | the single next action | lead |
 | `lane <unit>|--diff <range>` | the computed lane and why | lead, gate |
@@ -28,6 +28,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 | `sync` | projects intents and units onto GitHub issues and a Project ([Board](board.md)) | lead, merge |
 | `push` | checked base push | lead |
 | `merge <unit>` | the merge gate, then `git merge --no-ff` with trailers | lead |
+| `retro <intent>` | lists the codes that fired 3+ times, the intent's escalations and the owner's interventions, proposes at most three changes, and resets the counters ([Steering](steering.md#3-across-intents-the-retro)) | lead, owner |
 | `hook <name>` | entry point for the plugin's hooks; reads the hook JSON on stdin | hooks |
 
 # Output
@@ -45,7 +46,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 
 # Implementation limits
 - Node 22+, ESM, no dependencies; git through `execFileSync`, never a shell.
-- `plugin/cli/lib/` one module per concern: `config`, `profile`, `template`, `okf`, `grid`, `state`, `card`, `gate`, `hooks`, `init`, `board`.
+- `plugin/cli/lib/` one module per concern: `config`, `profile`, `template`, `okf`, `grid`, `state`, `card`, `gate`, `hooks`, `init`, `board`, `retro`.
 - No hand-coded values in code. Commands, exit codes, file paths, layer order and every user-facing message live in `plugin/cli/cli.json`, read by `config`. Messages are templates rendered by the template engine. `cli.json` sits beside the CLI so it is vendored with it. Tests check that it matches this doc.
 
 - Every module is tested with `node:test` against fixture repos created in a temp dir.

@@ -10,7 +10,7 @@ import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
 import { computeLane, inside, readPlan, runTarget, spansOf } from './grid.mjs';
 import { issueTitle, sync } from './board.mjs';
-import { approval, baseOf, branchOf, bundleOf, diffHash, git, readState, reviewFocuses, roundsOf, runtimeFile, tryGit, writeJson } from './state.mjs';
+import { approval, baseOf, branchOf, bump, bundleOf, diffHash, git, readState, reviewFocuses, roundsOf, runtimeFile, tryGit, writeJson } from './state.mjs';
 
 const G = config.gate;
 const matches = (path, glob) => inside('/' + path, glob);
@@ -217,7 +217,9 @@ export const commands = {
       tryGit(tree, 'merge', '--abort');
       dropWorktree(cwd, tree);
       // Remembered so `next` stops offering this merge until the base or the diff changes.
-      writeJson(runtimeFile(cwd, 'gates', unit.id), { base: git(cwd, 'rev-parse', st.base), diffHash: diffHash(cwd, st.base, unit.id), codes: [...new Set(findings.map((f) => f.code))] });
+      const codes = [...new Set(findings.map((f) => f.code))];
+      writeJson(runtimeFile(cwd, 'gates', unit.id), { base: git(cwd, 'rev-parse', st.base), diffHash: diffHash(cwd, st.base, unit.id), codes });
+      for (const code of codes) bump(cwd, 'codes', code);
       return done('', config.exit.findings, findings);
     }
     const card = readJson(runtimeFile(cwd, 'cards', unit.id));

@@ -38,12 +38,13 @@ test('U1/AC-1 cli.json matches the CLI design: commands and exit codes', () => {
 });
 
 test('every message the CLI uses is defined in cli.json, and none is unused', () => {
-  const { messages } = readJson('plugin/cli/cli.json');
+  const { messages, retro } = readJson('plugin/cli/cli.json');
+  const named = new Set(retro.proposals.map((p) => p.text)); // the retro's proposal texts are named in cli.json
   const files = ['plugin/cli/aidlc.mjs', ...readdirSync(join(ROOT, 'plugin/cli/lib')).map((f) => `plugin/cli/lib/${f}`)];
   const code = files.map((f) => readFileSync(join(ROOT, f), 'utf8')).join('\n');
   const used = [...code.matchAll(/(?:msg|fail|yerr)\('(\w+)'|add\([^;]*?'[A-Z]+-[A-Z-]+', '(\w+)'/g)].map((m) => m[1] ?? m[2]);
   for (const key of used) assert.ok(key in messages, `${key} is used but not defined`);
-  for (const key of Object.keys(messages)) assert.ok(code.includes(`'${key}'`), `${key} is defined but never used`);
+  for (const key of Object.keys(messages)) assert.ok(code.includes(`'${key}'`) || named.has(key), `${key} is defined but never used`);
 });
 
 test('U1/AC-1 unknown command exits 64', () => {

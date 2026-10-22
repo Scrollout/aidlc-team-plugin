@@ -83,7 +83,7 @@ test('U10/AC-4 OKF-INDEX allows prose paragraphs, keeps them on regeneration, an
   assert.match(readFileSync(join(dir, 'index.md'), 'utf8'), /^# Note\n\nContext: every concept here is checked by hand\.\nA second prose line\.\n\n\* \[A\]\(a\.md\) - A valid concept\.\n\* \[B\]\(b\.md\) - Another\.\n$/);
 });
 
-test('U10/AC-4 prose under a heading the new index lacks moves to the top, and stays there', () => {
+test('U10/AC-4 U19/AC-3 prose under a heading the new index lacks moves to the top, and an entry keeps its hint', () => {
   const dir = mkdtempSync(join(tmpdir(), 'prose-'));
   write(dir, {
     'a.md': '---\ntype: Design\ntitle: A\ndescription: A design.\n---\n',
@@ -91,7 +91,7 @@ test('U10/AC-4 prose under a heading the new index lacks moves to the top, and s
   });
   writeIndexes(dir);
   const once = readFileSync(join(dir, 'index.md'), 'utf8');
-  assert.equal(once, 'Context map: every Uses line names an Exposes entry.\n\n# Design\n\n* [A](a.md) - A design.\n');
+  assert.equal(once, 'Context map: every Uses line names an Exposes entry.\n\n# Design\n\n* [A](a.md) - A design. Load when designing.\n');
   writeIndexes(dir);
   assert.equal(readFileSync(join(dir, 'index.md'), 'utf8'), once, 'stable on the next run');
 });
