@@ -202,3 +202,8 @@ test('U6/AC-1 a quick-lane unit needs no review: its report makes it ready to me
   assert.match(run(dir, ['next']).out, /^merge U-1/);
   assert.equal(merge(dir).code, 0);
 });
+
+test('U6/AC-1 an empty diff does not raise the lane', () => {
+  const dir = setup({ beforeReview: (d) => { git(d, 'switch', '-q', 'unit/U-1'); git(d, 'revert', '--no-edit', 'HEAD'); git(d, 'switch', '-q', 'main'); } });
+  assert.doesNotMatch(merge(dir).out, /GATE-LANE/);
+});

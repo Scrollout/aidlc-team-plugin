@@ -165,6 +165,7 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   const kinds = profile.reserve ? Object.keys(profile.reserve) : null;
   const out = [];
   const add = (code, u, line, key, data) => out.push(finding(code, u.file, line, key, { unit: u.id, ...data }, base));
+  const bundleRel = relative(base, bundle).split(sep).join('/');
 
   for (const u of units) {
     for (const dep of u.depends.filter((d) => !known.has(d))) add('PLAN-DAG', u, keyLine(u, 'depends'), 'depUnknown', { dep });
@@ -176,6 +177,12 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
       else if (!levels.includes(ac.level)) add('PLAN-LEVEL', u, ac.line, 'acBadLevel', { ac: ac.id, level: ac.level, levels: levels.join(', ') });
     }
     if (!u.scope.length) add('PLAN-SCOPE', u, 1, 'scopeMissing', {});
+    // Builders never write what merge writes: bundle indexes and logs, and profile.shared files.
+    for (const glob of u.scope) {
+      const last = glob.split('/').at(-1);
+      const inBundle = glob.startsWith(bundleRel + '/') || glob.startsWith('**');
+      if ((inBundle && [config.okf.index, config.okf.log].includes(last)) || list(profile.shared).includes(glob)) add('PLAN-SHARED', u, keyLine(u, 'scope'), 'planShared', { glob });
+    }
   }
   if (requirements.length) {
     const known = new Set(requirements.map((r) => r.id));

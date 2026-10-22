@@ -122,3 +122,13 @@ test('U3 plan lint runs inside aidlc check and exits 1', () => {
   assert.equal(r.status, 1);
   assert.match(r.stdout, /PLAN-AC AC-2 appears more than once/);
 });
+
+test('U3/AC-3 PLAN-SHARED: a scope naming a bundle index or log, or a shared file, is a finding', () => {
+  const found = lint('PLAN-SHARED', { shared: ['go.sum'] });
+  assert.deepEqual(found.map((f) => f.message), [
+    'U-1 scope PLAN-SHARED/guide/index.md names a file only merge writes',
+    'U-1 scope PLAN-SHARED/log.md names a file only merge writes',
+  ]);
+  const dir = project({ 'docs/units/U-1-a.md': '---\ntype: Unit\ntitle: A\ndescription: A.\nscope: ["go.sum", "web/index.md"]\n---\n\n- AC-1 (unit): x.\n' });
+  assert.deepEqual(lintPlan(join(dir, 'docs'), { shared: ['go.sum'] }, { base: dir }).map((f) => f.code), ['PLAN-SHARED'], 'an index.md outside the bundle is fine');
+});

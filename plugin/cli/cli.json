@@ -338,6 +338,7 @@
     "guardRelease": "{{what}} needs the owner",
     "scopeOut": "{{path}} is outside the scope of {{unit}}",
     "scopeShared": "{{path}} is written by merge",
+    "planShared": "{{unit}} scope {{glob}} names a file only merge writes",
     "scopeApproval": "{{path}}: approvals and verified_hash are the owner's",
     "secretFound": "{{path}} contains what looks like a secret",
     "modelUnit": "{{agent}} prompt names no unit",
@@ -463,6 +464,10 @@
       "PLAN-SCOPE": {
         "level": "error",
         "fix": "give the unit a scope, narrow the scopes, or add a depends between the units"
+      },
+      "PLAN-SHARED": {
+        "level": "error",
+        "fix": "drop it from the scope: merge regenerates indexes and the log and runs profile.regen for shared files"
       },
       "PLAN-REQ": {
         "level": "error",
