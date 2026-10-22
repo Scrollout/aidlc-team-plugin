@@ -19,21 +19,41 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 `.git/aidlc/` sits in git's common dir, so every worktree sees the same runtime data, and it is never committed.
 
 # Unit states
-`draft → approved → building → reviewed → merged`, plus `blocked` (a dependency not merged) and `stale` (its approval no longer matches its content).
+```mermaid
+stateDiagram-v2
+  direction LR
+  [*] --> draft
+  draft --> approved: owner approves
+  approved --> stale: doc edited
+  stale --> approved: owner re-approves
+  approved --> blocked: a dependency not merged
+  blocked --> approved: dependency merged
+  approved --> building: branch unit/U-n
+  building --> reported: aidlc report
+  reported --> reviewed: verdict pass
+  reported --> building: verdict fix
+  reviewed --> merged: aidlc merge
+  merged --> [*]
+```
 
 # Approvals
-- Approval uses OKF's own trust field rather than an invented one. The owner runs `! aidlc approve <doc>`. It appends `{ by: human:<git user.email>, at }` to `verified`, sets `status: stable`, and writes the extension key `verified_hash`, covering the body and the frontmatter except `verified`, `verified_hash` and `status`.
+- Approval uses OKF's own trust field rather than an invented one. The owner runs `! aidlc approve <doc>`. It takes several docs (IDs or paths), so a plan is approved in one command. It keeps earlier `verified` events, appends `{ by: human:<git user.email>, at }`, sets `status: stable`, and writes `verified_hash`: sha256 of the body plus the parsed frontmatter as sorted JSON, without `verified`, `verified_hash`, `status`, `hold` and `priority`. So reformatting the YAML or an owner hold does not make the doc stale. A quick-lane fix unit needs no approval.
 - Agents cannot approve: the guard denies `aidlc approve` from a tool call, and the scope hook denies any edit that adds or changes a `human:` entry in `verified` or changes `verified_hash`. The `!` prefix runs outside the agent, so only the owner can.
 - Editing an approved doc makes it `stale`; `next` then asks for re-approval. Only intents, plans (units) and one-way-door decisions carry approvals, so this stays rare.
 
 # next
-`aidlc next` prints one line: the single next action and the command or agent that performs it, e.g. `build U-3 (card: aidlc card U-3)`. Order:
-1. Any `stale` approval → re-approve.
-2. Intent not approved → elaborate and request approval.
-3. Plan not approved → draft units and request approval.
-4. Reviewed units → merge in DAG order.
-5. Approved, unblocked units → build; up to `parallel.max` at once when scopes are disjoint.
-6. All merged → deployment checks, then release.
+`aidlc next` prints one line: the single next action and the command or agent that performs it, e.g. `build U-3 (card: aidlc card U-3)`. It exits 2 when the action waits on the owner. Order:
+1. A merge cut off midway → continue it.
+2. Any `stale` approval → re-approve.
+3. Intent not approved → elaborate and request approval.
+4. Plan not approved → draft units and request approval.
+5. Reviewed units → merge in DAG order.
+6. Verdict `escalate` → the owner decides. Verdict `fix` → fix round.
+7. Reported, not reviewed → review.
+8. Building with a stale heartbeat (over 2 min) and no report → restart its builder.
+9. Approved, unblocked units → build, on one line; up to `parallel.max` in flight, with scopes disjoint from units in flight.
+10. Builders running → wait.
+11. Intent fully merged and not tagged → release with the owner.
 
 `aidlc status` prints the same state as a short table; the SessionStart hook injects it, capped at 1,000 chars. This replaces handoff files.
 

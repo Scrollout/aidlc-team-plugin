@@ -7,6 +7,11 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** U4 settled with the owner ([State](design/state.md), [Unit card](design/unit-card.md)):
+  - approval hashing, and approving several docs in one command;
+  - the full `next` order, which exits 2 at owner gates;
+  - the card template and its runtime record.
+  Mermaid diagrams added to [Overview](design/overview.md), [Grid](design/grid.md) and [State](design/state.md).
 - **Update** U3 built: plan lint (`PLAN-*`) runs in `aidlc check`, and `aidlc lane` computes lanes. A glob with a leading `/` is anchored at the root ([Grid](design/grid.md)). Release 0.3.0 ships the MIT license in `plugin/`.
 - **Update** The repo is public and name neutral. The docs no longer name private projects or tools, and the marketplace is renamed to `aidlc-team` ([Overview](design/overview.md)).
 - **Update** U3 settled with the owner ([Grid](design/grid.md), [Profile and templates](design/profile.md)):
