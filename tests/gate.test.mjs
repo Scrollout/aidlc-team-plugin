@@ -95,6 +95,15 @@ for (const [code, make] of Object.entries(BROKEN)) {
   });
 }
 
+test('U6/AC-1 a unit that adds a test location to the profile passes GATE-LEVEL; a unit doc naming a tag is no test', () => {
+  const widened = { ...PROFILE, levels: { unit: { paths: ['tests/**', 'src/*.check.mjs'], run: 'node --test' } } };
+  const dir = setup({ unit: { scope: ['src/**', 'tests/**', '.aidlc/profile.json'] }, files: { ...CODE, 'src/add.check.mjs': '// U-1/AC-1\n', '.aidlc/profile.json': JSON.stringify(widened) } });
+  const r = merge(dir);
+  assert.ok(!codes(r).includes('GATE-LEVEL'), r.out);
+  const doc = setup({ files: CODE, beforeReview: (d) => commit(d, 'card text', { 'docs/notes/U-1.md': '---\ntype: Note\ntitle: n\ndescription: d\n---\n\nA test tagged U-1/AC-1.\n' }) });
+  assert.deepEqual(codes(merge(doc)).filter((c) => c.startsWith('GATE-A') || c === 'GATE-LEVEL'), ['GATE-AC']);
+});
+
 test('U6/AC-8 a full-lane unit merges on its tests; proof-revert is deferred to M2', () => {
   const dir = setup({ unit: { scope: ['db/**', 'tests/**'] }, files: { 'db/add.mjs': 'export const add = (a, b) => a + b;\n', 'tests/add.test.mjs': TEST['tests/add.test.mjs'].replace('../src/add.mjs', '../db/add.mjs') } });
   assert.equal(JSON.parse(read(dir, '.git/aidlc/cards/U-1.json')).lane, 'full');
