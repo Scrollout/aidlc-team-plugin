@@ -81,6 +81,9 @@ test('U7/AC-2 scope: in-scope writes pass, out-of-scope and merge-written files 
   const wt = unitWorktree(dir);
   assert.equal(decision(hook('scope', writeTool(wt, 'src/a.mjs', '1;\n'))), 'allow');
   assert.match(reason(hook('scope', writeTool(wt, 'lib/x.mjs', '1;\n'))), /^SCOPE-OUT lib\/x\.mjs is outside the scope of U-1/);
+  write(dir, { '.git/aidlc/cards/U-1.json': { unit: 'U-1', scope: ['src/**', 'lib/**'] } });
+  assert.equal(decision(hook('scope', writeTool(wt, 'lib/x.mjs', '1;\n'))), 'allow', 'the card\'s scope wins over an older doc on the branch');
+  rmSync(join(dir, '.git/aidlc/cards/U-1.json'));
   assert.match(reason(hook('scope', writeTool(wt, 'docs/log.md', 'x\n'))), /^SCOPE-SHARED docs\/log\.md is written by merge/);
   assert.equal(decision(hook('scope', writeTool(dir, 'lib/x.mjs', '1;\n'))), 'allow', 'outside a unit worktree there is no scope');
   assert.match(reason(hook('scope', writeTool(dir, '.aidlc/local/profile.json', '{}'))), /^SCOPE-APPROVAL/, 'only the owner delegates approvals');

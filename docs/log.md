@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** `start` takes over any clean earlier worktree of the unit, since the launch mark of 0.14.1 made a finished one look live; the scope hook reads the scope from the unit's card, so a card widened on the base applies to an older branch (pilot findings, [Skill and agents](design/prompts.md), [Hooks](design/hooks.md)). Release 0.14.2. CI writes a job summary: version, test counts, docs check, CLI size and any failures (owner's request).
 - **Update** The model hook marks a builder in flight at launch, and a fix round whose builder runs reads as building, so `next` and the Stop hook stop re-offering it; a verdict older than the builder's last report no longer counts, so a fix round reported without a new commit gets a new review (pilot findings, [Hooks](design/hooks.md), [State](design/state.md)). Release 0.14.1.
 - **Update** [M1](roadmap/m1.md) U1/AC-5: CI runs on every branch push but no longer on release tags, which point at commits CI already tested (owner's request).
 - **Update** [0008 Delegated approvals](decisions/0008-delegated-approvals.md): delegated approvals are stamped `process:delegated`, an OKF v0.2 actor, instead of `agent:auto`, which OKF has no prefix for (pilot finding, owner's choice); earlier `agent:auto` stamps still count. Release 0.14.0.

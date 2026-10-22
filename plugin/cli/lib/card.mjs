@@ -7,7 +7,7 @@ import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { parseDoc, proseLines } from './okf.mjs';
 import { computeLane, overlaps, readPlan, reqId } from './grid.mjs';
-import { aidlcDir, approval, baseOf, branchOf, bundleOf, diffHash, git, heartbeatFresh, readReview, roundsOf, runtimeFile, sha256, tryGit, writeJson } from './state.mjs';
+import { aidlcDir, approval, baseOf, branchOf, bundleOf, diffHash, git, readReview, roundsOf, runtimeFile, sha256, tryGit, writeJson } from './state.mjs';
 
 const C = config.card;
 const AC_LINE = /^\s*[-*]\s+AC-\d+\b/;
@@ -102,7 +102,7 @@ export function renderCard(cwd, unitId) {
   const hash = sha256(docText + '\n' + render(template, { ...data, base: '', hash: '' }, file)).slice(0, C.hashLength);
   const card = render(template, { ...data, hash }, file);
   if (card.length > C.max) return { code: config.exit.findings, output: msg('cardTooLong', { unit: unitId, size: card.length, max: C.max }) };
-  const record = { unit: unitId, hash, base: baseSha, lane: lane.lane, model };
+  const record = { unit: unitId, hash, base: baseSha, lane: lane.lane, model, scope: atBase.scope };
   writeJson(runtimeFile(cwd, 'cards', unitId), record);
   return { code: config.exit.ok, output: card, record };
 }
@@ -145,9 +145,9 @@ export const commands = {
       if (tryGit(cwd, 'rev-parse', '-q', '--verify', `refs/heads/${branch}`)) {
         const taken = git(cwd, 'worktree', 'list', '--porcelain').split('\n\n').find((w) => w.includes(`branch refs/heads/${branch}`));
         if (taken) {
-          // An earlier builder's worktree is taken over only when it is clean and its heartbeat is stale.
+          // An earlier builder's worktree is taken over only when it is clean; next never runs two builders for a unit.
           const path = taken.split('\n')[0].replace(/^worktree /, '');
-          if (tryGit(path, 'status', '--porcelain') !== '' || heartbeatFresh(cwd, unit)) return done(msg('branchTaken', { branch, path }), config.exit.findings);
+          if (tryGit(path, 'status', '--porcelain') !== '') return done(msg('branchTaken', { branch, path }), config.exit.findings);
           git(cwd, 'worktree', 'remove', path);
         }
         git(cwd, 'switch', '-q', branch);
