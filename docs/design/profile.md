@@ -61,4 +61,4 @@ Merge rules:
 - Neutral by construction: templates never contain the plugin's name; a test greps rendered output.
 
 # Vendoring
-`init` and `upgrade` copy `plugin/cli/` to `.aidlc/bin/` with a `VERSION` file holding the plugin version. `upgrade` replaces `.aidlc/bin/` and nothing else, and refuses to run from the pinned copy itself. CI, git hooks and the plugin's own hooks run `node .aidlc/bin/aidlc.mjs`, so the project's pinned version is the one that judges it.
+`init` and `upgrade` copy `plugin/cli/` to `.aidlc/bin/` with a `VERSION` file holding the plugin version. `upgrade` replaces `.aidlc/bin/` and nothing else, refuses to run from the pinned copy itself, and refuses an older plugin than the pinned `VERSION` unless the owner passes `--downgrade`. CI, git hooks and the plugin's own hooks run `node .aidlc/bin/aidlc.mjs`, so the project's pinned version is the one that judges it.

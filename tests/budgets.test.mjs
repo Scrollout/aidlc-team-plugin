@@ -3,6 +3,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { approve, commit, intentDoc, makeRepo, run, unitDoc } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -79,7 +81,36 @@ const CHECKS = {
     }),
     real: () => files('plugin/hooks', /^hooks\.json$/).map((f) => ({ name: f, text: read(f) })),
   },
+  'Blocking hook run time': {
+    check: (items, limit) => items.filter((i) => Number(i.text) > limit).map((i) => `${i.name}: ${i.text} ms > ${limit}`),
+    real: hookTimes,
+  },
 };
+
+// The median run time of each blocking hook, through the plugin's run.mjs and the pinned CLI, on a small project.
+function hookTimes() {
+  const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), 'docs/units/U-1-a.md': unitDoc({ scope: ['src/**'] }) });
+  run(dir, ['upgrade']);
+  commit(dir, 'pin the CLI');
+  approve(dir, 'I-1', 'U-1');
+  run(dir, ['card', 'U-1']);
+  const write = { tool_name: 'Write', tool_input: { file_path: join(dir, 'src/a.mjs'), content: '1;\n' } };
+  const calls = {
+    guard: { tool_name: 'Bash', tool_input: { command: 'git status' } },
+    scope: write,
+    secrets: write,
+    model: { tool_name: 'Agent', tool_input: { subagent_type: 'team:builder', prompt: 'Build U-1.', model: 'sonnet' } },
+  };
+  return Object.entries(calls).map(([name, call]) => {
+    const input = JSON.stringify({ cwd: dir, hook_event_name: 'PreToolUse', ...call });
+    const times = Array.from({ length: 5 }, () => {
+      const start = performance.now();
+      spawnSync(process.execPath, [join(ROOT, 'plugin/hooks/run.mjs'), name], { input });
+      return performance.now() - start;
+    }).sort((a, b) => a - b);
+    return { name, text: String(Math.round(times[2])) };
+  });
+}
 
 const OVER = {
   'Always-on context added to a project session': (n) => [{ name: 'AGENTS.md', text: 'x'.repeat(n * 4 + 1) }],
@@ -89,6 +120,7 @@ const OVER = {
   'Skill and agent descriptions': (n) => [{ name: 'builder.md', text: `---\nname: b\ndescription: ${'x'.repeat(n + 1)}\n---\n` }],
   'Unit card': (n) => [{ name: 'card', text: 'x'.repeat(n + 1) }],
   'CLI source (`plugin/cli/`)': (n) => [{ name: 'a.mjs', text: 'x\n'.repeat(n) }, { name: 'b.mjs', text: 'y\n' }],
+  'Blocking hook run time': (n) => [{ name: 'guard', text: String(n + 1) }],
   'Hook timeout': (n) => [
     { name: 'hooks.json', text: JSON.stringify({ hooks: { PreToolUse: [{ hooks: [{ type: 'command', command: 'guard', timeout: n + 1, onFailure: 'block' }] }] } }) },
   ],

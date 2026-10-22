@@ -99,6 +99,12 @@ test('U5/AC-3 upgrade replaces .aidlc/bin and nothing else; the pinned copy cann
     return spawnSync(process.execPath, [join(dir, '.aidlc/bin/aidlc.mjs'), ...args], { cwd: dir, encoding: 'utf8' });
   };
   assert.equal(own(['upgrade']).status, 64);
+  writeFileSync(join(dir, '.aidlc/bin/VERSION'), '99.0.0\n');
+  const older = run(dir, ['upgrade']);
+  assert.equal(older.code, 64, 'an older plugin never replaces a newer pinned CLI');
+  assert.match(older.err, /older than the pinned CLI 99\.0\.0/);
+  assert.equal(run(dir, ['upgrade', '--downgrade']).code, 0);
+  assert.equal(readFileSync(join(dir, '.aidlc/bin/VERSION'), 'utf8'), PLUGIN.version + '\n');
 });
 
 test('U5/AC-4 and AC-6 init --adopt keeps the layout, records the adoption commit and lists leftovers', () => {

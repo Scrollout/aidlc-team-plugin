@@ -59,7 +59,10 @@
     },
     {
       "name": "upgrade",
-      "usage": "upgrade",
+      "usage": "upgrade [--downgrade]",
+      "flags": [
+        "--downgrade"
+      ],
       "does": "re-vendor the CLI from the installed plugin"
     },
     {
@@ -281,6 +284,7 @@
     "initSettingKept": "kept {{key}} in {{path}}: it is set to {{value}}\n",
     "initAdopted": "adopted the bundle at {{bundle}} as of {{commit}}\n",
     "initNoBundle": "no bundle with okf_version found: run init without --adopt",
+    "upgradeOlder": "the installed plugin {{version}} is older than the pinned CLI {{pinned}} → update the plugin, or pass --downgrade to go back on purpose\n",
     "initFindings": "bundle: {{errors}} spec errors, {{warnings}} house-rule warnings (aidlc check {{bundle}} lists them)\n",
     "initLeftoverDir": "leftover: {{path}}/ is not a known folder; left untouched\n",
     "initLeftoverTrailer": "leftover: commit trailer {{key}} in {{count}} commits; history is left as is\n",
