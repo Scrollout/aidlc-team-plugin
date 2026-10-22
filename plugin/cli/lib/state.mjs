@@ -29,6 +29,15 @@ export function writeJson(file, data) {
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, JSON.stringify(data, null, 2) + '\n');
 }
+// Bounded runtime counters the retro reads and resets (docs/design/steering.md#3-across-intents-the-retro).
+export const statsFile = (cwd) => join(aidlcDir(cwd), config.retro.stats);
+export function bump(cwd, kind, key) {
+  const st = readJson(statsFile(cwd)) ?? { since: new Date().toISOString() };
+  if (kind === config.retro.interventions) st[kind] = [...(st[kind] ?? []), key].slice(-config.retro.keep);
+  else st[kind] = { ...st[kind], [key]: (st[kind]?.[key] ?? 0) + 1 };
+  writeJson(statsFile(cwd), st);
+}
+
 export const sha256 = (text) => createHash('sha256').update(text).digest('hex');
 
 // Review rounds of one focus; a verdict without `focus` is the general review.
@@ -473,6 +482,7 @@ export const commands = {
     if (!unit) throw new UsageError(msg('noDoc', { name: '' }));
     const data = parseObject(readStdin(ctx), 'report');
     writeJson(runtimeFile(ctx.cwd, 'reports', unit), { ...data, unit, at: new Date().toISOString() });
+    if (data.status === S.stopped) bump(ctx.cwd, 'escalations', config.retro.reasons.stopped);
     return done(msg('recorded', { what: 'report', unit }));
   },
 
@@ -496,6 +506,7 @@ export const commands = {
     const card = readJson(runtimeFile(cwd, 'cards', unit))?.hash ?? null;
     const round = { ...data, focus, verdict, card, diffHash: diffHash(cwd, baseOf(profile), unit), at: new Date().toISOString() };
     writeJson(target, { unit, rounds: [...prior, round] });
+    if (verdict === S.verdicts[2]) bump(cwd, 'escalations', config.retro.reasons.review);
     rmSync(join(aidlcDir(cwd), S.reviewing, unit), { force: true }); // the review is no longer in flight
     return done(msg('recorded', { what: verdict, unit }));
   },

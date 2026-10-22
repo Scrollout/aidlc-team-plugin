@@ -218,3 +218,18 @@ test('U18/AC-4 guard allows a command that only redirects output or reads its ex
   git(dir, 'add', 'src/a.mjs');
   assert.match(reason(bash(dir, 'git commit -m x > out.log; echo $?')), /GUARD-BASE-COMMIT/, 'code on the base is still refused');
 });
+
+test('U19/AC-1 the docs hook sets a generated.at the edit wrote in local time to the current UTC second', () => {
+  const dir = project();
+  const future = new Date(Date.now() + 3 * 3600e3).toISOString().replace(/\.\d+Z$/, 'Z'); // UTC+3 local time marked Z
+  const text = `---\ntype: Note\ntitle: N\ndescription: A note.\ngenerated: { by: x/1, at: ${future} }\n---\n\nText.\n`;
+  write(dir, { 'docs/notes/n.md': text });
+  const r = hook('docs', { cwd: dir, hook_event_name: 'PostToolUse', tool_name: 'Write', tool_input: { file_path: join(dir, 'docs/notes/n.md'), content: text } });
+  const at = read(dir, 'docs/notes/n.md').match(/at: (\S+) \}/)[1];
+  assert.ok(Math.abs(Date.parse(at) - Date.now()) < 60e3, at);
+  assert.match(r.json.hookSpecificOutput.additionalContext, new RegExp(`generated\\.at ${future} was not the current UTC time; the docs hook set it to ${at}: re-read`));
+  const old = text.replace(future, '2026-01-01T00:00:00Z');
+  write(dir, { 'docs/notes/o.md': old });
+  hook('docs', { cwd: dir, hook_event_name: 'PostToolUse', tool_name: 'Edit', tool_input: { file_path: join(dir, 'docs/notes/o.md'), old_string: 'Text.', new_string: 'More text.' } });
+  assert.equal(read(dir, 'docs/notes/o.md'), old, 'a stamp the edit did not write stays');
+});

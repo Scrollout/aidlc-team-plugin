@@ -294,14 +294,23 @@ function walk(dir, out = []) {
 
 // ---- Indexes, as the reference index.py ----
 
-function existingSubdirLines(indexFile) {
+// Entry lines of an existing index: link → description text.
+function existingEntries(indexFile) {
   const out = new Map();
   if (!existsSync(indexFile)) return out;
   for (const line of read(indexFile).split('\n')) {
-    const m = line.match(/^\* \[[^\]]*\]\(([^)]+)\/index\.md\)(?: - (.*))?$/);
+    const m = line.match(/^\* \[[^\]]*\]\(([^)]+)\)(?: - (.*))?$/);
     if (m) out.set(m[1], m[2] ?? '');
   }
   return out;
+}
+
+// House addition: a hint written after the description (`… Load when …`) survives regeneration.
+function withHint(desc, old) {
+  if (!desc || !old || old === desc) return desc;
+  if (old.startsWith(desc)) return old;
+  const at = OKF.hints.map((h) => old.indexOf(h)).filter((k) => k > 0).sort((a, b) => a - b)[0];
+  return at === undefined ? desc : `${desc} ${old.slice(at)}`;
 }
 
 function rootFrontmatter(indexFile) {
@@ -366,6 +375,7 @@ export function buildIndexes(root) {
   const out = new Map();
   for (const dir of order) {
     const entries = [];
+    const old = existingEntries(join(dir, OKF.index));
     for (const name of sortNames(dir)) {
       const p = join(dir, name);
       if (name === OKF.index || name === OKF.log) continue;
@@ -379,7 +389,7 @@ export function buildIndexes(root) {
           type: truthy(fm.type) ? pyStr(fm.type) : '',
           title: truthy(fm.title) ? pyStr(fm.title) : name.slice(0, -OKF.ext.length),
           link: name,
-          desc: truthy(fm.description) ? pyStr(fm.description) : '',
+          desc: withHint(truthy(fm.description) ? pyStr(fm.description) : '', old.get(name)),
         });
       }
     }
@@ -391,10 +401,9 @@ export function buildIndexes(root) {
     const top = [...prose].filter(([h]) => h === '' || !types.has(h)).flatMap(([h, block], k) => (k && h !== '' ? ['', ...block] : block));
     out.set(dir, prefix + (top.length ? top.join('\n') + '\n\n' : '') + indexText(entries, prose));
     if (dir === root) continue;
-    // One entry: its description, as the reference. Otherwise keep the parent's existing line instead of an LLM.
-    descs.set(dir, entries.length === 1 && entries[0].desc
-      ? entries[0].desc
-      : existingSubdirLines(join(dirname(dir), OKF.index)).get(relative(dirname(dir), dir)) ?? '');
+    // The parent's existing line, written by hand where the reference asks an LLM; else one entry's description, as the reference.
+    const line = existingEntries(join(dirname(dir), OKF.index)).get(`${relative(dirname(dir), dir)}/${OKF.index}`);
+    descs.set(dir, line || (entries.length === 1 ? entries[0].desc : ''));
   }
   return out;
 }
@@ -554,7 +563,9 @@ export const commands = {
     const paths = given.length ? given.map((a) => resolve(cwd, a)) : [bundle];
     for (const p of paths) {
       if (!existsSync(p)) throw new UsageError(msg('noSuchPath', { name: relPath(cwd, p) }));
-      if (statSync(p).isDirectory()) findings.push(...checkBundle(p, { rules, base: cwd }));
+      // A folder below the bundle root is checked within the bundle, so bundle-root links resolve from the root.
+      if (statSync(p).isDirectory() && p !== bundle && inside(bundle, p)) findings.push(...checkBundle(bundle, { rules, base: cwd }).filter((f) => inside(p, resolve(cwd, f.path))));
+      else if (statSync(p).isDirectory()) findings.push(...checkBundle(p, { rules, base: cwd }));
       else if (inside(bundle, p)) findings.push(...checkBundle(bundle, { rules, base: cwd }).filter((f) => f.path === relPath(cwd, p)));
     }
     return { code: hasErrors(findings) ? config.exit.findings : config.exit.ok, findings, output: '' };

@@ -7,7 +7,7 @@ import { msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
 import { inside, readPlan } from './grid.mjs';
-import { aidlcDir, baseOf, bundleOf, git, heartbeatFresh, nextAction, ownerLines, readState, runtimeFile, tryGit, writeJson } from './state.mjs';
+import { aidlcDir, baseOf, bump, bundleOf, git, heartbeatFresh, nextAction, ownerLines, readState, runtimeFile, tryGit, writeJson } from './state.mjs';
 import { directAllowed, mergeWritten } from './gate.mjs';
 
 const H = config.hooks;
@@ -72,7 +72,11 @@ function deny(cwd, input, code, key, data, decision = 'deny') {
     const counts = (all[input.session_id] ??= {});
     counts[key2] = (counts[key2] ?? 0) + 1;
     writeJson(file, all);
-    if (counts[key2] >= H.escalateAt) reason = msg('hookEscalate', { reason, count: counts[key2] });
+    bump(cwd, 'codes', code);
+    if (counts[key2] >= H.escalateAt) {
+      reason = msg('hookEscalate', { reason, count: counts[key2] });
+      bump(cwd, 'escalations', config.retro.reasons.denials);
+    }
   }
   return JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: decision, permissionDecisionReason: reason } });
 }
@@ -187,16 +191,32 @@ function model(input, cwd) {
   return allow();
 }
 
+// A `generated.at` the edit wrote far from the current UTC time (a local time marked Z) becomes the current UTC second.
+function restamp(input, file) {
+  const t = input.tool_input ?? {};
+  const written = [t.content, t.new_string, ...(Array.isArray(t.edits) ? t.edits.map((e) => e.new_string) : [])].filter((x) => typeof x === 'string').join('\n');
+  const doc = parseDoc(readFileSync(file, 'utf8'));
+  const at = doc.fm?.generated?.at;
+  if (typeof at !== 'string' || !written.includes(at) || Number.isNaN(Date.parse(at)) || Math.abs(Date.parse(at) - Date.now()) <= config.okf.stampSkew * 1000) return null;
+  const to = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
+  const k = doc.lines.slice(0, doc.body).findIndex((l) => l.includes(at));
+  if (k < 0) return null;
+  doc.lines[k] = doc.lines[k].replace(at, to);
+  writeFileSync(file, doc.lines.join('\n'));
+  return msg('docsRestamped', { from: at, to });
+}
+
 function docs(input, cwd) {
   const top = real(git(cwd, 'rev-parse', '--show-toplevel'));
   const { profile } = loadProfile(top);
   const bundle = bundleOf(top, profile);
   const file = real(resolve(cwd, String(input.tool_input?.file_path ?? '')));
   if (!file.startsWith(bundle + sep)) return allow();
+  const stamped = existsSync(file) ? restamp(input, file) : null;
   if (!unitOfBranch(cwd)) writeIndexes(bundle);
   const errors = checkBundle(bundle, { rules: profile.docs?.rules ?? {}, base: top }).filter((f) => f.level === 'error' && f.path === relPath(top, file));
-  if (!errors.length) return allow();
-  return JSON.stringify({ decision: 'block', reason: msg('docsErrors', { errors: errors.map((f) => msg('finding', f).trim()).join('\n') }) });
+  if (errors.length) return JSON.stringify({ decision: 'block', reason: (stamped ?? '') + msg('docsErrors', { errors: errors.map((f) => msg('finding', f).trim()).join('\n') }) });
+  return stamped ? JSON.stringify({ hookSpecificOutput: { hookEventName: 'PostToolUse', additionalContext: stamped } }) : allow();
 }
 
 function touch(file) {
@@ -209,7 +229,11 @@ function touch(file) {
 function heartbeat(input, cwd) {
   const prompts = readJson(promptsFile(cwd));
   const asked = input.tool_use_id && prompts?.find((p) => p.id === input.tool_use_id && !p.ran);
-  if (asked) writeJson(promptsFile(cwd), prompts.map((p) => (p === asked ? { ...p, ran: new Date().toISOString() } : p)));
+  if (asked) {
+    const ran = new Date().toISOString();
+    writeJson(promptsFile(cwd), prompts.map((p) => (p === asked ? { ...p, ran } : p)));
+    bump(cwd, config.retro.interventions, { command: asked.command, at: ran }); // the owner's command ran
+  }
   if (String(input.agent_type ?? '').endsWith(H.agents[1])) {
     const dir = join(aidlcDir(cwd), S.reviewing);
     for (const unit of existsSync(dir) ? readdirSync(dir) : []) if (heartbeatFresh(cwd, unit, Date.now(), S.reviewing)) touch(join(dir, unit));

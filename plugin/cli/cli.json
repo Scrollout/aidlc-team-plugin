@@ -119,6 +119,11 @@
       "does": "record the owner's run mode: unattended or not, the next action to stop at, where to report (owner only)"
     },
     {
+      "name": "retro",
+      "usage": "retro <intent>",
+      "does": "list what fired, escalated and needed the owner; propose at most three changes; reset the counters"
+    },
+    {
       "name": "review",
       "usage": "review record <unit> <file|->",
       "does": "store a reviewer verdict keyed by diff hash"
@@ -350,6 +355,31 @@
     "modelMismatch": "{{agent}} for {{unit}} uses {{model}}, {{source}} says {{expected}}",
     "modelSourceCard": "the card's Model: line",
     "modelSourceReview": "the profile's models.review",
+    "retroUsage": "usage: retro I-<n> (an intent in the bundle)",
+    "retroHead": "retro {{intent}}, counters since {{since}}\n",
+    "retroNever": "the first run",
+    "retroCodes": "codes fired 3 or more times:\n",
+    "retroCount": "  {{key}} {{count}}\n",
+    "retroNone": "  none\n",
+    "retroEscalations": "escalations:\n",
+    "retroReview": "  {{unit}} review {{focus}} escalated with {{findings}} findings at {{at}}\n",
+    "retroStopped": "  {{unit}} builder stopped at {{at}}: {{reason}}\n",
+    "retroDenials": "  {{count}} repeated hook denials escalated to the owner\n",
+    "retroInterventions": "owner commands that ran:\n",
+    "retroIntervention": "  {{at}} {{command}}\n",
+    "retroProposals": "proposals (the owner accepts or rejects each):\n",
+    "retroProposal": "  {{kind}}: {{text}}\n",
+    "retroReset": "counters reset\n",
+    "retroGlob": "{{key}} fired {{count}} times: add the folders where its tests live to profile.levels.<level>.paths",
+    "retroScope": "{{key}} fired {{count}} times: in .aidlc/rules/planning.md, scope each unit to its tests, fixtures and generated files",
+    "retroBuilder": "{{key}} fired {{count}} times: in .aidlc/rules/builder.md, run the card's checks and test runs before the report",
+    "retroTemplate": "{{key}} fired {{count}} times: in .aidlc/templates/, give the doc template what {{key}} asks for",
+    "retroLead": "{{key}} fired {{count}} times: in .aidlc/rules/lead.md, write down the command the lead should use instead",
+    "retroMerge": "{{key}} fired {{count}} times: in .aidlc/rules/lead.md, run aidlc merge only when aidlc next offers it",
+    "retroStop": "builders stopped {{count}} times: in .aidlc/rules/planning.md, name the interfaces and folders a unit needs before approval",
+    "retroReviewCheck": "reviews escalated {{count}} times: a profile check (modules[].check or architecture.checks) that catches what the reviewers found",
+    "retroCheck": "{{key}} fired {{count}} times: a profile check (modules[].check or architecture.checks) that catches it before review",
+    "docsRestamped": "generated.at {{from}} was not the current UTC time; the docs hook set it to {{to}}: re-read the file before editing it again\n",
     "docsErrors": "fix these OKF errors now:\n{{errors}}",
     "statusResume": "Load the aidlc skill and run aidlc next.\n",
     "boardOff": "no github section in the profile: the board is off",
@@ -393,6 +423,8 @@
       "okf_version"
     ],
     "subdirType": "Subdirectories",
+    "hints": ["Load when"],
+    "stampSkew": 300,
     "otherType": "Other",
     "attested": {
       "type": "Attested Computation",
@@ -767,6 +799,34 @@
       }
     },
     "noReview": "none"
+  },
+  "retro": {
+    "stats": "stats.json",
+    "interventions": "interventions",
+    "keep": 50,
+    "min": 3,
+    "max": 3,
+    "reasons": { "review": "review", "stopped": "stopped", "denials": "denials" },
+    "proposals": [
+      { "match": "PLAN-TEST", "kind": "profile glob", "text": "retroGlob" },
+      { "match": "GATE-LEVEL", "kind": "profile glob", "text": "retroGlob" },
+      { "match": "SCOPE-", "kind": "project rule", "text": "retroScope" },
+      { "match": "PLAN-SCOPE", "kind": "project rule", "text": "retroScope" },
+      { "match": "stopped", "kind": "project rule", "text": "retroStop" },
+      { "match": "GATE-AC", "kind": "project rule", "text": "retroBuilder" },
+      { "match": "GATE-RUN", "kind": "project rule", "text": "retroBuilder" },
+      { "match": "GATE-CHECK", "kind": "project rule", "text": "retroBuilder" },
+      { "match": "HOUSE-", "kind": "template tweak", "text": "retroTemplate" },
+      { "match": "OKF-", "kind": "template tweak", "text": "retroTemplate" },
+      { "match": "GUARD-", "kind": "project rule", "text": "retroLead" },
+      { "match": "GATE-REVIEW", "kind": "project rule", "text": "retroMerge" },
+      { "match": "GATE-CARD", "kind": "project rule", "text": "retroMerge" },
+      { "match": "GATE-APPROVAL", "kind": "project rule", "text": "retroMerge" },
+      { "match": "GATE-DEPS", "kind": "project rule", "text": "retroMerge" },
+      { "match": "denials", "kind": "project rule", "text": "retroLead" },
+      { "match": "review", "kind": "new check", "text": "retroReviewCheck" },
+      { "match": "", "kind": "new check", "text": "retroCheck" }
+    ]
   },
   "hooks": {
     "names": [
