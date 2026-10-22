@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Creation** README with two diagrams: the whole AI-DLC lifecycle with the plugin's enforcement points, and the plugin's parts with what they write into a project. Linked from [Overview](design/overview.md).
 - **Update** U10 built:
   - requirement docs are read by ID number;
   - `PLAN-REQ` applies once a bundle has a requirement;

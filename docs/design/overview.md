@@ -20,6 +20,9 @@ sources:
 - Autonomous: the owner approves intent, plan, one-way doors and release; agents do the rest.
 - Extensible: rule layers (plugin, org, project, personal) and overridable templates.
 
+# Diagrams
+The whole lifecycle and the plugin's parts are drawn in the [README](../../README.md); one unit's path is below.
+
 # How a unit flows
 ```mermaid
 sequenceDiagram
