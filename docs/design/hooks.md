@@ -33,7 +33,7 @@ sources:
 - **steer** (Stop) blocks with `next`'s line when the action is autonomous. It lets the stop through:
   - at a human gate, or while builders run;
   - when `stop_hook_active` is true;
-  - when the last message ends with a question.
+  - when a line of the last message ends with a question mark, so a question followed by its options counts.
 - **status** (SessionStart) returns `aidlc status` and one resume line, at most 1,000 chars.
 
 # Escalation
