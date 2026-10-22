@@ -5,7 +5,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve, sep } from 'node:path';
 import { config, UsageError } from './config.mjs';
 import { msg } from './template.mjs';
-import { loadProfile } from './profile.mjs';
+import { loadProfile, withDefaults } from './profile.mjs';
 import { parseDoc, proseLines } from './okf.mjs';
 
 const GRID = config.grid;
@@ -161,7 +161,7 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   const { units: all, intents, requirements } = readPlan(bundle);
   const units = all.filter((u) => u.fm.status !== GRID.dropped && !skip.includes(u.id));
   const known = new Set(all.map((u) => u.id));
-  const levels = profile.levels ? Object.keys(profile.levels) : GRID.defaultLevels;
+  const levels = Object.keys(withDefaults(profile).levels);
   const kinds = profile.reserve ? Object.keys(profile.reserve) : null;
   const out = [];
   const add = (code, u, line, key, data) => out.push(finding(code, u.file, line, key, { unit: u.id, ...data }, base));
@@ -235,7 +235,7 @@ export function computeLane(items, profile = {}, { paths = false } = {}) {
 
 // ---- Commands ----
 
-const bundleOf = (cwd, profile) => resolve(cwd, profile.docs?.bundle ?? config.okf.bundle);
+const bundleOf = (cwd, profile) => resolve(cwd, profile.docs.bundle);
 
 export const commands = {
   lane(args, { cwd }) {

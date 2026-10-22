@@ -15,8 +15,8 @@
   "layers": [
     {
       "name": "plugin",
-      "from": "plugin",
-      "path": "templates/defaults.json"
+      "from": "cli",
+      "path": "defaults.json"
     },
     {
       "name": "project",
@@ -47,8 +47,15 @@
   "commands": [
     {
       "name": "init",
-      "usage": "init",
-      "does": "ask questions, write the profile, render templates, vendor the CLI"
+      "usage": "init [--adopt] [--name n] [--base b] [--bundle dir] [--overwrite path]…",
+      "does": "ask questions, write the profile, render templates, vendor the CLI",
+      "flags": [
+        "--adopt",
+        "--name",
+        "--base",
+        "--bundle",
+        "--overwrite"
+      ]
     },
     {
       "name": "upgrade",
@@ -262,10 +269,22 @@
     "reqNone": "{{doc}} cites no requirement",
     "reqUnknown": "{{doc}} cites {{req}}, which does not exist",
     "nextApproveRequirements": "ask the owner to approve the requirements the plan cites: ! aidlc approve {{reqs}}",
-    "statusUncovered": "not yet delivered: {{reqs}}\n"
+    "statusUncovered": "not yet delivered: {{reqs}}\n",
+    "initWrote": "wrote {{path}}\n",
+    "initKept": "kept {{path}}: it exists; rerun with --overwrite {{path}} to replace it\n",
+    "initAdded": "added {{what}} to {{path}}\n",
+    "initSettingKept": "kept {{key}} in {{path}}: it is set to {{value}}\n",
+    "initAdopted": "adopted the bundle at {{bundle}} as of {{commit}}\n",
+    "initNoBundle": "no bundle with okf_version found: run init without --adopt",
+    "initFindings": "bundle: {{errors}} spec errors, {{warnings}} house-rule warnings (aidlc check {{bundle}} lists them)\n",
+    "initLeftoverDir": "leftover: {{path}}/ is not a known folder; left untouched\n",
+    "initLeftoverTrailer": "leftover: commit trailer {{key}} in {{count}} commits; history is left as is\n",
+    "initVendored": "pinned the CLI {{version}} in {{path}}\n",
+    "initNotPlugin": "init and upgrade run from the installed plugin, not from {{path}}",
+    "initNeedsRepo": "init runs in a git repository",
+    "badFlag": "{{name}} needs a value"
   },
   "okf": {
-    "bundle": "docs",
     "index": "index.md",
     "log": "log.md",
     "ext": ".md",
@@ -349,11 +368,6 @@
     "unitFile": "^(U-\\d+)(?:-[^/]*)?\\.md$",
     "intentFile": "^(I-\\d+)(?:-[^/]*)?\\.md$",
     "dropped": "dropped",
-    "defaultLevels": [
-      "unit",
-      "integration",
-      "e2e"
-    ],
     "codes": {
       "PLAN-DAG": {
         "level": "error",
@@ -390,8 +404,6 @@
     "cards": "cards",
     "heartbeats": "heartbeats",
     "heartbeatMs": 120000,
-    "base": "main",
-    "parallel": 3,
     "branchPrefix": "unit/",
     "trailer": "Unit",
     "human": "human:",
@@ -423,14 +435,102 @@
     "max": 6000,
     "hashLength": 16
   },
-  "models": {
-    "quick": "sonnet",
-    "standard": "sonnet",
-    "full": "opus",
-    "escalate": "opus",
-    "review": "opus",
-    "modules": 2,
-    "acs": 6,
-    "complex": []
+  "replaceKeys": [
+    "levels"
+  ],
+  "init": {
+    "files": [
+      {
+        "template": "profile.json",
+        "to": ".aidlc/profile.json"
+      },
+      {
+        "template": "AGENTS.md",
+        "to": "AGENTS.md"
+      },
+      {
+        "template": "CLAUDE.md",
+        "to": "CLAUDE.md"
+      },
+      {
+        "template": "bundle/index.md",
+        "to": "{{bundle}}/index.md",
+        "bundle": true
+      },
+      {
+        "template": "bundle/log.md",
+        "to": "{{bundle}}/log.md",
+        "bundle": true
+      },
+      {
+        "template": "docs/requirement.md",
+        "to": ".aidlc/templates/docs/requirement.md"
+      },
+      {
+        "template": "docs/intent.md",
+        "to": ".aidlc/templates/docs/intent.md"
+      },
+      {
+        "template": "docs/unit.md",
+        "to": ".aidlc/templates/docs/unit.md"
+      },
+      {
+        "template": "docs/decision.md",
+        "to": ".aidlc/templates/docs/decision.md"
+      },
+      {
+        "template": "ci.yml",
+        "to": ".github/workflows/aidlc.yml"
+      }
+    ],
+    "quick": [
+      "{{bundle}}/**",
+      "*.md"
+    ],
+    "gitignore": ".gitignore",
+    "ignoreLines": [
+      ".aidlc/local/",
+      ".claude/worktrees/"
+    ],
+    "settings": ".claude/settings.json",
+    "settingsKeys": {
+      "worktree": {
+        "baseRef": "head"
+      }
+    },
+    "bin": ".aidlc/bin",
+    "version": "VERSION",
+    "manifest": ".claude-plugin/plugin.json",
+    "knownDirs": [
+      ".git",
+      ".github",
+      ".gitlab",
+      ".claude",
+      ".aidlc",
+      ".vscode",
+      ".idea",
+      ".devcontainer",
+      ".husky",
+      ".circleci",
+      ".config",
+      ".cache"
+    ],
+    "knownTrailers": [
+      "Co-Authored-By",
+      "Signed-off-by",
+      "Acked-by",
+      "Reviewed-by",
+      "Tested-by",
+      "Reported-by",
+      "Suggested-by",
+      "Helped-by",
+      "Claude-Session",
+      "Unit",
+      "Card",
+      "Review"
+    ],
+    "trailerDepth": 500,
+    "okfMarker": "okf_version",
+    "searchDepth": 3
   }
 }

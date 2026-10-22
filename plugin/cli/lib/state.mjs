@@ -22,8 +22,8 @@ export const tryGit = (cwd, ...args) => {
 export const aidlcDir = (cwd) => join(resolve(cwd, git(cwd, 'rev-parse', '--git-common-dir')), S.dir);
 export const runtimeFile = (cwd, kind, unit) => join(aidlcDir(cwd), S[kind], `${unit}.json`);
 export const branchOf = (unit) => S.branchPrefix + unit;
-export const baseOf = (profile) => profile.base ?? S.base;
-export const bundleOf = (cwd, profile) => resolve(cwd, profile.docs?.bundle ?? config.okf.bundle);
+export const baseOf = (profile) => profile.base;
+export const bundleOf = (cwd, profile) => resolve(cwd, profile.docs.bundle);
 
 const readJson = (file) => (existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null);
 export function writeJson(file, data) {
@@ -182,7 +182,7 @@ export function nextAction(st) {
   if (lost) return action('act', 'nextRestart', { unit: lost.id, branch: branchOf(lost.id) });
 
   const inFlight = scope.filter((u) => u.state === 'building');
-  const max = st.profile.parallel?.max ?? S.parallel;
+  const max = st.profile.parallel.max;
   const picked = [];
   const ready = scope.filter((u) => u.state === 'approved').sort((a, b) => priorityOf(b) - priorityOf(a) || byId(a, b));
   for (const u of ready.filter((x) => !x.fm.hold)) {

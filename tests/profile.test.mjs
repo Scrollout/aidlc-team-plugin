@@ -16,13 +16,13 @@ function fixture(files) {
 
 test('U1/AC-2 layers merge in order: plugin, project, personal', () => {
   const dir = fixture({
-    'plugin/templates/defaults.json': { base: 'main', parallel: { max: 2 }, docs: { bundle: 'docs' } },
+    'cli/defaults.json': { base: 'main', parallel: { max: 2 }, docs: { bundle: 'docs' } },
     'repo/.aidlc/profile.json': { name: 'example', parallel: { max: 3 } },
     'repo/.aidlc/local/profile.json': { parallel: { max: 1 } },
     'repo/.aidlc/rules/b.md': '# b',
     'repo/.aidlc/rules/a.md': '# a',
   });
-  const { profile, layers, rules } = loadProfile(join(dir, 'repo'), { pluginDir: join(dir, 'plugin') });
+  const { profile, layers, rules } = loadProfile(join(dir, 'repo'), { cliDir: join(dir, 'cli') });
   assert.deepEqual(profile, { base: 'main', parallel: { max: 1 }, docs: { bundle: 'docs' }, name: 'example' });
   assert.deepEqual(layers, ['plugin', 'project', 'personal']);
   assert.deepEqual(rules.map((r) => r.slice(-4)), ['a.md', 'b.md']);
@@ -48,7 +48,7 @@ test('U1/AC-2 removing a deny is refused with the layer and key', () => {
 
 test('U1/AC-2 missing layers are empty; invalid JSON names the file', () => {
   const empty = fixture({});
-  assert.deepEqual(loadProfile(empty, { pluginDir: join(empty, 'none') }), { profile: {}, layers: [], rules: [] });
+  assert.deepEqual(loadProfile(empty, { cliDir: join(empty, 'none') }), { profile: {}, layers: [], rules: [] });
   const bad = fixture({ '.aidlc/profile.json': '{ nope' });
-  assert.throws(() => loadProfile(bad, { pluginDir: join(bad, 'none') }), /\.aidlc\/profile\.json: invalid JSON/);
+  assert.throws(() => loadProfile(bad, { cliDir: join(bad, 'none') }), /\.aidlc\/profile\.json: invalid JSON/);
 });

@@ -1,0 +1,172 @@
+// Init and upgrade: render a project's files from templates, pin the CLI, adopt an existing bundle
+// (docs/design/profile.md, docs/design/paths.md). Settings, file list and messages come from cli.json.
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join, relative, resolve } from 'node:path';
+import { CLI_DIR, PLUGIN_DIR, config, UsageError } from './config.mjs';
+import { msg, render, renderFile } from './template.mjs';
+import { DEFAULTS } from './profile.mjs';
+import { checkBundle, parseDoc } from './okf.mjs';
+import { git, tryGit } from './state.mjs';
+
+const I = config.init;
+const isMap = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+
+function parseFlags(args, known) {
+  const out = { overwrite: [] };
+  for (let k = 0; k < args.length; k++) {
+    const a = args[k];
+    if (!known.includes(a)) throw new UsageError(msg('unknownFlag', { name: a }));
+    if (a === '--adopt') { out.adopt = true; continue; }
+    const v = args[++k];
+    if (v === undefined || v.startsWith('--')) throw new UsageError(msg('badFlag', { name: a }));
+    if (a === '--overwrite') out.overwrite.push(v);
+    else out[a.slice(2)] = v;
+  }
+  return out;
+}
+
+function projectRoot(cwd) {
+  const top = tryGit(cwd, 'rev-parse', '--show-toplevel');
+  if (!top) throw new UsageError(msg('initNeedsRepo', {}));
+  return top;
+}
+
+// The version of the installed plugin; refuses to run from a pinned copy.
+function pluginVersion(root) {
+  const manifest = join(PLUGIN_DIR, I.manifest);
+  if (!existsSync(manifest) || resolve(CLI_DIR) === resolve(root, I.bin)) throw new UsageError(msg('initNotPlugin', { path: CLI_DIR }));
+  return JSON.parse(readFileSync(manifest, 'utf8')).version;
+}
+
+function vendor(root, version) {
+  const bin = join(root, I.bin);
+  rmSync(bin, { recursive: true, force: true });
+  cpSync(CLI_DIR, bin, { recursive: true });
+  writeFileSync(join(bin, I.version), version + '\n');
+  return msg('initVendored', { version, path: I.bin });
+}
+
+// The shallowest folder whose index.md declares okf_version.
+function findBundle(root) {
+  const queue = [[root, 0]];
+  while (queue.length) {
+    const [dir, depth] = queue.shift();
+    const index = join(dir, config.okf.index);
+    if (existsSync(index)) {
+      const doc = parseDoc(readFileSync(index, 'utf8'));
+      if (doc.fm && I.okfMarker in doc.fm) return dir;
+    }
+    if (depth >= I.searchDepth) continue;
+    for (const name of readdirSync(dir).sort()) {
+      const p = join(dir, name);
+      if (!name.startsWith('.') && statSync(p).isDirectory()) queue.push([p, depth + 1]);
+    }
+  }
+  return null;
+}
+
+// Adds keys the settings file lacks; never changes a key the project already set.
+function mergeSettings(target, wanted, path, out) {
+  let changed = false;
+  for (const [key, value] of Object.entries(wanted)) {
+    const at = [...path, key].join('.');
+    if (!(key in target)) { target[key] = value; changed = true; out.push(msg('initAdded', { what: at, path: I.settings })); }
+    else if (isMap(target[key]) && isMap(value)) changed = mergeSettings(target[key], value, [...path, key], out) || changed;
+    else if (JSON.stringify(target[key]) !== JSON.stringify(value)) out.push(msg('initSettingKept', { key: at, path: I.settings, value: JSON.stringify(target[key]) }));
+  }
+  return changed;
+}
+
+function leftovers(root) {
+  const out = [];
+  for (const name of readdirSync(root).sort()) {
+    if (name.startsWith('.') && !I.knownDirs.includes(name) && statSync(join(root, name)).isDirectory()) out.push(msg('initLeftoverDir', { path: name }));
+  }
+  const counts = new Map();
+  const log = tryGit(root, 'log', '-n', String(I.trailerDepth), '--format=%(trailers:only,unfold)%x1e') ?? '';
+  for (const rec of log.split('\x1e')) {
+    for (const key of new Set(rec.split('\n').map((l) => l.match(/^([\w-]+):/)?.[1]).filter(Boolean))) counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  const known = I.knownTrailers.map((k) => k.toLowerCase());
+  for (const [key, count] of [...counts].sort()) if (!known.includes(key.toLowerCase())) out.push(msg('initLeftoverTrailer', { key, count }));
+  return out;
+}
+
+const done = (output, code = config.exit.ok) => ({ code, findings: [], output });
+
+export const commands = {
+  init(args, { cwd }) {
+    const flags = parseFlags(args, config.commands.find((c) => c.name === 'init').flags);
+    const root = projectRoot(cwd);
+    const version = pluginVersion(root);
+    let bundle = flags.bundle ?? DEFAULTS.docs.bundle;
+    let adopted = null;
+    const report = [];
+    if (flags.adopt) {
+      const found = findBundle(root);
+      if (!found) throw new UsageError(msg('initNoBundle', {}));
+      bundle = relative(root, found).split('\\').join('/');
+      adopted = git(root, 'rev-parse', 'HEAD');
+    }
+    const name = flags.name ?? basename(root);
+    const base = flags.base ?? tryGit(root, 'symbolic-ref', '--short', 'HEAD') ?? DEFAULTS.base;
+    const text = { name, bundle, date: new Date().toISOString().slice(0, 10) };
+    const json = {
+      name: JSON.stringify(name),
+      base: JSON.stringify(base),
+      bundle: JSON.stringify(bundle),
+      quick: I.quick.map((q) => JSON.stringify(render(q, { bundle }))).join(', '),
+      extra: adopted ? [{ key: 'adopted', value: JSON.stringify(adopted) }] : [],
+    };
+
+    let kept = 0;
+    for (const f of I.files) {
+      if (flags.adopt && f.bundle) continue;
+      const to = render(f.to, { bundle });
+      const abs = join(root, to);
+      if (existsSync(abs) && !flags.overwrite.includes(to)) {
+        report.push(msg('initKept', { path: to }));
+        kept++;
+        continue;
+      }
+      const out = renderFile(f.template, f.template.endsWith('.json') ? json : text, { root, pluginDir: PLUGIN_DIR });
+      mkdirSync(dirname(abs), { recursive: true });
+      writeFileSync(abs, out);
+      report.push(msg('initWrote', { path: to }));
+    }
+
+    const ignore = join(root, I.gitignore);
+    const have = existsSync(ignore) ? readFileSync(ignore, 'utf8') : '';
+    const missing = I.ignoreLines.filter((l) => !have.split('\n').includes(l));
+    if (missing.length) {
+      writeFileSync(ignore, have + (have && !have.endsWith('\n') ? '\n' : '') + missing.join('\n') + '\n');
+      report.push(msg('initAdded', { what: missing.join(' '), path: I.gitignore }));
+    }
+
+    const settingsFile = join(root, I.settings);
+    const settings = existsSync(settingsFile) ? JSON.parse(readFileSync(settingsFile, 'utf8')) : {};
+    if (mergeSettings(settings, I.settingsKeys, [], report)) {
+      mkdirSync(dirname(settingsFile), { recursive: true });
+      writeFileSync(settingsFile, JSON.stringify(settings, null, 2) + '\n');
+    }
+
+    report.push(vendor(root, version));
+    if (flags.adopt) {
+      const findings = checkBundle(join(root, bundle), { base: root });
+      report.push(msg('initAdopted', { bundle, commit: adopted }));
+      report.push(msg('initFindings', {
+        errors: findings.filter((f) => f.level === 'error').length,
+        warnings: findings.filter((f) => f.level === 'warning').length,
+        bundle,
+      }));
+      report.push(...leftovers(root));
+    }
+    return done(report.join(''), kept ? config.exit.blocked : config.exit.ok);
+  },
+
+  // Replaces the pinned CLI with the installed plugin's, and nothing else.
+  upgrade(args, { cwd }) {
+    const root = projectRoot(cwd);
+    return done(vendor(root, pluginVersion(root)));
+  },
+};

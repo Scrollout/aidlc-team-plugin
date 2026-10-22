@@ -4,7 +4,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { CLI_DIR, config, UsageError } from './config.mjs';
 import { msg, render } from './template.mjs';
-import { loadProfile } from './profile.mjs';
+import { loadProfile, withDefaults } from './profile.mjs';
 import { parseDoc, proseLines } from './okf.mjs';
 import { computeLane, overlaps, readPlan } from './grid.mjs';
 import { aidlcDir, approval, baseOf, branchOf, bundleOf, diffHash, git, runtimeFile, sha256, tryGit, writeJson } from './state.mjs';
@@ -15,7 +15,7 @@ const LINK = /\]\(([^)\s#]+\.md)(?:#[^)]*)?\)/g;
 
 // Model for a unit: lane default, escalated for size or complex globs, and for a fix round after a CONFIRMED finding.
 export function routeModel(unit, lane, profile = {}, review = null) {
-  const m = { ...config.models, ...(profile.models ?? {}) };
+  const m = withDefaults(profile).models;
   let model = m[lane];
   let reason = msg('laneModel', { lane });
   if (lane === 'standard') {

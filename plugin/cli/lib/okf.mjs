@@ -530,7 +530,7 @@ export function checkBundle(root, { rules = {}, base = process.cwd() } = {}) {
 
 // ---- Commands ----
 
-const bundleOf = (cwd, profile) => resolve(cwd, profile.docs?.bundle ?? OKF.bundle);
+const bundleOf = (cwd, profile) => resolve(cwd, profile.docs.bundle);
 const hasErrors = (findings) => findings.some((f) => f.level === 'error');
 const inside = (dir, file) => file === dir || file.startsWith(dir + sep);
 
@@ -546,13 +546,15 @@ export const commands = {
     const known = config.commands.find((c) => c.name === 'check').flags;
     for (const flag of args.filter((a) => a.startsWith('--'))) {
       if (!known.includes(flag)) throw new UsageError(msg('unknownFlag', { name: flag }));
-      throw new Error(msg('flagNotBuilt', { name: flag }));
+      // `--ci` is OKF validation plus plan lint until the gate adds its merge-commit checks.
+      if (flag !== '--ci') throw new Error(msg('flagNotBuilt', { name: flag }));
     }
     const { profile } = loadProfile(cwd);
     const rules = profile.docs?.rules ?? {};
     const bundle = bundleOf(cwd, profile);
     const findings = lintRules(rules);
-    const paths = args.length ? args.map((a) => resolve(cwd, a)) : [bundle];
+    const given = args.filter((a) => !a.startsWith('--'));
+    const paths = given.length ? given.map((a) => resolve(cwd, a)) : [bundle];
     for (const p of paths) {
       if (!existsSync(p)) throw new UsageError(msg('noSuchPath', { name: relative(cwd, p) }));
       if (statSync(p).isDirectory()) findings.push(...checkBundle(p, { rules, base: cwd }));
