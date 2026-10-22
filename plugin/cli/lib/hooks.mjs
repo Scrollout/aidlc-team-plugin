@@ -1,7 +1,7 @@
 // Hook entry points: `aidlc hook <name>` reads the hook JSON on stdin and prints the decision JSON
 // (docs/design/hooks.md). Deny lists, patterns, codes and messages come from cli.json.
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, utimesSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join, relative, resolve } from 'node:path';
+import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { config, readJson, UsageError, relPath } from './config.mjs';
 import { msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
@@ -155,7 +155,7 @@ function secrets(input, cwd) {
   const added = [t.content, t.new_string, ...(Array.isArray(t.edits) ? t.edits.map((e) => e.new_string) : [])].filter((x) => typeof x === 'string').join('\n');
   const { profile } = loadProfile(cwd);
   const patterns = [...H.secrets, ...(profile.security?.secrets ?? [])].map((p) => new RegExp(p, 'i'));
-  if (patterns.some((re) => re.test(added))) return deny(cwd, input, 'SECRET', 'secretFound', { path: relPath(cwd, file) });
+  if (patterns.some((re) => re.test(added))) return deny(cwd, input, 'SECRET', 'secretFound', { path: relPath(cwd, real(file)) });
   return allow();
 }
 
@@ -175,11 +175,11 @@ function model(input, cwd) {
 }
 
 function docs(input, cwd) {
-  const top = git(cwd, 'rev-parse', '--show-toplevel');
+  const top = real(git(cwd, 'rev-parse', '--show-toplevel'));
   const { profile } = loadProfile(top);
   const bundle = bundleOf(top, profile);
   const file = real(resolve(cwd, String(input.tool_input?.file_path ?? '')));
-  if (!file.startsWith(bundle + '/')) return allow();
+  if (!file.startsWith(bundle + sep)) return allow();
   if (!unitOfBranch(cwd)) writeIndexes(bundle);
   const errors = checkBundle(bundle, { rules: profile.docs?.rules ?? {}, base: top }).filter((f) => f.level === 'error' && f.path === relPath(top, file));
   if (!errors.length) return allow();

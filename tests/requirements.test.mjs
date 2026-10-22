@@ -68,7 +68,7 @@ test('U10/AC-4 OKF-INDEX allows prose paragraphs, keeps them on regeneration, an
   const spec = join(ROOT, 'tests/fixtures/okf/spec');
   assert.deepEqual(checkBundle(join(spec, 'index-prose')).filter((f) => f.level === 'error'), []);
   const malformed = checkBundle(join(spec, 'OKF-INDEX-entry'), { base: spec }).filter((f) => f.code === 'OKF-INDEX');
-  assert.deepEqual(malformed.map((f) => [f.path, f.line]), [[join('OKF-INDEX-entry', 'index.md'), 5]]);
+  assert.deepEqual(malformed.map((f) => [f.path, f.line]), [['OKF-INDEX-entry/index.md', 5]]);
 
   const dir = mkdtempSync(join(tmpdir(), 'prose-'));
   cpSync(join(spec, 'index-prose'), dir, { recursive: true });
