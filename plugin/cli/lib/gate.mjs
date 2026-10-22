@@ -117,7 +117,7 @@ function runGate(cwd, st, unit) {
     else if (!unit.scope.some((g) => matches(path, g))) add('SCOPE-OUT', 'gateScope', { path }, path);
   }
   const diffLane = computeLane(paths, profile, { paths: true });
-  if (card && G.lanes.indexOf(diffLane.lane) > G.lanes.indexOf(card.lane)) add('GATE-LANE', 'gateLane', { lane: diffLane.lane, reason: diffLane.reason, card: card.lane });
+  if (card && paths.length && G.lanes.indexOf(diffLane.lane) > G.lanes.indexOf(card.lane)) add('GATE-LANE', 'gateLane', { lane: diffLane.lane, reason: diffLane.reason, card: card.lane });
 
   const hash = diffHash(cwd, base, unit.id);
   // Quick lane: no reviewer (docs/design/team.md#cost); the diff's own lane is checked above.

@@ -97,3 +97,17 @@ test('U1/AC-6 claude plugin validate . passes', (t) => {
   assert.match(out, /Validation passed/);
   assert.doesNotMatch(out, /warning/i);
 });
+
+test('cli.json has no duplicate keys in one object (JSON.parse would keep only the last)', () => {
+  const text = readFileSync(join(ROOT, 'plugin/cli/cli.json'), 'utf8');
+  const stack = [new Set()];
+  for (const line of text.split('\n')) {
+    if (/^\s*[}\]]/.test(line)) stack.pop();
+    const key = line.match(/^\s*"([^"]+)":/)?.[1];
+    if (key) {
+      assert.ok(!stack.at(-1).has(key), `duplicate key ${key}`);
+      stack.at(-1).add(key);
+    }
+    if (/[{[]\s*$/.test(line)) stack.push(new Set());
+  }
+});
