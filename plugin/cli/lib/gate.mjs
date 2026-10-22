@@ -9,6 +9,7 @@ import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
 import { computeLane, inside, readPlan } from './grid.mjs';
+import { issueTitle, sync } from './board.mjs';
 import { approval, baseOf, branchOf, bundleOf, diffHash, git, readState, reviewFocuses, roundsOf, runtimeFile, tryGit } from './state.mjs';
 
 const G = config.gate;
@@ -240,6 +241,10 @@ export const commands = {
       try { git(cwd, 'worktree', 'remove', path); } catch (e) { output += msg('gateKept', { path, error: e.message.split('\n')[0] }); }
     }
     tryGit(cwd, 'branch', '-q', '-D', branchOf(unit.id));
+    // The board follows a merge; it is best effort and never fails one (docs/design/board.md).
+    if (st.profile.github) {
+      try { output += sync(cwd); } catch (e) { output += msg('boardFailed', { error: e.message.split('\n')[0] }); }
+    }
     return done(output);
   },
 
@@ -254,17 +259,19 @@ export const commands = {
   },
 
   fix(args, { cwd }) {
-    const flags = { scope: [], requirement: [] };
+    const flags = { scope: [], requirement: [], 'from-issue': [] };
     let title = null;
     for (let k = 0; k < args.length; k++) {
-      if (args[k] === '--scope' || args[k] === '--requirement') {
+      if (args[k].startsWith('--') && args[k].slice(2) in flags) {
         if (!args[k + 1]) throw new UsageError(msg('badFlag', { name: args[k] }));
         flags[args[k].slice(2)].push(args[++k]);
       } else if (args[k].startsWith('--')) throw new UsageError(msg('unknownFlag', { name: args[k] }));
       else title = title ?? args[k];
     }
-    if (!title || !flags.scope.length) throw new UsageError(msg('fixUsage', {}));
     const { profile } = loadProfile(cwd);
+    const issue = flags['from-issue'].map(Number);
+    if (issue.length) title = issueTitle(profile, issue[0]);
+    if (!title || !flags.scope.length) throw new UsageError(msg('fixUsage', {}));
     const lane = computeLane(flags.scope, profile);
     if (lane.lane === 'full') return done(msg('fixFull', { title, reason: lane.reason }), config.exit.blocked);
     const bundle = bundleOf(cwd, profile);
@@ -278,6 +285,7 @@ export const commands = {
       why: title,
       scope: flags.scope.map((s) => JSON.stringify(s)).join(', '),
       requirements: flags.requirement.length ? [flags.requirement.join(', ')] : [],
+      issue,
       producer: `aidlc/${version}`,
       at: new Date().toISOString().replace(/\.\d+Z$/, 'Z'),
       level: Object.keys(withDefaults(profile).levels)[0],

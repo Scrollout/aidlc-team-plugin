@@ -32,7 +32,7 @@ function resolvePlain(s, line) {
   const int = s.match(INT);
   if (int) {
     const body = int[2].replace(/_/g, '');
-    const radix = RADIX[body.slice(0, 2)] ?? (body.length > 1 ? 8 : 10);
+    const radix = RADIX[body.slice(0, 2)] ?? (body.length > 1 && body[0] === '0' ? 8 : 10);
     return (int[1] === '-' ? -1 : 1) * parseInt(radix === 8 || radix === 10 ? body : body.slice(2), radix);
   }
   if (FLOAT.test(s) && /\d/.test(s)) return Number(s.replace(/_/g, ''));

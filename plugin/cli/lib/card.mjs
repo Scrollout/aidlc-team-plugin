@@ -32,7 +32,7 @@ export function routeModel(unit, lane, profile = {}, review = null) {
   return { model, reason };
 }
 
-function templateFile(cwd, name) {
+export function templateFile(cwd, name) {
   const own = join(cwd, config.templates.find((t) => t.from === 'project').path, name);
   return existsSync(own) ? own : join(CLI_DIR, name);
 }

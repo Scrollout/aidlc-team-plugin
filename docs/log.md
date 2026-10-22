@@ -7,6 +7,12 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Update** U11 built ([Board](design/board.md)): `aidlc sync` projects intents and units onto issues, sub-issues, labels and Project fields through `gh api`, writing only differences; `merge` runs it best-effort; `fix --from-issue` links a fix unit to its issue. A YAML fix: only a leading `0` makes an integer octal, so `12` is no longer read as 10. Release 0.10.0.
+- **Update** U11 design settled with the owner ([Board](design/board.md)):
+  - `sync` closes merged units' issues, and `merge` runs it best-effort instead of writing a `Closes` trailer;
+  - `board.issue` in a doc links an existing issue, which is how adopted projects keep their board;
+  - board fields live in a `board:` frontmatter map that the approval hash excludes;
+  - field maps, labels, the body template and the 1,500-char cap.
 - **Update** U8 built ([Skill and agents](design/prompts.md)):
   - the `aidlc` skill runs the loop on `next` and sets a project up;
   - the builder and reviewer agents, with the reviewer's JSON contract tested against [Verification](design/verification.md);
