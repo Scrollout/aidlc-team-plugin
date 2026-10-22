@@ -3,7 +3,7 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve, sep } from 'node:path';
-import { at, config, fieldPaths, list, UsageError } from './config.mjs';
+import { at, config, fieldPaths, list, UsageError, relPath } from './config.mjs';
 import { msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { parseDoc, proseLines } from './okf.mjs';
@@ -107,7 +107,7 @@ export function readPlan(bundle) {
 }
 
 function finding(code, file, line, key, data, base) {
-  return { code, level: GRID.codes[code].level, path: relative(base, file), line, message: msg(key, data), fix: GRID.codes[code].fix };
+  return { code, level: GRID.codes[code].level, path: relPath(base, file), line, message: msg(key, data), fix: GRID.codes[code].fix };
 }
 
 const keyLine = (u, key) => {
@@ -164,7 +164,7 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   const kinds = profile.reserve ? Object.keys(profile.reserve) : null;
   const out = [];
   const add = (code, u, line, key, data) => out.push(finding(code, u.file, line, key, { unit: u.id, ...data }, base));
-  const bundleRel = relative(base, bundle).split(sep).join('/');
+  const bundleRel = relPath(base, bundle);
 
   for (const u of units) {
     for (const dep of u.depends.filter((d) => !known.has(d))) add('PLAN-DAG', u, keyLine(u, 'depends'), 'depUnknown', { dep });
@@ -258,7 +258,7 @@ export const commands = {
     } else if (args[0]) {
       const bundle = bundleOf(cwd, profile);
       const unit = readPlan(bundle).units.find((u) => u.id === args[0]);
-      if (!unit) throw new UsageError(msg('unknownUnit', { name: args[0], dir: relative(cwd, join(bundle, GRID.units)) }));
+      if (!unit) throw new UsageError(msg('unknownUnit', { name: args[0], dir: relPath(cwd, join(bundle, GRID.units)) }));
       items = unit.scope;
     } else throw new UsageError(msg('laneUsage', {}));
     return { code: config.exit.ok, findings: [], output: msg('laneLine', computeLane(items, profile, { paths })) };
@@ -274,7 +274,7 @@ export const commands = {
     for (const p of paths.length ? paths : [bundle]) {
       if (!existsSync(p)) continue;
       if (statSync(p).isDirectory()) findings.push(...lintPlan(p, profile, { base: cwd, skip }));
-      else if (p.startsWith(bundle + sep)) findings.push(...lintPlan(bundle, profile, { base: cwd, skip }).filter((f) => f.path === relative(cwd, p)));
+      else if (p.startsWith(bundle + sep)) findings.push(...lintPlan(bundle, profile, { base: cwd, skip }).filter((f) => f.path === relPath(cwd, p)));
     }
     return { code: findings.length ? config.exit.findings : config.exit.ok, findings, output: '' };
   },

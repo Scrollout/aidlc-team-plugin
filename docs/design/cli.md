@@ -30,6 +30,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 | `hook <name>` | entry point for the plugin's hooks; reads the hook JSON on stdin | hooks |
 
 # Output
+- Paths in output, cards and runtime files are relative and use `/` on every platform; the CLI resolves its working folder to its real long path first (Windows short names, symlinks), and reads docs with CRLF line ends as LF.
 - Findings: `path:line CODE message`, one per line. Codes are stable (`OKF-TYPE`, `PLAN-DAG`, `SCOPE-OUT`, …).
 - Advice: one line, imperative, naming the command or agent to run.
 - No banners, no colour unless a TTY, no summaries longer than the findings.

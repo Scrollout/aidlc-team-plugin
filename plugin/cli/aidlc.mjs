@@ -50,7 +50,8 @@ export async function main(argv, io = { out: process.stdout, err: process.stderr
     return EXIT.usage;
   }
   try {
-    const result = await HANDLERS[name](args, { cwd: io.cwd ?? process.cwd() });
+    // The real long path, as git reports it: no Windows short names or symlinks (docs/design/cli.md).
+    const result = await HANDLERS[name](args, { cwd: realpathSync.native(io.cwd ?? process.cwd()) });
     io.out.write(result.output + result.findings.map((f) => msg('finding', f)).join(''));
     return result.code;
   } catch (e) {

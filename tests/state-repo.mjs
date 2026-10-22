@@ -45,12 +45,13 @@ export function unitDoc({ intent = 'I-1', depends = [], scope = ['src/**'], modu
 }
 
 // A repo on `main` with a profile, the given docs committed, and a git identity.
-export function makeRepo(docs = {}, profile = {}) {
-  const dir = mkdtempSync(join(tmpdir(), 'state-'));
+export function makeRepo(docs = {}, profile = {}, parent = tmpdir()) {
+  const dir = mkdtempSync(join(parent, 'state-'));
   git(dir, 'init', '-q', '-b', 'main');
   git(dir, 'config', 'user.email', 'owner@example.com');
   git(dir, 'config', 'user.name', 'Owner');
   git(dir, 'config', 'commit.gpgsign', 'false');
+  git(dir, 'config', 'core.autocrlf', 'false'); // tests compare bytes; the CLI itself reads CRLF docs as LF
   commit(dir, 'init', { '.aidlc/profile.json': profile, ...docs });
   return dir;
 }

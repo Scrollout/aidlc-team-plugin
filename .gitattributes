@@ -1,1 +1,2 @@
+# LF everywhere, also in a Windows checkout: the CLI renders templates byte for byte and tests compare bytes.
 * text=auto eol=lf

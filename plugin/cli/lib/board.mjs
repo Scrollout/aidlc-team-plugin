@@ -2,19 +2,19 @@
 // (docs/design/board.md). No other command reads the board; it writes only what differs.
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { relative } from 'node:path';
-import { at, config, UsageError } from './config.mjs';
+import { at, config, list, relPath, UsageError } from './config.mjs';
 import { msg, render } from './template.mjs';
 import { templateFile } from './card.mjs';
 import { git, readState } from './state.mjs';
 
 const B = config.board;
+let ghCommand = [B.gh]; // `github.gh` overrides it (docs/design/board.md)
 
 function api(args, body) {
   let out;
   try {
     const opts = { input: body ? JSON.stringify(body) : '', encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] };
-    out = execFileSync(B.gh, ['api', ...args, ...(body ? ['--input', '-'] : [])], opts);
+    out = execFileSync(ghCommand[0], [...ghCommand.slice(1), 'api', ...args, ...(body ? ['--input', '-'] : [])], opts);
   } catch (e) {
     // gh's own message (stderr, or the API's error body) says what failed; the command line does not.
     throw new Error(`${args.slice(0, 3).join(' ')}: ${(e.stderr || e.stdout || e.message).trim().split('\n').join(' ')}`);
@@ -34,6 +34,7 @@ function pages(path) {
 
 const github = (profile) => {
   if (!profile.github?.repo) throw new UsageError(msg('boardOff', {}));
+  ghCommand = list(profile.github.gh ?? B.gh);
   return profile.github;
 };
 
@@ -57,7 +58,7 @@ function wanted(cwd, st, gh) {
     const done = B.done.includes(state);
     const acs = (d.acs ?? []).map((a) => ({ box: done ? 'x' : ' ', text: d.doc.lines[a.line - 1].replace(/^\s*[-*]\s+/, '') }));
     const marker = msg('boardMarker', { kind, id: d.id });
-    const data = { description: String(d.fm.description ?? ''), link: `https://github.com/${gh.repo}/blob/${st.base}/${relative(top, d.file).split('\\').join('/')}`, marker };
+    const data = { description: String(d.fm.description ?? ''), link: `https://github.com/${gh.repo}/blob/${st.base}/${relPath(top, d.file)}`, marker };
     let body;
     do body = render(template, { ...data, acs }, file); while (body.length > B.maxBody && acs.pop());
     const fields = Object.fromEntries(Object.entries(gh.fields ?? {}).map(([name, spec]) => {

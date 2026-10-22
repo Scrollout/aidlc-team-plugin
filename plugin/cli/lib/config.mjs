@@ -1,6 +1,6 @@
 // Loads cli.json, the one place for commands, exit codes, paths and messages (docs/design/cli.md).
 import { existsSync, readFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const CLI_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -17,4 +17,7 @@ export const readJson = (file) => (existsSync(file) ? JSON.parse(readFileSync(fi
 export const at = (obj, path) => path.split('.').reduce((v, k) => (isMap(v) ? v[k] : undefined), obj);
 // The frontmatter paths a board field map reads.
 export const fieldPaths = (fields) => Object.values(fields ?? {}).map((spec) => (typeof spec === 'string' ? spec : spec.from));
+// A path as the CLI shows and stores it: relative, with `/` on every platform (docs/design/cli.md).
+export const posix = (p) => p.split(sep).join('/');
+export const relPath = (from, to) => posix(relative(from, to));
 export const done = (output, code = config.exit.ok, findings = []) => ({ code, findings, output });

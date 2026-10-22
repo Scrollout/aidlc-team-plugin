@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
-import { config, done, isMap, list, readJson, UsageError } from './config.mjs';
+import { config, done, isMap, list, readJson, UsageError, relPath } from './config.mjs';
 import { msg } from './template.mjs';
 import { loadProfile } from './profile.mjs';
 import { parseDoc } from './okf.mjs';
@@ -217,13 +217,13 @@ export function openPoints(doc) {
 }
 
 export function nextAction(st) {
-  const rel = (dir) => relative(st.cwd, join(st.bundle, dir)) || dir;
+  const rel = (dir) => relPath(st.cwd, join(st.bundle, dir)) || dir;
   if (st.mergeUnit) return action('act', 'nextContinueMerge', { unit: st.mergeUnit });
 
   const stale = [...st.requirements, ...st.intents, ...st.units].filter((d) => d.state === 'stale');
   if (stale.length) return action(...(st.auto.includes(S.auto[0]) ? ['act', 'nextAutoApprove'] : ['human', 'nextReapprove']), { docs: ids(stale) });
   const open = [...st.requirements, ...st.intents, ...st.units].filter((d) => d.state === 'draft').map((d) => ({ d, points: openPoints(d.doc) })).find((x) => x.points.length);
-  if (open) return action('human', 'nextOpenDraft', { doc: open.d.id, points: open.points.join(', '), file: relative(st.cwd, open.d.file) });
+  if (open) return action('human', 'nextOpenDraft', { doc: open.d.id, points: open.points.join(', '), file: relPath(st.cwd, open.d.file) });
 
   const unreleased = st.intents.find((i) => i.state === 'merged'); // its release does not hold back the next intent
   const intent = st.intents.find((i) => !['released', 'merged'].includes(i.state)) ?? unreleased;
@@ -353,7 +353,7 @@ export const commands = {
       const cls = approval(doc) === 'stale' ? S.auto[0] : quick ? S.auto[1] : null;
       if (auto && !auto.includes(cls)) throw new UsageError(msg('notDelegated', { name }));
       writeFileSync(file, stamp(text, auto ? S.agent : S.human + by, at));
-      out += msg('approved', { doc: relative(cwd, file) });
+      out += msg('approved', { doc: relPath(cwd, file) });
     }
     return done(out);
   },
