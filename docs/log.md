@@ -7,6 +7,8 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-22
 
+- **Creation** [Approvals](design/approvals.md), split out of [State](design/state.md): stamps, who approves, and owner prompts.
+- **Update** M2 U15 built (owner's choices): an owner gate holds back only the units that wait on its docs, so independent units build first; the guard records owner prompts and `status` shows whether the last one ran; a builder launched after a stop report takes over; the lead parks a step with `aidlc hold U-<n> <question>`, and a held unit gets no action; the new owner command `aidlc mode` records the run mode and steer's stopping point; `next` asks for the draft decisions a unit links to; a delegated re-approval refuses a change to acceptance criteria; `MODEL-MISMATCH` names its source and the card prints the review model ([State](design/state.md), [Hooks](design/hooks.md), [CLI](design/cli.md)). Release 0.19.0.
 - **Update** M2 U12 built: the CLI and hooks run on Windows, and CI requires it. Paths in output and cards use `/` on every platform, the working folder is resolved to its real long path, the repo checks out with LF line ends, and `github.gh` names another `gh` ([CLI](design/cli.md), [Board](design/board.md)). Release 0.18.0.
 - **Update** [M2](roadmap/m2.md) planned with the owner: hardening from the pilot plus `aidlc retro`, in eight units U12–U19; the other work cut from M1 moves to M3. The CLI budget rises to 3,000 lines ([Overview](design/overview.md)), and a delegated re-approval no longer covers a change to acceptance criteria ([0008](decisions/0008-delegated-approvals.md)).
 - **Update** [M1](roadmap/m1.md) is closed: every exit criterion has its evidence in the [pilot report](pilot/report.md). Next is [M2](roadmap/m2.md).

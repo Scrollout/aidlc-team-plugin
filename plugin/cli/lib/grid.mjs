@@ -82,10 +82,10 @@ function readDocs(bundle, dir, pattern, norm = (id) => id) {
   });
 }
 
-function acsOf(doc) {
+export function acsOf(doc) {
   return proseLines(doc.lines, doc.body).flatMap(([line, text]) => {
     const m = text.match(AC);
-    return m ? [{ id: m[1], level: m[2]?.trim(), line }] : [];
+    return m ? [{ id: m[1], level: m[2]?.trim(), line, text }] : [];
   });
 }
 

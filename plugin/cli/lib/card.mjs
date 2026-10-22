@@ -83,6 +83,7 @@ export function renderCard(cwd, unitId) {
     laneReason: lane.reason,
     model,
     modelReason: reason,
+    reviewModel: withDefaults(profile).models.review,
     base: baseSha,
     acs: proseLines(doc.lines, doc.body).filter(([, t]) => AC_LINE.test(t)).map(([n]) => doc.lines[n - 1].trim()),
     scope: atBase.scope,

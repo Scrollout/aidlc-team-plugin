@@ -7,7 +7,7 @@ import { msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
 import { inside, readPlan } from './grid.mjs';
-import { aidlcDir, baseOf, bundleOf, git, heartbeatFresh, nextAction, readState, runtimeFile, tryGit, writeJson } from './state.mjs';
+import { aidlcDir, baseOf, bundleOf, git, heartbeatFresh, nextAction, ownerLines, readState, runtimeFile, tryGit, writeJson } from './state.mjs';
 import { directAllowed, mergeWritten } from './gate.mjs';
 
 const H = config.hooks;
@@ -54,6 +54,13 @@ const ownerCommand = (argv) => H.owner.find((o) => argv.some((a, k) => H.cli.som
 
 // ---- Decisions ----
 
+// Owner prompts the guard raised; the PostToolUse hook marks one `ran` when its call completes (docs/design/approvals.md).
+const promptsFile = (cwd) => join(aidlcDir(cwd), H.prompts);
+function recordPrompt(cwd, input, command) {
+  const all = readJson(promptsFile(cwd)) ?? [];
+  writeJson(promptsFile(cwd), [...all, { id: input.tool_use_id ?? null, command, at: new Date().toISOString() }].slice(-H.promptsKept));
+}
+
 const allow = () => '{}';
 function deny(cwd, input, code, key, data, decision = 'deny') {
   const message = msg(key, data);
@@ -79,7 +86,12 @@ function guard(input, cwd) {
   for (const argv of segments(String(input.tool_input?.command ?? ''))) {
     // The owner answers a permission prompt for an owner command; without prompts (bypass) it stays a `!` command (decision 0009).
     const owner = ownerCommand(argv);
-    if (owner) return deny(cwd, input, 'GUARD-OWNER', 'guardOwner', { command: argv.slice(argv.indexOf(owner)).join(' ') }, input.permission_mode === H.noPrompt ? 'deny' : 'ask');
+    if (owner) {
+      const command = argv.slice(argv.indexOf(owner)).join(' ');
+      if (input.permission_mode === H.noPrompt) return deny(cwd, input, 'GUARD-OWNER', 'guardOwner', { command });
+      recordPrompt(cwd, input, command);
+      return deny(cwd, input, 'GUARD-OWNER', 'guardOwner', { command }, 'ask');
+    }
     for (const [tool, sub] of H.ask) if (argv[0]?.split('/').pop() === tool && argv.includes(sub)) return deny(cwd, input, 'GUARD-RELEASE', 'guardRelease', { what: `${tool} ${sub}` }, 'ask');
     const g = gitCall(argv);
     if (!g) continue;
@@ -169,7 +181,8 @@ function model(input, cwd) {
   const card = existsSync(runtimeFile(cwd, 'cards', unit)) ? JSON.parse(readFileSync(runtimeFile(cwd, 'cards', unit), 'utf8')) : null;
   const expected = role === H.agents[0] ? card?.model : withDefaults(loadProfile(cwd).profile).models.review;
   if (!expected) return deny(cwd, input, 'MODEL-UNIT', 'modelUnit', { agent });
-  if (t.model !== expected) return deny(cwd, input, 'MODEL-MISMATCH', 'modelMismatch', { agent, unit, model: t.model ?? 'none', expected });
+  const source = msg(role === H.agents[0] ? 'modelSourceCard' : 'modelSourceReview', {});
+  if (t.model !== expected) return deny(cwd, input, 'MODEL-MISMATCH', 'modelMismatch', { agent, unit, model: t.model ?? 'none', expected, source });
   touch(join(aidlcDir(cwd), role === H.agents[1] ? S.reviewing : S.heartbeats, unit)); // in flight from launch: next waits for it
   return allow();
 }
@@ -194,6 +207,9 @@ function touch(file) {
 
 // A builder's tool call keeps its unit's heartbeat fresh; a reviewer's keeps the reviews in flight fresh.
 function heartbeat(input, cwd) {
+  const prompts = readJson(promptsFile(cwd));
+  const asked = input.tool_use_id && prompts?.find((p) => p.id === input.tool_use_id && !p.ran);
+  if (asked) writeJson(promptsFile(cwd), prompts.map((p) => (p === asked ? { ...p, ran: new Date().toISOString() } : p)));
   if (String(input.agent_type ?? '').endsWith(H.agents[1])) {
     const dir = join(aidlcDir(cwd), S.reviewing);
     for (const unit of existsSync(dir) ? readdirSync(dir) : []) if (heartbeatFresh(cwd, unit, Date.now(), S.reviewing)) touch(join(dir, unit));
@@ -212,7 +228,8 @@ function steer(input, cwd) {
   const asked = String(input.last_assistant_message ?? '').split('\n').some((l) => /\?[*_`)\s]*$/.test(l));
   if (input.stop_hook_active || asked) return allow();
   const next = nextAction(readState(cwd));
-  return next.kind === 'act' ? JSON.stringify({ decision: 'block', reason: next.line }) : allow();
+  const stop = readJson(join(cwd, personalProfile))?.run?.stop; // the owner's stopping point (aidlc mode --stop)
+  return next.kind === 'act' && S.stops[stop] !== next.key ? JSON.stringify({ decision: 'block', reason: next.line }) : allow();
 }
 
 function status(input, cwd) {
@@ -221,7 +238,7 @@ function status(input, cwd) {
   const lines = [...st.intents.map((i) => msg('statusIntent', { id: i.id, state: i.state, title: i.fm.title ?? '' })),
     ...st.units.filter((u) => u.state !== 'merged').map((u) => msg('statusUnit', { id: u.id, state: u.state, title: u.fm.title ?? '' }))];
   const tail = msg('statusNext', { line: nextAction(st).line }) + resume;
-  let out = '';
+  let out = ownerLines(cwd);
   for (let k = 0; k < lines.length; k++) {
     const more = msg('statusMore', { count: lines.length - k });
     if ((out + lines[k] + more + tail).length > S.statusMax) { out += more; break; }

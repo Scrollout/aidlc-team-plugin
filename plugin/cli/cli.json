@@ -114,6 +114,11 @@
       "does": "let the lead approve re-approvals or quick-lane units (owner only)"
     },
     {
+      "name": "mode",
+      "usage": "mode attended|unattended [--stop <action>] [--report <to>]|off",
+      "does": "record the owner's run mode: unattended or not, the next action to stop at, where to report (owner only)"
+    },
+    {
       "name": "review",
       "usage": "review record <unit> <file|->",
       "does": "store a reviewer verdict keyed by diff hash"
@@ -336,7 +341,9 @@
     "scopeApproval": "{{path}}: approvals and verified_hash are the owner's",
     "secretFound": "{{path}} contains what looks like a secret",
     "modelUnit": "{{agent}} prompt names no unit",
-    "modelMismatch": "{{agent}} for {{unit}} uses {{model}}, the card says {{expected}}",
+    "modelMismatch": "{{agent}} for {{unit}} uses {{model}}, {{source}} says {{expected}}",
+    "modelSourceCard": "the card's Model: line",
+    "modelSourceReview": "the profile's models.review",
     "docsErrors": "fix these OKF errors now:\n{{errors}}",
     "statusResume": "Load the aidlc skill and run aidlc next.\n",
     "boardOff": "no github section in the profile: the board is off",
@@ -356,7 +363,14 @@
     "boardFailed": "warning: sync failed, run aidlc sync: {{error}}\n",
     "nextMigrate": "elaborate the migration intent with the owner in {{dir}}/I-1-<slug>.md (adopted at {{commit}}): docs, always-on context, profile, architecture baseline, module audit, cleanup; then ask for approval",
     "nextStopped": "the builder of {{unit}} stopped ({{reason}}): if the unit doc is wrong, fix it and ask the owner to re-approve it; otherwise remove the cause and start its builder again (card: aidlc card {{unit}})",
-    "holdUsage": "usage: hold <unit> [off]",
+    "holdUsage": "usage: hold <unit> [off|<reason>]",
+    "modeUsage": "usage: mode attended|unattended [--stop build|review|fix|merge|release] [--report <to>] | off",
+    "modeSet": "run mode: {{run}}\n",
+    "runLine": "{{mode}}{{#each stop}}, stop at {{this}}{{/each}}{{#each report}}, report to {{this}}{{/each}}",
+    "statusRun": "run: {{run}}\n",
+    "statusPrompt": "owner prompt: {{command}} ({{state}} {{at}})\n",
+    "notDelegatedAcs": "{{name}} changes its acceptance criteria: the owner approves it",
+    "heldReason": "{{unit}} ({{reason}})",
     "priorityUsage": "usage: priority <unit> <n>, a whole number; higher builds first",
     "nextAutoApprove": "approve {{docs}}, delegated by the owner: aidlc approve --auto {{docs}}",
     "notDelegated": "{{name}} is not in a class the owner delegated (approvals.auto in .aidlc/local/profile.json): the owner approves it",
@@ -523,6 +537,17 @@
     "stdin": "-",
     "stopped": "stopped",
     "off": "off",
+    "modes": [
+      "attended",
+      "unattended"
+    ],
+    "stops": {
+      "build": "nextBuild",
+      "review": "nextReview",
+      "fix": "nextFixRound",
+      "merge": "nextMerge",
+      "release": "nextRelease"
+    },
     "approvers": [
       "human:",
       "process:",
@@ -535,6 +560,7 @@
       "quick"
     ],
     "unitType": "Unit",
+    "decisionType": "Decision",
     "gates": "gates",
     "reviewing": "reviewing"
   },
@@ -835,7 +861,14 @@
     "owner": [
       "approve",
       "upgrade",
-      "delegate"
+      "delegate",
+      "mode"
+    ],
+    "prompts": "prompts.json",
+    "promptsKept": 5,
+    "promptStates": [
+      "asked",
+      "ran"
     ]
   },
   "board": {

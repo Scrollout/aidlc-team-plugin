@@ -1,5 +1,6 @@
 # Design
 
+* [Approvals](approvals.md) - How the owner approves intents, requirements, units and decisions, what makes an approval stale, what the lead may approve for them, and how owner prompts are recorded.
 * [Board](board.md) - An optional one-way projection of derived state onto GitHub issues and a GitHub Project, written by deterministic code at zero model tokens.
 * [CLI](cli.md) - The aidlc commands, their exit codes and the terse output format.
 * [Everyday paths](paths.md) - Fixes without an intent, changes mid-flight, shared files, pushing and base health, cleanup, adopting an existing project, and removing the plugin.

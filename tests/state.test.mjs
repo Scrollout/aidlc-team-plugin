@@ -59,7 +59,7 @@ test('U4/AC-1 status derives every unit state from docs, branches and trailers, 
     'U-6': 'building', 'U-7': 'reported', 'U-8': 'reviewed', 'U-9': 'fix',
   });
   assert.match(r.out, /^I-1 approved Pricing$/m);
-  assert.match(r.out, /^next: re-approve U-3/m);
+  assert.match(r.out, /^next: merge U-8/m, 'work that does not wait on the stale U-3 goes first');
   assert.ok(r.out.length <= 1000);
   assert.equal(git(dir, 'status', '--porcelain'), '', 'no state file in the working tree');
 });
@@ -276,8 +276,8 @@ test('U4/AC-2 a delegated re-approval of a stopped unit restarts its builder too
   approve(dir, 'I-1', 'U-1');
   branch(dir, 'U-1');
   run(dir, ['report', 'U-1'], '{"status": "stopped", "stop": "AC-1 is ambiguous"}');
-  write(dir, { [U(1)]: read(dir, U(1)).replace('it works.', 'it returns 200.'), '.aidlc/local/profile.json': { approvals: { auto: ['reapprove'] } } });
-  commit(dir, 'clarify AC-1');
+  write(dir, { [U(1)]: read(dir, U(1)) + '\n# Out of scope\n- Error pages.\n', '.aidlc/local/profile.json': { approvals: { auto: ['reapprove'] } } });
+  commit(dir, 'clarify the scope');
   assert.equal(run(dir, ['approve', '--auto', 'U-1']).code, 0);
   assert.match(run(dir, ['next']).out, /^restart the builder of U-1/);
 });
@@ -321,7 +321,7 @@ test('U3/AC-3 check skips merged units in plan lint, as next does', () => {
 test('U4/AC-3 delegated approvals: the lead re-approves and approves quick units only when the personal profile says so', () => {
   const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['src/**'] }), [U(2)]: unitDoc({ scope: ['docs/guide/**'] }) }, { lanes: { quick: ['docs/**'] } });
   approve(dir, 'I-1', 'U-1');
-  write(dir, { [U(1)]: read(dir, U(1)).replace('it works.', 'it works well.') });
+  write(dir, { [U(1)]: read(dir, U(1)).replace('Unit goal.', 'Unit goal, said better.') });
   commit(dir, 'edit U-1');
   assert.match(run(dir, ['next']).out, /^re-approve U-1 after their edits: aidlc approve U-1 \(the owner confirms the prompt\)/);
   assert.equal(run(dir, ['approve', '--auto', 'U-1']).code, 64, 'nothing delegated yet');
@@ -339,7 +339,9 @@ test('U4/AC-3 delegated approvals: the lead re-approves and approves quick units
 
   commit(dir, 'a standard draft', { [U(3)]: unitDoc({ scope: ['lib/**'] }) });
   assert.equal(run(dir, ['approve', '--auto', 'U-3']).code, 64, 'a first approval of a standard unit is never delegated');
-  assert.match(run(dir, ['next']).out, /^ask the owner to approve the plan/);
+  assert.match(run(dir, ['next']).out, /^build U-1, U-2 /, 'the approved units build while the owner has U-3 to approve');
+  for (const u of ['U-1', 'U-2']) { branch(dir, u, `${u}.txt`); heartbeat(dir, u); }
+  assert.match(run(dir, ['next']).out, /^ask the owner to approve the plan: aidlc approve U-3 /);
 });
 
 test('U4/AC-1 a unit whose dependencies are unmerged is blocked, even with a branch from an earlier run', () => {
