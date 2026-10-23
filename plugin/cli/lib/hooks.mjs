@@ -235,9 +235,10 @@ function touch(file) {
 }
 
 // A builder's tool call keeps its unit's heartbeat fresh; a reviewer's keeps the reviews in flight fresh.
+// Runs as each call starts and ends, so a mark outlives the longest Bash call (docs/design/in-flight.md).
 function heartbeat(input, cwd) {
   const prompts = readJson(promptsFile(cwd));
-  const asked = input.tool_use_id && prompts?.find((p) => p.id === input.tool_use_id && !p.ran);
+  const asked = input.hook_event_name !== H.before && input.tool_use_id && prompts?.find((p) => p.id === input.tool_use_id && !p.ran); // the owner may still refuse it
   if (asked) {
     const ran = new Date().toISOString();
     writeJson(promptsFile(cwd), prompts.map((p) => (p === asked ? { ...p, ran } : p)));

@@ -74,7 +74,7 @@ const CHECKS = {
         for (const h of groups.flatMap((g) => g.hooks ?? [])) {
           const id = `${name} ${event} ${h.command ?? h.args?.join(' ') ?? ''}`.trim();
           if (typeof h.timeout !== 'number' || h.timeout > limit) out.push(`${id}: timeout ${h.timeout} not ≤ ${limit}`);
-          if (event === 'PreToolUse' && h.onFailure !== 'block') out.push(`${id}: blocking hook without onFailure "block"`);
+          if (event === 'PreToolUse' && h.args?.at(-1) !== 'heartbeat' && h.onFailure !== 'block') out.push(`${id}: blocking hook without onFailure "block"`);
         }
       }
       return out;

@@ -3,7 +3,7 @@ type: Design
 title: Verification
 description: The inner loop (hooks), the merge gate, the reviewer's output contract and the CI mode.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T17:45:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T18:15:00Z }
 sources:
   - id: cc-hooks
     resource: https://code.claude.com/docs/en/hooks
@@ -35,7 +35,7 @@ Facts from the hooks reference this design relies on:[^cc-hooks]
 | steer | Stop | ends of turn while `next` has an autonomous action and no human gate is pending (see [Steering](steering.md)) |
 | model | PreToolUse Agent | a builder or reviewer started with a `model` other than the card's |
 | status | SessionStart (startup, resume, clear, compact, fork) | nothing; injects `aidlc status` and the resume line (≤ 1,000 chars) |
-| heartbeat | PostToolUse, in a `unit/*` worktree | nothing; touches the unit's heartbeat file |
+| heartbeat | PreToolUse and PostToolUse, in a `unit/*` worktree | nothing; touches the unit's heartbeat file |
 
 The guard matches a short deny list on parsed argv; it does not try to model the shell. Details: [Hook mechanics](hooks.md).
 

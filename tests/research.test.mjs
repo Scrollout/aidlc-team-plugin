@@ -64,7 +64,7 @@ test('U25/AC-1 a researcher in flight is waited for, and steer does not demand i
   const steer = spawnSync(process.execPath, [join(ROOT, 'plugin/cli/aidlc.mjs'), 'hook', 'steer'], { cwd: dir, encoding: 'utf8', input: JSON.stringify({ cwd: dir, session_id: 's', hook_event_name: 'Stop', last_assistant_message: 'Started.' }) });
   assert.equal(JSON.parse(steer.stdout).decision, undefined, 'the stop is let through');
   const marker = join(dir, '.git/aidlc/researching/U-1');
-  utimesSync(marker, new Date(Date.now() - 10 * 60 * 1000), new Date(Date.now() - 10 * 60 * 1000));
+  utimesSync(marker, new Date(Date.now() - 13 * 60 * 1000), new Date(Date.now() - 13 * 60 * 1000));
   modelHook(dir, { hook_event_name: 'PostToolUse', tool_name: 'WebFetch', agent_type: 'aidlc-team:researcher', tool_input: {} });
   assert.match(run(dir, ['next']).out, /^research for U-1/, 'a stale marker is not refreshed: the researcher is gone');
   modelHook(dir, { hook_event_name: 'PreToolUse', tool_name: 'Agent', tool_input: { subagent_type: 'aidlc-team:researcher', prompt: '# Research for U-1', model: 'sonnet' } });

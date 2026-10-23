@@ -3,7 +3,7 @@ type: Design
 title: Hook mechanics
 description: How the plugin's hooks reach the pinned CLI, what each one checks, and how repeated denials escalate.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T12:00:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T18:15:00Z }
 sources:
   - id: cc-hooks
     resource: https://code.claude.com/docs/en/hooks
@@ -29,7 +29,7 @@ sources:
 - **secrets** (Edit, Write): new content matching a built-in secret pattern or one in `profile.security.secrets` is denied. Pattern lists sit in data, not in rules prose, so a project adds one without editing code.
 - **model** (Agent): a builder or reviewer (`subagent_type` ending in `:builder` or `:reviewer`) must name its unit `U-<n>` in the prompt and pass `model` equal to the card's (builder) or `models.review` (reviewer). It touches the unit's heartbeat (builder) or `reviewing` marker (reviewer) at launch, so `next` waits for an agent from its start. A researcher must pass `models.research`; its brief's first line names the doc, whose `researching` marker it touches.
 - **docs** (PostToolUse on a bundle file) returns that file's OKF errors as a block reason so the agent fixes them at once. Outside a `unit/*` worktree it also regenerates the indexes. When the edit wrote a `generated.at` more than `okf.stampSkew` seconds from the current UTC time (a local time marked `Z`), it rewrites the stamp to the current UTC second and tells the agent to re-read the file.
-- **heartbeat** (PostToolUse) touches `.git/aidlc/heartbeats/U-<n>` for a call in a `unit/*` worktree, except a reviewer's. A reviewer's calls keep `.git/aidlc/reviewing/U-<n>` fresh, and a researcher's its `researching` marker, which the model hook creates when the reviewer starts and `review record` removes, so `next` waits for a review in flight and no longer.
+- **heartbeat** (PreToolUse and PostToolUse) keeps the mark of the builder, reviewer or researcher in flight fresh, and after a call marks an owner prompt the guard recorded as `ran` ([Agents in flight](in-flight.md), [Approvals](approvals.md#owner-prompts)).
 - **steer** (Stop) blocks with `next`'s line when the action is autonomous. It lets the stop through:
   - at a human gate, or while builders run;
   - when `stop_hook_active` is true;
@@ -37,7 +37,6 @@ sources:
   - when `next`'s action is the stopping point the owner set with `aidlc mode --stop`.
 - **prompt** (UserPromptSubmit): a prompt that is exactly `approve <doc>…` runs `approve` as the owner before the lead reads it, and passes the prompt on with what it stamped or the error as `additionalContext`; any other prompt passes unchanged ([0011](../decisions/0011-plain-word-approval.md)).[^cc-hooks]
 - **status** (SessionStart) returns `aidlc status` and one resume line, at most 1,000 chars: the run mode and the last owner prompt come first.
-- **heartbeat** (PostToolUse) also marks an owner prompt the guard recorded as `ran` ([Approvals](approvals.md#owner-prompts)).
 - **denied** (PermissionDenied, Bash) records a command auto mode refused, with the commit `HEAD` was on, in `.git/aidlc/host-denied.json` (the last five).[^cc-hooks] While `HEAD` stays there, `next` hands that action to the owner instead of demanding it again ([State](state.md#next)), so steer lets the stop through.
 
 # Escalation
