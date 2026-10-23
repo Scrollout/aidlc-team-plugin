@@ -40,8 +40,9 @@ test('U23/AC-2 U23/AC-3 U23/AC-4 a question held for research is next; the brief
   assert.doesNotMatch(readFileSync(join(ROOT, 'plugin/cli/research.md'), 'utf8'), /https?:/, 'the plugin ships no source list');
   const out = brief.out.match(/writes it unchanged to (\S+)/)[1];
   assert.equal(out, 'docs/research/U-1-how-does-go-get-read-a.md');
+  assert.match(brief.out, /^The lead then runs `aidlc check docs\/research\/U-1-how-does-go-get-read-a\.md` and the project's own doc checks, and sends any finding back to you to fix; it never edits the digest itself\.$/m, 'a resend is the brief\'s step');
 
-  const digest = brief.out.split(/writes it unchanged to \S+\n/)[1].replace('<the question in a few words>', 'Go file proxy').replace('<the answer in one line>', 'It reads the module files.');
+  const digest = brief.out.split(/never edits the digest itself\.\n/)[1].replace('<the question in a few words>', 'Go file proxy').replace('<the answer in one line>', 'It reads the module files.');
   write(dir, { [out]: digest });
   commit(dir, 'research for U-1');
   assert.match(run(dir, ['next']).out, /^build U-1/, 'researched once: the answered hold no longer holds U-1');

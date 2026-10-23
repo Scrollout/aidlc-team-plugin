@@ -15,6 +15,7 @@ Model: {{model}}
 Read at most {{max}} sources. Keep the whole digest, frontmatter included, under {{cap}} characters.
 
 ## Return this digest; the lead writes it unchanged to {{out}}
+The lead then runs `aidlc check {{out}}` and the project's own doc checks, and sends any finding back to you to fix; it never edits the digest itself.
 ---
 type: Research
 title: <the question in a few words>

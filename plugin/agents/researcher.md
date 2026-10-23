@@ -21,4 +21,4 @@ You research one question. The brief is in your prompt: the question, the projec
 - Give two or three real options with their trade-offs for this project. Do not recommend one unless the sources settle it; then say which source does.
 
 # Return
-Only the digest, in the brief's format, under 4,000 characters. Nothing before or after it.
+Only the digest, in the brief's format, the whole file within the brief's cap. Nothing before or after it.
