@@ -370,6 +370,7 @@
     "archEdge": "{{from}} -> {{to}}: {{reason}}",
     "gateMerged": "merged {{unit}} as {{sha}}\n",
     "gateKept": "kept {{path}}: {{error}}\n",
+    "gateKeptDirty": "it has uncommitted changes to tracked files",
     "gateLogEntry": "- **Update** {{unit}} {{title}} merged.",
     "ciTrailer": "merge {{sha}} lacks the {{trailer}} trailer",
     "ciScope": "merge {{sha}} of {{unit}} changes {{path}}, outside its scope",

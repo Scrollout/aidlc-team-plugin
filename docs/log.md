@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** M5 U46 built: after a merge, a builder worktree with clean tracked files is removed even when locked; one with uncommitted tracked changes is kept and named ([Merge mechanics](design/gate.md#trial-merge)). Release 0.53.0.
 - **Update** M5 U45 built: the status hook records a `/clear`, and `next` asks for one only when none happened since the last merge ([Resume](design/resume.md#between-intents)). Release 0.52.0.
 - **Update** M5 U44 built: a level's `needs` refuses its run while a variable is unset, and its `skip` pattern fails a level or proof-revert run that skipped a test, as `GATE-SKIP` ([Merge mechanics](design/gate.md#details)). Release 0.51.0.
 - **Update** M5 U43 built: plan lint reports `PLAN-SLICE` for an intent with no AC at the top level that runs, unless it says `slice`, and for a multi-module unit tested only at the first level ([Plan lint](design/plan-lint.md)). Release 0.50.0.

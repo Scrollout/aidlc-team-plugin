@@ -272,7 +272,10 @@ export const commands = {
     const holder = git(cwd, 'worktree', 'list', '--porcelain').split('\n\n').find((w) => w.includes(`branch refs/heads/${branchOf(unit.id)}`));
     if (holder) {
       const path = holder.split('\n')[0].replace(/^worktree /, '');
-      try { git(cwd, 'worktree', 'remove', path); } catch (e) { output += msg('gateKept', { path, error: e.message.split('\n')[0] }); }
+      // Clean tracked files: the host's lock on an agent worktree is no reason to keep it; uncommitted work is.
+      const dirty = tryGit(path, 'status', '--porcelain', '--untracked-files=no');
+      if (dirty) output += msg('gateKept', { path, error: msg('gateKeptDirty', {}) });
+      else try { git(cwd, 'worktree', 'remove', '--force', '--force', path); } catch (e) { output += msg('gateKept', { path, error: e.message.split('\n')[0] }); }
     }
     tryGit(cwd, 'branch', '-q', '-D', branchOf(unit.id));
     // The board follows a merge; it is best effort and never fails one (docs/design/board.md).

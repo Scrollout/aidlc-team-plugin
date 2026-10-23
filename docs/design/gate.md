@@ -14,7 +14,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T07:00:00Z }
 `aidlc merge U-<n>` runs in the lead's checkout on the base:
 1. A temporary worktree at the base tip merges `unit/U-<n>` with `--no-ff --no-commit`. A conflict fails with `GATE-CONFLICT`: the builder merges the base into its branch and reports again.
 2. Every condition of [Verification](verification.md) runs on that merged tree. The bundle indexes and log, and `profile.regen` commands for `profile.shared` files, are updated there.
-3. Only when all pass, the merge is committed with `Unit`, `Card` and `Review` trailers and the base fast-forwards to it. The unit's worktree and branch are then removed.
+3. Only when all pass, the merge is committed with `Unit`, `Card` and `Review` trailers and the base fast-forwards to it. The unit's worktree and branch are then removed: a worktree whose tracked files are clean goes even when the host locked it (agent worktrees are locked), one with uncommitted tracked changes is kept and named.
 Nothing touches the base until every check passes, so a failed gate leaves no half merge.
 
 # Codes
