@@ -4,6 +4,7 @@
 * [Approvals](approvals.md) - How the owner approves intents, requirements, units and decisions, what makes an approval stale, what the lead may approve for them, and how owner prompts are recorded.
 * [Board](board.md) - An optional one-way projection of derived state onto GitHub issues and a GitHub Project, written by deterministic code at zero model tokens.
 * [CLI](cli.md) - The aidlc commands, their exit codes and the terse output format.
+* [Deployment and operation](operations.md) - Draft - how the grid's Deployment and Operation rows run after an intent merges - deploy check, release, smoke, rollback, runbook and feedback - with the commands from the project profile.
 * [Everyday paths](paths.md) - Fixes without an intent, changes mid-flight, shared files, pushing and base health, cleanup, adopting an existing project, and removing the plugin.
 * [Grid](grid.md) - The AI-DLC rows, the plan-execute-validate loop in each cell, lanes and the doc types each row produces.
 * [Hook mechanics](hooks.md) - How the plugin's hooks reach the pinned CLI, what each one checks, and how repeated denials escalate.
