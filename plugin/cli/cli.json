@@ -386,6 +386,8 @@
     "scopeOut": "{{path}} is outside the scope of {{unit}}",
     "scopeShared": "{{path}} is written by merge",
     "planShared": "{{unit}} scope {{glob}} names a file only merge writes",
+    "planSliceIntent": "{{unit}} has no AC at the top level {{level}}: no unit tests it end to end",
+    "planSliceUnit": "{{unit}} crosses modules {{modules}} but tests only at the {{level}} level",
     "planGenerated": "{{unit}} scope names {{has}} but not {{lacks}}: a generator links them",
     "planUntracked": "{{unit}} scope names {{path}}, which exists but git does not track: a builder cannot commit it",
     "planDecision": "{{unit}} touches the one-way door {{door}} and links no decision",
@@ -550,6 +552,7 @@
     "intentFile": "^(I-\\d+)(?:-[^/]*)?\\.md$",
     "dropped": "dropped",
     "twoWay": "twoWay",
+    "slice": "slice",
     "decisionType": "Decision",
     "interfaces": "Interfaces",
     "codes": {
@@ -596,6 +599,10 @@
       "PLAN-DEPENDS": {
         "level": "error",
         "fix": "add the other unit to depends, or move the AC to that unit"
+      },
+      "PLAN-SLICE": {
+        "level": "error",
+        "fix": "add an AC at the top level to one of the intent's units (or slice: \"<why no end-to-end AC>\" on the intent), and test a unit that crosses modules at the integration level or higher"
       },
       "PLAN-GENERATED": {
         "level": "error",

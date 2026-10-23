@@ -3,7 +3,7 @@ type: Design
 title: Grid
 description: The AI-DLC rows, the plan-execute-validate loop in each cell, lanes and the doc types each row produces.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T21:50:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T06:40:00Z }
 ---
 
 # Rows
@@ -75,7 +75,7 @@ Globs: `**` spans folders, `*` and `?` stay inside one, and a pattern without `/
 # Tests
 Tests are the Source row's second output, derived from the ACs written in Units, so they are planned before any code exists.
 - Each AC declares a level, e.g. `AC-2 (integration): …`. `profile.levels` maps each level to `paths` globs and a `run` command; the plugin defaults define `unit`, `integration` and `e2e`. The gate checks that the tagged test lives where its level says.
-- Behaviour that crosses a module or the network needs `integration` or higher; unit tests alone prove only local logic.
+- Behaviour that crosses a module or the network needs `integration` or higher; unit tests alone prove only local logic. Each intent has an AC at the top level ([Plan lint](plan-lint.md), `PLAN-SLICE`).
 - A fix unit always has one AC: a regression test that fails before the fix.
 - Quick lane adds no tests but runs the existing ones.
 
