@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-23
 
+- **Creation** [M4 scripted pilot report](pilot/m4-4-report.md): a pilot with no owner present (`tests/evals/pilot.mjs` and a headless lead) saw U33, U37, U38 and the 0.46.1 stop fix hold; U34 was not reached; it found the fix-round bug fixed in 0.46.2.
 - **Update** 0.46.2: a `fix` verdict starts a fix round even while the last builder's heartbeat is fresh; only a builder launched after the verdict makes the unit `building` ([Agents in flight](design/in-flight.md)). Found by the scripted pilot.
 - **Creation** [M4 pilot 3 report](pilot/m4-3-report.md): U36, U37 and U39 held on 0.46.0; U34 and U38 were not exercised; three bugs fixed in 0.46.1; generated files in a scope go to the [M4](roadmap/m4.md) candidates.
 - **Update** 0.46.1, three fixes from the third M4 pilot: a stopped builder's last calls no longer read as a restart (a launch mark decides, [Agents in flight](design/in-flight.md)); a bundle-root link to a decision clears `PLAN-DECISION`; `next` offers a delegated re-approval only when every unit keeps its ACs, as `approve --auto` requires ([Approvals](design/approvals.md)).
