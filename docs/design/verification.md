@@ -3,7 +3,7 @@ type: Design
 title: Verification
 description: The inner loop (hooks), the merge gate, the reviewer's output contract and the CI mode.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T12:20:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T13:10:00Z }
 sources:
   - id: cc-hooks
     resource: https://code.claude.com/docs/en/hooks
@@ -63,7 +63,7 @@ How a review runs, and why there is no separate architecture focus: [Skill and a
 The skill and agent prompts are code coupled to a model version. `tests/evals/` holds a fixture project with seeded defects (an AC without a real test, an out-of-scope edit, an injection, a missing authz check). The reviewer must find each one; the builder must stop on the interface-change fixture. Run before every release and on every model change; a miss blocks the release.
 
 # Later
-- M2: proof-revert (with the production change reverted, every AC test must fail) and security content patterns, cut from M1 to keep it small (owner, 2026-10-22).
-- M3: an optional CI evaluator agent on pushes.
+- M3: proof-revert, planned as U28 ([M3](../roadmap/m3.md)), and security content patterns, cut from M1 to keep it small (owner, 2026-10-22).
+- Later: an optional CI evaluator agent on pushes.
 
 [^cc-hooks]: Claude Code hooks reference

@@ -3,7 +3,7 @@ type: Design
 title: Overview
 description: Goals, non-goals, budgets, repo layout and glossary of the plugin.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T13:10:00Z }
 sources:
   - id: cc-host
     resource: https://code.claude.com/docs/en/plugins/host-marketplace
@@ -59,7 +59,7 @@ sequenceDiagram
 | Skill body / agent prompt | 3 KB each |
 | Skill and agent descriptions | 300 chars each |
 | Unit card | 6,000 chars |
-| CLI source (`plugin/cli/`) | 3,000 lines |
+| CLI source (`plugin/cli/`) | 3,400 lines |
 | Hook timeout | 10 s explicit, `onFailure: "block"` on blocking hooks |
 | Blocking hook run time | 500 ms, median of 5 calls on a small project |
 
