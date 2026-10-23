@@ -3,7 +3,7 @@ type: Design
 title: State
 description: How the CLI derives progress from git and docs, how approvals work, and how next picks the one allowed step.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T19:50:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T22:00:00Z }
 ---
 
 # Sources of truth
@@ -53,29 +53,11 @@ Intents, requirements, units and one-way-door decisions carry the owner's approv
 10. Building with a stale heartbeat ([Agents in flight](in-flight.md)) and no report → restart its builder. A merged unit still in a worktree → stop its builder, remove the worktree.
 11. Approved, unblocked units → build, on one line; up to `parallel.max` in flight, with scopes disjoint from units in flight.
 12. Builders running → wait.
-13. Intent merged, untagged → release with the owner; 4–12 serve the next one meanwhile.
+13. Intent merged, untagged → release with the owner; 4–12 serve the next one meanwhile. All released → the owner clears the lead's session first ([Resume](resume.md#between-intents)).
 
 An owner gate in steps 2–5 holds back only the units that wait on its docs: `next` first returns an action of steps 6–11 for the other units, then the gate. A held unit (`hold`, by the owner, or by the lead with a reason while it parks a question) gets no action until the hold is released. An action auto mode refused at the current commit ([Hooks](hooks.md)) goes to the owner: `aidlc approve <docs>` for a delegated approval, else the refused command.
 
 `aidlc status` prints it as a short table; SessionStart injects it (max 1,000 chars).
 
 # Surviving a clear, crash or new session
-Nothing that matters lives only in the conversation; all below is on disk before the turn ends.
-| Could be lost | Where it lives instead |
-|---|---|
-| Owner's answers during elaboration | the draft intent/unit doc: the lead writes each answer before asking the next question; open ones stay under `## Open questions` |
-| Owner instructions about the plan ("hold U-4", "U-2 first") | plan fields set by `aidlc hold`, `aidlc priority` |
-| Owner run mode (unattended, a stopping point, where to report) | `run` in the personal profile, set by the owner command `aidlc mode`; `status` shows it |
-| Builder's work | WIP commits on `unit/U-<n>` after each passing test |
-| Builder's report | `.git/aidlc/reports/U-<n>.json`, written by the builder's `aidlc report U-<n>` |
-| Reviewer's verdict | the reviewer runs `aidlc review record` itself; the lead never relays it |
-| Which builders are running | a heartbeat file per unit, touched by a hook in its worktree |
-| A merge cut off midway | detected from `MERGE_HEAD`; `next` says abort or continue |
-
-On resume (SessionStart `startup`, `resume`, `clear`, `compact`):
-1. The hook injects `aidlc status` plus one line: load the `aidlc` skill and run `aidlc next`.
-2. A unit with a fresh heartbeat is still running: wait, don't start a second builder.
-3. A unit with a stale heartbeat and no report is interrupted: `next` restarts its builder from the same card, told to continue from the branch's last commit.
-4. Reports and verdicts on disk count as if the old session had received them.
-
-Result: after a clear, `next` returns the same action it would have returned before, with no duplicate builder and no lost work.
+Everything that matters is on disk before a turn ends: [Resume](resume.md).

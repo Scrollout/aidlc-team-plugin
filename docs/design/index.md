@@ -13,6 +13,7 @@
 * [Plan lint](plan-lint.md) - The checks aidlc check runs on intents and units before the owner approves them, each with its code.
 * [Profile and templates](profile.md) - The project profile, rule layers, the template engine and how the CLI is vendored and pinned.
 * [Requirements and architecture checks](architecture.md) - Lasting requirements as their own docs, and architecture rules as checks that fail a merge, so a project cannot drift from its intended shape.
+* [Resume](resume.md) - How the lead survives a clear, a crash or a new session - what lives on disk instead of the conversation - and why the owner clears the lead between intents.
 * [Review rounds](review-rounds.md) - What review record does with a verdict - fix rounds and their limit, send-backs, and which focus passes still count after a fix.
 * [Skill and agents](prompts.md) - What the lead's skill and the builder and reviewer prompts say, how a review is picked and run, and why the prompts restate no enforced rule.
 * [State](state.md) - How the CLI derives progress from git and docs, how approvals work, and how next picks the one allowed step.
