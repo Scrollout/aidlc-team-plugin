@@ -97,13 +97,13 @@ export function renderCard(cwd, unitId) {
     acs: proseLines(doc.lines, doc.body).filter(([, t]) => AC_LINE.test(t)).map(([n]) => doc.lines[n - 1].trim()),
     scope: atBase.scope,
     // Interface links resolved from the unit doc's folder to repo paths, as `git show <base>:<path>` takes them.
-    interfaces: [...new Set([...doc.lines.slice(doc.body).join('\n').matchAll(LINK)]
-      .map((m) => relPath(top, m[1].startsWith('/') ? join(bundle, m[1]) : resolve(dirname(unit.file), m[1]))))],
+    interfaces: [...new Set([...section(doc, 'Interfaces').filter((l) => !l.match(LINK)).map((l) => l.trim().replace(/^[-*]\s+/, '')),
+      ...[...doc.lines.slice(doc.body).join('\n').matchAll(LINK)].map((m) => relPath(top, m[1].startsWith('/') ? join(bundle, m[1]) : resolve(dirname(unit.file), m[1])))])], // plain lines as written
     reserves: atBase.reserves,
     requirements: list(doc.fm.requirements).map(reqId).flatMap((id) => plan.requirements.filter((r) => reqId(r.id) === id)
-      .map((r) => msg('cardRequirement', { id, path: relPath(top, r.file) }))),
+      .map((r) => msg('cardRequirement', { id: r.id, path: relPath(top, r.file) }))), // as the file names it
     fixes: [fixes.length ? msg('cardFixes', { list: fixes.join('') }) : '', answered.length ? msg('cardAnswered', { list: answered.join('') }) : ''].join(''),
-    proof: [[...new Set(Object.values(withDefaults(profile).levels).flatMap((l) => list(l?.paths)))].join(', ')].filter(Boolean),
+    proof: [Object.entries(withDefaults(profile).levels).filter(([, l]) => l?.run && list(l.paths).length).map(([level]) => level).join(', ')].filter(Boolean),
     runs: Object.entries(withDefaults(profile).levels).filter(([, l]) => l?.run).map(([level, l]) => ({ level, run: l.run })),
     checks: (profile.modules ?? []).filter((m) => modules.has(m.id ?? m.name) && m.check).map((m) => ({ module: m.id ?? m.name, check: m.check })),
     outOfScope: section(doc, 'Out of scope'),

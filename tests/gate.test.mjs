@@ -294,7 +294,7 @@ test('U28/AC-2 U28/AC-3 a test-only, quick-lane or run-less unit skips the proof
   const runless = setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'] } } } });
   assert.match(merge(runless).out, /^proof skipped: no level run holds a tagged test$/m);
   const card = run(setup(), ['card', 'U-1']).out;
-  assert.match(card, /^The merge gate reverts your changes outside tests\/\*\* and runs again each level above that holds one of your tagged tests: each must fail\.$/m);
+  assert.match(card, /^The merge gate reverts your changes outside the test paths of unit and reruns those levels: each one holding a tagged test must then fail\.$/m);
   assert.match(readFileSync(join(import.meta.dirname, '../plugin/agents/builder.md'), 'utf8'), /The merge gate checks this: it reverts your code and reruns the levels of your tagged tests, and a test that still passes refuses the merge\./);
 });
 
