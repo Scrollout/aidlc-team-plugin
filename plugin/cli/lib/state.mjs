@@ -326,6 +326,12 @@ function unitWork(st, scope) {
   if (reported) return action('act', 'nextReview', { unit: reported.id, focus: reported.focus, model: st.profile.models.review });
   const lost = live.find((u) => u.state === 'building' && !u.fresh);
   if (lost) return action('act', 'nextRestart', { unit: lost.id, branch: branchOf(lost.id) });
+  // A builder still holding a merged unit's worktree: the merge could not remove it.
+  const trees = git(st.cwd, 'worktree', 'list', '--porcelain').split('\n\n');
+  for (const u of st.units.filter((x) => x.state === 'merged')) {
+    const tree = trees.find((w) => w.split('\n').includes(`branch refs/heads/${branchOf(u.id)}`));
+    if (tree) return action('act', 'nextWorktreeLeft', { unit: u.id, path: tree.split('\n')[0].replace(/^worktree /, ''), branch: branchOf(u.id) });
+  }
 
   const inFlight = [...scope.filter((u) => ['building', 'reviewing'].includes(u.state)), ...backAtWork];
   const max = st.profile.parallel.max;
@@ -343,7 +349,17 @@ function unitWork(st, scope) {
   return null;
 }
 
+// An action auto mode refused at this commit goes to the owner, not demanded again (docs/design/state.md#next).
+export const hostDeniedFile = (cwd) => join(aidlcDir(cwd), S.hostDenied);
 export function nextAction(st) {
+  const next = pickAction(st);
+  const refused = next.kind === 'act' && /: aidlc ([^()]+)$/.exec(next.line)?.[1];
+  const head = refused && tryGit(st.cwd, 'rev-parse', 'HEAD');
+  if (!refused || !(readJson(hostDeniedFile(st.cwd)) ?? []).some((d) => d.head === head && String(d.command).includes(refused))) return next;
+  return action('human', 'nextHostDenied', { refused, command: refused.split(' ').filter((a) => a !== S.autoFlag).join(' ') });
+}
+
+function pickAction(st) {
   if (st.mergeUnit) return action('act', 'nextContinueMerge', { unit: st.mergeUnit });
   const unreleased = st.intents.find((i) => i.state === 'merged'); // its release does not hold back the next intent
   const intent = st.intents.find((i) => !['released', 'merged'].includes(i.state)) ?? unreleased;

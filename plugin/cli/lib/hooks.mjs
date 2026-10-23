@@ -7,7 +7,7 @@ import { msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
 import { inside, readPlan } from './grid.mjs';
-import { aidlcDir, baseOf, bump, bundleOf, git, heartbeatFresh, nextAction, ownerLines, readState, runtimeFile, tryGit, writeJson } from './state.mjs';
+import { aidlcDir, baseOf, bump, bundleOf, git, heartbeatFresh, hostDeniedFile, nextAction, ownerLines, readState, runtimeFile, tryGit, writeJson } from './state.mjs';
 import { directAllowed, mergeWritten } from './gate.mjs';
 
 const H = config.hooks;
@@ -271,7 +271,16 @@ function status(input, cwd) {
   return JSON.stringify({ hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: out + tail } });
 }
 
-const HOOKS = { guard, scope, secrets, model, docs, heartbeat, steer, status };
+// Auto mode refused a command: kept with the commit it was refused at, so next hands it to the owner.
+function denied(input, cwd) {
+  const command = String(input.tool_input?.command ?? '');
+  if (!command) return allow();
+  const kept = [...(readJson(hostDeniedFile(cwd)) ?? []), { command, head: tryGit(cwd, 'rev-parse', 'HEAD'), at: new Date().toISOString() }];
+  writeJson(hostDeniedFile(cwd), kept.slice(-S.hostDeniedKept));
+  return allow();
+}
+
+const HOOKS = { guard, scope, secrets, model, docs, heartbeat, steer, status, denied };
 
 export const commands = {
   hook(args, ctx) {

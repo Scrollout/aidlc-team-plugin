@@ -50,24 +50,24 @@ Intents, requirements, units and one-way-door decisions carry the owner's approv
 7. Verdict `escalate` in any focus → the owner decides; their re-approval marks its findings answered on the card and sends the unit straight to review. Verdict `fix` → fix round (none while its builder runs); the card lists the findings. A verdict older than the builder's last report no longer counts.
 8. A builder that reported `stopped` → the lead fixes the spec (re-approved) or the cause; the builder restarts from the card.
 9. Reported, not reviewed → review, naming the first required focus without a `pass` for the current diff ([Skill and agents](prompts.md#review)).
-10. Building with a stale heartbeat (over 2 min) and no report → restart its builder.
+10. Building with a stale heartbeat (over 2 min) and no report → restart its builder. A merged unit still in a worktree → stop its builder, remove the worktree.
 11. Approved, unblocked units → build, on one line; up to `parallel.max` in flight, with scopes disjoint from units in flight.
 12. Builders running → wait.
 13. Intent merged, untagged → release with the owner; meanwhile 4–12 serve the next one.
 
-An owner gate in steps 2–5 holds back only the units that wait on its docs (the docs themselves, their intent, requirements or dependencies): `next` first returns an action of steps 6–11 for the other units, then the gate. A held unit (`hold`, by the owner, or by the lead with a reason while it parks a question) gets no action until the hold is released. A builder launched after a `stopped` report reads as building.
+An owner gate in steps 2–5 holds back only the units that wait on its docs: `next` first returns an action of steps 6–11 for the other units, then the gate. A held unit (`hold`, by the owner, or by the lead with a reason while it parks a question) gets no action until the hold is released. A builder launched after a `stopped` report reads as building. An action auto mode refused at the current commit ([Hooks](hooks.md)) goes to the owner: `aidlc approve <docs>` for a delegated approval, else the refused command.
 
-`aidlc status` prints the same state as a short table; SessionStart injects it (max 1,000 chars) in place of handoff files.
+`aidlc status` prints the same state as a short table; SessionStart injects it (max 1,000 chars).
 
 # Surviving a clear, crash or new session
-Rule: nothing that matters lives only in the conversation. Everything below is on disk before the turn that produced it ends.
+Nothing that matters lives only in the conversation; all below is on disk before the turn ends.
 | Could be lost | Where it lives instead |
 |---|---|
 | Owner's answers during elaboration | the draft intent/unit doc: the lead writes each answer before asking the next question; open ones stay under `## Open questions` |
 | Owner instructions about the plan ("hold U-4", "U-2 first") | plan fields set by `aidlc hold`, `aidlc priority`, never chat memory |
 | Owner run mode (unattended, a stopping point, where to report) | `run` in the personal profile, set by the owner command `aidlc mode`; `status` shows it |
-| Builder's work | WIP commits on `unit/U-<n>` after every passing test; the worktree is on disk |
-| Builder's report | `aidlc report U-<n>` writes `.git/aidlc/reports/U-<n>.json`; the builder runs it before returning |
+| Builder's work | WIP commits on `unit/U-<n>` after each passing test |
+| Builder's report | `.git/aidlc/reports/U-<n>.json`, written by the builder's `aidlc report U-<n>` |
 | Reviewer's verdict | the reviewer runs `aidlc review record` itself; the lead never relays it |
 | Which builders are running | a heartbeat file per unit, touched by a PostToolUse hook in its worktree |
 | A merge cut off midway | detected from `MERGE_HEAD`; `next` says abort or continue |
@@ -76,6 +76,6 @@ On resume (SessionStart `startup`, `resume`, `clear`, `compact`):
 1. The hook injects `aidlc status` plus one line: load the `aidlc` skill and run `aidlc next`.
 2. A unit with a fresh heartbeat (under 2 min) is still running: wait, don't start a second builder.
 3. A unit with a stale heartbeat and no report is interrupted: `next` restarts its builder from the same card, told to continue from the branch's last commit.
-4. Reports and verdicts on disk are picked up as if the old session had received them.
+4. Reports and verdicts on disk count as if the old session had received them.
 
 Result: after a clear, `next` returns the same action it would have returned before, with no duplicate builder and no lost work.

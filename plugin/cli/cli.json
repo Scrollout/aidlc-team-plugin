@@ -263,6 +263,8 @@
     "nextHeld": "{{units}} on hold: the owner releases them",
     "nextRelease": "{{intent}} is merged: release with the owner",
     "nextIdle": "all intents released: elaborate the next intent with the owner",
+    "nextHostDenied": "auto mode refused aidlc {{refused}}: the owner runs aidlc {{command}} (the owner confirms the prompt)",
+    "nextWorktreeLeft": "{{unit}} is merged but {{path}} still holds {{branch}}: stop its builder, then git worktree remove --force --force {{path}} and git branch -D {{branch}}",
     "nextLine": "{{line}}\n",
     "statusIntent": "{{id}} {{state}} {{title}}\n",
     "statusUnit": "  {{id}} {{state}} {{title}}\n",
@@ -564,6 +566,8 @@
     "cards": "cards",
     "heartbeats": "heartbeats",
     "heartbeatMs": 120000,
+    "hostDenied": "host-denied.json",
+    "hostDeniedKept": 5,
     "branchPrefix": "unit/",
     "trailer": "Unit",
     "human": "human:",
@@ -850,7 +854,8 @@
       "docs",
       "heartbeat",
       "steer",
-      "status"
+      "status",
+      "denied"
     ],
     "agents": [
       ":builder",

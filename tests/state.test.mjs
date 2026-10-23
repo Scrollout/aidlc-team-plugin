@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readdirSync, utimesSync } from 'node:fs';
 import { join } from 'node:path';
-import { aidlc, approve, branch, commit, git, intentDoc, makeRepo, merge, read, review, run, unitDoc, write } from './state-repo.mjs';
+import { aidlc, approve, branch, commit, git, intentDoc, makeRepo, merge, read, review, run, tempDir, unitDoc, write } from './state-repo.mjs';
 import { parseDoc } from '../plugin/cli/lib/okf.mjs';
 import { approval, hashDoc } from '../plugin/cli/lib/state.mjs';
 
@@ -394,4 +394,18 @@ test('U18/AC-2 next offers a merge only when each AC has a tagged test on the br
   git(dir, 'switch', '-q', 'main');
   review(dir, 'U-1', 'pass');
   assert.match(run(dir, ['next']).out, /^merge U-1/);
+});
+
+test('U20/AC-3 a builder still holding a merged unit\'s worktree is named: stop it and remove the worktree', () => {
+  const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['src/**'] }) });
+  approve(dir, 'I-1', 'U-1');
+  branch(dir, 'U-1');
+  merge(dir, 'U-1');
+  const tree = join(tempDir('builder-'), 'wt');
+  git(dir, 'worktree', 'add', '-q', tree, 'unit/U-1');
+  const r = run(dir, ['next']);
+  assert.equal(r.code, 0, 'the lead\'s step');
+  assert.match(r.out, /^U-1 is merged but .+wt still holds unit\/U-1: stop its builder, then git worktree remove --force --force .+wt and git branch -D unit\/U-1/);
+  git(dir, 'worktree', 'remove', '--force', tree);
+  assert.doesNotMatch(run(dir, ['next']).out, /still holds/);
 });
