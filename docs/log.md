@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-23
 
+- **Creation** [M4 pilot report](pilot/m4-report.md): badges, owner blocks, the card fixes and upgrade output held on 0.38.0; a send-back with no reason on the card goes to the [M4](roadmap/m4.md) candidates.
 - **Update** M4 U31 built (owner's suggestion): a `next` line for an owner step starts with 👉, a refusal or stop with ⛔, the lead's steps with none; the skill has the lead end its message with the owner's step alone, or ✅ ([State](design/state.md), [Skill and agents](design/prompts.md)). Release 0.38.0.
 - **Update** M4 U30 built: `upgrade` says when the CLI was already at that release and nothing changed, which release it copied from, and the commands that fetch a newer one ([CLI](design/cli.md)). Release 0.37.0.
 - **Update** M4 U29 built: the card names requirements as their files do (`R-057`), keeps the plain lines of a unit's `Interfaces` section, and its proof note names the levels instead of their globs ([Unit card](design/unit-card.md)). Release 0.36.0.
