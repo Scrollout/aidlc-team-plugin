@@ -315,11 +315,13 @@ test('U44/AC-1 U44/AC-2 a level that needs an unset variable fails before it run
   const r = merge(needs);
   assert.equal(r.code, 1);
   assert.match(r.out, /GATE-RUN .*level unit needs AIDLC_TEST_UNSET_DB, which is unset: its tests would skip/);
-  const skipped = setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: 'node --test', skip: '^ℹ skipped [1-9]' } } }, files: { ...CODE, 'tests/add.test.mjs': TEST['tests/add.test.mjs'].replace("test('U-1/AC-1 adds'", "test('U-1/AC-1 adds', { skip: !process.env.AIDLC_TEST_UNSET_DB }") } });
+  // A runner that reports a skip only once the unit's code is reverted: the level run passes, proof-revert skips.
+  const probe = 'node -e "if (!require(\'fs\').existsSync(\'src/add.mjs\')) console.log(\'SKIP: no code to test\')"';
+  const skipped = setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: probe, skip: '^SKIP:' } } } });
   const s = merge(skipped);
-  assert.equal(s.code, 1);
-  assert.match(s.out, /GATE-SKIP .*level unit skipped a test: ℹ skipped 1/);
-  assert.equal(merge(setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: 'node --test', skip: '^ℹ skipped [1-9]' } } } })).code, 0, 'no skip: the merge passes');
+  assert.equal(s.code, 1, s.out);
+  assert.match(s.out, /GATE-SKIP .*level unit skipped a test: SKIP: no code to test/);
+  assert.doesNotMatch(s.out, /GATE-PROOF/, 'a skip is reported as a skip, not as a test that still passes');
 });
 
 test('U46/AC-1 after a merge a locked builder worktree with clean tracked files is removed; one with uncommitted tracked changes is kept and named', () => {
