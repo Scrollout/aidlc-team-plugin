@@ -24,13 +24,17 @@ function proofRevert(tree, card, paths, levels, tagged, bundleRel, add) {
   const runs = Object.entries(levels ?? {}).filter(([, l]) => l?.run && [...tagged].some((f) => list(l.paths).some((g) => matches(f, g))));
   const skip = card?.lane === 'quick' ? 'proofQuick' : !code.length ? 'proofTests' : !runs.length ? 'proofNoRun' : null;
   if (skip) return { levels: [], note: msg('proofSkipped', { why: msg(skip, {}) }) };
-  const staged = new Set(git(tree, 'ls-files', '--', ...code).split('\n')); // the merge result, kept in the index
+  // Index and files both go back, so a run that checks `git diff` sees a clean tree, not the revert.
+  const merged = git(tree, 'write-tree');
+  const staged = new Set(git(tree, 'ls-files', '--', ...code).split('\n'));
   const atBase = code.filter((f) => tryGit(tree, 'cat-file', '-e', `HEAD:${f}`) !== null);
-  if (atBase.length) git(tree, 'restore', '--source=HEAD', '--worktree', '--', ...atBase);
-  for (const f of code.filter((x) => !atBase.includes(x))) rmSync(join(tree, f), { force: true });
+  if (atBase.length) git(tree, 'restore', '--source=HEAD', '--staged', '--worktree', '--', ...atBase);
+  const added = code.filter((x) => !atBase.includes(x) && staged.has(x));
+  if (added.length) git(tree, 'rm', '-q', '-f', '--', ...added);
   for (const [level, l] of runs) if (shell(tree, l.run)) add('GATE-PROOF', 'gateProof', { level });
+  git(tree, 'read-tree', merged);
   const back = code.filter((f) => staged.has(f));
-  if (back.length) git(tree, 'restore', '--worktree', '--', ...back);
+  if (back.length) git(tree, 'checkout-index', '-f', '--', ...back);
   for (const f of code.filter((x) => !staged.has(x))) rmSync(join(tree, f), { force: true });
   return { levels: runs.map(([level]) => level), note: '' };
 }

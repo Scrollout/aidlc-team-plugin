@@ -297,3 +297,14 @@ test('U28/AC-2 U28/AC-3 a test-only, quick-lane or run-less unit skips the proof
   assert.match(card, /^The merge gate reverts your changes outside tests\/\*\* and runs again each level above that holds one of your tagged tests: each must fail\.$/m);
   assert.match(readFileSync(join(import.meta.dirname, '../plugin/agents/builder.md'), 'utf8'), /The merge gate checks this: it reverts your code and reruns the levels of your tagged tests, and a test that still passes refuses the merge\./);
 });
+
+test('U28/AC-1 a run that checks git diff is not fooled by the revert', () => {
+  const profile = { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: 'node --test && git diff --exit-code' } } };
+  const r = merge(setup({ profile, files: { ...CODE, ...VACUOUS } }));
+  assert.match(r.out, /GATE-PROOF level unit still passes/, r.out);
+  const ok = setup({ profile });
+  const m = merge(ok);
+  assert.equal(m.code, 0, m.out);
+  assert.equal(read(ok, 'src/add.mjs'), CODE['src/add.mjs']);
+  assert.equal(git(ok, 'status', '--porcelain'), '');
+});

@@ -7,7 +7,7 @@ sources:
   - id: aws-aidlc
     resource: https://github.com/awslabs/aidlc-workflows
     title: AWS AI-DLC workflows
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T14:00:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T14:20:00Z }
 ---
 
 # Trial merge
@@ -25,7 +25,7 @@ Nothing touches the base until every check passes, so a failed gate leaves no ha
 - **Lane:** the lane of the diff's paths must not exceed the card's lane.
 - **AC tests:** a file in the merged tree, outside the docs bundle, contains `U-<n>/AC-<k>` for each AC. With `profile.levels.<level>.paths` set, the file must match them, read from the merged tree's profile: a unit whose scope holds the profile can add a test location, and its reviewers see that change.
 - **Test runs:** every `profile.levels.<level>.run`, from the merged tree's profile, runs there in full on every lane; a failure is `GATE-RUN`. The merge commit records them in a `Tested: <level>, …` trailer (`none` without one). AWS AI-DLC likewise runs one owner-approved verification command at every unit and requires a verified pass.[^aws-aidlc]
-- **Proof-revert:** when every other check so far passed, the unit's changed paths outside every level's `paths`, the bundle and `.aidlc/` are put back as at the base (added files removed), and each level whose `paths` hold one of the unit's tagged tests runs again: one that still passes is `GATE-PROOF`. The merge result is then restored. A quick-lane unit, a test-only diff or no such level skips it, and the merge says so. The trailer `Proof: <level>, …` records it (`none` when skipped).
+- **Proof-revert:** when every other check so far passed, the unit's changed paths outside every level's `paths`, the bundle and `.aidlc/` are put back as at the base in the index and the files (added files removed), so a run that checks `git diff` sees a clean tree, and each level whose `paths` hold one of the unit's tagged tests runs again: one that still passes is `GATE-PROOF`. The merge result is then restored. A quick-lane unit, a test-only diff or no such level skips it, and the merge says so. The trailer `Proof: <level>, …` records it (`none` when skipped).
 - **Quick lane ACs:** a quick unit has no tagged tests, so each command its ACs name in a code span (`make <target>`, `npm run <target>`, `just <target>`, from `grid.runners`) runs on the merged tree; a failure is `GATE-AC`. A claim with no run behind it counts for nothing.[^aws-aidlc]
 - **Checks:** `check` of every module whose `paths` the diff touches, then `security.check` and `architecture.checks`, run in the merged tree. Commands come from the owner's profile and run through the shell; git never does.
 - **Review:** the last `general` verdict is `pass`, for the current diff hash and the current card hash. Each focus whose globs the diff touches needs its own `pass`. A verdict file's `focus` defaults to `general`.
