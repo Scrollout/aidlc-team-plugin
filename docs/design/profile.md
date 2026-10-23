@@ -7,7 +7,7 @@ sources:
   - id: aws-aidlc
     resource: https://github.com/awslabs/aidlc-workflows/blob/main/docs/guide/glossary.md
     title: AWS AI-DLC glossary (copy and native channels)
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T17:30:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T19:00:00Z }
 ---
 
 # Profile (`.aidlc/profile.json`, tracked)
@@ -57,15 +57,15 @@ Merge rules:
   - requirement, intent, unit and decision templates in `.aidlc/templates/docs/`;
   - `.github/workflows/aidlc.yml`.
 
-  It also adds `.aidlc/local/` and the builders' worktree folder `.claude/worktrees/` to `.gitignore`, adds the worktree folder to every other ignore file the project has (`init.ignoreFiles`: `.dockerignore`, `.prettierignore`, …) so tree-walking tools and tests skip it, and sets `worktree.baseRef: "head"` in `.claude/settings.json`.
-- `review.fixRounds` is how many fix rounds a review focus gets since the unit's last approval before the next `fix` goes to the owner (default 3).
+  It also adds `.aidlc/local/` and the builders' worktree folder `.claude/worktrees/` to `.gitignore`, adds the worktree folder to every other ignore file the project has (`init.ignoreFiles`: `.dockerignore`, `.prettierignore`, …) so tools and tests skip it, and sets `worktree.baseRef: "head"` in `.claude/settings.json`.
+- `review.fixRounds`: fix rounds per focus since the unit's last approval before a `fix` escalates (default 3). `decisions.paths`: one-way-door globs (default `lanes.full`, [Approvals](approvals.md)).
 - `research.sources` lists sources the owner trusts for the researcher, and `research.max` its source budget (default 8); `models.research` its model ([0010](../decisions/0010-research-and-advice.md)).
 - When the project has a lint target (`make lint`, `npm run lint` or `just lint`, from `grid.runners` and `init.lintTargets`), `init` offers it as a module check, for the owner to add to `modules[].check`; it writes nothing for it.
-- `init` takes its answers as flags (`--name`, `--base`, `--bundle`); the skill asks the owner first. It never overwrites: an existing file is left alone and listed, and `init` exits 2 until the owner reruns with `--overwrite <path>` for each file to replace. Adding lines to `.gitignore` or a missing key to `.claude/settings.json` is not an overwrite.
+- `init` takes its answers as flags (`--name`, `--base`, `--bundle`); the skill asks the owner first. It never overwrites: it lists an existing file and exits 2 until the owner reruns with `--overwrite <path>` for it. Adding lines to `.gitignore` or a missing key to `.claude/settings.json` is not an overwrite.
 - `init --adopt` keeps an existing bundle (the folder whose `index.md` has `okf_version`), records `adopted: <HEAD>` and reports, without changing anything:
   - spec errors and house-rule warnings;
   - leftovers of other tools: unknown top-level dot folders, and commit trailer keys other than the standard and our own.
-- Neutral by construction: templates never contain the plugin's name; a test greps rendered output.
+- Neutral by construction: templates never name the plugin; a test greps rendered output.
 
 # Vendoring
 `init` and `upgrade` copy `plugin/cli/` to `.aidlc/bin/` with a `VERSION` file holding the plugin version. `upgrade` replaces `.aidlc/bin/` and nothing else, refuses to run from the pinned copy itself, and refuses an older plugin than the pinned `VERSION` unless the owner passes `--downgrade`. It copies a release: the installed plugin, which Claude Code copies from a tagged version, or a plugin checkout with no uncommitted change under its plugin folder; a dirty checkout is refused unless the owner passes `--dirty`, as when developing the plugin itself. AWS AI-DLC likewise installs only from a versioned release.[^aws-aidlc] CI, git hooks and the plugin's own hooks run `node .aidlc/bin/aidlc.mjs`, so the project's pinned version is the one that judges it.
