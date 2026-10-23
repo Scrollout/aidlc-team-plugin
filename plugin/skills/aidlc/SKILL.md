@@ -13,13 +13,13 @@ description: Run the AI-DLC loop in this repo - set it up, elaborate intents and
 When a command or hook refuses, its message names the fix: apply it. When it says `escalate`, stop and tell the owner.
 
 # Doing each action
-- **elaborate, draft**: copy the template from `.aidlc/templates/docs/`. Ask the owner one question at a time, offering 2-3 options with your recommendation, and write each answer into the doc before asking the next. Keep unanswered points under `# Open questions`. State the why of every doc. Run `aidlc check <file>`, commit the doc, then run `next`.
+- **elaborate, draft**: copy the template from `.aidlc/templates/docs/`. Ask the owner one question at a time, offering 2-3 options with your recommendation; write each answer into the doc before the next. Keep unanswered points under `# Open questions`. State the why of every doc. Run `aidlc check <file>`, commit the doc, then run `next`.
 - **build**: for each unit run `aidlc card U-<n>`. Then start every builder in one message: Agent, `subagent_type: aidlc-team:builder`, `model` set to the card's `Model:`, prompt `Build U-<n>.` followed by the whole card.
 - **fix round, restart**: as for build, with the prompt starting `Fix round for U-<n>.` or `Continue U-<n> from the last commit on its branch.`
 - **review**: run `aidlc card U-<n>`. Start one Agent, `subagent_type: aidlc-team:reviewer`, `model` as `next` names it, prompt `Review U-<n>, focus <focus>.` followed by the whole card.
-- **wait**: end the turn; agent notifications wake you.
+- **wait**: end the turn; agent notices wake you.
 - **merge**: run the command; apply each finding's fix.
-- **research**: `aidlc research <id>` prints the brief; start one Agent, `subagent_type: aidlc-team:researcher`, `model` as `next` names it, the brief as prompt. File its digest as the brief says, commit, draft the decision.
+- **research**: `aidlc research <id>` prints the brief; start one Agent, `subagent_type: aidlc-team:researcher`, `model` as `next` names it, the brief as prompt. File the digest as the brief says, draft the decision from it, commit both at once.
 - **release**: tell the owner; they tag and release.
 
 Agents record their own results; never relay or rewrite them.

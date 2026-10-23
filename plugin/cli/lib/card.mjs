@@ -136,7 +136,7 @@ function researchBrief(cwd, id) {
   return render(readFileSync(file, 'utf8'), {
     doc: doc.id, question, questionYaml: JSON.stringify(question), file: relPath(cwd, doc.file), model: st.profile.models.research,
     index: relPath(cwd, join(st.bundle, config.okf.index)), stack: C.stack.filter((f) => existsSync(join(cwd, f))),
-    sources: list(st.profile.research?.sources), max: st.profile.research.max, out: relPath(cwd, join(st.bundle, config.grid.research, `${doc.id}-${slug}.md`)),
+    sources: list(st.profile.research?.sources), max: st.profile.research.max, cap: config.okf.sizeCaps.Research ?? config.okf.sizeCapDefault, out: relPath(cwd, join(st.bundle, config.grid.research, `${doc.id}-${slug}.md`)),
   }, file);
 }
 

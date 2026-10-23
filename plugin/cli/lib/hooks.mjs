@@ -183,6 +183,8 @@ function model(input, cwd) {
   const agent = String(t.subagent_type ?? '');
   if (agent.endsWith(H.researcher)) {
     const expected = withDefaults(loadProfile(cwd).profile).models.research;
+    const doc = String(t.prompt ?? '').match(new RegExp(H.researchFor, 'm'))?.[1];
+    if (t.model === expected && doc) touch(join(aidlcDir(cwd), S.researching, doc)); // in flight from launch, as a builder
     return t.model === expected ? allow() : deny(cwd, input, 'MODEL-MISMATCH', 'modelMismatch', { agent, unit: msg('researchFor', {}), model: t.model ?? 'none', expected, source: msg('modelSourceResearch', {}) });
   }
   const role = H.agents.find((a) => agent.endsWith(a));
@@ -241,9 +243,10 @@ function heartbeat(input, cwd) {
     writeJson(promptsFile(cwd), prompts.map((p) => (p === asked ? { ...p, ran } : p)));
     bump(cwd, config.retro.interventions, { command: asked.command, at: ran }); // the owner's command ran
   }
-  if (String(input.agent_type ?? '').endsWith(H.agents[1])) {
-    const dir = join(aidlcDir(cwd), S.reviewing);
-    for (const unit of existsSync(dir) ? readdirSync(dir) : []) if (heartbeatFresh(cwd, unit, Date.now(), S.reviewing)) touch(join(dir, unit));
+  const kind = String(input.agent_type ?? '').endsWith(H.agents[1]) ? S.reviewing : String(input.agent_type ?? '').endsWith(H.researcher) ? S.researching : null;
+  if (kind) {
+    const dir = join(aidlcDir(cwd), kind);
+    for (const unit of existsSync(dir) ? readdirSync(dir) : []) if (heartbeatFresh(cwd, unit, Date.now(), kind)) touch(join(dir, unit));
     return allow(); // a reviewer reading a builder's worktree must not keep that builder alive
   }
   const unit = unitOfBranch(cwd);

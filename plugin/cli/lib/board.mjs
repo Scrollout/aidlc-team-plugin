@@ -75,7 +75,7 @@ function wanted(cwd, st, gh) {
   };
   return [
     ...st.intents.map((i) => one(i, 'intent', i.state, null)),
-    ...st.units.map((u) => one(u, 'unit', u.fm.hold && B.holdable.includes(u.state) ? B.held : u.state, u.fm.intent ? `intent:${u.fm.intent}` : null)),
+    ...st.units.map((u) => one(u, 'unit', u.held && B.holdable.includes(u.state) ? B.held : u.state, u.fm.intent ? `intent:${u.fm.intent}` : null)),
   ];
 }
 

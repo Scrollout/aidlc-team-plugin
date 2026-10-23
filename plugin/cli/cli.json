@@ -265,6 +265,7 @@
     "nextRestart": "restart the builder of {{unit}} from branch {{branch}} (card: aidlc card {{unit}})",
     "nextBuild": "build {{units}} (cards: {{cards}})",
     "nextWait": "wait for the builders and reviewers of {{units}}",
+    "nextWaitResearch": "wait for the researcher of {{doc}}",
     "nextHeld": "{{units}} on hold: the owner releases them",
     "nextRelease": "{{intent}} is merged: release with the owner",
     "nextResearch": "research for {{doc}}: researcher on {{model}} (brief: aidlc research {{doc}})",
@@ -645,7 +646,8 @@
     "unitType": "Unit",
     "decisionType": "Decision",
     "gates": "gates",
-    "reviewing": "reviewing"
+    "reviewing": "reviewing",
+    "researching": "researching"
   },
   "card": {
     "template": "card.md",
@@ -889,6 +891,7 @@
     ],
     "unitPattern": "\\bU-\\d+\\b",
     "researcher": ":researcher",
+    "researchFor": "^# Research for (\\S+)",
     "denials": "denials.json",
     "escalateAt": 3,
     "git": {
