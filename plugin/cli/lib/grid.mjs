@@ -2,7 +2,7 @@
 // Settings, codes and messages come from cli.json.
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative, resolve, sep } from 'node:path';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { at, config, fieldPaths, list, UsageError, relPath } from './config.mjs';
 import { msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
@@ -108,6 +108,13 @@ export function readPlan(bundle) {
     acs: acsOf(u.doc),
   }));
   return { intents: readDocs(bundle, GRID.intents, GRID.intentFile).map(cite), units, requirements };
+}
+
+// The .md files a doc's body links to, resolved from its folder; with a heading, only the links in that section.
+function linksOf(d, heading) {
+  let on = !heading;
+  const lines = proseLines(d.doc.lines, d.doc.body).map(([n]) => d.doc.lines[n - 1]).filter((l) => (/^#{1,6}\s/.test(l) ? ((on = !heading || new RegExp(`^#{1,6}\\s+${heading}\\s*$`, 'i').test(l)), false) : on));
+  return [...lines.join('\n').matchAll(/\]\(([^)#\s]+\.md)(?:#[^)]*)?\)/g)].map((m) => resolve(dirname(d.file), m[1]));
 }
 
 function finding(code, file, line, key, data, base) {
@@ -240,6 +247,16 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
       const mapping = map ? msg('planBoardMap', { pairs: Object.entries(map).map(([from, to]) => msg('planBoardPair', { from, to })).join(', ') }) : '';
       add('PLAN-BOARD', u, 1, 'planBoard', { path, field, example, mapping });
     }
+  }
+  // A unit at a one-way door links a Decision doc or says why it is two-way (docs/design/approvals.md). Focus globs
+  // alone are no door: they get a deeper review, not a decision.
+  const doorGlobs = list(profile.decisions?.paths ?? profile.lanes?.full);
+  for (const u of units.filter((x) => !x.fm[GRID.twoWay])) {
+    const links = linksOf(u);
+    if (links.some((f) => parseDoc(existsSync(f) ? readFileSync(f, 'utf8') : '').fm?.type === GRID.decisionType)) continue;
+    const owned = (path) => u.scope.some((g) => overlaps('/' + path, g));
+    const door = doorGlobs.find((g) => u.scope.some((s) => overlaps(s, g))) ?? linksOf(u, GRID.interfaces).map((f) => relPath(base, f)).find(owned);
+    if (door) add('PLAN-DECISION', u, keyLine(u, 'scope'), 'planDecision', { door });
   }
   for (const c of cycles(units)) add('PLAN-DAG', c.unit, keyLine(c.unit, 'depends'), 'depCycle', { cycle: c.text });
 

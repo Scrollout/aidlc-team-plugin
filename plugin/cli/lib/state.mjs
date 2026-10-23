@@ -8,7 +8,7 @@ import { config, done, isMap, list, readJson, UsageError, relPath } from './conf
 import { msg } from './template.mjs';
 import { loadProfile } from './profile.mjs';
 import { parseDoc } from './okf.mjs';
-import { acsOf, computeLane, overlaps, readPlan, reqId as reqIdOf } from './grid.mjs';
+import { acsOf, computeLane, lintPlan, overlaps, readPlan, reqId as reqIdOf } from './grid.mjs';
 
 const S = config.state;
 
@@ -471,6 +471,12 @@ export const commands = {
     const at = new Date().toISOString(); // to the millisecond: review rounds are compared with it
     const auto = args.includes(S.autoFlag) && delegated(cwd);
     let out = '';
+    // A unit at a one-way door is approved only with its decision or a twoWay reason (docs/design/approvals.md).
+    const doors = lintPlan(bundle, profile, { base: cwd }).filter((f) => f.code === S.doorCode);
+    for (const name of args.filter((a) => a !== S.autoFlag)) {
+      const door = doors.find((f) => f.path === relPath(cwd, findDoc(cwd, bundle, name)));
+      if (door) throw new UsageError(msg('approveDoor', door));
+    }
     for (const name of args.filter((a) => a !== S.autoFlag)) {
       const file = findDoc(cwd, bundle, name);
       const text = readFileSync(file, 'utf8');

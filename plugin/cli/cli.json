@@ -247,6 +247,7 @@
     "laneUsage": "usage: lane <unit>|--diff <range>",
     "unknownUnit": "no unit {{name}} in {{dir}}",
     "noEmail": "git config user.email is not set",
+    "approveDoor": "{{code}} {{message}} → {{fix}}",
     "notApprovable": "{{name}} is not an intent, unit or decision doc",
     "approved": "approved {{doc}}\n",
     "noDoc": "no doc {{name}}",
@@ -384,6 +385,7 @@
     "scopeOut": "{{path}} is outside the scope of {{unit}}",
     "scopeShared": "{{path}} is written by merge",
     "planShared": "{{unit}} scope {{glob}} names a file only merge writes",
+    "planDecision": "{{unit}} touches the one-way door {{door}} and links no decision",
     "scopeApproval": "{{path}}: approvals and verified_hash are the owner's",
     "secretFound": "{{path}} contains what looks like a secret",
     "modelUnit": "{{agent}} prompt names no unit",
@@ -543,6 +545,9 @@
     "unitFile": "^(U-\\d+)(?:-[^/]*)?\\.md$",
     "intentFile": "^(I-\\d+)(?:-[^/]*)?\\.md$",
     "dropped": "dropped",
+    "twoWay": "twoWay",
+    "decisionType": "Decision",
+    "interfaces": "Interfaces",
     "codes": {
       "PLAN-DAG": {
         "level": "error",
@@ -587,6 +592,10 @@
       "PLAN-DEPENDS": {
         "level": "error",
         "fix": "add the other unit to depends, or move the AC to that unit"
+      },
+      "PLAN-DECISION": {
+        "level": "error",
+        "fix": "link a Decision doc from the unit (template .aidlc/templates/docs/decision.md: options, choice, why), for the owner to approve with it, or set twoWay: \"<why it is easy to undo>\" in its frontmatter"
       }
     },
     "runners": { "make": "Makefile", "npm run": "package.json", "just": "justfile" },
@@ -659,6 +668,7 @@
     ],
     "unitType": "Unit",
     "decisionType": "Decision",
+    "doorCode": "PLAN-DECISION",
     "gates": "gates",
     "reviewing": "reviewing",
     "badges": {

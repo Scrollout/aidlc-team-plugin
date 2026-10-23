@@ -195,3 +195,24 @@ test('U22/AC-1 U22/AC-2 a scope holding the profile may add its test location; a
     ['PLAN-TEST', 'docs/units/U-2-b.md', 'AC-1 (unit) has no test location: no scope glob overlaps levels.unit.paths tests/unit/**'],
   ], 'U-1 adds its test location to the profile with its test; a module keyed by name counts');
 });
+
+test('U37/AC-1 a unit at a one-way door links a decision or says why it is two-way, else PLAN-DECISION names the door', () => {
+  const linked = (scope, body, fm = '') => `---\ntype: Unit\ntitle: A\ndescription: A.\nscope: ${JSON.stringify(scope)}\n${fm}---\n\n# Acceptance criteria\n\n- AC-1 (unit): x.\n\n${body}\n`;
+  const dir = project({
+    'docs/decisions/0001-keep-table.md': '---\ntype: Decision\ntitle: 0001 Keep the table\ndescription: Keep it.\n---\n\n# Decision\nKeep.\n',
+    'docs/architecture/api.md': '---\ntype: Design\ntitle: API\ndescription: The API.\n---\n\n# Shape\nx\n',
+    'docs/units/U-1-a.md': linked(['migrations/0001.sql'], ''),
+    'docs/units/U-2-b.md': linked(['migrations/0002.sql'], '# Logical\n- [Keep the table](../decisions/0001-keep-table.md)'),
+    'docs/units/U-3-c.md': linked(['migrations/0003.sql'], '', 'twoWay: "a new table the next migration can drop"\n'),
+    'docs/units/U-4-d.md': linked(['docs/architecture/api.md', 'src/a/**'], '# Interfaces\n- [API](../architecture/api.md)'),
+    'docs/units/U-5-e.md': linked(['src/b/**'], '# Interfaces\n- [API](../architecture/api.md)'),
+  });
+  const doors = (profile) => lintPlan(join(dir, 'docs'), profile, { base: dir }).filter((f) => f.code === 'PLAN-DECISION').map((f) => [f.path, f.message]);
+  assert.deepEqual(doors({ lanes: { full: ['migrations/**'] } }), [
+    ['docs/units/U-1-a.md', 'U-1 touches the one-way door migrations/** and links no decision'],
+    ['docs/units/U-4-d.md', 'U-4 touches the one-way door docs/architecture/api.md and links no decision'],
+  ], 'a linked decision or twoWay clears it; consuming an interface is no door');
+  assert.deepEqual(doors({ lanes: { full: ['migrations/**'] }, decisions: { paths: ['schema/**'] } }).map(([p]) => p), ['docs/units/U-4-d.md'], 'decisions.paths replaces lanes.full');
+  assert.deepEqual(doors({ focus: { security: ['migrations/**'] } }).map(([p]) => p), ['docs/units/U-4-d.md'], 'a focus glob alone is no door');
+  assert.match(lintPlan(join(dir, 'docs'), { lanes: { full: ['migrations/**'] } }, { base: dir }).find((f) => f.code === 'PLAN-DECISION').fix, /Decision doc .*options, choice, why.*twoWay: "<why it is easy to undo>"/);
+});

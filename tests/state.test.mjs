@@ -519,3 +519,18 @@ test('U35/AC-1 a pass carrying a CONFIRMED finding is recorded as fix and says w
   assert.deepEqual([last().verdict, last().findings.length], ['fix', 2]);
   assert.match(run(dir, ['card', 'U-1']).out, /## Findings to fix[\s\S]*CONFIRMED a\/x:1: CONFIRMED claim/);
 });
+
+test('U37/AC-2 U37/AC-3 approve refuses a unit at a one-way door with no decision; the plan approval names the linked decision', () => {
+  const door = { lanes: { full: ['migrations/**'] } };
+  const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['migrations/**'] }) }, door);
+  approve(dir, 'I-1');
+  const r = run(dir, ['approve', 'U-1']);
+  assert.equal(r.code, 64);
+  assert.match(r.err, /PLAN-DECISION U-1 touches the one-way door migrations\/\*\* and links no decision → link a Decision doc/);
+  commit(dir, 'decide', {
+    'docs/decisions/0001-keep.md': '---\ntype: Decision\ntitle: 0001 Keep\ndescription: Keep it.\n---\n\n# Decision\nKeep.\n',
+    [U(1)]: read(dir, U(1)) + '\n# Logical\n- [Keep](../decisions/0001-keep.md)\n',
+  });
+  assert.match(run(dir, ['next']).out, /^👉 ask the owner to approve the plan: aidlc approve U-1 docs\/decisions\/0001-keep\.md/);
+  approve(dir, 'U-1', 'docs/decisions/0001-keep.md');
+});
