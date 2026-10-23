@@ -7,7 +7,7 @@ import { msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
 import { inside, readPlan } from './grid.mjs';
-import { aidlcDir, baseOf, bump, bundleOf, git, heartbeatFresh, hostDeniedFile, nextAction, ownerLines, readState, runtimeFile, tryGit, writeJson } from './state.mjs';
+import { aidlcDir, baseOf, bump, bundleOf, commands as owner, git, heartbeatFresh, hostDeniedFile, nextAction, ownerLines, readState, runtimeFile, tryGit, writeJson } from './state.mjs';
 import { directAllowed, mergeWritten } from './gate.mjs';
 
 const H = config.hooks;
@@ -62,6 +62,7 @@ function recordPrompt(cwd, input, command) {
 }
 
 const allow = () => '{}';
+const approveWords = (text) => String(text ?? '').trim().match(new RegExp(H.approveWords, 'i'))?.[1].trim().split(/\s+/);
 function deny(cwd, input, code, key, data, decision = 'deny') {
   const message = msg(key, data);
   let reason = msg('hookDeny', { code, message, fix: H.codes[code].fix });
@@ -87,6 +88,8 @@ function guard(input, cwd) {
   const top = git(cwd, 'rev-parse', '--show-toplevel');
   const bundleRel = relPath(top, bundleOf(top, profile));
   const branch = tryGit(cwd, 'rev-parse', '--abbrev-ref', 'HEAD');
+  // A scheduled prompt reaches the prompt hook as if typed: the lead may not schedule an approval (decision 0011).
+  if (H.scheduled.includes(input.tool_name)) return approveWords(input.tool_input?.prompt) ? deny(cwd, input, 'GUARD-SCHEDULE', 'guardSchedule', {}) : allow();
   for (const argv of segments(String(input.tool_input?.command ?? ''))) {
     // The owner answers a permission prompt for an owner command; without prompts (bypass) it stays a `!` command (decision 0009).
     const owner = ownerCommand(argv);
@@ -285,7 +288,16 @@ function denied(input, cwd) {
   return allow();
 }
 
-const HOOKS = { guard, scope, secrets, model, docs, heartbeat, steer, status, denied };
+// The owner typed exactly `approve <doc>…`: stamped as the owner before the lead reads the prompt (decision 0011).
+function prompt(input, cwd) {
+  const docs = approveWords(input.prompt);
+  if (!docs) return allow();
+  let context;
+  try { context = msg('promptApproved', { out: owner.approve(docs, { cwd }).output }); } catch (e) { context = msg('promptApproveFailed', { error: e.message }); }
+  return JSON.stringify({ hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext: context } });
+}
+
+const HOOKS = { guard, prompt, scope, secrets, model, docs, heartbeat, steer, status, denied };
 
 export const commands = {
   hook(args, ctx) {

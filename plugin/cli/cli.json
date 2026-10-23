@@ -251,15 +251,15 @@
     "approved": "approved {{doc}}\n",
     "noDoc": "no doc {{name}}",
     "nextContinueMerge": "finish the merge of {{unit}}: aidlc merge {{unit}}, or git merge --abort",
-    "nextReapprove": "re-approve {{docs}} after their edits: aidlc approve {{docs}} (the owner confirms the prompt)",
+    "nextReapprove": "re-approve {{docs}} after their edits: aidlc approve {{docs}} (the owner confirms the prompt or types: approve {{docs}})",
     "nextNoIntent": "elaborate an intent with the owner in {{dir}}/I-1-<slug>.md, then ask for approval",
     "nextOpenDraft": "finish elaborating {{doc}} with the owner: {{points}} still open in {{file}}; then ask for approval",
-    "nextApproveIntent": "ask the owner to approve {{intent}}: aidlc approve {{intent}} (the owner confirms the prompt)",
+    "nextApproveIntent": "ask the owner to approve {{intent}}: aidlc approve {{intent}} (the owner confirms the prompt or types: approve {{intent}})",
     "nextDraftUnits": "draft the units of {{intent}} in {{dir}}/U-<n>-<slug>.md, then ask for the plan approval",
-    "nextApprovePlan": "ask the owner to approve the plan: aidlc approve {{units}} (the owner confirms the prompt)",
+    "nextApprovePlan": "ask the owner to approve the plan: aidlc approve {{units}} (the owner confirms the prompt or types: approve {{units}})",
     "nextMerge": "merge {{unit}}: aidlc merge {{unit}}",
     "nextUntagged": "{{unit}} has no test tagged {{tags}} on its branch: send the builder back (card: aidlc card {{unit}})",
-    "nextEscalated": "{{unit}} review escalated: the owner decides",
+    "nextEscalated": "{{unit}} review escalated: the owner decides. To keep the spec: aidlc approve {{unit}} (the owner confirms the prompt or types: approve {{unit}}); or change the spec first",
     "nextFixRound": "fix round for {{unit}}: builder (card: aidlc card {{unit}})",
     "nextReview": "review {{unit}}, focus {{focus}}: reviewer on {{model}} (card: aidlc card {{unit}})",
     "nextRestart": "restart the builder of {{unit}} from branch {{branch}} (card: aidlc card {{unit}})",
@@ -272,7 +272,7 @@
     "researchFor": "a research question",
     "modelSourceResearch": "the profile's models.research",
     "nextIdle": "all intents released: elaborate the next intent with the owner",
-    "nextHostDenied": "auto mode refused aidlc {{refused}}: the owner runs aidlc {{command}} (the owner confirms the prompt)",
+    "nextHostDenied": "auto mode refused aidlc {{refused}}: the owner runs aidlc {{command}} (the owner confirms the prompt or types: {{command}})",
     "nextWorktreeLeft": "{{unit}} is merged but {{path}} still holds {{branch}}: stop its builder, then git worktree remove --force --force {{path}} and git branch -D {{branch}}",
     "nextLine": "{{line}}\n",
     "statusIntent": "{{id}} {{state}} {{title}}\n",
@@ -313,7 +313,7 @@
     "planBoardAny": "<value>",
     "moduleUnknown": "{{unit}} names module {{module}}, which profile.modules lacks (has: {{modules}})",
     "reqUnknown": "{{doc}} cites {{req}}, which does not exist",
-    "nextApproveRequirements": "ask the owner to approve the requirements the plan cites: aidlc approve {{reqs}} (the owner confirms the prompt)",
+    "nextApproveRequirements": "ask the owner to approve the requirements the plan cites: aidlc approve {{reqs}} (the owner confirms the prompt or types: approve {{reqs}})",
     "statusUncovered": "not yet delivered: {{reqs}}\n",
     "initWrote": "wrote {{path}}\n",
     "initLint": "{{command}} is the project's lint target → add it as a module check (modules[].check in .aidlc/profile.json), so the gate runs it\n",
@@ -356,7 +356,7 @@
     "ciScope": "merge {{sha}} of {{unit}} changes {{path}}, outside its scope",
     "ciCommit": "commit {{sha}} changes {{path}} outside a unit",
     "pushed": "pushed {{base}} to {{remote}}\n",
-    "fixWrote": "wrote {{path}}, {{lane}} lane{{#each approve}}; the owner approves it: aidlc approve {{this}} (the owner confirms the prompt){{/each}}\n",
+    "fixWrote": "wrote {{path}}, {{lane}} lane{{#each approve}}; the owner approves it: aidlc approve {{this}} (the owner confirms the prompt or types: approve {{this}}){{/each}}\n",
     "fixUsage": "usage: fix \"<title>\"|--from-issue <n> --scope <glob>… [--requirement R-<n>…]",
     "hookDeny": "{{code}} {{message}} → {{fix}}",
     "hookEscalate": "escalate: {{reason}} (denied {{count}} times this turn; stop and tell the owner)",
@@ -436,6 +436,9 @@
     "notDelegated": "{{name}} is not in a class the owner delegated (approvals.auto in .aidlc/local/profile.json): the owner approves it",
     "nextGated": "the gate refused {{unit}} ({{codes}}; aidlc merge {{unit}} lists them): fix what the lead can, ask the owner for the rest",
     "guardOwner": "{{command}}: the owner answers this prompt",
+    "guardSchedule": "a scheduled prompt that approves",
+    "promptApproved": "The owner typed this approval; the prompt hook ran it:\n{{out}}Commit the stamps and continue with aidlc next; do not run aidlc approve for it.",
+    "promptApproveFailed": "The owner typed an approval, but it failed: {{error}}. Tell the owner; do not run aidlc approve for it.",
     "delegateUsage": "usage: delegate <class>… | off, classes: reapprove, quick",
     "delegated": "the lead may approve: {{classes}}\n"
   },
@@ -775,7 +778,7 @@
     ],
     "codes": {
       "GATE-APPROVAL": {
-        "fix": "the owner approves the unit: ! node .aidlc/bin/aidlc.mjs approve <unit>"
+        "fix": "the owner approves the unit: they type approve <unit>"
       },
       "GATE-DEPS": {
         "fix": "merge its dependencies first"
@@ -966,8 +969,11 @@
       "SCOPE-SHARED": {
         "fix": "leave indexes, logs and shared files to aidlc merge"
       },
+      "GUARD-SCHEDULE": {
+        "fix": "only the owner approves: they type approve <doc>"
+      },
       "SCOPE-APPROVAL": {
-        "fix": "only the owner approves, with ! node .aidlc/bin/aidlc.mjs approve"
+        "fix": "only the owner approves: they type approve <doc>"
       },
       "SECRET": {
         "fix": "keep secrets out of the repo; read them from the environment"
@@ -980,6 +986,11 @@
       }
     },
     "noPrompt": "bypassPermissions",
+    "approveWords": "^approve((?:\\s+[\\w./-]+)+)$",
+    "scheduled": [
+      "CronCreate",
+      "ScheduleWakeup"
+    ],
     "owner": [
       "approve",
       "upgrade",

@@ -3,7 +3,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash",
+        "matcher": "Bash|CronCreate|ScheduleWakeup",
         "hooks": [
           {
             "type": "command",
@@ -127,6 +127,21 @@
             "args": [
               "${CLAUDE_PLUGIN_ROOT}/hooks/run.mjs",
               "status"
+            ],
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/run.mjs",
+              "prompt"
             ],
             "timeout": 10
           }

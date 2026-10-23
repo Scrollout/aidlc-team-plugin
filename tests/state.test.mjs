@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readdirSync, utimesSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, utimesSync } from 'node:fs';
 import { join } from 'node:path';
 import { aidlc, approve, branch, commit, git, intentDoc, makeRepo, merge, read, review, run, tempDir, unitDoc, write } from './state-repo.mjs';
 import { parseDoc } from '../plugin/cli/lib/okf.mjs';
@@ -76,7 +76,7 @@ const SCENARIOS = {
     commit(dir, 'edit', { [U(1)]: read(dir, U(1)) + '\nMore text.\n' });
   }],
   'elaborating (intent not approved)': [/^ask the owner to approve I-1: aidlc approve I-1/, 2, () => {}],
-  'plan pending': [/^ask the owner to approve the plan: aidlc approve U-1 U-2 \(the owner confirms the prompt\)$/, 2, (dir) => approve(dir, 'I-1')],
+  'plan pending': [/^ask the owner to approve the plan: aidlc approve U-1 U-2 \(the owner confirms the prompt or types: approve U-1 U-2\)$/, 2, (dir) => approve(dir, 'I-1')],
   reviewed: [/^merge U-1: aidlc merge U-1/, 0, (dir) => {
     approve(dir, 'I-1', 'U-1', 'U-2');
     branch(dir, 'U-1');
@@ -323,7 +323,7 @@ test('U4/AC-3 delegated approvals: the lead re-approves and approves quick units
   approve(dir, 'I-1', 'U-1');
   write(dir, { [U(1)]: read(dir, U(1)).replace('Unit goal.', 'Unit goal, said better.') });
   commit(dir, 'edit U-1');
-  assert.match(run(dir, ['next']).out, /^re-approve U-1 after their edits: aidlc approve U-1 \(the owner confirms the prompt\)/);
+  assert.match(run(dir, ['next']).out, /^re-approve U-1 after their edits: aidlc approve U-1 \(the owner confirms the prompt or types: approve U-1\)/);
   assert.equal(run(dir, ['approve', '--auto', 'U-1']).code, 64, 'nothing delegated yet');
 
   write(dir, { '.aidlc/local/profile.json': { approvals: { auto: ['reapprove', 'quick'] } } });
@@ -408,4 +408,17 @@ test('U20/AC-3 a builder still holding a merged unit\'s worktree is named: stop 
   assert.match(r.out, /^U-1 is merged but .+wt still holds unit\/U-1: stop its builder, then git worktree remove --force --force .+wt and git branch -D unit\/U-1/);
   git(dir, 'worktree', 'remove', '--force', tree);
   assert.doesNotMatch(run(dir, ['next']).out, /still holds/);
+});
+
+test('U24/AC-3 every owner step names the words to type, an escalation included, and no message offers a ! command', () => {
+  const texts = (o) => (typeof o === 'string' ? [o] : o && typeof o === 'object' ? Object.values(o).flatMap(texts) : []);
+  const all = [...texts(JSON.parse(readFileSync(join(import.meta.dirname, '../plugin/cli/cli.json'), 'utf8'))), readFileSync(join(import.meta.dirname, '../plugin/hooks/run.mjs'), 'utf8')];
+  assert.deepEqual(all.filter((t) => /(^|[\s:`])! ?node\b/.test(t)), [], 'no ! command');
+  const dir = base();
+  assert.match(run(dir, ['next']).out, /^ask the owner to approve I-1: aidlc approve I-1 \(the owner confirms the prompt or types: approve I-1\)/);
+  approve(dir, 'I-1', 'U-1', 'U-2');
+  branch(dir, 'U-1');
+  review(dir, 'U-1', 'fix');
+  review(dir, 'U-1', 'fix');
+  assert.match(run(dir, ['next']).out, /^U-1 review escalated: the owner decides\. To keep the spec: aidlc approve U-1 \(the owner confirms the prompt or types: approve U-1\); or change the spec first/);
 });
