@@ -3,7 +3,7 @@ type: Design
 title: Approvals
 description: How the owner approves intents, requirements, units and decisions, what makes an approval stale, what the lead may approve for them, and how owner prompts are recorded.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T20:10:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T22:20:00Z }
 ---
 
 # Stamp
@@ -18,5 +18,5 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T20:10:00Z }
 - Auto mode's classifier may refuse the lead's `approve --auto` as self-approval, as it did twice in the [M2 pilot](../pilot/m2-interventions.md). The denied hook records it, and `next` then names `aidlc approve <docs>`, which reaches the owner as a permission prompt. The plugin writes no permission rules (owner's choice, 2026-10-23).
 
 # Owner prompts
-- When the guard raises a permission prompt for an owner command, it records the command and the tool call in `.git/aidlc/prompts.json` (the last five). The PostToolUse hook marks it `ran` when that call completes, which happens only after the owner said yes.
+- When the guard raises a permission prompt for an owner command, it records the command and the tool call in `.git/aidlc/prompts.json` (the last five). The PostToolUse hook marks it `ran` when that call completes, which happens only after the owner said yes. When the CLI itself refuses an owner command (a pinned copy's `upgrade`, a bad argument), it marks the prompt `refused` first, so a call that still ends well, as one followed by `; echo $?` does, is not counted as run.
 - `status` shows the last prompt and whether it ran, so after a clear or on another device the lead can tell an answered prompt from a pending one. A stamp whose prompt ran is the owner's: the lead never reverts it.

@@ -61,6 +61,17 @@ function recordPrompt(cwd, input, command) {
   writeJson(promptsFile(cwd), [...all, { id: input.tool_use_id ?? null, command, at: new Date().toISOString() }].slice(-H.promptsKept));
 }
 
+// The CLI refused an owner command: its prompt is `refused`, so a call that still ends well is not counted as run.
+export function ownerRefused(cwd, command) {
+  if (!existsSync(promptsFile(cwd))) return;
+  const prompts = readJson(promptsFile(cwd));
+  const asked = prompts.findLast((p) => p.command === command && !p.ran && !p.refused);
+  if (!asked) return;
+  const refused = new Date().toISOString();
+  writeJson(promptsFile(cwd), prompts.map((p) => (p === asked ? { ...p, refused } : p)));
+  bump(cwd, config.retro.ownerRefused, { command, at: refused });
+}
+
 const allow = () => '{}';
 const approveWords = (text) => String(text ?? '').trim().match(new RegExp(H.approveWords, 'i'))?.[1].trim().split(/\s+/);
 function deny(cwd, input, code, key, data, decision = 'deny') {
@@ -239,7 +250,7 @@ function touch(file) {
 // Runs as each call starts and ends, so a mark outlives the longest Bash call (docs/design/in-flight.md).
 function heartbeat(input, cwd) {
   const prompts = readJson(promptsFile(cwd));
-  const asked = input.hook_event_name !== H.before && input.tool_use_id && prompts?.find((p) => p.id === input.tool_use_id && !p.ran); // the owner may still refuse it
+  const asked = input.hook_event_name !== H.before && input.tool_use_id && prompts?.find((p) => p.id === input.tool_use_id && !p.ran && !p.refused); // the owner may still refuse it
   if (asked) {
     const ran = new Date().toISOString();
     writeJson(promptsFile(cwd), prompts.map((p) => (p === asked ? { ...p, ran } : p)));

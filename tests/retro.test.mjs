@@ -99,3 +99,22 @@ test('U26/AC-3 the retro lists approvals of the decisions the intent\'s docs cit
   assert.match(owner, /^ {2}\S+ approve 0001-pick by owner@example\.com$/m);
   assert.doesNotMatch(owner, /0002-other/, 'a decision no doc of the intent cites');
 });
+
+test('U42/AC-1 U42/AC-2 an owner command the CLI refuses is marked refused, not ran, and the retro lists it apart', () => {
+  const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), [U(1)]: unitDoc() });
+  approve(dir, 'I-1', 'U-1');
+  assert.equal(run(dir, ['retro', 'I-1']).code, 0, 'a first retro resets the counters');
+  write(dir, { '.git/aidlc/prompts.json': [{ id: 't1', command: 'mode sideways', at: '2026-10-23T10:00:00Z' }, { id: 't2', command: 'mode unattended', at: '2026-10-23T10:01:00Z' }] });
+  const cli = (args, input) => spawnSync(process.execPath, [join(ROOT, 'plugin/cli/aidlc.mjs'), ...args], { cwd: dir, encoding: 'utf8', input: input && JSON.stringify({ cwd: dir, ...input }) });
+  assert.equal(cli(['mode', 'sideways']).status, 64);
+  cli(['hook', 'heartbeat'], { hook_event_name: 'PostToolUse', tool_use_id: 't1' }); // `; echo $?` made the call end well
+  assert.equal(cli(['mode', 'unattended']).status, 0);
+  cli(['hook', 'heartbeat'], { hook_event_name: 'PostToolUse', tool_use_id: 't2' });
+  const prompts = JSON.parse(read(dir, '.git/aidlc/prompts.json'));
+  assert.ok(prompts[0].refused && !prompts[0].ran, 'the refused prompt');
+  assert.ok(prompts[1].ran && !prompts[1].refused);
+  const owner = run(dir, ['retro', 'I-1']).out.split('owner approvals and commands:\n')[1].split('proposals')[0];
+  assert.match(owner, /^ {2}\S+ refused by the CLI: mode sideways$/m);
+  assert.match(owner, /^ {2}\S+ mode unattended$/m);
+  assert.doesNotMatch(owner, /^ {2}\S+ mode sideways$/m);
+});

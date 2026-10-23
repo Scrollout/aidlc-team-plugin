@@ -93,7 +93,7 @@ export function ownerLines(cwd) {
   const run = readJson(personal(cwd))?.run;
   const prompt = readJson(join(aidlcDir(cwd), config.hooks.prompts))?.at(-1);
   return (run ? msg('statusRun', { run: msg('runLine', { mode: run.mode, stop: list(run.stop), report: list(run.report) }) }) : '')
-    + (prompt ? msg('statusPrompt', { command: prompt.command, state: prompt.ran ? config.hooks.promptStates[1] : config.hooks.promptStates[0], at: prompt.ran ?? prompt.at }) : '');
+    + (prompt ? msg('statusPrompt', { command: prompt.command, state: config.hooks.promptStates[prompt.ran ? 1 : prompt.refused ? 2 : 0], at: prompt.ran ?? prompt.refused ?? prompt.at }) : '');
 }
 
 // The text of a doc as last approved: the newest commit of it whose content matches its verified_hash.
