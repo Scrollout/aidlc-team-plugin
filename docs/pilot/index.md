@@ -6,4 +6,5 @@
 * [M2 re-pilot 2 report](m2-repilot2-report.md) - The fourth pilot, two parallel units on CLI 0.32.0 after U24 to U26 - wall time, tokens, plain-word approval, the research loop, every step outside next, the retro and each M2 exit criterion.
 * [M2 re-pilot interventions](m2-repilot-interventions.md) - Every step outside aidlc next in the M2 re-pilot on CLI 0.29.0, by the owner or the lead, with the cause and the change it needs, and the other findings of the run.
 * [M2 re-pilot report](m2-repilot-report.md) - The third pilot, two parallel units on CLI 0.29.0 after the M2 fixes - wall time, tokens, rounds, the researcher, the retro and each M2 exit criterion.
+* [M3 pilot report](m3-report.md) - The M3 pilot, three units on CLI 0.35.0 - project rules on the card, proof-revert on every merge and a demo of its refusal, the bug the demo found, tokens and each M3 exit criterion.
 * [Pilot interventions](interventions.md) - Every manual step in the M1 pilot, by the owner or by the lead outside aidlc next, and the release that fixed it or the M2 item it became.
