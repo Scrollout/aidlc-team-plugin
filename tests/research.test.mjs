@@ -98,3 +98,11 @@ test('U25/AC-2 a research question with <angle brackets> on a draft is no open p
   commit(dir, 'digest');
   assert.match(run(dir, ['next']).out, /^ask the owner to approve the plan: aidlc approve U-1/);
 });
+
+test('U27/AC-2 the research brief carries the project rules', () => {
+  const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), [U1]: unitDoc({ scope: ['sdk/**'] }), '.aidlc/rules/docs.md': 'Every doc starts with a **TL;DR:** line.\n' });
+  run(dir, ['hold', 'U-1', 'research:', 'which proxy?']);
+  commit(dir, 'hold');
+  const brief = run(dir, ['research', 'U-1']).out;
+  assert.match(brief, /^## Project rule: \.aidlc\/rules\/docs\.md\nEvery doc starts with a \*\*TL;DR:\*\* line\.$/m);
+});

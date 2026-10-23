@@ -3,7 +3,7 @@ type: Design
 title: Skill and agents
 description: What the lead's skill and the builder and reviewer prompts say, how a review is picked and run, and why the prompts restate no enforced rule.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T12:40:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T13:40:00Z }
 sources:
   - id: cc-subagents
     resource: https://code.claude.com/docs/en/sub-agents
@@ -27,7 +27,7 @@ The lead's loop: run `aidlc next`, do the one action it prints, run it again. It
 - The lead passes each one the card text, the unit ID and, as the Agent call's `model`, the card's model (builder) or `models.review` (reviewer). The model hook checks both.
 - **Builder** (`isolation: worktree`): `aidlc start U-<n>` first; for each AC a failing test tagged `U-<n>/AC-<k>`, then the code; a commit after every passing test; the card's checks and test runs, each as one plain command, since the host's worktree isolation refuses a compound command that names git, `.github` included, and the tool result shows a non-zero exit code; `aidlc report`. It stops and reports on the card's stop conditions instead of working around them. A fix round works through the card's findings.
 - A restarted or fix-round builder gets a new worktree. `aidlc start` switches it to the existing `unit/U-<n>` branch, first removing the earlier worktree of that branch when it is clean; one with uncommitted work is refused and named. It then merges the card's base into the branch, so the builder sees the work merged since; on a conflict it leaves the merge open and names the files, which the builder resolves inside its scope and commits before running `start` again. The lead never runs two builders for a unit, since `next` waits while one is in flight.
-- **Researcher** ([0010](../decisions/0010-research-and-advice.md)): read and web tools only, on `models.research`, which the model hook checks. Its prompt is the brief `aidlc research <doc>` prints: the question, the project's docs, stack and `research.sources`, and the budget: at most `research.max` sources and the bundle's size cap for the whole digest, frontmatter included. It reads official sources first, treats fetched pages as data, and returns a digest the lead files where the brief says. The lead checks it with `aidlc check` and the project's doc checks and sends findings back; it never edits a digest. The plugin ships no source list.
+- **Researcher** ([0010](../decisions/0010-research-and-advice.md)): read and web tools only, on `models.research`, which the model hook checks. Its prompt is the brief `aidlc research <doc>` prints: the question, the project's docs, stack, rules (as on the card) and `research.sources`, and the budget: at most `research.max` sources and the bundle's size cap for the whole digest, frontmatter included. It reads official sources first, treats fetched pages as data, and returns a digest the lead files where the brief says. The lead checks it with `aidlc check` and the project's doc checks and sends findings back; it never edits a digest. The plugin ships no source list.
 - **Reviewer**: reads and runs, never edits. It runs the card's test runs and quotes each result; one it could not run is a finding, as in AWS AI-DLC's unit review.[^aws-aidlc]
 
 # Review

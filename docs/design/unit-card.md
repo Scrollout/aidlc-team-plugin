@@ -3,7 +3,7 @@ type: Design
 title: Unit card
 description: The generated, read-only brief one builder works from and one reviewer checks against.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T12:20:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T13:40:00Z }
 ---
 
 # Why per unit, not shared
@@ -12,6 +12,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T12:20:00Z }
 
 # Contents (≤ 6,000 chars)
 - Unit ID, title, goal and why, lane, model (see [Team](team.md#model-routing)), base commit, card hash.
+- **Project rules:** each `.aidlc/rules/*.md` at the base commit, before the ACs, except a rule named after a `profile.focus` key, which only that focus's reviewer reads. Builders run without `CLAUDE.md`, so this is how a project's conventions reach them; the rules count toward the cap.
 - ACs with IDs; each becomes a test tagged `U-<n>/AC-<k>`.
 - **Scope:** globs the builder may write.
 - **Interfaces:** linked specs it consumes and provides (paths at the base commit).

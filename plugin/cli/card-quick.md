@@ -6,7 +6,9 @@ Model: {{model}} ({{modelReason}})
 Base: {{base}}
 Card: {{hash}}
 
-## Done when
+{{#each rules}}## Project rule: {{name}}
+{{text}}
+{{/each}}## Done when
 No tagged tests are needed in this lane; the checks below must pass.
 {{#each acs}}{{this}}
 {{/each}}
