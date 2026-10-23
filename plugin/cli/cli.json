@@ -421,6 +421,7 @@
     "scopeOut": "{{path}} is outside the scope of {{unit}}",
     "scopeShared": "{{path}} is written by merge",
     "planShared": "{{unit}} scope {{glob}} names a file only merge writes",
+    "planRunbook": "{{unit}} links no runbook, and the profile deploys",
     "planSliceIntent": "{{unit}} has no AC at the top level {{level}}: no unit tests it end to end",
     "planSliceUnit": "{{unit}} crosses modules {{modules}} but tests only at the {{level}} level",
     "planGenerated": "{{unit}} scope names {{has}} but not {{lacks}}: a generator links them",
@@ -590,6 +591,7 @@
     "slice": "slice",
     "decisionType": "Decision",
     "interfaces": "Interfaces",
+    "runbookType": "Runbook",
     "codes": {
       "PLAN-DAG": {
         "level": "error",
@@ -634,6 +636,10 @@
       "PLAN-DEPENDS": {
         "level": "error",
         "fix": "add the other unit to depends, or move the AC to that unit"
+      },
+      "PLAN-RUNBOOK": {
+        "level": "error",
+        "fix": "link a Runbook doc from the intent (template .aidlc/templates/docs/runbook.md: how to roll back, what to watch, who to call)"
       },
       "PLAN-SLICE": {
         "level": "error",
@@ -781,6 +787,10 @@
       {
         "template": "docs/decision.md",
         "to": ".aidlc/templates/docs/decision.md"
+      },
+      {
+        "template": "docs/runbook.md",
+        "to": ".aidlc/templates/docs/runbook.md"
       },
       {
         "template": "ci.yml",

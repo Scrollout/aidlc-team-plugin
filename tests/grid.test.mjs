@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdirSync, readdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { computeLane, inside, lintPlan, overlaps, readPlan } from '../plugin/cli/lib/grid.mjs';
 import { tempDir } from './state-repo.mjs';
@@ -271,4 +271,27 @@ test('U43/AC-1 U43/AC-2 an intent ends to end once; a unit crossing modules is t
   ], 'I-2 has an e2e AC; I-3 says why not');
   assert.deepEqual(slices({ ...profile, levels: { unit: { run: 'u' }, integration: { run: 'i' }, e2e: {} } }).map(([p]) => p), ['docs/intents/I-2-b.md', 'docs/units/U-4-d.md'], 'with no e2e run, integration is the top: I-1 has it, I-2 does not');
   assert.deepEqual(slices({ modules: profile.modules }), [['docs/units/U-4-d.md', 'U-4 crosses modules api, web but tests only at the unit level']], 'the defaults define no run: no intent check');
+});
+
+test('U50/AC-1 with deploy in the profile, a live intent links a Runbook doc', () => {
+  const intent = (id, body = '') => `---\ntype: Intent\ntitle: ${id}\ndescription: ${id}.\n---\n\n# Goal\nx\n${body}`;
+  const unit = (n, intentId) => `---\ntype: Unit\ntitle: A\ndescription: A.\nintent: ${intentId}\nscope: ["u${n}/**"]\n---\n\n# Acceptance criteria\n\n- AC-1 (unit): x.\n`;
+  const dir = project({
+    'docs/intents/I-1-a.md': intent('I-1'),
+    'docs/intents/I-2-b.md': intent('I-2', '\nRoll back with [the API runbook](../runbooks/api.md).\n'),
+    'docs/intents/I-3-c.md': intent('I-3'),
+    'docs/intents/I-4-d.md': intent('I-4', '\nSee [the design](../design/d.md).\n'),
+    'docs/runbooks/api.md': '---\ntype: Runbook\ntitle: API\ndescription: The API runbook.\n---\n',
+    'docs/design/d.md': '---\ntype: Design\ntitle: D\ndescription: D.\n---\n',
+    'docs/units/U-1-a.md': unit(1, 'I-1'),
+    'docs/units/U-2-b.md': unit(2, 'I-2'),
+    'docs/units/U-3-c.md': unit(3, 'I-3'),
+  });
+  const runbooks = (profile, skip = []) => lintPlan(join(dir, 'docs'), profile, { base: dir, skip }).filter((f) => f.code === 'PLAN-RUNBOOK').map((f) => `${f.path} ${f.message}`);
+  const deploy = { deploy: { check: ['make image'] } };
+  assert.deepEqual(runbooks(deploy, ['U-3']), ['docs/intents/I-1-a.md I-1 links no runbook, and the profile deploys', 'docs/intents/I-4-d.md I-4 links no runbook, and the profile deploys'], 'I-2 links one; I-3 is merged; I-4 links no Runbook and has no units yet');
+  assert.deepEqual(runbooks({}), [], 'no deploy, no runbook check');
+  const template = readFileSync(join(ROOT, 'plugin/templates/docs/runbook.md'), 'utf8');
+  for (const heading of ['# Roll back', '# Watch', '# Call']) assert.match(template, new RegExp(`^${heading}$`, 'm'));
+  assert.match(template, /^type: Runbook$/m);
 });

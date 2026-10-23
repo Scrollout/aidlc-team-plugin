@@ -29,7 +29,7 @@ Commands come from the profile, as every check does; the plugin ships no pipelin
 1. **Deployment:** once an intent is merged, `next` runs `deploy.check` on the merged base before it offers the release; a failure names the command and becomes a fix unit.
 2. **Release:** the owner's step. `next` names `release` (and `deploy.run`) for the owner; the CLI records that it ran and its exit, as for any owner command.
 3. **Operation:** `deploy.smoke` runs after the release. A pass marks the intent released; a failure stops the loop with ⛔, names `deploy.rollback` for the owner, and drafts a fix unit from the smoke output.
-4. **Runbook:** an intent with a `deploy` profile links a runbook doc (how to roll back, what to watch), checked by plan lint.
+4. **Runbook:** an intent with a `deploy` profile links a runbook doc (how to roll back, what to watch, who to call), checked by plan lint as `PLAN-RUNBOOK`; `init` ships `.aidlc/templates/docs/runbook.md`.
 5. **Feedback:** the retro lists each failed check, smoke and rollback of the intent, and each fix unit they started.
 
 # Choices
