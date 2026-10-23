@@ -7,12 +7,12 @@ sources:
   - id: cc-env
     resource: https://code.claude.com/docs/en/env-vars
     title: Claude Code environment variables
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T20:10:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T21:00:00Z }
 ---
 
 # Marks
 - A builder: `.git/aidlc/heartbeats/U-<n>`. The model hook touches it at launch; the heartbeat hook touches it on each tool call in the unit's `unit/*` worktree.
-- A builder's launch: `.git/aidlc/launches/U-<n>`, touched by the model hook only. A stop report is taken over by a builder launched after it, never by the stopped builder's own last calls, which touch its heartbeat after the report (third M4 pilot).
+- A builder's launch: `.git/aidlc/launches/U-<n>`, touched by the model hook only. A stop report, or a `fix` verdict, is taken over by a builder launched after it, never by the last builder's own calls, which keep its heartbeat fresh for minutes after its report (third M4 pilot and the scripted pilot).
 - A reviewer: `.git/aidlc/reviewing/U-<n>`. The model hook creates it at launch, the reviewer's calls keep it fresh, and `review record` removes it. A reviewer's calls never touch a builder's heartbeat, so reading a builder's worktree keeps no builder alive.
 - A researcher: the `researching` mark of the doc its brief names, kept the same way.
 
