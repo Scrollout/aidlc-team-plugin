@@ -3,7 +3,7 @@ type: Design
 title: State
 description: How the CLI derives progress from git and docs, how approvals work, and how next picks the one allowed step.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T18:15:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T19:50:00Z }
 ---
 
 # Sources of truth
@@ -44,18 +44,18 @@ Intents, requirements, units and one-way-door decisions carry the owner's approv
 1. A merge cut off midway → continue it. A doc held with `research: <question>` unanswered in `research/` → research it, or wait for its researcher ([0010](../decisions/0010-research-and-advice.md)); the digest releases that hold.
 2. Any `stale` approval → re-approve.
 3. A draft intent, requirement or unit with open points (a template `<…>` placeholder outside plan fields, or an `Open questions` item) → finish elaborating it with the owner, naming them; no approval or unit work first.
-4. No intent yet: elaborate one; in an adopted project with none, the migration intent ([Everyday paths](paths.md#adopting-an-existing-project)). Intent not approved → request approval; then the draft requirements it and its units cite.
-5. Plan not approved → draft units and request approval.
-6. Reviewed units → merge in DAG order, once each AC has a tagged test on the branch (else back to the builder); a held unit waits; a refused one waits for a new base or diff.
+4. No intent yet: elaborate one; in an adopted project with none, the migration intent ([Everyday paths](paths.md#adopting-an-existing-project)). Intent not approved → request approval, with the draft requirements it cites.
+5. Plan not approved → draft units, request approval with the draft decisions and requirements they cite.
+6. Reviewed units → merge in DAG order, once each AC has a tagged test on the branch (else back to the builder); a refused one waits for a new base or diff.
 7. Verdict `escalate` in any focus → the owner decides; their re-approval marks its findings answered on the card and sends the unit straight to review. Verdict `fix` → fix round, findings on the card, none while its builder runs. A verdict older than the builder's last report no longer counts.
-8. A builder that reported `stopped` → the lead fixes the spec (re-approved) or the cause; the builder restarts.
+8. A builder that reported `stopped` → the lead fixes the spec (re-approved) or the cause; the builder restarts, and is building from then on.
 9. Reported, not reviewed → review, naming the first required focus without a `pass` for the current diff ([Skill and agents](prompts.md#review)).
 10. Building with a stale heartbeat ([Agents in flight](in-flight.md)) and no report → restart its builder. A merged unit still in a worktree → stop its builder, remove the worktree.
 11. Approved, unblocked units → build, on one line; up to `parallel.max` in flight, with scopes disjoint from units in flight.
 12. Builders running → wait.
 13. Intent merged, untagged → release with the owner; 4–12 serve the next one meanwhile.
 
-An owner gate in steps 2–5 holds back only the units that wait on its docs: `next` first returns an action of steps 6–11 for the other units, then the gate. A held unit (`hold`, by the owner, or by the lead with a reason while it parks a question) gets no action until the hold is released. A builder started after a `stopped` report is building. An action auto mode refused at the current commit ([Hooks](hooks.md)) goes to the owner: `aidlc approve <docs>` for a delegated approval, else the refused command.
+An owner gate in steps 2–5 holds back only the units that wait on its docs: `next` first returns an action of steps 6–11 for the other units, then the gate. A held unit (`hold`, by the owner, or by the lead with a reason while it parks a question) gets no action until the hold is released. An action auto mode refused at the current commit ([Hooks](hooks.md)) goes to the owner: `aidlc approve <docs>` for a delegated approval, else the refused command.
 
 `aidlc status` prints it as a short table; SessionStart injects it (max 1,000 chars).
 

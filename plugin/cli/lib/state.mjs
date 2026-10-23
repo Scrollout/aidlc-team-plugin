@@ -292,17 +292,22 @@ function gateOf(st, intent, scope) {
     if (st.profile.adopted) return gate('nextMigrate', [], { dir: rel(config.grid.intents), commit: String(st.profile.adopted).slice(0, 12) });
     return gate('nextNoIntent', [], { dir: rel(config.grid.intents) });
   }
-  if (intent && intent.state === 'draft') return gate('nextApproveIntent', [intent.id], { intent: intent.id });
+  // A first approval names the draft requirements its docs cite, so one owner prompt covers them (U39).
+  const draftCited = (docs) => st.requirements.filter((r) => r.state === 'draft' && docs.some((d) => d.requirements.includes(r.id)));
+  if (intent && intent.state === 'draft') {
+    const docs = [intent, ...draftCited([intent])];
+    return gate('nextApproveIntent', docs.map((d) => d.id), { intent: ids(docs) });
+  }
   if (intent && intent.state === 'approved' && !intent.units.length) return gate('nextDraftUnits', [], { intent: intent.id, dir: rel(config.grid.units) }, 'act');
   const cited = new Set([...(intent?.requirements ?? []), ...scope.filter((u) => u.state !== 'merged').flatMap((u) => u.requirements)]);
   const draftReqs = st.requirements.filter((r) => r.state === 'draft' && cited.has(r.id));
-  if (draftReqs.length) return gate('nextApproveRequirements', draftReqs.map((r) => r.id), { reqs: ids(draftReqs) });
   const drafts = scope.filter((u) => u.state === 'draft');
-  if (!drafts.length) return null;
+  if (!drafts.length) return draftReqs.length ? gate('nextApproveRequirements', draftReqs.map((r) => r.id), { reqs: ids(draftReqs) }) : null;
   const decisions = citedDecisions(st, drafts);
-  const docs = [ids(drafts), ...decisions].join(' ');
-  const auto = st.auto.includes(S.auto[1]) && drafts.every((u) => u.lane === 'quick') && !decisions.length;
-  return gate(auto ? 'nextAutoApprove' : 'nextApprovePlan', drafts.map((u) => u.id), { docs, units: docs }, auto ? 'act' : 'human');
+  const reqs = draftReqs; // the ones the intent and these units cite
+  const docs = [ids([...drafts, ...reqs]), ...decisions].join(' ');
+  const auto = st.auto.includes(S.auto[1]) && drafts.every((u) => u.lane === 'quick') && !decisions.length && !reqs.length;
+  return gate(auto ? 'nextAutoApprove' : 'nextApprovePlan', [...drafts, ...reqs].map((d) => d.id), { docs, units: docs }, auto ? 'act' : 'human');
 }
 
 // AC tags that no file on the unit branch carries outside the bundle, as the gate looks for them.
