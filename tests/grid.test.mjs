@@ -216,3 +216,11 @@ test('U37/AC-1 a unit at a one-way door links a decision or says why it is two-w
   assert.deepEqual(doors({ focus: { security: ['migrations/**'] } }).map(([p]) => p), ['docs/units/U-4-d.md'], 'a focus glob alone is no door');
   assert.match(lintPlan(join(dir, 'docs'), { lanes: { full: ['migrations/**'] } }, { base: dir }).find((f) => f.code === 'PLAN-DECISION').fix, /Decision doc .*options, choice, why.*twoWay: "<why it is easy to undo>"/);
 });
+
+test('0.46.1 a bundle-root link to a decision clears PLAN-DECISION', () => {
+  const dir = project({
+    'docs/decisions/0001-keep.md': '---\ntype: Decision\ntitle: 0001 Keep\ndescription: Keep it.\n---\n\n# Decision\nKeep.\n',
+    'docs/units/U-1-a.md': '---\ntype: Unit\ntitle: A\ndescription: A.\nscope: ["migrations/0001.sql"]\n---\n\n# Acceptance criteria\n\n- AC-1 (unit): x.\n\n# Logical\n- [Keep](/decisions/0001-keep.md)\n',
+  });
+  assert.deepEqual(lintPlan(join(dir, 'docs'), { lanes: { full: ['migrations/**'] } }, { base: dir }).filter((f) => f.code === 'PLAN-DECISION'), []);
+});

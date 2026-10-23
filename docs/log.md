@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-23
 
+- **Update** 0.46.1, three fixes from the third M4 pilot: a stopped builder's last calls no longer read as a restart (a launch mark decides, [Agents in flight](design/in-flight.md)); a bundle-root link to a decision clears `PLAN-DECISION`; `next` offers a delegated re-approval only when every unit keeps its ACs, as `approve --auto` requires ([Approvals](design/approvals.md)).
 - **Update** M4 U39 built: `next`'s intent approval names the draft requirements the intent cites, and the plan approval those its units cite, so one owner prompt covers them ([State](design/state.md#next)). Release 0.46.0.
 - **Update** M4 U38 built (owner's choice): a reviewer's own `escalate` within `review.fixRounds` is recorded as `fix`, and the reviewer's prompt says so ([Review rounds](design/review-rounds.md)). Release 0.45.0.
 - **Update** M4 U37 built (owner's request and choice of trigger): a unit whose scope overlaps `decisions.paths` (default `lanes.full`) or an interface doc it lists links a Decision doc or says `twoWay`, or plan lint reports `PLAN-DECISION` and `approve` refuses it ([Approvals](design/approvals.md), [Grid](design/grid.md)). Release 0.44.0.

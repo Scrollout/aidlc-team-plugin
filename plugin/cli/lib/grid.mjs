@@ -110,11 +110,12 @@ export function readPlan(bundle) {
   return { intents: readDocs(bundle, GRID.intents, GRID.intentFile).map(cite), units, requirements };
 }
 
-// The .md files a doc's body links to, resolved from its folder; with a heading, only the links in that section.
-function linksOf(d, heading) {
+// The .md files a doc's body links to, resolved from its folder or, for a `/` link, the bundle root; with a
+// heading, only the links in that section.
+function linksOf(d, bundle, heading) {
   let on = !heading;
   const lines = proseLines(d.doc.lines, d.doc.body).map(([n]) => d.doc.lines[n - 1]).filter((l) => (/^#{1,6}\s/.test(l) ? ((on = !heading || new RegExp(`^#{1,6}\\s+${heading}\\s*$`, 'i').test(l)), false) : on));
-  return [...lines.join('\n').matchAll(/\]\(([^)#\s]+\.md)(?:#[^)]*)?\)/g)].map((m) => resolve(dirname(d.file), m[1]));
+  return [...lines.join('\n').matchAll(/\]\(([^)#\s]+\.md)(?:#[^)]*)?\)/g)].map((m) => (m[1].startsWith('/') ? join(bundle, m[1]) : resolve(dirname(d.file), m[1])));
 }
 
 function finding(code, file, line, key, data, base) {
@@ -252,10 +253,10 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   // alone are no door: they get a deeper review, not a decision.
   const doorGlobs = list(profile.decisions?.paths ?? profile.lanes?.full);
   for (const u of units.filter((x) => !x.fm[GRID.twoWay])) {
-    const links = linksOf(u);
+    const links = linksOf(u, bundle);
     if (links.some((f) => parseDoc(existsSync(f) ? readFileSync(f, 'utf8') : '').fm?.type === GRID.decisionType)) continue;
     const owned = (path) => u.scope.some((g) => overlaps('/' + path, g));
-    const door = doorGlobs.find((g) => u.scope.some((s) => overlaps(s, g))) ?? linksOf(u, GRID.interfaces).map((f) => relPath(base, f)).find(owned);
+    const door = doorGlobs.find((g) => u.scope.some((s) => overlaps(s, g))) ?? linksOf(u, bundle, GRID.interfaces).map((f) => relPath(base, f)).find(owned);
     if (door) add('PLAN-DECISION', u, keyLine(u, 'scope'), 'planDecision', { door });
   }
   for (const c of cycles(units)) add('PLAN-DAG', c.unit, keyLine(c.unit, 'depends'), 'depCycle', { cycle: c.text });

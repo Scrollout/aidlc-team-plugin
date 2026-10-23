@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { rmSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { approve, branch, commit, intentDoc, makeRepo, read, review, run, unitDoc, write } from './state-repo.mjs';
 
@@ -53,7 +53,11 @@ test('U15/AC-3 a builder launched after a stop report takes over; a unit the lea
   run(dir, ['report', 'U-1'], '{"status": "stopped", "stop": "scope too small"}');
   assert.match(run(dir, ['next']).out, /^⛔ the builder of U-1 stopped/);
   live(dir, 'U-1');
-  assert.match(run(dir, ['status']).out, /U-1 building/);
+  assert.match(run(dir, ['next']).out, /^⛔ the builder of U-1 stopped/, 'the stopped builder\'s own last calls do not take over (0.46.1)');
+  assert.equal(run(dir, ['card', 'U-1']).code, 0);
+  const model = JSON.parse(readFileSync(join(dir, '.git/aidlc/cards/U-1.json'), 'utf8')).model;
+  hook('model', { cwd: dir, hook_event_name: 'PreToolUse', tool_name: 'Agent', tool_input: { subagent_type: 'aidlc-team:builder', prompt: 'Continue U-1 from its branch\'s last commit.', model } });
+  assert.match(run(dir, ['status']).out, /U-1 building/, 'a builder launched after the stop takes over');
   assert.doesNotMatch(run(dir, ['next']).out, /stopped/, 'steer no longer pushes the old stop');
   assert.equal(run(dir, ['hold', 'U-1', 'asked the owner about the branch move']).code, 0);
   commit(dir, 'park U-1');
