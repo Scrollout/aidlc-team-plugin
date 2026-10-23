@@ -85,8 +85,7 @@ const SCENARIOS = {
   escalated: [/^👉 U-1 review escalated: the owner decides/, 2, (dir) => {
     approve(dir, 'I-1', 'U-1', 'U-2');
     branch(dir, 'U-1');
-    review(dir, 'U-1', 'fix');
-    review(dir, 'U-1', 'fix');
+    for (let k = 0; k < 4; k++) review(dir, 'U-1', 'fix');
   }],
   'fix verdict': [/^fix round for U-1: builder/, 0, (dir) => {
     approve(dir, 'I-1', 'U-1', 'U-2');
@@ -219,25 +218,30 @@ test('U4/AC-3 approve writes the stamp; editing makes it stale; reformatting or 
   assert.equal(run(dir, ['approve', 'docs/note.md']).code, 64);
 });
 
-test('review record turns a second fix into escalate; report needs a JSON object', () => {
+test('U33/AC-1 review record turns the fix past review.fixRounds (default 3) into escalate, per focus; report needs a JSON object', () => {
   const dir = base();
   approve(dir, 'I-1', 'U-1', 'U-2');
   branch(dir, 'U-1');
-  review(dir, 'U-1', 'fix');
-  review(dir, 'U-1', 'fix');
+  for (let k = 0; k < 4; k++) review(dir, 'U-1', 'fix');
   const rounds = JSON.parse(read(dir, '.git/aidlc/reviews/U-1.json')).rounds;
-  assert.deepEqual(rounds.map((r) => r.verdict), ['fix', 'escalate']);
+  assert.deepEqual(rounds.map((r) => r.verdict), ['fix', 'fix', 'fix', 'escalate']);
+  const one = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['a/**'] }) }, { review: { fixRounds: 1 } });
+  approve(one, 'I-1', 'U-1');
+  branch(one, 'U-1');
+  review(one, 'U-1', 'fix');
+  review(one, 'U-1', 'fix');
+  assert.deepEqual(JSON.parse(read(one, '.git/aidlc/reviews/U-1.json')).rounds.map((r) => r.verdict), ['fix', 'escalate'], 'the profile sets the limit');
   assert.equal(run(dir, ['report', 'U-1'], 'not json').code, 64);
   assert.equal(run(dir, ['review', 'record', 'U-9', 'x.json']).code, 64);
 });
 
-test('U26/AC-1 U26/AC-2 a fix recorded as escalate tells the reviewer why; the card heads the owner\'s answer as a re-approval', () => {
+test('U26/AC-1 U26/AC-2 U33/AC-2 a fix recorded as escalate tells the reviewer why; the card heads the owner\'s answer as a re-approval', () => {
   const dir = base();
   approve(dir, 'I-1', 'U-1', 'U-2');
   branch(dir, 'U-1');
   const verdict = (v) => { const f = join(tempDir('verdict-'), 'v.json'); writeFileSync(f, JSON.stringify({ verdict: v, findings: [{ path: 'a/x', line: 1, claim: 'c', scenario: 's', confidence: 'CONFIRMED' }] })); return run(dir, ['review', 'record', 'U-1', f]).out; };
-  assert.match(verdict('fix'), /^recorded fix for U-1$/m);
-  assert.match(verdict('fix'), /^recorded escalate for U-1: a second fix in focus general since the owner's last approval goes to the owner$/m);
+  for (const k of [1, 2, 3]) assert.match(verdict('fix'), new RegExp(`^recorded fix for U-1: fix round ${k} of 3 in focus general$`, 'm'));
+  assert.match(verdict('fix'), /^recorded escalate for U-1: fix round 4 in focus general would pass the limit of 3 since the owner's last approval, so the owner decides$/m);
   approve(dir, 'U-1');
   const card = run(dir, ['card', 'U-1']).out;
   assert.match(card, /^## Findings the owner answered by re-approving\nThe owner kept or changed the spec after these escalated; report each again only if it still holds against the spec as it is now\.$/m);
@@ -255,8 +259,7 @@ test('U8/AC-6 U18/AC-3 re-approving an escalated unit marks its findings answere
   approve(dir, 'I-1', 'U-1');
   branch(dir, 'U-1');
   const finding = { path: 'src/U-1.txt', line: 1, claim: 'wrong level', scenario: 'gate fails', confidence: 'CONFIRMED' };
-  review(dir, 'U-1', 'fix', [finding]);
-  review(dir, 'U-1', 'fix', [finding]);
+  for (let k = 0; k < 4; k++) review(dir, 'U-1', 'fix', [finding]);
   assert.match(run(dir, ['next']).out, /^👉 U-1 review escalated/);
   write(dir, { [U(1)]: read(dir, U(1)).replace('it works.', 'it works at the unit level.') });
   commit(dir, 'owner widens U-1');
@@ -430,8 +433,7 @@ test('U24/AC-3 every owner step names the words to type, an escalation included,
   assert.match(run(dir, ['next']).out, /^👉 ask the owner to approve I-1: aidlc approve I-1 \(the owner confirms the prompt or types: approve I-1\)/);
   approve(dir, 'I-1', 'U-1', 'U-2');
   branch(dir, 'U-1');
-  review(dir, 'U-1', 'fix');
-  review(dir, 'U-1', 'fix');
+  for (let k = 0; k < 4; k++) review(dir, 'U-1', 'fix');
   assert.match(run(dir, ['next']).out, /^👉 U-1 review escalated: the owner decides\. To keep the spec: aidlc approve U-1 \(the owner confirms the prompt or types: approve U-1\); or change the spec first/);
 });
 
@@ -459,7 +461,7 @@ test('U32/AC-1 U32/AC-2 U32/AC-3 a pass with an untagged AC is recorded as fix a
   writeFileSync(f, JSON.stringify({ verdict: 'pass', findings: [] }));
   const r = run(dir, ['review', 'record', 'U-1', f]);
   assert.equal(r.code, 0, r.err);
-  assert.match(r.out, /^recorded fix for U-1: no test is tagged U-1\/AC-1 on its branch, so it cannot pass$/m);
+  assert.match(r.out, /^recorded fix for U-1: no test is tagged U-1\/AC-1 on its branch, so it cannot pass \(fix round 1 of 3\)$/m);
   assert.equal(JSON.parse(read(dir, '.git/aidlc/reviews/U-1.json')).rounds.at(-1).verdict, 'fix');
   assert.match(run(dir, ['next']).out, /^fix round for U-1/);
   const card = run(dir, ['card', 'U-1']).out;

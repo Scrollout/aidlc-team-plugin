@@ -33,7 +33,7 @@ test('U19/AC-4 U19/AC-5 the counters feed aidlc retro, which lists, proposes at 
   approve(dir, 'I-1', 'U-1', 'U-2');
   branch(dir, 'U-1');
   review(dir, 'U-1', 'fix', [{ path: 'src/U-1.txt', line: 1, claim: 'x', scenario: 'y', confidence: 'CONFIRMED' }]);
-  review(dir, 'U-1', 'fix');
+  for (let k = 0; k < 3; k++) review(dir, 'U-1', 'fix');
   run(dir, ['report', 'U-2'], '{"status": "stopped", "stop": "the scope is too small"}');
   for (let k = 0; k < 3; k++) run(dir, ['merge', 'U-1']);
   const hook = (command) => spawnSync(process.execPath, [join(ROOT, 'plugin/cli/aidlc.mjs'), 'hook', 'guard'], { cwd: dir, encoding: 'utf8', input: JSON.stringify({ session_id: 's', cwd: dir, tool_input: { command } }) });

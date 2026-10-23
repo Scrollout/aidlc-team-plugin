@@ -531,22 +531,22 @@ export const commands = {
     const target = runtimeFile(cwd, 'reviews', unit);
     const prior = readJson(target)?.rounds ?? [];
     const focus = data.focus ?? S.focus;
-    // A second `fix` in the same focus since the unit's last approval becomes `escalate`: the owner decides.
-    const doc = readPlan(bundleOf(cwd, profile)).units.find((u) => u.id === unit)?.doc;
-    const since = doc ? approvedAt(doc, [S.human]) : 0;
-    const again = roundsOf({ rounds: prior }, focus).some((r) => r.verdict === 'fix' && !beforeApproval(r, since));
-    // A pass while an AC has no tagged test on the branch is a fix: the gate would refuse it (U32).
+    // A `fix` that would start fix round `review.fixRounds + 1` in its focus since the unit's last approval
+    // becomes `escalate`: the owner decides (U33).
     const planUnit = readPlan(bundleOf(cwd, profile)).units.find((u) => u.id === unit);
+    const since = planUnit ? approvedAt(planUnit.doc, [S.human]) : 0;
+    const limit = profile.review.fixRounds;
+    const round = roundsOf({ rounds: prior }, focus).filter((r) => r.verdict === 'fix' && !beforeApproval(r, since)).length + 1;
+    // A pass while an AC has no tagged test on the branch is a fix: the gate would refuse it (U32).
     const missing = data.verdict === S.verdicts[0] && planUnit ? untagged({ cwd, bundle: bundleOf(cwd, profile) }, planUnit) : [];
     if (missing.length) Object.assign(data, { verdict: 'fix', findings: missing.map((tag) => ({ path: '', line: '', claim: msg('untaggedClaim', { tag }), scenario: msg('untaggedScenario', {}), confidence: S.confirmed })) });
     if (missing.length) bump(cwd, config.retro.sendBacks, { unit, tags: missing.join(', '), at: new Date().toISOString() });
-    const verdict = data.verdict === 'fix' && again ? 'escalate' : data.verdict;
+    const verdict = data.verdict === 'fix' && round > limit ? 'escalate' : data.verdict;
     const card = readJson(runtimeFile(cwd, 'cards', unit))?.hash ?? null;
-    const round = { ...data, focus, verdict, card, diffHash: diffHash(cwd, baseOf(profile), unit), at: new Date().toISOString() };
-    writeJson(target, { unit, rounds: [...prior, round] });
+    writeJson(target, { unit, rounds: [...prior, { ...data, focus, verdict, card, diffHash: diffHash(cwd, baseOf(profile), unit), at: new Date().toISOString() }] });
     if (verdict === S.verdicts[2]) bump(cwd, 'escalations', config.retro.reasons.review);
     rmSync(join(aidlcDir(cwd), S.reviewing, unit), { force: true }); // the review is no longer in flight
-    const why = missing.length ? 'recordedUntagged' : verdict !== data.verdict ? 'recordedEscalate' : 'recorded';
-    return done(msg(why, { what: verdict, unit, focus, tags: missing.join(', ') })); // the reviewer learns why
+    const why = verdict !== data.verdict ? 'recordedEscalate' : missing.length ? 'recordedUntagged' : verdict === 'fix' ? 'recordedFix' : 'recorded';
+    return done(msg(why, { what: verdict, unit, focus, tags: missing.join(', '), round, limit })); // the reviewer learns why
   },
 };
