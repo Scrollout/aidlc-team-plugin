@@ -303,6 +303,7 @@
     "noBranch": "no branch {{branch}}",
     "recorded": "recorded {{what}} for {{unit}}\n",
     "recordedUntagged": "recorded {{what}} for {{unit}}: no test is tagged {{tags}} on its branch, so it cannot pass (fix round {{round}} of {{limit}})\n",
+    "recordedConfirmed": "recorded {{what}} for {{unit}}: a pass cannot carry a CONFIRMED finding ({{confirmed}} sent), so the builder fixes it (fix round {{round}} of {{limit}})\n",
     "recordedFix": "recorded {{what}} for {{unit}}: fix round {{round}} of {{limit}} in focus {{focus}}\n",
     "untaggedClaim": "{{tag}} has no tagged test on the branch",
     "untaggedScenario": "the merge gate refuses the unit until a test carries the tag",

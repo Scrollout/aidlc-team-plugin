@@ -154,3 +154,7 @@ test('U8/AC-5 the eval fixture seeds each defect and scores found and missed', (
   run(dir, ['report', 'U-2'], JSON.stringify({ status: 'stopped', stop: 'the Price API has to change' }));
   assert.ok(score(dir).every((r) => r.found), JSON.stringify(score(dir)));
 });
+
+test('U35/AC-2 the reviewer prompt says a CONFIRMED finding blocks the merge', () => {
+  assert.match(parse(REVIEWER).body, /A `CONFIRMED` finding blocks the merge: never send it with `pass`\./);
+});

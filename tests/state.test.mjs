@@ -498,3 +498,19 @@ test('U34/AC-1 U34/AC-2 each round records its commit; a focus pass outlives a f
   assert.match(run(dir, ['next']).out, /^review U-1, focus security/, 'a fix inside the focus globs is reviewed again');
   assert.match(run(dir, ['merge', 'U-1']).out, /GATE-SPECIALIST/);
 });
+
+test('U35/AC-1 a pass carrying a CONFIRMED finding is recorded as fix and says why; PLAUSIBLE findings stay notes on a pass', () => {
+  const dir = base();
+  approve(dir, 'I-1', 'U-1', 'U-2');
+  branch(dir, 'U-1');
+  const finding = (confidence) => ({ path: 'a/x', line: 1, claim: `${confidence} claim`, scenario: 's', confidence });
+  const record = (findings) => run(dir, ['review', 'record', 'U-1', '-'], JSON.stringify({ verdict: 'pass', findings }));
+  const last = () => JSON.parse(read(dir, '.git/aidlc/reviews/U-1.json')).rounds.at(-1);
+  let r = record([finding('PLAUSIBLE')]);
+  assert.match(r.out, /^recorded pass for U-1$/m);
+  assert.deepEqual([last().verdict, last().findings.length], ['pass', 1]);
+  r = record([finding('CONFIRMED'), finding('PLAUSIBLE')]);
+  assert.match(r.out, /^recorded fix for U-1: a pass cannot carry a CONFIRMED finding \(1 sent\), so the builder fixes it \(fix round 1 of 3\)$/m);
+  assert.deepEqual([last().verdict, last().findings.length], ['fix', 2]);
+  assert.match(run(dir, ['card', 'U-1']).out, /## Findings to fix[\s\S]*CONFIRMED a\/x:1: CONFIRMED claim/);
+});
