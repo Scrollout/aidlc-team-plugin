@@ -2,6 +2,7 @@
   "base": "main",
   "docs": { "bundle": "docs" },
   "parallel": { "max": 3 },
+  "research": { "max": 8 },
   "levels": { "unit": {}, "integration": {}, "e2e": {} },
-  "models": { "quick": "sonnet", "standard": "sonnet", "full": "opus", "escalate": "opus", "review": "opus", "modules": 2, "acs": 6, "complex": [] }
+  "models": { "quick": "sonnet", "standard": "sonnet", "full": "opus", "escalate": "opus", "review": "opus", "research": "sonnet", "modules": 2, "acs": 6, "complex": [] }
 }

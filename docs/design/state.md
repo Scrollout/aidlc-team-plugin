@@ -40,15 +40,15 @@ stateDiagram-v2
 Intents, requirements, units and one-way-door decisions carry the owner's approval; editing one makes it `stale` ([Approvals](approvals.md)).
 
 # next
-`aidlc next` prints one line: the single next action and the command or agent that performs it, e.g. `build U-3 (card: aidlc card U-3)`. It exits 2 when the action waits on the owner, and prints an owner command runnable as is (`aidlc` is shorthand in the docs). Order:
-1. A merge cut off midway → continue it.
+`aidlc next` prints one line: the single next action and the command or agent that performs it, e.g. `build U-3 (card: …)`. It exits 2 when the owner acts, printing a runnable owner command. Order:
+1. A merge cut off midway → continue it. A doc held with `research: <question>` unanswered in `research/` → research it ([0010](../decisions/0010-research-and-advice.md)).
 2. Any `stale` approval → re-approve.
-3. A draft intent, requirement or unit with open points (a `<…>` placeholder left from its template, or an item under `Open questions`) → finish elaborating it with the owner, naming them; no approval or unit work before that.
+3. A draft intent, requirement or unit with open points (a template `<…>` placeholder or an `Open questions` item) → finish elaborating it with the owner, naming them; no approval or unit work before that.
 4. No intent yet: elaborate one; in an adopted project with none, the migration intent ([Everyday paths](paths.md#adopting-an-existing-project)). Intent not approved → request approval; then the draft requirements it and its units cite.
 5. Plan not approved → draft units and request approval.
-6. Reviewed units → merge in DAG order, once each AC has a tagged test on the branch (else back to the builder); a held unit waits; a refused one is not offered again for the same base and diff.
-7. Verdict `escalate` in any focus → the owner decides; their re-approval marks its findings answered on the card and sends the unit straight to review. Verdict `fix` → fix round (none while its builder runs); the card lists the findings. A verdict older than the builder's last report no longer counts.
-8. A builder that reported `stopped` → the lead fixes the spec (re-approved) or the cause; the builder restarts from the card.
+6. Reviewed units → merge in DAG order, once each AC has a tagged test on the branch (else back to the builder); a held unit waits; a refused one waits for a new base or diff.
+7. Verdict `escalate` in any focus → the owner decides; their re-approval marks its findings answered on the card and sends the unit straight to review. Verdict `fix` → fix round, findings on the card, none while its builder runs. A verdict older than the builder's last report no longer counts.
+8. A builder that reported `stopped` → the lead fixes the spec (re-approved) or the cause; the builder restarts.
 9. Reported, not reviewed → review, naming the first required focus without a `pass` for the current diff ([Skill and agents](prompts.md#review)).
 10. Building with a stale heartbeat (over 2 min) and no report → restart its builder. A merged unit still in a worktree → stop its builder, remove the worktree.
 11. Approved, unblocked units → build, on one line; up to `parallel.max` in flight, with scopes disjoint from units in flight.

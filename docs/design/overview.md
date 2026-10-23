@@ -67,7 +67,7 @@ sequenceDiagram
 - `plugin/.claude-plugin/plugin.json`: `name` is `aidlc-team` (kebab-case, no reserved prefix, and never `aidlc`, which projects use for the CLI and `.aidlc/`), the only `version`; users stay on a version until it is bumped.
 - `plugin/cli/aidlc.mjs`, `plugin/cli/lib/*.mjs`: the CLI.
 - `plugin/hooks/`: thin wrappers that call the CLI.
-- `plugin/agents/`: `builder.md`, `reviewer.md`.
+- `plugin/agents/`: `builder.md`, `reviewer.md`, `researcher.md`.
 - `plugin/skills/aidlc/SKILL.md`: the lead's loop.
 - `plugin/templates/`: everything `init` renders.
 - `.claude-plugin/marketplace.json`: marketplace `scrollout.net`, one entry `aidlc-team` with `source: "./plugin"`, so tests and docs never ship. Install id: `aidlc-team@scrollout.net`.
