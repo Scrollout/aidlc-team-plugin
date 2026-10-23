@@ -33,7 +33,7 @@ function tree(dir, skip = []) {
 
 const pinned = (dir, ...args) => run(dir, args.length ? args : ['check', '--ci']);
 
-test('U5/AC-1 init on an empty repo writes a valid profile, a short AGENTS.md, a passing bundle and the pinned CLI', () => {
+test('U5/AC-1 U50/AC-1 init on an empty repo writes a valid profile, a short AGENTS.md, a passing bundle and the pinned CLI', () => {
   const dir = emptyRepo();
   const r = run(dir, ['init', '--name', 'demo']);
   assert.equal(r.code, 0, r.err + r.out);
@@ -44,7 +44,7 @@ test('U5/AC-1 init on an empty repo writes a valid profile, a short AGENTS.md, a
   assert.equal(readFileSync(join(dir, '.aidlc/bin/VERSION'), 'utf8'), PLUGIN.version + '\n');
   assert.deepEqual(JSON.parse(readFileSync(join(dir, '.claude/settings.json'), 'utf8')), { worktree: { baseRef: 'head' } });
   assert.match(readFileSync(join(dir, '.gitignore'), 'utf8'), /^\.aidlc\/local\/$/m);
-  for (const t of ['requirement', 'intent', 'unit', 'decision']) assert.ok(existsSync(join(dir, `.aidlc/templates/docs/${t}.md`)), t);
+  for (const t of ['requirement', 'intent', 'unit', 'decision', 'runbook']) assert.ok(existsSync(join(dir, `.aidlc/templates/docs/${t}.md`)), t);
   const check = run(dir, ['check']);
   assert.equal(check.code, 0, check.out);
   assert.equal(check.out, '', 'the new bundle passes with no warnings');
@@ -63,7 +63,7 @@ test('U5/AC-1 init never overwrites without asking', () => {
   assert.equal(readFileSync(join(dir, '.gitignore'), 'utf8'), 'node_modules/\n.aidlc/local/\n.claude/worktrees/\n', 'lines are added, nothing replaced');
 
   const again = run(dir, ['init', '--overwrite', 'CLAUDE.md', '--overwrite', 'AGENTS.md', '--overwrite', '.aidlc/profile.json',
-    ...['requirement', 'intent', 'unit', 'decision'].flatMap((t) => ['--overwrite', `.aidlc/templates/docs/${t}.md`]),
+    ...['requirement', 'intent', 'unit', 'decision', 'runbook'].flatMap((t) => ['--overwrite', `.aidlc/templates/docs/${t}.md`]),
     '--overwrite', 'docs/index.md', '--overwrite', 'docs/log.md', '--overwrite', '.github/workflows/aidlc.yml']);
   assert.equal(again.code, 0, again.out);
   assert.equal(readFileSync(join(dir, 'CLAUDE.md'), 'utf8'), '@AGENTS.md\n');

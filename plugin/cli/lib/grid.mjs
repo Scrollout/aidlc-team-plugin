@@ -266,6 +266,11 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
     const own = units.filter((u) => u.fm.intent === i.id);
     if (top && own.length && !own.some((u) => u.acs.some((a) => a.level === top))) add('PLAN-SLICE', i, 1, 'planSliceIntent', { level: top });
   }
+  // With a deploy, each live intent links its runbook (docs/design/operations.md).
+  const live = (i) => units.some((u) => u.fm.intent === i.id) || !all.some((u) => u.fm.intent === i.id);
+  for (const i of profile.deploy ? intents.filter((x) => x.fm.status !== GRID.dropped && live(x)) : []) {
+    if (!linksOf(i, bundle).some((f) => existsSync(f) && parseDoc(readFileSync(f, 'utf8')).fm?.type === GRID.runbookType)) add('PLAN-RUNBOOK', i, 1, 'planRunbook', {});
+  }
   for (const u of units.filter((x) => x.modules.length > 1 && x.acs.length && x.acs.every((a) => a.level === levels[0]))) {
     add('PLAN-SLICE', u, keyLine(u, 'modules'), 'planSliceUnit', { modules: u.modules.join(', '), level: levels[0] });
   }
