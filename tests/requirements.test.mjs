@@ -40,7 +40,7 @@ test('U10/AC-2 requirements are approved by ID; an edited one is stale and block
   approve(dir, 'I-1');
   let r = run(dir, ['next']);
   assert.equal(r.code, 2);
-  assert.match(r.out, /^👉 ask the owner to approve the requirements the plan cites: aidlc approve R-001 R-002 \(the owner confirms the prompt or types: approve R-001 R-002\)$/m);
+  assert.match(r.out, /^👉 ask the owner to approve the plan: aidlc approve U-1 U-2 R-001 R-002 \(the owner confirms the prompt or types: approve U-1 U-2 R-001 R-002\)$/m, 'U39: the plan approval names the draft requirements its units cite');
 
   approve(dir, 'R-001', 'R-2', 'U-1', 'U-2');
   assert.match(run(dir, ['next']).out, /^build U-1, U-2/);
@@ -93,4 +93,13 @@ test('U10/AC-4 U19/AC-3 prose under a heading the new index lacks moves to the t
   assert.equal(once, 'Context map: every Uses line names an Exposes entry.\n\n# Design\n\n* [A](a.md) - A design. Load when designing.\n');
   writeIndexes(dir);
   assert.equal(readFileSync(join(dir, 'index.md'), 'utf8'), once, 'stable on the next run');
+});
+
+test('U39/AC-1 the intent approval names the draft requirements the intent cites, so one prompt covers them', () => {
+  const dir = repo();
+  const r = run(dir, ['next']);
+  assert.equal(r.code, 2);
+  assert.match(r.out, /^👉 ask the owner to approve I-1 R-001: aidlc approve I-1 R-001 \(the owner confirms the prompt or types: approve I-1 R-001\)$/m);
+  approve(dir, 'I-1', 'R-001');
+  assert.match(run(dir, ['next']).out, /^👉 ask the owner to approve the plan: aidlc approve U-1 U-2 R-002 /, 'R-001 is approved; R-002 comes with the units that cite it');
 });
