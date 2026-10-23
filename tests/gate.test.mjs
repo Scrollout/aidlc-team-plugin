@@ -46,7 +46,7 @@ test('U6/AC-2 a passing gate merges --no-ff with trailers, writes index and log,
   assert.equal(r.code, 0, r.out + r.err);
   assert.match(r.out, /^merged U-1 as [0-9a-f]{40}$/m);
   const card = JSON.parse(read(dir, '.git/aidlc/cards/U-1.json')).hash;
-  assert.equal(git(dir, 'log', '-1', '--format=%(trailers:only,unfold)').trim(), `Unit: U-1\nCard: ${card}\nReview: pass\nTested: unit`);
+  assert.equal(git(dir, 'log', '-1', '--format=%(trailers:only,unfold)').trim(), `Unit: U-1\nCard: ${card}\nReview: pass\nTested: unit\nProof: unit`);
   assert.equal(git(dir, 'rev-list', '--parents', '-n', '1', 'HEAD').split(' ').length, 3, 'a merge commit');
   assert.match(read(dir, 'docs/log.md'), /- \*\*Update\*\* U-1 Unit merged\./);
   assert.ok(existsSync(join(dir, 'docs/units/index.md')), 'indexes written');
@@ -104,7 +104,7 @@ test('U6/AC-1 a unit that adds a test location to the profile passes GATE-LEVEL;
   assert.deepEqual(codes(merge(doc)).filter((c) => c.startsWith('GATE-A') || c === 'GATE-LEVEL'), ['GATE-AC']);
 });
 
-test('U6/AC-8 a full-lane unit merges on its tests; proof-revert is deferred to M2', () => {
+test('U6/AC-8 a full-lane unit merges on its tests', () => {
   const dir = setup({ unit: { scope: ['db/**', 'tests/**'] }, files: { 'db/add.mjs': 'export const add = (a, b) => a + b;\n', 'tests/add.test.mjs': TEST['tests/add.test.mjs'].replace('../src/add.mjs', '../db/add.mjs') } });
   assert.equal(JSON.parse(read(dir, '.git/aidlc/cards/U-1.json')).lane, 'full');
   const r = merge(dir);
@@ -262,4 +262,38 @@ test('U13/AC-4 push on a base never pushed checks only the commits after the one
   const r = run(dir, ['push']);
   assert.equal(r.code, 0, r.out + r.err);
   assert.equal(git(remote, 'rev-parse', 'main'), git(dir, 'rev-parse', 'main'));
+});
+
+const VACUOUS = { 'tests/add.test.mjs': "import { test } from 'node:test';\nimport assert from 'node:assert';\ntest('U-1/AC-1 adds', () => assert.ok(true));\n" };
+
+test('U28/AC-1 a tagged test that still passes with the change reverted refuses the merge; the merge keeps the change', () => {
+  const vacuous = setup({ files: { ...CODE, ...VACUOUS } });
+  const r = merge(vacuous);
+  assert.equal(r.code, 1);
+  assert.match(r.out, /GATE-PROOF level unit still passes with U-1's changes outside the test paths reverted: its tagged tests do not test them → make each tagged test fail without the change, then report again/);
+  assert.equal(git(vacuous, 'rev-list', '--merges', 'main'), '', 'nothing merged');
+  const fixing = setup({ beforeReview: (d) => {
+    commit(d, 'a buggy add on the base', { 'src/add.mjs': 'export const add = (a, b) => a - b;\n' });
+    git(d, 'switch', '-q', 'unit/U-1'); git(d, 'merge', '-q', '--no-edit', '-X', 'ours', 'main'); git(d, 'switch', '-q', 'main');
+  } });
+  const ok = merge(fixing);
+  assert.equal(ok.code, 0, ok.out);
+  assert.equal(read(fixing, 'src/add.mjs'), CODE['src/add.mjs'], 'the reverted file is restored before the commit');
+  assert.match(git(fixing, 'log', '-1', '--format=%(trailers:only,unfold)'), /^Proof: unit$/m);
+  assert.equal(git(fixing, 'status', '--porcelain'), '');
+});
+
+test('U28/AC-2 U28/AC-3 a test-only, quick-lane or run-less unit skips the proof and says so; the card and builder name it', () => {
+  const tests = setup({ files: VACUOUS });
+  const r = merge(tests);
+  assert.equal(r.code, 0, r.out);
+  assert.match(r.out, /^proof skipped: no change outside the test paths$/m);
+  assert.match(git(tests, 'log', '-1', '--format=%(trailers:only,unfold)'), /^Proof: none$/m);
+  const quick = setup({ unit: { scope: ['docs/guide/**'], modules: [] }, files: { 'docs/guide/a.md': '---\ntype: Note\ntitle: A\ndescription: A note.\ngenerated: { by: x/1, at: 2026-01-01T00:00:00Z }\n---\n\nText.\n' } });
+  assert.match(merge(quick).out, /^proof skipped: quick lane$/m);
+  const runless = setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'] } } } });
+  assert.match(merge(runless).out, /^proof skipped: no level run holds a tagged test$/m);
+  const card = run(setup(), ['card', 'U-1']).out;
+  assert.match(card, /^The merge gate reverts your changes outside tests\/\*\* and runs again each level above that holds one of your tagged tests: each must fail\.$/m);
+  assert.match(readFileSync(join(import.meta.dirname, '../plugin/agents/builder.md'), 'utf8'), /The merge gate checks this: it reverts your code and reruns the levels of your tagged tests, and a test that still passes refuses the merge\./);
 });

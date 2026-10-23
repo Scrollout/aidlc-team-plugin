@@ -15,6 +15,26 @@ import { approval, baseOf, branchOf, bump, bundleOf, diffHash, git, readState, r
 const G = config.gate;
 const matches = (path, glob) => inside('/' + path, glob);
 const finding = (code, path, line, key, data) => ({ code, level: 'error', path, line, message: msg(key, data), fix: G.codes[code].fix });
+const projectDir = dirname(config.layers.find((l) => l.from === 'project').path) + '/';
+
+// Proof-revert: with the unit's code reverted, each level that holds a tagged test must fail (docs/design/gate.md).
+function proofRevert(tree, card, paths, levels, tagged, bundleRel, add) {
+  const isTest = (f) => Object.values(levels ?? {}).some((l) => list(l?.paths).some((g) => matches(f, g)));
+  const code = paths.filter((f) => !isTest(f) && !f.startsWith(bundleRel + '/') && !f.startsWith(projectDir));
+  const runs = Object.entries(levels ?? {}).filter(([, l]) => l?.run && [...tagged].some((f) => list(l.paths).some((g) => matches(f, g))));
+  const skip = card?.lane === 'quick' ? 'proofQuick' : !code.length ? 'proofTests' : !runs.length ? 'proofNoRun' : null;
+  if (skip) return { levels: [], note: msg('proofSkipped', { why: msg(skip, {}) }) };
+  const staged = new Set(git(tree, 'ls-files', '--', ...code).split('\n')); // the merge result, kept in the index
+  const atBase = code.filter((f) => tryGit(tree, 'cat-file', '-e', `HEAD:${f}`) !== null);
+  if (atBase.length) git(tree, 'restore', '--source=HEAD', '--worktree', '--', ...atBase);
+  for (const f of code.filter((x) => !atBase.includes(x))) rmSync(join(tree, f), { force: true });
+  for (const [level, l] of runs) if (shell(tree, l.run)) add('GATE-PROOF', 'gateProof', { level });
+  const back = code.filter((f) => staged.has(f));
+  if (back.length) git(tree, 'restore', '--worktree', '--', ...back);
+  for (const f of code.filter((x) => !staged.has(x))) rmSync(join(tree, f), { force: true });
+  return { levels: runs.map(([level]) => level), note: '' };
+}
+
 const shell = (cwd, command) => spawnSync(command, { cwd, shell: true, encoding: 'utf8' }).status === 0;
 
 // Paths only `merge` writes: bundle indexes and logs, and the profile's shared files.
@@ -134,14 +154,16 @@ function runGate(cwd, st, unit) {
   if (tryGit(tree, 'merge', '-q', '--no-ff', '--no-commit', branchOf(unit.id)) === null) {
     tryGit(tree, 'merge', '--abort');
     add('GATE-CONFLICT', 'gateConflict', { base });
-    return { findings: out, tree, tested: [] };
+    return { findings: out, tree, tested: [], proof: null };
   }
 
   const { levels } = withDefaults(loadProfile(tree).profile); // from the merge result: a unit may add a test location
   const levelPaths = (level) => list(levels?.[level]?.paths);
+  const tagged = new Set();
   for (const ac of card?.lane === 'quick' ? [] : unit.acs) { // a quick-lane card carries no ACs, so no AC tests
     const tag = `${unit.id}/${ac.id}`;
     const files = (tryGit(tree, 'grep', '-l', '-F', tag) ?? '').split('\n').filter((f) => f && !f.startsWith(bundleRel + '/'));
+    files.forEach((f) => tagged.add(f));
     if (!files.length) add('GATE-AC', 'gateAc', { tag });
     else if (levelPaths(ac.level).length && !files.some((f) => levelPaths(ac.level).some((g) => matches(f, g)))) {
       add('GATE-LEVEL', 'gateLevel', { tag, files: files.join(', '), level: ac.level });
@@ -158,6 +180,8 @@ function runGate(cwd, st, unit) {
     }
   }
 
+  const proof = out.length ? null : proofRevert(tree, card, paths, levels, tagged, bundleRel, add); // only on a green merge result
+
   const touched = (p.modules ?? []).filter((m) => paths.some((x) => list(m.paths).some((g) => matches(x, g))));
   for (const m of touched.filter((x) => x.check)) if (!shell(tree, m.check)) add('GATE-CHECK', 'gateCheck', { command: m.check });
   for (const command of list(p.security?.check)) if (!shell(tree, command)) add('GATE-SECURITY', 'gateCheck', { command });
@@ -170,7 +194,7 @@ function runGate(cwd, st, unit) {
   for (const f of checkBundle(treeBundle, { rules: p.docs?.rules ?? {}, base: tree }).filter((x) => x.level === 'error')) {
     out.push(finding('GATE-OKF', f.path, f.line, 'gateOkf', f));
   }
-  return { findings: out, tree, tested: tested.map(([level]) => level) };
+  return { findings: out, tree, tested: tested.map(([level]) => level), proof };
 }
 
 // Base commits in `range` that are neither gate merges in scope nor direct commits on allowed paths.
@@ -212,7 +236,7 @@ export const commands = {
     if (!unit) throw new UsageError(msg('unknownUnit', { name: args[0] ?? '', dir: relPath(cwd, join(st.bundle, config.grid.units)) }));
     if (git(cwd, 'rev-parse', '--abbrev-ref', 'HEAD') !== st.base) throw new UsageError(msg('gateNotBase', { base: st.base }));
     if (!tryGit(cwd, 'rev-parse', '-q', '--verify', branchOf(unit.id))) throw new UsageError(msg('noBranch', { branch: branchOf(unit.id) }));
-    const { findings, tree, tested } = runGate(cwd, st, unit);
+    const { findings, tree, tested, proof } = runGate(cwd, st, unit);
     if (findings.length) {
       tryGit(tree, 'merge', '--abort');
       dropWorktree(cwd, tree);
@@ -225,11 +249,11 @@ export const commands = {
     const card = readJson(runtimeFile(cwd, 'cards', unit.id));
     git(tree, 'add', '-A');
     git(tree, 'commit', '-q', '-m', `Merge ${unit.id}: ${unit.fm.title ?? ''}`,
-      '-m', `${G.trailers.unit}: ${unit.id}\n${G.trailers.card}: ${card.hash}\n${G.trailers.review}: ${card.lane === 'quick' ? G.noReview : G.pass}\n${G.tested}: ${tested.join(', ') || G.noReview}`);
+      '-m', `${G.trailers.unit}: ${unit.id}\n${G.trailers.card}: ${card.hash}\n${G.trailers.review}: ${card.lane === 'quick' ? G.noReview : G.pass}\n${G.tested}: ${tested.join(', ') || G.noReview}\n${G.proof}: ${proof?.levels.join(', ') || G.noReview}`);
     const sha = git(tree, 'rev-parse', 'HEAD');
     dropWorktree(cwd, tree);
     git(cwd, 'merge', '-q', '--ff-only', sha);
-    let output = msg('gateMerged', { unit: unit.id, sha });
+    let output = msg('gateMerged', { unit: unit.id, sha }) + (proof?.note ?? '');
     const holder = git(cwd, 'worktree', 'list', '--porcelain').split('\n\n').find((w) => w.includes(`branch refs/heads/${branchOf(unit.id)}`));
     if (holder) {
       const path = holder.split('\n')[0].replace(/^worktree /, '');

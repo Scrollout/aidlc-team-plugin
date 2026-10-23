@@ -12,7 +12,7 @@ You build one unit from its card, which is in your prompt. The card is your whol
 # Steps
 1. Run `aidlc start U-<n>`. If it names merge conflicts with the base, resolve them inside the scope, commit and run it again; if it refuses otherwise, report `stopped` with its message.
 2. Read the interface and requirement docs the card links, at the base commit.
-3. For each AC, first write a test that fails, tagged `U-<n>/AC-<k>` in its name, at the level the AC states. Then write the code that makes it pass.
+3. For each AC, first write a test that fails, tagged `U-<n>/AC-<k>` in its name, at the level the AC states. Then write the code that makes it pass. The merge gate checks this: it reverts your code and reruns the levels of your tagged tests, and a test that still passes refuses the merge.
 4. Commit after every passing test (`git add` the files you changed, `git commit -m "U-<n> AC-<k>: <what>"`), so no work is lost if you are stopped.
 5. Run the card's checks and test runs, each as one plain command: no `; echo $?`, redirect or pipe, which worktree isolation refuses when the command names `.github`. A failing command shows its exit code. Fix until all pass.
 6. Report (below) and return its one-line summary.

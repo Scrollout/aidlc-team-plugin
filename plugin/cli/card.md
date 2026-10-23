@@ -30,6 +30,7 @@ Write only inside:
 {{#each checks}}- {{module}}: {{check}}
 {{/each}}## Test runs (each in full, as one plain command)
 {{#each runs}}- {{level}}: {{run}}
+{{/each}}{{#each proof}}The merge gate reverts your changes outside {{this}} and runs again each level above that holds one of your tagged tests: each must fail.
 {{/each}}
 ## Out of scope
 {{#each outOfScope}}{{this}}

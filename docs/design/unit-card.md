@@ -3,7 +3,7 @@ type: Design
 title: Unit card
 description: The generated, read-only brief one builder works from and one reviewer checks against.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T13:40:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T14:00:00Z }
 ---
 
 # Why per unit, not shared
@@ -18,7 +18,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T13:40:00Z }
 - **Interfaces:** linked specs it consumes and provides (paths at the base commit).
 - **Requirements:** the requirement docs the unit cites, which the builder meets and every review checks.
 - **Findings to fix:** in a fix round, the findings of each focus whose last verdict for the current diff is `fix`. After an escalation the owner re-approved, its findings are listed as answered by that re-approval, for the reviewer to report again only if one still holds against the spec as it is now.
-- **Test runs:** every level's `run`; the builder and the reviewer run each in full, and the gate again on the merge result.
+- **Test runs:** every level's `run`; the builder and the reviewer run each in full, and the gate again on the merge result, then once more with the unit's code reverted, when each level holding a tagged test must fail.
 - **Reserves:** e.g. migration number `regional/0005`.
 - **Checks:** the profile commands for the unit's modules, matched by `id`, or `name` when a module has none.
 - **Out of scope** and **stop and report if** (interface change, scope too small, AC ambiguous).
