@@ -351,6 +351,8 @@
     "gateAc": "no test tagged {{tag}}",
     "gateAcCommand": "{{ac}} names {{command}}, which fails on the merge result",
     "gateRun": "level {{level}} run {{command}} fails on the merge result",
+    "gateNeeds": "level {{level}} needs {{vars}}, which is unset: its tests would skip",
+    "gateSkip": "level {{level}} skipped a test: {{line}}",
     "gateProof": "level {{level}} still passes with {{unit}}'s changes outside the test paths reverted: its tagged tests do not test them",
     "proofSkipped": "proof skipped: {{why}}\n",
     "proofQuick": "quick lane",
@@ -848,6 +850,9 @@
       },
       "GATE-PROOF": {
         "fix": "make each tagged test fail without the change, then report again"
+      },
+      "GATE-SKIP": {
+        "fix": "run the level where its tests can run (set what it needs), or make the skipped test run; a skipped test proves nothing"
       },
       "GATE-RUN": {
         "fix": "the builder fixes the code or tests until the level's run passes on the base merged in"

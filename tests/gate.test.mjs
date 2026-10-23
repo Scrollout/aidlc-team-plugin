@@ -67,6 +67,7 @@ const BROKEN = {
   'GATE-LEVEL': () => setup({ files: { ...CODE, 'src/add.check.mjs': '// U-1/AC-1\n' } }),
   'GATE-CHECK': () => setup({ profile: { ...PROFILE, modules: [{ id: 'core', paths: ['src/**'], check: FAIL }] } }),
   'GATE-RUN': () => setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: FAIL } } } }),
+  'GATE-SKIP': () => setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: 'node -e "console.log(\'# SKIP U-1/AC-1 needs a database\')"', skip: '^# SKIP' } } } }),
   'GATE-REVIEW': () => setup({ verdict: 'fix' }),
   'GATE-CARD': () => {
     const d = setup();
@@ -307,4 +308,16 @@ test('U28/AC-1 a run that checks git diff is not fooled by the revert', () => {
   assert.equal(m.code, 0, m.out);
   assert.equal(read(ok, 'src/add.mjs'), CODE['src/add.mjs']);
   assert.equal(git(ok, 'status', '--porcelain'), '');
+});
+
+test('U44/AC-1 U44/AC-2 a level that needs an unset variable fails before it runs; a skip in a level or proof-revert run fails as GATE-SKIP', () => {
+  const needs = setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: 'node --test', needs: ['AIDLC_TEST_UNSET_DB'] } } } });
+  const r = merge(needs);
+  assert.equal(r.code, 1);
+  assert.match(r.out, /GATE-RUN .*level unit needs AIDLC_TEST_UNSET_DB, which is unset: its tests would skip/);
+  const skipped = setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: 'node --test', skip: '^ℹ skipped [1-9]' } } }, files: { ...CODE, 'tests/add.test.mjs': TEST['tests/add.test.mjs'].replace("test('U-1/AC-1 adds'", "test('U-1/AC-1 adds', { skip: !process.env.AIDLC_TEST_UNSET_DB }") } });
+  const s = merge(skipped);
+  assert.equal(s.code, 1);
+  assert.match(s.out, /GATE-SKIP .*level unit skipped a test: ℹ skipped 1/);
+  assert.equal(merge(setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: 'node --test', skip: '^ℹ skipped [1-9]' } } } })).code, 0, 'no skip: the merge passes');
 });
