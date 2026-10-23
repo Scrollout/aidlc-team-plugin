@@ -3,7 +3,7 @@ type: Design
 title: Hook mechanics
 description: How the plugin's hooks reach the pinned CLI, what each one checks, and how repeated denials escalate.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T12:20:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T11:40:00Z }
 sources:
   - id: cc-hooks
     resource: https://code.claude.com/docs/en/hooks
@@ -12,11 +12,11 @@ sources:
 
 # Wiring
 - `plugin/hooks/hooks.json` runs `node ${CLAUDE_PLUGIN_ROOT}/hooks/run.mjs <name>` in exec form.[^cc-hooks] The wrapper finds the project from the hook input's `cwd` (the folder holding `.aidlc/profile.json`) and runs `node .aidlc/bin/aidlc.mjs hook <name>` there, so the project's pinned CLI judges it. A `cwd` outside any work tree, such as `.git/aidlc`, is judged from the project folder, so a session that wandered there can still `cd` out.
-- A folder without `.aidlc/profile.json` is not managed: every hook allows. A managed project whose pinned CLI is missing gets a deny from every PreToolUse hook, naming the owner's `!` command that restores it from the plugin (a hook cannot judge it, and the lead cannot run it past the guard). The other hooks let the event pass, so the Stop hook cannot block every turn end.
+- A folder without `.aidlc/profile.json` is not managed: every hook allows. A managed project whose pinned CLI is missing gets a deny from every PreToolUse hook, naming the command the owner runs in a terminal to restore it from the plugin (a hook cannot judge it, and the lead cannot run it past the guard). The other hooks let the event pass, so the Stop hook cannot block every turn end, and a failed prompt hook (an older pinned CLI) passes the prompt unchanged.
 - Blocking hooks (guard, scope, secrets, model) set `timeout: 10` and `onFailure: "block"`; a hook that cannot run denies. Each prints JSON and exits 0: `permissionDecision: "deny"` with `CODE message → fix` as the reason.
 
 # Checks
-- **guard** (Bash) reads each command segment as argv. It denies:
+- **guard** (Bash) reads each command segment as argv. On `CronCreate` and `ScheduleWakeup` it denies a prompt the prompt hook would take as the owner's approval. On Bash it denies:
   - a force push or `+refspec`;
   - pushing or deleting the base, so `aidlc push` is the only way;
   - `--no-verify` or `-n` on a commit;
@@ -35,6 +35,7 @@ sources:
   - when `stop_hook_active` is true;
   - when a line of the last message ends with a question mark, so a question followed by its options counts;
   - when `next`'s action is the stopping point the owner set with `aidlc mode --stop`.
+- **prompt** (UserPromptSubmit): a prompt that is exactly `approve <doc>…` runs `approve` as the owner before the lead reads it, and passes the prompt on with what it stamped or the error as `additionalContext`; any other prompt passes unchanged ([0011](../decisions/0011-plain-word-approval.md)).[^cc-hooks]
 - **status** (SessionStart) returns `aidlc status` and one resume line, at most 1,000 chars: the run mode and the last owner prompt come first.
 - **heartbeat** (PostToolUse) also marks an owner prompt the guard recorded as `ran` ([Approvals](approvals.md#owner-prompts)).
 - **denied** (PermissionDenied, Bash) records a command auto mode refused, with the commit `HEAD` was on, in `.git/aidlc/host-denied.json` (the last five).[^cc-hooks] While `HEAD` stays there, `next` hands that action to the owner instead of demanding it again ([State](state.md#next)), so steer lets the stop through.

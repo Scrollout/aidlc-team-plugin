@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-23
 
+- **Update** M2 U24 built ([0011](decisions/0011-plain-word-approval.md)): a prompt that is exactly `approve <doc>…` stamps those docs as the owner through a UserPromptSubmit hook and tells the lead; the guard denies a scheduled task or loop with such a prompt; an older pinned CLI never blocks a prompt; every owner step `next` names gives the words to type, an escalation included, and no message offers `!` ([Hooks](design/hooks.md), [Approvals](design/approvals.md)). Release 0.30.0.
 - **Creation** [0011 Plain-word approval](decisions/0011-plain-word-approval.md) (owner's choice): the owner approves by typing `approve <doc>…`. **Update** [M2](roadmap/m2.md): units U24 to U26 carry the re-pilot's gaps, then a short re-pilot. The [re-pilot report](pilot/m2-repilot-report.md) no longer counts the lead's second `upgrade` as a retro error, since the owner answered its prompt.
 - **Creation** [M2 re-pilot report](pilot/m2-repilot-report.md): one intent with two parallel units on 0.29.0. The auto mode refusals and the M2 profile edit are gone, and the retro criterion holds. The research loop and the escalation step still need the lead or a `!` command, so M2 stays open ([M2](roadmap/m2.md#result)).
 - **Creation** [M3](roadmap/m3.md) draft: project rules on the card, proof-revert, a simplicity check in the general review if needed, a complexity check for this repo, the advisor if needed, and the cuts carried from M2 (owner's brainstorm on agent code quality).
