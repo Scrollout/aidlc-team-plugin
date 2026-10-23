@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-23
 
+- **Creation** [M2 re-pilot 2 report](pilot/m2-repilot2-report.md): two parallel units on 0.32.0, no fix rounds, three typed approvals. M2 stays open on one gap: the lead resent a research digest that broke the project's doc rules ([M2](roadmap/m2.md#result)).
 - **Update** Fix from M2 re-pilot 2: a draft's plan fields (a hold's question, priority, board) are no open points, so a research question with `<…>` in it no longer keeps its answered hold on ([State](design/state.md)). Release 0.32.1.
 - **Update** M2 U26 built: `review record` tells the reviewer when its `fix` became `escalate` and why; the card heads findings the owner answered by re-approving as such; the retro lists approvals of the decisions the intent's docs cite ([Verification](design/verification.md), [Unit card](design/unit-card.md), [Steering](design/steering.md)). Release 0.32.0.
 - **Update** M2 U25 built: the model hook marks a researcher in flight from its brief's first line and its calls keep the mark fresh, so `next` waits for it and steer no longer demands it again; a filed digest that answers a `research:` hold releases it; the brief caps the whole digest, frontmatter included, at the bundle's cap and asks for `generated` ([State](design/state.md), [Hooks](design/hooks.md), [Skill and agents](design/prompts.md)). Release 0.31.0.
