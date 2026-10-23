@@ -68,9 +68,12 @@ const segWithin = (x, y) => within(tokens(x), tokens(y), '*', charWithin);
 export const overlaps = (a, b) => intersects(segments(a), segments(b), '**', segOverlap);
 export const inside = (a, b) => within(segments(a), segments(b), '**', segWithin);
 
+// A scope holding the project profile can add its own test location to `levels` (docs/design/grid.md).
+const PROFILE = '/' + config.layers.find((l) => l.name === 'project').path;
+
 // ---- Plan ----
 
-function readDocs(bundle, dir, pattern, norm = (id) => id) {
+function readDocs(bundle, dir, pattern) {
   const d = join(bundle, dir);
   if (!existsSync(d)) return [];
   const re = new RegExp(pattern);
@@ -79,7 +82,7 @@ function readDocs(bundle, dir, pattern, norm = (id) => id) {
     if (!m) return [];
     const file = join(d, name);
     const doc = parseDoc(readFileSync(file, 'utf8'));
-    return doc.error || !doc.fm ? [] : [{ id: norm(m[1]), file, fm: doc.fm, doc, requirements: list(doc.fm.requirements).map(reqId) }];
+    return doc.error || !doc.fm ? [] : [{ id: m[1], file, fm: doc.fm, doc, requirements: list(doc.fm.requirements).map(reqId) }];
   });
 }
 
@@ -92,7 +95,11 @@ export function acsOf(doc) {
 
 // Intents and units of a bundle; units carry their parsed fields and ACs.
 export function readPlan(bundle) {
-  const units = readDocs(bundle, GRID.units, GRID.unitFile).map((u) => ({
+  const requirements = readDocs(bundle, GRID.requirements, GRID.requirementFile);
+  // Citations compare by number (R-24 cites R-024.md) and print as the file names the requirement.
+  const named = new Map(requirements.map((r) => [reqId(r.id), r.id]));
+  const cite = (d) => ({ ...d, requirements: d.requirements.map((r) => named.get(r) ?? r) });
+  const units = readDocs(bundle, GRID.units, GRID.unitFile).map((u) => cite({
     ...u,
     depends: list(u.fm.depends),
     scope: list(u.fm.scope),
@@ -100,11 +107,7 @@ export function readPlan(bundle) {
     modules: list(u.fm.modules),
     acs: acsOf(u.doc),
   }));
-  return {
-    intents: readDocs(bundle, GRID.intents, GRID.intentFile),
-    units,
-    requirements: readDocs(bundle, GRID.requirements, GRID.requirementFile, reqId),
-  };
+  return { intents: readDocs(bundle, GRID.intents, GRID.intentFile).map(cite), units, requirements };
 }
 
 function finding(code, file, line, key, data, base) {
@@ -188,6 +191,7 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   const known = new Set(all.map((u) => u.id));
   const levels = Object.keys(withDefaults(profile).levels);
   const kinds = profile.reserve ? Object.keys(profile.reserve) : null;
+  const modules = new Set((profile.modules ?? []).map((m) => String(m.id ?? m.name)));
   const levelDefs = withDefaults(profile).levels;
   const out = [];
   const add = (code, u, line, key, data) => out.push(finding(code, u.file, line, key, { unit: u.id, ...data }, base));
@@ -202,12 +206,13 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
       if (!ac.level) add('PLAN-LEVEL', u, ac.line, 'acNoLevel', { ac: ac.id });
       else if (!levels.includes(ac.level)) add('PLAN-LEVEL', u, ac.line, 'acBadLevel', { ac: ac.id, level: ac.level, levels: levels.join(', ') });
     }
+    for (const m of u.modules.filter((x) => !modules.has(x))) add('PLAN-MODULE', u, keyLine(u, 'modules'), 'moduleUnknown', { module: m, modules: [...modules].join(', ') || '-' });
     if (!u.scope.length) add('PLAN-SCOPE', u, 1, 'scopeMissing', {});
     // Each AC's test must have a place in the scope, unless the quick lane adds no tests.
     else if (computeLane(u.scope, profile).lane !== 'quick') {
       for (const ac of u.acs.filter((a) => levels.includes(a.level))) {
         const paths = list(levelDefs[ac.level].paths);
-        if (paths.length && !u.scope.some((g) => paths.some((p) => overlaps(g, p)))) add('PLAN-TEST', u, ac.line, 'acNoTestPath', { ac: ac.id, level: ac.level, paths: paths.join(', ') });
+        if (paths.length && !u.scope.some((g) => overlaps(g, PROFILE) || paths.some((p) => overlaps(g, p)))) add('PLAN-TEST', u, ac.line, 'acNoTestPath', { ac: ac.id, level: ac.level, paths: paths.join(', ') });
       }
     }
     // Builders never write what merge writes: bundle indexes and logs, and profile.shared files.

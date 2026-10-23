@@ -221,3 +221,12 @@ test('U16/AC-1 start merges the card base into an existing unit branch; a confli
   assert.equal(c.code, 1);
   assert.match(c.out, /conflicts in README\.md → resolve them inside the scope, commit, and run start again/);
 });
+
+test('U22/AC-2 the card lists the checks of a module the profile keys by name', () => {
+  const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), 'docs/units/U-1-a.md': unitDoc({ scope: ['sdk/**'], modules: ['sdk-go'] }) },
+    { modules: [{ name: 'sdk-go', paths: ['sdk/**'], check: 'make sdk-test' }] });
+  approve(dir, 'I-1', 'U-1');
+  const r = run(dir, ['card', 'U-1']);
+  assert.equal(r.code, 0, r.err);
+  assert.match(r.out, /## Checks\n- sdk-go: make sdk-test\n/);
+});
