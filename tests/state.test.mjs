@@ -112,7 +112,12 @@ const SCENARIOS = {
   'building, stale heartbeat': [/^restart the builder of U-1 from branch unit\/U-1/, 0, (dir) => {
     approve(dir, 'I-1', 'U-1', 'U-2');
     branch(dir, 'U-1');
-    heartbeat(dir, 'U-1', 5 * 60 * 1000);
+    heartbeat(dir, 'U-1', 13 * 60 * 1000);
+  }],
+  'U36/AC-3 building, heartbeat 10 min old (a long test run)': [/^wait for the builders and reviewers of U-1$/, 0, (dir) => {
+    approve(dir, 'I-1', 'U-1', 'U-2');
+    branch(dir, 'U-1');
+    heartbeat(dir, 'U-1', 10 * 60 * 1000);
   }],
   'building, fresh heartbeat': [/^wait for the builders and reviewers of U-1$/, 0, (dir) => {
     approve(dir, 'I-1', 'U-1', 'U-2');
@@ -375,7 +380,7 @@ test('U4/AC-6 a review in flight makes next wait instead of asking for it again'
   assert.match(run(dir, ['next']).out, /^review U-1, focus general/);
   write(dir, { '.git/aidlc/reviewing/U-1': '' });
   assert.match(run(dir, ['next']).out, /^wait for the builders and reviewers of U-1/);
-  const old = new Date(Date.now() - 10 * 60 * 1000);
+  const old = new Date(Date.now() - 13 * 60 * 1000);
   utimesSync(join(dir, '.git/aidlc/reviewing/U-1'), old, old);
   assert.match(run(dir, ['next']).out, /^review U-1, focus general/, 'a reviewer that went quiet is started again');
   write(dir, { '.git/aidlc/reviewing/U-1': '' });

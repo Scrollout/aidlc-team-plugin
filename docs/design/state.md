@@ -3,7 +3,7 @@ type: Design
 title: State
 description: How the CLI derives progress from git and docs, how approvals work, and how next picks the one allowed step.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T16:00:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T18:15:00Z }
 ---
 
 # Sources of truth
@@ -50,7 +50,7 @@ Intents, requirements, units and one-way-door decisions carry the owner's approv
 7. Verdict `escalate` in any focus → the owner decides; their re-approval marks its findings answered on the card and sends the unit straight to review. Verdict `fix` → fix round, findings on the card, none while its builder runs. A verdict older than the builder's last report no longer counts.
 8. A builder that reported `stopped` → the lead fixes the spec (re-approved) or the cause; the builder restarts.
 9. Reported, not reviewed → review, naming the first required focus without a `pass` for the current diff ([Skill and agents](prompts.md#review)).
-10. Building with a stale heartbeat (over 2 min) and no report → restart its builder. A merged unit still in a worktree → stop its builder, remove the worktree.
+10. Building with a stale heartbeat ([Agents in flight](in-flight.md)) and no report → restart its builder. A merged unit still in a worktree → stop its builder, remove the worktree.
 11. Approved, unblocked units → build, on one line; up to `parallel.max` in flight, with scopes disjoint from units in flight.
 12. Builders running → wait.
 13. Intent merged, untagged → release with the owner; 4–12 serve the next one meanwhile.
@@ -69,12 +69,12 @@ Nothing that matters lives only in the conversation; all below is on disk before
 | Builder's work | WIP commits on `unit/U-<n>` after each passing test |
 | Builder's report | `.git/aidlc/reports/U-<n>.json`, written by the builder's `aidlc report U-<n>` |
 | Reviewer's verdict | the reviewer runs `aidlc review record` itself; the lead never relays it |
-| Which builders are running | a heartbeat file per unit, touched by a PostToolUse hook in its worktree |
+| Which builders are running | a heartbeat file per unit, touched by a hook in its worktree |
 | A merge cut off midway | detected from `MERGE_HEAD`; `next` says abort or continue |
 
 On resume (SessionStart `startup`, `resume`, `clear`, `compact`):
 1. The hook injects `aidlc status` plus one line: load the `aidlc` skill and run `aidlc next`.
-2. A unit with a fresh heartbeat (under 2 min) is still running: wait, don't start a second builder.
+2. A unit with a fresh heartbeat is still running: wait, don't start a second builder.
 3. A unit with a stale heartbeat and no report is interrupted: `next` restarts its builder from the same card, told to continue from the branch's last commit.
 4. Reports and verdicts on disk count as if the old session had received them.
 

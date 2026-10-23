@@ -56,6 +56,19 @@
             "onFailure": "block"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/hooks/run.mjs",
+              "heartbeat"
+            ],
+            "timeout": 10
+          }
+        ]
       }
     ],
     "PostToolUse": [

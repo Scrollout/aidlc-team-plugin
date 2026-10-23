@@ -107,7 +107,7 @@ test('U7/AC-2 scope: in-scope writes pass, out-of-scope and merge-written files 
 
 test('U7/AC-3 blocking hooks fail closed; unmanaged folders are left alone; a missing CLI denies tool calls only', () => {
   for (const group of HOOKS.hooks.PreToolUse) {
-    for (const h of group.hooks) {
+    for (const h of group.hooks.filter((x) => x.args?.at(-1) !== 'heartbeat')) { // the heartbeat only marks, never blocks
       assert.equal(h.onFailure, 'block');
       assert.equal(h.timeout, 10);
       assert.equal(h.command, 'node');
@@ -289,4 +289,26 @@ test('U24/AC-2 the lead cannot schedule an approval prompt; a pinned CLI without
   const old = typed(dir, 'approve U-1');
   assert.equal(old.code, 0, 'an older pinned CLI passes the prompt');
   assert.equal(old.json && Object.keys(old.json).length, 0, 'with no context');
+});
+
+test('U36/AC-1 U36/AC-2 heartbeat runs as a call starts and as it ends; only the end marks an owner prompt ran', () => {
+  const hooks = JSON.parse(readFileSync(join(ROOT, 'plugin/hooks/hooks.json'), 'utf8')).hooks;
+  const beats = (event) => hooks[event].filter((h) => !h.matcher && h.hooks.some((x) => x.args?.at(-1) === 'heartbeat'));
+  assert.equal(beats('PreToolUse').length, 1, 'every tool call, before it runs');
+  assert.equal(beats('PostToolUse').length, 1, 'every tool call, after it runs');
+  const dir = project();
+  const wt = unitWorktree(dir);
+  const beat = join(dir, '.git/aidlc/heartbeats/U-1');
+  write(dir, { '.git/aidlc/heartbeats/U-1': '' });
+  const old = new Date(Date.now() - 10 * 60 * 1000);
+  utimesSync(beat, old, old);
+  hook('heartbeat', { cwd: wt, hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: { command: 'make test' } });
+  assert.ok(Date.now() - statSync(beat).mtimeMs < 5000, 'a long call starting keeps its builder fresh');
+  write(dir, { '.git/aidlc/prompts.json': [{ id: 't1', command: 'approve U-1', at: '2026-10-23T10:00:00Z' }] });
+  hook('heartbeat', { cwd: dir, hook_event_name: 'PreToolUse', tool_use_id: 't1', tool_name: 'Bash', tool_input: {} });
+  assert.equal(JSON.parse(read(dir, '.git/aidlc/prompts.json'))[0].ran, undefined, 'the owner may still refuse it');
+  hook('heartbeat', { cwd: dir, hook_event_name: 'PostToolUse', tool_use_id: 't1', tool_name: 'Bash', tool_input: {} });
+  assert.ok(JSON.parse(read(dir, '.git/aidlc/prompts.json'))[0].ran);
+  rmSync(join(dir, '.aidlc/bin'), { recursive: true });
+  assert.equal(hook('heartbeat', { cwd: dir, hook_event_name: 'PreToolUse', tool_name: 'Read', tool_input: {} }).code, 0, 'it never blocks a call, even without the CLI');
 });
