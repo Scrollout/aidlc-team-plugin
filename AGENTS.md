@@ -5,7 +5,7 @@ A Claude Code plugin that brings AI-DLC (Intent → Units → Design → Code �
 ## Read first
 - `docs/index.md`: the docs bundle (OKF v0.2). Read an index, then one doc. Indexes are generated; never edit them by hand.
 - `docs/constitution/principles.md`: the rules every change is checked against.
-- `docs/roadmap/m1.md`: the current plan.
+- `docs/roadmap/index.md`: the milestone plans; the newest one is the current plan.
 
 ## Layout
 - `plugin/`: what ships (CLI, hooks, agents, skill, templates). Nothing else is installed.

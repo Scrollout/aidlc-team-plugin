@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-23
 
+- **Update** [M3](roadmap/m3.md) closed (owner's choice), all exit criteria met on 0.35.1. **Creation** [M4](roadmap/m4.md) draft: the card fixes and retro miscount from the M3 pilot, the review and cost findings of the M2 re-pilots, and the cuts carried since M1.
 - **Creation** [M3 pilot report](pilot/m3-report.md): three units on 0.35.0; every card carried the owner's builder rule and U-27's builder and reviewers followed it; a proof-revert demo refused a vacuous test on 0.35.1. All M3 exit criteria met ([M3](roadmap/m3.md#result)).
 - **Update** Fix from the M3 pilot demo: proof-revert reverts the index as well as the files, so a level run that checks `git diff` (a generated-files check) no longer fails on the revert itself and hides a vacuous test ([Merge mechanics](design/gate.md)). Release 0.35.1.
 - **Update** M3 U28 built: proof-revert. On a green merge result the gate puts the unit's code back as at the base and runs again each level holding one of its tagged tests; one that still passes is `GATE-PROOF`. Quick-lane, test-only and run-less units skip it and say so; the merge records a `Proof:` trailer; the card and the builder's prompt name the check ([Merge mechanics](design/gate.md), [Verification](design/verification.md), [Unit card](design/unit-card.md)). Release 0.35.0.
