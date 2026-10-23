@@ -238,7 +238,8 @@ export function readState(cwd, { now = Date.now() } = {}) {
     const complete = own.length > 0 && own.every((u) => u.state === 'merged');
     // With deploy or release in the profile, the recorded release decides, not a tag (docs/design/operations.md).
     const deploy = readJson(runtimeFile(cwd, 'deploys', i.id)) ?? {};
-    const released = complete && (profile.deploy || profile.release ? Boolean(deploy.release?.ok)
+    const smoked = !profile.deploy?.smoke || (deploy.smoke?.ok && deploy.smoke.at >= deploy.release.at);
+    const released = complete && (profile.deploy || profile.release ? Boolean(deploy.release?.ok && smoked)
       : own.every((u) => (tryGit(cwd, 'tag', '--contains', merged.get(u.id)) ?? '') !== ''));
     return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own, deploy };
   });
@@ -398,9 +399,11 @@ function researched(bundle) {
 
 function pickAction(st) {
   if (st.mergeUnit) return action('act', 'nextContinueMerge', { unit: st.mergeUnit });
+  const unreleased = st.intents.find((i) => i.state === 'merged'); // its release does not hold back the next intent
+  const ops = unreleased && releaseStep(st, unreleased);
+  if (S.badges.stops.includes(ops?.key) || ops?.key === 'nextSmokeFix') return ops; // a failed release or smoke comes first
   const asked = [...st.requirements, ...st.intents, ...st.units].find((d) => researchOf(d) && !st.answered.has(researchOf(d)));
   if (asked) return heartbeatFresh(st.cwd, asked.id, Date.now(), S.researching) ? action('wait', 'nextWaitResearch', { doc: asked.id }) : action('act', 'nextResearch', { doc: asked.id, model: st.profile.models.research });
-  const unreleased = st.intents.find((i) => i.state === 'merged'); // its release does not hold back the next intent
   const intent = st.intents.find((i) => !['released', 'merged'].includes(i.state)) ?? unreleased;
   const scope = st.units.filter((u) => !u.fm.intent || u.fm.intent === intent?.id);
   const gate = gateOf(st, intent, scope);
@@ -413,7 +416,7 @@ function pickAction(st) {
   }
   const work = unitWork(st, scope);
   if (work) return work;
-  if (unreleased) return releaseStep(st, unreleased);
+  if (ops) return ops;
   // A clear newer than the last merge on the base already gave the lead a fresh session (docs/design/resume.md).
   const lastMerge = Number(tryGit(st.cwd, 'log', '-1', '--merges', '--format=%ct', st.base) || 0) * 1000;
   return action('human', heartbeatAt(st.cwd, S.cleared, '.') > lastMerge ? 'nextIdleCleared' : 'nextIdle');
@@ -424,6 +427,9 @@ function releaseStep(st, i) {
   if (!st.profile.deploy && !st.profile.release) return action('human', 'nextRelease', { intent: i.id });
   const rec = i.deploy;
   const base = tryGit(st.cwd, 'rev-parse', st.base);
+  // A failed smoke stops everything until the owner rolled back; then a fix unit, after which the base moves.
+  if (rec.smoke && !rec.smoke.ok && !(rec.rollback?.ok && rec.rollback.at > rec.smoke.at)) return action('human', 'nextSmokeFailed', { intent: i.id, ...rec.smoke });
+  if (rec.smoke && !rec.smoke.ok && rec.smoke.base === base) return action('act', 'nextSmokeFix', { intent: i.id, file: relPath(st.cwd, runtimeFile(st.cwd, 'deploys', i.id)) });
   if (rec.release && !rec.release.ok && rec.release.base === base) return action('human', 'nextReleaseFailed', { intent: i.id, ...rec.release });
   const checked = list(st.profile.deploy?.check).length > 0;
   if (checked && rec.check?.base !== base) return action('act', 'nextDeployCheck', { intent: i.id });

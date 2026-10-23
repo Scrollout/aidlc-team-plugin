@@ -50,6 +50,16 @@ export const commands = {
     if (!commands.length) throw new UsageError(msg('releaseUsage', {}));
     if (list(deploy.check).length && !(t.intent.deploy.check?.ok && t.intent.deploy.check.base === t.base)) throw new UsageError(msg('releaseNoCheck', { intent: t.intent.id }));
     const result = runAll(t.top, commands);
-    return done(record(t, 'release', result), result.ok ? config.exit.ok : config.exit.findings);
+    let out = record(t, 'release', result);
+    const smoke = result.ok && deploy.smoke ? runAll(t.top, [deploy.smoke]) : result;
+    if (result.ok && deploy.smoke) out += record(t, 'smoke', smoke);
+    return done(out, smoke.ok ? config.exit.ok : config.exit.findings);
+  },
+
+  // The owner's step after a failed smoke; without deploy.rollback it records the owner's rollback by hand.
+  rollback([id], { cwd }) {
+    const t = target(cwd, id, 'rollbackUsage', ['merged', 'released']);
+    const result = runAll(t.top, list(t.st.profile.deploy?.rollback));
+    return done(record(t, 'rollback', result), result.ok ? config.exit.ok : config.exit.findings);
   },
 };

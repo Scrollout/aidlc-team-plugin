@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** M6 U49 built: `aidlc release` runs `deploy.smoke` after a passing release, and the intent is released once both passed; a failed smoke is a ⛔ stop before other work that names `aidlc rollback I-<n>`, an owner command, and then a fix unit with `aidlc fix … --after I-<n>`; once it merges the check and release run again ([Deployment and operation](design/operations.md#details)). Release 0.56.0.
 - **Update** M6 U48 built: `aidlc release I-<n>` runs `deploy.run` and then `release`, records each exit and is an owner command; with `deploy` or `release` in the profile the recorded release, not a tag, marks the intent released. The typed words `release I-<n>` record a go the guard uses once, since a deploy outlasts the prompt hook (owner's choice) ([Deployment and operation](design/operations.md#details)). Release 0.55.0.
 - **Update** M6 U47 built: with `deploy.check` in the profile, a merged intent's `next` names `aidlc deploy check I-<n>`, which runs the check on the base and records it; the release is offered only after a pass on the current base, and a failure names the command and `aidlc fix` ([Deployment and operation](design/operations.md#details)). Release 0.54.0.
 - **Creation** [Deployment and operation](design/operations.md) and the [M6](roadmap/m6.md) draft: deploy check, release, smoke, rollback, runbook and retro feedback from the profile, following AWS AI-DLC's operation stages; the owner settled the four open choices.
