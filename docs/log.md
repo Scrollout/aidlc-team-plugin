@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-23
 
+- **Creation** [0010 Research for open questions](decisions/0010-research-and-advice.md) (owner's choice): a researcher subagent on a cheap model, project sources only, official ones first; the owner still decides. **Update** [M2](roadmap/m2.md): units U20 to U23 carry the pilot's gaps and the researcher, then a re-pilot.
 - **Creation** [M2 pilot report](pilot/m2-report.md): the second pilot, one intent with two parallel units on 0.25.0. Windows CI and the CLI budget hold; steps outside `next` and the retro's gaps keep M2 open ([M2](roadmap/m2.md#result)).
 - **Update** M2 U14 built: `sync` treats an issue list shorter than the repository's issue count as a lagging read, retries with backoff and creates nothing while it stays short; `PLAN-BOARD` names the board field and gives an example from the profile's own map ([Board](design/board.md)). Release 0.25.0. All M2 units are built; the second pilot remains for the exit criteria.
 - **Update** M2 U13 built: every test makes its temp folders under one root that is removed when the run ends, also on failure, and the gate's trial worktree removes its parent folder; `init` adds the builders' worktree folder to the project's other ignore files and offers its lint target as a module check; `push` on a base never pushed checks only the commits after the one that added the profile ([Profile](design/profile.md), [Merge mechanics](design/gate.md)). Release 0.24.0.
