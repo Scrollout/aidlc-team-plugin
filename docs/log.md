@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-23
 
+- **Creation** [M3 pilot report](pilot/m3-report.md): three units on 0.35.0; every card carried the owner's builder rule and U-27's builder and reviewers followed it; a proof-revert demo refused a vacuous test on 0.35.1. All M3 exit criteria met ([M3](roadmap/m3.md#result)).
 - **Update** Fix from the M3 pilot demo: proof-revert reverts the index as well as the files, so a level run that checks `git diff` (a generated-files check) no longer fails on the revert itself and hides a vacuous test ([Merge mechanics](design/gate.md)). Release 0.35.1.
 - **Update** M3 U28 built: proof-revert. On a green merge result the gate puts the unit's code back as at the base and runs again each level holding one of its tagged tests; one that still passes is `GATE-PROOF`. Quick-lane, test-only and run-less units skip it and say so; the merge records a `Proof:` trailer; the card and the builder's prompt name the check ([Merge mechanics](design/gate.md), [Verification](design/verification.md), [Unit card](design/unit-card.md)). Release 0.35.0.
 - **Update** M3 U27 built: the card carries each `.aidlc/rules/*.md` at the base commit, before the ACs and within its cap, except a rule a review focus reads; the research brief carries the same rules; a card over the cap names the rules' share ([Unit card](design/unit-card.md), [Skill and agents](design/prompts.md)). Release 0.34.0.
