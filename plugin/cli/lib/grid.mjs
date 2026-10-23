@@ -259,6 +259,16 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
     const door = doorGlobs.find((g) => u.scope.some((s) => overlaps(s, g))) ?? linksOf(u, bundle, GRID.interfaces).map((f) => relPath(base, f)).find(owned);
     if (door) add('PLAN-DECISION', u, keyLine(u, 'scope'), 'planDecision', { door });
   }
+  // Each intent ends to end once: an AC at the top level that runs; a unit crossing modules is tested above the
+  // first level (docs/design/plan-lint.md).
+  const top = levels.filter((l) => levelDefs[l]?.run).at(-1);
+  for (const i of intents.filter((x) => x.fm.status !== GRID.dropped && !x.fm[GRID.slice])) {
+    const own = units.filter((u) => u.fm.intent === i.id);
+    if (top && own.length && !own.some((u) => u.acs.some((a) => a.level === top))) add('PLAN-SLICE', i, 1, 'planSliceIntent', { level: top });
+  }
+  for (const u of units.filter((x) => x.modules.length > 1 && x.acs.length && x.acs.every((a) => a.level === levels[0]))) {
+    add('PLAN-SLICE', u, keyLine(u, 'modules'), 'planSliceUnit', { modules: u.modules.join(', '), level: levels[0] });
+  }
   // A generator links outputs to sources: a scope names both sides or neither. An existing file git does not
   // track is no output a builder can commit (docs/design/plan-lint.md).
   let files = null; // outside a git work tree there is nothing to compare with

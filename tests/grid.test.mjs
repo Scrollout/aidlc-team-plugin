@@ -189,7 +189,7 @@ test('U22/AC-1 U22/AC-2 a scope holding the profile may add its test location; a
     'docs/units/U-1-a.md': unitDoc('scope: ["sdk/ts/**", "/.aidlc/profile.json"]\nmodules: [sdk-ts]', '- AC-1 (unit): installs.'),
     'docs/units/U-2-b.md': unitDoc('scope: ["web/**"]\nmodules: [api, web]', '- AC-1 (unit): renders.'),
   });
-  const found = lintPlan(join(dir, 'docs'), profile, { base: dir });
+  const found = lintPlan(join(dir, 'docs'), profile, { base: dir }).filter((f) => f.code !== 'PLAN-SLICE'); // U43 has its own test
   assert.deepEqual(found.map((f) => [f.code, f.path, f.message]), [
     ['PLAN-MODULE', 'docs/units/U-2-b.md', 'U-2 names module web, which profile.modules lacks (has: api, sdk-ts)'],
     ['PLAN-TEST', 'docs/units/U-2-b.md', 'AC-1 (unit) has no test location: no scope glob overlaps levels.unit.paths tests/unit/**'],
@@ -249,4 +249,26 @@ test('U40/AC-1 U40/AC-2 U40/AC-3 a scope names both sides of a generated entry, 
     ['docs/units/U-4-d.md', 'U-4 scope names sdk/schema.d.ts, which exists but git does not track: a builder cannot commit it'],
   ], 'both sides pass; a new file passes');
   assert.match(lintPlan(join(dir, 'docs'), profile, { base: dir }).find((f) => f.code === 'PLAN-GENERATED').fix, /generated entry/);
+});
+
+test('U43/AC-1 U43/AC-2 an intent ends to end once; a unit crossing modules is tested above the first level', () => {
+  const intent = (id, fm = '') => `---\ntype: Intent\ntitle: ${id}\ndescription: ${id}.\n${fm}---\n\n# Goal\nx\n`;
+  const unit = (intentId, modules, acs) => `---\ntype: Unit\ntitle: A\ndescription: A.\nintent: ${intentId}\nmodules: [${modules.join(', ')}]\nscope: ["${intentId}/${modules.join('-')}/**"]\n---\n\n# Acceptance criteria\n\n${acs.map((l, k) => `- AC-${k + 1} (${l}): x.`).join('\n')}\n`;
+  const dir = project({
+    'docs/intents/I-1-a.md': intent('I-1'),
+    'docs/intents/I-2-b.md': intent('I-2'),
+    'docs/intents/I-3-c.md': intent('I-3', 'slice: "a docs-only change"\n'),
+    'docs/units/U-1-a.md': unit('I-1', ['api'], ['unit', 'integration']),
+    'docs/units/U-2-b.md': unit('I-2', ['api'], ['unit']),
+    'docs/units/U-3-c.md': unit('I-2', ['web'], ['e2e']),
+    'docs/units/U-4-d.md': unit('I-3', ['api', 'web'], ['unit']),
+  });
+  const profile = { modules: [{ id: 'api', paths: ['api/**'] }, { id: 'web', paths: ['web/**'] }], levels: { unit: { run: 'u' }, integration: { run: 'i' }, e2e: { run: 'e' } } };
+  const slices = (p) => lintPlan(join(dir, 'docs'), p, { base: dir }).filter((f) => f.code === 'PLAN-SLICE').map((f) => [f.path, f.message]);
+  assert.deepEqual(slices(profile), [
+    ['docs/intents/I-1-a.md', 'I-1 has no AC at the top level e2e: no unit tests it end to end'],
+    ['docs/units/U-4-d.md', 'U-4 crosses modules api, web but tests only at the unit level'],
+  ], 'I-2 has an e2e AC; I-3 says why not');
+  assert.deepEqual(slices({ ...profile, levels: { unit: { run: 'u' }, integration: { run: 'i' }, e2e: {} } }).map(([p]) => p), ['docs/intents/I-2-b.md', 'docs/units/U-4-d.md'], 'with no e2e run, integration is the top: I-1 has it, I-2 does not');
+  assert.deepEqual(slices({ modules: profile.modules }), [['docs/units/U-4-d.md', 'U-4 crosses modules api, web but tests only at the unit level']], 'the defaults define no run: no intent check');
 });
