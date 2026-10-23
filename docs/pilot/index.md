@@ -11,4 +11,5 @@
 * [M4 pilot 3 report](m4-3-report.md) - A short pilot of U36 to U39 on CLI 0.46.0 - a decision for a one-way door, cited requirements in the first approval, long calls, the three bugs fixed in 0.46.1, and the findings for the next batch.
 * [M4 pilot report](m4-report.md) - A short pilot of the first M4 batch on CLI 0.38.0 - owner badges and blocks, the card fixes, upgrade output, proof lines and the findings for the next batch.
 * [M4 scripted pilot report](m4-4-report.md) - A pilot with no owner present - a scripted project, a test owner's approvals, a headless lead with real builders and reviewers - on CLI 0.46.1 and 0.46.2.
+* [M5 pilot 1 report](m5-report.md) - A short pilot of U40 to U42 on CLI 0.49.0 - a generated-files map on a real project, the clear between intents, and the findings for the next batch.
 * [Pilot interventions](interventions.md) - Every manual step in the M1 pilot, by the owner or by the lead outside aidlc next, and the release that fixed it or the M2 item it became.
