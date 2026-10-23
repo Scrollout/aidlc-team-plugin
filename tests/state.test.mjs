@@ -92,6 +92,12 @@ const SCENARIOS = {
     branch(dir, 'U-1');
     review(dir, 'U-1', 'fix');
   }],
+  '0.46.2 fix verdict while the last builder\'s heartbeat is fresh': [/^fix round for U-1: builder/, 0, (dir) => {
+    approve(dir, 'I-1', 'U-1', 'U-2');
+    branch(dir, 'U-1');
+    heartbeat(dir, 'U-1'); // the builder that reported before the review touched it minutes ago
+    review(dir, 'U-1', 'fix');
+  }],
   'fix round reported with no new commit': [/^review U-1, focus general/, 0, (dir) => {
     approve(dir, 'I-1', 'U-1', 'U-2');
     branch(dir, 'U-1');
@@ -102,6 +108,7 @@ const SCENARIOS = {
     approve(dir, 'I-1', 'U-1', 'U-2');
     branch(dir, 'U-1');
     review(dir, 'U-1', 'fix');
+    write(dir, { '.git/aidlc/launches/U-1': '' }); // the model hook launched the fix-round builder
     heartbeat(dir, 'U-1');
   }],
   reported: [/^review U-1, focus general: reviewer on opus \(card: aidlc card U-1\)/, 0, (dir) => {
@@ -407,7 +414,7 @@ test('U18/AC-2 next offers a merge only when each AC has a tagged test on the br
   git(dir, 'switch', '-q', 'main');
   review(dir, 'U-1', 'pass');
   assert.match(run(dir, ['next']).out, /^fix round for U-1/, 'a note in the bundle is no test: the pass is recorded as fix (U32)');
-  write(dir, { '.git/aidlc/heartbeats/U-1': '' });
+  write(dir, { '.git/aidlc/heartbeats/U-1': '', '.git/aidlc/launches/U-1': '' });
   assert.match(run(dir, ['next']).out, /^wait for the builders and reviewers of U-1/, 'the builder sent back is waited for');
   git(dir, 'switch', '-q', 'unit/U-1');
   commit(dir, 'tag AC-2', { 'src/round.txt': 'U-1/AC-2\n' });

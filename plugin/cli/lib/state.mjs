@@ -215,7 +215,12 @@ export function readState(cwd, { now = Date.now() } = {}) {
       const lastAt = review?.rounds?.at(-1)?.at;
       focus = verdicts.find((x) => x.verdict !== 'pass')?.focus ?? null;
       if (has('escalate')) state = 'escalated';
-      else if (has('fix')) state = heartbeatFresh(cwd, u.id, now) ? 'building' : 'fix';
+      // A fix round is in flight once a builder was launched after the verdict: the builder that reported before
+      // the review keeps its heartbeat fresh for minutes (docs/design/in-flight.md).
+      else if (has('fix')) {
+        const fixAt = Math.max(0, ...(review?.rounds ?? []).filter((r) => r.verdict === 'fix').map((r) => Date.parse(r.at)));
+        state = heartbeatFresh(cwd, u.id, now) && heartbeatAt(cwd, u.id, S.launches) > fixAt ? 'building' : 'fix';
+      }
       else if (!focus && (!quick || report)) {
         const gate = readJson(runtimeFile(cwd, 'gates', u.id));
         state = gate?.diffHash === hash && gate.base === tryGit(cwd, 'rev-parse', base) ? 'gated' : 'reviewed';
