@@ -86,3 +86,14 @@ test('U25/AC-2 U25/AC-3 an answered research hold no longer holds the doc; the b
   commit(dir, 'owner hold');
   assert.match(run(dir, ['next']).out, /on hold/, 'any other hold still holds');
 });
+
+test('U25/AC-2 a research question with <angle brackets> on a draft is no open point once answered', () => {
+  const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), [U1]: unitDoc({ scope: ['sdk/**'] }) });
+  approve(dir, 'I-1');
+  run(dir, ['hold', 'U-1', 'research:', 'is go build ./internal/<m>/... enough?']);
+  commit(dir, 'hold U-1');
+  assert.match(run(dir, ['next']).out, /^research for U-1/);
+  write(dir, { 'docs/research/U-1-go-build.md': '---\ntype: Research\ntitle: Build\ndescription: Enough.\nquestion: "is go build ./internal/<m>/... enough?"\n---\n\n# Options\nOne.\n' });
+  commit(dir, 'digest');
+  assert.match(run(dir, ['next']).out, /^ask the owner to approve the plan: aidlc approve U-1/);
+});
