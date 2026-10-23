@@ -8,7 +8,9 @@ Model: {{model}}
 - The docs bundle: {{index}}
 {{#each stack}}- Stack: {{this}}
 {{/each}}
-## Sources the owner named
+{{#each rules}}## Project rule: {{name}}
+{{text}}
+{{/each}}## Sources the owner named
 {{#each sources}}- {{this}}
 {{/each}}
 ## Budget

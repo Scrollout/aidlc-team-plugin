@@ -230,3 +230,27 @@ test('U22/AC-2 the card lists the checks of a module the profile keys by name', 
   assert.equal(r.code, 0, r.err);
   assert.match(r.out, /## Checks\n- sdk-go: make sdk-test\n/);
 });
+
+test('U27/AC-1 U27/AC-3 the card carries the project rules at the base, but a focus rule, and counts them toward its cap', () => {
+  const plain = repo();
+  approve(plain, 'I-1', 'U-1');
+  const before = run(plain, ['card', 'U-1']).out;
+  assert.doesNotMatch(before, /Project rule/, 'no rules folder: the card as before');
+
+  const dir = makeRepo({ 'docs/intents/I-1-pricing.md': intentDoc('I-1'), [U1]: doc(),
+    '.aidlc/rules/style.md': '# Style\n\nName errors ErrX.\n', '.aidlc/rules/payments.md': 'Check idempotency keys.\n', '.aidlc/rules/notes.txt': 'not a rule\n' },
+  { ...PROFILE, focus: { payments: ['src/pay/**'] } });
+  approve(dir, 'I-1', 'U-1');
+  write(dir, { '.aidlc/rules/style.md': '# Style\n\nChanged after the base.\n' });
+  const card = run(dir, ['card', 'U-1']).out;
+  assert.match(card, /^## Project rule: \.aidlc\/rules\/style\.md\n# Style\n\nName errors ErrX\.\n/m, 'from the base commit');
+  assert.ok(card.indexOf('Project rule') < card.indexOf('## Acceptance criteria'), 'before the ACs');
+  assert.doesNotMatch(card, /idempotency|notes\.txt/, 'a focus rule stays the reviewer\'s; only .md files');
+  assert.equal(before.replace(/^(Base|Card): .*$/gm, ''), run(plain, ['card', 'U-1']).out.replace(/^(Base|Card): .*$/gm, ''));
+
+  commit(dir, 'a long rule', { '.aidlc/rules/style.md': '# Style\n\n' + 'Keep it short. '.repeat(400) + '\n' });
+  approve(dir, 'U-1');
+  const long = run(dir, ['card', 'U-1']);
+  assert.notEqual(long.code, 0);
+  assert.match(long.out, /^card for U-1 is \d+ chars, over 6000, \d{4} of them project rules: shorten the unit doc or the rules$/m);
+});

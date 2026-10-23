@@ -7,7 +7,9 @@ Review model: {{reviewModel}} (profile models.review)
 Base: {{base}}
 Card: {{hash}}
 
-## Acceptance criteria
+{{#each rules}}## Project rule: {{name}}
+{{text}}
+{{/each}}## Acceptance criteria
 Write each as a test tagged {{id}}/AC-<k> at its level, before the code.
 {{#each acs}}{{this}}
 {{/each}}

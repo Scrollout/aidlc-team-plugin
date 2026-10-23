@@ -1,6 +1,6 @@
 // Unit card: rendered from the base commit, refused for unapproved or stale units, recorded for `start`
 // and the model hook (docs/design/unit-card.md). Model routing follows docs/design/team.md.
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { CLI_DIR, config, done, list, UsageError, relPath } from './config.mjs';
 import { msg, render } from './template.mjs';
@@ -45,6 +45,13 @@ function section(doc, heading) {
     else if (on && text.trim()) out.push(doc.lines[n - 1]);
   }
   return out;
+}
+
+// The project's rules, but those a review focus reads (docs/design/unit-card.md); `at` reads one, from the base or the disk.
+function projectRules(names, profile, at) {
+  const { dir, ext } = config.rules;
+  return names.filter((f) => f.endsWith(ext) && !Object.hasOwn(profile.focus ?? {}, f.slice(0, -ext.length))).sort()
+    .map((f) => ({ name: `${dir}/${f}`, text: at(`${dir}/${f}`).replace(/\n*$/, '\n') }));
 }
 
 // Renders the card for `unitId` from the base commit; returns { code, card, record } or a refusal.
@@ -99,13 +106,14 @@ export function renderCard(cwd, unitId) {
     runs: Object.entries(withDefaults(profile).levels).filter(([, l]) => l?.run).map(([level, l]) => ({ level, run: l.run })),
     checks: (profile.modules ?? []).filter((m) => modules.has(m.id ?? m.name) && m.check).map((m) => ({ module: m.id ?? m.name, check: m.check })),
     outOfScope: section(doc, 'Out of scope'),
+    rules: projectRules((tryGit(cwd, 'ls-tree', '--name-only', `${baseSha}:${config.rules.dir}`) ?? '').split('\n'), profile, (p) => git(cwd, 'show', `${baseSha}:${p}`)),
   };
   const file = templateFile(cwd, lane.lane === 'quick' ? C.quickTemplate : C.template);
   const template = readFileSync(file, 'utf8');
   // The base is left out, so a base that moved for other units does not make a recorded review stale.
   const hash = sha256(docText + '\n' + render(template, { ...data, base: '', hash: '' }, file)).slice(0, C.hashLength);
   const card = render(template, { ...data, hash }, file);
-  if (card.length > C.max) return { code: config.exit.findings, output: msg('cardTooLong', { unit: unitId, size: card.length, max: C.max }) };
+  if (card.length > C.max) return { code: config.exit.findings, output: msg('cardTooLong', { unit: unitId, size: card.length, max: C.max, rules: data.rules.reduce((n, r) => n + r.text.length, 0) }) };
   const record = { unit: unitId, hash, base: baseSha, lane: lane.lane, model, scope: atBase.scope };
   writeJson(runtimeFile(cwd, 'cards', unitId), record);
   return { code: config.exit.ok, output: card, record };
@@ -136,6 +144,7 @@ function researchBrief(cwd, id) {
   return render(readFileSync(file, 'utf8'), {
     doc: doc.id, question, questionYaml: JSON.stringify(question), file: relPath(cwd, doc.file), model: st.profile.models.research,
     index: relPath(cwd, join(st.bundle, config.okf.index)), stack: C.stack.filter((f) => existsSync(join(cwd, f))),
+    rules: projectRules(existsSync(join(cwd, config.rules.dir)) ? readdirSync(join(cwd, config.rules.dir)) : [], st.profile, (p) => readFileSync(join(cwd, p), 'utf8')),
     sources: list(st.profile.research?.sources), max: st.profile.research.max, cap: config.okf.sizeCaps.Research ?? config.okf.sizeCapDefault, out: relPath(cwd, join(st.bundle, config.grid.research, `${doc.id}-${slug}.md`)),
   }, file);
 }

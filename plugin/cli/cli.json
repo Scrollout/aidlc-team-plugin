@@ -281,7 +281,7 @@
     "statusMore": "  … {{count}} more\n",
     "statusNext": "next: {{line}}\n",
     "cardRefused": "{{unit}} is {{state}}: the owner approves it before a card is rendered\n",
-    "cardTooLong": "card for {{unit}} is {{size}} chars, over {{max}}: shorten the unit doc\n",
+    "cardTooLong": "card for {{unit}} is {{size}} chars, over {{max}}, {{rules}} of them project rules: shorten the unit doc or the rules\n",
     "noBase": "base branch {{base}} has no commits",
     "laneModel": "lane {{lane}}",
     "modelEscalated": "escalated: {{reason}}",
