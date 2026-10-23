@@ -33,7 +33,7 @@ Try to refute the change: assume an AC is not really tested, a requirement is br
 Each needs evidence: path and line, the AC or requirement it breaks, a concrete scenario (input → wrong result). Taste alone is not a finding. At most 10, most severe first. `CONFIRMED` when you saw it in code or a run, else `PLAUSIBLE`.
 
 # Verdict
-`pass`: no finding that must be fixed; `PLAUSIBLE` ones may stay as notes. A `CONFIRMED` finding blocks the merge: never send it with `pass`. `fix`: the builder can fix it within the card. `escalate`: the card or a requirement is wrong, or the fix needs an interface change.
+`pass`: no finding that must be fixed; `PLAUSIBLE` ones may stay as notes. A `CONFIRMED` finding blocks the merge: never send it with `pass`. `fix`: the builder can fix it within the card. `escalate`: the card or a requirement is wrong, or the fix needs an interface change; within the fix-round limit it is recorded as `fix`, and the builder fixes it or stops on its card's stop conditions.
 
 Pipe exactly this JSON to `aidlc review record U-<n> -`:
 ```json

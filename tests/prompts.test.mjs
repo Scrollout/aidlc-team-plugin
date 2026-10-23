@@ -158,3 +158,7 @@ test('U8/AC-5 the eval fixture seeds each defect and scores found and missed', (
 test('U35/AC-2 the reviewer prompt says a CONFIRMED finding blocks the merge', () => {
   assert.match(parse(REVIEWER).body, /A `CONFIRMED` finding blocks the merge: never send it with `pass`\./);
 });
+
+test('U38/AC-2 the reviewer prompt says an escalate is a fix round first', () => {
+  assert.match(parse(REVIEWER).body, /within the fix-round limit it is recorded as `fix`, and the builder fixes it or stops on its card's stop conditions/);
+});
