@@ -182,3 +182,16 @@ test('U17/AC-3 an AC naming another unit\'s file or target needs a depends path 
   assert.deepEqual(lintPlan(join(dir, 'docs'), {}, { base: dir }), [], 'a depends path clears it');
   assert.deepEqual(lint('PLAN-DEPENDS', {}, { skip: ['U-1'] }), [], 'a merged unit\'s output is on the base');
 });
+
+test('U22/AC-1 U22/AC-2 a scope holding the profile may add its test location; a module the profile lacks is PLAN-MODULE', () => {
+  const profile = { levels: { unit: { paths: ['tests/unit/**'] } }, modules: [{ id: 'api', paths: ['internal/**'] }, { name: 'sdk-ts', paths: ['sdk/ts/**'] }] };
+  const dir = project({
+    'docs/units/U-1-a.md': unitDoc('scope: ["sdk/ts/**", "/.aidlc/profile.json"]\nmodules: [sdk-ts]', '- AC-1 (unit): installs.'),
+    'docs/units/U-2-b.md': unitDoc('scope: ["web/**"]\nmodules: [api, web]', '- AC-1 (unit): renders.'),
+  });
+  const found = lintPlan(join(dir, 'docs'), profile, { base: dir });
+  assert.deepEqual(found.map((f) => [f.code, f.path, f.message]), [
+    ['PLAN-MODULE', 'docs/units/U-2-b.md', 'U-2 names module web, which profile.modules lacks (has: api, sdk-ts)'],
+    ['PLAN-TEST', 'docs/units/U-2-b.md', 'AC-1 (unit) has no test location: no scope glob overlaps levels.unit.paths tests/unit/**'],
+  ], 'U-1 adds its test location to the profile with its test; a module keyed by name counts');
+});

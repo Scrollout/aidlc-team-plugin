@@ -384,7 +384,7 @@ function findDoc(cwd, bundle, name) {
   const path = resolve(cwd, name);
   if (existsSync(path)) return path;
   const plan = readPlan(bundle);
-  const hit = [...plan.units, ...plan.intents, ...plan.requirements].find((d) => d.id === reqIdOf(name));
+  const hit = [...plan.units, ...plan.intents, ...plan.requirements].find((d) => reqIdOf(d.id) === reqIdOf(name));
   if (!hit) throw new UsageError(msg('noDoc', { name }));
   return hit.file;
 }

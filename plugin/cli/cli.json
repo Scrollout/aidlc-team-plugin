@@ -302,6 +302,7 @@
     "planBoardMap": " ({{pairs}})",
     "planBoardPair": "{{from}} means {{to}}",
     "planBoardAny": "<value>",
+    "moduleUnknown": "{{unit}} names module {{module}}, which profile.modules lacks (has: {{modules}})",
     "reqUnknown": "{{doc}} cites {{req}}, which does not exist",
     "nextApproveRequirements": "ask the owner to approve the requirements the plan cites: aidlc approve {{reqs}} (the owner confirms the prompt)",
     "statusUncovered": "not yet delivered: {{reqs}}\n",
@@ -548,7 +549,11 @@
       },
       "PLAN-TEST": {
         "level": "error",
-        "fix": "add a scope glob where the level's tests live, or give the AC a level whose paths the scope holds"
+        "fix": "add a scope glob where the level's tests live, give the AC a level whose paths the scope holds, or add /.aidlc/profile.json to the scope so the unit adds its test location to levels"
+      },
+      "PLAN-MODULE": {
+        "level": "error",
+        "fix": "name a module from profile.modules, or add the module to the profile"
       },
       "PLAN-DEPENDS": {
         "level": "error",

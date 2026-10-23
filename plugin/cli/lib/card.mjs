@@ -93,11 +93,11 @@ export function renderCard(cwd, unitId) {
     interfaces: [...new Set([...doc.lines.slice(doc.body).join('\n').matchAll(LINK)]
       .map((m) => relPath(top, m[1].startsWith('/') ? join(bundle, m[1]) : resolve(dirname(unit.file), m[1]))))],
     reserves: atBase.reserves,
-    requirements: list(doc.fm.requirements).map(reqId).flatMap((id) => plan.requirements.filter((r) => r.id === id)
+    requirements: list(doc.fm.requirements).map(reqId).flatMap((id) => plan.requirements.filter((r) => reqId(r.id) === id)
       .map((r) => msg('cardRequirement', { id, path: relPath(top, r.file) }))),
     fixes: [fixes.length ? msg('cardFixes', { list: fixes.join('') }) : '', answered.length ? msg('cardAnswered', { list: answered.join('') }) : ''].join(''),
     runs: Object.entries(withDefaults(profile).levels).filter(([, l]) => l?.run).map(([level, l]) => ({ level, run: l.run })),
-    checks: (profile.modules ?? []).filter((m) => modules.has(m.id) && m.check).map((m) => ({ module: m.id, check: m.check })),
+    checks: (profile.modules ?? []).filter((m) => modules.has(m.id ?? m.name) && m.check).map((m) => ({ module: m.id ?? m.name, check: m.check })),
     outOfScope: section(doc, 'Out of scope'),
   };
   const file = templateFile(cwd, lane.lane === 'quick' ? C.quickTemplate : C.template);

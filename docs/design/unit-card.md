@@ -19,7 +19,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 - **Findings to fix:** in a fix round, the findings of each focus whose last verdict for the current diff is `fix`. After an escalation the owner re-approved, its findings are listed as answered by the spec change, for the reviewer to check against it.
 - **Test runs:** every level's `run`; the builder and the reviewer run each in full, and the gate again on the merge result.
 - **Reserves:** e.g. migration number `regional/0005`.
-- **Checks:** the profile commands for the unit's modules.
+- **Checks:** the profile commands for the unit's modules, matched by `id`, or `name` when a module has none.
 - **Out of scope** and **stop and report if** (interface change, scope too small, AC ambiguous).
 - **Report format:** what the builder returns.
 
