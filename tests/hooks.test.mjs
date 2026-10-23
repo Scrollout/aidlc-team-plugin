@@ -136,7 +136,7 @@ test('U7/AC-4 the status injection stays within 1,000 chars', () => {
   assert.ok(text.length <= 1000, String(text.length));
   assert.match(text, /^I-1 draft/m);
   assert.match(text, /… \d+ more/);
-  assert.match(text, /next: ask the owner to approve I-1/);
+  assert.match(text, /next: 👉 ask the owner to approve I-1/);
   assert.match(text, /Load the aidlc skill and run aidlc next\.\n$/);
 });
 
@@ -243,7 +243,7 @@ test('U20/AC-1 U20/AC-2 a delegated approval auto mode refused goes to the owner
   assert.equal(denied.code, 0, denied.err);
   const next = run(dir, ['next']);
   assert.equal(next.code, 2, 'an owner step');
-  assert.match(next.out, /^auto mode refused aidlc approve --auto U-1: the owner runs aidlc approve U-1 \(the owner confirms the prompt or types: approve U-1\)/);
+  assert.match(next.out, /^⛔ auto mode refused aidlc approve --auto U-1: the owner runs aidlc approve U-1 \(the owner confirms the prompt or types: approve U-1\)/);
   assert.equal(stop(dir).json.decision, undefined, 'steer lets the stop through');
   assert.equal(decision(bash(dir, 'node .aidlc/bin/aidlc.mjs approve U-1')), 'ask', 'the owner command is a prompt');
   commit(dir, 'something else', { 'notes.txt': 'x\n' });

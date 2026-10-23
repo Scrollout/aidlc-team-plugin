@@ -220,7 +220,7 @@ test('U6/AC-1 a refused merge is not offered again until the base or the diff ch
   assert.match(run(dir, ['next']).out, /^merge U-1/);
   assert.equal(merge(dir).code, 1);
   const r = run(dir, ['next']);
-  assert.match(r.out, /^the gate refused U-1 \(GATE-CHECK; aidlc merge U-1 lists them\)/);
+  assert.match(r.out, /^⛔ the gate refused U-1 \(GATE-CHECK; aidlc merge U-1 lists them\)/);
   assert.equal(r.code, 2);
   commit(dir, 'the base moves', { 'docs/note.md': 'x\n' });
   assert.match(run(dir, ['next']).out, /^merge U-1/);

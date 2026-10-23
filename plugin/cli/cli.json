@@ -655,6 +655,11 @@
     "decisionType": "Decision",
     "gates": "gates",
     "reviewing": "reviewing",
+    "badges": {
+      "owner": "👉 ",
+      "stop": "⛔ ",
+      "stops": ["nextGated", "nextHostDenied", "nextStopped"]
+    },
     "researching": "researching"
   },
   "card": {

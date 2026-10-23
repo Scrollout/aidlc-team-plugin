@@ -3,7 +3,7 @@ type: Design
 title: Skill and agents
 description: What the lead's skill and the builder and reviewer prompts say, how a review is picked and run, and why the prompts restate no enforced rule.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T13:40:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T16:00:00Z }
 sources:
   - id: cc-subagents
     resource: https://code.claude.com/docs/en/sub-agents
@@ -20,7 +20,7 @@ sources:
 Only a skill's description is always in context; its body loads when invoked.[^cc-skills] An agent's prompt is paid on every run. So each prompt is at most 3 KB, carries no rule a hook or the gate enforces, and leaves the "what next" to `aidlc next`. A denial names its own fix, so the prompt need not.
 
 # Skill: `aidlc`
-The lead's loop: run `aidlc next`, do the one action it prints, run it again. It covers what the CLI cannot do: how to elaborate an intent and units with the owner (questions one at a time, options with a recommendation, each answer written into the doc before the next question), how to start builders and reviewers, and that owner gates end the turn. It covers research too ([0010](../decisions/0010-research-and-advice.md)).
+The lead's loop: run `aidlc next`, do the one action it prints, run it again. It covers what the CLI cannot do: how to elaborate an intent and units with the owner (questions one at a time, options with a recommendation, each answer written into the doc before the next question), how to start builders and reviewers, and that owner gates end the turn, with the owner's step alone at the end of the message: the badge `next` gives it, numbered steps and the words to type, or ✅ when nothing is theirs. It covers research too ([0010](../decisions/0010-research-and-advice.md)).
 
 # Agents
 - Plugin agents are named `aidlc-team:builder`, `aidlc-team:reviewer` and `aidlc-team:researcher`.[^cc-subagents] All set `omitClaudeMd`, omit `Agent` from `tools`, and say that `aidlc` means `node .aidlc/bin/aidlc.mjs`.
