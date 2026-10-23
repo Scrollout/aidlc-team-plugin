@@ -21,5 +21,4 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T10:50:00Z }
 - The fix-round builder did not run the project lint, which is in no card check or level run. The retro proposed the matching check.
 - After the security fix, `next` restarted at the general focus, so every round re-runs every focus: six general reviews for one unit.
 - The U-23 builder could not run its CI step script in its worktree because the host's isolation refused it. The reviewers ran it.
-- The retro reads approvals only from the intent's own docs, so the approval of a decision those docs cite is missing. An `upgrade` the lead ran is listed as an owner command.
-- To check: the lead's second `upgrade` ran 8 s after its prompt was raised, and the lead saw no prompt. Whether auto mode can answer a guard `ask` without the owner decides whether "ran" proves the owner said yes.
+- The retro reads approvals only from the intent's own docs, so the approval of a decision those docs cite is missing.

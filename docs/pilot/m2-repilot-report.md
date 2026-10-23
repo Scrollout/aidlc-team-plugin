@@ -9,20 +9,20 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T10:50:00Z }
 # Run
 The scratch copy of the [M2 pilot](m2-report.md) on CLI 0.29.0, to check U20 to U23. Intent I-4: an etcd implementation of an existing coordinator interface, tested against a real etcd in CI. Two units in parallel: U-22 (the implementation, research hold on its fencing token) and U-23 (CI runs the suite on etcd).
 
-- Run mode: elaboration answers as "take the recommended option and log it"; re-approvals delegated.
+- Run mode as in M2: recommended options taken and logged; re-approvals delegated.
 - Wall time: lead start to the last merge 136 min (setup 6 min, elaboration 9 min, build to last merge 120 min). (M2: 64 min); the extra time is U-22's rounds.
 - Researcher: one run, Sonnet, 47 s. The decision drafted from its digest was approved by the owner.
 
 # Fix rounds and reviews
-- U-23: one build, general and security reviews passed with no findings.
+- U-23: one build; both reviews passed clean.
 - U-22: three fix rounds, all CONFIRMED findings:
   1. General: a failed campaign deleted the wrong candidate key.
   2. General: one spelling the project lint rejects; as the focus's second `fix` it became an escalation, and the owner re-approved the unit.
   3. Security: a campaign could win on a revoked key (3 of 3). Then both focuses passed.
-- The delegated `approve --auto R-011` ran with no auto mode refusal this time.
+- The delegated `approve --auto R-011` ran with no auto mode refusal.
 
 # Tokens
-Counted the same way as in M2, from 08:22 onward.
+Counted as in M2.
 
 | Role | Runs | Processed | New | Median run |
 |---|---|---|---|---|
@@ -55,12 +55,12 @@ owner approvals and commands:
 proposals: new check: reviews escalated 1 times: a profile check (modules[].check or architecture.checks) that catches what the reviewers found
 ```
 
-It lists the escalation, the hand-run re-approval and the owner's prompts, and the proposal fits the gap (the fix round never ran the project lint). Two errors: the approval of the cited decision is missing, and the lead's second `upgrade` is listed as the owner's.
+It lists the escalation, the re-approval and the owner's prompts; the proposal fits the gap (the fix round never ran the project lint). One error: the approval of the cited decision is missing. Both `upgrade` lines are the owner's, though the lead saw no prompt: a hook's `ask` prompts the owner even in auto mode ([0009](../decisions/0009-approval-prompt.md)).
 
 # M2 exit criteria
 - `node --test` green on Linux, macOS and Windows, required by CI: **met**. The last run on main (0.29.0) passed.
 - Second pilot with no hand edit to state, no lead step outside `next`, and every owner step one `next` names: **not met**. No state was hand-edited, and M2's auto mode refusals and profile edit are gone, but the lead released the research hold and reshaped the digest outside `next`. `next` also named the escalation without naming the owner's command ([steps](m2-repilot-interventions.md) 2 to 5).
-- `aidlc retro` lists codes, escalations and interventions, with at most three proposals: **met**, with the two errors above carried as fixes.
+- `aidlc retro` lists codes, escalations and interventions, with at most three proposals: **met**, with the error above carried as a fix.
 - CLI source within 3,000 lines: **met**, 2,956.
 
 M2 stays open on one criterion; the fixes are listed in [M2](../roadmap/m2.md#result).
