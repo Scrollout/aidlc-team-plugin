@@ -280,6 +280,7 @@ function steer(input, cwd) {
 }
 
 function status(input, cwd) {
+  if (input.source === H.clearSource) touch(join(aidlcDir(cwd), S.cleared)); // next stops asking for the clear
   const st = readState(cwd);
   const resume = msg('statusResume', {});
   const lines = [...st.intents.map((i) => msg('statusIntent', { id: i.id, state: i.state, title: i.fm.title ?? '' })),

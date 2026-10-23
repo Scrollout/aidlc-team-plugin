@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readdirSync, readFileSync, utimesSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { aidlc, approve, branch, commit, git, intentDoc, makeRepo, merge, read, review, run, tempDir, unitDoc, write } from './state-repo.mjs';
 import { parseDoc } from '../plugin/cli/lib/okf.mjs';
@@ -572,4 +573,18 @@ test('U41/AC-2 status shows the clear while every intent is released and nothing
   assert.doesNotMatch(run(dir, ['status']).out, /\/clear/, 'merged, not yet released');
   git(dir, 'tag', 'v1');
   assert.match(run(dir, ['status']).out, /^next: 👉 all intents released: the owner clears the lead's session/m);
+});
+
+test('U45/AC-1 after a clear newer than the last merge, next asks to elaborate the next intent, not for the clear again', () => {
+  const dir = base();
+  approve(dir, 'I-1', 'U-1', 'U-2');
+  for (const [u, f] of [['U-1', 'a/x.txt'], ['U-2', 'b/x.txt']]) { branch(dir, u, f); merge(dir, u); }
+  git(dir, 'tag', 'v1');
+  write(dir, { '.git/aidlc/cleared': '' });
+  const old = new Date(Date.now() - 3600 * 1000);
+  utimesSync(join(aidlc(dir), 'cleared'), old, old);
+  assert.match(run(dir, ['next']).out, /^👉 all intents released: the owner clears the lead's session/, 'a clear before the last merge does not count');
+  const r = spawnSync(process.execPath, [join(import.meta.dirname, '../plugin/cli/aidlc.mjs'), 'hook', 'status'], { cwd: dir, encoding: 'utf8', input: JSON.stringify({ cwd: dir, hook_event_name: 'SessionStart', source: 'clear' }) });
+  assert.match(JSON.parse(r.stdout).hookSpecificOutput.additionalContext, /next: 👉 all intents released and the lead's session is fresh: elaborate the next intent with the owner/);
+  assert.match(run(dir, ['next']).out, /^👉 all intents released and the lead's session is fresh: elaborate the next intent with the owner/);
 });
