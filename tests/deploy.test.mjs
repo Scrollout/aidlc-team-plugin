@@ -137,3 +137,24 @@ test('U49/AC-2 a failed smoke is a stop before other work: the owner rolls back,
   assert.equal(run(dir, ['release', 'I-1']).code, 0);
   assert.match(run(dir, ['status']).out, /^I-1 released /m);
 });
+
+test('U51/AC-1 the retro lists each failed deploy check, smoke and rollback of the intent, with the fix units they started', () => {
+  const dir = merged({ deploy: { check: [FAIL], run: OK, smoke: FAIL, rollback: FAIL } });
+  assert.equal(run(dir, ['retro', 'I-1']).code, 0, 'a first retro resets the counters');
+  run(dir, ['deploy', 'check', 'I-1']);
+  commit(dir, 'the check passes now', { '.aidlc/profile.json': { deploy: { check: [OK], run: OK, smoke: FAIL, rollback: FAIL } } });
+  run(dir, ['deploy', 'check', 'I-1']);
+  run(dir, ['release', 'I-1']);
+  run(dir, ['rollback', 'I-1']);
+  run(dir, ['fix', 'health check fails after release', '--after', 'I-1', '--scope', 'docs/**']);
+  const r = run(dir, ['retro', 'I-1']);
+  assert.equal(r.code, 0, r.err);
+  const lines = r.out.split('deploy failures:\n')[1].split('proposals')[0].trimEnd().split('\n');
+  assert.deepEqual(lines.map((l) => l.replace(/ at \S+:/, ' at <t>:')), [
+    `  check failed at <t>: ${FAIL}`,
+    `  smoke failed at <t>: ${FAIL}`,
+    `  rollback failed at <t>: ${FAIL}`,
+    '  fix units after I-1: U-2',
+  ]);
+  assert.match(run(dir, ['retro', 'I-1']).out, /^deploy failures:\n {2}fix units after I-1: U-2\n/m, 'the counters reset; the fix units stay in the plan');
+});

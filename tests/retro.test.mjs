@@ -54,7 +54,7 @@ test('U19/AC-4 U19/AC-5 the counters feed aidlc retro, which lists, proposes at 
   assert.match(r.out, /^ {2}U-1 review general escalated with 0 findings at \S+$/m);
   assert.match(r.out, /^ {2}U-2 builder stopped at \S+: the scope is too small$/m);
   assert.match(r.out, /^ {2}1 repeated hook denials escalated to the owner$/m);
-  assert.match(r.out, /^owner approvals and commands:\n( {2}\S+ approve (I|U)-\d by owner@example\.com\n){3}proposals/m, 'from the stamps; the prompt for approve U-1 is not listed twice');
+  assert.match(r.out, /^owner approvals and commands:\n( {2}\S+ approve (I|U)-\d by owner@example\.com\n){3}deploy failures:\n {2}none\nproposals/m, 'from the stamps; the prompt for approve U-1 is not listed twice');
   const proposals = r.out.split('proposals (the owner accepts or rejects each):\n')[1].split('counters reset')[0].trim().split('\n').map((p) => p.trim());
   assert.ok(proposals.length >= 1 && proposals.length <= 3, proposals.join('\n'));
   assert.ok(proposals.every((p) => /^(profile glob|project rule|template tweak|new check): /.test(p)), proposals.join('\n'));
