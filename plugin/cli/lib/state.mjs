@@ -59,6 +59,14 @@ export function reviewFocuses(cwd, profile, base, unit) {
   return needed;
 }
 
+// A focus other than general keeps its last pass after a fix round when the commits since the reviewed commit
+// touch none of its globs (docs/design/review-rounds.md); general always reviews the current diff.
+export function keptPass(cwd, profile, unit, focus, last) {
+  if (focus === S.focus || last?.verdict !== S.verdicts[0] || !last.commit) return false;
+  const paths = tryGit(cwd, 'diff', '--name-only', last.commit, branchOf(unit));
+  return paths !== null && !paths.split('\n').filter(Boolean).some((x) => list(profile.focus?.[focus]).some((g) => overlaps('/' + x, g)));
+}
+
 // ---- Approvals ----
 
 const sortKeys = (v) => (Array.isArray(v) ? v.map(sortKeys) : isMap(v) ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, sortKeys(v[k])])) : v);
@@ -199,7 +207,8 @@ export function readState(cwd, { now = Date.now() } = {}) {
       const hash = diffHash(cwd, base, u.id);
       const verdicts = (quick ? [] : [...reviewFocuses(cwd, profile, base, u.id).keys()]).map((f) => {
         const last = roundsOf(review, f).at(-1);
-        return { focus: f, verdict: last?.diffHash === hash && !(report?.at > last.at) ? last.verdict : null }; // a later report asks for a new verdict
+        const current = last?.diffHash === hash && !(report?.at > last.at); // a later report asks for a new verdict
+        return { focus: f, verdict: current || keptPass(cwd, profile, u.id, f, last) ? last.verdict : null };
       });
       const has = (v) => verdicts.some((x) => x.verdict === v);
       const lastAt = review?.rounds?.at(-1)?.at;
@@ -543,7 +552,8 @@ export const commands = {
     if (missing.length) bump(cwd, config.retro.sendBacks, { unit, tags: missing.join(', '), at: new Date().toISOString() });
     const verdict = data.verdict === 'fix' && round > limit ? 'escalate' : data.verdict;
     const card = readJson(runtimeFile(cwd, 'cards', unit))?.hash ?? null;
-    writeJson(target, { unit, rounds: [...prior, { ...data, focus, verdict, card, diffHash: diffHash(cwd, baseOf(profile), unit), at: new Date().toISOString() }] });
+    const commit = git(cwd, 'rev-parse', branchOf(unit)); // what a kept pass is measured from (U34)
+    writeJson(target, { unit, rounds: [...prior, { ...data, focus, verdict, card, diffHash: diffHash(cwd, baseOf(profile), unit), commit, at: new Date().toISOString() }] });
     if (verdict === S.verdicts[2]) bump(cwd, 'escalations', config.retro.reasons.review);
     rmSync(join(aidlcDir(cwd), S.reviewing, unit), { force: true }); // the review is no longer in flight
     const why = verdict !== data.verdict ? 'recordedEscalate' : missing.length ? 'recordedUntagged' : verdict === 'fix' ? 'recordedFix' : 'recorded';

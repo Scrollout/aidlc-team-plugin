@@ -10,7 +10,7 @@ import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
 import { computeLane, inside, readPlan, runTarget, spansOf } from './grid.mjs';
 import { issueTitle, sync } from './board.mjs';
-import { approval, baseOf, branchOf, bump, bundleOf, diffHash, git, readState, reviewFocuses, roundsOf, runtimeFile, tryGit, writeJson } from './state.mjs';
+import { approval, baseOf, branchOf, bump, bundleOf, diffHash, git, keptPass, readState, reviewFocuses, roundsOf, runtimeFile, tryGit, writeJson } from './state.mjs';
 
 const G = config.gate;
 const matches = (path, glob) => inside('/' + path, glob);
@@ -150,7 +150,7 @@ function runGate(cwd, st, unit) {
     needed.delete(config.state.focus);
     for (const [focus, why] of needed) {
       const last = roundsOf(unit.review, focus).at(-1);
-      if (!last || last.verdict !== G.pass || last.diffHash !== hash) add('GATE-SPECIALIST', 'gateSpecialist', { focus, why });
+      if (!last || last.verdict !== G.pass || (last.diffHash !== hash && !keptPass(cwd, p, unit.id, focus, last))) add('GATE-SPECIALIST', 'gateSpecialist', { focus, why });
     }
   }
 

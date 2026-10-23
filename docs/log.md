@@ -7,7 +7,8 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-23
 
-- **Update** M4 U33 built (owner's choice): a review focus escalates to the owner only when a `fix` would start fix round `review.fixRounds + 1` since the unit's last approval (default 3); `review record` names the round and the limit ([Merge mechanics](design/gate.md#review-rounds), [Profile](design/profile.md)). Release 0.40.0.
+- **Update** M4 U34 built (owner's choice): each review round records the branch commit; after a fix round a focus other than `general` keeps its `pass` when the commits since touch none of its globs, and `next` and the gate count it ([Review rounds](design/review-rounds.md)). Release 0.41.0.
+- **Update** M4 U33 built (owner's choice): a review focus escalates to the owner only when a `fix` would start fix round `review.fixRounds + 1` since the unit's last approval (default 3); `review record` names the round and the limit ([Review rounds](design/review-rounds.md), [Profile](design/profile.md)). Release 0.40.0.
 - **Update** M4 U32 built: `review record` turns a `pass` into `fix` while an AC has no tagged test on the branch, with one finding per tag, so the card's `Findings to fix` names the reason; the retro lists each send-back ([Verification](design/verification.md), [Steering](design/steering.md)). Release 0.39.0.
 - **Creation** [M4 pilot report](pilot/m4-report.md): badges, owner blocks, the card fixes and upgrade output held on 0.38.0; a send-back with no reason on the card goes to the [M4](roadmap/m4.md) candidates.
 - **Update** M4 U31 built (owner's suggestion): a `next` line for an owner step starts with 👉, a refusal or stop with ⛔, the lead's steps with none; the skill has the lead end its message with the owner's step alone, or ✅ ([State](design/state.md), [Skill and agents](design/prompts.md)). Release 0.38.0.
