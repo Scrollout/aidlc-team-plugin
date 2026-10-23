@@ -224,3 +224,29 @@ test('0.46.1 a bundle-root link to a decision clears PLAN-DECISION', () => {
   });
   assert.deepEqual(lintPlan(join(dir, 'docs'), { lanes: { full: ['migrations/**'] } }, { base: dir }).filter((f) => f.code === 'PLAN-DECISION'), []);
 });
+
+test('U40/AC-1 U40/AC-2 U40/AC-3 a scope names both sides of a generated entry, and no existing file git does not track', () => {
+  const unit = (scope) => `---\ntype: Unit\ntitle: A\ndescription: A.\nscope: ${JSON.stringify(scope)}\n---\n\n# Acceptance criteria\n\n- AC-1 (unit): x.\n`;
+  const dir = project({
+    '.gitignore': 'sdk/\n',
+    'api/tsp/main.tsp': 'model A {}\n',
+    'api/openapi/kernel.yaml': 'openapi: 3.1.0\n',
+    'sdk/schema.d.ts': '// generated, ignored\n',
+    'web/schema.d.ts': '// generated, tracked\n',
+    'docs/units/U-1-a.md': unit(['api/openapi/kernel.yaml']),
+    'docs/units/U-2-b.md': unit(['api/tsp/**']),
+    'docs/units/U-3-c.md': unit(['api/tsp/**', 'api/openapi/**', 'web/schema.d.ts']),
+    'docs/units/U-4-d.md': unit(['sdk/schema.d.ts']),
+    'docs/units/U-5-e.md': unit(['src/new.mjs']),
+  });
+  execFileSync('git', ['init', '-q'], { cwd: dir });
+  execFileSync('git', ['add', '-A'], { cwd: dir });
+  const profile = { generated: [{ outputs: ['api/openapi/*.yaml', 'web/schema.d.ts'], sources: ['api/tsp/**'] }] };
+  const found = lintPlan(join(dir, 'docs'), profile, { base: dir }).filter((f) => f.code === 'PLAN-GENERATED').map((f) => [f.path, f.message]);
+  assert.deepEqual(found, [
+    ['docs/units/U-1-a.md', 'U-1 scope names api/openapi/*.yaml but not api/tsp/**: a generator links them'],
+    ['docs/units/U-2-b.md', 'U-2 scope names api/tsp/** but not api/openapi/*.yaml, web/schema.d.ts: a generator links them'],
+    ['docs/units/U-4-d.md', 'U-4 scope names sdk/schema.d.ts, which exists but git does not track: a builder cannot commit it'],
+  ], 'both sides pass; a new file passes');
+  assert.match(lintPlan(join(dir, 'docs'), profile, { base: dir }).find((f) => f.code === 'PLAN-GENERATED').fix, /generated entry/);
+});

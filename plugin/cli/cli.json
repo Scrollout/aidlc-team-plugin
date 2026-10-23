@@ -386,6 +386,8 @@
     "scopeOut": "{{path}} is outside the scope of {{unit}}",
     "scopeShared": "{{path}} is written by merge",
     "planShared": "{{unit}} scope {{glob}} names a file only merge writes",
+    "planGenerated": "{{unit}} scope names {{has}} but not {{lacks}}: a generator links them",
+    "planUntracked": "{{unit}} scope names {{path}}, which exists but git does not track: a builder cannot commit it",
     "planDecision": "{{unit}} touches the one-way door {{door}} and links no decision",
     "scopeApproval": "{{path}}: approvals and verified_hash are the owner's",
     "secretFound": "{{path}} contains what looks like a secret",
@@ -593,6 +595,10 @@
       "PLAN-DEPENDS": {
         "level": "error",
         "fix": "add the other unit to depends, or move the AC to that unit"
+      },
+      "PLAN-GENERATED": {
+        "level": "error",
+        "fix": "add the missing globs to the scope (the profile's generated entry pairs outputs with sources), or scope the tracked file instead of the untracked one"
       },
       "PLAN-DECISION": {
         "level": "error",

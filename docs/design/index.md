@@ -10,6 +10,7 @@
 * [Merge mechanics](gate.md) - How aidlc merge, push, fix and check --ci carry out the gate in Verification - the trial merge, the codes, shared files, architecture rules and the CI history check.
 * [OKF](okf.md) - How the plugin writes, indexes and validates OKF v0.2 bundles, following the official spec and its reference implementation.
 * [Overview](overview.md) - Goals, non-goals, budgets, repo layout and glossary of the plugin.
+* [Plan lint](plan-lint.md) - The checks aidlc check runs on intents and units before the owner approves them, each with its code.
 * [Profile and templates](profile.md) - The project profile, rule layers, the template engine and how the CLI is vendored and pinned.
 * [Requirements and architecture checks](architecture.md) - Lasting requirements as their own docs, and architecture rules as checks that fail a merge, so a project cannot drift from its intended shape.
 * [Review rounds](review-rounds.md) - What review record does with a verdict - fix rounds and their limit, send-backs, and which focus passes still count after a fix.
