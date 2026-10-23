@@ -329,6 +329,8 @@
     "initLeftoverDir": "leftover: {{path}}/ is not a known folder; left untouched\n",
     "initLeftoverTrailer": "leftover: commit trailer {{key}} in {{count}} commits; history is left as is\n",
     "initVendored": "pinned the CLI {{version}} in {{path}}\n",
+    "upgradeSame": "the CLI is already {{version}} in {{path}}: nothing changed\n",
+    "upgradeFrom": "copied from {{version}} at {{path}}; for a newer release: claude plugin marketplace update, then claude plugin update {{name}}, restart, and upgrade again\n",
     "initNotPlugin": "init and upgrade run from the installed plugin, not from {{path}}",
     "initNeedsRepo": "init runs in a git repository",
     "badFlag": "{{name}} needs a value",

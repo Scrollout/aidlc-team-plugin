@@ -185,3 +185,14 @@ test('U13/AC-2 U13/AC-3 init adds the worktree folder to the ignore files the pr
   assert.doesNotMatch(readFileSync(join(dir, '.aidlc/profile.json'), 'utf8'), /lint/, 'the owner adds it');
   assert.doesNotMatch(run(dir, ['init']).out, /added \.claude\/worktrees\/ to \.dockerignore/, 'once');
 });
+
+test('U30/AC-1 U30/AC-2 upgrade says when nothing changed, where it copied from, and how to get a newer release', () => {
+  const dir = emptyRepo();
+  assert.equal(run(dir, ['init']).code, 0);
+  const first = run(dir, ['upgrade', '--dirty']);
+  assert.equal(first.code, 0, first.err);
+  const again = run(dir, ['upgrade', '--dirty']);
+  assert.match(again.out, new RegExp(`^the CLI is already ${PLUGIN.version.replace(/\./g, '\\.')} in \\.aidlc/bin: nothing changed$`, 'm'));
+  assert.doesNotMatch(again.out, /^pinned the CLI/m);
+  assert.match(again.out, new RegExp(`^copied from ${PLUGIN.version.replace(/\./g, '\\.')} at \\S+; for a newer release: claude plugin marketplace update, then claude plugin update ${PLUGIN.name}, restart, and upgrade again$`, 'm'));
+});
