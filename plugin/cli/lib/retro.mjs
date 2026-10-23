@@ -42,6 +42,10 @@ export const commands = {
       ...(stats[R.ownerRefused] ?? []).map((d) => ({ at: d.at, line: msg('retroOwnerRefused', d) })),
     ].sort((a, b) => (a.at < b.at ? -1 : 1));
     out += msg('retroInterventions', {}) + (owner.map((o) => o.line).join('') || msg('retroNone', {}));
+    // What production taught: each failed deploy step and the fix units it started (docs/design/operations.md).
+    const fixes = st.units.filter((u) => u.fm.after === intent.id).map((u) => u.id);
+    const failed = (stats[R.deployFailures] ?? []).filter((d) => d.intent === intent.id).map((d) => msg('retroDeploy', d)).join('');
+    out += msg('retroDeploys', {}) + (failed + (fixes.length ? msg('retroDeployFixes', { intent: intent.id, units: fixes.join(', ') }) : '') || msg('retroNone', {}));
 
     // One proposal per most frequent code or escalation reason, from the first matching entry of the map.
     const proposals = [...codes, ...reasons].slice(0, R.max).map(([key, count]) => {

@@ -3,7 +3,7 @@
 import { spawnSync } from 'node:child_process';
 import { config, done, list, readJson, UsageError } from './config.mjs';
 import { msg } from './template.mjs';
-import { git, readState, runtimeFile, tryGit, writeJson } from './state.mjs';
+import { bump, git, readState, runtimeFile, tryGit, writeJson } from './state.mjs';
 
 // Runs the commands in order until one fails: { ok, command, exit, output }, with the tail of the output.
 function runAll(cwd, commands) {
@@ -29,7 +29,9 @@ function target(cwd, id, usageKey, states = ['merged']) {
 
 // Records one step's run and says how it went.
 function record(t, step, result) {
-  writeJson(t.file, { ...(readJson(t.file) ?? { intent: t.intent.id }), [step]: { ...result, base: t.base, at: new Date().toISOString() } });
+  const at = new Date().toISOString();
+  if (!result.ok) bump(t.top, config.retro.deployFailures, { intent: t.intent.id, step, command: result.command, at }); // the retro's feedback
+  writeJson(t.file, { ...(readJson(t.file) ?? { intent: t.intent.id }), [step]: { ...result, base: t.base, at } });
   return msg(result.ok ? 'deployPassed' : 'deployFailed', { intent: t.intent.id, step, ...result });
 }
 
