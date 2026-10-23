@@ -235,11 +235,11 @@ const action = (kind, key, data = {}) => ({ kind, key, line: msg(key, data) });
 const priorityOf = (u) => Number(u.fm.priority ?? 0);
 
 // Open points of a draft: frontmatter fields and sections still holding a template placeholder, or items under
-// the open-questions heading (docs/design/state.md).
+// the open-questions heading (docs/design/state.md). Plan fields (a hold's question) are not doc content.
 const PLACEHOLDER = /<[^<>\n]+>/;
 export function openPoints(doc) {
   const points = new Set();
-  doc.lines.slice(1, doc.body).forEach((l) => { const m = /^(\w+):(.*)$/.exec(l); if (m && PLACEHOLDER.test(m[2])) points.add(m[1]); });
+  doc.lines.slice(1, doc.body).forEach((l) => { const m = /^(\w+):(.*)$/.exec(l); if (m && !S.hashExclude.includes(m[1]) && PLACEHOLDER.test(m[2])) points.add(m[1]); });
   let heading = '';
   for (const line of doc.lines.slice(doc.body)) {
     const h = /^#+\s+(.+)$/.exec(line);

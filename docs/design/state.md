@@ -3,7 +3,7 @@ type: Design
 title: State
 description: How the CLI derives progress from git and docs, how approvals work, and how next picks the one allowed step.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T12:00:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T13:30:00Z }
 ---
 
 # Sources of truth
@@ -43,7 +43,7 @@ Intents, requirements, units and one-way-door decisions carry the owner's approv
 `aidlc next` prints one line: the single next action and the command or agent that performs it. It exits 2 when the owner acts, printing a runnable owner command. Order:
 1. A merge cut off midway → continue it. A doc held with `research: <question>` unanswered in `research/` → research it, or wait for its researcher ([0010](../decisions/0010-research-and-advice.md)); the digest releases that hold.
 2. Any `stale` approval → re-approve.
-3. A draft intent, requirement or unit with open points (a template `<…>` placeholder or an `Open questions` item) → finish elaborating it with the owner, naming them; no approval or unit work before that.
+3. A draft intent, requirement or unit with open points (a template `<…>` placeholder outside plan fields, or an `Open questions` item) → finish elaborating it with the owner, naming them; no approval or unit work first.
 4. No intent yet: elaborate one; in an adopted project with none, the migration intent ([Everyday paths](paths.md#adopting-an-existing-project)). Intent not approved → request approval; then the draft requirements it and its units cite.
 5. Plan not approved → draft units and request approval.
 6. Reviewed units → merge in DAG order, once each AC has a tagged test on the branch (else back to the builder); a held unit waits; a refused one waits for a new base or diff.
