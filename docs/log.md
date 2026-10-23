@@ -5,6 +5,10 @@ title: aidlc-team-plugin docs history
 
 # Bundle history
 
+## 2026-10-24
+
+- **Creation** [M5 pilot 1 report](pilot/m5-report.md): U40 and U41 held on 0.49.0; skipped tests counting as passed, the clear line after the clear, every output of a generator and lingering worktrees go to the [M5](roadmap/m5.md) candidates.
+
 ## 2026-10-23
 
 - **Update** M5 U42 built: an owner command the CLI refuses marks its prompt `refused`, so the heartbeat hook no longer counts it as run, and the retro lists it apart ([Approvals](design/approvals.md#owner-prompts), [Steering](design/steering.md)). Release 0.49.0.
