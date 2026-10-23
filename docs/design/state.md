@@ -3,7 +3,7 @@ type: Design
 title: State
 description: How the CLI derives progress from git and docs, how approvals work, and how next picks the one allowed step.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T13:30:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T16:00:00Z }
 ---
 
 # Sources of truth
@@ -40,7 +40,7 @@ stateDiagram-v2
 Intents, requirements, units and one-way-door decisions carry the owner's approval; editing one makes it `stale` ([Approvals](approvals.md)).
 
 # next
-`aidlc next` prints one line: the single next action and the command or agent that performs it. It exits 2 when the owner acts, printing a runnable owner command. Order:
+`aidlc next` prints one line: the single next action and the command or agent that performs it. Badges (`state.badges`): 👉 an owner step, ⛔ a refusal or stop. It exits 2 when the owner acts. Order:
 1. A merge cut off midway → continue it. A doc held with `research: <question>` unanswered in `research/` → research it, or wait for its researcher ([0010](../decisions/0010-research-and-advice.md)); the digest releases that hold.
 2. Any `stale` approval → re-approve.
 3. A draft intent, requirement or unit with open points (a template `<…>` placeholder outside plan fields, or an `Open questions` item) → finish elaborating it with the owner, naming them; no approval or unit work first.
@@ -53,9 +53,9 @@ Intents, requirements, units and one-way-door decisions carry the owner's approv
 10. Building with a stale heartbeat (over 2 min) and no report → restart its builder. A merged unit still in a worktree → stop its builder, remove the worktree.
 11. Approved, unblocked units → build, on one line; up to `parallel.max` in flight, with scopes disjoint from units in flight.
 12. Builders running → wait.
-13. Intent merged, untagged → release with the owner; meanwhile 4–12 serve the next one.
+13. Intent merged, untagged → release with the owner; 4–12 serve the next one meanwhile.
 
-An owner gate in steps 2–5 holds back only the units that wait on its docs: `next` first returns an action of steps 6–11 for the other units, then the gate. A held unit (`hold`, by the owner, or by the lead with a reason while it parks a question) gets no action until the hold is released. A builder launched after a `stopped` report reads as building. An action auto mode refused at the current commit ([Hooks](hooks.md)) goes to the owner: `aidlc approve <docs>` for a delegated approval, else the refused command.
+An owner gate in steps 2–5 holds back only the units that wait on its docs: `next` first returns an action of steps 6–11 for the other units, then the gate. A held unit (`hold`, by the owner, or by the lead with a reason while it parks a question) gets no action until the hold is released. A builder started after a `stopped` report is building. An action auto mode refused at the current commit ([Hooks](hooks.md)) goes to the owner: `aidlc approve <docs>` for a delegated approval, else the refused command.
 
 `aidlc status` prints it as a short table; SessionStart injects it (max 1,000 chars).
 
@@ -64,7 +64,7 @@ Nothing that matters lives only in the conversation; all below is on disk before
 | Could be lost | Where it lives instead |
 |---|---|
 | Owner's answers during elaboration | the draft intent/unit doc: the lead writes each answer before asking the next question; open ones stay under `## Open questions` |
-| Owner instructions about the plan ("hold U-4", "U-2 first") | plan fields set by `aidlc hold`, `aidlc priority`, never chat memory |
+| Owner instructions about the plan ("hold U-4", "U-2 first") | plan fields set by `aidlc hold`, `aidlc priority` |
 | Owner run mode (unattended, a stopping point, where to report) | `run` in the personal profile, set by the owner command `aidlc mode`; `status` shows it |
 | Builder's work | WIP commits on `unit/U-<n>` after each passing test |
 | Builder's report | `.git/aidlc/reports/U-<n>.json`, written by the builder's `aidlc report U-<n>` |

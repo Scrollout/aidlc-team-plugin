@@ -71,18 +71,18 @@ const SCENARIOS = {
     branch(dir, 'U-1');
     git(dir, 'merge', '-q', '--no-ff', '--no-commit', 'unit/U-1');
   }],
-  'stale approval': [/^re-approve U-1 after their edits: aidlc approve U-1/, 2, (dir) => {
+  'stale approval': [/^👉 re-approve U-1 after their edits: aidlc approve U-1/, 2, (dir) => {
     approve(dir, 'I-1', 'U-1');
     commit(dir, 'edit', { [U(1)]: read(dir, U(1)) + '\nMore text.\n' });
   }],
-  'elaborating (intent not approved)': [/^ask the owner to approve I-1: aidlc approve I-1/, 2, () => {}],
-  'plan pending': [/^ask the owner to approve the plan: aidlc approve U-1 U-2 \(the owner confirms the prompt or types: approve U-1 U-2\)$/, 2, (dir) => approve(dir, 'I-1')],
+  'elaborating (intent not approved)': [/^👉 ask the owner to approve I-1: aidlc approve I-1/, 2, () => {}],
+  'plan pending': [/^👉 ask the owner to approve the plan: aidlc approve U-1 U-2 \(the owner confirms the prompt or types: approve U-1 U-2\)$/, 2, (dir) => approve(dir, 'I-1')],
   reviewed: [/^merge U-1: aidlc merge U-1/, 0, (dir) => {
     approve(dir, 'I-1', 'U-1', 'U-2');
     branch(dir, 'U-1');
     review(dir, 'U-1', 'pass');
   }],
-  escalated: [/^U-1 review escalated: the owner decides/, 2, (dir) => {
+  escalated: [/^👉 U-1 review escalated: the owner decides/, 2, (dir) => {
     approve(dir, 'I-1', 'U-1', 'U-2');
     branch(dir, 'U-1');
     review(dir, 'U-1', 'fix');
@@ -124,7 +124,7 @@ const SCENARIOS = {
     commit(dir, 'third unit', { [U(3)]: unitDoc({ scope: ['c/**'] }), [U(4)]: unitDoc({ scope: ['a/sub/**'] }) });
     approve(dir, 'I-1', 'U-1', 'U-2', 'U-3', 'U-4');
   }],
-  'all merged, not tagged': [/^I-1 is merged: release with the owner$/, 2, (dir) => {
+  'all merged, not tagged': [/^👉 I-1 is merged: release with the owner$/, 2, (dir) => {
     approve(dir, 'I-1', 'U-1', 'U-2');
     branch(dir, 'U-1', 'a/x.txt');
     merge(dir, 'U-1');
@@ -136,7 +136,7 @@ const SCENARIOS = {
     approve(dir, 'I-1', 'U-1', 'U-2', 'I-2', 'U-3');
     for (const [u, f] of [['U-1', 'a/x.txt'], ['U-2', 'b/x.txt']]) { branch(dir, u, f); merge(dir, u); }
   }],
-  released: [/^all intents released/, 2, (dir) => {
+  released: [/^👉 all intents released/, 2, (dir) => {
     approve(dir, 'I-1', 'U-1', 'U-2');
     for (const [u, f] of [['U-1', 'a/x.txt'], ['U-2', 'b/x.txt']]) { branch(dir, u, f); merge(dir, u); }
     git(dir, 'tag', 'v1');
@@ -157,7 +157,7 @@ for (const [name, [expect, code, setup]] of Object.entries(SCENARIOS)) {
 
 test('U4/AC-2 next with no intent asks to elaborate one', () => {
   const r = run(makeRepo(), ['next']);
-  assert.match(r.out, /^elaborate an intent with the owner in docs\/intents\/I-1-<slug>\.md/);
+  assert.match(r.out, /^👉 elaborate an intent with the owner in docs\/intents\/I-1-<slug>\.md/);
   assert.equal(r.code, 2);
 });
 
@@ -169,7 +169,7 @@ test('U4/AC-8 a draft with open points sends the lead back to the owner before a
   report(dir, 'U-1');
   commit(dir, 'draft I-2', { 'docs/intents/I-2-export.md': draft });
   let r = run(dir, ['next']);
-  assert.equal(r.out.trimEnd(), 'finish elaborating I-2 with the owner: description, Why, Open questions still open in docs/intents/I-2-export.md; then ask for approval');
+  assert.equal(r.out.trimEnd(), '👉 finish elaborating I-2 with the owner: description, Why, Open questions still open in docs/intents/I-2-export.md; then ask for approval');
   assert.equal(r.code, 2);
   write(dir, { 'docs/intents/I-2-export.md': draft.replace('<one sentence>', 'Weekly export.').replace('<the reason>', 'Sales asks.').replace('\n## Open questions\n- Which day?\n', '') });
   r = run(dir, ['next']);
@@ -246,7 +246,7 @@ test('U26/AC-1 U26/AC-2 a fix recorded as escalate tells the reviewer why; the c
 test('U5/AC-4 an adopted project with no intent is asked for the migration intent', () => {
   const dir = makeRepo({}, { adopted: '0123456789abcdef0123' });
   const r = run(dir, ['next']);
-  assert.match(r.out, /^elaborate the migration intent with the owner in docs\/intents\/I-1-<slug>\.md \(adopted at 0123456789ab\)/);
+  assert.match(r.out, /^👉 elaborate the migration intent with the owner in docs\/intents\/I-1-<slug>\.md \(adopted at 0123456789ab\)/);
   assert.equal(r.code, 2);
 });
 
@@ -257,7 +257,7 @@ test('U8/AC-6 U18/AC-3 re-approving an escalated unit marks its findings answere
   const finding = { path: 'src/U-1.txt', line: 1, claim: 'wrong level', scenario: 'gate fails', confidence: 'CONFIRMED' };
   review(dir, 'U-1', 'fix', [finding]);
   review(dir, 'U-1', 'fix', [finding]);
-  assert.match(run(dir, ['next']).out, /^U-1 review escalated/);
+  assert.match(run(dir, ['next']).out, /^👉 U-1 review escalated/);
   write(dir, { [U(1)]: read(dir, U(1)).replace('it works.', 'it works at the unit level.') });
   commit(dir, 'owner widens U-1');
   approve(dir, 'U-1');
@@ -275,7 +275,7 @@ test('U4/AC-2 a stopped builder sends the unit back to the lead; re-approval res
   branch(dir, 'U-1');
   run(dir, ['report', 'U-1'], '{"status": "stopped", "stop": "the scope is too small"}');
   const r = run(dir, ['next']);
-  assert.match(r.out, /^the builder of U-1 stopped \(the scope is too small\): if the unit doc is wrong, fix it and ask the owner to re-approve it; otherwise remove the cause and start its builder again/);
+  assert.match(r.out, /^⛔ the builder of U-1 stopped \(the scope is too small\): if the unit doc is wrong, fix it and ask the owner to re-approve it; otherwise remove the cause and start its builder again/);
   assert.equal(r.code, 0);
   write(dir, { [U(1)]: read(dir, U(1)).replace('src/**', 'src/**", "lib/**') });
   commit(dir, 'widen U-1');
@@ -317,7 +317,7 @@ test('U4/AC-2 a hold also holds a reviewed unit\'s merge', () => {
   assert.match(run(dir, ['next']).out, /^merge U-1/);
   run(dir, ['hold', 'U-1']);
   const r = run(dir, ['next']);
-  assert.match(r.out, /^U-1 on hold: the owner releases them/);
+  assert.match(r.out, /^👉 U-1 on hold: the owner releases them/);
   assert.equal(r.code, 2);
 });
 
@@ -335,7 +335,7 @@ test('U4/AC-3 delegated approvals: the lead re-approves and approves quick units
   approve(dir, 'I-1', 'U-1');
   write(dir, { [U(1)]: read(dir, U(1)).replace('Unit goal.', 'Unit goal, said better.') });
   commit(dir, 'edit U-1');
-  assert.match(run(dir, ['next']).out, /^re-approve U-1 after their edits: aidlc approve U-1 \(the owner confirms the prompt or types: approve U-1\)/);
+  assert.match(run(dir, ['next']).out, /^👉 re-approve U-1 after their edits: aidlc approve U-1 \(the owner confirms the prompt or types: approve U-1\)/);
   assert.equal(run(dir, ['approve', '--auto', 'U-1']).code, 64, 'nothing delegated yet');
 
   write(dir, { '.aidlc/local/profile.json': { approvals: { auto: ['reapprove', 'quick'] } } });
@@ -353,7 +353,7 @@ test('U4/AC-3 delegated approvals: the lead re-approves and approves quick units
   assert.equal(run(dir, ['approve', '--auto', 'U-3']).code, 64, 'a first approval of a standard unit is never delegated');
   assert.match(run(dir, ['next']).out, /^build U-1, U-2 /, 'the approved units build while the owner has U-3 to approve');
   for (const u of ['U-1', 'U-2']) { branch(dir, u, `${u}.txt`); heartbeat(dir, u); }
-  assert.match(run(dir, ['next']).out, /^ask the owner to approve the plan: aidlc approve U-3 /);
+  assert.match(run(dir, ['next']).out, /^👉 ask the owner to approve the plan: aidlc approve U-3 /);
 });
 
 test('U4/AC-1 a unit whose dependencies are unmerged is blocked, even with a branch from an earlier run', () => {
@@ -427,10 +427,24 @@ test('U24/AC-3 every owner step names the words to type, an escalation included,
   const all = [...texts(JSON.parse(readFileSync(join(import.meta.dirname, '../plugin/cli/cli.json'), 'utf8'))), readFileSync(join(import.meta.dirname, '../plugin/hooks/run.mjs'), 'utf8')];
   assert.deepEqual(all.filter((t) => /(^|[\s:`])! ?node\b/.test(t)), [], 'no ! command');
   const dir = base();
-  assert.match(run(dir, ['next']).out, /^ask the owner to approve I-1: aidlc approve I-1 \(the owner confirms the prompt or types: approve I-1\)/);
+  assert.match(run(dir, ['next']).out, /^👉 ask the owner to approve I-1: aidlc approve I-1 \(the owner confirms the prompt or types: approve I-1\)/);
   approve(dir, 'I-1', 'U-1', 'U-2');
   branch(dir, 'U-1');
   review(dir, 'U-1', 'fix');
   review(dir, 'U-1', 'fix');
-  assert.match(run(dir, ['next']).out, /^U-1 review escalated: the owner decides\. To keep the spec: aidlc approve U-1 \(the owner confirms the prompt or types: approve U-1\); or change the spec first/);
+  assert.match(run(dir, ['next']).out, /^👉 U-1 review escalated: the owner decides\. To keep the spec: aidlc approve U-1 \(the owner confirms the prompt or types: approve U-1\); or change the spec first/);
+});
+
+test('U31/AC-1 U31/AC-2 owner steps start with the owner badge, refusals and stops with the stop badge, the lead\'s steps with none', () => {
+  const { badges } = JSON.parse(readFileSync(join(import.meta.dirname, '../plugin/cli/cli.json'), 'utf8')).state;
+  assert.notEqual(badges.owner.trim(), badges.stop.trim(), 'two different symbols');
+  const dir = base();
+  assert.ok(run(dir, ['next']).out.startsWith(badges.owner), 'approve I-1 is the owner\'s');
+  approve(dir, 'I-1', 'U-1', 'U-2');
+  assert.match(run(dir, ['next']).out, /^build U-1/, 'the lead\'s step carries no badge');
+  branch(dir, 'U-1');
+  run(dir, ['report', 'U-1'], '{"status": "stopped", "stop": "scope too small"}');
+  assert.ok(run(dir, ['next']).out.startsWith(badges.stop), 'a stop');
+  const skill = readFileSync(join(import.meta.dirname, '../plugin/skills/aidlc/SKILL.md'), 'utf8');
+  assert.match(skill, /End the turn with their step alone, last: the line's badge and \*\*Your action\*\*, numbered steps, the words to type in code\. Nothing for them: end with ✅\./);
 });

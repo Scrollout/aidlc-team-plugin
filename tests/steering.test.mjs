@@ -32,7 +32,7 @@ test('U15/AC-1 an owner gate holds back only the units that wait on its docs', (
   live(dir, 'U-1');
   r = run(dir, ['next']);
   assert.equal(r.code, 2);
-  assert.match(r.out, /^re-approve U-2 after their edits/);
+  assert.match(r.out, /^👉 re-approve U-2 after their edits/);
 });
 
 test('U15/AC-2 the guard records an owner prompt, and the PostToolUse hook marks it ran', () => {
@@ -51,7 +51,7 @@ test('U15/AC-3 a builder launched after a stop report takes over; a unit the lea
   approve(dir, 'I-1', 'U-1', 'U-2');
   branch(dir, 'U-1', 'a/x.txt');
   run(dir, ['report', 'U-1'], '{"status": "stopped", "stop": "scope too small"}');
-  assert.match(run(dir, ['next']).out, /^the builder of U-1 stopped/);
+  assert.match(run(dir, ['next']).out, /^⛔ the builder of U-1 stopped/);
   live(dir, 'U-1');
   assert.match(run(dir, ['status']).out, /U-1 building/);
   assert.doesNotMatch(run(dir, ['next']).out, /stopped/, 'steer no longer pushes the old stop');
@@ -63,7 +63,7 @@ test('U15/AC-3 a builder launched after a stop report takes over; a unit the lea
   run(dir, ['report', 'U-2'], '{"status": "stopped", "stop": "x"}');
   run(dir, ['hold', 'U-2', 'waits on the owner too']);
   for (const u of ['U-1', 'U-2']) rmSync(join(dir, '.git/aidlc/heartbeats', u)); // nothing runs while they are parked
-  assert.match(run(dir, ['next']).out, /^U-1 \(asked the owner about the branch move\), U-2 \(waits on the owner too\) on hold/);
+  assert.match(run(dir, ['next']).out, /^👉 U-1 \(asked the owner about the branch move\), U-2 \(waits on the owner too\) on hold/);
   assert.equal(steer(dir), 'allow', 'steer does not push a parked step');
 });
 
@@ -91,10 +91,10 @@ test('U15/AC-5 next asks for the draft decisions a unit cites, with the unit', (
   const decision = '---\ntype: Decision\ntitle: 0001 Currency\ndescription: Prices carry a currency.\n---\n\n# Decision\nAdd it.\n';
   const dir = project({ [U(1)]: unitDoc({ scope: ['a/**'], extra: '\n# Interfaces\n- [Currency](../decisions/0001-currency.md)\n' }), 'docs/decisions/0001-currency.md': decision });
   approve(dir, 'I-1');
-  assert.match(run(dir, ['next']).out, /^ask the owner to approve the plan: aidlc approve U-1 docs\/decisions\/0001-currency\.md /);
+  assert.match(run(dir, ['next']).out, /^👉 ask the owner to approve the plan: aidlc approve U-1 docs\/decisions\/0001-currency\.md /);
   approve(dir, 'U-1', 'docs/decisions/0001-currency.md');
   commit(dir, 'edit U-1', { [U(1)]: read(dir, U(1)).replace('Unit goal.', 'Unit goal again.') });
-  assert.match(run(dir, ['next']).out, /^re-approve U-1 after/, 'an approved decision is not asked again');
+  assert.match(run(dir, ['next']).out, /^👉 re-approve U-1 after/, 'an approved decision is not asked again');
 });
 
 test('U15/AC-6 a delegated re-approval refuses a change to the acceptance criteria', () => {
