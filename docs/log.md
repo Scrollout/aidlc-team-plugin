@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-23
 
+- **Update** [M2](roadmap/m2.md) closed (owner's choice): CI on three platforms, the retro and the CLI budget met; the last lead steps of re-pilot 2 are fixed in 0.32.1 and 0.33.0. [M3](roadmap/m3.md) takes the project's doc rules for digests and the re-pilots' review and token findings.
 - **Update** Fix from M2 re-pilot 2: the research brief tells the lead to run `aidlc check` and the project's doc checks on the digest and send findings back to the researcher, never editing it; the researcher keeps the whole file within the brief's cap ([Skill and agents](design/prompts.md)). Release 0.33.0.
 - **Creation** [M2 re-pilot 2 report](pilot/m2-repilot2-report.md): two parallel units on 0.32.0, no fix rounds, three typed approvals. M2 stays open on one gap: the lead resent a research digest that broke the project's doc rules ([M2](roadmap/m2.md#result)).
 - **Update** Fix from M2 re-pilot 2: a draft's plan fields (a hold's question, priority, board) are no open points, so a research question with `<…>` in it no longer keeps its answered hold on ([State](design/state.md)). Release 0.32.1.
