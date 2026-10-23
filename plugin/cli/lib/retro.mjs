@@ -2,7 +2,7 @@
 // (docs/design/steering.md#3-across-intents-the-retro). Proposals and messages come from cli.json.
 import { config, done, readJson, UsageError } from './config.mjs';
 import { msg } from './template.mjs';
-import { readState, runtimeFile, statsFile, writeJson } from './state.mjs';
+import { events, readState, runtimeFile, statsFile, writeJson } from './state.mjs';
 
 const R = config.retro;
 
@@ -22,13 +22,22 @@ export const commands = {
     const escalations = intent.units.flatMap((u) => [
       ...(readJson(runtimeFile(cwd, 'reviews', u.id))?.rounds ?? []).filter((r) => r.verdict === config.state.verdicts[2])
         .map((r) => msg('retroReview', { unit: u.id, focus: r.focus ?? config.state.focus, findings: (r.findings ?? []).length, at: r.at })),
-      ...(u.report?.status === config.state.stopped ? [msg('retroStopped', { unit: u.id, reason: String(u.report.stop ?? u.report.summary ?? ''), at: u.report.at })] : []),
     ]);
+    const mine = new Set(intent.units.map((u) => u.id));
+    escalations.push(...(stats[R.stops] ?? []).filter((s) => mine.has(s.unit)).map((s) => msg('retroStopped', s)));
     const denials = stats.escalations?.[R.reasons.denials];
     if (denials) escalations.push(msg('retroDenials', { count: denials }));
     out += msg('retroEscalations', {}) + (escalations.join('') || msg('retroNone', {}));
-    const owner = stats[R.interventions] ?? [];
-    out += msg('retroInterventions', {}) + (owner.map((i) => msg('retroIntervention', i)).join('') || msg('retroNone', {}));
+    // Owner approvals from the stamps of the intent's docs, however they ran; other owner commands; auto mode refusals.
+    const since = Date.parse(stats.since ?? 0) || 0;
+    const docs = [intent, ...intent.units, ...st.requirements.filter((r) => intent.units.some((u) => u.requirements.includes(r.id)) || intent.requirements.includes(r.id))];
+    const owner = [
+      ...docs.flatMap((d) => events(d.fm).filter((e) => String(e.by).startsWith(config.state.human) && Date.parse(e.at) >= since)
+        .map((e) => ({ at: String(e.at), line: msg('retroApproval', { at: e.at, doc: d.id, by: String(e.by).slice(config.state.human.length) }) }))),
+      ...(stats[R.interventions] ?? []).filter((i) => !/\bapprove\b/.test(i.command)).map((i) => ({ at: i.at, line: msg('retroIntervention', i) })),
+      ...(stats[R.hostDenied] ?? []).map((d) => ({ at: d.at, line: msg('retroHostDenied', d) })),
+    ].sort((a, b) => (a.at < b.at ? -1 : 1));
+    out += msg('retroInterventions', {}) + (owner.map((o) => o.line).join('') || msg('retroNone', {}));
 
     // One proposal per most frequent code or escalation reason, from the first matching entry of the map.
     const proposals = [...codes, ...reasons].slice(0, R.max).map(([key, count]) => {
