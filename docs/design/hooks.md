@@ -37,6 +37,7 @@ sources:
   - when `next`'s action is the stopping point the owner set with `aidlc mode --stop`.
 - **status** (SessionStart) returns `aidlc status` and one resume line, at most 1,000 chars: the run mode and the last owner prompt come first.
 - **heartbeat** (PostToolUse) also marks an owner prompt the guard recorded as `ran` ([Approvals](approvals.md#owner-prompts)).
+- **denied** (PermissionDenied, Bash) records a command auto mode refused, with the commit `HEAD` was on, in `.git/aidlc/host-denied.json` (the last five).[^cc-hooks] While `HEAD` stays there, `next` hands that action to the owner instead of demanding it again ([State](state.md#next)), so steer lets the stop through.
 
 # Escalation
 Denials are counted per session, code and target in `.git/aidlc/denials.json`; `steer` clears the session's counts at the end of each turn. The third identical denial in a turn says `escalate`: stop and tell the owner.

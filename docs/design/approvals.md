@@ -14,6 +14,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T18:10:00Z }
 # Who approves
 - Agents cannot approve: the guard denies `aidlc approve` from a tool call, and the scope hook denies any edit to `verified` or `verified_hash`. Only the owner approves, by `!` or prompt ([0009](../decisions/0009-approval-prompt.md)), or a class they delegated ([0008](../decisions/0008-delegated-approvals.md)).
 - A delegated `reapprove` refuses an edit that changes a unit's acceptance criteria: the CLI finds the approved version in git history (the commit whose content matches `verified_hash`) and compares the AC lines; without that version it refuses too.
+- Auto mode's classifier may refuse the lead's `approve --auto` as self-approval, as it did twice in the [M2 pilot](../pilot/m2-interventions.md). The denied hook records it, and `next` then names `aidlc approve <docs>`, which reaches the owner as a permission prompt. The plugin writes no permission rules (owner's choice, 2026-10-23).
 
 # Owner prompts
 - When the guard raises a permission prompt for an owner command, it records the command and the tool call in `.git/aidlc/prompts.json` (the last five). The PostToolUse hook marks it `ran` when that call completes, which happens only after the owner said yes.

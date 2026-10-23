@@ -232,3 +232,20 @@ test('U19/AC-1 the docs hook sets a generated.at the edit wrote in local time to
   hook('docs', { cwd: dir, hook_event_name: 'PostToolUse', tool_name: 'Edit', tool_input: { file_path: join(dir, 'docs/notes/o.md'), old_string: 'Text.', new_string: 'More text.' } });
   assert.equal(read(dir, 'docs/notes/o.md'), old, 'a stamp the edit did not write stays');
 });
+
+test('U20/AC-1 U20/AC-2 a delegated approval auto mode refused goes to the owner as a prompt; steer stops demanding it until HEAD moves', () => {
+  const dir = project();
+  approve(dir, 'I-1', 'U-1', 'U-2');
+  write(dir, { [U1]: read(dir, U1).replace('Unit goal.', 'Unit goal, said better.'), '.aidlc/local/profile.json': { approvals: { auto: ['reapprove'] } } });
+  commit(dir, 'edit U-1');
+  assert.match(stop(dir).json.reason, /aidlc approve --auto U-1$/);
+  const denied = hook('denied', { cwd: dir, hook_event_name: 'PermissionDenied', tool_name: 'Bash', tool_input: { command: 'node .aidlc/bin/aidlc.mjs approve --auto U-1' }, reason: '[Self-Approval]' });
+  assert.equal(denied.code, 0, denied.err);
+  const next = run(dir, ['next']);
+  assert.equal(next.code, 2, 'an owner step');
+  assert.match(next.out, /^auto mode refused aidlc approve --auto U-1: the owner runs aidlc approve U-1 \(the owner confirms the prompt\)/);
+  assert.equal(stop(dir).json.decision, undefined, 'steer lets the stop through');
+  assert.equal(decision(bash(dir, 'node .aidlc/bin/aidlc.mjs approve U-1')), 'ask', 'the owner command is a prompt');
+  commit(dir, 'something else', { 'notes.txt': 'x\n' });
+  assert.match(stop(dir).json.reason, /aidlc approve --auto U-1$/, 'a new commit is a new situation');
+});
