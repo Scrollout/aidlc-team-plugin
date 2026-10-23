@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-23
 
+- **Update** M4 U30 built: `upgrade` says when the CLI was already at that release and nothing changed, which release it copied from, and the commands that fetch a newer one ([CLI](design/cli.md)). Release 0.37.0.
 - **Update** M4 U29 built: the card names requirements as their files do (`R-057`), keeps the plain lines of a unit's `Interfaces` section, and its proof note names the levels instead of their globs ([Unit card](design/unit-card.md)). Release 0.36.0.
 - **Update** [M3](roadmap/m3.md) closed (owner's choice), all exit criteria met on 0.35.1. **Creation** [M4](roadmap/m4.md) draft: the card fixes and retro miscount from the M3 pilot, the review and cost findings of the M2 re-pilots, and the cuts carried since M1.
 - **Creation** [M3 pilot report](pilot/m3-report.md): three units on 0.35.0; every card carried the owner's builder rule and U-27's builder and reviewers followed it; a proof-revert demo refused a vacuous test on 0.35.1. All M3 exit criteria met ([M3](roadmap/m3.md#result)).

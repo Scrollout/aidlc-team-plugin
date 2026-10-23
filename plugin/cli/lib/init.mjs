@@ -181,6 +181,9 @@ export const commands = {
     // A release, not work in progress: a plugin checkout must have nothing uncommitted under the plugin folder.
     const tracked = tryGit(PLUGIN_DIR, 'ls-files', '--error-unmatch', I.manifest) !== null;
     if (tracked && tryGit(PLUGIN_DIR, 'status', '--porcelain', '--', '.') !== '' && !flags.dirty) throw new UsageError(msg('upgradeDirty', { path: PLUGIN_DIR }));
-    return done(vendor(root, version));
+    const same = pinned === version; // a re-copy of the same release changes nothing in the tree
+    const copied = vendor(root, version);
+    const name = JSON.parse(readFileSync(join(PLUGIN_DIR, I.manifest), 'utf8')).name;
+    return done((same ? msg('upgradeSame', { version, path: I.bin }) : copied) + msg('upgradeFrom', { version, path: PLUGIN_DIR, name }));
   },
 };

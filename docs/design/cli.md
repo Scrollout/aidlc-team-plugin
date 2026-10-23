@@ -3,14 +3,14 @@ type: Design
 title: CLI
 description: The aidlc commands, their exit codes and the terse output format.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 ---
 
 # Commands
 | Command | Does | Run by |
 |---|---|---|
 | `init` | asks questions, writes profile, renders templates, vendors itself | owner via the `aidlc` skill |
-| `upgrade [--downgrade] [--dirty]` | re-vendors the CLI from the installed plugin's release; refuses an older one or a checkout with uncommitted changes unless told | owner |
+| `upgrade [--downgrade] [--dirty]` | re-vendors the CLI from the installed plugin's release; refuses an older one or a checkout with uncommitted changes unless told; says when nothing changed, which release it copied, and how to fetch a newer one | owner |
 | `index [bundle]` | regenerates every `index.md` in the bundle like the OKF reference implementation | docs hook, merge, anyone |
 | `check [--ci] [path…]` | OKF validation, plan lint, profile lint; `--ci` adds merge-trailer checks. A directory is checked as a bundle, or within the profile's bundle when it lies below its root; a file reports only its own findings | hooks, CI, anyone |
 | `status` | the state table | SessionStart hook, anyone |
