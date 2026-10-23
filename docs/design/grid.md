@@ -3,7 +3,7 @@ type: Design
 title: Grid
 description: The AI-DLC rows, the plan-execute-validate loop in each cell, lanes and the doc types each row produces.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T19:00:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T21:50:00Z }
 ---
 
 # Rows
@@ -51,19 +51,7 @@ reserves: [migration regional/0005]
 ---
 - AC-1 (unit): price rounds half-even per currency.
 ```
-Plan lint compares every unit except `status: dropped` and the IDs its caller skips (U4 passes the merged ones, derived from git). Codes, all errors:
-- `PLAN-DAG` a `depends` cycle (named in full) or an unknown unit.
-- `PLAN-AC` a duplicate AC ID in a unit.
-- `PLAN-LEVEL` an AC without a level, or with one `profile.levels` does not define.
-- `PLAN-RESERVE` a malformed reservation (`<kind> <area>/<n>`), a kind `profile.reserve` lacks, or the same one in two units.
-- `PLAN-SCOPE` a unit without `scope`, or two units whose scopes overlap with no `depends` path between them. When a bare file name (`Makefile`) overlaps only because it matches at any depth, the message suggests `/Makefile`.
-- `PLAN-SHARED` a scope naming a file only merge writes: a bundle `index.md` or `log.md`, or a `profile.shared` entry.
-- `PLAN-REQ` an intent or unit citing no requirement, or an unknown one ([Architecture](architecture.md)), printed as its file names it.
-- `PLAN-BOARD` a unit missing a planned board value ([Board](board.md)).
-- `PLAN-TEST` a non-quick unit whose scope overlaps none of an AC level's `paths`, so the AC's test has nowhere to go. A scope holding the profile passes: it can add the test location.
-- `PLAN-MODULE` a unit `modules:` entry naming no profile module (`id`, or `name` when it has none).
-- `PLAN-DECISION` a unit at a one-way door with no decision ([Approvals](approvals.md)).
-- `PLAN-DEPENDS` an AC whose code span names another unit's output with no `depends` path to it: a path in that unit's scope, or a `make`/`npm run`/`just` target (`grid.runners`) the base build file lacks, whose build file is in that unit's scope and whose doc names it.
+Plan lint checks the plan before approval; its codes are in [Plan lint](plan-lint.md).
 
 # Plan, execute, validate
 Every cell runs the same loop:

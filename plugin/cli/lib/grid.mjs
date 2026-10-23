@@ -3,7 +3,7 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
-import { at, config, fieldPaths, list, UsageError, relPath } from './config.mjs';
+import { at, config, fieldPaths, isMap, list, UsageError, relPath } from './config.mjs';
 import { msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { parseDoc, proseLines } from './okf.mjs';
@@ -258,6 +258,19 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
     const owned = (path) => u.scope.some((g) => overlaps('/' + path, g));
     const door = doorGlobs.find((g) => u.scope.some((s) => overlaps(s, g))) ?? linksOf(u, bundle, GRID.interfaces).map((f) => relPath(base, f)).find(owned);
     if (door) add('PLAN-DECISION', u, keyLine(u, 'scope'), 'planDecision', { door });
+  }
+  // A generator links outputs to sources: a scope names both sides or neither. An existing file git does not
+  // track is no output a builder can commit (docs/design/plan-lint.md).
+  let files = null; // outside a git work tree there is nothing to compare with
+  try { files = new Set(execFileSync('git', ['ls-files'], { cwd: base, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).split('\n')); } catch {}
+  for (const u of units) {
+    const touches = (globs) => list(globs).filter((g) => u.scope.some((s) => overlaps(s, g)));
+    for (const entry of (Array.isArray(profile.generated) ? profile.generated : []).filter(isMap)) {
+      const [outs, srcs] = [touches(entry.outputs), touches(entry.sources)];
+      if (outs.length && !srcs.length) add('PLAN-GENERATED', u, keyLine(u, 'scope'), 'planGenerated', { has: outs.join(', '), lacks: list(entry.sources).join(', ') });
+      if (srcs.length && !outs.length) add('PLAN-GENERATED', u, keyLine(u, 'scope'), 'planGenerated', { has: srcs.join(', '), lacks: list(entry.outputs).join(', ') });
+    }
+    for (const path of files ? u.scope.filter((s) => !/[*?[]/.test(s) && !files.has(s) && existsSync(join(base, s))) : []) add('PLAN-GENERATED', u, keyLine(u, 'scope'), 'planUntracked', { path });
   }
   for (const c of cycles(units)) add('PLAN-DAG', c.unit, keyLine(c.unit, 'depends'), 'depCycle', { cycle: c.text });
 
