@@ -547,8 +547,12 @@ export const commands = {
     const limit = profile.review.fixRounds;
     const round = roundsOf({ rounds: prior }, focus).filter((r) => r.verdict === 'fix' && !beforeApproval(r, since)).length + 1;
     // A pass while an AC has no tagged test on the branch is a fix: the gate would refuse it (U32).
-    const missing = data.verdict === S.verdicts[0] && planUnit ? untagged({ cwd, bundle: bundleOf(cwd, profile) }, planUnit) : [];
-    if (missing.length) Object.assign(data, { verdict: 'fix', findings: missing.map((tag) => ({ path: '', line: '', claim: msg('untaggedClaim', { tag }), scenario: msg('untaggedScenario', {}), confidence: S.confirmed })) });
+    // A pass carrying a CONFIRMED finding is a fix too: the reviewer saw the defect (U35).
+    const pass = data.verdict === S.verdicts[0];
+    const missing = pass && planUnit ? untagged({ cwd, bundle: bundleOf(cwd, profile) }, planUnit) : [];
+    const confirmed = pass ? (data.findings ?? []).filter((f) => f.confidence === S.confirmed).length : 0;
+    const sentBack = missing.map((tag) => ({ path: '', line: '', claim: msg('untaggedClaim', { tag }), scenario: msg('untaggedScenario', {}), confidence: S.confirmed }));
+    if (missing.length || confirmed) Object.assign(data, { verdict: 'fix', findings: [...(data.findings ?? []), ...sentBack] });
     if (missing.length) bump(cwd, config.retro.sendBacks, { unit, tags: missing.join(', '), at: new Date().toISOString() });
     const verdict = data.verdict === 'fix' && round > limit ? 'escalate' : data.verdict;
     const card = readJson(runtimeFile(cwd, 'cards', unit))?.hash ?? null;
@@ -556,7 +560,7 @@ export const commands = {
     writeJson(target, { unit, rounds: [...prior, { ...data, focus, verdict, card, diffHash: diffHash(cwd, baseOf(profile), unit), commit, at: new Date().toISOString() }] });
     if (verdict === S.verdicts[2]) bump(cwd, 'escalations', config.retro.reasons.review);
     rmSync(join(aidlcDir(cwd), S.reviewing, unit), { force: true }); // the review is no longer in flight
-    const why = verdict !== data.verdict ? 'recordedEscalate' : missing.length ? 'recordedUntagged' : verdict === 'fix' ? 'recordedFix' : 'recorded';
-    return done(msg(why, { what: verdict, unit, focus, tags: missing.join(', '), round, limit })); // the reviewer learns why
+    const why = verdict !== data.verdict ? 'recordedEscalate' : missing.length ? 'recordedUntagged' : confirmed ? 'recordedConfirmed' : verdict === 'fix' ? 'recordedFix' : 'recorded';
+    return done(msg(why, { what: verdict, unit, focus, tags: missing.join(', '), round, limit, confirmed })); // the reviewer learns why
   },
 };
