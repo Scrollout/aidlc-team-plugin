@@ -7,7 +7,7 @@ sources:
   - id: aws-aidlc
     resource: https://github.com/awslabs/aidlc-workflows
     title: AWS AI-DLC workflows
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T17:30:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T17:45:00Z }
 ---
 
 # Trial merge
@@ -28,13 +28,8 @@ Nothing touches the base until every check passes, so a failed gate leaves no ha
 - **Proof-revert:** when every other check so far passed, the unit's changed paths outside every level's `paths`, the bundle and `.aidlc/` are put back as at the base in the index and the files (added files removed), so a run that checks `git diff` sees a clean tree, and each level whose `paths` hold one of the unit's tagged tests runs again: one that still passes is `GATE-PROOF`. The merge result is then restored. A quick-lane unit, a test-only diff or no such level skips it, and the merge says so. The trailer `Proof: <level>, …` records it (`none` when skipped).
 - **Quick lane ACs:** a quick unit has no tagged tests, so each command its ACs name in a code span (`make <target>`, `npm run <target>`, `just <target>`, from `grid.runners`) runs on the merged tree; a failure is `GATE-AC`. A claim with no run behind it counts for nothing.[^aws-aidlc]
 - **Checks:** `check` of every module whose `paths` the diff touches, then `security.check` and `architecture.checks`, run in the merged tree. Commands come from the owner's profile and run through the shell; git never does.
-- **Review:** the last `general` verdict is `pass`, for the current diff hash and the current card hash. Each focus whose globs the diff touches needs its own `pass`. A verdict file's `focus` defaults to `general`.
+- **Review:** the last `general` verdict is `pass`, for the current diff hash and the current card hash. Each focus whose globs the diff touches needs its own `pass`, for the current diff or kept ([Review rounds](review-rounds.md)). A verdict file's `focus` defaults to `general`.
 - **Architecture:** `architecture.graph` prints `<from path> -> <to path>` edges, repo-relative. An edge whose `from` matches a boundary's `from` and whose `to` matches one of its `deny` globs is denied, unless `same: false` and both paths matched the boundary's `*` segments alike, or an approved decision listed in `except` covers it: one that lists the edge as a `<from> -> <to>` line, or one that lists no edge and so covers the whole boundary. Boundaries are read from the merged tree, so the unit that adds a boundary is checked against it.
-
-# Review rounds
-- A `fix` sends the builder a fix round. A `fix` that would start fix round `review.fixRounds + 1` (default 3) in its focus since the unit's last approval is recorded as `escalate`: the owner decides ([State](state.md#next)). The owner chose three rounds over one (2026-10-23).
-- A `pass` while an AC has no tagged test on the branch is recorded as `fix`, with one finding per tag.
-- `review record` names the round and the limit.
 
 # push and fix
 - `aidlc push` lists the base commits the remote lacks; on a base never pushed, those after the commit that added `.aidlc/profile.json`, since history before the plugin follows no gate. Each must be a merge with a `Unit` trailer, or touch only allowed direct paths: the bundle, `.aidlc/**`, and the files `init` writes. Then it pushes the base.

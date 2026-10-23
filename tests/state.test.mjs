@@ -469,3 +469,32 @@ test('U32/AC-1 U32/AC-2 U32/AC-3 a pass with an untagged AC is recorded as fix a
   const retro = run(dir, ['retro', 'I-1']).out;
   assert.match(retro, /^ {2}U-1 sent back at \S+: no test tagged U-1\/AC-1$/m);
 });
+
+test('U34/AC-1 U34/AC-2 each round records its commit; a focus pass outlives a fix its globs did not see, general does not', () => {
+  const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['a/**', 'sec/**'] }) }, { focus: { security: ['sec/**'] } });
+  approve(dir, 'I-1', 'U-1');
+  git(dir, 'switch', '-q', '-c', 'unit/U-1');
+  commit(dir, 'work', { 'a/x.txt': 'U-1/AC-1\n', 'sec/y.txt': 'y\n' });
+  const fixRound = (file) => {
+    git(dir, 'switch', '-q', 'unit/U-1');
+    commit(dir, `fix ${file}`, { [file]: `${file} fixed\n` });
+    git(dir, 'switch', '-q', 'main');
+    report(dir, 'U-1');
+  };
+  git(dir, 'switch', '-q', 'main');
+  review(dir, 'U-1', 'pass');
+  run(dir, ['review', 'record', 'U-1', '-'], JSON.stringify({ verdict: 'pass', focus: 'security', findings: [] }));
+  const rounds = () => JSON.parse(read(dir, '.git/aidlc/reviews/U-1.json')).rounds;
+  assert.deepEqual(rounds().map((r) => r.commit), Array(2).fill(git(dir, 'rev-parse', 'unit/U-1')));
+  review(dir, 'U-1', 'fix');
+  fixRound('a/z.txt');
+  assert.match(run(dir, ['next']).out, /^review U-1, focus general/, 'general reviews the fix');
+  review(dir, 'U-1', 'pass');
+  assert.match(run(dir, ['next']).out, /^merge U-1/, 'the security pass is kept: the fix touched no security glob');
+  assert.doesNotMatch(run(dir, ['merge', 'U-1']).out, /GATE-SPECIALIST|GATE-REVIEW/);
+  review(dir, 'U-1', 'fix');
+  fixRound('sec/z.txt');
+  review(dir, 'U-1', 'pass');
+  assert.match(run(dir, ['next']).out, /^review U-1, focus security/, 'a fix inside the focus globs is reviewed again');
+  assert.match(run(dir, ['merge', 'U-1']).out, /GATE-SPECIALIST/);
+});
