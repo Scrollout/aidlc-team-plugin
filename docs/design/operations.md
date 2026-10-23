@@ -39,6 +39,10 @@ The owner's, 2026-10-24:
 - One deploy target per project; environment promotion is later.
 - In: a runbook per intent, and the retro's feedback. Out: observability, SLO, load and incident stages.
 
+# Details
+- **Record:** `.git/aidlc/deploys/I-<n>.json` keeps the last run of each step (`check`, `release`, `smoke`, `rollback`) with its exit, the failing command, the tail of its output and the base commit it ran on. `aidlc deploy` writes it; `next` only reads it. Steps run in the work tree, which must be on the base.
+- **Check:** with `deploy.check`, a merged intent's `next` is `aidlc deploy check I-<n>` until a check ran on the current base; a failed check names the command and `aidlc fix … --scope …`. The fix unit is plan work and comes first; once it merges the base moves and the check runs again.
+
 Units: [M6](../roadmap/m6.md).
 
 [^aws-ops]: AWS AI-DLC operation stages

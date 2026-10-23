@@ -13,6 +13,7 @@ import { commands as gate } from './lib/gate.mjs';
 import { commands as hooks, ownerRefused } from './lib/hooks.mjs';
 import { commands as board } from './lib/board.mjs';
 import { commands as retro } from './lib/retro.mjs';
+import { commands as deploy } from './lib/deploy.mjs';
 
 export const EXIT = config.exit;
 export { UsageError };
@@ -29,7 +30,7 @@ const combine = (...handlers) => async (args, ctx) => {
 };
 
 // Each unit that builds a command adds its handler here, keyed by the command name in cli.json.
-export const HANDLERS = { ...okf, ...state, ...card, ...init, ...gate, ...hooks, ...board, ...retro, lane: grid.lane, check: combine(okf.check, grid.check, gate.check) };
+export const HANDLERS = { ...okf, ...state, ...card, ...init, ...gate, ...hooks, ...board, ...retro, ...deploy, lane: grid.lane, check: combine(okf.check, grid.check, gate.check) };
 
 export function help() {
   const width = Math.max(...config.commands.map((c) => c.usage.length));
