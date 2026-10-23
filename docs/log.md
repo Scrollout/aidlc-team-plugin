@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-23
 
+- **Update** M4 U38 built (owner's choice): a reviewer's own `escalate` within `review.fixRounds` is recorded as `fix`, and the reviewer's prompt says so ([Review rounds](design/review-rounds.md)). Release 0.45.0.
 - **Update** M4 U37 built (owner's request and choice of trigger): a unit whose scope overlaps `decisions.paths` (default `lanes.full`) or an interface doc it lists links a Decision doc or says `twoWay`, or plan lint reports `PLAN-DECISION` and `approve` refuses it ([Approvals](design/approvals.md), [Grid](design/grid.md)). Release 0.44.0.
 - **Creation** [M4 pilot 2 report](pilot/m4-2-report.md): U33's round count and U35's PLAUSIBLE notes held on 0.42.0; U34 was not exercised; stale in-flight marks led to U36; a reviewer's own escalate, a one-way-door decision check and cited requirements in the first approval go to the [M4](roadmap/m4.md) candidates.
 - **Update** M4 U36 built (owner's choice, from the second M4 pilot): the heartbeat hook also runs before each tool call and a mark stays fresh for 12 min, longer than the 10-min Bash ceiling, so a reviewer or builder in a long test run is not taken for dead ([Agents in flight](design/in-flight.md)). Release 0.43.0.

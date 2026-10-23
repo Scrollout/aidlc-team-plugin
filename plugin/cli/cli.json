@@ -305,6 +305,7 @@
     "recorded": "recorded {{what}} for {{unit}}\n",
     "recordedUntagged": "recorded {{what}} for {{unit}}: no test is tagged {{tags}} on its branch, so it cannot pass (fix round {{round}} of {{limit}})\n",
     "recordedConfirmed": "recorded {{what}} for {{unit}}: a pass cannot carry a CONFIRMED finding ({{confirmed}} sent), so the builder fixes it (fix round {{round}} of {{limit}})\n",
+    "recordedEscalateFix": "recorded {{what}} for {{unit}}: a reviewer escalate is a fix round first (fix round {{round}} of {{limit}}); the builder fixes it or stops on its card's stop conditions\n",
     "recordedFix": "recorded {{what}} for {{unit}}: fix round {{round}} of {{limit}} in focus {{focus}}\n",
     "untaggedClaim": "{{tag}} has no tagged test on the branch",
     "untaggedScenario": "the merge gate refuses the unit until a test carries the tag",

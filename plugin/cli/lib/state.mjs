@@ -560,13 +560,14 @@ export const commands = {
     const sentBack = missing.map((tag) => ({ path: '', line: '', claim: msg('untaggedClaim', { tag }), scenario: msg('untaggedScenario', {}), confidence: S.confirmed }));
     if (missing.length || confirmed) Object.assign(data, { verdict: 'fix', findings: [...(data.findings ?? []), ...sentBack] });
     if (missing.length) bump(cwd, config.retro.sendBacks, { unit, tags: missing.join(', '), at: new Date().toISOString() });
-    const verdict = data.verdict === 'fix' && round > limit ? 'escalate' : data.verdict;
+    // A reviewer's own escalate is a fix round first, until the limit (U38).
+    const verdict = ['fix', S.verdicts[2]].includes(data.verdict) ? (round > limit ? S.verdicts[2] : 'fix') : data.verdict;
     const card = readJson(runtimeFile(cwd, 'cards', unit))?.hash ?? null;
     const commit = git(cwd, 'rev-parse', branchOf(unit)); // what a kept pass is measured from (U34)
     writeJson(target, { unit, rounds: [...prior, { ...data, focus, verdict, card, diffHash: diffHash(cwd, baseOf(profile), unit), commit, at: new Date().toISOString() }] });
     if (verdict === S.verdicts[2]) bump(cwd, 'escalations', config.retro.reasons.review);
     rmSync(join(aidlcDir(cwd), S.reviewing, unit), { force: true }); // the review is no longer in flight
-    const why = verdict !== data.verdict ? 'recordedEscalate' : missing.length ? 'recordedUntagged' : confirmed ? 'recordedConfirmed' : verdict === 'fix' ? 'recordedFix' : 'recorded';
+    const why = verdict === S.verdicts[2] ? 'recordedEscalate' : data.verdict === S.verdicts[2] ? 'recordedEscalateFix' : missing.length ? 'recordedUntagged' : confirmed ? 'recordedConfirmed' : verdict === 'fix' ? 'recordedFix' : 'recorded';
     return done(msg(why, { what: verdict, unit, focus, tags: missing.join(', '), round, limit, confirmed })); // the reviewer learns why
   },
 };

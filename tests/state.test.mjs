@@ -534,3 +534,16 @@ test('U37/AC-2 U37/AC-3 approve refuses a unit at a one-way door with no decisio
   assert.match(run(dir, ['next']).out, /^👉 ask the owner to approve the plan: aidlc approve U-1 docs\/decisions\/0001-keep\.md/);
   approve(dir, 'U-1', 'docs/decisions/0001-keep.md');
 });
+
+test('U38/AC-1 a reviewer escalate within review.fixRounds is recorded as fix and says why; past the limit it stays escalate', () => {
+  const dir = base();
+  approve(dir, 'I-1', 'U-1', 'U-2');
+  branch(dir, 'U-1');
+  const record = (verdict) => run(dir, ['review', 'record', 'U-1', '-'], JSON.stringify({ verdict, findings: [{ path: 'a/x', line: 1, claim: 'the card cannot be met', scenario: 's', confidence: 'CONFIRMED' }] })).out;
+  assert.match(record('escalate'), /^recorded fix for U-1: a reviewer escalate is a fix round first \(fix round 1 of 3\); the builder fixes it or stops on its card's stop conditions$/m);
+  assert.match(run(dir, ['next']).out, /^fix round for U-1/);
+  record('fix');
+  record('escalate');
+  assert.match(record('escalate'), /^recorded escalate for U-1: fix round 4/m);
+  assert.deepEqual(JSON.parse(read(dir, '.git/aidlc/reviews/U-1.json')).rounds.map((r) => r.verdict), ['fix', 'fix', 'fix', 'escalate']);
+});
