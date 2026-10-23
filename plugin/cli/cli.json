@@ -120,6 +120,11 @@
       "does": "record the owner's run mode: unattended or not, the next action to stop at, where to report (owner only)"
     },
     {
+      "name": "research",
+      "usage": "research <doc>",
+      "does": "print the researcher's brief for a question held on the doc"
+    },
+    {
       "name": "retro",
       "usage": "retro <intent>",
       "does": "list what fired, escalated and needed the owner; propose at most three changes; reset the counters"
@@ -262,6 +267,10 @@
     "nextWait": "wait for the builders and reviewers of {{units}}",
     "nextHeld": "{{units}} on hold: the owner releases them",
     "nextRelease": "{{intent}} is merged: release with the owner",
+    "nextResearch": "research for {{doc}}: researcher on {{model}} (brief: aidlc research {{doc}})",
+    "researchNone": "{{doc}} holds no research question: aidlc hold {{doc}} research: <question>",
+    "researchFor": "a research question",
+    "modelSourceResearch": "the profile's models.research",
     "nextIdle": "all intents released: elaborate the next intent with the owner",
     "nextHostDenied": "auto mode refused aidlc {{refused}}: the owner runs aidlc {{command}} (the owner confirms the prompt)",
     "nextWorktreeLeft": "{{unit}} is merged but {{path}} still holds {{branch}}: stop its builder, then git worktree remove --force --force {{path}} and git branch -D {{branch}}",
@@ -564,6 +573,7 @@
     },
     "runners": { "make": "Makefile", "npm run": "package.json", "just": "justfile" },
     "requirements": "requirements",
+    "research": "research",
     "requirementFile": "^(R-\\d+)(?:-[^/]*)?\\.md$"
   },
   "state": {
@@ -574,6 +584,7 @@
     "heartbeats": "heartbeats",
     "heartbeatMs": 120000,
     "hostDenied": "host-denied.json",
+    "researchHold": "research:",
     "hostDeniedKept": 5,
     "branchPrefix": "unit/",
     "trailer": "Unit",
@@ -635,6 +646,8 @@
   },
   "card": {
     "template": "card.md",
+    "researchTemplate": "research.md",
+    "stack": ["go.mod", "package.json", "pyproject.toml", "requirements.txt", "Cargo.toml", "pom.xml", "build.gradle", "Gemfile", "composer.json", "Makefile", "justfile", "Dockerfile"],
     "quickTemplate": "card-quick.md",
     "max": 6000,
     "hashLength": 16
@@ -872,6 +885,7 @@
       ":reviewer"
     ],
     "unitPattern": "\\bU-\\d+\\b",
+    "researcher": ":researcher",
     "denials": "denials.json",
     "escalateAt": 3,
     "git": {

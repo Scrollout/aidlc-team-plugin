@@ -178,6 +178,10 @@ function secrets(input, cwd) {
 function model(input, cwd) {
   const t = input.tool_input ?? {};
   const agent = String(t.subagent_type ?? '');
+  if (agent.endsWith(H.researcher)) {
+    const expected = withDefaults(loadProfile(cwd).profile).models.research;
+    return t.model === expected ? allow() : deny(cwd, input, 'MODEL-MISMATCH', 'modelMismatch', { agent, unit: msg('researchFor', {}), model: t.model ?? 'none', expected, source: msg('modelSourceResearch', {}) });
+  }
   const role = H.agents.find((a) => agent.endsWith(a));
   if (!role) return allow();
   const unit = String(t.prompt ?? '').match(new RegExp(H.unitPattern))?.[0];

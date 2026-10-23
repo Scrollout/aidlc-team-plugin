@@ -1,0 +1,38 @@
+# Research for {{doc}}
+
+Question: {{question}}
+Asked in: {{file}}
+Model: {{model}}
+
+## Project context (read first)
+- The docs bundle: {{index}}
+{{#each stack}}- Stack: {{this}}
+{{/each}}
+## Sources the owner named
+{{#each sources}}- {{this}}
+{{/each}}
+## Budget
+Read at most {{max}} sources. Keep the digest under 4,000 characters.
+
+## Return this digest; the lead writes it unchanged to {{out}}
+---
+type: Research
+title: <the question in a few words>
+description: <the answer in one line>
+question: {{questionYaml}}
+sources:
+  - id: <short id>
+    resource: <url>
+    title: <page title>
+---
+
+# Options
+<two or three options; each with its evidence as [^id] citations, official sources first>
+
+# Secondary sources
+<blogs, forums or answers you used, marked as such; none is the only support for an option>
+
+# Open doubts
+<what the sources do not settle>
+
+[^<id>]: <page title>

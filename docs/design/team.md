@@ -20,6 +20,7 @@ sources:
 | Lead | main session + `aidlc` skill | runs `next`, writes intent/unit/design docs, starts builders and reviewers, merges | writes production code on the base branch |
 | Builder | subagent, Sonnet, `isolation: worktree` | builds one unit from its card, test first; reports | edits outside scope, changes interfaces, approves |
 | Reviewer | subagent, Opus, fresh context | checks the diff against the card and linked specs; returns findings | edits files |
+| Researcher | subagent, Sonnet, fresh context, on a held question | a cited digest, official sources first | decides, writes files |
 
 The owner holds both leads of the AI-DLC diagram: product behaviour (Inception) and software system (Construction).
 
@@ -50,7 +51,7 @@ The CLI picks the model; the lead passes it as the Agent call's per-invocation `
 | Fix round after a reviewer `fix` | same as round 1 | round 1 was Sonnet and a finding is CONFIRMED: round 2 runs on Opus |
 | Review, specialists | Opus | - |
 
-Thresholds and the table live in `profile.models`, so a project can shift the balance. The lead runs on the model the owner chose; the skill recommends Opus because the lead writes the design rows with the owner.
+Thresholds and the table live in `profile.models`, so a project can shift the balance. The lead runs on the model the owner chose; Opus suits it, since the lead writes the design rows with the owner.
 
 # Cost
 - Builders default to Sonnet; Opus where the table above says so.

@@ -2,7 +2,7 @@
 // and records builder reports and reviewer verdicts (docs/design/state.md). Nothing here is a ledger.
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { config, done, isMap, list, readJson, UsageError, relPath } from './config.mjs';
 import { msg } from './template.mjs';
@@ -359,8 +359,18 @@ export function nextAction(st) {
   return action('human', 'nextHostDenied', { refused, command: refused.split(' ').filter((a) => a !== S.autoFlag).join(' ') });
 }
 
+// A question the lead held for research (decision 0010) and the questions the bundle's research docs answer.
+export const researchOf = (doc) => (typeof doc.fm.hold === 'string' && doc.fm.hold.startsWith(S.researchHold) ? doc.fm.hold.slice(S.researchHold.length).trim() : null);
+function researched(bundle) {
+  const dir = join(bundle, config.grid.research);
+  return new Set((existsSync(dir) ? readdirSync(dir) : []).filter((f) => f.endsWith(config.okf.ext)).map((f) => parseDoc(readFileSync(join(dir, f), 'utf8')).fm?.question));
+}
+
 function pickAction(st) {
   if (st.mergeUnit) return action('act', 'nextContinueMerge', { unit: st.mergeUnit });
+  const answered = researched(st.bundle);
+  const asked = [...st.requirements, ...st.intents, ...st.units].find((d) => researchOf(d) && !answered.has(researchOf(d)));
+  if (asked) return action('act', 'nextResearch', { doc: asked.id, model: st.profile.models.research });
   const unreleased = st.intents.find((i) => i.state === 'merged'); // its release does not hold back the next intent
   const intent = st.intents.find((i) => !['released', 'merged'].includes(i.state)) ?? unreleased;
   const scope = st.units.filter((u) => !u.fm.intent || u.fm.intent === intent?.id);

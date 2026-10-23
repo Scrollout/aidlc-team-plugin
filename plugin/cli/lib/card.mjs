@@ -7,7 +7,7 @@ import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { parseDoc, proseLines } from './okf.mjs';
 import { computeLane, overlaps, readPlan, reqId } from './grid.mjs';
-import { aidlcDir, approval, baseOf, branchOf, bundleOf, diffHash, git, readReview, roundsOf, runtimeFile, sha256, tryGit, writeJson } from './state.mjs';
+import { aidlcDir, approval, baseOf, branchOf, bundleOf, diffHash, git, readReview, readState, researchOf, roundsOf, runtimeFile, sha256, tryGit, writeJson } from './state.mjs';
 
 const C = config.card;
 const AC_LINE = /^\s*[-*]\s+AC-\d+\b/;
@@ -125,7 +125,24 @@ function readPlanUnit(unit, doc) {
 }
 
 
+// The researcher's brief: the held question and the project's own context, never a plugin source list (decision 0010).
+function researchBrief(cwd, id) {
+  const st = readState(cwd);
+  const doc = [...st.requirements, ...st.intents, ...st.units].find((d) => reqId(d.id) === reqId(String(id)));
+  const question = doc && researchOf(doc);
+  if (!question) throw new UsageError(msg('researchNone', { doc: id ?? '' }));
+  const slug = question.toLowerCase().replace(/[^a-z0-9]+/g, '-').split('-').filter(Boolean).slice(0, 6).join('-');
+  const file = templateFile(cwd, C.researchTemplate);
+  return render(readFileSync(file, 'utf8'), {
+    doc: doc.id, question, questionYaml: JSON.stringify(question), file: relPath(cwd, doc.file), model: st.profile.models.research,
+    index: relPath(cwd, join(st.bundle, config.okf.index)), stack: C.stack.filter((f) => existsSync(join(cwd, f))),
+    sources: list(st.profile.research?.sources), max: st.profile.research.max, out: relPath(cwd, join(st.bundle, config.grid.research, `${doc.id}-${slug}.md`)),
+  }, file);
+}
+
 export const commands = {
+  research: (args, { cwd }) => done(researchBrief(cwd, args[0])),
+
   card(args, { cwd }) {
     if (!args[0]) throw new UsageError(msg('noDoc', { name: '' }));
     const r = renderCard(cwd, args[0]);
