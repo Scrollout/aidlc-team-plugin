@@ -342,6 +342,11 @@
     "gateAc": "no test tagged {{tag}}",
     "gateAcCommand": "{{ac}} names {{command}}, which fails on the merge result",
     "gateRun": "level {{level}} run {{command}} fails on the merge result",
+    "gateProof": "level {{level}} still passes with {{unit}}'s changes outside the test paths reverted: its tagged tests do not test them",
+    "proofSkipped": "proof skipped: {{why}}\n",
+    "proofQuick": "quick lane",
+    "proofTests": "no change outside the test paths",
+    "proofNoRun": "no level run holds a tagged test",
     "gateLevel": "{{tag}} is tested in {{files}}, outside the {{level}} paths",
     "gateCheck": "{{command}} failed",
     "gateReview": "no pass verdict for the current diff of {{unit}}",
@@ -768,6 +773,7 @@
       "review": "Review"
     },
     "tested": "Tested",
+    "proof": "Proof",
     "pass": "pass",
     "lanes": [
       "quick",
@@ -800,6 +806,9 @@
       },
       "GATE-CHECK": {
         "fix": "fix the module until its check passes"
+      },
+      "GATE-PROOF": {
+        "fix": "make each tagged test fail without the change, then report again"
       },
       "GATE-RUN": {
         "fix": "the builder fixes the code or tests until the level's run passes on the base merged in"

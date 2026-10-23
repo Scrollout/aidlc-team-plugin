@@ -3,7 +3,7 @@ type: Design
 title: Verification
 description: The inner loop (hooks), the merge gate, the reviewer's output contract and the CI mode.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T13:10:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T14:00:00Z }
 sources:
   - id: cc-hooks
     resource: https://code.claude.com/docs/en/hooks
@@ -44,7 +44,7 @@ Fails with one line per problem, each naming the fix, unless all hold:
 1. Unit approved and not stale; deps merged.
 2. Diff inside the card's scope; lane at merge ≥ lane at start.
 3. Every AC has a test tagged `U-<n>/AC-<k>` in the diff or the base, at its level; not in the quick lane ([Unit card](unit-card.md#quick-lane)).
-4. Profile checks for the touched modules and every level `run` pass on the merged result.
+4. Profile checks for the touched modules and every level `run` pass on the merged result; with the unit's code reverted, each level of its tagged tests fails (proof-revert).
 5. Outside the quick lane, verdict `pass` for the current diff hash, plus each required specialist (a focus is required when its globs match the diff).
 6. Bundle passes OKF validation.
 7. Profile `security.check` commands pass when set (e.g. secret scan, SAST, dependency audit such as gitleaks, semgrep, govulncheck); the plugin runs them, it does not ship them.
@@ -63,7 +63,7 @@ How a review runs, and why there is no separate architecture focus: [Skill and a
 The skill and agent prompts are code coupled to a model version. `tests/evals/` holds a fixture project with seeded defects (an AC without a real test, an out-of-scope edit, an injection, a missing authz check). The reviewer must find each one; the builder must stop on the interface-change fixture. Run before every release and on every model change; a miss blocks the release.
 
 # Later
-- M3: proof-revert, planned as U28 ([M3](../roadmap/m3.md)), and security content patterns, cut from M1 to keep it small (owner, 2026-10-22).
+- Security content patterns, cut from M1 (owner, 2026-10-22).
 - Later: an optional CI evaluator agent on pushes.
 
 [^cc-hooks]: Claude Code hooks reference

@@ -103,6 +103,7 @@ export function renderCard(cwd, unitId) {
     requirements: list(doc.fm.requirements).map(reqId).flatMap((id) => plan.requirements.filter((r) => reqId(r.id) === id)
       .map((r) => msg('cardRequirement', { id, path: relPath(top, r.file) }))),
     fixes: [fixes.length ? msg('cardFixes', { list: fixes.join('') }) : '', answered.length ? msg('cardAnswered', { list: answered.join('') }) : ''].join(''),
+    proof: [[...new Set(Object.values(withDefaults(profile).levels).flatMap((l) => list(l?.paths)))].join(', ')].filter(Boolean),
     runs: Object.entries(withDefaults(profile).levels).filter(([, l]) => l?.run).map(([level, l]) => ({ level, run: l.run })),
     checks: (profile.modules ?? []).filter((m) => modules.has(m.id ?? m.name) && m.check).map((m) => ({ module: m.id ?? m.name, check: m.check })),
     outOfScope: section(doc, 'Out of scope'),
