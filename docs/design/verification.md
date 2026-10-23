@@ -3,7 +3,7 @@ type: Design
 title: Verification
 description: The inner loop (hooks), the merge gate, the reviewer's output contract and the CI mode.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T09:20:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T12:20:00Z }
 sources:
   - id: cc-hooks
     resource: https://code.claude.com/docs/en/hooks
@@ -52,7 +52,7 @@ Fails with one line per problem, each naming the fix, unless all hold:
 On success: `git merge --no-ff` with trailers `Unit: U-<n>`, `Card: <hash>`, `Review: pass`. How it runs: [Merge mechanics](gate.md).
 
 # Reviewer contract
-Returns JSON only: `{verdict: pass|fix|escalate, focus?, findings: [{path, line, ac?, claim, scenario, confidence: CONFIRMED|PLAUSIBLE}]}`, at most 10 findings. Round 1 `fix` → builder fixes → round 2. A second `fix` becomes `escalate`: the owner decides ([State](state.md#next)). The reviewer reads tests first: tests are what the owner samples.
+Returns JSON only: `{verdict: pass|fix|escalate, focus?, findings: [{path, line, ac?, claim, scenario, confidence: CONFIRMED|PLAUSIBLE}]}`, at most 10 findings. Round 1 `fix` → builder fixes → round 2. A second `fix` becomes `escalate`, and `review record` tells the reviewer: the owner decides ([State](state.md#next)). The reviewer reads tests first: tests are what the owner samples.
 
 How a review runs, and why there is no separate architecture focus: [Skill and agents](prompts.md#review).
 

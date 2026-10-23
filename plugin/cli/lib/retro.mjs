@@ -2,7 +2,8 @@
 // (docs/design/steering.md#3-across-intents-the-retro). Proposals and messages come from cli.json.
 import { config, done, readJson, UsageError } from './config.mjs';
 import { msg } from './template.mjs';
-import { events, readState, runtimeFile, statsFile, writeJson } from './state.mjs';
+import { basename } from 'node:path';
+import { decisionsOf, events, readState, runtimeFile, statsFile, writeJson } from './state.mjs';
 
 const R = config.retro;
 
@@ -31,6 +32,7 @@ export const commands = {
     // Owner approvals from the stamps of the intent's docs, however they ran; other owner commands; auto mode refusals.
     const since = Date.parse(stats.since ?? 0) || 0;
     const docs = [intent, ...intent.units, ...st.requirements.filter((r) => intent.units.some((u) => u.requirements.includes(r.id)) || intent.requirements.includes(r.id))];
+    docs.push(...decisionsOf(st, docs).map((d) => ({ id: basename(d.file, config.okf.ext), fm: d.doc.fm }))); // and the decisions they cite
     const owner = [
       ...docs.flatMap((d) => events(d.fm).filter((e) => String(e.by).startsWith(config.state.human) && Date.parse(e.at) >= since)
         .map((e) => ({ at: String(e.at), line: msg('retroApproval', { at: e.at, doc: d.id, by: String(e.by).slice(config.state.human.length) }) }))),

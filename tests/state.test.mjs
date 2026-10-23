@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readdirSync, readFileSync, utimesSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, utimesSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { aidlc, approve, branch, commit, git, intentDoc, makeRepo, merge, read, review, run, tempDir, unitDoc, write } from './state-repo.mjs';
 import { parseDoc } from '../plugin/cli/lib/okf.mjs';
@@ -231,6 +231,18 @@ test('review record turns a second fix into escalate; report needs a JSON object
   assert.equal(run(dir, ['review', 'record', 'U-9', 'x.json']).code, 64);
 });
 
+test('U26/AC-1 U26/AC-2 a fix recorded as escalate tells the reviewer why; the card heads the owner\'s answer as a re-approval', () => {
+  const dir = base();
+  approve(dir, 'I-1', 'U-1', 'U-2');
+  branch(dir, 'U-1');
+  const verdict = (v) => { const f = join(tempDir('verdict-'), 'v.json'); writeFileSync(f, JSON.stringify({ verdict: v, findings: [{ path: 'a/x', line: 1, claim: 'c', scenario: 's', confidence: 'CONFIRMED' }] })); return run(dir, ['review', 'record', 'U-1', f]).out; };
+  assert.match(verdict('fix'), /^recorded fix for U-1$/m);
+  assert.match(verdict('fix'), /^recorded escalate for U-1: a second fix in focus general since the owner's last approval goes to the owner$/m);
+  approve(dir, 'U-1');
+  const card = run(dir, ['card', 'U-1']).out;
+  assert.match(card, /^## Findings the owner answered by re-approving\nThe owner kept or changed the spec after these escalated; report each again only if it still holds against the spec as it is now\.$/m);
+});
+
 test('U5/AC-4 an adopted project with no intent is asked for the migration intent', () => {
   const dir = makeRepo({}, { adopted: '0123456789abcdef0123' });
   const r = run(dir, ['next']);
@@ -251,7 +263,7 @@ test('U8/AC-6 U18/AC-3 re-approving an escalated unit marks its findings answere
   approve(dir, 'U-1');
   assert.match(run(dir, ['next']).out, /^review U-1, focus general/, 'no fix round: the re-review runs directly');
   const card = run(dir, ['card', 'U-1']).out;
-  assert.match(card, /## Findings answered by the spec change\n.*\n- general CONFIRMED src\/U-1\.txt:1: wrong level \(gate fails\)$/m);
+  assert.match(card, /## Findings the owner answered by re-approving\n.*\n- general CONFIRMED src\/U-1\.txt:1: wrong level \(gate fails\)$/m);
   assert.doesNotMatch(card, /Findings to fix/);
   review(dir, 'U-1', 'fix', [finding]);
   assert.equal(JSON.parse(read(dir, '.git/aidlc/reviews/U-1.json')).rounds.at(-1).verdict, 'fix', 'the first fix after re-approval');
