@@ -195,10 +195,11 @@ export function readState(cwd, { now = Date.now() } = {}) {
     if (merged.has(u.id)) state = 'merged';
     else if (needsApproval && approvalState !== 'approved') state = approvalState;
     // A builder that stopped hands the unit back to the lead until the owner re-approves its fixed spec.
-    // A builder launched after the stop report has taken over: the unit reads as building.
+    // A builder launched after the stop report has taken over: the unit reads as building. The launch mark, not the
+    // heartbeat, decides: the stopped builder's own last calls touch the heartbeat after its report.
     else if (report?.status === S.stopped && Date.parse(report.at) > approvedAt(u.doc)
       && !(review?.rounds ?? []).some((r) => r.at > report.at)
-      && !(heartbeatFresh(cwd, u.id, now) && heartbeatAt(cwd, u.id) > Date.parse(report.at))) state = 'stopped';
+      && !(heartbeatAt(cwd, u.id, S.launches) > Date.parse(report.at))) state = 'stopped';
     else if (!u.depends.every((d) => merged.has(d))) state = 'blocked';
     else if (branches.has(branchOf(u.id))) {
       // The last verdict of each required focus, counted only while it is for the current diff.
@@ -283,7 +284,9 @@ function gateOf(st, intent, scope) {
   if (stale.length) {
     const decisions = citedDecisions(st, stale.filter((d) => st.units.includes(d)));
     const docs = [ids(stale), ...decisions].join(' ');
-    return gate(...(st.auto.includes(S.auto[0]) && !decisions.length ? ['nextAutoApprove', stale.map((d) => d.id), { docs }, 'act'] : ['nextReapprove', stale.map((d) => d.id), { docs }]));
+    // A delegated re-approval keeps every unit's ACs, as `approve --auto` checks: what done means is the owner's.
+    const acsKept = stale.filter((d) => st.units.includes(d)).every((d) => { const before = approvedText(st.cwd, d.file, d.doc.fm.verified_hash); return before !== null && acLines(parseDoc(before)) === acLines(d.doc); });
+    return gate(...(st.auto.includes(S.auto[0]) && !decisions.length && acsKept ? ['nextAutoApprove', stale.map((d) => d.id), { docs }, 'act'] : ['nextReapprove', stale.map((d) => d.id), { docs }]));
   }
   const open = [...st.requirements, ...st.intents, ...st.units].filter((d) => d.state === 'draft').map((d) => ({ d, points: openPoints(d.doc) })).find((x) => x.points.length);
   // An open conversation with the owner comes before any unit work: no docs, so nothing counts as independent.
@@ -352,7 +355,7 @@ function unitWork(st, scope) {
     if (tree) return action('act', 'nextWorktreeLeft', { unit: u.id, path: tree.split('\n')[0].replace(/^worktree /, ''), branch: branchOf(u.id) });
   }
 
-  const inFlight = [...scope.filter((u) => ['building', 'reviewing'].includes(u.state)), ...backAtWork];
+  const inFlight = [...scope.filter((u) => u.state === 'reviewing' || (u.state === 'building' && u.fresh)), ...backAtWork]; // a held unit's quiet builder is not in flight
   const max = st.profile.parallel.max;
   const picked = [];
   const ready = live.filter((u) => u.state === 'approved').sort((a, b) => priorityOf(b) - priorityOf(a) || byId(a, b));

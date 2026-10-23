@@ -547,3 +547,13 @@ test('U38/AC-1 a reviewer escalate within review.fixRounds is recorded as fix an
   assert.match(record('escalate'), /^recorded escalate for U-1: fix round 4/m);
   assert.deepEqual(JSON.parse(read(dir, '.git/aidlc/reviews/U-1.json')).rounds.map((r) => r.verdict), ['fix', 'fix', 'fix', 'escalate']);
 });
+
+test('0.46.1 next offers no delegated re-approval for a unit whose acceptance criteria changed: the owner approves it', () => {
+  const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['src/**'] }) });
+  approve(dir, 'I-1', 'U-1');
+  write(dir, { '.aidlc/local/profile.json': { approvals: { auto: ['reapprove'] } } });
+  commit(dir, 'add AC-2', { [U(1)]: read(dir, U(1)).replace('- AC-1 (unit): it works.', '- AC-1 (unit): it works.\n- AC-2 (unit): it also rounds.') });
+  const r = run(dir, ['next']);
+  assert.match(r.out, /^👉 re-approve U-1 after their edits: aidlc approve U-1 /);
+  assert.equal(r.code, 2);
+});

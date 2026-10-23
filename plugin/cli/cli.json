@@ -672,6 +672,7 @@
     "doorCode": "PLAN-DECISION",
     "gates": "gates",
     "reviewing": "reviewing",
+    "launches": "launches",
     "badges": {
       "owner": "👉 ",
       "stop": "⛔ ",

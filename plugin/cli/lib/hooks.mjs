@@ -197,6 +197,7 @@ function model(input, cwd) {
   const source = msg(role === H.agents[0] ? 'modelSourceCard' : 'modelSourceReview', {});
   if (t.model !== expected) return deny(cwd, input, 'MODEL-MISMATCH', 'modelMismatch', { agent, unit, model: t.model ?? 'none', expected, source });
   touch(join(aidlcDir(cwd), role === H.agents[1] ? S.reviewing : S.heartbeats, unit)); // in flight from launch: next waits for it
+  if (role === H.agents[0]) touch(join(aidlcDir(cwd), S.launches, unit)); // takes over a stopped builder's unit
   return allow();
 }
 

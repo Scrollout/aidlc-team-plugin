@@ -3,7 +3,7 @@ type: Design
 title: Approvals
 description: How the owner approves intents, requirements, units and decisions, what makes an approval stale, what the lead may approve for them, and how owner prompts are recorded.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T19:00:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T20:10:00Z }
 ---
 
 # Stamp
@@ -14,7 +14,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T19:00:00Z }
 
 # Who approves
 - Agents cannot approve: the guard denies `aidlc approve` from a tool call, and the scope hook denies any edit to `verified` or `verified_hash`. Only the owner approves: by typing `approve <doc>…` as a prompt ([0011](../decisions/0011-plain-word-approval.md)), by answering the prompt the guard raises when the lead runs `aidlc approve` ([0009](../decisions/0009-approval-prompt.md)), by `!` in a terminal, or through a class they delegated ([0008](../decisions/0008-delegated-approvals.md)). Every owner step `next` names gives both the command and the words to type.
-- A delegated `reapprove` refuses an edit that changes a unit's acceptance criteria: the CLI finds the approved version in git history (the commit whose content matches `verified_hash`) and compares the AC lines; without that version it refuses too.
+- A delegated `reapprove` refuses an edit that changes a unit's acceptance criteria: the CLI finds the approved version in git history (the commit whose content matches `verified_hash`) and compares the AC lines; without that version it refuses too, and `next` then names the owner's approval instead.
 - Auto mode's classifier may refuse the lead's `approve --auto` as self-approval, as it did twice in the [M2 pilot](../pilot/m2-interventions.md). The denied hook records it, and `next` then names `aidlc approve <docs>`, which reaches the owner as a permission prompt. The plugin writes no permission rules (owner's choice, 2026-10-23).
 
 # Owner prompts
