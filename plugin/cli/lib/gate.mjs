@@ -31,7 +31,7 @@ function proofRevert(tree, card, paths, levels, tagged, bundleRel, add) {
   if (atBase.length) git(tree, 'restore', '--source=HEAD', '--staged', '--worktree', '--', ...atBase);
   const added = code.filter((x) => !atBase.includes(x) && staged.has(x));
   if (added.length) git(tree, 'rm', '-q', '-f', '--', ...added);
-  for (const [level, l] of runs) if (shell(tree, l.run)) add('GATE-PROOF', 'gateProof', { level });
+  for (const [level, l] of runs) if (runLevel(tree, level, l, add) === true) add('GATE-PROOF', 'gateProof', { level }); // a skip is no proof
   git(tree, 'read-tree', merged);
   const back = code.filter((f) => staged.has(f));
   if (back.length) git(tree, 'checkout-index', '-f', '--', ...back);
@@ -40,6 +40,17 @@ function proofRevert(tree, card, paths, levels, tagged, bundleRel, add) {
 }
 
 const shell = (cwd, command) => spawnSync(command, { cwd, shell: true, encoding: 'utf8' }).status === 0;
+
+// A level run: refused while a variable it needs is unset, and failed when its runner reports a skip, so a
+// skipped test never counts as passed (docs/design/gate.md). Returns whether the run itself exited 0, or null.
+function runLevel(tree, level, l, add) {
+  const unset = list(l.needs).filter((v) => !process.env[v]);
+  if (unset.length) return add('GATE-RUN', 'gateNeeds', { level, vars: unset.join(', ') }), null;
+  const r = spawnSync(l.run, { cwd: tree, shell: true, encoding: 'utf8' });
+  const skipped = l.skip && `${r.stdout}\n${r.stderr}`.split('\n').find((line) => new RegExp(l.skip).test(line));
+  if (skipped) return add('GATE-SKIP', 'gateSkip', { level, line: skipped.trim() }), null;
+  return r.status === 0;
+}
 
 // Paths only `merge` writes: bundle indexes and logs, and the profile's shared files.
 export function mergeWritten(path, bundleRel, profile) {
@@ -176,7 +187,7 @@ function runGate(cwd, st, unit) {
 
   // Every level's run in full, as the owner's verification of each unit; a quick unit's ACs name their own commands.
   const tested = Object.entries(levels ?? {}).filter(([, l]) => l?.run);
-  for (const [level, l] of tested) if (!shell(tree, l.run)) add('GATE-RUN', 'gateRun', { level, command: l.run });
+  for (const [level, l] of tested) if (runLevel(tree, level, l, add) === false) add('GATE-RUN', 'gateRun', { level, command: l.run });
   for (const ac of card?.lane === 'quick' ? unit.acs : []) {
     for (const t of spansOf(unit.doc.lines[ac.line - 1]).map(runTarget).filter(Boolean)) {
       const command = `${t.runner} ${t.name}`;
