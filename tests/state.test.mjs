@@ -398,7 +398,7 @@ test('U18/AC-2 next offers a merge only when each AC has a tagged test on the br
   commit(dir, 'a note naming the tag', { 'docs/notes/n.md': 'see U-1/AC-2\n' });
   git(dir, 'switch', '-q', 'main');
   review(dir, 'U-1', 'pass');
-  assert.match(run(dir, ['next']).out, /^U-1 has no test tagged U-1\/AC-2 on its branch: send the builder back/);
+  assert.match(run(dir, ['next']).out, /^fix round for U-1/, 'a note in the bundle is no test: the pass is recorded as fix (U32)');
   write(dir, { '.git/aidlc/heartbeats/U-1': '' });
   assert.match(run(dir, ['next']).out, /^wait for the builders and reviewers of U-1/, 'the builder sent back is waited for');
   git(dir, 'switch', '-q', 'unit/U-1');
@@ -447,4 +447,23 @@ test('U31/AC-1 U31/AC-2 owner steps start with the owner badge, refusals and sto
   assert.ok(run(dir, ['next']).out.startsWith(badges.stop), 'a stop');
   const skill = readFileSync(join(import.meta.dirname, '../plugin/skills/aidlc/SKILL.md'), 'utf8');
   assert.match(skill, /End the turn with their step alone, last: the line's badge and \*\*Your action\*\*, numbered steps, the words to type in code\. Nothing for them: end with ✅\./);
+});
+
+test('U32/AC-1 U32/AC-2 U32/AC-3 a pass with an untagged AC is recorded as fix and the card names it; the retro lists the send-back', () => {
+  const dir = base();
+  approve(dir, 'I-1', 'U-1', 'U-2');
+  git(dir, 'switch', '-q', '-c', 'unit/U-1');
+  commit(dir, 'code, no tagged test', { 'a/x.txt': 'x\n' });
+  git(dir, 'switch', '-q', 'main');
+  const f = join(tempDir('verdict-'), 'v.json');
+  writeFileSync(f, JSON.stringify({ verdict: 'pass', findings: [] }));
+  const r = run(dir, ['review', 'record', 'U-1', f]);
+  assert.equal(r.code, 0, r.err);
+  assert.match(r.out, /^recorded fix for U-1: no test is tagged U-1\/AC-1 on its branch, so it cannot pass$/m);
+  assert.equal(JSON.parse(read(dir, '.git/aidlc/reviews/U-1.json')).rounds.at(-1).verdict, 'fix');
+  assert.match(run(dir, ['next']).out, /^fix round for U-1/);
+  const card = run(dir, ['card', 'U-1']).out;
+  assert.match(card, /## Findings to fix[\s\S]*U-1\/AC-1 has no tagged test on the branch/);
+  const retro = run(dir, ['retro', 'I-1']).out;
+  assert.match(retro, /^ {2}U-1 sent back at \S+: no test tagged U-1\/AC-1$/m);
 });

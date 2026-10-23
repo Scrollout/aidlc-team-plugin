@@ -3,7 +3,7 @@ type: Design
 title: Verification
 description: The inner loop (hooks), the merge gate, the reviewer's output contract and the CI mode.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T14:00:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T17:00:00Z }
 sources:
   - id: cc-hooks
     resource: https://code.claude.com/docs/en/hooks
@@ -52,7 +52,7 @@ Fails with one line per problem, each naming the fix, unless all hold:
 On success: `git merge --no-ff` with trailers `Unit: U-<n>`, `Card: <hash>`, `Review: pass`. How it runs: [Merge mechanics](gate.md).
 
 # Reviewer contract
-Returns JSON only: `{verdict: pass|fix|escalate, focus?, findings: [{path, line, ac?, claim, scenario, confidence: CONFIRMED|PLAUSIBLE}]}`, at most 10 findings. Round 1 `fix` → builder fixes → round 2. A second `fix` becomes `escalate`, and `review record` tells the reviewer: the owner decides ([State](state.md#next)). The reviewer reads tests first: tests are what the owner samples.
+Returns JSON only: `{verdict: pass|fix|escalate, focus?, findings: [{path, line, ac?, claim, scenario, confidence: CONFIRMED|PLAUSIBLE}]}`, at most 10 findings. A `fix` sends the builder a fix round. A second `fix` becomes `escalate` (the owner decides, [State](state.md#next)); a `pass` while an AC has no tagged test is recorded as `fix`. `review record` tells the reviewer either way. The reviewer reads tests first.
 
 How a review runs, and why there is no separate architecture focus: [Skill and agents](prompts.md#review).
 
@@ -60,7 +60,7 @@ How a review runs, and why there is no separate architecture focus: [Skill and a
 `aidlc check --ci` runs OKF validation, plan lint and, for each merge commit on the base, its trailers and scope. It needs only Node and the vendored CLI. The owner audits 1 merged unit in 10.
 
 # Prompt evals
-The skill and agent prompts are code coupled to a model version. `tests/evals/` holds a fixture project with seeded defects (an AC without a real test, an out-of-scope edit, an injection, a missing authz check). The reviewer must find each one; the builder must stop on the interface-change fixture. Run before every release and on every model change; a miss blocks the release.
+Prompts are code coupled to a model version. `tests/evals/` holds a fixture project with seeded defects (an AC without a real test, an out-of-scope edit, an injection, a missing authz check). The reviewer must find each one; the builder must stop on the interface-change fixture. Run before every release and on every model change; a miss blocks the release.
 
 # Later
 - Security content patterns, cut from M1 (owner, 2026-10-22).

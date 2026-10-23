@@ -26,6 +26,7 @@ export const commands = {
     ]);
     const mine = new Set(intent.units.map((u) => u.id));
     escalations.push(...(stats[R.stops] ?? []).filter((s) => mine.has(s.unit)).map((s) => msg('retroStopped', s)));
+    escalations.push(...(stats[R.sendBacks] ?? []).filter((s) => mine.has(s.unit)).map((s) => msg('retroSentBack', s)));
     const denials = stats.escalations?.[R.reasons.denials];
     if (denials) escalations.push(msg('retroDenials', { count: denials }));
     out += msg('retroEscalations', {}) + (escalations.join('') || msg('retroNone', {}));

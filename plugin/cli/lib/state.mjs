@@ -297,7 +297,7 @@ function gateOf(st, intent, scope) {
 }
 
 // AC tags that no file on the unit branch carries outside the bundle, as the gate looks for them.
-function untagged(st, u) {
+export function untagged(st, u) {
   const tags = u.acs.map((a) => `${u.id}/${a.id}`);
   if (!tags.length) return [];
   const top = git(st.cwd, 'rev-parse', '--show-toplevel');
@@ -535,12 +535,18 @@ export const commands = {
     const doc = readPlan(bundleOf(cwd, profile)).units.find((u) => u.id === unit)?.doc;
     const since = doc ? approvedAt(doc, [S.human]) : 0;
     const again = roundsOf({ rounds: prior }, focus).some((r) => r.verdict === 'fix' && !beforeApproval(r, since));
+    // A pass while an AC has no tagged test on the branch is a fix: the gate would refuse it (U32).
+    const planUnit = readPlan(bundleOf(cwd, profile)).units.find((u) => u.id === unit);
+    const missing = data.verdict === S.verdicts[0] && planUnit ? untagged({ cwd, bundle: bundleOf(cwd, profile) }, planUnit) : [];
+    if (missing.length) Object.assign(data, { verdict: 'fix', findings: missing.map((tag) => ({ path: '', line: '', claim: msg('untaggedClaim', { tag }), scenario: msg('untaggedScenario', {}), confidence: S.confirmed })) });
+    if (missing.length) bump(cwd, config.retro.sendBacks, { unit, tags: missing.join(', '), at: new Date().toISOString() });
     const verdict = data.verdict === 'fix' && again ? 'escalate' : data.verdict;
     const card = readJson(runtimeFile(cwd, 'cards', unit))?.hash ?? null;
     const round = { ...data, focus, verdict, card, diffHash: diffHash(cwd, baseOf(profile), unit), at: new Date().toISOString() };
     writeJson(target, { unit, rounds: [...prior, round] });
     if (verdict === S.verdicts[2]) bump(cwd, 'escalations', config.retro.reasons.review);
     rmSync(join(aidlcDir(cwd), S.reviewing, unit), { force: true }); // the review is no longer in flight
-    return done(msg(verdict !== data.verdict ? 'recordedEscalate' : 'recorded', { what: verdict, unit, focus })); // the reviewer learns why
+    const why = missing.length ? 'recordedUntagged' : verdict !== data.verdict ? 'recordedEscalate' : 'recorded';
+    return done(msg(why, { what: verdict, unit, focus, tags: missing.join(', ') })); // the reviewer learns why
   },
 };
