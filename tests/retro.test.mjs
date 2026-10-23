@@ -89,3 +89,13 @@ test('U21/AC-1 U21/AC-2 a stop report a restart replaced still counts; the retro
   assert.match(owner, /^ {2}\S+ mode unattended$/m);
   assert.match(owner, /^ {2}\S+ auto mode refused: node \.aidlc\/bin\/aidlc\.mjs approve --auto U-2$/m);
 });
+
+test('U26/AC-3 the retro lists approvals of the decisions the intent\'s docs cite', () => {
+  const decision = '---\ntype: Decision\ntitle: 0001 Pick\ndescription: The pick.\nstatus: draft\n---\n\n# Decision\nThis one.\n';
+  const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), [U(1)]: unitDoc({ extra: '\nPer [0001](../decisions/0001-pick.md).\n' }), 'docs/decisions/0001-pick.md': decision, 'docs/decisions/0002-other.md': decision.replace('0001', '0002') });
+  assert.equal(run(dir, ['retro', 'I-1']).code, 0);
+  approve(dir, 'I-1', 'U-1', 'docs/decisions/0001-pick.md', 'docs/decisions/0002-other.md');
+  const owner = run(dir, ['retro', 'I-1']).out.split('owner approvals and commands:\n')[1];
+  assert.match(owner, /^ {2}\S+ approve 0001-pick by owner@example\.com$/m);
+  assert.doesNotMatch(owner, /0002-other/, 'a decision no doc of the intent cites');
+});

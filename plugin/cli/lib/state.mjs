@@ -104,8 +104,8 @@ const acLines = (doc) => acsOf(doc).map((a) => a.text.trim()).join('\n');
 export const approvedAt = (doc, by = S.approvers) => Math.max(0, ...events(doc.fm).filter((e) => by.some((b) => String(e.by ?? '').startsWith(b))).map((e) => Date.parse(String(e.at)) || 0));
 const beforeApproval = (round, at) => Date.parse(round.at) < at;
 
-// A unit's review rounds. An escalation the owner answered by re-approving the unit counts as a `fix`:
-// the spec changed, so the builder gets a fix round with those findings (docs/design/verification.md).
+// A unit's review rounds. An escalation the owner answered by re-approving the unit counts as answered: the unit
+// goes back to review, and the card lists those findings for the reviewer to check again (docs/design/verification.md).
 export function readReview(cwd, unit, doc) {
   const review = readJson(runtimeFile(cwd, 'reviews', unit));
   const at = doc ? approvedAt(doc, [S.human]) : 0;
@@ -250,17 +250,19 @@ export function openPoints(doc) {
 }
 
 // Draft Decision docs the units' bodies link to: approved with the units (docs/design/approvals.md).
-function citedDecisions(st, units) {
-  const out = new Set();
-  for (const u of units) {
+// The Decision docs the given docs link to, as { file, doc }; `next` asks for the drafts with their units.
+export function decisionsOf(st, docs) {
+  const out = new Map();
+  for (const u of docs) {
     for (const [, link] of u.doc.lines.slice(u.doc.body).join('\n').matchAll(/\]\(([^)#\s]+\.md)(?:#[^)]*)?\)/g)) {
       const file = link.startsWith('/') ? join(st.bundle, link) : resolve(dirname(u.file), link);
       const doc = existsSync(file) ? parseDoc(readFileSync(file, 'utf8')) : null;
-      if (doc?.fm?.type === S.decisionType && approval(doc) === 'draft') out.add(relPath(st.cwd, file));
+      if (doc?.fm?.type === S.decisionType) out.set(file, { file, doc });
     }
   }
-  return [...out];
+  return [...out.values()];
 }
+const citedDecisions = (st, units) => decisionsOf(st, units).filter((d) => approval(d.doc) === 'draft').map((d) => relPath(st.cwd, d.file));
 
 // The owner gate of steps 2-5 (docs/design/state.md#next) and the docs it waits on, or the lead's own step.
 function gateOf(st, intent, scope) {
@@ -537,6 +539,6 @@ export const commands = {
     writeJson(target, { unit, rounds: [...prior, round] });
     if (verdict === S.verdicts[2]) bump(cwd, 'escalations', config.retro.reasons.review);
     rmSync(join(aidlcDir(cwd), S.reviewing, unit), { force: true }); // the review is no longer in flight
-    return done(msg('recorded', { what: verdict, unit }));
+    return done(msg(verdict !== data.verdict ? 'recordedEscalate' : 'recorded', { what: verdict, unit, focus })); // the reviewer learns why
   },
 };
