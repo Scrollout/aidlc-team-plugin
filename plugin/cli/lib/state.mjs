@@ -237,7 +237,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
     const own = units.filter((u) => u.fm.intent === i.id);
     const complete = own.length > 0 && own.every((u) => u.state === 'merged');
     const released = complete && own.every((u) => (tryGit(cwd, 'tag', '--contains', merged.get(u.id)) ?? '') !== '');
-    return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own };
+    return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own, deploy: readJson(runtimeFile(cwd, 'deploys', i.id)) ?? {} };
   });
   const requirements = plan.requirements.map((r) => ({ ...r, state: approval(r.doc) }));
   return { cwd, profile, base, bundle, intents, units, requirements, answered, auto: delegated(cwd), mergeUnit: mergeInProgress(cwd, units) };
@@ -410,10 +410,19 @@ function pickAction(st) {
   }
   const work = unitWork(st, scope);
   if (work) return work;
-  if (unreleased) return action('human', 'nextRelease', { intent: unreleased.id });
+  if (unreleased) return releaseStep(st, unreleased);
   // A clear newer than the last merge on the base already gave the lead a fresh session (docs/design/resume.md).
   const lastMerge = Number(tryGit(st.cwd, 'log', '-1', '--merges', '--format=%ct', st.base) || 0) * 1000;
   return action('human', heartbeatAt(st.cwd, S.cleared, '.') > lastMerge ? 'nextIdleCleared' : 'nextIdle');
+}
+
+// A merged intent's Deployment rows, from its deploy record and the base commit (docs/design/operations.md).
+function releaseStep(st, i) {
+  const rec = i.deploy;
+  const checked = list(st.profile.deploy?.check).length > 0;
+  if (checked && rec.check?.base !== tryGit(st.cwd, 'rev-parse', st.base)) return action('act', 'nextDeployCheck', { intent: i.id });
+  if (checked && !rec.check.ok) return action('act', 'nextDeployFailed', { intent: i.id, ...rec.check });
+  return action('human', 'nextRelease', { intent: i.id });
 }
 
 // ---- Commands ----

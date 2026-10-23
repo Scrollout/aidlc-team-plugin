@@ -175,6 +175,11 @@
       "does": "run the merge gate, then merge --no-ff with trailers"
     },
     {
+      "name": "deploy",
+      "usage": "deploy check <intent>",
+      "does": "run the profile's deploy check on the base and record it"
+    },
+    {
       "name": "hook",
       "usage": "hook <name>",
       "does": "entry point for hooks; reads the hook JSON on stdin"
@@ -269,6 +274,13 @@
     "nextWaitResearch": "wait for the researcher of {{doc}}",
     "nextHeld": "{{units}} on hold: the owner releases them",
     "nextRelease": "{{intent}} is merged: release with the owner",
+    "nextDeployCheck": "{{intent}} is merged: run its deploy check on the base: aidlc deploy check {{intent}}",
+    "nextDeployFailed": "{{intent}} deploy check failed on the base: {{command}} exited {{exit}}; draft a fix: aidlc fix \"<what failed>\" --scope <globs>",
+    "deployUsage": "usage: aidlc deploy check <intent>, for a merged intent with deploy.check in the profile",
+    "deployNotMerged": "{{intent}} is {{state}}: deploy steps run on a merged intent",
+    "deployNotOnBase": "check out {{base}} first: deploy steps run on the base",
+    "deployPassed": "{{intent}} {{step}} passed\n",
+    "deployFailed": "{{intent}} {{step}} failed: {{command}} exited {{exit}}\n{{output}}\n",
     "nextResearch": "research for {{doc}}: researcher on {{model}} (brief: aidlc research {{doc}})",
     "researchNone": "{{doc}} holds no research question: aidlc hold {{doc}} research: <question>",
     "researchFor": "a research question",
@@ -697,7 +709,8 @@
       "stop": "⛔ ",
       "stops": ["nextGated", "nextHostDenied", "nextStopped"]
     },
-    "researching": "researching"
+    "researching": "researching",
+    "deploys": "deploys"
   },
   "card": {
     "template": "card.md",
@@ -898,6 +911,9 @@
       }
     },
     "noReview": "none"
+  },
+  "deploy": {
+    "outputMax": 2000
   },
   "retro": {
     "stats": "stats.json",
