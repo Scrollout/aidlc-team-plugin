@@ -31,7 +31,7 @@ From the session transcript, deduplicated by message id; "processed" counts cach
 The lead is still about 85 % of the total: 4.2 M per unit against 5.9 M in M1.
 
 # Steps outside `next` and other findings
-Five steps outside `next` (one setup, two by the lead, two by the owner) and six other findings: [M2 pilot interventions](m2-interventions.md).
+Six steps outside `next` (one setup, two by the lead, three by the owner) and five other findings: [M2 pilot interventions](m2-interventions.md).
 
 # Retro
 `aidlc retro I-3`, as printed:
