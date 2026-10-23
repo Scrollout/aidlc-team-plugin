@@ -147,7 +147,7 @@ const SCENARIOS = {
     approve(dir, 'I-1', 'U-1', 'U-2', 'I-2', 'U-3');
     for (const [u, f] of [['U-1', 'a/x.txt'], ['U-2', 'b/x.txt']]) { branch(dir, u, f); merge(dir, u); }
   }],
-  released: [/^👉 all intents released/, 2, (dir) => {
+  'U41/AC-1 released': [/^👉 all intents released: the owner clears the lead's session before the next intent \(the owner types: \/clear\); everything done is on disk\. Then elaborate the next intent with the owner/, 2, (dir) => {
     approve(dir, 'I-1', 'U-1', 'U-2');
     for (const [u, f] of [['U-1', 'a/x.txt'], ['U-2', 'b/x.txt']]) { branch(dir, u, f); merge(dir, u); }
     git(dir, 'tag', 'v1');
@@ -563,4 +563,13 @@ test('0.46.1 next offers no delegated re-approval for a unit whose acceptance cr
   const r = run(dir, ['next']);
   assert.match(r.out, /^👉 re-approve U-1 after their edits: aidlc approve U-1 /);
   assert.equal(r.code, 2);
+});
+
+test('U41/AC-2 status shows the clear while every intent is released and nothing is in flight', () => {
+  const dir = base();
+  approve(dir, 'I-1', 'U-1', 'U-2');
+  for (const [u, f] of [['U-1', 'a/x.txt'], ['U-2', 'b/x.txt']]) { branch(dir, u, f); merge(dir, u); }
+  assert.doesNotMatch(run(dir, ['status']).out, /\/clear/, 'merged, not yet released');
+  git(dir, 'tag', 'v1');
+  assert.match(run(dir, ['status']).out, /^next: 👉 all intents released: the owner clears the lead's session/m);
 });
