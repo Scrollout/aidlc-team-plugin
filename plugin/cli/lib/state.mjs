@@ -175,6 +175,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
   const branches = new Set((tryGit(cwd, 'for-each-ref', '--format=%(refname:short)', `refs/heads/${S.branchPrefix}`) ?? '').split('\n').filter(Boolean));
   const live = plan.units.filter((u) => u.fm.status !== config.grid.dropped).sort(byId);
 
+  const answered = researched(bundle);
   const units = live.map((u) => {
     const lane = computeLane(u.scope, profile).lane;
     const needsApproval = Boolean(u.fm.intent) || lane !== 'quick';
@@ -214,7 +215,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
       }
       else state = 'building';
     } else state = heartbeatFresh(cwd, u.id, now) ? 'building' : 'approved';
-    return { ...u, lane, state, focus, fresh: heartbeatFresh(cwd, u.id, now), report, review };
+    return { ...u, lane, state, focus, fresh: heartbeatFresh(cwd, u.id, now), report, review, held: Boolean(u.fm.hold) && !answered.has(researchOf(u)) }; // an answered research hold no longer holds
   });
 
   const intents = plan.intents.sort(byId).map((i) => {
@@ -224,7 +225,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
     return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own };
   });
   const requirements = plan.requirements.map((r) => ({ ...r, state: approval(r.doc) }));
-  return { cwd, profile, base, bundle, intents, units, requirements, auto: delegated(cwd), mergeUnit: mergeInProgress(cwd, units) };
+  return { cwd, profile, base, bundle, intents, units, requirements, answered, auto: delegated(cwd), mergeUnit: mergeInProgress(cwd, units) };
 }
 
 // ---- next ----
@@ -305,7 +306,7 @@ function untagged(st, u) {
 // Steps 6-12 for the given units; a held unit gets no action until the hold is released.
 function unitWork(st, scope) {
   const merged = (id) => st.units.find((x) => x.id === id)?.state === 'merged';
-  const live = scope.filter((u) => !u.fm.hold);
+  const live = scope.filter((u) => !u.held);
   // A merge is offered only when each AC has a tagged test on the branch; a builder sent back for one is waited for.
   const backAtWork = [];
   for (const u of live.filter((x) => x.state === 'reviewed' && x.depends.every(merged))) {
@@ -344,7 +345,7 @@ function unitWork(st, scope) {
   }
   if (picked.length) return action('act', 'nextBuild', { units: picked.map((u) => u.id).join(', '), cards: picked.map((u) => `aidlc card ${u.id}`).join(', ') });
   if (inFlight.length) return action('wait', 'nextWait', { units: inFlight.map((u) => u.id).join(', ') });
-  const held = scope.filter((u) => u.fm.hold && u.state !== 'merged');
+  const held = scope.filter((u) => u.held && u.state !== 'merged');
   if (held.length) return action('human', 'nextHeld', { units: held.map((u) => (u.fm.hold === true ? u.id : msg('heldReason', { unit: u.id, reason: u.fm.hold }))).join(', ') });
   return null;
 }
@@ -368,9 +369,8 @@ function researched(bundle) {
 
 function pickAction(st) {
   if (st.mergeUnit) return action('act', 'nextContinueMerge', { unit: st.mergeUnit });
-  const answered = researched(st.bundle);
-  const asked = [...st.requirements, ...st.intents, ...st.units].find((d) => researchOf(d) && !answered.has(researchOf(d)));
-  if (asked) return action('act', 'nextResearch', { doc: asked.id, model: st.profile.models.research });
+  const asked = [...st.requirements, ...st.intents, ...st.units].find((d) => researchOf(d) && !st.answered.has(researchOf(d)));
+  if (asked) return heartbeatFresh(st.cwd, asked.id, Date.now(), S.researching) ? action('wait', 'nextWaitResearch', { doc: asked.id }) : action('act', 'nextResearch', { doc: asked.id, model: st.profile.models.research });
   const unreleased = st.intents.find((i) => i.state === 'merged'); // its release does not hold back the next intent
   const intent = st.intents.find((i) => !['released', 'merged'].includes(i.state)) ?? unreleased;
   const scope = st.units.filter((u) => !u.fm.intent || u.fm.intent === intent?.id);

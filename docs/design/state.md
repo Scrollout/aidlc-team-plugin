@@ -3,7 +3,7 @@ type: Design
 title: State
 description: How the CLI derives progress from git and docs, how approvals work, and how next picks the one allowed step.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T12:00:00Z }
 ---
 
 # Sources of truth
@@ -12,11 +12,11 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 | Intent and plan approved | a `human:` entry in the doc's OKF `verified` field, with `verified_hash` still matching the content |
 | Unit exists, its deps, scope | the unit doc |
 | Unit in progress | branch `unit/U-<n>` exists |
-| Unit reviewed | `.git/aidlc/reviews/U-<n>.json`, keyed by diff hash: a `pass` in `general` and in every focus the gate requires |
+| Unit reviewed | `.git/aidlc/reviews/U-<n>.json`, keyed by diff hash: a `pass` in `general` and each focus the gate requires |
 | Unit done | a merge commit on the base branch with trailer `Unit: U-<n>` |
 | Released | a tag reachable from the base containing the intent's units |
 
-`.git/aidlc/` sits in git's common dir, so every worktree sees the same runtime data, and it is never committed.
+`.git/aidlc/` is in git's common dir: every worktree sees it, and it is never committed.
 
 # Unit states
 ```mermaid
@@ -40,8 +40,8 @@ stateDiagram-v2
 Intents, requirements, units and one-way-door decisions carry the owner's approval; editing one makes it `stale` ([Approvals](approvals.md)).
 
 # next
-`aidlc next` prints one line: the single next action and the command or agent that performs it, e.g. `build U-3 (card: …)`. It exits 2 when the owner acts, printing a runnable owner command. Order:
-1. A merge cut off midway → continue it. A doc held with `research: <question>` unanswered in `research/` → research it ([0010](../decisions/0010-research-and-advice.md)).
+`aidlc next` prints one line: the single next action and the command or agent that performs it. It exits 2 when the owner acts, printing a runnable owner command. Order:
+1. A merge cut off midway → continue it. A doc held with `research: <question>` unanswered in `research/` → research it, or wait for its researcher ([0010](../decisions/0010-research-and-advice.md)); the digest releases that hold.
 2. Any `stale` approval → re-approve.
 3. A draft intent, requirement or unit with open points (a template `<…>` placeholder or an `Open questions` item) → finish elaborating it with the owner, naming them; no approval or unit work before that.
 4. No intent yet: elaborate one; in an adopted project with none, the migration intent ([Everyday paths](paths.md#adopting-an-existing-project)). Intent not approved → request approval; then the draft requirements it and its units cite.
@@ -57,7 +57,7 @@ Intents, requirements, units and one-way-door decisions carry the owner's approv
 
 An owner gate in steps 2–5 holds back only the units that wait on its docs: `next` first returns an action of steps 6–11 for the other units, then the gate. A held unit (`hold`, by the owner, or by the lead with a reason while it parks a question) gets no action until the hold is released. A builder launched after a `stopped` report reads as building. An action auto mode refused at the current commit ([Hooks](hooks.md)) goes to the owner: `aidlc approve <docs>` for a delegated approval, else the refused command.
 
-`aidlc status` prints the same state as a short table; SessionStart injects it (max 1,000 chars).
+`aidlc status` prints it as a short table; SessionStart injects it (max 1,000 chars).
 
 # Surviving a clear, crash or new session
 Nothing that matters lives only in the conversation; all below is on disk before the turn ends.

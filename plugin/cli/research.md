@@ -12,7 +12,7 @@ Model: {{model}}
 {{#each sources}}- {{this}}
 {{/each}}
 ## Budget
-Read at most {{max}} sources. Keep the digest under 4,000 characters.
+Read at most {{max}} sources. Keep the whole digest, frontmatter included, under {{cap}} characters.
 
 ## Return this digest; the lead writes it unchanged to {{out}}
 ---
@@ -20,6 +20,7 @@ type: Research
 title: <the question in a few words>
 description: <the answer in one line>
 question: {{questionYaml}}
+generated: { by: <your model>, at: <the current UTC time> }
 sources:
   - id: <short id>
     resource: <url>

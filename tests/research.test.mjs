@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync, utimesSync } from 'node:fs';
 import { join } from 'node:path';
 import { approve, commit, intentDoc, makeRepo, run, unitDoc, write } from './state-repo.mjs';
 
@@ -44,8 +44,45 @@ test('U23/AC-2 U23/AC-3 U23/AC-4 a question held for research is next; the brief
   const digest = brief.out.split(/writes it unchanged to \S+\n/)[1].replace('<the question in a few words>', 'Go file proxy').replace('<the answer in one line>', 'It reads the module files.');
   write(dir, { [out]: digest });
   commit(dir, 'research for U-1');
-  const after = run(dir, ['next']);
-  assert.equal(after.code, 2, after.out);
-  assert.match(after.out, /U-1 \(research: how does go get read a file:\/\/ GOPROXY\?\)/, 'researched once: the hold is the owner\'s to release');
+  assert.match(run(dir, ['next']).out, /^build U-1/, 'researched once: the answered hold no longer holds U-1');
   assert.equal(run(dir, ['research', 'U-2']).code, 64);
+});
+
+const modelHook = (dir, input) => spawnSync(process.execPath, [join(ROOT, 'plugin/cli/aidlc.mjs'), 'hook', input.hook_event_name === 'PostToolUse' ? 'heartbeat' : 'model'], { cwd: dir, encoding: 'utf8', input: JSON.stringify({ cwd: dir, session_id: 's', ...input }) });
+
+test('U25/AC-1 a researcher in flight is waited for, and steer does not demand it again', () => {
+  const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), [U1]: unitDoc({ scope: ['sdk/**'] }) });
+  approve(dir, 'I-1', 'U-1');
+  run(dir, ['hold', 'U-1', 'research:', 'which proxy?']);
+  commit(dir, 'hold U-1');
+  assert.match(run(dir, ['next']).out, /^research for U-1/);
+  const r = modelHook(dir, { hook_event_name: 'PreToolUse', tool_name: 'Agent', tool_input: { subagent_type: 'aidlc-team:researcher', prompt: run(dir, ['research', 'U-1']).out, model: 'sonnet' } });
+  assert.equal(r.status, 0, r.stderr);
+  const next = run(dir, ['next']);
+  assert.match(next.out, /^wait for the researcher of U-1$/m);
+  const steer = spawnSync(process.execPath, [join(ROOT, 'plugin/cli/aidlc.mjs'), 'hook', 'steer'], { cwd: dir, encoding: 'utf8', input: JSON.stringify({ cwd: dir, session_id: 's', hook_event_name: 'Stop', last_assistant_message: 'Started.' }) });
+  assert.equal(JSON.parse(steer.stdout).decision, undefined, 'the stop is let through');
+  const marker = join(dir, '.git/aidlc/researching/U-1');
+  utimesSync(marker, new Date(Date.now() - 10 * 60 * 1000), new Date(Date.now() - 10 * 60 * 1000));
+  modelHook(dir, { hook_event_name: 'PostToolUse', tool_name: 'WebFetch', agent_type: 'aidlc-team:researcher', tool_input: {} });
+  assert.match(run(dir, ['next']).out, /^research for U-1/, 'a stale marker is not refreshed: the researcher is gone');
+  modelHook(dir, { hook_event_name: 'PreToolUse', tool_name: 'Agent', tool_input: { subagent_type: 'aidlc-team:researcher', prompt: '# Research for U-1', model: 'sonnet' } });
+  modelHook(dir, { hook_event_name: 'PostToolUse', tool_name: 'WebFetch', agent_type: 'aidlc-team:researcher', tool_input: {} });
+  assert.ok(Date.now() - statSync(marker).mtimeMs < 5000, 'its calls keep the marker fresh');
+});
+
+test('U25/AC-2 U25/AC-3 an answered research hold no longer holds the doc; the brief caps the whole digest and asks for generated', () => {
+  const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), [U1]: unitDoc({ scope: ['sdk/**'] }) });
+  approve(dir, 'I-1', 'U-1');
+  run(dir, ['hold', 'U-1', 'research:', 'which proxy?']);
+  commit(dir, 'hold U-1');
+  const brief = run(dir, ['research', 'U-1']).out;
+  assert.match(brief, / Keep the whole digest, frontmatter included, under 4000 characters\.$/m);
+  assert.match(brief, /^generated: \{ by: <your model>, at: <the current UTC time> \}$/m);
+  write(dir, { 'docs/research/U-1-which-proxy.md': '---\ntype: Research\ntitle: Proxy\ndescription: The file proxy.\nquestion: "which proxy?"\n---\n\n# Options\nOne.\n' });
+  commit(dir, 'digest');
+  assert.match(run(dir, ['next']).out, /^build U-1/);
+  run(dir, ['hold', 'U-1', 'the owner asks to wait']);
+  commit(dir, 'owner hold');
+  assert.match(run(dir, ['next']).out, /on hold/, 'any other hold still holds');
 });
