@@ -236,8 +236,11 @@ export function readState(cwd, { now = Date.now() } = {}) {
   const intents = plan.intents.sort(byId).map((i) => {
     const own = units.filter((u) => u.fm.intent === i.id);
     const complete = own.length > 0 && own.every((u) => u.state === 'merged');
-    const released = complete && own.every((u) => (tryGit(cwd, 'tag', '--contains', merged.get(u.id)) ?? '') !== '');
-    return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own, deploy: readJson(runtimeFile(cwd, 'deploys', i.id)) ?? {} };
+    // With deploy or release in the profile, the recorded release decides, not a tag (docs/design/operations.md).
+    const deploy = readJson(runtimeFile(cwd, 'deploys', i.id)) ?? {};
+    const released = complete && (profile.deploy || profile.release ? Boolean(deploy.release?.ok)
+      : own.every((u) => (tryGit(cwd, 'tag', '--contains', merged.get(u.id)) ?? '') !== ''));
+    return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own, deploy };
   });
   const requirements = plan.requirements.map((r) => ({ ...r, state: approval(r.doc) }));
   return { cwd, profile, base, bundle, intents, units, requirements, answered, auto: delegated(cwd), mergeUnit: mergeInProgress(cwd, units) };
@@ -418,11 +421,14 @@ function pickAction(st) {
 
 // A merged intent's Deployment rows, from its deploy record and the base commit (docs/design/operations.md).
 function releaseStep(st, i) {
+  if (!st.profile.deploy && !st.profile.release) return action('human', 'nextRelease', { intent: i.id });
   const rec = i.deploy;
+  const base = tryGit(st.cwd, 'rev-parse', st.base);
+  if (rec.release && !rec.release.ok && rec.release.base === base) return action('human', 'nextReleaseFailed', { intent: i.id, ...rec.release });
   const checked = list(st.profile.deploy?.check).length > 0;
-  if (checked && rec.check?.base !== tryGit(st.cwd, 'rev-parse', st.base)) return action('act', 'nextDeployCheck', { intent: i.id });
+  if (checked && rec.check?.base !== base) return action('act', 'nextDeployCheck', { intent: i.id });
   if (checked && !rec.check.ok) return action('act', 'nextDeployFailed', { intent: i.id, ...rec.check });
-  return action('human', 'nextRelease', { intent: i.id });
+  return action('human', 'nextDeployRelease', { intent: i.id });
 }
 
 // ---- Commands ----

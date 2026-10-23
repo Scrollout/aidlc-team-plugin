@@ -41,4 +41,15 @@ export const commands = {
     const result = runAll(t.top, checks);
     return done(record(t, 'check', result), result.ok ? config.exit.ok : config.exit.findings);
   },
+
+  // The owner's step: deploy.run, then the profile's release, after a deploy check passed on this base.
+  release([id], { cwd }) {
+    const t = target(cwd, id, 'releaseUsage');
+    const { deploy = {}, release } = t.st.profile;
+    const commands = [deploy.run, release].filter(Boolean);
+    if (!commands.length) throw new UsageError(msg('releaseUsage', {}));
+    if (list(deploy.check).length && !(t.intent.deploy.check?.ok && t.intent.deploy.check.base === t.base)) throw new UsageError(msg('releaseNoCheck', { intent: t.intent.id }));
+    const result = runAll(t.top, commands);
+    return done(record(t, 'release', result), result.ok ? config.exit.ok : config.exit.findings);
+  },
 };
