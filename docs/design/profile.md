@@ -7,7 +7,7 @@ sources:
   - id: aws-aidlc
     resource: https://github.com/awslabs/aidlc-workflows/blob/main/docs/guide/glossary.md
     title: AWS AI-DLC glossary (copy and native channels)
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T17:30:00Z }
 ---
 
 # Profile (`.aidlc/profile.json`, tracked)
@@ -35,7 +35,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 
 # Rule layers
 Merged in order, later wins, except that a `deny` in an earlier layer cannot be removed:
-1. plugin defaults (`plugin/cli/defaults.json`: base, bundle, parallel, levels, models), beside the CLI so a project's pinned copy carries them
+1. plugin defaults (`plugin/cli/defaults.json`: base, bundle, parallel, levels, models, review), beside the CLI so a project's pinned copy carries them
 2. org pack: a git repo pinned by tag in `profile.org`, cached under `.git/aidlc/org/` (M2)
 3. project: `.aidlc/profile.json`, `.aidlc/rules/*.md`
 4. personal: `.aidlc/local/profile.json` (untracked); only this layer may delegate approvals ([0008](../decisions/0008-delegated-approvals.md))
@@ -58,6 +58,7 @@ Merge rules:
   - `.github/workflows/aidlc.yml`.
 
   It also adds `.aidlc/local/` and the builders' worktree folder `.claude/worktrees/` to `.gitignore`, adds the worktree folder to every other ignore file the project has (`init.ignoreFiles`: `.dockerignore`, `.prettierignore`, …) so tree-walking tools and tests skip it, and sets `worktree.baseRef: "head"` in `.claude/settings.json`.
+- `review.fixRounds` is how many fix rounds a review focus gets since the unit's last approval before the next `fix` goes to the owner (default 3).
 - `research.sources` lists sources the owner trusts for the researcher, and `research.max` its source budget (default 8); `models.research` its model ([0010](../decisions/0010-research-and-advice.md)).
 - When the project has a lint target (`make lint`, `npm run lint` or `just lint`, from `grid.runners` and `init.lintTargets`), `init` offers it as a module check, for the owner to add to `modules[].check`; it writes nothing for it.
 - `init` takes its answers as flags (`--name`, `--base`, `--bundle`); the skill asks the owner first. It never overwrites: an existing file is left alone and listed, and `init` exits 2 until the owner reruns with `--overwrite <path>` for each file to replace. Adding lines to `.gitignore` or a missing key to `.claude/settings.json` is not an overwrite.
