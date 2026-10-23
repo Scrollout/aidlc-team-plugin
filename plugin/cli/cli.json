@@ -410,6 +410,7 @@
     "retroApproval": "  {{at}} approve {{doc}} by {{by}}\n",
     "retroHostDenied": "  {{at}} auto mode refused: {{command}}\n",
     "retroIntervention": "  {{at}} {{command}}\n",
+    "retroOwnerRefused": "  {{at}} refused by the CLI: {{command}}\n",
     "retroProposals": "proposals (the owner accepts or rejects each):\n",
     "retroProposal": "  {{kind}}: {{text}}\n",
     "retroReset": "counters reset\n",
@@ -889,7 +890,8 @@
     "stops": "stops",
     "sendBacks": "sendBacks",
     "hostDenied": "hostDenied",
-    "lists": ["interventions", "stops", "hostDenied", "sendBacks"],
+    "ownerRefused": "ownerRefused",
+    "lists": ["interventions", "stops", "hostDenied", "sendBacks", "ownerRefused"],
     "keep": 50,
     "min": 3,
     "max": 3,
@@ -1047,7 +1049,8 @@
     "promptsKept": 5,
     "promptStates": [
       "asked",
-      "ran"
+      "ran",
+      "refused"
     ]
   },
   "board": {

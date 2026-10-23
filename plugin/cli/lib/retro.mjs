@@ -39,6 +39,7 @@ export const commands = {
         .map((e) => ({ at: String(e.at), line: msg('retroApproval', { at: e.at, doc: d.id, by: String(e.by).slice(config.state.human.length) }) }))),
       ...(stats[R.interventions] ?? []).filter((i) => !/\bapprove\b/.test(i.command)).map((i) => ({ at: i.at, line: msg('retroIntervention', i) })),
       ...(stats[R.hostDenied] ?? []).map((d) => ({ at: d.at, line: msg('retroHostDenied', d) })),
+      ...(stats[R.ownerRefused] ?? []).map((d) => ({ at: d.at, line: msg('retroOwnerRefused', d) })),
     ].sort((a, b) => (a.at < b.at ? -1 : 1));
     out += msg('retroInterventions', {}) + (owner.map((o) => o.line).join('') || msg('retroNone', {}));
 

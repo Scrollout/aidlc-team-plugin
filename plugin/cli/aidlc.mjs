@@ -10,7 +10,7 @@ import { commands as state } from './lib/state.mjs';
 import { commands as card } from './lib/card.mjs';
 import { commands as init } from './lib/init.mjs';
 import { commands as gate } from './lib/gate.mjs';
-import { commands as hooks } from './lib/hooks.mjs';
+import { commands as hooks, ownerRefused } from './lib/hooks.mjs';
 import { commands as board } from './lib/board.mjs';
 import { commands as retro } from './lib/retro.mjs';
 
@@ -57,6 +57,7 @@ export async function main(argv, io = { out: process.stdout, err: process.stderr
     return result.code;
   } catch (e) {
     io.err.write(msg('failed', { name, error: e.message }));
+    if (config.hooks.owner.includes(name)) try { ownerRefused(realpathSync.native(io.cwd ?? process.cwd()), argv.join(' ')); } catch {} // outside a project there is no prompt
     return e instanceof UsageError ? EXIT.usage : EXIT.internal;
   }
 }

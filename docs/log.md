@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-23
 
+- **Update** M5 U42 built: an owner command the CLI refuses marks its prompt `refused`, so the heartbeat hook no longer counts it as run, and the retro lists it apart ([Approvals](design/approvals.md#owner-prompts), [Steering](design/steering.md)). Release 0.49.0.
 - **Update** M5 U41 built: once every intent is released and nothing is in flight, `next` and `status` ask the owner to clear the lead's session before the next intent ([Resume](design/resume.md#between-intents)). Release 0.48.0.
 - **Update** M5 U40 built: the profile's `generated` entries map outputs to sources, and plan lint reports `PLAN-GENERATED` for a scope with one side only, or naming an existing file git does not track ([Plan lint](design/plan-lint.md), split from [Grid](design/grid.md)). Release 0.47.0.
 - **Update** [M4](roadmap/m4.md) closed on 0.46.2 (owner's choice); its candidates are the [M5](roadmap/m5.md) draft.
