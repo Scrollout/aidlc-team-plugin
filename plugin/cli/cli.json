@@ -180,6 +180,11 @@
       "does": "run the profile's deploy check on the base and record it"
     },
     {
+      "name": "release",
+      "usage": "release <intent>",
+      "does": "run deploy.run and the profile's release on the base and record them (the owner's)"
+    },
+    {
       "name": "hook",
       "usage": "hook <name>",
       "does": "entry point for hooks; reads the hook JSON on stdin"
@@ -274,6 +279,11 @@
     "nextWaitResearch": "wait for the researcher of {{doc}}",
     "nextHeld": "{{units}} on hold: the owner releases them",
     "nextRelease": "{{intent}} is merged: release with the owner",
+    "nextDeployRelease": "{{intent}} is ready to release: the owner releases it: aidlc release {{intent}} (the owner confirms the prompt or types: release {{intent}})",
+    "nextReleaseFailed": "{{intent}} release failed: {{command}} exited {{exit}}; the owner retries (the owner types: release {{intent}}), or the lead drafts a fix: aidlc fix \"<what failed>\" --scope <globs>",
+    "releaseUsage": "usage: aidlc release <intent>, for a merged intent with deploy.run or release in the profile",
+    "releaseNoCheck": "{{intent}} has no passing deploy check on this base: run aidlc deploy check {{intent}} first",
+    "promptGo": "The owner typed {{command}}: run aidlc {{command}} now; the guard lets this one call through.",
     "nextDeployCheck": "{{intent}} is merged: run its deploy check on the base: aidlc deploy check {{intent}}",
     "nextDeployFailed": "{{intent}} deploy check failed on the base: {{command}} exited {{exit}}; draft a fix: aidlc fix \"<what failed>\" --scope <globs>",
     "deployUsage": "usage: aidlc deploy check <intent>, for a merged intent with deploy.check in the profile",
@@ -707,7 +717,7 @@
     "badges": {
       "owner": "👉 ",
       "stop": "⛔ ",
-      "stops": ["nextGated", "nextHostDenied", "nextStopped"]
+      "stops": ["nextGated", "nextHostDenied", "nextStopped", "nextReleaseFailed"]
     },
     "researching": "researching",
     "deploys": "deploys"
@@ -1067,6 +1077,8 @@
     },
     "noPrompt": "bypassPermissions",
     "approveWords": "^approve((?:\\s+[\\w./-]+)+)$",
+    "goWords": "^(release|rollback)\\s+(I-\\d+)$",
+    "goes": "goes.json",
     "scheduled": [
       "CronCreate",
       "ScheduleWakeup"
@@ -1075,7 +1087,8 @@
       "approve",
       "upgrade",
       "delegate",
-      "mode"
+      "mode",
+      "release"
     ],
     "prompts": "prompts.json",
     "promptsKept": 5,

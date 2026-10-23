@@ -29,6 +29,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 | `push` | checked base push | lead |
 | `merge <unit>` | the merge gate, then `git merge --no-ff` with trailers | lead |
 | `deploy check <intent>` | runs `deploy.check` on the base and records it ([Deployment and operation](operations.md)) | lead |
+| `release <intent>` | runs `deploy.run` and `release` on the base and records them | owner (prompt or the words `release I-<n>`) |
 | `research <doc>` | prints the researcher's brief for a question held on the doc: the question, the project's docs, stack files and `research.sources`, the budget, and where the digest goes ([0010](../decisions/0010-research-and-advice.md)) | lead |
 | `retro <intent>` | lists the codes that fired 3+ times, the intent's escalations and the owner's interventions, proposes at most three changes, and resets the counters ([Steering](steering.md#3-across-intents-the-retro)) | lead, owner |
 | `hook <name>` | entry point for the plugin's hooks; reads the hook JSON on stdin | hooks |

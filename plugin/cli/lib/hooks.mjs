@@ -106,6 +106,7 @@ function guard(input, cwd) {
     const owner = ownerCommand(argv);
     if (owner) {
       const command = argv.slice(argv.indexOf(owner)).join(' ');
+      if (useGo(cwd, command)) return allow(); // the owner typed it (docs/design/operations.md#details)
       if (input.permission_mode === H.noPrompt) return deny(cwd, input, 'GUARD-OWNER', 'guardOwner', { command });
       recordPrompt(cwd, input, command);
       return deny(cwd, input, 'GUARD-OWNER', 'guardOwner', { command }, 'ask');
@@ -305,8 +306,26 @@ function denied(input, cwd) {
   return allow();
 }
 
+// The owner's go for `release I-<n>` or `rollback I-<n>` at a commit: typed as a prompt, used up by the guard.
+const goesFile = (cwd) => join(aidlcDir(cwd), H.goes);
+function useGo(cwd, command) {
+  const goes = readJson(goesFile(cwd)) ?? [];
+  const go = goes.find((g) => g.command === command && g.head === tryGit(cwd, 'rev-parse', 'HEAD'));
+  if (!go) return false;
+  writeJson(goesFile(cwd), goes.filter((g) => g !== go));
+  bump(cwd, config.retro.interventions, { command, at: new Date().toISOString() });
+  return true;
+}
+
 // The owner typed exactly `approve <doc>…`: stamped as the owner before the lead reads the prompt (decision 0011).
+// A deploy outlasts the hook, so typed `release I-<n>` only records the go and the lead runs it.
 function prompt(input, cwd) {
+  const go = String(input.prompt ?? '').trim().match(new RegExp(H.goWords, 'i'));
+  if (go) {
+    const command = `${go[1].toLowerCase()} ${go[2].toUpperCase()}`;
+    writeJson(goesFile(cwd), [...(readJson(goesFile(cwd)) ?? []), { command, head: tryGit(cwd, 'rev-parse', 'HEAD'), at: new Date().toISOString() }].slice(-H.promptsKept));
+    return JSON.stringify({ hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext: msg('promptGo', { command }) } });
+  }
   const docs = approveWords(input.prompt);
   if (!docs) return allow();
   let context;

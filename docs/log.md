@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** M6 U48 built: `aidlc release I-<n>` runs `deploy.run` and then `release`, records each exit and is an owner command; with `deploy` or `release` in the profile the recorded release, not a tag, marks the intent released. The typed words `release I-<n>` record a go the guard uses once, since a deploy outlasts the prompt hook (owner's choice) ([Deployment and operation](design/operations.md#details)). Release 0.55.0.
 - **Update** M6 U47 built: with `deploy.check` in the profile, a merged intent's `next` names `aidlc deploy check I-<n>`, which runs the check on the base and records it; the release is offered only after a pass on the current base, and a failure names the command and `aidlc fix` ([Deployment and operation](design/operations.md#details)). Release 0.54.0.
 - **Creation** [Deployment and operation](design/operations.md) and the [M6](roadmap/m6.md) draft: deploy check, release, smoke, rollback, runbook and retro feedback from the profile, following AWS AI-DLC's operation stages; the owner settled the four open choices.
 - **Update** M5 U46 built: after a merge, a builder worktree with clean tracked files is removed even when locked; one with uncommitted tracked changes is kept and named ([Merge mechanics](design/gate.md#trial-merge)). Release 0.53.0.
