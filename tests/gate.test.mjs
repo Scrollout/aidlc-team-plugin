@@ -321,3 +321,24 @@ test('U44/AC-1 U44/AC-2 a level that needs an unset variable fails before it run
   assert.match(s.out, /GATE-SKIP .*level unit skipped a test: ℹ skipped 1/);
   assert.equal(merge(setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: 'node --test', skip: '^ℹ skipped [1-9]' } } } })).code, 0, 'no skip: the merge passes');
 });
+
+test('U46/AC-1 after a merge a locked builder worktree with clean tracked files is removed; one with uncommitted tracked changes is kept and named', () => {
+  const dir = setup();
+  const wt = join(tempDir('wt-'), 'w');
+  git(dir, 'worktree', 'add', '-q', wt, 'unit/U-1');
+  git(dir, 'worktree', 'lock', '--reason', 'claude agent', wt);
+  write(wt, { 'build.log': 'untracked scratch\n' });
+  const r = merge(dir);
+  assert.equal(r.code, 0, r.out + r.err);
+  assert.ok(!existsSync(wt), 'removed despite the lock and an untracked log');
+  assert.doesNotMatch(r.out, /kept/);
+
+  const dirty = setup();
+  const wt2 = join(tempDir('wt-'), 'w');
+  git(dirty, 'worktree', 'add', '-q', wt2, 'unit/U-1');
+  write(wt2, { 'src/add.mjs': 'export const add = (a, b) => a - b;\n' });
+  const k = merge(dirty);
+  assert.equal(k.code, 0, k.out + k.err);
+  assert.ok(existsSync(wt2), 'uncommitted tracked work is never thrown away');
+  assert.match(k.out, /^kept .+: it has uncommitted changes to tracked files$/m);
+});
