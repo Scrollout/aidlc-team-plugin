@@ -151,12 +151,13 @@
     },
     {
       "name": "fix",
-      "usage": "fix \"<title>\"|--from-issue <n> --scope <glob>… [--requirement R-<n>…]",
+      "usage": "fix \"<title>\"|--from-issue <n> --scope <glob>… [--requirement R-<n>…] [--after <intent>]",
       "does": "create a one-unit plan without an intent",
       "flags": [
         "--scope",
         "--requirement",
-        "--from-issue"
+        "--from-issue",
+        "--after"
       ]
     },
     {
@@ -182,7 +183,12 @@
     {
       "name": "release",
       "usage": "release <intent>",
-      "does": "run deploy.run and the profile's release on the base and record them (the owner's)"
+      "does": "run deploy.run and the profile's release on the base, then deploy.smoke, and record them (the owner's)"
+    },
+    {
+      "name": "rollback",
+      "usage": "rollback <intent>",
+      "does": "run deploy.rollback and record it (the owner's)"
     },
     {
       "name": "hook",
@@ -280,12 +286,15 @@
     "nextHeld": "{{units}} on hold: the owner releases them",
     "nextRelease": "{{intent}} is merged: release with the owner",
     "nextDeployRelease": "{{intent}} is ready to release: the owner releases it: aidlc release {{intent}} (the owner confirms the prompt or types: release {{intent}})",
-    "nextReleaseFailed": "{{intent}} release failed: {{command}} exited {{exit}}; the owner retries (the owner types: release {{intent}}), or the lead drafts a fix: aidlc fix \"<what failed>\" --scope <globs>",
+    "nextReleaseFailed": "{{intent}} release failed: {{command}} exited {{exit}}; the owner retries (the owner types: release {{intent}}), or the lead drafts a fix: aidlc fix \"<what failed>\" --after {{intent}} --scope <globs>",
     "releaseUsage": "usage: aidlc release <intent>, for a merged intent with deploy.run or release in the profile",
     "releaseNoCheck": "{{intent}} has no passing deploy check on this base: run aidlc deploy check {{intent}} first",
     "promptGo": "The owner typed {{command}}: run aidlc {{command}} now; the guard lets this one call through.",
+    "nextSmokeFailed": "{{intent}} smoke failed: {{command}} exited {{exit}}; the owner rolls back: aidlc rollback {{intent}} (the owner confirms the prompt or types: rollback {{intent}})",
+    "nextSmokeFix": "{{intent}} was rolled back: draft a fix from the smoke output in {{file}}: aidlc fix \"<what failed>\" --after {{intent}} --scope <globs>",
+    "rollbackUsage": "usage: aidlc rollback <intent>, for a merged or released intent",
     "nextDeployCheck": "{{intent}} is merged: run its deploy check on the base: aidlc deploy check {{intent}}",
-    "nextDeployFailed": "{{intent}} deploy check failed on the base: {{command}} exited {{exit}}; draft a fix: aidlc fix \"<what failed>\" --scope <globs>",
+    "nextDeployFailed": "{{intent}} deploy check failed on the base: {{command}} exited {{exit}}; draft a fix: aidlc fix \"<what failed>\" --after {{intent}} --scope <globs>",
     "deployUsage": "usage: aidlc deploy check <intent>, for a merged intent with deploy.check in the profile",
     "deployNotMerged": "{{intent}} is {{state}}: deploy steps run on a merged intent",
     "deployNotOnBase": "check out {{base}} first: deploy steps run on the base",
@@ -399,7 +408,7 @@
     "ciCommit": "commit {{sha}} changes {{path}} outside a unit",
     "pushed": "pushed {{base}} to {{remote}}\n",
     "fixWrote": "wrote {{path}}, {{lane}} lane{{#each approve}}; the owner approves it: aidlc approve {{this}} (the owner confirms the prompt or types: approve {{this}}){{/each}}\n",
-    "fixUsage": "usage: fix \"<title>\"|--from-issue <n> --scope <glob>… [--requirement R-<n>…]",
+    "fixUsage": "usage: fix \"<title>\"|--from-issue <n> --scope <glob>… [--requirement R-<n>…] [--after <intent>]",
     "hookDeny": "{{code}} {{message}} → {{fix}}",
     "hookEscalate": "escalate: {{reason}} (denied {{count}} times this turn; stop and tell the owner)",
     "guardForce": "force push",
@@ -717,7 +726,7 @@
     "badges": {
       "owner": "👉 ",
       "stop": "⛔ ",
-      "stops": ["nextGated", "nextHostDenied", "nextStopped", "nextReleaseFailed"]
+      "stops": ["nextGated", "nextHostDenied", "nextStopped", "nextReleaseFailed", "nextSmokeFailed"]
     },
     "researching": "researching",
     "deploys": "deploys"
@@ -1088,7 +1097,8 @@
       "upgrade",
       "delegate",
       "mode",
-      "release"
+      "release",
+      "rollback"
     ],
     "prompts": "prompts.json",
     "promptsKept": 5,

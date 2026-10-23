@@ -298,7 +298,7 @@ export const commands = {
   },
 
   fix(args, { cwd }) {
-    const flags = { scope: [], requirement: [], 'from-issue': [] };
+    const flags = { scope: [], requirement: [], 'from-issue': [], after: [] };
     let title = null;
     for (let k = 0; k < args.length; k++) {
       if (args[k].startsWith('--') && args[k].slice(2) in flags) {
@@ -324,6 +324,7 @@ export const commands = {
       scope: flags.scope.map((s) => JSON.stringify(s)).join(', '),
       requirements: flags.requirement.length ? [flags.requirement.join(', ')] : [],
       issue,
+      after: flags.after.slice(0, 1), // the release it fixes (docs/design/operations.md)
       producer: `aidlc/${version}`,
       at: new Date().toISOString().replace(/\.\d+Z$/, 'Z'),
       level: Object.keys(withDefaults(profile).levels)[0],

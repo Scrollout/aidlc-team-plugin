@@ -24,12 +24,13 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 | `review record <unit> <file\|->` | stores a reviewer verdict keyed by diff hash; `-` reads it from stdin | reviewer |
 | `report <unit>` | stores the builder's report (JSON on stdin) | builder |
 | `hold <unit> [off or <reason>]` / `priority <unit> <n>` | records an owner instruction in the plan (`hold: true` or the reason, `priority: <n>`, higher first); the lead also holds a unit with a reason while it parks a question for the owner | lead |
-| `fix "<title>"\|--from-issue <n>` | one-unit plan without an intent; from an issue, titled like it and linked to it | lead |
+| `fix "<title>"\|--from-issue <n> [--after <intent>]` | one-unit plan without an intent; from an issue, titled like it and linked to it; `--after` links the release it fixes | lead |
 | `sync` | projects intents and units onto GitHub issues and a Project ([Board](board.md)) | lead, merge |
 | `push` | checked base push | lead |
 | `merge <unit>` | the merge gate, then `git merge --no-ff` with trailers | lead |
 | `deploy check <intent>` | runs `deploy.check` on the base and records it ([Deployment and operation](operations.md)) | lead |
 | `release <intent>` | runs `deploy.run` and `release` on the base and records them | owner (prompt or the words `release I-<n>`) |
+| `rollback <intent>` | runs `deploy.rollback` and records it | owner (prompt or the words `rollback I-<n>`) |
 | `research <doc>` | prints the researcher's brief for a question held on the doc: the question, the project's docs, stack files and `research.sources`, the budget, and where the digest goes ([0010](../decisions/0010-research-and-advice.md)) | lead |
 | `retro <intent>` | lists the codes that fired 3+ times, the intent's escalations and the owner's interventions, proposes at most three changes, and resets the counters ([Steering](steering.md#3-across-intents-the-retro)) | lead, owner |
 | `hook <name>` | entry point for the plugin's hooks; reads the hook JSON on stdin | hooks |
