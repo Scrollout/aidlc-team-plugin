@@ -3,7 +3,7 @@ type: Design
 title: Resume
 description: How the lead survives a clear, a crash or a new session - what lives on disk instead of the conversation - and why the owner clears the lead between intents.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T22:00:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T07:20:00Z }
 ---
 
 # What lives on disk
@@ -28,4 +28,4 @@ On resume (SessionStart `startup`, `resume`, `clear`, `compact`):
 Result: after a clear, `next` returns the same action it would have returned before, with no duplicate builder and no lost work.
 
 # Between intents
-When every intent is released and nothing is in flight, `next` and `status` ask the owner to clear the lead's session (`/clear`) before the next intent. A finished intent's conversation costs tokens on every later turn: the lead's session was 94 % of a re-pilot's tokens in M2, and the owner cleared the pilot lead at 40 % after the third M4 pilot. The status hook brings back what the next intent needs, and `/clear` resumes passed in every pilot.
+When every intent is released and nothing is in flight, `next` and `status` ask the owner to clear the lead's session (`/clear`) before the next intent. A finished intent's conversation costs tokens on every later turn: the lead's session was 94 % of a re-pilot's tokens in M2, and the owner cleared the pilot lead at 40 % after the third M4 pilot. The status hook brings back what the next intent needs, and `/clear` resumes passed in every pilot. The hook also records the clear (SessionStart `source: clear`) in `.git/aidlc/cleared`; once one is newer than the last merge on the base, `next` asks to elaborate the next intent instead of asking for the clear again (M5 pilot 1).

@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** M5 U45 built: the status hook records a `/clear`, and `next` asks for one only when none happened since the last merge ([Resume](design/resume.md#between-intents)). Release 0.52.0.
 - **Update** M5 U44 built: a level's `needs` refuses its run while a variable is unset, and its `skip` pattern fails a level or proof-revert run that skipped a test, as `GATE-SKIP` ([Merge mechanics](design/gate.md#details)). Release 0.51.0.
 - **Update** M5 U43 built: plan lint reports `PLAN-SLICE` for an intent with no AC at the top level that runs, unless it says `slice`, and for a multi-module unit tested only at the first level ([Plan lint](design/plan-lint.md)). Release 0.50.0.
 - **Creation** [M5 pilot 1 report](pilot/m5-report.md): U40 and U41 held on 0.49.0; skipped tests counting as passed, the clear line after the clear, every output of a generator and lingering worktrees go to the [M5](roadmap/m5.md) candidates.

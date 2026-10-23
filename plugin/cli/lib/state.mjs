@@ -411,7 +411,9 @@ function pickAction(st) {
   const work = unitWork(st, scope);
   if (work) return work;
   if (unreleased) return action('human', 'nextRelease', { intent: unreleased.id });
-  return action('human', 'nextIdle');
+  // A clear newer than the last merge on the base already gave the lead a fresh session (docs/design/resume.md).
+  const lastMerge = Number(tryGit(st.cwd, 'log', '-1', '--merges', '--format=%ct', st.base) || 0) * 1000;
+  return action('human', heartbeatAt(st.cwd, S.cleared, '.') > lastMerge ? 'nextIdleCleared' : 'nextIdle');
 }
 
 // ---- Commands ----

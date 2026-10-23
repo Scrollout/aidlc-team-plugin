@@ -273,6 +273,7 @@
     "researchNone": "{{doc}} holds no research question: aidlc hold {{doc}} research: <question>",
     "researchFor": "a research question",
     "modelSourceResearch": "the profile's models.research",
+    "nextIdleCleared": "all intents released and the lead's session is fresh: elaborate the next intent with the owner",
     "nextIdle": "all intents released: the owner clears the lead's session before the next intent (the owner types: /clear); everything done is on disk. Then elaborate the next intent with the owner",
     "nextHostDenied": "auto mode refused aidlc {{refused}}: the owner runs aidlc {{command}} (the owner confirms the prompt or types: {{command}})",
     "nextWorktreeLeft": "{{unit}} is merged but {{path}} still holds {{branch}}: stop its builder, then git worktree remove --force --force {{path}} and git branch -D {{branch}}",
@@ -689,6 +690,7 @@
     "gates": "gates",
     "reviewing": "reviewing",
     "launches": "launches",
+    "cleared": "cleared",
     "badges": {
       "owner": "👉 ",
       "stop": "⛔ ",
@@ -948,6 +950,7 @@
     "unitPattern": "\\bU-\\d+\\b",
     "researcher": ":researcher",
     "before": "PreToolUse",
+    "clearSource": "clear",
     "researchFor": "^# Research for (\\S+)",
     "denials": "denials.json",
     "escalateAt": 3,
