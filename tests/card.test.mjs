@@ -254,3 +254,18 @@ test('U27/AC-1 U27/AC-3 the card carries the project rules at the base, but a fo
   assert.notEqual(long.code, 0);
   assert.match(long.out, /^card for U-1 is \d+ chars, over 6000, \d{4} of them project rules: shorten the unit doc or the rules$/m);
 });
+
+test('U29/AC-1 U29/AC-2 U29/AC-3 the card names requirements as their files do, keeps plain interface lines and names the proof levels', () => {
+  const req = '---\ntype: Requirement\ntitle: Prices\ndescription: Prices are local.\n---\n\n# Statement\nPrices are local.\n';
+  const dir = makeRepo({ 'docs/intents/I-1-pricing.md': intentDoc('I-1'), 'docs/requirements/R-057.md': req,
+    [U1]: doc({ extra: '\n# Interfaces\n\n- internal/buildinfo: Get() Info, Info.String()\n- See [the API spec](../architecture/api.md).\n' }).replace('---\n\n#', 'requirements: [R-057]\n---\n\n#') },
+  { ...PROFILE, levels: { unit: { paths: ['src/**/*.test.mjs', 'tests/**'], run: 'node --test' }, e2e: { paths: ['e2e/**'] } } });
+  approve(dir, 'I-1', 'R-057', 'U-1');
+  const card = run(dir, ['card', 'U-1']);
+  assert.equal(card.code, 0, card.out + card.err);
+  assert.match(card.out, /^- R-057 docs\/requirements\/R-057\.md$/m);
+  assert.match(card.out, /^- internal\/buildinfo: Get\(\) Info, Info\.String\(\)$/m, 'a plain interface line is kept');
+  assert.match(card.out, /^- docs\/architecture\/api\.md$/m);
+  assert.match(card.out, /^The merge gate reverts your changes outside the test paths of unit and reruns those levels: each one holding a tagged test must then fail\.$/m);
+  assert.doesNotMatch(card.out, /outside src\//);
+});

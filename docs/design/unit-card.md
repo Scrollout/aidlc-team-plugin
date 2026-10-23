@@ -3,7 +3,7 @@ type: Design
 title: Unit card
 description: The generated, read-only brief one builder works from and one reviewer checks against.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T14:00:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:30:00Z }
 ---
 
 # Why per unit, not shared
@@ -15,8 +15,8 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T14:00:00Z }
 - **Project rules:** each `.aidlc/rules/*.md` at the base commit, before the ACs, except a rule named after a `profile.focus` key, which only that focus's reviewer reads. Builders run without `CLAUDE.md`, so this is how a project's conventions reach them; the rules count toward the cap.
 - ACs with IDs; each becomes a test tagged `U-<n>/AC-<k>`.
 - **Scope:** globs the builder may write.
-- **Interfaces:** linked specs it consumes and provides (paths at the base commit).
-- **Requirements:** the requirement docs the unit cites, which the builder meets and every review checks.
+- **Interfaces:** linked specs it consumes and provides (paths at the base commit), and the plain lines of the unit's `Interfaces` section as written.
+- **Requirements:** the requirement docs the unit cites, named as their files are, which the builder meets and every review checks.
 - **Findings to fix:** in a fix round, the findings of each focus whose last verdict for the current diff is `fix`. After an escalation the owner re-approved, its findings are listed as answered by that re-approval, for the reviewer to report again only if one still holds against the spec as it is now.
 - **Test runs:** every level's `run`; the builder and the reviewer run each in full, and the gate again on the merge result, then once more with the unit's code reverted, when each level holding a tagged test must fail.
 - **Reserves:** e.g. migration number `regional/0005`.
