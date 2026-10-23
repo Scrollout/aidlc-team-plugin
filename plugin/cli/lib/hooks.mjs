@@ -277,6 +277,7 @@ function denied(input, cwd) {
   if (!command) return allow();
   const kept = [...(readJson(hostDeniedFile(cwd)) ?? []), { command, head: tryGit(cwd, 'rev-parse', 'HEAD'), at: new Date().toISOString() }];
   writeJson(hostDeniedFile(cwd), kept.slice(-S.hostDeniedKept));
+  bump(cwd, config.retro.hostDenied, { command, at: kept.at(-1).at });
   return allow();
 }
 

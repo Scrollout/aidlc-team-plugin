@@ -54,7 +54,7 @@ test('U19/AC-4 U19/AC-5 the counters feed aidlc retro, which lists, proposes at 
   assert.match(r.out, /^ {2}U-1 review general escalated with 0 findings at \S+$/m);
   assert.match(r.out, /^ {2}U-2 builder stopped at \S+: the scope is too small$/m);
   assert.match(r.out, /^ {2}1 repeated hook denials escalated to the owner$/m);
-  assert.match(r.out, /^owner commands that ran:\n {2}\S+ approve U-1$/m);
+  assert.match(r.out, /^owner approvals and commands:\n( {2}\S+ approve (I|U)-\d by owner@example\.com\n){3}proposals/m, 'from the stamps; the prompt for approve U-1 is not listed twice');
   const proposals = r.out.split('proposals (the owner accepts or rejects each):\n')[1].split('counters reset')[0].trim().split('\n').map((p) => p.trim());
   assert.ok(proposals.length >= 1 && proposals.length <= 3, proposals.join('\n'));
   assert.ok(proposals.every((p) => /^(profile glob|project rule|template tweak|new check): /.test(p)), proposals.join('\n'));
@@ -66,4 +66,26 @@ test('U19/AC-4 U19/AC-5 the counters feed aidlc retro, which lists, proposes at 
   assert.deepEqual(Object.keys(stats(dir)), ['since'], 'the retro resets the counters');
   assert.match(run(dir, ['retro', 'I-1']).out, /^codes fired 3 or more times:\n {2}none$/m);
   assert.equal(run(dir, ['retro', 'I-9']).code, 64);
+});
+
+test('U21/AC-1 U21/AC-2 a stop report a restart replaced still counts; the retro lists every owner approval, however it ran, and each auto mode refusal', () => {
+  const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), [U(1)]: unitDoc(), [U(2)]: unitDoc({ scope: ['lib/**'] }) });
+  approve(dir, 'I-1', 'U-1');
+  assert.equal(run(dir, ['retro', 'I-1']).code, 0, 'a first retro resets the counters');
+  run(dir, ['report', 'U-1'], '{"status": "stopped", "stop": "the scope is too small"}');
+  run(dir, ['report', 'U-1'], '{"status": "done", "summary": "built after the scope was widened"}');
+  approve(dir, 'U-2'); // as the owner's ! command: no prompt recorded
+  write(dir, { '.git/aidlc/prompts.json': [{ id: 't1', command: 'mode unattended', at: '2026-10-23T10:00:00Z' }] });
+  const cli = (args, input) => spawnSync(process.execPath, [join(ROOT, 'plugin/cli/aidlc.mjs'), ...args], { cwd: dir, encoding: 'utf8', input: JSON.stringify({ cwd: dir, ...input }) });
+  cli(['hook', 'heartbeat'], { tool_use_id: 't1' });
+  cli(['hook', 'denied'], { hook_event_name: 'PermissionDenied', tool_name: 'Bash', tool_input: { command: 'node .aidlc/bin/aidlc.mjs approve --auto U-2' }, reason: '[Self-Approval]' });
+
+  const r = run(dir, ['retro', 'I-1']);
+  assert.equal(r.code, 0, r.err);
+  assert.match(r.out, /^escalations:\n {2}U-1 builder stopped at \S+: the scope is too small\n/m);
+  const owner = r.out.split('owner approvals and commands:\n')[1].split('proposals')[0];
+  assert.match(owner, /^ {2}\S+ approve U-2 by owner@example\.com$/m, 'an approval run outside the guard');
+  assert.doesNotMatch(owner, /approve (I-1|U-1) by/, 'approvals before the last retro are not repeated');
+  assert.match(owner, /^ {2}\S+ mode unattended$/m);
+  assert.match(owner, /^ {2}\S+ auto mode refused: node \.aidlc\/bin\/aidlc\.mjs approve --auto U-2$/m);
 });

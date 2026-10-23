@@ -32,8 +32,8 @@ export function writeJson(file, data) {
 // Bounded runtime counters the retro reads and resets (docs/design/steering.md#3-across-intents-the-retro).
 export const statsFile = (cwd) => join(aidlcDir(cwd), config.retro.stats);
 export function bump(cwd, kind, key) {
-  const st = readJson(statsFile(cwd)) ?? { since: new Date().toISOString() };
-  if (kind === config.retro.interventions) st[kind] = [...(st[kind] ?? []), key].slice(-config.retro.keep);
+  const st = readJson(statsFile(cwd)) ?? {}; // `since` is the last retro's reset
+  if (config.retro.lists.includes(kind)) st[kind] = [...(st[kind] ?? []), key].slice(-config.retro.keep);
   else st[kind] = { ...st[kind], [key]: (st[kind]?.[key] ?? 0) + 1 };
   writeJson(statsFile(cwd), st);
 }
@@ -62,7 +62,7 @@ export function reviewFocuses(cwd, profile, base, unit) {
 // ---- Approvals ----
 
 const sortKeys = (v) => (Array.isArray(v) ? v.map(sortKeys) : isMap(v) ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, sortKeys(v[k])])) : v);
-const events = (fm) => (isMap(fm.verified) ? [fm.verified] : Array.isArray(fm.verified) ? fm.verified.filter(isMap) : []);
+export const events = (fm) => (isMap(fm.verified) ? [fm.verified] : Array.isArray(fm.verified) ? fm.verified.filter(isMap) : []);
 
 export function hashDoc(doc) {
   const fm = Object.fromEntries(Object.entries(doc.fm ?? {}).filter(([k]) => !S.hashExclude.includes(k)));
@@ -498,7 +498,10 @@ export const commands = {
     if (!unit) throw new UsageError(msg('noDoc', { name: '' }));
     const data = parseObject(readStdin(ctx), 'report');
     writeJson(runtimeFile(ctx.cwd, 'reports', unit), { ...data, unit, at: new Date().toISOString() });
-    if (data.status === S.stopped) bump(ctx.cwd, 'escalations', config.retro.reasons.stopped);
+    if (data.status === S.stopped) {
+      bump(ctx.cwd, 'escalations', config.retro.reasons.stopped);
+      bump(ctx.cwd, config.retro.stops, { unit, reason: String(data.stop ?? data.summary ?? ''), at: new Date().toISOString() }); // a restart's report replaces this one
+    }
     return done(msg('recorded', { what: 'report', unit }));
   },
 
