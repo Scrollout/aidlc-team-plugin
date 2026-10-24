@@ -236,11 +236,11 @@ export function readState(cwd, { now = Date.now() } = {}) {
   const intents = plan.intents.sort(byId).map((i) => {
     const own = units.filter((u) => u.fm.intent === i.id);
     const complete = own.length > 0 && own.every((u) => u.state === 'merged');
-    // With deploy or release in the profile, the recorded release decides, not a tag (docs/design/operations.md).
+    // Released: the owner tagged it, or its recorded release (and smoke) passed (docs/design/operations.md).
     const deploy = readJson(runtimeFile(cwd, 'deploys', i.id)) ?? {};
     const smoked = !profile.deploy?.smoke || (deploy.smoke?.ok && deploy.smoke.at >= deploy.release.at);
-    const released = complete && (profile.deploy || profile.release ? Boolean(deploy.release?.ok && smoked)
-      : own.every((u) => (tryGit(cwd, 'tag', '--contains', merged.get(u.id)) ?? '') !== ''));
+    const released = complete && ((profile.deploy || profile.release) && Boolean(deploy.release?.ok && smoked)
+      || own.every((u) => (tryGit(cwd, 'tag', '--contains', merged.get(u.id)) ?? '') !== ''));
     return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own, deploy };
   });
   const requirements = plan.requirements.map((r) => ({ ...r, state: approval(r.doc) }));
