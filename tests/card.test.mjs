@@ -65,6 +65,22 @@ test('U4/AC-4 card refuses an unapproved or stale unit, and one over 6,000 chars
   assert.match(r.out, /over 6000/);
 });
 
+test('U77/AC-1 the findings of a fix round do not count toward the card cap', () => {
+  const dir = repo({ acs: Array.from({ length: 44 }, (_, k) => `- AC-${k + 1} (unit): ${'x'.repeat(80)}.`) });
+  approve(dir, 'I-1', 'U-1');
+  const fits = run(dir, ['card', 'U-1']);
+  assert.equal(fits.code, 0, fits.out);
+  assert.ok(fits.out.length > 5000 && fits.out.length <= 6000, String(fits.out.length));
+  git(dir, 'switch', '-q', '-c', 'unit/U-1');
+  commit(dir, 'work', { 'src/pricing/a.txt': 'a\n' });
+  git(dir, 'switch', '-q', 'main');
+  review(dir, 'U-1', 'fix', Array.from({ length: 10 }, (_, k) => ({ path: 'src/pricing/a.txt', line: k + 1, claim: 'c'.repeat(150), scenario: 's'.repeat(150), confidence: 'PLAUSIBLE' })));
+  const r = run(dir, ['card', 'U-1']);
+  assert.equal(r.code, 0, r.out);
+  assert.ok(r.out.length > 6000, 'the findings are listed in full');
+  assert.match(r.out, /src\/pricing\/a\.txt:10:/);
+});
+
 test('U4/AC-4 the card hash changes when the unit doc changes, even outside the rendered parts', () => {
   const dir = repo();
   approve(dir, 'U-1');

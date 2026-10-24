@@ -262,6 +262,14 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
     const own = units.filter((u) => u.fm.intent === i.id);
     if (top && own.length && !own.some((u) => u.acs.some((a) => a.level === top))) add('PLAN-SLICE', i, 1, 'planSliceIntent', { level: top });
   }
+  // The waiver is for work outside the running product: a new unit reaching a module or a one-way door voids it.
+  const product = [...(profile.modules ?? []).flatMap((m) => list(m.paths)), ...doorGlobs];
+  for (const i of top ? intents.filter((x) => x.fm.status !== GRID.dropped && x.fm[GRID.slice]) : []) {
+    for (const u of units.filter((x) => x.fm.intent === i.id && !x.fm.verified_hash)) {
+      const area = product.find((g) => u.scope.some((s) => overlaps(s, g)));
+      if (area) add('PLAN-SLICE', u, keyLine(u, 'scope'), 'planSliceWaiver', { intent: i.id, glob: u.scope.find((s) => overlaps(s, area)), area, level: top });
+    }
+  }
   // With a deploy, each live intent links its runbook (docs/design/operations.md).
   const live = (i) => units.some((u) => u.fm.intent === i.id) || !all.some((u) => u.fm.intent === i.id);
   for (const i of profile.deploy ? intents.filter((x) => x.fm.status !== GRID.dropped && live(x) && !testsOnly(all.filter((u) => u.fm.intent === x.id), profile)) : []) {
