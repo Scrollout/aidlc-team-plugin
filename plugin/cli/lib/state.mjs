@@ -3,7 +3,7 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { bundleOf, config, QUICK, VERDICT, done, git, gitLines, isMap, list, readJson, readStdin, tryGit, UsageError, relPath } from './config.mjs';
 import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
@@ -517,8 +517,13 @@ function findDoc(cwd, bundle, name) {
   if (existsSync(path)) return path;
   const plan = readPlan(bundle);
   const hit = [...plan.units, ...plan.intents, ...plan.requirements].find((d) => reqIdOf(d.id) === reqIdOf(name));
-  if (!hit) throw new UsageError(msg('noDoc', { name }));
-  return hit.file;
+  if (hit) return hit.file;
+  // A decision by its number, as the owner types it: `approve 0010` (docs/design/cli.md).
+  const decision = /^\d+$/.test(name) && readdirSync(bundle, { recursive: true }).map(String)
+    .filter((f) => Number(basename(f).match(/^(\d+)-.*\.md$/)?.[1]) === Number(name)).map((f) => join(bundle, f))
+    .find((f) => parseDoc(readFileSync(f, 'utf8')).fm?.type === config.grid.decisionType);
+  if (!decision) throw new UsageError(msg('noDoc', { name }));
+  return decision;
 }
 
 function parseObject(text, name) {
