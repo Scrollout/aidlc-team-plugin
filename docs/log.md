@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** [M8](roadmap/m8.md) closed on 0.74.0 (owner): the partial-AC mutation finding and `next` serving one intent at a time move to [Later](roadmap/later.md).
 - **Update** M8 U68: decisions 0001 to 0011, the principles and the settled design docs (architecture, OKF, OKF validation, board, in flight, review rounds, resume, unit card, plan lint, team, parallel builders) are `stable`; the docs that changed in M6 to M8 stay `draft` until the first migration settles them.
 - **Update** M8 U70 security fixes: the U70 review's realistic mistakes and cheap evasions are blocked (`--auto` only on `approve`, base commit, push, move, merge and alias shapes, writes outside a worktree or into `.git/aidlc`, `aidlc hook` and `claude -p` with owner words, unquoted and notebook secrets, a merge-time secret scan, unknown-unit merges); the rest is recorded in [Guard limits](design/guard-limits.md) (owner's choice). Release 0.74.0.
 - **Creation** [M8 evals report](pilot/m8-evals-report.md): the reviewer and builder evals ran on 0.73.0 with back-fill units; every seeded case was found, about 1.60 USD; one builder mutation broke only part of its AC and passed review.
