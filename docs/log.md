@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** M8 U66 built: verdicts are one named map, lanes have one constant each, duplicate keys are gone, and the producer, merge subject, board link, card headings, flag lists and shell wrappers come from `cli.json`. Release 0.71.0.
 - **Update** M8 U63: the design docs, decisions and constitution match the code; principle 7 reads `review.fixRounds` (3 by default); claims with no code moved to [Later](roadmap/later.md); five docs split out to stay under the size cap ([Hook checks](design/hook-checks.md), [CLI engine](design/cli-engine.md), [OKF validation](design/okf-validation.md), [Parallel builds](design/parallel.md), [Vendoring](design/vendoring.md)).
 - **Update** M8 U65 built: dead code out and one shared helper each for git, shell runs, findings, the bundle path, links and sections, unit paths, worktrees and status lines; `status` and the session-start hook now list the same units; a worktree lookup no longer mistakes `unit/U-1` for `unit/U-10`. CLI 3,358 to 3,306 lines. Release 0.70.0.
 - **Update** M8 U62 built: the guard denies a scheduled prompt that is a go (`release I-<n>`, `rollback I-<n>`), as it does an approval; `hold` usage names the reason; `prompt` is listed with the hook names ([Hooks](design/hooks.md)). Release 0.69.0.
