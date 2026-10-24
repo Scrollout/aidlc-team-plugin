@@ -416,6 +416,7 @@
     "proofQuick": "quick lane",
     "proofNoRun": "no level run holds a tagged test",
     "gateLevel": "{{tag}} is tested in {{files}}, outside the {{level}} paths",
+    "gateLevelNoPaths": "{{tag}} is at level {{level}}, which has a run but no paths, so no merge can prove its test",
     "gateCheck": "{{command}} failed",
     "gateReview": "no pass verdict for the current diff of {{unit}}",
     "gateCardStale": "the review was made against card {{reviewed}}, the current card is {{card}}",
@@ -521,6 +522,7 @@
     "boardAdded": "added #{{number}} to the project\n",
     "boardSet": "set {{field}} of #{{number}} to {{value}}\n",
     "boardInSync": "the board is in sync\n",
+    "boardItemHidden": "#{{number}} is on the Project but not listed, also after waiting (an archived item?) → restore it or remove it on the Project, then run aidlc sync",
     "boardShort": "GitHub listed {{got}} of the repository's {{count}} issues, also after waiting → sync created nothing; run aidlc sync again later",
     "boardFailed": "warning: sync failed, run aidlc sync: {{error}}\n",
     "nextMigrate": "elaborate the migration intent with the owner in {{dir}}/I-1-<slug>.md (adopted at {{commit}}): docs, always-on context, profile, architecture baseline, module audit, cleanup; then ask for approval",
@@ -961,7 +963,7 @@
         "fix": "add a test tagged with the AC"
       },
       "GATE-LEVEL": {
-        "fix": "move the test under the level's paths in profile.levels"
+        "fix": "move the test under the level's paths in profile.levels, or add the paths the level lacks, in this unit or in one merged before it"
       },
       "GATE-CHECK": {
         "fix": "fix the module until its check passes"
@@ -1232,6 +1234,7 @@
     "gh": "gh",
     "perPage": 100,
     "maxBody": 1500,
+    "itemExists": "Content already exists in this project",
     "template": "issue.md",
     "issue": "board.issue",
     "statusField": "Status",

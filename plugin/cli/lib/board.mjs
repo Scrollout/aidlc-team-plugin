@@ -155,25 +155,41 @@ function issues(gh, docs, out, backoff) {
   }
 }
 
-function project(gh, docs, out) {
+function project(gh, docs, out, backoff) {
   const m = String(gh.project).match(new RegExp(B.project));
   if (!m) throw new UsageError(msg('boardProject', { project: gh.project }));
   const owner = B.owners[m[1]];
   const query = render(B.queries.project, { owner }, 'board.queries.project');
-  const items = [];
-  let proj;
-  let cursor = null;
-  do {
-    proj = graphql(query, { login: m[2], number: Number(m[3]), cursor })[owner].projectV2;
-    items.push(...proj.items.nodes);
-    cursor = proj.items.pageInfo.hasNextPage ? proj.items.pageInfo.endCursor : null;
-  } while (cursor);
+  const read = () => {
+    const items = [];
+    let proj;
+    let cursor = null;
+    do {
+      proj = graphql(query, { login: m[2], number: Number(m[3]), cursor })[owner].projectV2;
+      items.push(...proj.items.nodes);
+      cursor = proj.items.pageInfo.hasNextPage ? proj.items.pageInfo.endCursor : null;
+    } while (cursor);
+    return { proj, items };
+  };
+  let { proj, items } = read();
   const fields = new Map(proj.fields.nodes.filter((f) => f.name).map((f) => [f.name, f]));
   for (const d of docs) {
-    let item = items.find((i) => i.content?.number === d.found.number && i.content?.repository?.nameWithOwner === gh.repo);
+    const find = () => items.find((i) => i.content?.number === d.found.number && i.content?.repository?.nameWithOwner === gh.repo);
+    let item = find();
     if (!item) {
-      item = { id: graphql(B.queries.addItem, { project: proj.id, content: d.found.node_id }).addProjectV2ItemById.item.id, fieldValues: { nodes: [] } };
-      out.push(msg('boardAdded', { number: d.found.number }));
+      try {
+        item = { id: graphql(B.queries.addItem, { project: proj.id, content: d.found.node_id }).addProjectV2ItemById.item.id, fieldValues: { nodes: [] } };
+        out.push(msg('boardAdded', { number: d.found.number }));
+      } catch (e) {
+        // GitHub's own Project workflows (auto-add of sub-issues) added it after the read: read again, never add twice.
+        if (!e.message.includes(B.itemExists)) throw e;
+        for (let k = 0; !item; k++) {
+          if (k === backoff.length) throw new Error(msg('boardItemHidden', { number: d.found.number }));
+          sleep(backoff[k]);
+          ({ items } = read());
+          item = find();
+        }
+      }
     }
     const current = Object.fromEntries(item.fieldValues.nodes.filter((v) => v.field).map((v) => [v.field.name, String(v.name ?? v.number ?? v.date ?? v.text)]));
     for (const [name, value] of Object.entries(d.fields)) {
@@ -196,7 +212,7 @@ export function sync(cwd) {
   const docs = wanted(cwd, st, gh);
   const out = [];
   issues(gh, docs, out, st.profile.board.backoff);
-  if (gh.project) project(gh, docs, out);
+  if (gh.project) project(gh, docs, out, st.profile.board.backoff);
   return out.join('') || msg('boardInSync', {});
 }
 
