@@ -7,6 +7,7 @@
 ## Start here
 - Run `aidlc next` and do only the action it prints. `aidlc status` shows where things stand.
 - The docs live in `{{bundle}}/` (OKF). Read an index, then one doc. Indexes are generated; never edit them by hand.
+- How work is built here, and the check behind each rule: `{{bundle}}/constitution/principles.md`.
 
 ## How work flows
 1. Requirements (`{{bundle}}/requirements/R-<n>-<slug>.md`) state what must always hold.

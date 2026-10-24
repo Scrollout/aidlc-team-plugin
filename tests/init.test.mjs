@@ -64,7 +64,7 @@ test('U5/AC-1 init never overwrites without asking', () => {
 
   const again = run(dir, ['init', '--overwrite', 'CLAUDE.md', '--overwrite', 'AGENTS.md', '--overwrite', '.aidlc/profile.json',
     ...['requirement', 'intent', 'unit', 'decision', 'runbook'].flatMap((t) => ['--overwrite', `.aidlc/templates/docs/${t}.md`]),
-    '--overwrite', 'docs/index.md', '--overwrite', 'docs/log.md', '--overwrite', '.github/workflows/aidlc.yml']);
+    '--overwrite', 'docs/index.md', '--overwrite', 'docs/log.md', '--overwrite', 'docs/constitution/principles.md', '--overwrite', '.github/workflows/aidlc.yml']);
   assert.equal(again.code, 0, again.out);
   assert.equal(readFileSync(join(dir, 'CLAUDE.md'), 'utf8'), '@AGENTS.md\n');
   assert.equal(run(dir, ['init', '--name']).code, 64);
@@ -232,4 +232,31 @@ test('U52/AC-3 plan lint warns PLAN-RUN while no level has a run; a warning does
   const ran = makeRepo({ 'docs/units/U-1-a.md': unit }, { levels: { unit: { run: 'npm test' } } });
   assert.doesNotMatch(run(ran, ['check']).out, /PLAN-RUN/);
   assert.doesNotMatch(run(makeRepo({}), ['check']).out, /PLAN-RUN/, 'no units yet, nothing to warn about');
+});
+
+test('U53/AC-1 U53/AC-2 init writes a constitution naming only checks the CLI defines, indexes it, and AGENTS.md points to it', () => {
+  const dir = emptyRepo();
+  assert.equal(run(dir, ['init', '--name', 'demo']).code, 0);
+  const text = readFileSync(join(dir, 'docs/constitution/principles.md'), 'utf8');
+  assert.match(text, /^type: Principles$/m);
+  assert.match(text, /^title: How demo is built$/m);
+  assert.match(text, /^# Project rules$/m);
+  const cli = JSON.parse(readFileSync(join(ROOT, 'plugin/cli/cli.json'), 'utf8'));
+  const known = new Set([cli.okf, cli.grid, cli.gate, cli.hooks].flatMap((s) => Object.keys(s.codes)));
+  const named = [...text.matchAll(/`([A-Z]+-[A-Z-]+)`/g)].map((m) => m[1]);
+  assert.ok(named.length >= 10, named.join(' '));
+  assert.deepEqual(named.filter((c) => !known.has(c)), [], 'every code it names exists');
+  for (const code of ['PLAN-SLICE', 'PLAN-RUN', 'GATE-PROOF', 'GATE-SKIP']) assert.ok(named.includes(code), code);
+  assert.match(readFileSync(join(dir, 'docs/index.md'), 'utf8'), /\[constitution\]\(constitution\/index\.md\)/);
+  assert.match(readFileSync(join(dir, 'docs/constitution/index.md'), 'utf8'), /principles\.md/);
+  const check = run(dir, ['check']);
+  assert.equal(check.code, 0, check.out);
+  assert.equal(check.out, '');
+  const agents = readFileSync(join(dir, 'AGENTS.md'), 'utf8');
+  assert.match(agents, /`docs\/constitution\/principles\.md`/);
+  assert.ok(agents.split('\n').length <= 60);
+
+  write(dir, { 'docs/constitution/principles.md': '---\ntype: Principles\ntitle: Ours\ndescription: Ours.\n---\n' });
+  run(dir, ['init']);
+  assert.match(readFileSync(join(dir, 'docs/constitution/principles.md'), 'utf8'), /^title: Ours$/m, 'an existing one is kept');
 });

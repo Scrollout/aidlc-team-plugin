@@ -5,7 +5,7 @@ import { basename, dirname, join, relative, resolve } from 'node:path';
 import { CLI_DIR, PLUGIN_DIR, config, done, isMap, UsageError, relPath } from './config.mjs';
 import { msg, render, renderFile } from './template.mjs';
 import { DEFAULTS } from './profile.mjs';
-import { checkBundle, parseDoc } from './okf.mjs';
+import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
 import { git, tryGit } from './state.mjs';
 import { definedOnBase } from './grid.mjs';
 
@@ -112,7 +112,7 @@ export const commands = {
     }
     const name = flags.name ?? basename(root);
     const base = flags.base ?? tryGit(root, 'symbolic-ref', '--short', 'HEAD') ?? DEFAULTS.base;
-    const text = { name, bundle, date: new Date().toISOString().slice(0, 10) };
+    const text = { name, bundle, date: new Date().toISOString().slice(0, 10), producer: `aidlc/${version}`, at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') };
     // Each level's run command, as the owner gave it; a detected one is only offered (docs/design/method.md).
     const levels = {};
     for (const value of flags.run ?? []) {
@@ -168,6 +168,7 @@ export const commands = {
       writeFileSync(settingsFile, JSON.stringify(settings, null, 2) + '\n');
     }
 
+    if (!flags.adopt) writeIndexes(join(root, bundle)); // the constitution's folder gets its index (docs/design/method.md)
     report.push(vendor(root, version));
     if (flags.adopt) {
       const findings = checkBundle(join(root, bundle), { base: root });

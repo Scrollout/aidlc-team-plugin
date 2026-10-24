@@ -784,6 +784,11 @@
         "bundle": true
       },
       {
+        "template": "bundle/constitution.md",
+        "to": "{{bundle}}/constitution/principles.md",
+        "bundle": true
+      },
+      {
         "template": "docs/requirement.md",
         "to": ".aidlc/templates/docs/requirement.md"
       },
