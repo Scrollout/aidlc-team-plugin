@@ -2,7 +2,7 @@
 // and the model hook (docs/design/unit-card.md). Model routing follows docs/design/team.md.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
-import { CLI_DIR, config, done, list, UsageError, relPath } from './config.mjs';
+import { CLI_DIR, config, done, list, readJson, UsageError, relPath } from './config.mjs';
 import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { parseDoc, proseLines } from './okf.mjs';
@@ -102,6 +102,9 @@ export function renderCard(cwd, unitId) {
     reserves: atBase.reserves,
     requirements: list(doc.fm.requirements).map(reqId).flatMap((id) => plan.requirements.filter((r) => reqId(r.id) === id)
       .map((r) => msg('cardRequirement', { id: r.id, path: relPath(top, r.file) }))), // as the file names it
+    // A back-fill unit's reported mutations, for the reviewer to judge (docs/design/backfill.md).
+    mutations: [[readJson(runtimeFile(cwd, 'reports', unitId))?.mutations ?? []].flat().filter((m) => m?.ac).map((m) => msg('cardMutation', { path: '', ...m, find: JSON.stringify(m.find), replace: JSON.stringify(m.replace) })).join('')]
+      .map((l) => (l ? msg('cardMutations', { list: l }) : '')).join(''),
     fixes: [fixes.length ? msg('cardFixes', { list: fixes.join('') }) : '', answered.length ? msg('cardAnswered', { list: answered.join('') }) : ''].join(''),
     proof: [Object.entries(withDefaults(profile).levels).filter(([, l]) => l?.run && list(l.paths).length).map(([level]) => level).join(', ')].filter(Boolean),
     runs: Object.entries(withDefaults(profile).levels).filter(([, l]) => l?.run).map(([level, l]) => ({ level, run: l.run })),

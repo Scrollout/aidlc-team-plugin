@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** M7 U55 built: a unit that changes only tests reports one mutation per AC, refused by `aidlc report` otherwise; the card says how and shows the reported ones, and the reviewer judges them ([Proof for back-fill tests](design/backfill.md)). Release 0.62.0.
 - **Creation** [Proof for back-fill tests](design/backfill.md) and M7 units U55 and U56 for approval: the builder lists one mutation per AC for a tests-only unit and the gate applies each (owner's choice).
 - **Update** M7 U54 built: `upgrade` adds each doc template a project lacks, and the constitution when its bundle holds no `Principles` doc, regenerating the indexes; it overwrites nothing and names each file it added ([Profile and templates](design/profile.md)). Release 0.61.0.
 - **Update** M7 U53 built: `init` writes `<bundle>/constitution/principles.md`, seven rules each naming the checks that enforce them and a section for the project's own, regenerates the bundle's indexes, and AGENTS.md points to it ([Build method from day one](design/method.md)). Release 0.60.0.
