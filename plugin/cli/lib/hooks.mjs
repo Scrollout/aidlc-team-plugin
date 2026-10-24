@@ -105,9 +105,10 @@ function guard(input, cwd) {
     // The owner answers a permission prompt for an owner command; without prompts (bypass) it stays a `!` command (decision 0009).
     const owner = ownerCommand(argv);
     if (owner) {
-      const command = argv.slice(argv.indexOf(owner)).join(' ');
-      // The owner typed it (docs/design/operations.md#details); a redirect after the intent is no part of the go.
-      if (useGo(cwd, argv.slice(argv.indexOf(owner), argv.indexOf(owner) + 2).join(' '))) return allow();
+      const rest = argv.slice(argv.indexOf(owner));
+      const cut = rest.findIndex((a) => /^\d*[<>]/.test(a)); // a redirect is no part of the command
+      const command = (cut < 0 ? rest : rest.slice(0, cut)).join(' ');
+      if (useGo(cwd, command)) return allow(); // the owner typed it (docs/design/operations.md#details)
       if (input.permission_mode === H.noPrompt) return deny(cwd, input, 'GUARD-OWNER', 'guardOwner', { command });
       recordPrompt(cwd, input, command);
       return deny(cwd, input, 'GUARD-OWNER', 'guardOwner', { command }, 'ask');

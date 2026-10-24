@@ -99,6 +99,8 @@ test('U48/AC-2 the release line names the words to type; typed words give a go t
   assert.equal(typed, 'The owner typed release I-1: run aidlc release I-1 now; the guard lets this one call through.');
   assert.ok(!existsSync(join(dir, 'released.txt')), 'the hook only records the go');
   assert.equal(guard(dir, 'S=$(date +%s); node .aidlc/bin/aidlc.mjs release I-1 2>&1 | tail -20'), 'none', 'the go lets it through, redirect and all');
+  guard(dir, 'node .aidlc/bin/aidlc.mjs release I-1 2>&1 | tail -20');
+  assert.equal(JSON.parse(read(dir, '.git/aidlc/prompts.json')).at(-1).command, 'release I-1', 'a prompt is recorded without the redirect');
   assert.equal(guard(dir, 'node .aidlc/bin/aidlc.mjs release I-1'), 'ask', 'once');
   hook(dir, 'prompt', { prompt: 'release I-1' });
   commit(dir, 'a later commit');
@@ -154,8 +156,10 @@ test('U51/AC-1 the retro lists each failed deploy check, smoke and rollback of t
   run(dir, ['deploy', 'check', 'I-1']);
   run(dir, ['release', 'I-1']);
   run(dir, ['rollback', 'I-1']);
-  run(dir, ['fix', 'health check fails after release', '--after', 'I-1', '--scope', 'docs/**']);
+  run(dir, ['fix', 'health check fails after release', '--after', 'I-1', '--scope', 'src/**']);
+  approve(dir, 'U-2');
   const r = run(dir, ['retro', 'I-1']);
+  assert.match(r.out, /^ {2}\S+ approve U-2 by owner@example\.com$/m, 'the fix unit\'s approval is the intent\'s too');
   assert.equal(r.code, 0, r.err);
   const lines = r.out.split('deploy failures:\n')[1].split('proposals')[0].trimEnd().split('\n');
   assert.deepEqual(lines.map((l) => l.replace(/ at \S+:/, ' at <t>:')), [
