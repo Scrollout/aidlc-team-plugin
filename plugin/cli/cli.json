@@ -163,6 +163,11 @@
       ]
     },
     {
+      "name": "map",
+      "usage": "map",
+      "does": "write the codebase map in the bundle (merge also writes it)"
+    },
+    {
       "name": "sync",
       "usage": "sync",
       "does": "project intents and units onto GitHub issues and a Project"
@@ -544,6 +549,13 @@
     "boardAdded": "added #{{number}} to the project\n",
     "boardSet": "set {{field}} of #{{number}} to {{value}}\n",
     "boardInSync": "the board is in sync\n",
+    "mapOwns": "owns {{data}}",
+    "mapApi": "public: {{api}}",
+    "mapRow": "| {{id}} | {{uses}} | {{usedBy}} |\n",
+    "mapBody": "\n# Tree\nThe folders that hold a module, with its id, the data it owns and its public paths.\n```\n{{tree}}\n```\n{{#each flow}}\n# Dependencies\nModule to module, from the dependency graph.\n```mermaid\nflowchart LR\n{{this}}\n```\n{{/each}}{{#each table}}\n| Module | Uses | Used by |\n|---|---|---|\n{{this}}{{/each}}",
+    "mapDoc": "---\ntype: Map\ntitle: Codebase map\ndescription: The codebase as a tree of modules, with the data each owns, its public paths and what it depends on; written at every merge, never by hand.\ngenerated: { by: {{producer}}, at: {{at}} }\n---\n{{body}}",
+    "mapWritten": "wrote {{file}}\n",
+    "mapSame": "the codebase map is current\n",
     "boardBehind": "the board is behind: aidlc sync\n",
     "boardMissingOption": "{{name}} {{value}} (the board has {{options}})",
     "boardNoOptions": "sync wrote nothing: the Project lacks {{#each missing}}{{this}}; {{/each}}→ add the option on the Project, or plan a value it has, then run aidlc sync",
@@ -596,7 +608,8 @@
       "Plan": 12000,
       "Intent": 12000,
       "Design": 6000,
-      "Decision": 6000
+      "Decision": 6000,
+      "Map": 16000
     },
     "sizeCapDefault": 4000,
     "levels": [
@@ -1280,6 +1293,18 @@
       "ran",
       "refused"
     ]
+  },
+  "map": {
+    "file": "codebase-map.md",
+    "noModule": "(no module)",
+    "sep": " · ",
+    "branch": "├── ",
+    "last": "└── ",
+    "pipe": "│   ",
+    "space": "    ",
+    "cap": 15000,
+    "versionFile": "VERSION",
+    "manifest": "../.claude-plugin/plugin.json"
   },
   "board": {
     "gh": "gh",

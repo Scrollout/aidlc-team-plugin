@@ -14,6 +14,7 @@ import { commands as hooks, ownerRefused } from './lib/hooks.mjs';
 import { commands as board } from './lib/board.mjs';
 import { commands as retro } from './lib/retro.mjs';
 import { commands as deploy } from './lib/deploy.mjs';
+import { commands as map } from './lib/map.mjs';
 
 const EXIT = config.exit;
 
@@ -29,7 +30,7 @@ const combine = (...handlers) => async (args, ctx) => {
 };
 
 // Each unit that builds a command adds its handler here, keyed by the command name in cli.json.
-export const HANDLERS = { ...okf, ...state, ...card, ...init, ...gate, ...hooks, ...board, ...retro, ...deploy, lane: grid.lane, check: withSummary(combine(okf.check, grid.check, gate.check)) };
+export const HANDLERS = { ...okf, ...state, ...card, ...init, ...gate, ...hooks, ...board, ...retro, ...deploy, ...map, lane: grid.lane, check: withSummary(combine(okf.check, grid.check, gate.check)) };
 
 function help() {
   const width = Math.max(...config.commands.map((c) => c.usage.length));
