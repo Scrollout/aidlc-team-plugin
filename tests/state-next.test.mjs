@@ -233,6 +233,30 @@ test('U34/AC-1 U34/AC-2 each round records its commit; a focus pass outlives a f
   assert.match(run(dir, ['merge', 'U-1']).out, /GATE-SPECIALIST/);
 });
 
+test('U75/AC-2 an added line matching security.content requires the security focus; a fix adding another reviews it again', () => {
+  const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['a/**'] }) }, { security: { content: ['BYPASSRLS'] } });
+  approve(dir, 'I-1', 'U-1');
+  git(dir, 'switch', '-q', '-c', 'unit/U-1');
+  commit(dir, 'work', { 'a/x.txt': 'U-1/AC-1\n', 'a/role.sql': 'ALTER ROLE app bypassrls;\n' });
+  git(dir, 'switch', '-q', 'main');
+  review(dir, 'U-1', 'pass');
+  assert.match(run(dir, ['next']).out, /^review U-1, focus security/, 'outside every focus glob, the content still asks for it');
+  assert.match(run(dir, ['merge', 'U-1']).out, /GATE-SPECIALIST security review required \(a\/role\.sql:1 matches security\.content BYPASSRLS\)/);
+  run(dir, ['review', 'record', 'U-1', '-'], JSON.stringify({ verdict: 'pass', focus: 'security', findings: [] }));
+  const fixRound = (text) => {
+    review(dir, 'U-1', 'fix');
+    git(dir, 'switch', '-q', 'unit/U-1');
+    commit(dir, 'fix', { 'a/x.txt': `U-1/AC-1 ${text}\n` });
+    git(dir, 'switch', '-q', 'main');
+    report(dir, 'U-1');
+    review(dir, 'U-1', 'pass');
+  };
+  fixRound('plain');
+  assert.match(run(dir, ['next']).out, /^merge U-1/, 'a fix with no matching line keeps the security pass');
+  fixRound('BYPASSRLS again');
+  assert.match(run(dir, ['next']).out, /^review U-1, focus security/);
+});
+
 test('U35/AC-1 a pass carrying a CONFIRMED finding is recorded as fix and says why; PLAUSIBLE findings stay notes on a pass', () => {
   const dir = twoUnits();
   approve(dir, 'I-1', 'U-1', 'U-2');
@@ -255,7 +279,7 @@ test('U37/AC-2 U37/AC-3 approve refuses a unit at a one-way door with no decisio
   approve(dir, 'I-1');
   const r = run(dir, ['approve', 'U-1']);
   assert.equal(r.code, 64);
-  assert.match(r.err, /PLAN-DECISION U-1 touches the one-way door migrations\/\*\* and links no decision → link a Decision doc/);
+  assert.match(r.err, /PLAN-DECISION U-1 touches the one-way door migrations\/\*\* through scope \S+ and links no decision → link a Decision doc/);
   commit(dir, 'decide', {
     'docs/decisions/0001-keep.md': '---\ntype: Decision\ntitle: 0001 Keep\ndescription: Keep it.\n---\n\n# Decision\nKeep.\n',
     [U(1)]: read(dir, U(1)) + '\n# Logical\n- [Keep](../decisions/0001-keep.md)\n',

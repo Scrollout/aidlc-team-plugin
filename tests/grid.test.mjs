@@ -197,6 +197,15 @@ test('U22/AC-1 U22/AC-2 a scope holding the profile may add its test location; a
   ], 'U-1 adds its test location to the profile with its test; a module keyed by name counts');
 });
 
+test('U75/AC-1 PLAN-DECISION names the scope glob that reaches the door and suggests anchoring a bare name', () => {
+  const dir = project({ 'docs/units/U-1-a.md': '---\ntype: Unit\ntitle: A\ndescription: A.\nscope: [".aidlc/profile.json", "Makefile"]\n---\n\n# Acceptance criteria\n\n- AC-1 (unit): x.\n' });
+  const doors = () => lintPlan(join(dir, 'docs'), { lanes: { full: ['migrations/**'] } }, { base: dir }).filter((f) => f.code === 'PLAN-DECISION').map((f) => f.message);
+  assert.deepEqual(doors(), ['U-1 touches the one-way door migrations/** through scope Makefile and links no decision (a bare name matches at any depth: write /Makefile for the root file)']);
+  const file = join(dir, 'docs/units/U-1-a.md');
+  writeFileSync(file, readFileSync(file, 'utf8').replace('"Makefile"', '"/Makefile"'));
+  assert.deepEqual(doors(), [], 'an anchored name stays at the root');
+});
+
 test('U37/AC-1 a unit at a one-way door links a decision or says why it is two-way, else PLAN-DECISION names the door', () => {
   const linked = (scope, body, fm = '') => `---\ntype: Unit\ntitle: A\ndescription: A.\nscope: ${JSON.stringify(scope)}\n${fm}---\n\n# Acceptance criteria\n\n- AC-1 (unit): x.\n\n${body}\n`;
   const dir = project({
@@ -210,8 +219,8 @@ test('U37/AC-1 a unit at a one-way door links a decision or says why it is two-w
   });
   const doors = (profile) => lintPlan(join(dir, 'docs'), profile, { base: dir }).filter((f) => f.code === 'PLAN-DECISION').map((f) => [f.path, f.message]);
   assert.deepEqual(doors({ lanes: { full: ['migrations/**'] } }), [
-    ['docs/units/U-1-a.md', 'U-1 touches the one-way door migrations/** and links no decision'],
-    ['docs/units/U-4-d.md', 'U-4 touches the one-way door docs/architecture/api.md and links no decision'],
+    ['docs/units/U-1-a.md', 'U-1 touches the one-way door migrations/** through scope migrations/0001.sql and links no decision'],
+    ['docs/units/U-4-d.md', 'U-4 touches the one-way door docs/architecture/api.md through scope docs/architecture/api.md and links no decision'],
   ], 'a linked decision or twoWay clears it; consuming an interface is no door');
   assert.deepEqual(doors({ lanes: { full: ['migrations/**'] }, decisions: { paths: ['schema/**'] } }).map(([p]) => p), ['docs/units/U-4-d.md'], 'decisions.paths replaces lanes.full');
   assert.deepEqual(doors({ focus: { security: ['migrations/**'] } }).map(([p]) => p), ['docs/units/U-4-d.md'], 'a focus glob alone is no door');

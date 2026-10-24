@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** M10 U75 built from the first migration: `PLAN-DECISION` names the scope glob that reaches the door and the anchor for a bare name; `security.content` requires the security focus for matching added lines (carried since M2); `check` warns `PROFILE-KEY` for a key nothing reads ([Profile](design/profile.md), [Approvals](design/approvals.md)). Release 0.80.0.
 - **Update** M10 U74 AC-3: the session-start status names the upgrade with the installed plugin's command when the pinned CLI is older; the skill runs owner commands for the owner's prompt, never as a `!` line ([Vendoring](design/vendoring.md)). Release 0.79.0.
 - **Update** M10 U74 built from the first migration: an AC at a level with a `run` but no `paths` is `GATE-LEVEL` instead of a silent proof skip; `sync` reads the Project items again when GitHub's auto-add of sub-issues added one after its read ([Merge mechanics](design/gate.md), [Board](design/board.md)). Release 0.78.0.
 - **Update** M10 U73 built from the first migration: `init` matches the generated workflow to the project's runner and action pins; a red base names the rerun path for a failure outside the repo; a unit adding an architecture boundary baselines today's edges ([CI on the base](design/base-ci.md), [Architecture](design/architecture.md)). Release 0.77.0.

@@ -55,7 +55,28 @@ export function reviewFocuses(cwd, profile, base, unit) {
     const path = paths.find((x) => list(globs).some((g) => overlaps('/' + x, g)));
     if (path) needed.set(focus, msg('gateFocusPath', { path, focus }));
   }
+  const hit = needed.has(S.contentFocus) ? null : contentHit(cwd, profile, `${base}...${branchOf(unit)}`);
+  if (hit) needed.set(S.contentFocus, msg('gateFocusContent', hit));
   return needed;
+}
+
+// The first added line in a diff range that matches a `security.content` pattern: code that needs a security
+// review wherever it sits (docs/design/profile.md).
+function contentHit(cwd, profile, range) {
+  const patterns = list(profile.security?.content);
+  if (!patterns.length) return null;
+  let path = null;
+  let line = 0;
+  for (const l of gitLines(cwd, 'diff', '-U0', '--no-color', '--no-ext-diff', range)) {
+    if (l.startsWith('+++ ')) path = l.slice(6);
+    else if (l.startsWith('@@')) line = Number(l.match(/\+(\d+)/)?.[1]);
+    else if (l.startsWith('+') && path) {
+      const pattern = patterns.find((p) => new RegExp(p, 'i').test(l.slice(1)));
+      if (pattern) return { path, line, pattern };
+      line++;
+    }
+  }
+  return null;
 }
 
 // A focus other than general keeps its last pass after a fix round when the commits since the reviewed commit
@@ -63,7 +84,8 @@ export function reviewFocuses(cwd, profile, base, unit) {
 export function keptPass(cwd, profile, unit, focus, last) {
   if (focus === S.focus || last?.verdict !== VERDICT.pass || !last.commit) return false;
   const paths = tryGit(cwd, 'diff', '--name-only', last.commit, branchOf(unit));
-  return paths !== null && !paths.split('\n').filter(Boolean).some((x) => list(profile.focus?.[focus]).some((g) => overlaps('/' + x, g)));
+  return paths !== null && !paths.split('\n').filter(Boolean).some((x) => list(profile.focus?.[focus]).some((g) => overlaps('/' + x, g)))
+    && !(focus === S.contentFocus && contentHit(cwd, profile, `${last.commit}..${branchOf(unit)}`));
 }
 
 // ---- Back-fill ----

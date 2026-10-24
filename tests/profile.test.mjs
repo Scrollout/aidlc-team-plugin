@@ -48,7 +48,7 @@ test('U1/AC-2 removing a deny is refused with the layer and key', () => {
 
 test('U1/AC-2 missing layers are empty; invalid JSON names the file', () => {
   const empty = fixture({});
-  assert.deepEqual(loadProfile(empty, { cliDir: join(empty, 'none') }), { profile: {}, layers: [], rules: [] });
+  assert.deepEqual(loadProfile(empty, { cliDir: join(empty, 'none') }), { profile: {}, layers: [], rules: [], sources: [] });
   const bad = fixture({ '.aidlc/profile.json': '{ nope' });
   assert.throws(() => loadProfile(bad, { cliDir: join(bad, 'none') }), /\.aidlc\/profile\.json: invalid JSON/);
 });

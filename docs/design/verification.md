@@ -33,7 +33,7 @@ Fails with one line per problem, each naming the fix, unless all hold:
 2. Diff inside the card's scope; lane at merge ≥ lane at start.
 3. Every AC has a test tagged `U-<n>/AC-<k>` in the diff or the base, at its level; not in the quick lane ([Unit card](unit-card.md#quick-lane)).
 4. Profile checks for the touched modules and every level `run` pass on the merged result; with the unit's code reverted, each level of its tagged tests fails (proof-revert). A quick-lane unit runs no level: the commands its ACs name run instead ([Merge mechanics](gate.md#details)).
-5. Outside the quick lane, verdict `pass` for the current diff hash, plus each required specialist (a focus is required when its globs match the diff).
+5. Outside the quick lane, verdict `pass` for the current diff hash, plus each required specialist (a focus is required when its globs match the diff; `security` also when an added line matches `security.content`, M10 U75).
 6. Bundle passes OKF validation.
 7. Profile `security.check` commands pass when set (e.g. secret scan, SAST, dependency audit such as gitleaks, semgrep, govulncheck); the plugin runs them, it does not ship them.
 8. Architecture: no denied dependency edge and every `architecture.checks` command passes, on every merge ([Architecture](architecture.md)).
@@ -53,7 +53,6 @@ Prompts are code coupled to a model version. `tests/evals/` holds a fixture proj
 `node tests/evals/run.mjs setup <dir>` creates the fixture; after the reviewer and builder have run on it, `node tests/evals/run.mjs score <dir>` lists each seeded defect as found or missed. Results go to the pilot report.
 
 # Later
-- Security content patterns, cut from M1 (owner, 2026-10-22).
 - Later: an optional CI evaluator agent on pushes.
 
 [^cc-hooks]: Claude Code hooks reference

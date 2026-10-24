@@ -57,7 +57,7 @@ function readLayer(file) {
 }
 
 function layerFiles(root, cliDir = CLI_DIR) {
-  return config.layers.map((l) => ({ name: l.name, file: join(l.from === 'cli' ? cliDir : root, l.path) }));
+  return config.layers.map((l) => ({ name: l.name, path: l.path, from: l.from, file: join(l.from === 'cli' ? cliDir : root, l.path) }));
 }
 
 // The plugin defaults, beside the CLI so a project's pinned copy carries them.
@@ -75,5 +75,5 @@ export function loadProfile(root, { cliDir = CLI_DIR } = {}) {
   const rules = existsSync(rulesDir)
     ? readdirSync(rulesDir).filter((f) => f.endsWith(config.rules.ext)).sort().map((f) => join(rulesDir, f))
     : [];
-  return { profile: mergeLayers(layers), layers: layers.map((l) => l.name), rules };
+  return { profile: mergeLayers(layers), layers: layers.map((l) => l.name), rules, sources: layers.filter((l) => l.from !== 'cli') };
 }
