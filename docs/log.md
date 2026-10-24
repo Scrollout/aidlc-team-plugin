@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Creation** [M8 evals report](pilot/m8-evals-report.md): the reviewer and builder evals ran on 0.73.0 with back-fill units; every seeded case was found, about 1.60 USD; one builder mutation broke only part of its AC and passed review.
 - **Update** M8 U67 built: the hook run-time budget counts only the time beyond a bare `node` start timed beside it; tests share one hook and one pinned-project helper; `board.backoff` moved to the defaults, so its test no longer sleeps; the suite runs in 32 s instead of 46 s. Release 0.73.0.
 - **Update** M8 U64 built: the skill names the deploy steps and the typed words; the builder prompt says what the gate proves for code, back-fill and quick-lane units; the constitution template carries those exceptions; the README diagrams and lists match the code. Release 0.72.0.
 - **Update** M8 U69: every diagram matches the code, with a new [Intent states](design/intent-states.md) diagram; [0012 Typed go](decisions/0012-typed-go.md) records the typed `release`/`rollback` words; decision 0009 lists every owner command.
