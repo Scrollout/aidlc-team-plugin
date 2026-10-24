@@ -3,11 +3,12 @@ import assert from 'node:assert/strict';
 import { git, makeRepo, read, run } from './state-repo.mjs';
 import { merge, PROFILE, setup } from './gate-repo.mjs';
 
-const GRAPH = `node -e "console.log(['src/api -> lib/db', 'src/api -> data/orders', 'lib/db -> third/x'].join('\\\\n'))"`;
+const GRAPH = 'node graph.mjs'; // a script file: quoting in an inline command differs between shells
+const GRAPH_JS = "console.log(['src/api -> lib/db', 'src/api -> data/orders', 'lib/db -> third/x'].join('\\n'));\n";
 const MODULES = [{ id: 'api', paths: ['src/api/**'], api: ['src/api'] }, { id: 'db', paths: ['lib/db/**'], data: ['data/orders'] }];
 
 test('U88/AC-1 aidlc map writes the modules as a tree with data and public paths, a top folder no module covers, and the module dependencies', () => {
-  const dir = makeRepo({ 'src/api/a.mjs': '1;\n', 'lib/db/b.mjs': '1;\n', 'scripts/c.sh': 'true\n' }, { modules: MODULES, architecture: { graph: GRAPH } });
+  const dir = makeRepo({ 'src/api/a.mjs': '1;\n', 'lib/db/b.mjs': '1;\n', 'scripts/c.sh': 'true\n', 'graph.mjs': GRAPH_JS }, { modules: MODULES, architecture: { graph: GRAPH } });
   const r = run(dir, ['map']);
   assert.equal(r.code, 0, r.err + r.out);
   const map = read(dir, 'docs/codebase-map.md');
