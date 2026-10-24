@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** 0.63.1: typed `approve …`, `release I-<n>` and `rollback I-<n>` count with a trailing full stop or exclamation mark (found by the M7 back-fill pilot).
 - **Creation** [M7 back-fill pilot report](pilot/m7-report.md): U55 and U56 held on 0.63.0; a back-fill intent still asks for a runbook and a release, now an M7 candidate.
 - **Update** M7 U56 built: for a unit that changes only tests, outside the quick lane, the gate applies each AC's mutation alone in its trial tree and refuses with `GATE-PROOF` when the AC's level still passes or a mutation does not apply; the trailer reads `Proof: mutation <levels>` ([Proof for back-fill tests](design/backfill.md)). Release 0.63.0.
 - **Update** M7 U55 built: a unit that changes only tests reports one mutation per AC, refused by `aidlc report` otherwise; the card says how and shows the reported ones, and the reviewer judges them ([Proof for back-fill tests](design/backfill.md)). Release 0.62.0.
