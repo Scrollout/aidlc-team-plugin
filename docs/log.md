@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** [M8](roadmap/m8.md): full alignment and cleanup planned as U62 to U68 from two read-only audits, for approval.
 - **Update** M8 U61 built: each back-fill mutation names the behaviour it breaks in `breaks`, refused without it; the card asks for the AC's main behaviour, not an edge, and the reviewer sends back an edge-only mutation ([Proof for back-fill tests](design/backfill.md)). Release 0.68.0.
 - **Creation** [M8](roadmap/m8.md) draft: U61, mutations that name and break their AC's main behaviour, for approval (from the [M7 back-fill pilot](pilot/m7-report.md)).
 - **Update** [M7](roadmap/m7.md) closed on 0.67.0 (owner): the conditional M5 candidates are dropped, U34 is left to the migration, and the M2 carry list moves to [Later](roadmap/later.md).
