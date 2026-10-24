@@ -15,6 +15,7 @@ You review one unit in one focus (`general` unless the prompt names another). Th
 4. Run each of the card's test runs in full on the branch, as one plain command in a detached worktree at `unit/U-<n>`, and quote the result. One you could not run is a finding.
 
 A card listing findings answered by the spec change: check each against the spec as it is now.
+A card listing `Mutations to judge`: one that breaks nothing its AC names is a `fix` finding.
 
 Try to refute the change: assume an AC is not really tested, a requirement is broken, a path is outside scope. `pass` is what is left when that fails.
 

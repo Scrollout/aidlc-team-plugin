@@ -6,9 +6,9 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, wri
 import { dirname, join, relative, resolve } from 'node:path';
 import { config, done, isMap, list, readJson, UsageError, relPath } from './config.mjs';
 import { msg } from './template.mjs';
-import { loadProfile } from './profile.mjs';
+import { loadProfile, withDefaults } from './profile.mjs';
 import { parseDoc } from './okf.mjs';
-import { acsOf, computeLane, lintPlan, overlaps, readPlan, reqId as reqIdOf } from './grid.mjs';
+import { acsOf, computeLane, inside, lintPlan, overlaps, readPlan, reqId as reqIdOf } from './grid.mjs';
 
 const S = config.state;
 
@@ -65,6 +65,35 @@ export function keptPass(cwd, profile, unit, focus, last) {
   if (focus === S.focus || last?.verdict !== S.verdicts[0] || !last.commit) return false;
   const paths = tryGit(cwd, 'diff', '--name-only', last.commit, branchOf(unit));
   return paths !== null && !paths.split('\n').filter(Boolean).some((x) => list(profile.focus?.[focus]).some((g) => overlaps('/' + x, g)));
+}
+
+// ---- Back-fill ----
+
+// A path in one of the levels' test paths.
+export const isTestPath = (f, levels) => Object.values(levels ?? {}).some((l) => list(l?.paths).some((g) => inside('/' + f, g)));
+// A unit's changes outside the test paths, the bundle and the project folder: what proof-revert reverts. None
+// makes it a back-fill unit, proved by mutations instead (docs/design/backfill.md).
+export const codeChanges = (paths, levels, bundleRel) => {
+  const project = dirname(config.layers.find((l) => l.from === 'project').path) + '/';
+  return paths.filter((f) => !isTestPath(f, levels) && !f.startsWith(bundleRel + '/') && !f.startsWith(project));
+};
+
+// What a back-fill unit's mutations lack: one per AC, of a file outside the tests and the diff, whose `find`
+// occurs exactly once on the unit branch. A quick-lane unit or one that changes code needs none.
+export function mutationProblems(cwd, profile, unit, mutations) {
+  const u = readPlan(bundleOf(cwd, profile)).units.find((x) => x.id === unit);
+  if (!u || computeLane(u.scope, profile).lane === 'quick') return [];
+  const levels = withDefaults(profile).levels;
+  const paths = (tryGit(cwd, 'diff', '--name-only', `${baseOf(profile)}...${branchOf(unit)}`) ?? '').split('\n').filter(Boolean);
+  if (codeChanges(paths, levels, relPath(git(cwd, 'rev-parse', '--show-toplevel'), bundleOf(cwd, profile))).length) return [];
+  return u.acs.flatMap((ac) => {
+    const tag = `${unit}/${ac.id}`;
+    const m = (Array.isArray(mutations) ? mutations : []).find((x) => x?.ac === tag);
+    if (!m) return [msg('mutationMissing', { tag })];
+    const text = m.path && tryGit(cwd, 'show', `${branchOf(unit)}:${m.path}`);
+    const count = text && m.find ? text.split(String(m.find)).length - 1 : 0;
+    return count === 1 && typeof m.replace === 'string' && !isTestPath(m.path, levels) && !paths.includes(m.path) ? [] : [msg('mutationBad', { tag, path: m.path ?? '', count })];
+  });
 }
 
 // ---- Approvals ----
@@ -562,6 +591,8 @@ export const commands = {
     const unit = args[0];
     if (!unit) throw new UsageError(msg('noDoc', { name: '' }));
     const data = parseObject(readStdin(ctx), 'report');
+    const problems = data.status === S.stopped ? [] : mutationProblems(ctx.cwd, loadProfile(ctx.cwd).profile, unit, data.mutations);
+    if (problems.length) throw new UsageError(msg('reportMutations', { problems: problems.join('; ') }));
     writeJson(runtimeFile(ctx.cwd, 'reports', unit), { ...data, unit, at: new Date().toISOString() });
     if (data.status === S.stopped) {
       bump(ctx.cwd, 'escalations', config.retro.reasons.stopped);

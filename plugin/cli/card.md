@@ -35,7 +35,7 @@ Write only inside:
 ## Out of scope
 {{#each outOfScope}}{{this}}
 {{/each}}
-{{fixes}}## Stop and report if
+{{fixes}}{{mutations}}## Stop and report if
 - an interface above has to change
 - the scope is too small for the ACs
 - an AC is ambiguous
@@ -43,3 +43,4 @@ Write only inside:
 ## Report
 First run `aidlc start {{id}}`. When done or stopped, pipe JSON to `aidlc report {{id}}`:
 {"status": "done|stopped", "summary": "...", "tests": ["<file>: {{id}}/AC-<k>"], "stop": "<reason when stopped>"}
+If you changed only tests, add "mutations": [{"ac": "{{id}}/AC-<k>", "path": "<code file the test covers>", "find": "<text there once>", "replace": "<text that breaks it>"}], one per AC: the gate applies each alone and that AC's level must fail.
