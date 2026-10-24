@@ -35,6 +35,13 @@ test('U28/AC-2 U28/AC-3 a quick-lane or run-less unit skips the proof and says s
   assert.match(readFileSync(join(import.meta.dirname, '../plugin/agents/builder.md'), 'utf8'), /The merge gate checks this: it reverts your code and reruns the levels of your tagged tests, and a test that still passes refuses the merge\./);
 });
 
+test('U74/AC-1 an AC at a level with a run and no paths refuses the merge instead of skipping its proof', () => {
+  const r = merge(setup({ profile: { ...PROFILE, levels: { unit: { run: 'node --test' } } } }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /GATE-LEVEL U-1\/AC-1 is at level unit, which has a run but no paths, so no merge can prove its test → move the test under the level's paths in profile.levels, or add the paths the level lacks, in this unit or in one merged before it/);
+  assert.doesNotMatch(r.out, /proof skipped/);
+});
+
 test('U28/AC-1 a run that checks git diff is not fooled by the revert', () => {
   const profile = { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: 'node --test && git diff --exit-code' } } };
   const r = merge(setup({ profile, files: { ...CODE, ...VACUOUS } }));

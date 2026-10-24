@@ -235,6 +235,24 @@ test('U14/AC-1 an issue list shorter than the repository count is retried with b
   assert.deepEqual(writes(ctx), [], 'no issue, label or milestone is created from a short list');
 });
 
+test('U74/AC-2 an item GitHub added after the read is read again, never added twice; one that stays unlisted stops sync', () => {
+  const ctx = setup();
+  aidlc(ctx, 'sync');
+  const s = stub(ctx);
+  const u1 = byTitle(ctx, 'U-1').number;
+  const auto = (hidden) => ({ ...s, calls: [], project: { ...s.project, items: s.project.items.map((i) => (i.number === u1 ? { ...i, hidden, values: {} } : i)) } });
+  writeFileSync(ctx.state, JSON.stringify(auto(1))); // added by the Project's auto-add of sub-issues, not listed yet
+  const r = aidlc(ctx, 'sync');
+  assert.equal(r.code, 0, r.err + r.out);
+  assert.equal(stub(ctx).project.items.filter((i) => i.number === u1).length, 1, 'one item');
+  assert.equal(item(ctx, u1).values.Status, 'Todo', 'its fields are set on the item read again');
+
+  writeFileSync(ctx.state, JSON.stringify(auto(99)));
+  const hidden = aidlc(ctx, 'sync');
+  assert.equal(hidden.code, 70);
+  assert.match(hidden.err, new RegExp(`#${u1} is on the Project but not listed, also after waiting`));
+});
+
 test('U14/AC-2 PLAN-BOARD names the board field and gives an example from the profile map', () => {
   const ctx = setup();
   const lines = aidlc(ctx, 'check').out.split('\n').filter((l) => l.includes('PLAN-BOARD'));

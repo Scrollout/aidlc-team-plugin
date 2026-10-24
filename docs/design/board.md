@@ -29,6 +29,7 @@ Zero model tokens. `aidlc sync` is CLI code calling `gh api` (REST for issues, G
 - Otherwise the marker in the body (`<!-- unit: U-3 -->`, `<!-- intent: I-1 -->`) finds it; with several, the oldest wins. No issue number is stored anywhere else.
 - Neither: `sync` lists the issues once more, since GitHub's list can lag, and creates the issue only if it is still missing.
 - A list shorter than the repository's issue count (GraphQL `issues.totalCount`) is a lagging read: `sync` lists again after each wait in the profile's `board.backoff` (ms; by default 500, 1000, 2000 and 4000), and when it is still short it stops before creating anything, a label or milestone included.
+- A Project's auto-add of sub-issues can add an item after `sync` read them; the add then fails (`Content already exists`). `sync` reads the items again with `board.backoff`; one still unlisted (archived) stops it, naming the issue.
 
 # Closing
 `sync` closes the issue of a merged unit and of a merged or released intent, and reopens one that is no longer done. `merge` stays offline: with `profile.github` set it runs `sync` afterwards, and a sync failure is a warning, never a merge failure. No `Closes` trailer is written.

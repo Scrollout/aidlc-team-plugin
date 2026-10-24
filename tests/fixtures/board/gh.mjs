@@ -25,7 +25,9 @@ if (args[1] === 'graphql') {
     s.calls.push({ op: 'project' });
     const owner = q.includes('organization(') ? 'organization' : 'user';
     const start = Number(v.cursor ?? 0);
-    const page = p.items.slice(start, start + 2); // tiny pages exercise the cursor
+    if (!v.cursor) s.view = p.items.filter((i) => !(i.hidden > 0 && i.hidden--)).map((i) => i.id); // per read: an item GitHub added but does not list yet
+    const listed = p.items.filter((i) => s.view.includes(i.id));
+    const page = listed.slice(start, start + 2); // tiny pages exercise the cursor
     const value = (f, x) => {
       const field = { name: f.name };
       if (f.options) return { name: x, field };
@@ -33,11 +35,12 @@ if (args[1] === 'graphql') {
     };
     const nodes = page.map((i) => ({ id: i.id, content: { number: i.number, repository: { nameWithOwner: i.repo } },
       fieldValues: { nodes: Object.entries(i.values).map(([n, x]) => value(p.fields.find((f) => f.name === n), x)).concat([{}]) } }));
-    const more = start + 2 < p.items.length;
+    const more = start + 2 < listed.length;
     reply({ data: { [owner]: { projectV2: { id: p.id, fields: { nodes: p.fields.concat([{}]) },
       items: { pageInfo: { hasNextPage: more, endCursor: more ? String(start + 2) : null }, nodes } } } } });
   } else if (q.includes('addProjectV2ItemById')) {
     const i = s.issues.find((x) => x.node_id === v.content);
+    if (p.items.some((x) => x.number === i.number)) { process.stderr.write('gh: Content already exists in this project\n'); process.exit(1); }
     const item = { id: `PVTI_${i.number}`, number: i.number, repo: s.repo, values: {} };
     p.items.push(item);
     s.calls.push({ op: 'addItem', write: true });

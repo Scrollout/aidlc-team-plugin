@@ -211,6 +211,7 @@ function runGate(cwd, st, unit) {
     const files = gitLines(tree, 'grep', '-l', '-F', tag).filter((f) => !f.startsWith(bundleRel + '/'));
     files.forEach((f) => tagged.add(f));
     if (!files.length) add('GATE-AC', 'gateAc', { tag });
+    else if (!levelPaths(ac.level).length && levels?.[ac.level]?.run) add('GATE-LEVEL', 'gateLevelNoPaths', { tag, level: ac.level }); // proof needs the paths
     else if (levelPaths(ac.level).length && !files.some((f) => levelPaths(ac.level).some((g) => matches(f, g)))) {
       add('GATE-LEVEL', 'gateLevel', { tag, files: files.join(', '), level: ac.level });
     }
