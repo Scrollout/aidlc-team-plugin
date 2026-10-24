@@ -20,5 +20,8 @@ The scratch copy of the [M6 pilot](m6-report.md), upgraded from 0.61.0 to 0.63.0
 - **The merge is silent about each mutation:** it prints only the merge line; which AC's mutation failed which level is in the trailer as one word.
 - **A weak mutation passes review:** the boundary flip is a real break but a narrow one; the reviewers accepted it. The card could ask for the mutation that breaks the AC's main behaviour.
 
+# Fixed after the run
+- **0.63.1:** the owner typed `release I-12.` with a full stop, so the words gave no go and the guard asked a prompt instead. Typed words now count with a trailing full stop or exclamation mark.
+
 # Retro
 No code fired 3 or more times, no escalations or proposals. Its window starts after the last retro, so it also lists the two upgrades of the 0.61.0 quick check.
