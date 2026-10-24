@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** M8 U62 built: the guard denies a scheduled prompt that is a go (`release I-<n>`, `rollback I-<n>`), as it does an approval; `hold` usage names the reason; `prompt` is listed with the hook names ([Hooks](design/hooks.md)). Release 0.69.0.
 - **Update** [M8](roadmap/m8.md): full alignment and cleanup planned as U62 to U70 (diagrams, decision 0012, evals and a security pass added at the owner's question) from two read-only audits, for approval.
 - **Update** M8 U61 built: each back-fill mutation names the behaviour it breaks in `breaks`, refused without it; the card asks for the AC's main behaviour, not an edge, and the reviewer sends back an edge-only mutation ([Proof for back-fill tests](design/backfill.md)). Release 0.68.0.
 - **Creation** [M8](roadmap/m8.md) draft: U61, mutations that name and break their AC's main behaviour, for approval (from the [M7 back-fill pilot](pilot/m7-report.md)).

@@ -102,7 +102,7 @@ function guard(input, cwd) {
   const bundleRel = relPath(top, bundleOf(top, profile));
   const branch = tryGit(cwd, 'rev-parse', '--abbrev-ref', 'HEAD');
   // A scheduled prompt reaches the prompt hook as if typed: the lead may not schedule an approval (decision 0011).
-  if (H.scheduled.includes(input.tool_name)) return approveWords(input.tool_input?.prompt) ? deny(cwd, input, 'GUARD-SCHEDULE', 'guardSchedule', {}) : allow();
+  if (H.scheduled.includes(input.tool_name)) return approveWords(input.tool_input?.prompt) || new RegExp(H.goWords, 'i').test(typed(input.tool_input?.prompt)) ? deny(cwd, input, 'GUARD-SCHEDULE', 'guardSchedule', {}) : allow();
   for (const argv of segments(String(input.tool_input?.command ?? ''))) {
     // The owner answers a permission prompt for an owner command; without prompts (bypass) it stays a `!` command (decision 0009).
     const owner = ownerCommand(argv);

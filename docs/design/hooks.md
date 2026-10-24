@@ -16,7 +16,7 @@ sources:
 - Blocking hooks (guard, scope, secrets, model) set `timeout: 10` and `onFailure: "block"`; a hook that cannot run denies. Each prints JSON and exits 0: `permissionDecision: "deny"` with `CODE message → fix` as the reason.
 
 # Checks
-- **guard** (Bash) reads each command segment as argv. On `CronCreate` and `ScheduleWakeup` it denies a prompt the prompt hook would take as the owner's approval. On Bash it denies:
+- **guard** (Bash) reads each command segment as argv. On `CronCreate` and `ScheduleWakeup` it denies a prompt the prompt hook would take as the owner's approval or go (`release I-<n>`, `rollback I-<n>`). On Bash it denies:
   - a force push or `+refspec`;
   - pushing or deleting the base, so `aidlc push` is the only way;
   - `--no-verify` or `-n` on a commit;

@@ -206,3 +206,14 @@ test('U59/AC-1 a hold on a merged intent parks its release steps for the owner; 
   next = run(dir, ['next']);
   assert.match(next.out, /^⛔ I-1 smoke failed/, 'production first');
 });
+
+test('U62/AC-1 the lead cannot schedule a go: a scheduled release or rollback prompt is denied', () => {
+  const dir = merged({ release: OK });
+  for (const tool of ['CronCreate', 'ScheduleWakeup']) {
+    for (const prompt of ['release I-1', 'Rollback I-1.']) {
+      const out = JSON.parse(hook(dir, 'guard', { tool_name: tool, tool_input: { cron: '* * * * *', prompt } }));
+      assert.equal(out.hookSpecificOutput?.permissionDecision, 'deny', `${tool} ${prompt}`);
+    }
+    assert.equal(hook(dir, 'guard', { tool_name: tool, tool_input: { prompt: 'check the release notes' } }).trim(), '{}');
+  }
+});
