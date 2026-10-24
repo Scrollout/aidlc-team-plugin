@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Add** M10 U87 [Module surfaces and cycles](design/module-surface.md): `modules[].api` limits what other modules may depend on (`ARCH-API`), `architecture.acyclic` fails circles between modules (`ARCH-CYCLE`); the CLI budget goes to 3,700 lines ([Overview](design/overview.md)). Release 0.92.0.
 - **Add** M10 U86 [Data ownership](design/data-ownership.md): each data node has one owning module; the gate fails a direct crossing (`ARCH-DATA`), and the card names the module's data. Release 0.91.0.
 - **Update** M10 U85: the card hash leaves out `board`, `priority` and `hold`, so a board edit keeps recorded reviews ([Unit card](design/unit-card.md)). Release 0.90.1.
 - **Update** M10 U84: `next` and `status` name `aidlc sync` while the board is behind the plan, e.g. after an approval; `sync` checks planned values against the Project's options before any write and plan lint flags missing ones; a unit waiting on a dependency is Todo ([Board](design/board.md)). Release 0.90.0.

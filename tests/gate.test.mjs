@@ -5,7 +5,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { approve, CLI, commit, git, makeRepo, read, review, run, tempDir } from './state-repo.mjs';
 import { CODE, codes, FAIL, LOG, merge, OK, PROFILE, setup, TEST } from './gate-repo.mjs';
-import { boundaryFindings, dataFindings } from '../plugin/cli/lib/gate.mjs';
+import { boundaryFindings, moduleFindings } from '../plugin/cli/lib/gate.mjs';
 
 test('U6/AC-2 a passing gate merges --no-ff with trailers, writes index and log, removes the branch', () => {
   const dir = setup();
@@ -122,15 +122,42 @@ test('U86/AC-1 data: a module reaches only the data it owns or shared data; ever
     ['internal/scope', 'data/regional/scopes'], ['internal/scope', 'data/regional/outbox'], ['internal/scope/x.go', 'internal/registry'],
     ['internal/registry', 'data/regional/scopes'], ['internal/scope', 'data/global/tenants'],
   ];
-  assert.deepEqual(dataFindings(edges, profile).map((f) => [f.code, f.message]), [
+  assert.deepEqual(moduleFindings(edges, profile).map((f) => [f.code, f.message]), [
     ['ARCH-DATA', "internal/registry -> data/regional/scopes: data/regional/scopes belongs to scope; reach it through scope's interface, an event or a shared service"],
     ['ARCH-DATA', 'internal/scope -> data/global/tenants: no module owns data/global/tenants; add it to one module\'s data, or to architecture.data.shared'],
   ], 'own data, shared data and import edges pass');
-  assert.deepEqual(dataFindings([['internal/registry', 'data/regional/providers']], profile).map((f) => f.message),
+  assert.deepEqual(moduleFindings([['internal/registry', 'data/regional/providers']], profile).map((f) => f.message),
     ['data/regional/providers is claimed by registry, audit; one module owns it']);
   const baseline = new Map([['docs/decisions/0011-data.md', '# Baseline\n- `internal/registry -> data/regional/scopes`\n']]);
-  assert.equal(dataFindings(edges, profile, baseline).length, 1, 'a listed crossing is covered, the unowned node still fails');
-  assert.deepEqual(dataFindings(edges, { modules: profile.modules }), [], 'off without architecture.data');
+  assert.equal(moduleFindings(edges, profile, baseline).length, 1, 'a listed crossing is covered, the unowned node still fails');
+  assert.deepEqual(moduleFindings(edges, { modules: profile.modules }), [], 'off without architecture.data');
+});
+
+test('U87/AC-1 api: another module depends only on a module\'s public paths; a module without api is not checked', () => {
+  const profile = {
+    modules: [{ id: 'scope', paths: ['internal/scope/**'], api: ['internal/scope', 'internal/scope/events/**'] }, { id: 'registry', paths: ['internal/registry/**'] }],
+    architecture: { api: { except: ['docs/decisions/0012-api.md'] } },
+  };
+  const edges = [['internal/registry', 'internal/scope'], ['internal/registry', 'internal/scope/events/v1'], ['internal/registry', 'internal/scope/store'],
+    ['internal/scope/store', 'internal/scope/domain'], ['internal/scope', 'internal/registry/store'], ['internal/registry', 'third/party']];
+  assert.deepEqual(moduleFindings(edges, profile).map((f) => [f.code, f.message]), [
+    ['ARCH-API', 'internal/registry -> internal/scope/store: internal/scope/store is inside scope; depend only on its public paths (internal/scope, internal/scope/events/**)'],
+  ]);
+  const baseline = new Map([['docs/decisions/0012-api.md', '- `internal/registry -> internal/scope/store`\n']]);
+  assert.deepEqual(moduleFindings(edges, profile, baseline), []);
+});
+
+test('U87/AC-2 acyclic: modules that depend on each other in a circle fail once per circle; a listed module edge breaks it', () => {
+  const modules = ['a', 'b', 'c', 'd'].map((id) => ({ id, paths: [`m/${id}/**`] }));
+  const edges = [['m/a/x', 'm/b/y'], ['m/b/y', 'm/c'], ['m/c', 'm/a/z'], ['m/c/q', 'm/b'], ['m/d', 'm/a']];
+  const on = { modules, architecture: { acyclic: { except: ['docs/decisions/0013-cycles.md'] } } };
+  assert.deepEqual(moduleFindings(edges, on).map((f) => f.message), [
+    'modules depend on each other in a circle: a -> b -> c -> a',
+    'modules depend on each other in a circle: b -> c -> b',
+  ]);
+  const broken = new Map([['docs/decisions/0013-cycles.md', '- `c -> a`\n- `c -> b`\n']]);
+  assert.deepEqual(moduleFindings(edges, on, broken), []);
+  assert.deepEqual(moduleFindings(edges, { modules }), [], 'off without architecture.acyclic');
 });
 
 test('U6/AC-3 and AC-10 check --ci flags merges without trailers or out of scope, and direct code commits, after adopted', () => {

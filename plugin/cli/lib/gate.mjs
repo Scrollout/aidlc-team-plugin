@@ -96,7 +96,7 @@ function globRegex(glob) {
   return new RegExp(`^${body}$`);
 }
 
-const exceptDocs = (arch) => [...(arch.boundaries ?? []).flatMap((b) => list(b.except)), ...list(arch.data?.except)];
+const exceptDocs = (arch) => [...(arch.boundaries ?? []).flatMap((b) => list(b.except)), ...[arch.data, arch.api, arch.acyclic].flatMap((r) => list(r?.except))];
 
 // Denied edges of the dependency graph the project's `architecture.graph` command prints. An approved
 // `except` decision covers the edges it lists as `<from> -> <to>` lines, or the whole boundary if it lists none.
@@ -120,17 +120,35 @@ export function boundaryFindings(edges, architecture, approved = new Map()) {
   return out;
 }
 
-// Data edges, `<path> -> <data node>`, against the module owning each node (docs/design/data-ownership.md).
-export function dataFindings(edges, profile, approved = new Map()) {
-  const data = profile.architecture?.data;
-  const hit = (globs, path) => list(globs).some((g) => globRegex('/' + g).test(path));
+// Module rules over the graph: data owners (docs/design/data-ownership.md), public surfaces and cycles (docs/design/module-surface.md).
+export function moduleFindings(edges, profile, approved = new Map()) {
+  const { data, api, acyclic } = profile.architecture ?? {};
+  const hit = (globs, path) => list(globs).some((g) => globRegex('/' + g).test(path) || globRegex('/' + g).test(path + '/'));
+  const mods = (profile.modules ?? []).map((m) => ({ ...m, id: String(m.id ?? m.name) }));
   const out = [];
-  const seen = new Set();
-  for (const [from, to] of edges.filter(([, t]) => data?.prefix && t.startsWith(data.prefix))) {
-    const owners = (profile.modules ?? []).filter((m) => hit(m.data, to)).map((m) => ({ ...m, id: String(m.id ?? m.name) }));
-    if (!seen.has(to) && (seen.add(to), owners.length > 1)) out.push(finding('ARCH-DATA', to, 1, 'archDataTwice', { to, owners: owners.map((m) => m.id).join(', ') }));
-    if (owners.some((m) => hit(m.paths, from) || hit(m.paths, from + '/')) || (!owners.length && hit(data.shared, to)) || excepted(data.except, approved, from, to)) continue;
-    out.push(finding('ARCH-DATA', from, 1, owners.length ? 'archDataEdge' : 'archDataNoOwner', { from, to, owner: owners.map((m) => m.id).join(', ') }));
+  const [seen, links] = [new Set(), new Map()];
+  for (const [from, to] of edges) {
+    const [a, b] = [from, to].map((p) => mods.find((m) => hit(m.paths, p)));
+    if (data?.prefix && to.startsWith(data.prefix)) {
+      const owners = mods.filter((m) => hit(m.data, to));
+      if (!seen.has(to) && (seen.add(to), owners.length > 1)) out.push(finding('ARCH-DATA', to, 1, 'archDataTwice', { to, owners: owners.map((m) => m.id).join(', ') }));
+      if (owners.includes(a) || (!owners.length && hit(data.shared, to)) || excepted(data.except, approved, from, to)) continue;
+      out.push(finding('ARCH-DATA', from, 1, owners.length ? 'archDataEdge' : 'archDataNoOwner', { from, to, owner: owners.map((m) => m.id).join(', ') }));
+    } else if (a && b && a !== b) {
+      if (b.api && !hit(b.api, to) && !excepted(api?.except, approved, from, to)) out.push(finding('ARCH-API', from, 1, 'archApi', { from, to, module: b.id, api: list(b.api).join(', ') }));
+      if (acyclic && !excepted(acyclic.except, approved, a.id, b.id)) links.set(a.id, new Set([...(links.get(a.id) ?? []), b.id]));
+    }
+  }
+  // One circle per set of modules: the shortest way back to each start, breadth first.
+  const circles = new Set();
+  for (const start of links.keys()) {
+    const back = new Map([[start, null]]);
+    const queue = [start];
+    let id;
+    while ((id = queue.shift()) !== undefined && !links.get(id)?.has(start)) for (const n of links.get(id) ?? []) if (!back.has(n)) back.set(n, id), queue.push(n);
+    const circle = id === undefined ? [] : [id];
+    while (circle.length && circle[0] !== start) circle.unshift(back.get(circle[0]));
+    if (circle.length && !circles.has([...circle].sort().join())) circles.add([...circle].sort().join()), out.push(finding('ARCH-CYCLE', '.', 1, 'archCycle', { circle: [...circle, start].join(G.edge) }));
   }
   return out;
 }
@@ -145,7 +163,7 @@ function architecture(cwd, profile, key = 'gateCheck') {
     const edges = (r.stdout ?? '').split('\n').map((l) => l.split(G.edge).map((s) => s.trim())).filter((e) => e.length === 2 && e[0] && e[1]);
     const approved = new Map(exceptDocs(arch).map((d) => [d, existsSync(join(cwd, d)) ? readFileSync(join(cwd, d), 'utf8') : ''])
       .filter(([, text]) => text && approval(parseDoc(text)) === 'approved'));
-    out.push(...boundaryFindings(edges, arch, approved), ...dataFindings(edges, profile, approved));
+    out.push(...boundaryFindings(edges, arch, approved), ...moduleFindings(edges, profile, approved));
   }
   for (const command of list(arch.checks)) if (!shell(cwd, command)) out.push(finding('ARCH-CHECK', '.', 1, key, { command }));
   return out;

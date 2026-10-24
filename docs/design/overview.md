@@ -64,7 +64,7 @@ sequenceDiagram
 | Skill body / agent prompt | 3 KB each |
 | Skill and agent descriptions | 300 chars each |
 | Unit card | 6,000 chars |
-| CLI source (`plugin/cli/`) | 3,600 lines |
+| CLI source (`plugin/cli/`) | 3,700 lines |
 | Hook timeout | 10 s explicit, `onFailure: "block"` on blocking hooks |
 | Blocking hook run time | 500 ms beyond a bare `node` start timed beside it, median of 5 calls on a small project |
 
