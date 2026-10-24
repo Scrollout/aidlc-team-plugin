@@ -106,6 +106,7 @@ test('U48/AC-2 the release line names the words to type; typed words give a go t
   commit(dir, 'a later commit');
   assert.equal(guard(dir, 'node .aidlc/bin/aidlc.mjs release I-1'), 'ask', 'a go is for the commit it was typed at');
   assert.equal(hook(dir, 'prompt', { prompt: 'please release I-1' }).trim(), '{}', 'only the exact words');
+  assert.match(hook(dir, 'prompt', { prompt: 'release I-1.' }), /The owner typed release I-1:/, 'a sentence\'s full stop is no part of them');
 });
 
 test('U49/AC-1 after a passing release aidlc release runs deploy.smoke; a pass marks the intent released and the record keeps the output', () => {

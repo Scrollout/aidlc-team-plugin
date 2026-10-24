@@ -270,6 +270,7 @@ test('U24/AC-1 a prompt that is exactly approve <doc>… stamps the docs as the 
   const failed = typed(dir, 'approve U-9');
   assert.equal(failed.code, 0, 'a failed approval never blocks the prompt');
   assert.match(context(failed), /^The owner typed an approval, but it failed: .*U-9/);
+  assert.match(context(typed(dir, 'approve U-2.')), /approved docs\/units\/U-2-b\.md\n/, 'a full stop ends the sentence, not the id');
 });
 
 test('U24/AC-2 the lead cannot schedule an approval prompt; a pinned CLI without the prompt hook does not block prompts', () => {

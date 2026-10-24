@@ -73,7 +73,9 @@ export function ownerRefused(cwd, command) {
 }
 
 const allow = () => '{}';
-const approveWords = (text) => String(text ?? '').trim().match(new RegExp(H.approveWords, 'i'))?.[1].trim().split(/\s+/);
+// Typed words as the owner ends a sentence: a trailing period or exclamation mark is no part of them.
+const typed = (text) => String(text ?? '').trim().replace(/[.!]+$/, '');
+const approveWords = (text) => typed(text).match(new RegExp(H.approveWords, 'i'))?.[1].trim().split(/\s+/);
 function deny(cwd, input, code, key, data, decision = 'deny') {
   const message = msg(key, data);
   let reason = msg('hookDeny', { code, message, fix: H.codes[code].fix });
@@ -322,7 +324,7 @@ function useGo(cwd, command) {
 // The owner typed exactly `approve <doc>…`: stamped as the owner before the lead reads the prompt (decision 0011).
 // A deploy outlasts the hook, so typed `release I-<n>` only records the go and the lead runs it.
 function prompt(input, cwd) {
-  const go = String(input.prompt ?? '').trim().match(new RegExp(H.goWords, 'i'));
+  const go = typed(input.prompt).match(new RegExp(H.goWords, 'i'));
   if (go) {
     const command = `${go[1].toLowerCase()} ${go[2].toUpperCase()}`;
     writeJson(goesFile(cwd), [...(readJson(goesFile(cwd)) ?? []), { command, head: tryGit(cwd, 'rev-parse', 'HEAD'), at: new Date().toISOString() }].slice(-H.promptsKept));
