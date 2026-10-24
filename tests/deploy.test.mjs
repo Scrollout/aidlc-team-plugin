@@ -56,6 +56,14 @@ test('U47/AC-2 the release is offered only after a check passed on the current b
   assert.equal(next.code, 0);
 });
 
+test('U48/AC-2 an intent the owner tagged before deploy was added stays released', () => {
+  const dir = merged({});
+  git(dir, 'tag', 'v1');
+  commit(dir, 'deploy added', { '.aidlc/profile.json': { deploy: { check: [OK], run: OK } } });
+  assert.match(run(dir, ['status']).out, /^I-1 released /m);
+  assert.doesNotMatch(run(dir, ['next']).out, /deploy check/);
+});
+
 test('U47/AC-2 without deploy.check the release line is the one from before', () => {
   assert.match(run(merged({}), ['next']).out, /^👉 I-1 is merged: release with the owner$/m);
 });
@@ -71,7 +79,7 @@ test('U48/AC-1 aidlc release runs deploy.run and then release, records each exit
   assert.equal(r.out, 'I-1 release passed\n');
   assert.ok(existsSync(join(dir, 'deployed.txt')) && existsSync(join(dir, 'released.txt')));
   assert.equal(record(dir).release.ok, true);
-  assert.match(run(dir, ['status']).out, /^I-1 released /m, 'the recorded release decides, not a tag');
+  assert.match(run(dir, ['status']).out, /^I-1 released /m, 'the recorded release decides');
 
   const failing = merged({ deploy: { run: FAIL }, release: mark('released.txt') });
   assert.equal(run(failing, ['release', 'I-1']).code, 1);
