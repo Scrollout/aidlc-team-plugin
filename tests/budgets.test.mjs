@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { approve, commit, intentDoc, makeRepo, run, unitDoc } from './state-repo.mjs';
+import { approve, hook, intentDoc, pinnedRepo, run, unitDoc } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -87,11 +87,11 @@ const CHECKS = {
   },
 };
 
-// The median run time of each blocking hook, through the plugin's run.mjs and the pinned CLI, on a small project.
+// The median run time of each blocking hook beyond a bare `node` start, through the plugin's run.mjs and the
+// pinned CLI, on a small project. Each call is paired with a `node -e 0` timed just before it, so a busy machine
+// slows both alike.
 function hookTimes() {
-  const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), 'docs/units/U-1-a.md': unitDoc({ scope: ['src/**'] }) });
-  run(dir, ['upgrade', '--dirty']);
-  commit(dir, 'pin the CLI');
+  const dir = pinnedRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), 'docs/units/U-1-a.md': unitDoc({ scope: ['src/**'] }) });
   approve(dir, 'I-1', 'U-1');
   run(dir, ['card', 'U-1']);
   const write = { tool_name: 'Write', tool_input: { file_path: join(dir, 'src/a.mjs'), content: '1;\n' } };
@@ -101,12 +101,15 @@ function hookTimes() {
     secrets: write,
     model: { tool_name: 'Agent', tool_input: { subagent_type: 'team:builder', prompt: 'Build U-1.', model: 'sonnet' } },
   };
+  const timed = (call) => {
+    const start = performance.now();
+    call();
+    return performance.now() - start;
+  };
   return Object.entries(calls).map(([name, call]) => {
-    const input = JSON.stringify({ cwd: dir, hook_event_name: 'PreToolUse', ...call });
     const times = Array.from({ length: 5 }, () => {
-      const start = performance.now();
-      spawnSync(process.execPath, [join(ROOT, 'plugin/hooks/run.mjs'), name], { input });
-      return performance.now() - start;
+      const bare = timed(() => spawnSync(process.execPath, ['-e', '0']));
+      return timed(() => hook(name, { cwd: dir, hook_event_name: 'PreToolUse', ...call })) - bare;
     }).sort((a, b) => a - b);
     return { name, text: String(Math.round(times[2])) };
   });

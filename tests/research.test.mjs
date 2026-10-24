@@ -1,9 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
 import { readFileSync, statSync, utimesSync } from 'node:fs';
 import { join } from 'node:path';
-import { approve, commit, intentDoc, makeRepo, run, unitDoc, write } from './state-repo.mjs';
+import { approve, commit, hook as hookCall, intentDoc, makeRepo, run, unitDoc, write } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const U1 = 'docs/units/U-1-a.md';
@@ -14,8 +13,7 @@ test('U23/AC-1 the researcher has read and web tools only, and the model hook ho
   assert.match(agent, /Official sources first/);
   assert.match(agent, /Mark each as secondary; none is the only support/);
   const dir = makeRepo({}, { models: { research: 'haiku' } });
-  const hook = (model) => JSON.parse(spawnSync(process.execPath, [join(ROOT, 'plugin/cli/aidlc.mjs'), 'hook', 'model'], { cwd: dir, encoding: 'utf8',
-    input: JSON.stringify({ cwd: dir, session_id: 's', tool_name: 'Agent', tool_input: { subagent_type: 'aidlc-team:researcher', prompt: '# Research for U-1', model } }) }).stdout);
+  const hook = (model) => hookCall('model', { cwd: dir, session_id: 's', tool_name: 'Agent', tool_input: { subagent_type: 'aidlc-team:researcher', prompt: '# Research for U-1', model } }, { pinned: false }).json;
   assert.deepEqual(hook('haiku'), {});
   assert.match(hook('opus').hookSpecificOutput.permissionDecisionReason, /^MODEL-MISMATCH aidlc-team:researcher for a research question uses opus, the profile's models\.research says haiku/);
 });
@@ -49,7 +47,7 @@ test('U23/AC-2 U23/AC-3 U23/AC-4 a question held for research is next; the brief
   assert.equal(run(dir, ['research', 'U-2']).code, 64);
 });
 
-const modelHook = (dir, input) => spawnSync(process.execPath, [join(ROOT, 'plugin/cli/aidlc.mjs'), 'hook', input.hook_event_name === 'PostToolUse' ? 'heartbeat' : 'model'], { cwd: dir, encoding: 'utf8', input: JSON.stringify({ cwd: dir, session_id: 's', ...input }) });
+const modelHook = (dir, input) => hookCall(input.hook_event_name === 'PostToolUse' ? 'heartbeat' : 'model', { cwd: dir, session_id: 's', ...input }, { pinned: false });
 
 test('U25/AC-1 a researcher in flight is waited for, and steer does not demand it again', () => {
   const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), [U1]: unitDoc({ scope: ['sdk/**'] }) });
@@ -58,11 +56,11 @@ test('U25/AC-1 a researcher in flight is waited for, and steer does not demand i
   commit(dir, 'hold U-1');
   assert.match(run(dir, ['next']).out, /^research for U-1/);
   const r = modelHook(dir, { hook_event_name: 'PreToolUse', tool_name: 'Agent', tool_input: { subagent_type: 'aidlc-team:researcher', prompt: run(dir, ['research', 'U-1']).out, model: 'sonnet' } });
-  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.code, 0, r.err);
   const next = run(dir, ['next']);
   assert.match(next.out, /^wait for the researcher of U-1$/m);
-  const steer = spawnSync(process.execPath, [join(ROOT, 'plugin/cli/aidlc.mjs'), 'hook', 'steer'], { cwd: dir, encoding: 'utf8', input: JSON.stringify({ cwd: dir, session_id: 's', hook_event_name: 'Stop', last_assistant_message: 'Started.' }) });
-  assert.equal(JSON.parse(steer.stdout).decision, undefined, 'the stop is let through');
+  const steer = hookCall('steer', { cwd: dir, session_id: 's', hook_event_name: 'Stop', last_assistant_message: 'Started.' }, { pinned: false });
+  assert.equal(steer.json.decision, undefined, 'the stop is let through');
   const marker = join(dir, '.git/aidlc/researching/U-1');
   utimesSync(marker, new Date(Date.now() - 13 * 60 * 1000), new Date(Date.now() - 13 * 60 * 1000));
   modelHook(dir, { hook_event_name: 'PostToolUse', tool_name: 'WebFetch', agent_type: 'aidlc-team:researcher', tool_input: {} });
