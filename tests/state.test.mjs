@@ -268,3 +268,13 @@ test('U8/AC-6 U18/AC-3 re-approving an escalated unit marks its findings answere
   review(dir, 'U-1', 'fix', [finding]);
   assert.equal(JSON.parse(read(dir, '.git/aidlc/reviews/U-1.json')).rounds.at(-1).verdict, 'fix', 'the first fix after re-approval');
 });
+
+test('U80/AC-2 approve finds a decision by its number, as the owner types it', () => {
+  const dir = makeRepo({ ...I1, 'docs/decisions/0010-baseline.md': '---\ntype: Decision\ntitle: 0010 Baseline\ndescription: Edges.\n---\n\n# Decision\nKeep.\n', 'docs/notes/0010-other.md': '---\ntype: Note\ntitle: N\ndescription: N.\n---\n\nText.\n' });
+  for (const name of ['0010', '10']) {
+    const r = run(dir, ['approve', name]);
+    assert.equal(r.code, 0, r.err);
+    assert.equal(parseDoc(read(dir, 'docs/decisions/0010-baseline.md')).fm.status, 'stable', name);
+  }
+  assert.match(run(dir, ['approve', '0011']).err, /0011/, 'an unknown number names it');
+});
