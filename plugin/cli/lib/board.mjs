@@ -2,11 +2,13 @@
 // (docs/design/board.md). No other command reads the board; it writes only what differs. Also reads the base's
 // CI runs (docs/design/base-ci.md).
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { at, config, done, git, list, relPath, tryGit, UsageError } from './config.mjs';
+import { join } from 'node:path';
+import { at, config, done, git, list, readJson, relPath, tryGit, UsageError } from './config.mjs';
 import { msg, render } from './template.mjs';
 import { templateFile } from './card.mjs';
-import { ciFile, readState, writeJson } from './state.mjs';
+import { aidlcDir, ciFile, readState, writeJson } from './state.mjs';
 
 const B = config.board;
 let ghCommand = [B.gh]; // `github.gh` overrides it (docs/design/board.md)
@@ -156,12 +158,13 @@ function issues(gh, docs, out, backoff) {
   }
 }
 
-function project(gh, docs, out, backoff) {
+// Reads the Project with all its items; called again when GitHub's own workflows race an add.
+function projectReader(gh) {
   const m = String(gh.project).match(new RegExp(B.project));
   if (!m) throw new UsageError(msg('boardProject', { project: gh.project }));
   const owner = B.owners[m[1]];
   const query = render(B.queries.project, { owner }, 'board.queries.project');
-  const read = () => {
+  return () => {
     const items = [];
     let proj;
     let cursor = null;
@@ -172,6 +175,19 @@ function project(gh, docs, out, backoff) {
     } while (cursor);
     return { proj, items };
   };
+}
+
+// Every planned value must be an option the Project has, checked before any write: a missing one stopped the
+// first migration's sync halfway. The options are kept for plan lint (PLAN-BOARD).
+function checkOptions(proj, docs) {
+  const options = Object.fromEntries(proj.fields.nodes.filter((f) => f.name && f.options).map((f) => [f.name, f.options.map((o) => o.name)]));
+  const missing = [...new Set(docs.flatMap((d) => Object.entries(d.fields)
+    .filter(([name, value]) => value !== undefined && options[name] && !options[name].includes(String(value)))
+    .map(([name, value]) => msg('boardMissingOption', { name, value, options: options[name].join(', ') }))))];
+  return { options, missing };
+}
+
+function project(gh, docs, out, backoff, read) {
   let { proj, items } = read();
   const fields = new Map(proj.fields.nodes.filter((f) => f.name).map((f) => [f.name, f]));
   for (const d of docs) {
@@ -206,14 +222,33 @@ function project(gh, docs, out, backoff) {
   }
 }
 
+// What sync last wrote, as a hash of the issues it wanted: `next` and `status` name sync once the plan moved past it.
+const boardFile = (cwd) => join(aidlcDir(cwd), config.state.board);
+const hashOf = (docs) => createHash('sha256').update(JSON.stringify(docs)).digest('hex');
+export function boardBehind(st) {
+  if (!st.profile.github?.repo) return '';
+  try {
+    return readJson(boardFile(st.cwd))?.hash === hashOf(wanted(st.cwd, st, st.profile.github)) ? '' : msg('boardBehind', {});
+  } catch { return ''; } // a board that cannot be planned offline is sync's error to report, not next's
+}
+
 // Syncs every intent and live unit; returns the writes it made, one line each.
 export function sync(cwd) {
   const st = readState(cwd);
   const gh = github(st.profile);
   const docs = wanted(cwd, st, gh);
+  const hash = hashOf(docs);
   const out = [];
+  const read = gh.project && projectReader(gh);
+  const { options, missing } = read ? checkOptions(read().proj, docs) : { options: {}, missing: [] };
+  const last = readJson(boardFile(cwd)) ?? {};
+  if (missing.length) {
+    writeJson(boardFile(cwd), { ...last, options });
+    throw new UsageError(msg('boardNoOptions', { missing }));
+  }
   issues(gh, docs, out, st.profile.board.backoff);
-  if (gh.project) project(gh, docs, out, st.profile.board.backoff);
+  if (read) project(gh, docs, out, st.profile.board.backoff, read);
+  writeJson(boardFile(cwd), { hash, options, at: new Date().toISOString() });
   return out.join('') || msg('boardInSync', {});
 }
 

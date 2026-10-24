@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** M10 U84: `next` and `status` name `aidlc sync` while the board is behind the plan, e.g. after an approval; `sync` checks planned values against the Project's options before any write and plan lint flags missing ones; a unit waiting on a dependency is Todo ([Board](design/board.md)). Release 0.90.0.
 - **Update** M10 U83: an intent whose merges changed no file under a module or one-way door ships nothing and is released once merged ([Deployment and operation](design/operations.md)). Release 0.89.0.
 - **Update** M10 U79: the quick-lane card also tells the builder to report from a file. Release 0.89.0.
 - **Update** M10 U82: the board maps `reviewing` and `gated` to In review and `stopped` to On hold, and shows an intent with a unit past approval as In Progress ([Board](design/board.md)). Release 0.88.0.

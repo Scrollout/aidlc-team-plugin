@@ -25,7 +25,7 @@ function setup({ polls = [[run(1, 'success')]], ci = { wait: 5, interval: 0 }, p
 function aidlc({ dir, stub }, ...args) {
   const { NODE_TEST_CONTEXT, ...env } = process.env;
   const r = spawnSync(process.execPath, [CLI, ...args], { cwd: dir, encoding: 'utf8', env: { ...env, GH_STUB: stub } });
-  return { code: r.status, out: r.stdout, err: r.stderr };
+  return { code: r.status, out: r.stdout.replace('the board is behind: aidlc sync\n', ''), err: r.stderr }; // the board has its own tests
 }
 const record = ({ dir }) => JSON.parse(read(dir, '.git/aidlc/ci.json'));
 const calls = ({ stub }) => JSON.parse(readFileSync(stub, 'utf8')).paths ?? [];
