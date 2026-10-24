@@ -24,7 +24,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 | `review record <unit> <file\|->` | stores a reviewer verdict keyed by diff hash; `-` reads it from stdin | reviewer |
 | `report <unit>` | stores the builder's report (JSON on stdin) | builder |
 | `hold <unit> [off or <reason>]` / `priority <unit> <n>` | records an owner instruction in the plan (`hold: true` or the reason, `priority: <n>`, higher first); the lead also holds a unit with a reason while it parks a question for the owner | lead |
-| `fix "<title>"\|--from-issue <n> [--after <intent>]` | one-unit plan without an intent; from an issue, titled like it and linked to it; `--after` links the release it fixes | lead |
+| `fix "<title>"\|--from-issue <n> [--after <intent>]` | one-unit plan without an intent; from an issue, titled like it and linked to it; `--after` links the release it fixes; prints the plan lint findings of the unit it wrote | lead |
 | `sync` | projects intents and units onto GitHub issues and a Project ([Board](board.md)) | lead, merge |
 | `push` | checked base push | lead |
 | `merge <unit>` | the merge gate, then `git merge --no-ff` with trailers | lead |

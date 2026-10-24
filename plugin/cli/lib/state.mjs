@@ -456,13 +456,15 @@ function releaseStep(st, i) {
   if (!st.profile.deploy && !st.profile.release) return action('human', 'nextRelease', { intent: i.id });
   const rec = i.deploy;
   const base = tryGit(st.cwd, 'rev-parse', st.base);
+  // A fix unit's scope holds its test: the example names the first level's test location (U58).
+  const tests = Object.values(withDefaults(st.profile).levels).flatMap((l) => list(l?.paths))[0] ?? '<test globs>';
   // A failed smoke stops everything until the owner rolled back; then a fix unit, after which the base moves.
   if (rec.smoke && !rec.smoke.ok && !(rec.rollback?.ok && rec.rollback.at > rec.smoke.at)) return action('human', 'nextSmokeFailed', { intent: i.id, ...rec.smoke });
-  if (rec.smoke && !rec.smoke.ok && rec.smoke.base === base) return action('act', 'nextSmokeFix', { intent: i.id, file: relPath(st.cwd, runtimeFile(st.cwd, 'deploys', i.id)) });
-  if (rec.release && !rec.release.ok && rec.release.base === base) return action('human', 'nextReleaseFailed', { intent: i.id, ...rec.release });
+  if (rec.smoke && !rec.smoke.ok && rec.smoke.base === base) return action('act', 'nextSmokeFix', { intent: i.id, tests, file: relPath(st.cwd, runtimeFile(st.cwd, 'deploys', i.id)) });
+  if (rec.release && !rec.release.ok && rec.release.base === base) return action('human', 'nextReleaseFailed', { intent: i.id, tests, ...rec.release });
   const checked = list(st.profile.deploy?.check).length > 0;
   if (checked && rec.check?.base !== base) return action('act', 'nextDeployCheck', { intent: i.id });
-  if (checked && !rec.check.ok) return action('act', 'nextDeployFailed', { intent: i.id, ...rec.check });
+  if (checked && !rec.check.ok) return action('act', 'nextDeployFailed', { intent: i.id, tests, ...rec.check });
   return action('human', 'nextDeployRelease', { intent: i.id });
 }
 
