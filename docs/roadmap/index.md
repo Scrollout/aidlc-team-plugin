@@ -9,3 +9,4 @@
 * [M6 Deployment and operation](m6.md) - The grid's Deployment and Operation rows - deploy check, release, smoke, rollback, runbook and feedback - run from the project profile, built and piloted on 0.54.0 to 0.58.3.
 * [M7 Build method and back-fill](m7.md) - The build method from day one (level runs at init, a constitution, upgrade adds what is missing), proof for back-fill tests by mutation, and the M6 and M7 pilot findings, built on 0.59.0 to 0.67.0.
 * [M8 Alignment and cleanup](m8.md) - Mutations that break an AC's main behaviour, then a full alignment and cleanup before the first real migration - docs that match the code, dead code out, values into cli.json, steadier tests, evals and a security pass, built on 0.68.0 to 0.74.0.
+* [M9 Draft](m9.md) - Draft - CI on the base before the first real migration - push before new builders, wait for the base's CI, and a red base comes first in next.

@@ -17,7 +17,6 @@ Carried since [M2](m2.md) through [M7](m7.md); each comes back as a unit only wh
 | `check --staged` | checking the whole bundle before each commit gets slow |
 | `reserve` and `clean` commands | reserved numbers (migrations) clash in practice |
 | `init` and `status` warn when Claude Code is older than `onFailure` needs (v2.1.295) | a project runs on an older Claude Code |
-| `profile.ci.wait`: poll the base's CI, and a red base comes first in `next` | a red base goes unnoticed while builders start |
 | `status` reports a forced subagent model (`CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1`) | a project runs where routing is forced |
 | Reviewer sends back a mutation that breaks only part of its AC | a migration's back-fill review accepts one ([M8 evals report](../pilot/m8-evals-report.md)) |
 | `next` serves more than one intent at a time | an owner step on one intent holds back another intent's builders |
