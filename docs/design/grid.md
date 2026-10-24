@@ -77,7 +77,7 @@ Tests are the Source row's second output, derived from the ACs written in Units,
 - Each AC declares a level, e.g. `AC-2 (integration): …`. `profile.levels` maps each level to `paths` globs and a `run` command; the plugin defaults define `unit`, `integration` and `e2e`. The gate checks that the tagged test lives where its level says.
 - Behaviour that crosses a module or the network needs `integration` or higher; unit tests alone prove only local logic. Each intent has an AC at the top level ([Plan lint](plan-lint.md), `PLAN-SLICE`).
 - A fix unit always has one AC: a regression test that fails before the fix.
-- Quick lane adds no tests but runs the existing ones.
+- Quick lane adds no tests and runs no level: the gate runs only the commands its ACs name ([Merge mechanics](gate.md#details)).
 
 # Vertical and horizontal specs
 - `capabilities/`: one doc per user journey (vertical); written in Units.

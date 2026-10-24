@@ -18,7 +18,7 @@ sources:
 - Deterministic: the CLI computes the next allowed step; hooks block rule breaks at the action.
 - Cheap and fast: small always-on context, Sonnet builders, Opus only for review, lanes sized to risk.
 - Autonomous: the owner approves intent, plan, one-way doors and release; agents do the rest.
-- Extensible: rule layers (plugin, org, project, personal) and overridable templates.
+- Extensible: rule layers (plugin, project, personal) and overridable templates.
 
 # Diagrams
 The whole lifecycle and the plugin's parts are drawn in the [README](../../README.md); one unit's path is below.

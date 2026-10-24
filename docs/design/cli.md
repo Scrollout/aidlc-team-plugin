@@ -9,30 +9,31 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 # Commands
 | Command | Does | Run by |
 |---|---|---|
-| `init [--run <level>=<command>]…` | asks questions, writes profile with each level's run command, renders templates, vendors itself | owner via the `aidlc` skill |
-| `upgrade [--downgrade] [--dirty]` | re-vendors the CLI from the installed plugin's release; refuses an older one or a checkout with uncommitted changes unless told; says when nothing changed, which release it copied, and how to fetch a newer one | owner |
+| `init [--adopt] [--name n] [--base b] [--bundle dir] [--run level=command]… [--overwrite path]…` | takes the answers the skill asked for as flags, writes the profile with each level's run command, renders templates, vendors itself; `--adopt` keeps an existing bundle ([Profile and templates](profile.md)) | owner via the `aidlc` skill |
+| `upgrade [--downgrade] [--dirty]` | re-vendors the CLI from the installed plugin's release and adds templates the project lacks; refuses an older one or a checkout with uncommitted changes unless told; says when nothing changed, which release it copied, and how to fetch a newer one | owner (prompt or `!`) |
 | `index [bundle]` | regenerates every `index.md` in the bundle like the OKF reference implementation | docs hook, merge, anyone |
-| `check [--ci] [path…]` | OKF validation, plan lint, profile lint; `--ci` adds merge-trailer checks. A directory is checked as a bundle, or within the profile's bundle when it lies below its root; a file reports only its own findings | hooks, CI, anyone |
+| `check [--ci] [path…]` | OKF validation, plan lint, profile lint; `--ci` adds the base history and architecture checks. A directory is checked as a bundle, or within the profile's bundle when it lies below its root; a file reports only its own findings | hooks, CI, anyone |
 | `status` | the state table | SessionStart hook, anyone |
 | `next` | the single next action | lead |
-| `lane <unit>|--diff <range>` | the computed lane and why | lead, gate |
+| `lane <unit>\|--diff <range>` | the computed lane and why | lead, gate |
 | `card <unit>` | renders the unit card | lead |
 | `start <unit>` | in a builder's worktree: names the branch `unit/U-<n>`, checks the base matches the card, and merges the card's base into an existing branch | builder |
+| `approve [--auto] <doc>…` | stamps approval | owner (typed words, prompt or `!`); `--auto` the lead, for what the owner delegated ([0008](../decisions/0008-delegated-approvals.md)) |
 | `delegate <class>…\|off` | lets the lead approve re-approvals and quick-lane units ([0008](../decisions/0008-delegated-approvals.md)) | owner (prompt or `!`) |
 | `mode attended\|unattended [--stop <action>] [--report <to>]\|off` | records the owner's run mode in the personal profile: unattended or not, the `next` action to stop at (`build`, `review`, `fix`, `merge`, `release`), where to report | owner (prompt or `!`) |
-| `approve [--auto] <doc>` | stamps approval | owner (`!`); `--auto` the lead, for what the owner delegated ([0008](../decisions/0008-delegated-approvals.md)) |
+| `research <doc>` | prints the researcher's brief for a question held on the doc: the question, the project's docs, stack files and `research.sources`, the budget, and where the digest goes ([0010](../decisions/0010-research-and-advice.md)) | lead |
+| `retro <intent>` | lists the codes that fired 3+ times, the intent's escalations, the owner's interventions and failed deploy steps, proposes at most three changes, and resets the counters ([Steering](steering.md#3-across-intents-the-retro)) | lead, owner |
 | `review record <unit> <file\|->` | stores a reviewer verdict keyed by diff hash; `-` reads it from stdin | reviewer |
 | `report <unit>` | stores the builder's report (JSON on stdin) | builder |
-| `hold <unit> [off or <reason>]` / `priority <unit> <n>` | records an owner instruction in the plan (`hold: true` or the reason, `priority: <n>`, higher first); the lead also holds a unit with a reason while it parks a question for the owner | lead |
-| `fix "<title>"\|--from-issue <n> [--after <intent>]` | one-unit plan without an intent; from an issue, titled like it and linked to it; `--after` links the release it fixes; prints the plan lint findings of the unit it wrote | lead |
+| `hold <doc> [off\|<reason>]` | records an owner instruction in the plan: `hold: true` or the reason; `off` removes it. The lead also holds a doc with a reason while it parks a question for the owner, and holds a merged intent to park its release steps | lead |
+| `priority <unit> <n>` | records `priority: <n>` in the plan, higher first | lead |
+| `fix "<title>"\|--from-issue <n> --scope <glob>… [--requirement R-<n>…] [--after <intent>]` | one-unit plan without an intent; from an issue, titled like it and linked to it; `--after` links the release it fixes; prints the plan lint findings of the unit it wrote ([Everyday paths](paths.md#fixes-without-an-intent)) | lead |
 | `sync` | projects intents and units onto GitHub issues and a Project ([Board](board.md)) | lead, merge |
 | `push` | checked base push | lead |
 | `merge <unit>` | the merge gate, then `git merge --no-ff` with trailers | lead |
 | `deploy check <intent>` | runs `deploy.check` on the base and records it ([Deployment and operation](operations.md)) | lead |
-| `release <intent>` | runs `deploy.run` and `release` on the base and records them | owner (prompt or the words `release I-<n>`) |
-| `rollback <intent>` | runs `deploy.rollback` and records it | owner (prompt or the words `rollback I-<n>`) |
-| `research <doc>` | prints the researcher's brief for a question held on the doc: the question, the project's docs, stack files and `research.sources`, the budget, and where the digest goes ([0010](../decisions/0010-research-and-advice.md)) | lead |
-| `retro <intent>` | lists the codes that fired 3+ times, the intent's escalations and the owner's interventions, proposes at most three changes, and resets the counters ([Steering](steering.md#3-across-intents-the-retro)) | lead, owner |
+| `release <intent>` | runs `deploy.run` and `release` on the base, then `deploy.smoke` when they passed, and records each | owner (prompt or the words `release I-<n>`) |
+| `rollback <intent>` | runs `deploy.rollback` and records it; without one it records the owner's rollback by hand | owner (prompt or the words `rollback I-<n>`) |
 | `hook <name>` | entry point for the plugin's hooks; reads the hook JSON on stdin | hooks |
 
 # Output
@@ -42,15 +43,10 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 - No banners, no colour unless a TTY, no summaries longer than the findings.
 
 # Engine and adapters
-- Every command handler returns `{ code, findings: [{ code, path, line, message, fix }], output }` and every hook rule returns `{ decision, code, message, fix }`. Handlers never print, write stdout or exit.
-- `aidlc.mjs` and `hook <name>` are adapters that render this data as the output and exit codes below. MCP, HTTP-hook and A2A adapters can reuse the same functions later; owner-only commands are never exposed on them ([0006](../decisions/0006-engine-behind-adapters.md)).
+How handlers return data and how the CLI is built: [CLI engine](cli-engine.md).
 
 # Exit codes
 `0` ok · `1` findings · `2` blocked by a human gate · `64` bad usage · `70` internal error (hooks treat it as deny).
 
-# Implementation limits
-- Node 22+, ESM, no dependencies; git through `execFileSync`, never a shell.
-- `plugin/cli/lib/` one module per concern: `config`, `profile`, `template`, `okf`, `grid`, `state`, `card`, `gate`, `hooks`, `init`, `board`, `retro`.
-- No hand-coded values in code. Commands, exit codes, file paths, layer order and every user-facing message live in `plugin/cli/cli.json`, read by `config`. Messages are templates rendered by the template engine. `cli.json` sits beside the CLI so it is vendored with it. Tests check that it matches this doc.
-
-- Every module is tested with `node:test` against fixture repos created in a temp dir.
+# Values
+No hand-coded values in code. Commands, exit codes, file paths, layer order and every user-facing message live in `plugin/cli/cli.json`, read by `config`. Messages are templates rendered by the template engine. `cli.json` sits beside the CLI so it is vendored with it. Tests check that its commands and exit codes match this doc.

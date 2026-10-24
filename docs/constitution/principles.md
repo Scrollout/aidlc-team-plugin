@@ -18,7 +18,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
    *Why:* approvals at the plan are cheap; re-stamps after the work are what made a previous tool slow.
 6. **Right-sized context.** Each agent gets one card and the docs it links to. The always-on context stays inside its budget.
    *Why:* accuracy and cost both degrade as context fills.
-7. **Fresh eyes verify.** The reviewer never shares context with the builder, returns structured findings, and gets at most two rounds before the owner decides.
+7. **Fresh eyes verify.** The reviewer never shares context with the builder, returns structured findings, and gets at most `review.fixRounds` fix rounds per focus (3 by default, the owner's choice in M4) before the owner decides.
    *Why:* a capped loop prevents the five-round fix chains seen in a pilot project.
 8. **Name neutral.** Nothing the plugin writes into a project names the plugin. Projects own their profile and templates.
    *Why:* A previous tool's names leaked into trailers, requirements and CI pins.

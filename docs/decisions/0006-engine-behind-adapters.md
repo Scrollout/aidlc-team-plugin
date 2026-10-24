@@ -26,7 +26,7 @@ Option 2, chosen by the owner on 2026-10-22. The servers are M3 work.
 - Returning data keeps one implementation for every caller; the CLI's text output becomes one rendering of it.
 
 # Consequences
-- Every command handler returns `{ code, findings, output }` and every hook rule returns `{ decision, code, message, fix }`. Neither prints, writes stdout or exits; the adapter does ([CLI](../design/cli.md)).
+- Every command handler returns `{ code, findings, output }`, and every hook rule the decision JSON its hook prints, as that `output`. Neither prints, writes stdout or exits; the adapter does ([CLI engine](../design/cli-engine.md)).
 - Remote mode holds only if every action goes through the engine. The agent's shell and file writes either pass through hooks that call the engine (blocking hooks keep `onFailure: "block"`, so an unreachable engine denies), or the agent has no native write tools and acts only through toolbox tools checked server-side.
 - In remote mode the toolbox owns the repository and the push credentials; merges happen only through its gate.
 - Owner actions (`approve`, tags, releases) are never exposed on an agent-facing adapter. Remotely they need a channel the agent cannot reach, such as a signed commit or a separate authenticated endpoint.

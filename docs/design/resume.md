@@ -19,7 +19,7 @@ Nothing that matters lives only in the conversation; all below is on disk before
 | Which builders are running | a heartbeat file per unit, touched by a hook in its worktree |
 | A merge cut off midway | detected from `MERGE_HEAD`; `next` says abort or continue |
 
-On resume (SessionStart `startup`, `resume`, `clear`, `compact`):
+On resume (SessionStart `startup`, `resume`, `clear`, `compact`, `fork`; the hook has no matcher, so every source gets it):
 1. The hook injects `aidlc status` plus one line: load the `aidlc` skill and run `aidlc next`.
 2. A unit with a fresh heartbeat is still running: wait, don't start a second builder.
 3. A unit with a stale heartbeat and no report is interrupted: `next` restarts its builder from the same card, told to continue from the branch's last commit.

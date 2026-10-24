@@ -38,9 +38,6 @@ The lead's loop: run `aidlc next`, do the one action it prints, run it again. It
 - A finding needs evidence: path and line, the AC or requirement it breaks, a concrete scenario. Taste alone is not a finding. The posture is adversarial: `pass` is what is left after trying to refute the change.[^aws-aidlc]
 - The reviewer records its verdict itself by piping the JSON to `aidlc review record U-<n> -`, then returns the verdict line.
 
-# Evals
-`tests/evals/` builds a fixture project with seeded defects ([Verification](verification.md#prompt-evals)). `node tests/evals/run.mjs setup <dir>` creates it; after the reviewer and builder have run on it, `node tests/evals/run.mjs score <dir>` lists each seeded defect as found or missed. Results go to the pilot report.
-
 [^cc-subagents]: Claude Code subagents
 [^cc-skills]: Claude Code skills
 [^aws-aidlc]: AWS AI-DLC workflows
