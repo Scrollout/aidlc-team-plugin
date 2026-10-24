@@ -205,8 +205,9 @@ function runGate(cwd, st, unit) {
     }
   }
 
-  // Every level's run in full, as the owner's verification of each unit; a quick unit's ACs name their own commands.
-  const tested = Object.entries(levels ?? {}).filter(([, l]) => l?.run);
+  // Every level's run in full, as the owner's verification of each unit; a quick unit runs none, its ACs name
+  // their own commands (U60).
+  const tested = card?.lane === 'quick' ? [] : Object.entries(levels ?? {}).filter(([, l]) => l?.run);
   for (const [level, l] of tested) if (runLevel(tree, level, l, add) === false) add('GATE-RUN', 'gateRun', { level, command: l.run });
   for (const ac of card?.lane === 'quick' ? unit.acs : []) {
     for (const t of spansOf(unit.doc.lines[ac.line - 1]).map(runTarget).filter(Boolean)) {
