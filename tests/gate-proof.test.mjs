@@ -117,6 +117,19 @@ test('U56/AC-1 U57/AC-2 a back-fill unit merges when each mutation fails its AC\
   assert.match(refused.out, /GATE-PROOF level unit still passes with U-1\/AC-1's mutation applied: its test does not catch the break/);
 });
 
+test('U75/AC-4 a unit whose revert unwires its own test is proved by its reported mutations, which may edit its diff', () => {
+  // The level runs the tests only once src/wired exists: the unit's revert removes it, so the level passes.
+  const profile = { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: 'node -e "process.exit(require(\'fs\').existsSync(\'src/wired\') ? 1 : 0)" || node --test' } } };
+  const files = { ...CODE, ...TEST, 'src/wired': 'yes\n' };
+  assert.match(merge(setup({ profile, files })).out, /GATE-PROOF level unit still passes with U-1's changes outside the test paths reverted/);
+  const done = (mutations) => (d) => assert.equal(run(d, ['report', 'U-1'], JSON.stringify({ status: 'done', summary: 's', tests: [], mutations })).code, 0);
+  const proved = setup({ profile, files, beforeReview: done(BREAK) });
+  const r = merge(proved);
+  assert.equal(r.code, 0, r.out);
+  assert.match(git(proved, 'log', '-1', '--format=%(trailers:only,unfold)'), /^Proof: mutation unit$/m);
+  assert.match(r.out, /^proof: U-1\/AC-1's mutation of src\/add\.mjs failed level unit$/m);
+});
+
 test('U56/AC-2 an AC without a mutation, or one whose find no longer matches once, refuses as GATE-PROOF', () => {
   assert.match(merge(backfill()).out, /GATE-PROOF U-1\/AC-1 has no mutation that applies: its find text must occur once in its file on the merge result/);
   const moved = backfill({ mutations: BREAK });

@@ -20,7 +20,8 @@ export const secretIn = (text, profile) => [...config.hooks.secrets, ...list(pro
 // Proof-revert: with the unit's code reverted, each level that holds a tagged test must fail (docs/design/gate.md).
 function proofRevert(tree, card, paths, levels, tagged, bundleRel, add, unit, mutations) {
   const code = codeChanges(paths, levels, bundleRel);
-  if (card && card.lane !== QUICK && !code.length) return proofMutate(tree, unit, mutations, levels, add);
+  // Reported mutations replace the revert: for a back-fill, and for a change its revert cannot test, such as wiring (docs/design/backfill.md).
+  if (card && card.lane !== QUICK && (!code.length || [mutations].flat().some((m) => m?.ac))) return proofMutate(tree, unit, mutations, levels, add);
   const runs = Object.entries(levels ?? {}).filter(([, l]) => l?.run && [...tagged].some((f) => list(l.paths).some((g) => matches(f, g))));
   const skip = card?.lane === QUICK ? 'proofQuick' : !runs.length ? 'proofNoRun' : null;
   if (skip) return { levels: [], note: msg('proofSkipped', { why: msg(skip, {}) }) };

@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** M10 U75 AC-4: a unit that changes code may report mutations, which then prove it instead of the revert, for a change the revert cannot test such as wiring a test into the level's run ([Back-fill](design/backfill.md)). Release 0.81.0.
 - **Update** M10 U74 AC-4: `start` takes over a clean earlier worktree of the unit's branch even when the host still locks it to the lead session ([Skill and agents](design/prompts.md)). Release 0.80.1.
 - **Update** M10 U75 built from the first migration: `PLAN-DECISION` names the scope glob that reaches the door and the anchor for a bare name; `security.content` requires the security focus for matching added lines (carried since M2); `check` warns `PROFILE-KEY` for a key nothing reads ([Profile](design/profile.md), [Approvals](design/approvals.md)). Release 0.80.0.
 - **Update** M10 U74 AC-3: the session-start status names the upgrade with the installed plugin's command when the pinned CLI is older; the skill runs owner commands for the owner's prompt, never as a `!` line ([Vendoring](design/vendoring.md)). Release 0.79.0.

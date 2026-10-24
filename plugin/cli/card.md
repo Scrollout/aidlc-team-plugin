@@ -46,4 +46,4 @@ Write only inside:
 ## Report
 First run `aidlc start {{id}}`. When done or stopped, pipe JSON to `aidlc report {{id}}`:
 {"status": "done|stopped", "summary": "...", "tests": ["<file>: {{id}}/AC-<k>"], "stop": "<reason when stopped>"}
-If you changed only tests, add "mutations": [{"ac": "{{id}}/AC-<k>", "path": "<code file the test covers>", "find": "<text there once>", "replace": "<text that breaks it>", "breaks": "<the AC's main behaviour it breaks>"}], one per AC, breaking the main behaviour, not only a boundary or an edge: the gate applies each alone and that AC's level must fail.
+If you changed only tests, or reverting your change cannot fail your tests (it wires them into the level's run), add "mutations": [{"ac": "{{id}}/AC-<k>", "path": "<code file the test covers>", "find": "<text there once>", "replace": "<text that breaks it>", "breaks": "<the AC's main behaviour it breaks>"}], one per AC, breaking the main behaviour, not only a boundary or an edge: the gate applies each alone and that AC's level must fail.
