@@ -1,7 +1,7 @@
 ---
 type: Design
 title: Deployment and operation
-description: Draft - how the grid's Deployment and Operation rows run after an intent merges - deploy check, release, smoke, rollback, runbook and feedback - with the commands from the project profile.
+description: How the grid's Deployment and Operation rows run after an intent merges - deploy check, release, smoke, rollback, runbook and feedback - with the commands from the project profile.
 status: draft
 sources:
   - id: aws-ops
@@ -11,7 +11,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T08:00:00Z }
 ---
 
 # Why
-The [Grid](grid.md) has a Deployment and an Operation row, but the loop ends at a merged, tagged intent: nothing runs a deploy check, a release or a smoke test, and nothing turns a failed release into work. The owner asked for both rows (2026-10-24).
+Before M6 the loop ended at a merged, tagged intent: the [Grid](grid.md)'s Deployment and Operation rows ran no deploy check, release or smoke test, and a failed release became no work. The owner asked for both rows (2026-10-24).
 
 # What AWS AI-DLC does
 Seven operation stages, every one conditional (`execution: CONDITIONAL`) and skipped when "no deployable target exists": deployment pipeline, environment provisioning, deployment execution, observability, performance validation, incident response, feedback.[^aws-ops] The parts this plugin can take without building pipelines:
@@ -26,11 +26,11 @@ Commands come from the profile, as every check does; the plugin ships no pipelin
 "deploy": { "check": ["make image"], "run": "make deploy", "smoke": "make smoke", "rollback": "make rollback" },
 "release": "make release"
 ```
-1. **Deployment:** once an intent is merged, `next` runs `deploy.check` on the merged base before it offers the release; a failure names the command and becomes a fix unit.
-2. **Release:** the owner's step. `next` names `release` (and `deploy.run`) for the owner; the CLI records that it ran and its exit, as for any owner command.
-3. **Operation:** `deploy.smoke` runs after the release. A pass marks the intent released; a failure stops the loop with ⛔, names `deploy.rollback` for the owner, and drafts a fix unit from the smoke output.
+1. **Deployment:** once an intent is merged, `next` asks the lead to run `deploy.check` on the merged base before it offers the release; a failure becomes a fix unit.
+2. **Release:** the owner's step, `aidlc release I-<n>`, which runs `deploy.run` and `release` and records the run.
+3. **Operation:** `deploy.smoke` runs after the release. A pass marks the intent released; a failure stops the loop with ⛔ and names the owner's rollback, then a fix unit from the smoke output.
 4. **Runbook:** an intent with a `deploy` profile links a runbook doc (how to roll back, what to watch, who to call), checked by plan lint as `PLAN-RUNBOOK`; `init` ships `.aidlc/templates/docs/runbook.md`.
-5. **Feedback:** the retro lists each failed check, smoke and rollback of the intent, and each fix unit they started.
+5. **Feedback:** each failed step adds `{ intent, step, command, at }` to the `deployFailures` counter list; the retro lists them with the fix units whose `after` names the intent.
 
 # Choices
 The owner's, 2026-10-24:
@@ -42,11 +42,10 @@ The owner's, 2026-10-24:
 # Details
 - **Record:** `.git/aidlc/deploys/I-<n>.json` keeps the last run of each step (`check`, `release`, `smoke`, `rollback`) with its exit, the failing command, the tail of its output and the base commit it ran on. `aidlc deploy` writes it; `next` only reads it. Steps run in the work tree, which must be on the base.
 - **Check:** with `deploy.check`, a merged intent's `next` is `aidlc deploy check I-<n>` until a check ran on the current base; a failed check names the command and `aidlc fix … --scope …`. The fix unit is plan work and comes first; once it merges the base moves and the check runs again.
-- **Release:** with `deploy` or `release` in the profile, `next` names `aidlc release I-<n>` as the owner's step; it runs `deploy.run` and then `release`, and the intent is released when that run passed. A release tag still counts as the owner's release, so intents tagged before `deploy` was added stay released (owner's choice, 2026-10-24, after the M6 pilot). Without either key the owner tags the release as before. A failed release is a ⛔ stop: the owner retries, or the lead drafts a fix.
-- **Smoke and rollback:** `aidlc release` runs `deploy.smoke` after a passing release; the intent is released once both passed. A failed smoke is a ⛔ stop before any other work: `next` names `aidlc rollback I-<n>`, the owner's command, which runs `deploy.rollback` (without one it records the owner's rollback by hand). Then `next` asks for a fix unit from the smoke output, `aidlc fix … --after I-<n>`; once it merges, the check and release run again on the new base.
+- **Release:** with `deploy` or `release` in the profile, `next` names `aidlc release I-<n>` as the owner's step; it runs `deploy.run` and then `release`, and the intent is released when that run passed. With `deploy.check` set it is refused until a check passed on the current base. A release tag still counts as the owner's release, so intents tagged before `deploy` was added stay released (owner's choice, 2026-10-24, after the M6 pilot). Without either key the owner tags the release as before. A failed release is a ⛔ stop: the owner retries, or the lead drafts a fix.
+- **Smoke and rollback:** `aidlc release` runs `deploy.smoke` after a passing release; the intent is released once both passed. A failed smoke is a ⛔ stop before any other work: `next` names `aidlc rollback I-<n>`, the owner's command, which runs `deploy.rollback` (without one it records the owner's rollback by hand), on a merged or released intent. Then `next` asks for a fix unit from the smoke output, `aidlc fix … --after I-<n>`; once it merges, the check and release run again on the new base.
 - **Words to type:** a deploy outlasts the prompt hook's 10 s limit, so the hook does not run it (owner's choice, 2026-10-24). A prompt that is exactly `release I-<n>` or `rollback I-<n>` records the owner's go for that command at the current commit in `.git/aidlc/goes.json`; the lead then runs the command, and the guard lets that one call through without a permission prompt and uses the go up. The host's own permission check still applies.
 - **Parking:** `aidlc hold I-<n> <reason>` on a merged intent parks its check, release and fix lines; `next` names the hold as the owner's step until `hold I-<n> off`. A failed smoke still stops (from the M6 pilot).
-- **Feedback:** each failed step adds `{ intent, step, command, at }` to the `deployFailures` counter list; the retro lists them with the units whose `after` names the intent.
 
 Units: [M6](../roadmap/m6.md).
 

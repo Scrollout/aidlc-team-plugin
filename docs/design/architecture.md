@@ -12,7 +12,7 @@ Units and their ACs are short-lived. A project's lasting constraints are not: se
 # Requirements
 - `requirements/R-<n>-<slug>.md`, `type: Requirement`, with acceptance criteria like a unit. IDs compare by number, so `R-018` and `R-18` are the same.
 - Intents and units cite them: `requirements: [R-4, R-18]`. Plan lint `PLAN-REQ`: an intent or unit that cites none, or cites one that does not exist. The rule applies once the bundle holds a requirement, so a project opts in by writing its first one.
-- A requirement is approved like an intent; editing it makes it `stale`, and `next` asks for re-approval before any build. Draft requirements cited by the current plan are approved before the plan.
+- A requirement is approved like an intent; editing it makes it `stale`, and `next` asks for re-approval before any build. Draft requirements an intent or the current plan cites are asked for in the same approval as that intent or plan.
 - `aidlc status` lists requirements that no merged unit cites yet.
 
 # Architecture rules
@@ -27,9 +27,9 @@ The profile describes the intended shape; the plugin enforces it without knowing
   "checks": ["make contract-check"]
 }
 ```
-- `graph` prints one dependency edge per line, `<from path> -> <to path>`. The project supplies it, e.g. from `go list -deps` or a bundler's module graph.
+- `graph` prints one dependency edge per line, `<from path> -> <to path>`, repo-relative; a `graph` that exits non-zero is `ARCH-CHECK`. The project supplies it, e.g. from `go list -deps` or a bundler's module graph.
 - A boundary denies edges from paths matching `from` to paths matching `deny`. With `"same": false`, an edge between two paths the same `*` matched differently is denied, so one service may not import another.
-- Gate condition: no denied edge on the merged result (`ARCH-BOUNDARY`, naming the edge and the reason), and every `architecture.checks` command passes (`ARCH-CHECK`). Both run on every merge, whatever the unit touched, and in `check --ci`.
+- Gate condition: no denied edge on the merged result (`ARCH-BOUNDARY`, naming the edge and the reason), and every `architecture.checks` command passes (`ARCH-CHECK`). Both run on every merge, whatever the unit touched, with the boundaries read from the merged tree, so the unit that adds a boundary is checked against it; `check --ci` runs them on the checked-out tree.
 - An exception is a decision doc the owner approves, listed under the boundary as `except: ["docs/decisions/0009-….md"]`. It covers the edges it lists, one `<from> -> <to>` per line, so a baseline of known violations does not open the boundary to new ones; a decision listing no edge covers the whole boundary.
 
 # Review

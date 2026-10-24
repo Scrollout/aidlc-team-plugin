@@ -43,23 +43,7 @@ sources:
 As in the sample bundles: optional frontmatter `type: Log`, `title`; date headings `## YYYY-MM-DD`, newest first; entries `- **Verb** text` (Creation, Update, Deprecation, Verified, …).
 
 # Validation
-The official sources ship no validator tool. They provide the conformance rules (spec §11) and, in the reference implementation, `OKFDocument.parse` and `validate()`, which reject an unterminated frontmatter block, invalid YAML, a frontmatter that is not a mapping, and a missing `type`; the reference agent calls it before writing a doc.[^okf-ref] Third-party validators exist but are not official. Our validator implements exactly those checks as errors, adds the index and log structure rules from §8 and §9, and is golden-tested against the official sample bundles.
-
-Frontmatter is read by a zero-dependency YAML subset: block and flow mappings and sequences, plain (multi-line), quoted and `|`/`>` scalars, comments. Anchors, aliases, tags and directives are reported as `OKF-FM`.
-
-Errors (spec conformance):[^okf-spec]
-- `OKF-FM` every non-reserved `.md` has a frontmatter block that is terminated, valid YAML and a mapping (timestamps kept as strings, as the reference loader does).
-- `OKF-TYPE` non-empty `type`.
-- `OKF-INDEX` an `index.md` has frontmatter other than `okf_version` at the root, or an entry line that is not `* [Title](url) - description` under a heading. Prose paragraphs are allowed: the spec does not forbid them, and real bundles use them.
-- `OKF-LOG` `log.md` date headings are `YYYY-MM-DD`.
-- `OKF-RUNTIME` an `Attested Computation` has `runtime`.
-
-Warnings (house rules; `profile.docs.rules` sets each to `error`, `warning` or `off`; spec codes cannot be changed):
-- `HOUSE-INDEX-STALE` an index differs from what `aidlc index` would generate.
-- `HOUSE-DESC` missing `title` or `description`.
-- `HOUSE-GENERATED` a doc without `generated` (authorship is not detectable, so owner-written bundles set it `off`).
-- `HOUSE-LINK` a link that does not resolve (the spec says consumers must tolerate these).
-- `HOUSE-SIZE` a doc over its type's cap: Unit, Plan, Intent 12,000 chars; Design, Decision 6,000; others 4,000.
+What `aidlc check` reports for a bundle, as errors and house-rule warnings: [OKF validation](okf-validation.md).
 
 [^okf-spec]: Open Knowledge Format v0.2 specification
 [^okf-ref]: OKF reference implementation (document.py, index.py)

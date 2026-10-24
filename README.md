@@ -33,7 +33,7 @@ flowchart TB
     reviewer["Reviewer<br/>fresh context, JSON verdict"]
     gate{"Merge gate<br/>scope, AC tests, checks,<br/>review, OKF, security, architecture"}
     card --> builder --> reviewer
-    reviewer -- "fix, at most 2 rounds" --> builder
+    reviewer -- "fix, at most 3 rounds" --> builder
     reviewer -- pass --> gate
   end
 
