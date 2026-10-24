@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** [M7](roadmap/m7.md) closed on 0.67.0 (owner): the conditional M5 candidates are dropped, U34 is left to the migration, and the M2 carry list moves to [Later](roadmap/later.md).
 - **Update** M7 U60 built: a quick-lane merge runs no level, only the commands its ACs name, the module checks it touches and the docs check; its trailer reads `Tested: none` ([Merge mechanics](design/gate.md)). Release 0.67.0.
 - **Update** M7 U59 built: a hold on a merged intent parks its deploy check, release and fix lines, and `next` names the hold as the owner's step until `hold I-<n> off`; a failed smoke still stops ([Deployment and operation](design/operations.md#details)). Release 0.66.0.
 - **Update** M7 U58 built: `aidlc fix` runs plan lint on the unit it wrote and prints each finding with its fix, exiting 1 on an error; `next`'s fix lines show the profile's first test location in their `--scope` example. Release 0.65.0.
