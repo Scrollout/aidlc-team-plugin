@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** M10 U80: an `except` decision a merge needs is a plan doc on the base, approved first; a unit carrying its own is told so at merge ([Architecture](design/architecture.md)). Release 0.86.0.
 - **Update** M10 U79: the guard asks the owner for a push that can publish a tag; `report <unit> <file>` and temp-folder writes replace piped reports, which worktree isolation refuses ([Hook checks](design/hook-checks.md)). Release 0.85.0.
 - **Update** M10 U78: `check --ci` on GitHub Actions writes a job summary with the verdict, findings and plan states ([CI check](design/ci-check.md)). Release 0.84.0.
 - **Update** M10 U76: a `slice:` waiver holds only for units outside every module and one-way door; an unapproved unit reaching one is `PLAN-SLICE` ([Plan lint](design/plan-lint.md)). Release 0.83.0.

@@ -65,6 +65,15 @@ test('U78/AC-1 check --ci on GitHub Actions writes a job summary: the verdict, t
   assert.match(failed, /^\| ❌ \| CI-COMMIT \| `[^`]+` \| .+ \| .+ \|$/m);
 });
 
+test('U80/AC-1 a unit that carries its own except decision is told the owner approves it on the base first', () => {
+  const doc = 'docs/decisions/0001-baseline.md';
+  const arch = { graph: 'node -e "console.log(\'src/add.mjs -> lib/db.mjs\')"', boundaries: [{ from: 'src/**', deny: ['lib/**'], reason: 'src never uses lib', except: [doc] }] };
+  const files = { ...CODE, ...TEST, '.aidlc/profile.json': JSON.stringify({ ...PROFILE, architecture: arch }), [doc]: '---\ntype: Decision\ntitle: 0001 Baseline\ndescription: Today\'s edges.\n---\n\n# Baseline\n- `src/add.mjs -> lib/db.mjs`\n' };
+  const r = merge(setup({ unit: { scope: ['src/**', 'tests/**', '.aidlc/profile.json', doc] }, files }));
+  assert.equal(r.code, 1);
+  assert.match(r.out, /docs\/decisions\/0001-baseline\.md:1 ARCH-BOUNDARY docs\/decisions\/0001-baseline\.md comes with U-1, so the owner cannot approve it before this merge: the lead commits it on the base as a plan doc/);
+});
+
 test('U6/AC-8 a full-lane unit merges on its tests', () => {
   const dir = setup({ unit: { scope: ['db/**', 'tests/**'], twoWay: 'a pure function, no data' }, files: { 'db/add.mjs': 'export const add = (a, b) => a + b;\n', 'tests/add.test.mjs': TEST['tests/add.test.mjs'].replace('../src/add.mjs', '../db/add.mjs') } });
   assert.equal(JSON.parse(read(dir, '.git/aidlc/cards/U-1.json')).lane, 'full');
