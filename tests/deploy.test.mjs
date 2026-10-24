@@ -171,3 +171,16 @@ test('U51/AC-1 the retro lists each failed deploy check, smoke and rollback of t
   ]);
   assert.match(run(dir, ['retro', 'I-1']).out, /^deploy failures:\n {2}fix units after I-1: U-2\n/m, 'the counters reset; the fix units stay in the plan');
 });
+
+test('U57/AC-1 an intent whose units change only test paths needs no runbook, deploy check or release', () => {
+  const profile = { levels: { unit: { paths: ['tests/**'] } }, deploy: { check: [OK], run: OK } };
+  const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), 'docs/units/U-1-u.md': unitDoc({ scope: ['tests/calc/**'] }) }, profile);
+  assert.doesNotMatch(run(dir, ['check']).out, /PLAN-RUNBOOK/, 'a back-fill ships no code');
+  approve(dir, 'I-1', 'U-1');
+  branch(dir, 'U-1', 'tests/calc/a.test.txt');
+  merge(dir, 'U-1');
+  assert.match(run(dir, ['status']).out, /^I-1 released /m);
+  assert.doesNotMatch(run(dir, ['next']).out, /deploy check|release I-1/);
+  const code = merged(profile);
+  assert.match(run(code, ['next']).out, /deploy check I-1/, 'a unit that may change code still deploys');
+});

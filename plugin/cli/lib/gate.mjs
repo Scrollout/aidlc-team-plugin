@@ -41,6 +41,7 @@ function proofRevert(tree, card, paths, levels, tagged, bundleRel, add, unit, mu
 // A unit that changes only tests: each AC's reported mutation, applied alone, must fail its level (docs/design/backfill.md).
 function proofMutate(tree, unit, mutations, levels, add) {
   const ran = new Set();
+  let note = '';
   for (const ac of unit.acs) {
     const tag = `${unit.id}/${ac.id}`;
     const m = (Array.isArray(mutations) ? mutations : []).find((x) => x?.ac === tag);
@@ -51,10 +52,11 @@ function proofMutate(tree, unit, mutations, levels, add) {
     if (!l?.run) continue; // a level that does not run proves nothing either way
     writeFileSync(file, text.replace(m.find, () => m.replace));
     if (runLevel(tree, ac.level, l, add) === true) add('GATE-PROOF', 'gateProofKept', { tag, level: ac.level });
+    else note += msg('proofMutated', { tag, level: ac.level, path: m.path });
     writeFileSync(file, text);
     ran.add(ac.level);
   }
-  return { levels: ran.size ? [`${G.mutation} ${[...ran].join(', ')}`] : [], note: '' };
+  return { levels: ran.size ? [`${G.mutation} ${[...ran].join(', ')}`] : [], note };
 }
 
 const shell = (cwd, command) => spawnSync(command, { cwd, shell: true, encoding: 'utf8' }).status === 0;

@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** M7 U57 built: an intent whose units' scopes all lie in the test paths gets no `PLAN-RUNBOOK` and is released once merged, with no deploy check or release; a mutation proof prints each AC's result ([Proof for back-fill tests](design/backfill.md)). Release 0.64.0.
 - **Update** M7 units U57 to U60 for approval: back-fill without release steps, a fix unit that lints itself, parking a merged intent, quick merges with no level runs; the CLI budget goes to 3,600 lines (owner) ([Overview](design/overview.md#budgets-hard-limits)).
 - **Update** 0.63.1: typed `approve …`, `release I-<n>` and `rollback I-<n>` count with a trailing full stop or exclamation mark (found by the M7 back-fill pilot).
 - **Creation** [M7 back-fill pilot report](pilot/m7-report.md): U55 and U56 held on 0.63.0; a back-fill intent still asks for a runbook and a release, now an M7 candidate.
