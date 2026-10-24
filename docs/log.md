@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** 0.58.2: the guard matches a typed `release I-<n>` go on the command and the intent only, so a call with `2>&1` after it uses the go instead of asking the owner again (found by the M6 pilot).
 - **Update** 0.58.1: a release tag still marks an intent released when the profile has `deploy`, so intents tagged before the key was added are not sent back to deploy (found by the M6 pilot; owner's choice) ([Deployment and operation](design/operations.md#details)).
 - **Update** M6 U51 built: each failed deploy check, release, smoke and rollback is counted, and the retro lists those of the intent with the fix units started `--after` it ([Steering](design/steering.md#3-across-intents-the-retro)). Release 0.58.0.
 - **Update** M6 U50 built: with `deploy` in the profile, plan lint reports `PLAN-RUNBOOK` for a live intent that links no `Runbook` doc, and `init` ships a runbook template (roll back, watch, call) ([Plan lint](design/plan-lint.md)). Release 0.57.0.

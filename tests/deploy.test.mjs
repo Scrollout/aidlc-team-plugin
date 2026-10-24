@@ -98,7 +98,7 @@ test('U48/AC-2 the release line names the words to type; typed words give a go t
   const typed = JSON.parse(hook(dir, 'prompt', { prompt: '  Release i-1 ' })).hookSpecificOutput.additionalContext;
   assert.equal(typed, 'The owner typed release I-1: run aidlc release I-1 now; the guard lets this one call through.');
   assert.ok(!existsSync(join(dir, 'released.txt')), 'the hook only records the go');
-  assert.equal(guard(dir, 'node .aidlc/bin/aidlc.mjs release I-1'), 'none', 'the go lets it through');
+  assert.equal(guard(dir, 'S=$(date +%s); node .aidlc/bin/aidlc.mjs release I-1 2>&1 | tail -20'), 'none', 'the go lets it through, redirect and all');
   assert.equal(guard(dir, 'node .aidlc/bin/aidlc.mjs release I-1'), 'ask', 'once');
   hook(dir, 'prompt', { prompt: 'release I-1' });
   commit(dir, 'a later commit');
