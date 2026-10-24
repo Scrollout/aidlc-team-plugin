@@ -40,6 +40,17 @@ test('U79/AC-1 a push that can publish a tag asks the owner, as git tag does; a 
   assert.equal(decision(guardIn(dir, 'git push origin unit/U-1')), 'ask', 'push.followTags in the repo config');
 });
 
+test('U81/AC-1 a delegated upgrade runs without a prompt; a downgrade or a dirty copy still asks; the status says which', () => {
+  const dir = project();
+  const upgrade = `node ${join(ROOT, 'plugin/cli/aidlc.mjs')} upgrade`;
+  assert.equal(decision(guardIn(dir, upgrade)), 'ask', 'not delegated yet');
+  write(dir, { '.aidlc/local/profile.json': { approvals: { auto: ['upgrade'] } } });
+  assert.equal(decision(guardIn(dir, upgrade)), 'allow');
+  for (const flag of ['--downgrade', '--dirty']) assert.equal(decision(guardIn(dir, `${upgrade} ${flag}`)), 'ask', flag);
+  writeFileSync(join(dir, '.aidlc/bin/VERSION'), '0.1.0\n');
+  assert.match(hook('status', { cwd: dir, hook_event_name: 'SessionStart', source: 'startup' }).json.hookSpecificOutput.additionalContext, /between units, the owner delegated upgrades: run node /);
+});
+
 test('U7/AC-1 guard denies each listed command and allows the everyday ones', () => {
   const dir = project();
   const denied = {

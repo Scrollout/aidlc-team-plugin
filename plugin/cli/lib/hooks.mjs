@@ -8,7 +8,7 @@ import { msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
 import { inside, readPlan } from './grid.mjs';
-import { aidlcDir, baseOf, bump, commands as owner, heartbeatFresh, hostDeniedFile, nextAction, readState, runtimeFile, statusText, writeJson } from './state.mjs';
+import { aidlcDir, baseOf, bump, commands as owner, delegated, heartbeatFresh, hostDeniedFile, nextAction, readState, runtimeFile, statusText, writeJson } from './state.mjs';
 import { directAllowed, mergeWritten, secretIn } from './gate.mjs';
 
 const H = config.hooks;
@@ -141,6 +141,8 @@ function guard(input, cwd) {
     if (owner) {
       const command = argv.slice(argv.indexOf(owner)).join(' ');
       if (useGo(cwd, command)) return allow(); // the owner typed it (docs/design/operations.md#details)
+      // A delegated upgrade copies the installed release; a downgrade or a dirty checkout stays the owner's (decision 0008).
+      if (owner === S.auto[2] && delegated(cwd).includes(owner) && !argv.some((a) => S.upgradeOwnerFlags.includes(a))) return allow();
       if (input.permission_mode === H.noPrompt) return deny(cwd, input, 'GUARD-OWNER', 'guardOwner', { command });
       recordPrompt(cwd, input, command);
       return deny(cwd, input, 'GUARD-OWNER', 'guardOwner', { command }, 'ask');

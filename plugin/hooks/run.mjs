@@ -35,6 +35,9 @@ function withUpgrade(out) {
   if (!/^\d+\.\d+\.\d+$/.test(pinned) || !/^\d+\.\d+\.\d+$/.test(installed) || !older(pinned, installed)) return out;
   const json = JSON.parse(out);
   const upgrade = `node ${join(import.meta.dirname, '..', 'cli', 'aidlc.mjs')} upgrade`;
-  json.hookSpecificOutput.additionalContext += `The pinned CLI is ${pinned}, the installed plugin ${installed} → between units, ask the owner to approve the upgrade, then run ${upgrade} (the pinned aidlc refuses it) and commit.\n`;
+  let auto = [];
+  try { auto = JSON.parse(readFileSync(join(dir, '.aidlc', 'local', 'profile.json'), 'utf8')).approvals?.auto ?? []; } catch {}
+  const step = auto.includes('upgrade') ? 'the owner delegated upgrades: run' : 'ask the owner to approve the upgrade, then run';
+  json.hookSpecificOutput.additionalContext += `The pinned CLI is ${pinned}, the installed plugin ${installed} → between units, ${step} ${upgrade} (the pinned aidlc refuses it) and commit.\n`;
   return JSON.stringify(json);
 }

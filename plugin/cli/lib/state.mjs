@@ -142,7 +142,7 @@ export function approval(doc) {
 
 // Approval classes the owner delegated to the lead; only the untracked personal layer counts (decision 0008).
 const personal = (cwd) => join(cwd, config.layers.find((l) => l.name === 'personal').path);
-const delegated = (cwd) => list(readJson(personal(cwd))?.approvals?.auto);
+export const delegated = (cwd) => list(readJson(personal(cwd))?.approvals?.auto);
 
 // The owner's run mode and the last owner prompt, as status shows them (docs/design/approvals.md#owner-prompts).
 function ownerLines(cwd) {

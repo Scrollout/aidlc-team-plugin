@@ -25,5 +25,8 @@ Option 2, chosen by the owner on 2026-10-22.
 - First approvals of intents, plans, requirements and one-way-door decisions are never delegated.
 - A `reapprove` does not cover an edit that changes a unit's acceptance criteria: that changes what done means, so it goes back to the owner (owner, after the pilot; [Approvals](../design/approvals.md#who-approves)).
 
+# Amendment 2026-10-24: upgrade
+A third class, `upgrade`, written by `aidlc delegate upgrade`. The first migration took about ten plugin releases in a day, each one an owner prompt with nothing to decide: the copy comes only from the installed release. With `upgrade` delegated, the guard lets the lead run the installed plugin's `upgrade` between units without a prompt; `--downgrade` and `--dirty` still ask the owner. The session-start status says which applies. The owner still chooses when the plugin itself is updated.
+
 # Why
 Principle 5 keeps the decisions with the owner; a re-approval of an edit that carries out an owner answer is bookkeeping, not a decision. A quick-lane unit touches only paths the owner has already declared low risk.

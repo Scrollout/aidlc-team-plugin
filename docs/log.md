@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** M10 U81 and [0008](decisions/0008-delegated-approvals.md) amended: the owner can delegate `upgrade`, so the lead copies each installed release with no prompt; a downgrade or a dirty copy still asks. Release 0.87.0.
 - **Update** M10 U80 AC-2: `approve` finds a decision by its number, as the owner types it (`approve 0010`). Release 0.86.1.
 - **Update** M10 U80: an `except` decision a merge needs is a plan doc on the base, approved first; a unit carrying its own is told so at merge ([Architecture](design/architecture.md)). Release 0.86.0.
 - **Update** M10 U79: the guard asks the owner for a push that can publish a tag; `report <unit> <file>` and temp-folder writes replace piped reports, which worktree isolation refuses ([Hook checks](design/hook-checks.md)). Release 0.85.0.
