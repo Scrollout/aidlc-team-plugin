@@ -453,13 +453,16 @@ function pickAction(st) {
 
 // A merged intent's Deployment rows, from its deploy record and the base commit (docs/design/operations.md).
 function releaseStep(st, i) {
-  if (!st.profile.deploy && !st.profile.release) return action('human', 'nextRelease', { intent: i.id });
   const rec = i.deploy;
   const base = tryGit(st.cwd, 'rev-parse', st.base);
+  const smokeDown = rec.smoke && !rec.smoke.ok && !(rec.rollback?.ok && rec.rollback.at > rec.smoke.at);
+  // A held intent parks its release steps until the owner resumes them; a failed smoke still stops (U59).
+  if (i.fm.hold && !smokeDown) return action('human', 'nextReleaseHeld', { intent: i.id, reason: i.fm.hold === true ? [] : [String(i.fm.hold)] });
+  if (!st.profile.deploy && !st.profile.release) return action('human', 'nextRelease', { intent: i.id });
   // A fix unit's scope holds its test: the example names the first level's test location (U58).
   const tests = Object.values(withDefaults(st.profile).levels).flatMap((l) => list(l?.paths))[0] ?? '<test globs>';
   // A failed smoke stops everything until the owner rolled back; then a fix unit, after which the base moves.
-  if (rec.smoke && !rec.smoke.ok && !(rec.rollback?.ok && rec.rollback.at > rec.smoke.at)) return action('human', 'nextSmokeFailed', { intent: i.id, ...rec.smoke });
+  if (smokeDown) return action('human', 'nextSmokeFailed', { intent: i.id, ...rec.smoke });
   if (rec.smoke && !rec.smoke.ok && rec.smoke.base === base) return action('act', 'nextSmokeFix', { intent: i.id, tests, file: relPath(st.cwd, runtimeFile(st.cwd, 'deploys', i.id)) });
   if (rec.release && !rec.release.ok && rec.release.base === base) return action('human', 'nextReleaseFailed', { intent: i.id, tests, ...rec.release });
   const checked = list(st.profile.deploy?.check).length > 0;

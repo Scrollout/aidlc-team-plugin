@@ -190,3 +190,19 @@ test('U58/AC-1 the fix lines of next name a test location from the profile', () 
   run(dir, ['deploy', 'check', 'I-1']);
   assert.match(run(dir, ['next']).out, /aidlc fix "<what failed>" --after I-1 --scope <code globs> --scope "tests\/\*\*"$/m);
 });
+
+test('U59/AC-1 a hold on a merged intent parks its release steps for the owner; off resumes them; a failed smoke still stops', () => {
+  const dir = merged({ deploy: { check: [OK], run: OK, smoke: FAIL } });
+  assert.equal(run(dir, ['hold', 'I-1', 'waiting', 'for', 'the', 'staging', 'window']).code, 0);
+  let next = run(dir, ['next']);
+  assert.equal(next.out, "👉 I-1's release steps are held: waiting for the staging window; when the owner says to resume: aidlc hold I-1 off\n");
+  assert.equal(next.code, 2, 'the turn may end');
+  assert.match(run(dir, ['status']).out, /^I-1 merged /m, 'approval stays: hold is a plan field');
+  run(dir, ['hold', 'I-1', 'off']);
+  assert.match(run(dir, ['next']).out, /deploy check I-1/);
+  run(dir, ['deploy', 'check', 'I-1']);
+  run(dir, ['release', 'I-1']);
+  run(dir, ['hold', 'I-1']);
+  next = run(dir, ['next']);
+  assert.match(next.out, /^⛔ I-1 smoke failed/, 'production first');
+});
