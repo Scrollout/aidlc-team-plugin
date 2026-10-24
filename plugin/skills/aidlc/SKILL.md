@@ -8,7 +8,7 @@ description: Run the AI-DLC loop in this repo - set it up, elaborate intents and
 
 1. Run `aidlc next`. It prints one action.
 2. Do only that action, then run `next` again.
-3. Exit code 2: the owner decides. Run an owner command the line names; they answer its prompt. End the turn with their step alone, last: the line's badge and **Your action**, numbered steps, the words to type in code. Nothing for them: end with ✅.
+3. Exit code 2: the owner decides. Run an owner command the line names; they answer its prompt. End the turn with their step alone, last: its badge (👉 or ⛔, no other) and **Your action**, numbered steps, the words to type in code. Nothing for them: end with ✅.
 
 A refusal names its fix: apply it. On `escalate`, stop and tell the owner.
 
@@ -17,8 +17,8 @@ A refusal names its fix: apply it. On `escalate`, stop and tell the owner.
 - **build**: run `aidlc card U-<n>` per unit, then start every builder in one message: Agent, `subagent_type: aidlc-team:builder`, `model` the card's `Model:`, prompt `Build U-<n>.` then the whole card.
 - **fix round, restart**: as build, the prompt starting `Fix round for U-<n>.` or `Continue U-<n> from its branch's last commit.`
 - **review**: run `aidlc card U-<n>`, then one Agent, `subagent_type: aidlc-team:reviewer`, `model` as `next` names it, prompt `Review U-<n>, focus <focus>.` then the whole card.
-- **wait**: end the turn; agent notices wake you.
-- **merge**: run the command; apply each finding's fix.
+- **wait**: end the turn; notices wake you.
+- **merge**: run it; apply each finding's fix.
 - **deploy check**: run it. A failed check or smoke prints an `aidlc fix` line: fill in what failed and run it.
 - **release, rollback**: owner steps (3). If the owner types `release I-<n>` or `rollback I-<n>`, run that command.
 - **research**: `aidlc research <id>` prints the brief; then one Agent, `subagent_type: aidlc-team:researcher`, `model` as `next` names it, the brief as prompt. File the digest as it says, draft the decision, commit both.

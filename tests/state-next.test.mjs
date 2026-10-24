@@ -182,7 +182,7 @@ test('U31/AC-1 U31/AC-2 owner steps start with the owner badge, refusals and sto
   run(dir, ['report', 'U-1'], '{"status": "stopped", "stop": "scope too small"}');
   assert.ok(run(dir, ['next']).out.startsWith(badges.stop), 'a stop');
   const skill = readFileSync(join(import.meta.dirname, '../plugin/skills/aidlc/SKILL.md'), 'utf8');
-  assert.match(skill, /End the turn with their step alone, last: the line's badge and \*\*Your action\*\*, numbered steps, the words to type in code\. Nothing for them: end with ✅\./);
+  assert.match(skill, /End the turn with their step alone, last: its badge \(👉 or ⛔, no other\) and \*\*Your action\*\*, numbered steps, the words to type in code\. Nothing for them: end with ✅\./);
 });
 
 test('U32/AC-1 U32/AC-2 U32/AC-3 a pass with an untagged AC is recorded as fix and the card names it; the retro lists the send-back', () => {
