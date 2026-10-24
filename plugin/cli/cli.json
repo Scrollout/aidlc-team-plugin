@@ -556,7 +556,7 @@
     "guardSchedule": "a scheduled prompt that approves",
     "promptApproved": "The owner typed this approval; the prompt hook ran it:\n{{out}}Commit the stamps and continue with aidlc next; do not run aidlc approve for it.",
     "promptApproveFailed": "The owner typed an approval, but it failed: {{error}}. Tell the owner; do not run aidlc approve for it.",
-    "delegateUsage": "usage: delegate <class>… | off, classes: reapprove, quick",
+    "delegateUsage": "usage: delegate <class>… | off, classes: reapprove, quick, upgrade",
     "delegated": "the lead may approve: {{classes}}\n"
   },
   "okf": {
@@ -797,8 +797,10 @@
     "autoFlag": "--auto",
     "auto": [
       "reapprove",
-      "quick"
+      "quick",
+      "upgrade"
     ],
+    "upgradeOwnerFlags": ["--downgrade", "--dirty"],
     "unitType": "Unit",
     "doorCode": "PLAN-DECISION",
     "gates": "gates",
