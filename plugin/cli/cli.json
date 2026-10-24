@@ -142,7 +142,7 @@
     },
     {
       "name": "hold",
-      "usage": "hold <unit> [off]",
+      "usage": "hold <doc> [off|<reason>]",
       "does": "record or release an owner hold in the plan"
     },
     {
@@ -1027,6 +1027,7 @@
       "model",
       "docs",
       "heartbeat",
+      "prompt",
       "steer",
       "status",
       "denied"
