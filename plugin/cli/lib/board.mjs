@@ -75,7 +75,8 @@ function wanted(cwd, st, gh) {
       group: kind === 'intent' ? `${kind}:${d.id}` : parent, milestone: kind === 'intent' ? { title, due: at(d.fm, B.target) } : null };
   };
   return [
-    ...st.intents.map((i) => one(i, 'intent', i.state, null)),
+    // An approved intent is under way once one of its units is past approval (docs/design/board.md).
+    ...st.intents.map((i) => one(i, 'intent', i.state === 'approved' && st.units.some((u) => u.fm.intent === i.id && !B.unstarted.includes(u.state)) ? B.started : i.state, null)),
     ...st.units.map((u) => one(u, 'unit', u.held && B.holdable.includes(u.state) ? B.held : u.state, u.fm.intent ? `intent:${u.fm.intent}` : null)),
   ];
 }
