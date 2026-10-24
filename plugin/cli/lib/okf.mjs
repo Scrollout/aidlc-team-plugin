@@ -1,15 +1,15 @@
 // OKF v0.2 validator and index generator (docs/design/okf.md). Settings, codes and messages come from cli.json.
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
-import { config, isMap, UsageError, relPath } from './config.mjs';
-import { msg } from './template.mjs';
+import { bundleOf, config, done, isMap, UsageError, relPath } from './config.mjs';
+import { finding as codeFinding, msg } from './template.mjs';
 import { loadProfile } from './profile.mjs';
 
 const OKF = config.okf;
 
 // ---- YAML subset (block and flow collections, plain/quoted/block scalars, comments) ----
 
-export class YamlError extends Error {}
+class YamlError extends Error {}
 const yerr = (key, data) => Object.assign(new YamlError(msg(key, data)), { line: data.line });
 
 // YAML 1.1 core resolution as PyYAML's SafeLoader, minus timestamps (kept as text, like the reference loader).
@@ -424,6 +424,7 @@ export function writeIndexes(root) {
 
 const DATE = /^## (\d{4})-(\d{2})-(\d{2})\s*$/;
 const ENTRY = /^\* \[[^\]]+\]\([^)\s]+\)( - .*)?$/;
+export const MD_LINK = /\]\(([^)#\s]+\.md)(?:#[^)]*)?\)/g;
 const LINK = /!?\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
 
 const validDate = (y, m, d) => {
@@ -442,6 +443,16 @@ export function proseLines(lines, from) {
   }
   return out;
 }
+
+// The body lines outside code fences as [lineNumber, text]; with a heading, only those of its section.
+export function sectionOf(doc, heading) {
+  let on = !heading;
+  return proseLines(doc.lines, doc.body).filter(([, text]) => (/^#{1,6}\s/.test(text) ? ((on = !heading || new RegExp(`^#{1,6}\\s+${heading}\\s*$`, 'i').test(text)), false) : on));
+}
+
+// The .md files a doc's body (or one section) links to, resolved from its folder or, for a `/` link, the bundle root.
+export const linksOf = (d, bundle, heading) => sectionOf(d.doc, heading).flatMap(([n]) => [...d.doc.lines[n - 1].matchAll(MD_LINK)])
+  .map((m) => (m[1].startsWith('/') ? join(bundle, m[1]) : resolve(dirname(d.file), m[1])));
 
 function checkLinks(root, file, lines, from, add) {
   for (const [n, text] of proseLines(lines, from)) {
@@ -501,7 +512,7 @@ function checkConcept(file, add) {
 }
 
 // Findings for `profile.docs.rules`, reported against the project profile.
-export function lintRules(rules = {}, file = config.layers.find((l) => l.from === 'project').path) {
+function lintRules(rules = {}, file = config.layers.find((l) => l.from === 'project').path) {
   const out = [];
   for (const [code, level] of Object.entries(rules)) {
     const key = !OKF.codes[code] ? 'ruleUnknown' : !OKF.codes[code].house ? 'ruleFixed' : !OKF.levels.includes(level) ? 'ruleLevel' : null;
@@ -510,9 +521,7 @@ export function lintRules(rules = {}, file = config.layers.find((l) => l.from ==
   return out;
 }
 
-function finding(code, level, path, line, key, data = {}) {
-  return { code, level, path, line, message: msg(key, data), fix: OKF.codes[code].fix };
-}
+const finding = (code, level, path, line, key, data) => codeFinding(OKF.codes, code, path, line, key, data, level);
 
 // Validates a bundle; returns findings with paths relative to `base`. `rules` maps house codes to levels.
 export function checkBundle(root, { rules = {}, base = process.cwd() } = {}) {
@@ -540,7 +549,6 @@ export function checkBundle(root, { rules = {}, base = process.cwd() } = {}) {
 
 // ---- Commands ----
 
-const bundleOf = (cwd, profile) => resolve(cwd, profile.docs.bundle);
 const hasErrors = (findings) => findings.some((f) => f.level === 'error');
 const inside = (dir, file) => file === dir || file.startsWith(dir + sep);
 
@@ -549,7 +557,7 @@ export const commands = {
     const root = args[0] ? resolve(cwd, args[0]) : bundleOf(cwd, loadProfile(cwd).profile);
     if (!existsSync(root)) throw new UsageError(msg('noSuchPath', { name: relPath(cwd, root) }));
     const written = writeIndexes(root).map((f) => relPath(cwd, f));
-    return { code: config.exit.ok, findings: [], output: written.map((f) => f + '\n').join('') };
+    return done(written.map((f) => f + '\n').join(''));
   },
 
   check(args, { cwd }) {
@@ -568,6 +576,6 @@ export const commands = {
       else if (statSync(p).isDirectory()) findings.push(...checkBundle(p, { rules, base: cwd }));
       else if (inside(bundle, p)) findings.push(...checkBundle(bundle, { rules, base: cwd }).filter((f) => f.path === relPath(cwd, p)));
     }
-    return { code: hasErrors(findings) ? config.exit.findings : config.exit.ok, findings, output: '' };
+    return done('', hasErrors(findings) ? config.exit.findings : config.exit.ok, findings);
   },
 };

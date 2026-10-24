@@ -1,18 +1,16 @@
 // Grid: reads intent and unit docs, lints the plan and computes lanes (docs/design/grid.md).
 // Settings, codes and messages come from cli.json.
-import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { dirname, join, relative, resolve, sep } from 'node:path';
-import { at, config, fieldPaths, isMap, list, UsageError, relPath } from './config.mjs';
-import { msg } from './template.mjs';
+import { join, resolve, sep } from 'node:path';
+import { at, bundleOf, config, done, fieldPaths, git, isMap, tryGit, list, UsageError, relPath } from './config.mjs';
+import { finding as codeFinding, msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
-import { parseDoc, proseLines } from './okf.mjs';
+import { linksOf, parseDoc, proseLines } from './okf.mjs';
 
 const GRID = config.grid;
 const AC = /^\s*[-*]\s+(AC-\d+)\b\s*(?:\(([^)]*)\))?\s*:/;
 const RESERVE = /^(\S+)\s+(\S+)\/(\d+)$/;
 const SPAN = /`([^`]+)`/g;
-
 
 // Requirement IDs compare by number: R-018 and R-18 are the same.
 export const reqId = (id) => id.replace(/^(R-)0*(\d)/, '$1$2');
@@ -96,34 +94,20 @@ export function acsOf(doc) {
   });
 }
 
+// A unit's plan fields and ACs, as its doc gives them.
+export const unitFields = (doc) => ({ fm: doc.fm, depends: list(doc.fm.depends), scope: list(doc.fm.scope), reserves: list(doc.fm.reserves), modules: list(doc.fm.modules), acs: acsOf(doc) });
+
 // Intents and units of a bundle; units carry their parsed fields and ACs.
 export function readPlan(bundle) {
   const requirements = readDocs(bundle, GRID.requirements, GRID.requirementFile);
   // Citations compare by number (R-24 cites R-024.md) and print as the file names the requirement.
   const named = new Map(requirements.map((r) => [reqId(r.id), r.id]));
   const cite = (d) => ({ ...d, requirements: d.requirements.map((r) => named.get(r) ?? r) });
-  const units = readDocs(bundle, GRID.units, GRID.unitFile).map((u) => cite({
-    ...u,
-    depends: list(u.fm.depends),
-    scope: list(u.fm.scope),
-    reserves: list(u.fm.reserves),
-    modules: list(u.fm.modules),
-    acs: acsOf(u.doc),
-  }));
+  const units = readDocs(bundle, GRID.units, GRID.unitFile).map((u) => cite({ ...u, ...unitFields(u.doc) }));
   return { intents: readDocs(bundle, GRID.intents, GRID.intentFile).map(cite), units, requirements };
 }
 
-// The .md files a doc's body links to, resolved from its folder or, for a `/` link, the bundle root; with a
-// heading, only the links in that section.
-function linksOf(d, bundle, heading) {
-  let on = !heading;
-  const lines = proseLines(d.doc.lines, d.doc.body).map(([n]) => d.doc.lines[n - 1]).filter((l) => (/^#{1,6}\s/.test(l) ? ((on = !heading || new RegExp(`^#{1,6}\\s+${heading}\\s*$`, 'i').test(l)), false) : on));
-  return [...lines.join('\n').matchAll(/\]\(([^)#\s]+\.md)(?:#[^)]*)?\)/g)].map((m) => (m[1].startsWith('/') ? join(bundle, m[1]) : resolve(dirname(d.file), m[1])));
-}
-
-function finding(code, file, line, key, data, base) {
-  return { code, level: GRID.codes[code].level, path: relPath(base, file), line, message: msg(key, data), fix: GRID.codes[code].fix };
-}
+const finding = (code, file, line, key, data, base) => codeFinding(GRID.codes, code, relPath(base, file), line, key, data);
 
 const keyLine = (u, key) => {
   const k = u.doc.lines.slice(0, u.doc.body).findIndex((l) => l.startsWith(`${key}:`));
@@ -279,8 +263,8 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   }
   // A generator links outputs to sources: a scope names both sides or neither. An existing file git does not
   // track is no output a builder can commit (docs/design/plan-lint.md).
-  let files = null; // outside a git work tree there is nothing to compare with
-  try { files = new Set(execFileSync('git', ['ls-files'], { cwd: base, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).split('\n')); } catch {}
+  const tracked = tryGit(base, 'ls-files');
+  const files = tracked === null ? null : new Set(tracked.split('\n')); // outside a git work tree there is nothing to compare with
   for (const u of units) {
     const touches = (globs) => list(globs).filter((g) => u.scope.some((s) => overlaps(s, g)));
     for (const entry of (Array.isArray(profile.generated) ? profile.generated : []).filter(isMap)) {
@@ -358,8 +342,6 @@ export function computeLane(items, profile = {}, { paths = false } = {}) {
 
 // ---- Commands ----
 
-const bundleOf = (cwd, profile) => resolve(cwd, profile.docs.bundle);
-
 // Live units while no level runs: the gate would run no tests (docs/design/method.md).
 function noRun(cwd, bundle, profile, skip) {
   const live = readPlan(bundle).units.some((u) => u.fm.status !== GRID.dropped && !skip.includes(u.id));
@@ -375,14 +357,14 @@ export const commands = {
     if (args[0] === '--diff') {
       paths = true;
       if (!args[1]) throw new UsageError(msg('laneUsage', {}));
-      items = execFileSync('git', ['diff', '--name-only', args[1]], { cwd, encoding: 'utf8' }).split('\n').filter(Boolean);
+      items = git(cwd, 'diff', '--name-only', args[1]).split('\n').filter(Boolean);
     } else if (args[0]) {
       const bundle = bundleOf(cwd, profile);
       const unit = readPlan(bundle).units.find((u) => u.id === args[0]);
       if (!unit) throw new UsageError(msg('unknownUnit', { name: args[0], dir: relPath(cwd, join(bundle, GRID.units)) }));
       items = unit.scope;
     } else throw new UsageError(msg('laneUsage', {}));
-    return { code: config.exit.ok, findings: [], output: msg('laneLine', computeLane(items, profile, { paths })) };
+    return done(msg('laneLine', computeLane(items, profile, { paths })));
   },
 
   // Plan lint for `check`: a directory is linted as a bundle; a file inside the profile's bundle reports only itself.
@@ -397,6 +379,6 @@ export const commands = {
       if (statSync(p).isDirectory()) findings.push(...lintPlan(p, profile, { base: cwd, skip }), ...noRun(cwd, p, profile, skip));
       else if (p.startsWith(bundle + sep)) findings.push(...lintPlan(bundle, profile, { base: cwd, skip }).filter((f) => f.path === relPath(cwd, p)));
     }
-    return { code: findings.some((f) => f.level === 'error') ? config.exit.findings : config.exit.ok, findings, output: '' }; // a warning does not fail
+    return done('', findings.some((f) => f.level === 'error') ? config.exit.findings : config.exit.ok, findings); // a warning does not fail
   },
 };

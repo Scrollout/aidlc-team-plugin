@@ -588,3 +588,17 @@ test('U45/AC-1 after a clear newer than the last merge, next asks to elaborate t
   assert.match(JSON.parse(r.stdout).hookSpecificOutput.additionalContext, /next: 👉 all intents released and the lead's session is fresh: elaborate the next intent with the owner/);
   assert.match(run(dir, ['next']).out, /^👉 all intents released and the lead's session is fresh: elaborate the next intent with the owner/);
 });
+
+test('U65/AC-2 status and the session-start hook show the same units: merged units of a released intent are history', () => {
+  const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['a/**'] }), [U(2)]: unitDoc({ scope: ['b/**'], intent: null }) });
+  approve(dir, 'I-1', 'U-1', 'U-2');
+  for (const [u, f] of [['U-1', 'a/x.txt'], ['U-2', 'b/x.txt']]) { branch(dir, u, f); merge(dir, u); }
+  git(dir, 'tag', 'v1');
+  const units = (text) => [...text.matchAll(/^ {2}(U-\d+) (\S+)/gm)].map((m) => `${m[1]} ${m[2]}`);
+  const status = run(dir, ['status']).out;
+  const r = spawnSync(process.execPath, [join(import.meta.dirname, '../plugin/cli/aidlc.mjs'), 'hook', 'status'], { cwd: dir, encoding: 'utf8', input: JSON.stringify({ cwd: dir, hook_event_name: 'SessionStart', source: 'startup' }) });
+  const context = JSON.parse(r.stdout).hookSpecificOutput.additionalContext;
+  assert.match(status, /^I-1 released /m);
+  assert.deepEqual(units(status), ['U-2 merged'], 'U-1 belongs to the released I-1');
+  assert.deepEqual(units(context), units(status));
+});

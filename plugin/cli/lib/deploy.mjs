@@ -1,15 +1,14 @@
 // Deploy: the grid's Deployment and Operation rows, run from the profile's commands. Each step's last run is
 // recorded with the base commit it ran on; `next` reads the record and never runs a step (docs/design/operations.md).
-import { spawnSync } from 'node:child_process';
-import { config, done, list, readJson, UsageError } from './config.mjs';
+import { config, done, git, list, readJson, sh, tryGit, UsageError } from './config.mjs';
 import { msg } from './template.mjs';
-import { bump, git, readState, runtimeFile, tryGit, writeJson } from './state.mjs';
+import { bump, readState, runtimeFile, writeJson } from './state.mjs';
 
 // Runs the commands in order until one fails: { ok, command, exit, output }, with the tail of the output.
 function runAll(cwd, commands) {
   let last = { ok: true };
   for (const command of commands) {
-    const r = spawnSync(command, { cwd, shell: true, encoding: 'utf8' });
+    const r = sh(cwd, command);
     last = { ok: r.status === 0, command, exit: r.status, output: (r.stdout + r.stderr).slice(-config.deploy.outputMax).trim() };
     if (!last.ok) break;
   }
