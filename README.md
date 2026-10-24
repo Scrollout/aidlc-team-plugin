@@ -111,6 +111,7 @@ The CLI keeps working with the plugin uninstalled: the project's pinned copy, it
 - [Overview](docs/design/overview.md): goals, budgets, releases, repo layout.
 - [Grid](docs/design/grid.md), [State](docs/design/state.md), [Verification](docs/design/verification.md), [Requirements and architecture checks](docs/design/architecture.md).
 - [Deployment and operation](docs/design/operations.md): deploy check, release, smoke and rollback; the owner types `release I-<n>` or `rollback I-<n>` as the go.
+- [CI on the base](docs/design/base-ci.md): with `ci.wait`, builders start only on a pushed base whose CI passed; a red base gets a fix unit first.
 - [Roadmap](docs/roadmap/index.md): the milestone plans; the newest one is the current plan.
 
 ## License

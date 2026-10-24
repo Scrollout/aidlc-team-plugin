@@ -1,11 +1,12 @@
 // Board: a one-way projection of derived state onto GitHub issues and a Project, through `gh api` only
-// (docs/design/board.md). No other command reads the board; it writes only what differs.
+// (docs/design/board.md). No other command reads the board; it writes only what differs. Also reads the base's
+// CI runs (docs/design/base-ci.md).
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { at, config, done, git, list, relPath, UsageError } from './config.mjs';
+import { at, config, done, git, list, relPath, tryGit, UsageError } from './config.mjs';
 import { msg, render } from './template.mjs';
 import { templateFile } from './card.mjs';
-import { readState } from './state.mjs';
+import { ciFile, readState, writeJson } from './state.mjs';
 
 const B = config.board;
 let ghCommand = [B.gh]; // `github.gh` overrides it (docs/design/board.md)
@@ -201,8 +202,38 @@ export function sync(cwd) {
 
 export const issueTitle = (profile, number) => rest('GET', `repos/${github(profile).repo}/issues/${number}`).title;
 
+// Polls the pushed base head's Actions runs until each completed, one is red, or ci.wait seconds passed; records them.
+const C = config.ci;
+function ciWait(cwd) {
+  const st = readState(cwd);
+  const wait = Number(st.profile.ci?.wait);
+  if (!wait || !st.profile.github?.repo) throw new UsageError(msg('ciUsage', {}));
+  const gh = github(st.profile);
+  const sha = git(cwd, 'rev-parse', st.base);
+  if (tryGit(cwd, 'rev-parse', '-q', '--verify', `${config.gate.remote}/${st.base}`) !== sha) throw new UsageError(msg('ciNotPushed', { base: st.base }));
+  const until = Date.now() + wait * 1000;
+  const red = (r) => C.red.includes(r.conclusion);
+  let runs;
+  for (;;) {
+    runs = rest('GET', `repos/${gh.repo}/actions/runs?head_sha=${sha}&per_page=${B.perPage}`).workflow_runs
+      .map((r) => ({ id: r.id, name: r.name, status: r.status, conclusion: r.conclusion ?? '', url: r.html_url }));
+    const finished = runs.length > 0 && runs.every((r) => r.status === C.completed);
+    if (finished || runs.some(red) || Date.now() >= until) break;
+    sleep(Math.min(Number(st.profile.ci.interval) * 1000, until - Date.now()));
+  }
+  // No run when the wait ended: no workflow runs for this commit, which counts as green.
+  const state = !runs.length ? 'none' : runs.some(red) ? 'red' : runs.every((r) => r.status === C.completed) ? 'green' : 'pending';
+  writeJson(ciFile(cwd), { sha, state, runs, at: new Date().toISOString() });
+  const logs = runs.filter(red).map((r) => msg('ciLog', { log: render(C.log, r, 'ci.log') })).join('');
+  return done(msg('ciResult', { base: st.base, sha: sha.slice(0, 12), state, runs }) + logs, state === 'red' ? config.exit.findings : config.exit.ok);
+}
+
 export const commands = {
   sync(args, { cwd }) {
     return done(sync(cwd));
+  },
+  ci([sub, ...more], { cwd }) {
+    if (sub !== 'wait' || more.length) throw new UsageError(msg('ciUsage', {}));
+    return ciWait(cwd);
   },
 };
