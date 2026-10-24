@@ -24,38 +24,51 @@ flowchart TB
     req["Requirements R-n<br/>lasting, approved"]
     intent["Intent I-n<br/>goal, why, success measures"]
     plan["Plan: units U-n<br/>ACs with test levels, scope,<br/>depends, reservations"]
+    researcher["Researcher<br/>cited digest for a held question,<br/>official sources first"]
+    decision["Decisions"]
     req --> intent --> plan
+    researcher --> decision
   end
 
   subgraph construction["Construction: per unit, in parallel worktrees"]
     card["Card<br/>rendered from the base commit"]
     builder["Builder<br/>tests first, only inside scope"]
     reviewer["Reviewer<br/>fresh context, JSON verdict"]
-    gate{"Merge gate<br/>scope, AC tests, checks,<br/>review, OKF, security, architecture"}
+    gate{"Merge gate<br/>scope, AC tests, checks, review,<br/>proof: code reverted or mutations,<br/>OKF, security, architecture"}
     card --> builder --> reviewer
     reviewer -- "fix, at most 3 rounds" --> builder
     reviewer -- pass --> gate
   end
 
-  subgraph operations["Operations"]
-    base["Base branch<br/>merges carry Unit, Card, Review trailers"]
-    release["Release tag"]
-    base --> release
+  subgraph operations["Deployment and Operation: when the profile deploys"]
+    base["Base branch<br/>merges carry Unit, Card, Review,<br/>Tested, Proof trailers"]
+    check["Deploy check<br/>aidlc deploy check I-n, on the base"]
+    release["Release, owner step<br/>aidlc release I-n"]
+    smoke["Smoke<br/>runs after the release"]
+    rollback["Rollback, owner step<br/>aidlc rollback I-n"]
+    fixunit["Fix unit<br/>aidlc fix --after I-n"]
+    released(["Released"])
+    base --> check -- pass --> release --> smoke -- pass --> released
+    check -- fail --> fixunit
+    smoke -- fail --> rollback --> fixunit
   end
 
   plan --> card
   gate -- "merge --no-ff" --> base
+  fixunit -- "plan work" --> card
 
   owner -. approves .-> req
   owner -. approves .-> intent
   owner -. "approves the plan once" .-> plan
-  owner -. "approves one-way doors" .-> decision["Decisions"]
+  owner -. "approves one-way doors" .-> decision
   owner -. "decides on escalation" .-> reviewer
-  owner -. approves .-> release
+  owner -. "confirms, or types release I-n" .-> release
+  owner -. "confirms, or types rollback I-n" .-> rollback
 
   next -. drives .-> plan
   next -. drives .-> card
   next -. drives .-> gate
+  next -. drives .-> check
 ```
 
 ## What the plugin installs and what it writes into a project
@@ -64,22 +77,22 @@ flowchart TB
 flowchart LR
   subgraph plugin["Plugin, installed in Claude Code"]
     skill["Skill aidlc<br/>the lead's loop"]
-    agents["Agents<br/>builder, reviewer"]
-    hooks["Hooks<br/>guard, scope, secrets, model,<br/>docs, steer, status, heartbeat"]
-    cli["CLI engine<br/>profile, template, okf, grid,<br/>state, card, gate, hooks, init"]
-    templates["Templates<br/>AGENTS.md, bundle, doc types, CI"]
+    agents["Agents<br/>builder, reviewer, researcher"]
+    hooks["Hooks<br/>guard, scope, secrets, model, docs,<br/>heartbeat, prompt, steer, status, denied"]
+    cli["CLI engine<br/>config, profile, template, okf, grid,<br/>state, card, gate, deploy, hooks,<br/>board, retro, init"]
+    templates["Templates<br/>AGENTS.md, CLAUDE.md, profile, CI,<br/>bundle with constitution, doc types<br/>with runbook"]
   end
 
   subgraph project["Your project, name neutral"]
-    profile[".aidlc/profile.json<br/>modules, lanes, levels,<br/>rules, architecture"]
+    profile[".aidlc/profile.json<br/>modules, lanes, levels,<br/>rules, architecture, deploy"]
     bin[".aidlc/bin<br/>pinned copy of the CLI"]
-    docs["docs/ OKF bundle<br/>requirements, intents, units,<br/>design, decisions"]
-    runtime[".git/aidlc<br/>cards, reports, verdicts,<br/>heartbeats, never committed"]
+    docs["docs/ OKF bundle<br/>constitution, requirements, intents,<br/>units, runbooks, design, decisions"]
+    runtime[".git/aidlc<br/>cards, reports, reviews, heartbeats,<br/>deploys, goes, prompts, stats,<br/>denials, never committed"]
     ci["CI<br/>aidlc check --ci"]
   end
 
   templates -- "init" --> profile
-  templates -- "init" --> docs
+  templates -- "init; upgrade adds missing ones" --> docs
   cli -- "init, upgrade" --> bin
   skill -- "runs" --> bin
   hooks -- "call" --> bin
@@ -97,7 +110,8 @@ The CLI keeps working with the plugin uninstalled: the project's pinned copy, it
 - [Principles](docs/constitution/principles.md): the ten rules every change is checked against.
 - [Overview](docs/design/overview.md): goals, budgets, releases, repo layout.
 - [Grid](docs/design/grid.md), [State](docs/design/state.md), [Verification](docs/design/verification.md), [Requirements and architecture checks](docs/design/architecture.md).
-- [M1 plan](docs/roadmap/m1.md): units, acceptance criteria and what is built.
+- [Deployment and operation](docs/design/operations.md): deploy check, release, smoke and rollback; the owner types `release I-<n>` or `rollback I-<n>` as the go.
+- [Roadmap](docs/roadmap/index.md): the milestone plans; the newest one is the current plan.
 
 ## License
 

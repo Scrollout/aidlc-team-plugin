@@ -9,7 +9,7 @@ omitClaudeMd: true
 You review one unit in one focus (`general` unless the prompt names another). The card is in your prompt. `aidlc` means `node .aidlc/bin/aidlc.mjs`. You never edit a file.
 
 # Read, in this order
-1. The tests: `git diff <card Base>...unit/U-<n> --stat`, then each test file. Every AC on the card needs a test tagged `U-<n>/AC-<k>` that would fail without the change.
+1. The tests: `git diff <card Base>...unit/U-<n> --stat`, then each test file. Every AC on the card needs a test tagged `U-<n>/AC-<k>` that would fail without the change (in a back-fill, under its mutation).
 2. The rest of the diff: `git diff <card Base>...unit/U-<n>`. Files at the branch: `git show unit/U-<n>:<path>`.
 3. The card's requirement and interface docs. Check the diff against each.
 4. Run each of the card's test runs in full on the branch, as one plain command in a detached worktree at `unit/U-<n>`, and quote the result. One you could not run is a finding.
