@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** [M7](roadmap/m7.md) draft: the build method from day one comes first (level runs asked at `init`, a constitution template, `upgrade` adds what is missing), folding in templates on upgrade (owner's pick).
 - **Update** [M5](roadmap/m5.md) closed (owner); its candidates are in the [M7](roadmap/m7.md) draft.
 - **Update** [M6](roadmap/m6.md) closed on 0.58.3 (owner); its pilot findings and the M5 candidates are the [M7](roadmap/m7.md) draft.
 - **Creation** [M6 pilot report](pilot/m6-report.md): deploy check, release, failed smoke, rollback, fix unit and second release held on 0.58.x; fixes 0.58.1 to 0.58.3; findings for the next batch.
