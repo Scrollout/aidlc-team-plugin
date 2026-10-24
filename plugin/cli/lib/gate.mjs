@@ -8,9 +8,9 @@ import { CLI_DIR, config, done, list, readJson, UsageError, relPath } from './co
 import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
-import { computeLane, inside, readPlan, runTarget, spansOf } from './grid.mjs';
+import { computeLane, inside, lintPlan, readPlan, runTarget, spansOf } from './grid.mjs';
 import { issueTitle, sync } from './board.mjs';
-import { approval, baseOf, branchOf, bump, bundleOf, codeChanges, diffHash, git, keptPass, readState, reviewFocuses, roundsOf, runtimeFile, tryGit, writeJson } from './state.mjs';
+import { approval, baseOf, branchOf, bump, bundleOf, codeChanges, diffHash, git, keptPass, mergedUnits, readState, reviewFocuses, roundsOf, runtimeFile, tryGit, writeJson } from './state.mjs';
 
 const G = config.gate;
 const matches = (path, glob) => inside('/' + path, glob);
@@ -351,7 +351,10 @@ export const commands = {
     }, G.fixTemplate);
     mkdirSync(join(bundle, config.grid.units), { recursive: true });
     writeFileSync(file, text);
-    return done(msg('fixWrote', { path: relPath(cwd, file), lane: lane.lane, approve: lane.lane === 'quick' ? [] : [id] }));
+    // The unit as plan lint sees it, so the lead completes what the skeleton cannot know (U58).
+    const findings = lintPlan(bundle, profile, { base: cwd, skip: [...mergedUnits(cwd, baseOf(profile)).keys()] }).filter((f) => f.path === relPath(cwd, file));
+    const out = msg('fixWrote', { path: relPath(cwd, file), lane: lane.lane, approve: lane.lane === 'quick' ? [] : [id] }) + (findings.length ? msg('fixLint', { path: relPath(cwd, file) }) : '');
+    return done(out, findings.some((f) => f.level === 'error') ? config.exit.findings : config.exit.ok, findings);
   },
 
   // The CI part of `check --ci`: base history since `profile.adopted`, and architecture on the checked-out tree.

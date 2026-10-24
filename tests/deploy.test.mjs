@@ -52,7 +52,7 @@ test('U47/AC-2 the release is offered only after a check passed on the current b
   assert.match(r.out, /^I-1 check failed: node -e .+ exited 3\nimage build broke\n/);
   assert.equal(record(failing).check.command, FAIL);
   const next = run(failing, ['next']);
-  assert.equal(next.out, `I-1 deploy check failed on the base: ${FAIL} exited 3; draft a fix: aidlc fix "<what failed>" --after I-1 --scope <globs>\n`);
+  assert.equal(next.out, `I-1 deploy check failed on the base: ${FAIL} exited 3; draft a fix: aidlc fix "<what failed>" --after I-1 --scope <code globs> --scope "<test globs>"\n`);
   assert.equal(next.code, 0);
 });
 
@@ -136,7 +136,7 @@ test('U49/AC-2 a failed smoke is a stop before other work: the owner rolls back,
   assert.equal(run(dir, ['rollback', 'I-1']).out, 'I-1 rollback passed\n');
   assert.ok(existsSync(join(dir, 'rolled.txt')));
   next = run(dir, ['next']);
-  assert.equal(next.out, 'I-1 was rolled back: draft a fix from the smoke output in .git/aidlc/deploys/I-1.json: aidlc fix "<what failed>" --after I-1 --scope <globs>\n');
+  assert.equal(next.out, 'I-1 was rolled back: draft a fix from the smoke output in .git/aidlc/deploys/I-1.json: aidlc fix "<what failed>" --after I-1 --scope <code globs> --scope "<test globs>"\n');
   const fix = run(dir, ['fix', 'health check fails after release', '--after', 'I-1', '--scope', 'docs/**']);
   assert.equal(fix.code, 0, fix.err);
   const unit = fix.out.match(/wrote (\S+?),/)[1];
@@ -183,4 +183,10 @@ test('U57/AC-1 an intent whose units change only test paths needs no runbook, de
   assert.doesNotMatch(run(dir, ['next']).out, /deploy check|release I-1/);
   const code = merged(profile);
   assert.match(run(code, ['next']).out, /deploy check I-1/, 'a unit that may change code still deploys');
+});
+
+test('U58/AC-1 the fix lines of next name a test location from the profile', () => {
+  const dir = merged({ levels: { unit: { paths: ['tests/**'] } }, deploy: { check: [FAIL] } });
+  run(dir, ['deploy', 'check', 'I-1']);
+  assert.match(run(dir, ['next']).out, /aidlc fix "<what failed>" --after I-1 --scope <code globs> --scope "tests\/\*\*"$/m);
 });

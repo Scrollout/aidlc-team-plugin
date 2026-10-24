@@ -171,7 +171,7 @@ test('U6/AC-6 push refuses a base commit that is neither a gate merge nor docs-o
   assert.notEqual(git(remote, 'rev-parse', 'main'), git(dir, 'rev-parse', 'main'));
 });
 
-test('U6/AC-7 U18/AC-5 fix writes a one-unit plan with a regression AC; quick needs no approval, standard and full do', () => {
+test('U6/AC-7 U18/AC-5 U58/AC-1 fix writes a one-unit plan with a regression AC; quick needs no approval, standard and full do', () => {
   const dir = makeRepo({}, { lanes: { quick: ['docs/**'], full: ['src/db/**'] } });
   let r = run(dir, ['fix', 'Typo in guide', '--scope', 'docs/guide/**']);
   assert.equal(r.code, 0, r.err);
@@ -186,7 +186,8 @@ test('U6/AC-7 U18/AC-5 fix writes a one-unit plan with a regression AC; quick ne
   r = run(dir, ['fix', 'Rounding bug', '--scope', 'src/math/**']);
   assert.match(r.out, /U-2-rounding-bug\.md, standard lane; the owner approves it: aidlc approve U-2/);
   r = run(dir, ['fix', 'Bad migration', '--scope', 'src/db/**']);
-  assert.equal(r.code, 0, r.err);
+  assert.equal(r.code, 1, 'U58/AC-1 written, but plan lint asks for its decision');
+  assert.match(r.out, /^docs\/units\/U-3-bad-migration\.md does not pass plan lint yet: fix each finding below, then run aidlc check docs\/units\/U-3-bad-migration\.md\ndocs\/units\/U-3-bad-migration\.md:\d+ PLAN-DECISION /m);
   assert.match(r.out, /U-3-bad-migration\.md, full lane; the owner approves it: aidlc approve U-3/);
   commit(dir, 'full fix');
   assert.match(run(dir, ['status']).out, /^ {2}U-3 draft/m, 'the full-lane fix waits for the owner');
