@@ -203,6 +203,13 @@ function runGate(cwd, st, unit) {
     return { findings: out, tree, tested: [], proof: null };
   }
 
+  // What merge writes comes first and is staged, so each check sees the tree that will be committed (docs/design/gate.md).
+  const treeBundle = join(tree, bundleRel);
+  writeIndexes(treeBundle);
+  addLogEntry(treeBundle, msg('gateLogEntry', { unit: unit.id, title: String(unit.fm.title ?? '') }));
+  for (const command of list(p.regen)) shell(tree, command);
+  git(tree, 'add', '-A');
+
   const merged = withDefaults(loadProfile(tree).profile); // from the merge result: a unit may add a test location
   const { levels } = merged;
   const levelPaths = (level) => list(levels?.[level]?.paths);
@@ -236,10 +243,6 @@ function runGate(cwd, st, unit) {
   for (const command of list(p.security?.check)) if (!shell(tree, command)) add('GATE-SECURITY', 'gateCheck', { command });
   out.push(...architecture(tree, merged)); // the boundaries as merged
 
-  const treeBundle = join(tree, bundleRel);
-  writeIndexes(treeBundle);
-  addLogEntry(treeBundle, msg('gateLogEntry', { unit: unit.id, title: String(unit.fm.title ?? '') }));
-  for (const command of list(p.regen)) shell(tree, command);
   for (const f of checkBundle(treeBundle, { rules: p.docs?.rules ?? {}, base: tree }).filter((x) => x.level === 'error')) {
     out.push(finding('GATE-OKF', f.path, f.line, 'gateOkf', f));
   }

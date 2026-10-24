@@ -35,6 +35,15 @@ test('U6/AC-1 a unit that adds a test location to the profile passes GATE-LEVEL;
   assert.deepEqual(codes(merge(doc)).filter((c) => c.startsWith('GATE-A') || c === 'GATE-LEVEL'), ['GATE-AC']);
 });
 
+test('U75/AC-5 the checks see the indexes and log merge writes: a unit adding a doc passes a run that wants it indexed', () => {
+  const indexed = 'node -e "process.exit(require(\'fs\').readFileSync(\'docs/notes/index.md\', \'utf8\').includes(\'n.md\') ? 0 : 1)" && node --test && git diff --exit-code';
+  const note = { 'docs/notes/n.md': '---\ntype: Note\ntitle: N\ndescription: A note.\ngenerated: { by: x/1, at: 2026-01-01T00:00:00Z }\n---\n\nText.\n' };
+  const dir = setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: indexed } } }, unit: { scope: ['src/**', 'tests/**', 'docs/notes/n.md'] }, files: { ...CODE, ...TEST, ...note } });
+  const r = merge(dir);
+  assert.equal(r.code, 0, r.out);
+  assert.match(read(dir, 'docs/notes/index.md'), /n\.md/);
+});
+
 test('U6/AC-8 a full-lane unit merges on its tests', () => {
   const dir = setup({ unit: { scope: ['db/**', 'tests/**'], twoWay: 'a pure function, no data' }, files: { 'db/add.mjs': 'export const add = (a, b) => a + b;\n', 'tests/add.test.mjs': TEST['tests/add.test.mjs'].replace('../src/add.mjs', '../db/add.mjs') } });
   assert.equal(JSON.parse(read(dir, '.git/aidlc/cards/U-1.json')).lane, 'full');
