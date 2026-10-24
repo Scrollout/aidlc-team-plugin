@@ -38,11 +38,17 @@ test('U55/AC-1 a unit that changes code, or one in the quick lane, needs no muta
   assert.equal(report(backfill({ profile: { ...PROFILE, lanes: { quick: ['tests/**'] } } })).code, 0);
 });
 
+test('U75/AC-4 a unit that changes code may report mutations; then each AC needs a valid one, which may edit its own diff', () => {
+  const wired = () => backfill({ scope: ['tests/**', 'src/**'], extra: { 'src/calc.txt': 'total = a + b + 0\n' } });
+  assert.equal(report(wired(), [{ ac: 'U-1/AC-1', path: 'src/calc.txt', find: 'a + b + 0', replace: 'a - b', breaks: 'the total' }]).code, 0, 'its own diff');
+  assert.equal(report(wired(), [{ ac: 'U-1/AC-9', path: 'src/calc.txt', find: 'a + b + 0', replace: 'a - b', breaks: 'x' }]).code, 64, 'AC-1 still needs one');
+});
+
 test('U55/AC-2 U61/AC-2 the card says how to list mutations and shows the reported ones; the prompts say who writes and who judges them', () => {
   const dir = backfill();
   git(dir, 'switch', '-q', 'main');
   let card = run(dir, ['card', 'U-1']).out;
-  assert.match(card, /^If you changed only tests, add "mutations": \[\{"ac": "U-1\/AC-<k>"/m);
+  assert.match(card, /^If you changed only tests, or reverting your change cannot fail your tests \(it wires them into the level.s run\), add "mutations": \[\{"ac": "U-1\/AC-<k>"/m);
   assert.doesNotMatch(card, /Mutations to judge/);
   git(dir, 'switch', '-q', 'unit/U-1');
   report(dir, [{ ac: 'U-1/AC-1', path: 'src/calc.txt', find: 'total = a + b', replace: 'total = a - b', breaks: 'the total' }]);
@@ -51,6 +57,6 @@ test('U55/AC-2 U61/AC-2 the card says how to list mutations and shows the report
   assert.match(card, /^## Mutations to judge .*\n- U-1\/AC-1: in src\/calc\.txt, "total = a \+ b" → "total = a - b"; breaks: the total$/m);
   assert.match(card, /"breaks": "<the AC's main behaviour it breaks>"\}\], one per AC, breaking the main behaviour, not only a boundary or an edge/, 'U61/AC-2');
   assert.match(readFileSync(join(ROOT, 'plugin/agents/reviewer.md'), 'utf8'), /breaks nothing its AC names, or only an edge of it, is a `fix` finding/, 'U61/AC-2');
-  assert.match(readFileSync(join(ROOT, 'plugin/agents/builder.md'), 'utf8'), /changed only tests \(a back-fill\), add the card's `mutations`.*named in `breaks`/);
+  assert.match(readFileSync(join(ROOT, 'plugin/agents/builder.md'), 'utf8'), /changed only tests, or as above, add the card's `mutations`.*named in `breaks`/);
   assert.match(readFileSync(join(ROOT, 'plugin/agents/reviewer.md'), 'utf8'), /`Mutations to judge`: one that breaks nothing its AC names/);
 });

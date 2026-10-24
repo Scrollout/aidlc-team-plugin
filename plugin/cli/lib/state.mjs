@@ -103,20 +103,22 @@ export const codeChanges = (paths, levels, bundleRel) => {
 export const mutationOf = (mutations, tag) => (Array.isArray(mutations) ? mutations : []).find((x) => x?.ac === tag);
 
 // What a back-fill unit's mutations lack: one per AC, of a file outside the tests and the diff, whose `find`
-// occurs exactly once on the unit branch. A quick-lane unit or one that changes code needs none.
+// occurs exactly once on the unit branch. A quick-lane unit needs none; one that changes code only when it reports
+// some, which may then edit its own diff (docs/design/backfill.md).
 function mutationProblems(cwd, profile, unit, mutations) {
   const u = readPlan(bundleOf(cwd, profile)).units.find((x) => x.id === unit);
   if (!u || computeLane(u.scope, profile).lane === QUICK) return [];
   const levels = withDefaults(profile).levels;
   const paths = unitPaths(cwd, baseOf(profile), unit);
-  if (codeChanges(paths, levels, relPath(git(cwd, 'rev-parse', '--show-toplevel'), bundleOf(cwd, profile))).length) return [];
+  const code = codeChanges(paths, levels, relPath(git(cwd, 'rev-parse', '--show-toplevel'), bundleOf(cwd, profile))).length > 0;
+  if (code && ![mutations].flat().some((m) => m?.ac)) return [];
   return u.acs.flatMap((ac) => {
     const tag = `${unit}/${ac.id}`;
     const m = mutationOf(mutations, tag);
     if (!m) return [msg('mutationMissing', { tag })];
     const text = m.path && tryGit(cwd, 'show', `${branchOf(unit)}:${m.path}`);
     const count = text && m.find ? text.split(String(m.find)).length - 1 : 0;
-    if (!(count === 1 && typeof m.replace === 'string' && !isTestPath(m.path, levels) && !paths.includes(m.path))) return [msg('mutationBad', { tag, path: m.path ?? '', count })];
+    if (!(count === 1 && typeof m.replace === 'string' && !isTestPath(m.path, levels) && (code || !paths.includes(m.path)))) return [msg('mutationBad', { tag, path: m.path ?? '', count })];
     return String(m.breaks ?? '').trim() ? [] : [msg('mutationBreaks', { tag })]; // what it breaks, for the reviewer to judge (U61)
   });
 }
