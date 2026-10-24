@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cpSync, existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { commit, git, makeRepo, run, tempDir, write } from './state-repo.mjs';
 
@@ -79,7 +79,7 @@ test('U5/AC-2 rendered files contain no plugin name', () => {
   }
 });
 
-test('U5/AC-3 upgrade replaces .aidlc/bin and nothing else; the pinned copy cannot upgrade itself', () => {
+test('U5/AC-3 upgrade replaces .aidlc/bin and changes nothing the project has; the pinned copy cannot upgrade itself', () => {
   const dir = emptyRepo();
   run(dir, ['init']);
   writeFileSync(join(dir, '.aidlc/bin/VERSION'), '0.0.1\n');
@@ -259,4 +259,30 @@ test('U53/AC-1 U53/AC-2 init writes a constitution naming only checks the CLI de
   write(dir, { 'docs/constitution/principles.md': '---\ntype: Principles\ntitle: Ours\ndescription: Ours.\n---\n' });
   run(dir, ['init']);
   assert.match(readFileSync(join(dir, 'docs/constitution/principles.md'), 'utf8'), /^title: Ours$/m, 'an existing one is kept');
+});
+
+test('U54/AC-1 upgrade adds each doc template and the constitution a project lacks, indexes it, and overwrites nothing', () => {
+  const dir = emptyRepo();
+  run(dir, ['init', '--name', 'demo']);
+  rmSync(join(dir, '.aidlc/templates/docs/runbook.md'));
+  rmSync(join(dir, 'docs/constitution'), { recursive: true });
+  run(dir, ['index']);
+  writeFileSync(join(dir, '.aidlc/templates/docs/unit.md'), '# our own unit template\n');
+  const r = run(dir, ['upgrade', '--dirty']);
+  assert.equal(r.code, 0, r.err);
+  assert.match(r.out, /^added \.aidlc\/templates\/docs\/runbook\.md: the project lacked it$/m);
+  assert.match(r.out, /^added docs\/constitution\/principles\.md: the project lacked it$/m);
+  assert.equal((r.out.match(/^added /gm) ?? []).length, 2, 'only what was missing');
+  assert.equal(readFileSync(join(dir, '.aidlc/templates/docs/unit.md'), 'utf8'), '# our own unit template\n');
+  assert.match(readFileSync(join(dir, 'docs/constitution/principles.md'), 'utf8'), /^title: How demo is built$/m);
+  assert.match(readFileSync(join(dir, 'docs/index.md'), 'utf8'), /\[constitution\]\(constitution\/index\.md\)/);
+  assert.equal(run(dir, ['check']).out, '', 'the bundle passes');
+  assert.doesNotMatch(run(dir, ['upgrade', '--dirty']).out, /^added /m, 'once');
+
+  const own = emptyRepo();
+  run(own, ['init']);
+  rmSync(join(own, 'docs/constitution'), { recursive: true });
+  write(own, { 'docs/handbook/rules.md': '---\ntype: Principles\ntitle: Ours\ndescription: Ours.\n---\n' });
+  assert.doesNotMatch(run(own, ['upgrade', '--dirty']).out, /constitution/, 'a bundle with its own Principles doc keeps it');
+  assert.ok(!existsSync(join(own, 'docs/constitution')));
 });

@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** M7 U54 built: `upgrade` adds each doc template a project lacks, and the constitution when its bundle holds no `Principles` doc, regenerating the indexes; it overwrites nothing and names each file it added ([Profile and templates](design/profile.md)). Release 0.61.0.
 - **Update** M7 U53 built: `init` writes `<bundle>/constitution/principles.md`, seven rules each naming the checks that enforce them and a section for the project's own, regenerates the bundle's indexes, and AGENTS.md points to it ([Build method from day one](design/method.md)). Release 0.60.0.
 - **Update** M7 U52 built: `init --run <level>=<command>` writes each level's run; without it `init` offers the commands it detects and writes none; `aidlc check` warns `PLAN-RUN` while no level runs, and a warning no longer fails plan lint ([Build method from day one](design/method.md)). Release 0.59.0.
 - **Update** [M7](roadmap/m7.md) candidates: proof for back-fill tests, so characterization tests for code built before a migration are shown to fail when it breaks (owner's pick).
