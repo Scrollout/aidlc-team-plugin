@@ -2,7 +2,7 @@
 type: Principles
 title: Principles
 description: The ten rules every design choice in this plugin is checked against.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 ---
 

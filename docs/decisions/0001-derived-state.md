@@ -2,7 +2,7 @@
 type: Decision
 title: 0001 Derived state
 description: Progress is computed from git and the docs bundle; there is no ledger, event log or handoff file.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 ---
 

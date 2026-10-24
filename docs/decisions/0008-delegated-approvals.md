@@ -2,7 +2,7 @@
 type: Decision
 title: 0008 Delegated approvals
 description: The owner can let the lead approve two classes of docs itself, re-approvals and quick-lane units, through an untracked personal setting; first approvals of intents, plans, requirements and one-way doors stay with the owner.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T12:41:16Z }
 ---
 

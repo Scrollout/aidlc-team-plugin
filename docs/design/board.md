@@ -2,7 +2,7 @@
 type: Design
 title: Board
 description: An optional one-way projection of derived state onto GitHub issues and a GitHub Project, written by deterministic code at zero model tokens.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T11:30:00Z }
 ---
 

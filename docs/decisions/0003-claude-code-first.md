@@ -2,7 +2,7 @@
 type: Decision
 title: 0003 Claude Code first
 description: Ship as a Claude Code plugin first; keep AGENTS.md and the CLI portable so other agent hosts can follow later.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 ---
 

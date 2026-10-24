@@ -2,7 +2,7 @@
 type: Decision
 title: 0009 Owner commands by permission prompt
 description: The owner runs owner commands (approve, upgrade, delegate, mode, release, rollback) by answering a yes/no permission prompt that the guard raises when the lead runs them, so they work from the mobile app and the web, where ! commands do not run.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T13:01:46Z }
 sources:
   - id: cc-rc

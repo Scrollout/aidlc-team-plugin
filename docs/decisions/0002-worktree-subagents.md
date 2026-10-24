@@ -2,7 +2,7 @@
 type: Decision
 title: 0002 Worktree subagents
 description: Parallel workers are worktree-isolated subagents of one lead session, not peer sessions.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 ---
 

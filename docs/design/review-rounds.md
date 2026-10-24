@@ -2,7 +2,7 @@
 type: Design
 title: Review rounds
 description: What review record does with a verdict - fix rounds and their limit, send-backs, and which focus passes still count after a fix.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T19:40:00Z }
 ---
 

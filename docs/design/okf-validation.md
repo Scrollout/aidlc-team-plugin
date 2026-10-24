@@ -2,7 +2,7 @@
 type: Design
 title: OKF validation
 description: The OKF errors and house-rule warnings the validator reports, and the YAML subset it reads frontmatter with.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T10:28:02Z }
 sources:
   - id: okf-spec

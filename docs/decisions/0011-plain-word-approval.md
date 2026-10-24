@@ -2,7 +2,7 @@
 type: Decision
 title: 0011 Plain-word approval
 description: The owner approves by typing exactly approve <doc>… as a prompt; a UserPromptSubmit hook stamps the docs before the lead sees the prompt, so approving needs no ! command, no path and no prompt the lead must raise.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T11:20:00Z }
 sources:
   - id: cc-hooks

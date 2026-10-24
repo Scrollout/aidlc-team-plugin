@@ -2,7 +2,7 @@
 type: Design
 title: Unit card
 description: The generated, read-only brief one builder works from and one reviewer checks against.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:30:00Z }
 ---
 

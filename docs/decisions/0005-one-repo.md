@@ -2,7 +2,7 @@
 type: Decision
 title: 0005 One repo
 description: Develop and ship from one repo; the installable plugin is the plugin/ folder only.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 ---
 

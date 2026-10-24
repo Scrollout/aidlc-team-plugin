@@ -2,7 +2,7 @@
 type: Decision
 title: 0006 Engine behind adapters
 description: Commands and hook rules are pure functions returning data; the CLI and hooks are adapters now, and MCP, HTTP hooks and A2A can be added later without changing the engine.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T09:38:26Z }
 sources:
   - id: cc-hooks
