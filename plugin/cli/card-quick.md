@@ -25,5 +25,5 @@ Write only inside:
 {{#each outOfScope}}{{this}}
 {{/each}}
 ## Report
-First run `aidlc start {{id}}`. When done or stopped, pipe JSON to `aidlc report {{id}}`:
+First run `aidlc start {{id}}`. When done or stopped, write the JSON to a file in your temp folder and run `aidlc report {{id}} <file>` (pipes and heredocs are refused):
 {"status": "done|stopped", "summary": "...", "stop": "<reason when stopped>"}
