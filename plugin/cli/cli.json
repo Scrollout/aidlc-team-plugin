@@ -391,6 +391,8 @@
     "gateNeeds": "level {{level}} needs {{vars}}, which is unset: its tests would skip",
     "gateSkip": "level {{level}} skipped a test: {{line}}",
     "gateProof": "level {{level}} still passes with {{unit}}'s changes outside the test paths reverted: its tagged tests do not test them",
+    "gateProofMutation": "{{tag}} has no mutation that applies: its find text must occur once in its file on the merge result",
+    "gateProofKept": "level {{level}} still passes with {{tag}}'s mutation applied: its test does not catch the break",
     "proofSkipped": "proof skipped: {{why}}\n",
     "proofQuick": "quick lane",
     "proofTests": "no change outside the test paths",
@@ -894,6 +896,7 @@
     },
     "tested": "Tested",
     "proof": "Proof",
+    "mutation": "mutation",
     "pass": "pass",
     "lanes": [
       "quick",

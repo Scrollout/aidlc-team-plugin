@@ -10,17 +10,16 @@ import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
 import { computeLane, inside, readPlan, runTarget, spansOf } from './grid.mjs';
 import { issueTitle, sync } from './board.mjs';
-import { approval, baseOf, branchOf, bump, bundleOf, diffHash, git, keptPass, readState, reviewFocuses, roundsOf, runtimeFile, tryGit, writeJson } from './state.mjs';
+import { approval, baseOf, branchOf, bump, bundleOf, codeChanges, diffHash, git, keptPass, readState, reviewFocuses, roundsOf, runtimeFile, tryGit, writeJson } from './state.mjs';
 
 const G = config.gate;
 const matches = (path, glob) => inside('/' + path, glob);
 const finding = (code, path, line, key, data) => ({ code, level: 'error', path, line, message: msg(key, data), fix: G.codes[code].fix });
-const projectDir = dirname(config.layers.find((l) => l.from === 'project').path) + '/';
 
 // Proof-revert: with the unit's code reverted, each level that holds a tagged test must fail (docs/design/gate.md).
-function proofRevert(tree, card, paths, levels, tagged, bundleRel, add) {
-  const isTest = (f) => Object.values(levels ?? {}).some((l) => list(l?.paths).some((g) => matches(f, g)));
-  const code = paths.filter((f) => !isTest(f) && !f.startsWith(bundleRel + '/') && !f.startsWith(projectDir));
+function proofRevert(tree, card, paths, levels, tagged, bundleRel, add, unit, mutations) {
+  const code = codeChanges(paths, levels, bundleRel);
+  if (card && card.lane !== 'quick' && !code.length) return proofMutate(tree, unit, mutations, levels, add);
   const runs = Object.entries(levels ?? {}).filter(([, l]) => l?.run && [...tagged].some((f) => list(l.paths).some((g) => matches(f, g))));
   const skip = card?.lane === 'quick' ? 'proofQuick' : !code.length ? 'proofTests' : !runs.length ? 'proofNoRun' : null;
   if (skip) return { levels: [], note: msg('proofSkipped', { why: msg(skip, {}) }) };
@@ -37,6 +36,25 @@ function proofRevert(tree, card, paths, levels, tagged, bundleRel, add) {
   if (back.length) git(tree, 'checkout-index', '-f', '--', ...back);
   for (const f of code.filter((x) => !staged.has(x))) rmSync(join(tree, f), { force: true });
   return { levels: runs.map(([level]) => level), note: '' };
+}
+
+// A unit that changes only tests: each AC's reported mutation, applied alone, must fail its level (docs/design/backfill.md).
+function proofMutate(tree, unit, mutations, levels, add) {
+  const ran = new Set();
+  for (const ac of unit.acs) {
+    const tag = `${unit.id}/${ac.id}`;
+    const m = (Array.isArray(mutations) ? mutations : []).find((x) => x?.ac === tag);
+    const file = m?.path && join(tree, m.path);
+    const text = file && existsSync(file) ? readFileSync(file, 'utf8') : null;
+    if (!text || !m.find || typeof m.replace !== 'string' || text.split(m.find).length !== 2) { add('GATE-PROOF', 'gateProofMutation', { tag }); continue; }
+    const l = levels?.[ac.level];
+    if (!l?.run) continue; // a level that does not run proves nothing either way
+    writeFileSync(file, text.replace(m.find, () => m.replace));
+    if (runLevel(tree, ac.level, l, add) === true) add('GATE-PROOF', 'gateProofKept', { tag, level: ac.level });
+    writeFileSync(file, text);
+    ran.add(ac.level);
+  }
+  return { levels: ran.size ? [`${G.mutation} ${[...ran].join(', ')}`] : [], note: '' };
 }
 
 const shell = (cwd, command) => spawnSync(command, { cwd, shell: true, encoding: 'utf8' }).status === 0;
@@ -195,7 +213,7 @@ function runGate(cwd, st, unit) {
     }
   }
 
-  const proof = out.length ? null : proofRevert(tree, card, paths, levels, tagged, bundleRel, add); // only on a green merge result
+  const proof = out.length ? null : proofRevert(tree, card, paths, levels, tagged, bundleRel, add, unit, readJson(runtimeFile(cwd, 'reports', unit.id))?.mutations); // only on a green merge result
 
   const touched = (p.modules ?? []).filter((m) => paths.some((x) => list(m.paths).some((g) => matches(x, g))));
   for (const m of touched.filter((x) => x.check)) if (!shell(tree, m.check)) add('GATE-CHECK', 'gateCheck', { command: m.check });

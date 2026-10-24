@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** M7 U56 built: for a unit that changes only tests, outside the quick lane, the gate applies each AC's mutation alone in its trial tree and refuses with `GATE-PROOF` when the AC's level still passes or a mutation does not apply; the trailer reads `Proof: mutation <levels>` ([Proof for back-fill tests](design/backfill.md)). Release 0.63.0.
 - **Update** M7 U55 built: a unit that changes only tests reports one mutation per AC, refused by `aidlc report` otherwise; the card says how and shows the reported ones, and the reviewer judges them ([Proof for back-fill tests](design/backfill.md)). Release 0.62.0.
 - **Creation** [Proof for back-fill tests](design/backfill.md) and M7 units U55 and U56 for approval: the builder lists one mutation per AC for a tests-only unit and the gate applies each (owner's choice).
 - **Update** M7 U54 built: `upgrade` adds each doc template a project lacks, and the constitution when its bundle holds no `Principles` doc, regenerating the indexes; it overwrites nothing and names each file it added ([Profile and templates](design/profile.md)). Release 0.61.0.

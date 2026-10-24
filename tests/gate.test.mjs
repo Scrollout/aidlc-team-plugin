@@ -284,12 +284,8 @@ test('U28/AC-1 a tagged test that still passes with the change reverted refuses 
   assert.equal(git(fixing, 'status', '--porcelain'), '');
 });
 
-test('U28/AC-2 U28/AC-3 a test-only, quick-lane or run-less unit skips the proof and says so; the card and builder name it', () => {
-  const tests = setup({ files: VACUOUS });
-  const r = merge(tests);
-  assert.equal(r.code, 0, r.out);
-  assert.match(r.out, /^proof skipped: no change outside the test paths$/m);
-  assert.match(git(tests, 'log', '-1', '--format=%(trailers:only,unfold)'), /^Proof: none$/m);
+test('U28/AC-2 U28/AC-3 a quick-lane or run-less unit skips the proof and says so; a test-only one needs mutations (U56); the card and builder name it', () => {
+  assert.match(merge(setup({ files: VACUOUS })).out, /GATE-PROOF U-1\/AC-1 has no mutation that applies/);
   const quick = setup({ unit: { scope: ['docs/guide/**'], modules: [] }, files: { 'docs/guide/a.md': '---\ntype: Note\ntitle: A\ndescription: A note.\ngenerated: { by: x/1, at: 2026-01-01T00:00:00Z }\n---\n\nText.\n' } });
   assert.match(merge(quick).out, /^proof skipped: quick lane$/m);
   const runless = setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'] } } } });
@@ -343,4 +339,39 @@ test('U46/AC-1 after a merge a locked builder worktree with clean tracked files 
   assert.equal(k.code, 0, k.out + k.err);
   assert.ok(existsSync(wt2), 'uncommitted tracked work is never thrown away');
   assert.match(k.out, /^kept .+: it has uncommitted changes to tracked files$/m);
+});
+
+// U-1 adds only a test for src/add.mjs, which the base already has, and reports the given mutations.
+function backfill({ test = TEST, mutations } = {}) {
+  const dir = makeRepo({ ...LOG, ...CODE, 'docs/intents/I-1-math.md': intentDoc('I-1', 'Math'), [U1]: unitDoc({ scope: ['tests/**'], acs: ['- AC-1 (unit): adds two numbers.'] }) }, PROFILE);
+  approve(dir, 'I-1', 'U-1');
+  git(dir, 'switch', '-q', '-c', 'unit/U-1');
+  commit(dir, 'characterize add', test);
+  if (mutations) assert.equal(run(dir, ['report', 'U-1'], JSON.stringify({ status: 'done', summary: 's', tests: [], mutations })).code, 0);
+  git(dir, 'switch', '-q', 'main');
+  assert.equal(run(dir, ['card', 'U-1']).code, 0);
+  review(dir, 'U-1', 'pass');
+  return dir;
+}
+const BREAK = [{ ac: 'U-1/AC-1', path: 'src/add.mjs', find: 'a + b', replace: 'a - b' }];
+
+test('U56/AC-1 a back-fill unit merges when each mutation fails its AC\'s level, and is refused when one still passes', () => {
+  const dir = backfill({ mutations: BREAK });
+  const r = merge(dir);
+  assert.equal(r.code, 0, r.out);
+  assert.match(git(dir, 'log', '-1', '--format=%(trailers:only,unfold)'), /^Proof: mutation unit$/m);
+  assert.equal(read(dir, 'src/add.mjs'), CODE['src/add.mjs'], 'the mutated file is restored');
+  assert.equal(git(dir, 'status', '--porcelain'), '');
+
+  const vacuous = backfill({ test: VACUOUS, mutations: BREAK });
+  const refused = merge(vacuous);
+  assert.equal(refused.code, 1);
+  assert.match(refused.out, /GATE-PROOF level unit still passes with U-1\/AC-1's mutation applied: its test does not catch the break/);
+});
+
+test('U56/AC-2 an AC without a mutation, or one whose find no longer matches once, refuses as GATE-PROOF', () => {
+  assert.match(merge(backfill()).out, /GATE-PROOF U-1\/AC-1 has no mutation that applies: its find text must occur once in its file on the merge result/);
+  const moved = backfill({ mutations: BREAK });
+  commit(moved, 'the base changes add', { 'src/add.mjs': 'export const add = (x, y) => x + y;\n' });
+  assert.match(merge(moved).out, /GATE-PROOF U-1\/AC-1 has no mutation that applies/);
 });
