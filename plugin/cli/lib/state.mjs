@@ -92,7 +92,8 @@ export function mutationProblems(cwd, profile, unit, mutations) {
     if (!m) return [msg('mutationMissing', { tag })];
     const text = m.path && tryGit(cwd, 'show', `${branchOf(unit)}:${m.path}`);
     const count = text && m.find ? text.split(String(m.find)).length - 1 : 0;
-    return count === 1 && typeof m.replace === 'string' && !isTestPath(m.path, levels) && !paths.includes(m.path) ? [] : [msg('mutationBad', { tag, path: m.path ?? '', count })];
+    if (!(count === 1 && typeof m.replace === 'string' && !isTestPath(m.path, levels) && !paths.includes(m.path))) return [msg('mutationBad', { tag, path: m.path ?? '', count })];
+    return String(m.breaks ?? '').trim() ? [] : [msg('mutationBreaks', { tag })]; // what it breaks, for the reviewer to judge (U61)
   });
 }
 

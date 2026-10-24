@@ -33,4 +33,4 @@ When a hook denies a write or command, its message names the fix: follow it.
 Pipe JSON to `aidlc report U-<n>`:
 `{"status": "done|stopped", "summary": "<one line>", "tests": ["<file>: U-<n>/AC-<k>"], "stop": "<reason when stopped>"}`
 List every AC test you wrote. Nothing is done until the report is recorded.
-If you changed only tests (a back-fill), add the card's `mutations`, one per AC: a small edit to the code the test covers that the test must catch.
+If you changed only tests (a back-fill), add the card's `mutations`, one per AC: a small edit to the code the test covers that breaks the AC's main behaviour, named in `breaks`.

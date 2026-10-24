@@ -354,7 +354,7 @@ function backfill({ test = TEST, mutations } = {}) {
   review(dir, 'U-1', 'pass');
   return dir;
 }
-const BREAK = [{ ac: 'U-1/AC-1', path: 'src/add.mjs', find: 'a + b', replace: 'a - b' }];
+const BREAK = [{ ac: 'U-1/AC-1', path: 'src/add.mjs', find: 'a + b', replace: 'a - b', breaks: 'adding' }];
 
 test('U56/AC-1 U57/AC-2 a back-fill unit merges when each mutation fails its AC\'s level, and is refused when one still passes', () => {
   const dir = backfill({ mutations: BREAK });
