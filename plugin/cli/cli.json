@@ -372,6 +372,7 @@
     "initLeftoverDir": "leftover: {{path}}/ is not a known folder; left untouched\n",
     "initLeftoverTrailer": "leftover: commit trailer {{key}} in {{count}} commits; history is left as is\n",
     "initVendored": "pinned the CLI {{version}} in {{path}}\n",
+    "upgradeAdded": "added {{path}}: the project lacked it\n",
     "upgradeSame": "the CLI is already {{version}} in {{path}}: nothing changed\n",
     "upgradeFrom": "copied from {{version}} at {{path}}; for a newer release: claude plugin marketplace update, then claude plugin update {{name}}, restart, and upgrade again\n",
     "initNotPlugin": "init and upgrade run from the installed plugin, not from {{path}}",
@@ -786,27 +787,33 @@
       {
         "template": "bundle/constitution.md",
         "to": "{{bundle}}/constitution/principles.md",
-        "bundle": true
+        "bundle": true,
+        "upgrade": true
       },
       {
         "template": "docs/requirement.md",
-        "to": ".aidlc/templates/docs/requirement.md"
+        "to": ".aidlc/templates/docs/requirement.md",
+        "upgrade": true
       },
       {
         "template": "docs/intent.md",
-        "to": ".aidlc/templates/docs/intent.md"
+        "to": ".aidlc/templates/docs/intent.md",
+        "upgrade": true
       },
       {
         "template": "docs/unit.md",
-        "to": ".aidlc/templates/docs/unit.md"
+        "to": ".aidlc/templates/docs/unit.md",
+        "upgrade": true
       },
       {
         "template": "docs/decision.md",
-        "to": ".aidlc/templates/docs/decision.md"
+        "to": ".aidlc/templates/docs/decision.md",
+        "upgrade": true
       },
       {
         "template": "docs/runbook.md",
-        "to": ".aidlc/templates/docs/runbook.md"
+        "to": ".aidlc/templates/docs/runbook.md",
+        "upgrade": true
       },
       {
         "template": "ci.yml",
@@ -868,7 +875,8 @@
       "Review"
     ],
     "trailerDepth": 500,
-    "okfMarker": "okf_version",
+    "principlesType": "Principles",
+  "okfMarker": "okf_version",
     "searchDepth": 3
   },
   "gate": {

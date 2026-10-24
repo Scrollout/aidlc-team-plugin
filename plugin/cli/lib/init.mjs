@@ -4,7 +4,7 @@ import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync,
 import { basename, dirname, join, relative, resolve } from 'node:path';
 import { CLI_DIR, PLUGIN_DIR, config, done, isMap, UsageError, relPath } from './config.mjs';
 import { msg, render, renderFile } from './template.mjs';
-import { DEFAULTS } from './profile.mjs';
+import { DEFAULTS, loadProfile } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
 import { git, tryGit } from './state.mjs';
 import { definedOnBase } from './grid.mjs';
@@ -95,6 +95,26 @@ function leftovers(root) {
   return out;
 }
 
+const textVars = (name, bundle, version) => ({ name, bundle, date: new Date().toISOString().slice(0, 10), producer: `aidlc/${version}`, at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') });
+
+// What a project set up by an older release lacks: each doc template, and a constitution when the bundle holds
+// no Principles doc (docs/design/method.md). Nothing is overwritten.
+function addMissing(root, version) {
+  const { profile } = loadProfile(root);
+  const dir = join(root, profile.docs.bundle);
+  const docs = existsSync(dir) ? readdirSync(dir, { recursive: true }).map(String).filter((f) => f.endsWith(config.okf.ext)) : [];
+  const principled = docs.some((f) => parseDoc(readFileSync(join(dir, f), 'utf8')).fm?.type === I.principlesType);
+  const added = [];
+  for (const f of I.files.filter((x) => x.upgrade && !(x.bundle && (principled || !existsSync(dir))))) {
+    const to = render(f.to, { bundle: profile.docs.bundle });
+    if (existsSync(join(root, to))) continue;
+    mkdirSync(dirname(join(root, to)), { recursive: true });
+    writeFileSync(join(root, to), renderFile(f.template, textVars(profile.name ?? basename(root), profile.docs.bundle, version), { root, pluginDir: PLUGIN_DIR }));
+    added.push(f);
+    if (f.bundle) writeIndexes(dir);
+  }
+  return added.map((f) => msg('upgradeAdded', { path: render(f.to, { bundle: profile.docs.bundle }) })).join('');
+}
 
 export const commands = {
   init(args, { cwd }) {
@@ -112,7 +132,7 @@ export const commands = {
     }
     const name = flags.name ?? basename(root);
     const base = flags.base ?? tryGit(root, 'symbolic-ref', '--short', 'HEAD') ?? DEFAULTS.base;
-    const text = { name, bundle, date: new Date().toISOString().slice(0, 10), producer: `aidlc/${version}`, at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') };
+    const text = textVars(name, bundle, version);
     // Each level's run command, as the owner gave it; a detected one is only offered (docs/design/method.md).
     const levels = {};
     for (const value of flags.run ?? []) {
@@ -193,6 +213,6 @@ export const commands = {
     const same = pinned === version; // a re-copy of the same release changes nothing in the tree
     const copied = vendor(root, version);
     const name = JSON.parse(readFileSync(join(PLUGIN_DIR, I.manifest), 'utf8')).name;
-    return done((same ? msg('upgradeSame', { version, path: I.bin }) : copied) + msg('upgradeFrom', { version, path: PLUGIN_DIR, name }));
+    return done((same ? msg('upgradeSame', { version, path: I.bin }) : copied) + addMissing(root, version) + msg('upgradeFrom', { version, path: PLUGIN_DIR, name }));
   },
 };
