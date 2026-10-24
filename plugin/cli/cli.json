@@ -173,6 +173,11 @@
       "does": "push the base after checking its new commits"
     },
     {
+      "name": "ci",
+      "usage": "ci wait",
+      "does": "wait for the pushed base's CI runs and record the result"
+    },
+    {
       "name": "merge",
       "usage": "merge <unit>",
       "does": "run the merge gate, then merge --no-ff with trailers"
@@ -301,6 +306,13 @@
     "deployUsage": "usage: aidlc deploy check <intent>, for a merged intent with deploy.check in the profile",
     "deployNotMerged": "{{intent}} is {{state}}: deploy steps run on a merged intent",
     "deployNotOnBase": "check out {{base}} first: deploy steps run on the base",
+    "nextCiPush": "the base has merges its remote lacks: push it before new builders: aidlc push",
+    "nextCiWait": "wait for the base's CI before new builders: aidlc ci wait",
+    "nextCiFix": "CI is red on the base ({{runs}}): only a fix unit builds; read the logs ({{logs}}) and draft one: aidlc fix \"<what failed>\" --scope <code globs> --scope \"{{tests}}\"",
+    "ciUsage": "usage: aidlc ci wait, with ci.wait (seconds) and github.repo in the profile",
+    "ciNotPushed": "push {{base}} first: aidlc push; CI runs on the pushed base",
+    "ciResult": "CI on {{base}} {{sha}}: {{state}}\n{{#each runs}}  {{name}}: {{status}} {{conclusion}} {{url}}\n{{/each}}",
+    "ciLog": "  logs: {{log}}\n",
     "deployPassed": "{{intent}} {{step}} passed\n",
     "deployFailed": "{{intent}} {{step}} failed: {{command}} exited {{exit}}\n{{output}}\n",
     "nextResearch": "research for {{doc}}: researcher on {{model}} (brief: aidlc research {{doc}})",
@@ -767,7 +779,8 @@
       "stops": ["nextGated", "nextHostDenied", "nextStopped", "nextReleaseFailed", "nextSmokeFailed"]
     },
     "researching": "researching",
-    "deploys": "deploys"
+    "deploys": "deploys",
+    "ci": "ci.json"
   },
   "card": {
     "template": "card.md",
@@ -996,6 +1009,11 @@
   },
   "deploy": {
     "outputMax": 2000
+  },
+  "ci": {
+    "completed": "completed",
+    "red": ["failure", "cancelled", "timed_out", "action_required", "startup_failure", "stale"],
+    "log": "gh run view {{id}} --log-failed"
   },
   "retro": {
     "stats": "stats.json",

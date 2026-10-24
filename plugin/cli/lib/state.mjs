@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { bundleOf, config, QUICK, VERDICT, done, git, gitLines, isMap, list, readJson, readStdin, tryGit, UsageError, relPath } from './config.mjs';
-import { msg } from './template.mjs';
+import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { linksOf, parseDoc } from './okf.mjs';
 import { acsOf, computeLane, inside, lintPlan, overlaps, readPlan, reqId as reqIdOf, testsOnly } from './grid.mjs';
@@ -16,6 +16,7 @@ const S = config.state;
 
 export const aidlcDir = (cwd) => join(resolve(cwd, git(cwd, 'rev-parse', '--git-common-dir')), S.dir);
 export const runtimeFile = (cwd, kind, unit) => join(aidlcDir(cwd), S[kind], `${unit}.json`);
+export const ciFile = (cwd) => join(aidlcDir(cwd), S.ci); // the base's last CI poll (docs/design/base-ci.md)
 export const branchOf = (unit) => S.branchPrefix + unit;
 export const baseOf = (profile) => profile.base;
 // The paths a unit's branch changes since its merge base with the base branch.
@@ -272,7 +273,17 @@ export function readState(cwd, { now = Date.now() } = {}) {
     return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own, deploy };
   });
   const requirements = plan.requirements.map((r) => ({ ...r, state: approval(r.doc) }));
-  return { cwd, profile, base, bundle, intents, units, requirements, answered, auto: delegated(cwd), mergeUnit: mergeInProgress(cwd, units) };
+  return { cwd, profile, base, bundle, intents, units, requirements, answered, auto: delegated(cwd), mergeUnit: mergeInProgress(cwd, units), ci: ciOf(cwd, profile, base) };
+}
+
+// With ci.wait: the base head, its remote, the last CI poll, and whether the base is red: the poll found it red and
+// no merge landed since, so plan commits (the fix unit's doc) keep it red and a merged fix ends it.
+function ciOf(cwd, profile, base) {
+  if (!profile.ci?.wait) return null;
+  const head = tryGit(cwd, 'rev-parse', base);
+  const rec = readJson(ciFile(cwd));
+  const red = rec?.state === 'red' && tryGit(cwd, 'rev-list', '--count', '--merges', `${rec.sha}..${head}`) === '0';
+  return { head, remote: tryGit(cwd, 'rev-parse', '-q', '--verify', `${config.gate.remote}/${base}`), rec, red };
 }
 
 // ---- next ----
@@ -362,9 +373,10 @@ function untagged(st, u) {
 function unitWork(st, scope) {
   const merged = (id) => st.units.find((x) => x.id === id)?.state === 'merged';
   const live = scope.filter((u) => !u.held);
+  const fixOnly = (u) => !st.ci?.red || !u.fm.intent; // on a red base only fix units build or merge
   // A merge is offered only when each AC has a tagged test on the branch; a builder sent back for one is waited for.
   const backAtWork = [];
-  for (const u of live.filter((x) => x.state === 'reviewed' && x.depends.every(merged))) {
+  for (const u of live.filter((x) => x.state === 'reviewed' && x.depends.every(merged) && fixOnly(x))) {
     const missing = u.lane === QUICK ? [] : untagged(st, u);
     if (!missing.length) return action('act', 'nextMerge', { unit: u.id });
     if (!u.fresh) return action('act', 'nextUntagged', { unit: u.id, tags: missing.join(', ') });
@@ -390,12 +402,15 @@ function unitWork(st, scope) {
   const inFlight = [...scope.filter((u) => u.state === 'reviewing' || (u.state === 'building' && u.fresh)), ...backAtWork]; // a held unit's quiet builder is not in flight
   const max = st.profile.parallel.max;
   const picked = [];
-  const ready = live.filter((u) => u.state === 'approved').sort((a, b) => priorityOf(b) - priorityOf(a) || byId(a, b));
+  const ready = live.filter((u) => u.state === 'approved' && fixOnly(u)).sort((a, b) => priorityOf(b) - priorityOf(a) || byId(a, b));
   for (const u of ready) {
     if (inFlight.length + picked.length >= max) break;
     const clash = [...inFlight, ...picked].some((o) => u.scope.some((g) => o.scope.some((h) => overlaps(g, h))));
     if (!clash) picked.push(u);
   }
+  // With ci.wait, builders start on a pushed base whose CI is known; on a red one the fix unit builds.
+  const ci = st.ci && !st.ci.red && (st.ci.head !== st.ci.remote ? 'nextCiPush' : st.ci.rec?.sha !== st.ci.head || st.ci.rec.state === 'pending' ? 'nextCiWait' : null);
+  if (picked.length && ci) return action('act', ci);
   if (picked.length) return action('act', 'nextBuild', { units: picked.map((u) => u.id).join(', '), cards: picked.map((u) => msg('cardCommand', { unit: u.id })).join(', ') });
   if (inFlight.length) return action('wait', 'nextWait', { units: inFlight.map((u) => u.id).join(', ') });
   const held = scope.filter((u) => u.held && u.state !== 'merged');
@@ -425,6 +440,11 @@ function pickAction(st) {
   const unreleased = st.intents.find((i) => i.state === 'merged'); // its release does not hold back the next intent
   const ops = unreleased && releaseStep(st, unreleased);
   if (S.badges.stops.includes(ops?.key) || ops?.key === 'nextSmokeFix') return ops; // a failed release or smoke comes first
+  // A red base comes next: a fix unit, unless one is live (docs/design/base-ci.md).
+  if (st.ci?.red && !st.units.some((u) => !u.fm.intent && u.state !== 'merged')) {
+    const red = st.ci.rec.runs.filter((r) => config.ci.red.includes(r.conclusion));
+    return action('act', 'nextCiFix', { runs: red.map((r) => r.name).join(', '), logs: red.map((r) => render(config.ci.log, r, 'ci.log')).join('; '), tests: firstTests(st.profile) });
+  }
   const asked = [...st.requirements, ...st.intents, ...st.units].find((d) => researchOf(d) && !st.answered.has(researchOf(d)));
   if (asked) return heartbeatFresh(st.cwd, asked.id, Date.now(), S.researching) ? action('wait', 'nextWaitResearch', { doc: asked.id }) : action('act', 'nextResearch', { doc: asked.id, model: st.profile.models.research });
   const intent = st.intents.find((i) => !['released', 'merged'].includes(i.state)) ?? unreleased;
@@ -445,6 +465,7 @@ function pickAction(st) {
   return action('human', heartbeatAt(st.cwd, S.cleared, '.') > lastMerge ? 'nextIdleCleared' : 'nextIdle');
 }
 
+const firstTests = (profile) => Object.values(withDefaults(profile).levels).flatMap((l) => list(l?.paths))[0] ?? S.testsPlaceholder;
 // A merged intent's Deployment rows, from its deploy record and the base commit (docs/design/operations.md).
 function releaseStep(st, i) {
   const rec = i.deploy;
@@ -454,7 +475,7 @@ function releaseStep(st, i) {
   if (i.fm.hold && !smokeDown) return action('human', 'nextReleaseHeld', { intent: i.id, reason: i.fm.hold === true ? [] : [String(i.fm.hold)] });
   if (!st.profile.deploy && !st.profile.release) return action('human', 'nextRelease', { intent: i.id });
   // A fix unit's scope holds its test: the example names the first level's test location (U58).
-  const tests = Object.values(withDefaults(st.profile).levels).flatMap((l) => list(l?.paths))[0] ?? S.testsPlaceholder;
+  const tests = firstTests(st.profile);
   // A failed smoke stops everything until the owner rolled back; then a fix unit, after which the base moves.
   if (smokeDown) return action('human', 'nextSmokeFailed', { intent: i.id, ...rec.smoke });
   if (rec.smoke && !rec.smoke.ok && rec.smoke.base === base) return action('act', 'nextSmokeFix', { intent: i.id, tests, file: relPath(st.cwd, runtimeFile(st.cwd, 'deploys', i.id)) });
