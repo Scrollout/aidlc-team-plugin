@@ -19,6 +19,11 @@ You build one unit from its card, which is in your prompt. The card is your whol
 
 A fix round's card lists `Findings to fix`: fix each one with a test that shows it, then do steps 4 to 6. When told to continue, read `git log` on your branch and pick up after the last commit.
 
+# What the gate proves
+- Code changed: the revert in step 3, of your code outside the test paths.
+- Only tests changed (a back-fill): no code to revert, so it applies each of your report's `mutations` alone and runs its AC's level; one that still passes refuses the merge.
+- Quick lane: no tagged tests are needed and it proves nothing; only the commands the ACs name run.
+
 # Stop and report instead of working around
 - An interface on the card has to change.
 - The scope is too small for the ACs.
@@ -33,4 +38,4 @@ When a hook denies a write or command, its message names the fix: follow it.
 Pipe JSON to `aidlc report U-<n>`:
 `{"status": "done|stopped", "summary": "<one line>", "tests": ["<file>: U-<n>/AC-<k>"], "stop": "<reason when stopped>"}`
 List every AC test you wrote. Nothing is done until the report is recorded.
-If you changed only tests (a back-fill), add the card's `mutations`, one per AC: a small edit to the code the test covers that breaks the AC's main behaviour, named in `breaks`.
+If you changed only tests (a back-fill), add the card's `mutations`, one per AC: a small edit to code the test covers, outside the test paths, that breaks the AC's main behaviour, not only an edge, named in `breaks`.

@@ -2,7 +2,7 @@
 // contract, the review focuses `next` names, and the eval fixture.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { approve, branch, commit, git, intentDoc, makeRepo, review, run, tempDir, unitDoc } from './state-repo.mjs';
 import { DEFECTS, score, setup } from './evals/run.mjs';
@@ -161,4 +161,48 @@ test('U35/AC-2 the reviewer prompt says a CONFIRMED finding blocks the merge', (
 
 test('U38/AC-2 the reviewer prompt says an escalate is a fix round first', () => {
   assert.match(parse(REVIEWER).body, /within the fix-round limit it is recorded as `fix`, and the builder fixes it or stops on its card's stop conditions/);
+});
+
+test('U64/AC-1 the skill names the deploy steps and the typed go words, the builder when the gate proves what', () => {
+  const skill = parse(SKILL).body;
+  for (const word of ['**deploy check**', '`aidlc fix`', '**release, rollback**: owner steps', '`release I-<n>`', '`rollback I-<n>`']) assert.ok(skill.includes(word), word);
+  const builder = parse(BUILDER).body;
+  assert.match(builder, /it reverts your code and reruns the levels of your tagged tests/);
+  assert.match(builder, /^- Code changed: the revert in step 3/m);
+  assert.match(builder, /^- Only tests changed \(a back-fill\): no code to revert, so it applies each of your report's `mutations`/m);
+  assert.match(builder, /^- Quick lane: no tagged tests are needed and it proves nothing/m);
+  assert.match(builder, /one per AC: .*`breaks`/);
+  for (const p of ['plugin/agents/researcher.md', REVIEWER]) assert.ok(Buffer.byteLength(read(p)) <= 3 * 1024, p);
+});
+
+test('U64/AC-1 the constitution template carries the quick-lane, back-fill and no-deploy exceptions, naming only existing codes', () => {
+  const text = read('plugin/templates/bundle/constitution.md');
+  assert.match(text, /quick-lane unit gets no review/);
+  assert.match(text, /quick-lane unit has no tagged tests and gets no proof/);
+  assert.match(text, /back-fill.*proved by one mutation per AC/);
+  assert.match(text, /When the profile deploys, a release counts once its deploy check and smoke pass/);
+  assert.match(text, /back-fill intent ships no code: it needs no runbook/);
+  const known = new Set([CLI.okf, CLI.grid, CLI.gate, CLI.hooks].flatMap((s) => Object.keys(s.codes)));
+  const named = [...text.matchAll(/`([A-Z]+-[A-Z-]+)`/g)].map((m) => m[1]);
+  assert.deepEqual(named.filter((c) => !known.has(c)), []);
+});
+
+test('U64/AC-2 the README shows every hook, module, agent, template, trailer, the deploy rows and the roadmap index', () => {
+  const readme = read('README.md');
+  const blocks = [...readme.matchAll(/```mermaid\n([\s\S]*?)```/g)].map((m) => m[1]);
+  assert.equal(blocks.length, 2);
+  const hooksNode = blocks[1].match(/hooks\["Hooks<br\/>(.*?)"\]/)[1];
+  for (const h of CLI.hooks.names) assert.match(hooksNode, new RegExp(`\\b${h}\\b`), h);
+  const cliNode = blocks[1].match(/cli\["CLI engine<br\/>(.*?)"\]/)[1];
+  for (const f of readdirSync(join(ROOT, 'plugin/cli/lib')).filter((f) => f.endsWith('.mjs'))) assert.match(cliNode, new RegExp(`\\b${f.replace('.mjs', '')}\\b`), f);
+  for (const a of readdirSync(join(ROOT, 'plugin/agents'))) assert.match(blocks[1], new RegExp(`\\b${a.replace('.md', '')}\\b`), a);
+  for (const t of ['AGENTS.md', 'CLAUDE.md', 'constitution', 'runbook', 'profile', 'CI']) assert.ok(blocks[1].includes(t), t);
+  for (const r of ['deploys', 'goes', 'prompts']) assert.match(blocks[1], new RegExp(`\\.git/aidlc<br/>.*\\b${r}\\b`), r);
+  assert.match(blocks[1], /upgrade adds missing/);
+  assert.match(blocks[0], /Unit, Card, Review,<br\/>Tested, Proof trailers/);
+  for (const step of ['Deploy check', 'Release, owner step', 'Smoke', 'Rollback, owner step', 'types release I-n', 'types rollback I-n', 'Researcher']) assert.ok(blocks[0].includes(step), step);
+  const rounds = JSON.parse(read('plugin/cli/defaults.json')).review.fixRounds;
+  assert.ok(blocks[0].includes(`at most ${rounds} rounds`));
+  assert.match(readme, /\]\(docs\/roadmap\/index\.md\)/);
+  assert.doesNotMatch(readme, /roadmap\/m1\.md/);
 });
