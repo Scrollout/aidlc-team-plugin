@@ -7,6 +7,8 @@ import { fileURLToPath } from 'node:url';
 export const CLI_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const config = JSON.parse(readFileSync(join(CLI_DIR, 'cli.json'), 'utf8'));
 export const PLUGIN_DIR = resolve(CLI_DIR, config.pluginRoot);
+export const VERDICT = config.state.verdicts; // a reviewer's verdicts, by name
+export const [QUICK, STANDARD, FULL] = config.gate.lanes; // the lanes, lowest first
 
 // Bad usage: the CLI exits with config.exit.usage.
 export class UsageError extends Error {}

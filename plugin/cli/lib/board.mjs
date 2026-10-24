@@ -60,7 +60,7 @@ function wanted(cwd, st, gh) {
     const done = B.done.includes(state);
     const acs = (d.acs ?? []).map((a) => ({ box: done ? 'x' : ' ', text: d.doc.lines[a.line - 1].replace(/^\s*[-*]\s+/, '') }));
     const marker = msg('boardMarker', { kind, id: d.id });
-    const data = { description: String(d.fm.description ?? ''), link: `https://github.com/${gh.repo}/blob/${st.base}/${relPath(top, d.file)}`, marker };
+    const data = { description: String(d.fm.description ?? ''), link: msg('boardLink', { repo: gh.repo, base: st.base, path: relPath(top, d.file) }), marker };
     let body;
     do body = render(template, { ...data, acs }, file); while (body.length > B.maxBody && acs.pop());
     const fields = Object.fromEntries(Object.entries(gh.fields ?? {}).map(([name, spec]) => {

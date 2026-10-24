@@ -2,7 +2,7 @@
 // Settings, codes and messages come from cli.json.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve, sep } from 'node:path';
-import { at, bundleOf, config, done, fieldPaths, git, isMap, tryGit, list, UsageError, relPath } from './config.mjs';
+import { at, bundleOf, config, FULL, QUICK, STANDARD, done, fieldPaths, git, isMap, tryGit, list, UsageError, relPath } from './config.mjs';
 import { finding as codeFinding, msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { linksOf, parseDoc, proseLines } from './okf.mjs';
@@ -204,7 +204,7 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
     for (const m of u.modules.filter((x) => !modules.has(x))) add('PLAN-MODULE', u, keyLine(u, 'modules'), 'moduleUnknown', { module: m, modules: [...modules].join(', ') || '-' });
     if (!u.scope.length) add('PLAN-SCOPE', u, 1, 'scopeMissing', {});
     // Each AC's test must have a place in the scope, unless the quick lane adds no tests.
-    else if (computeLane(u.scope, profile).lane !== 'quick') {
+    else if (computeLane(u.scope, profile).lane !== QUICK) {
       for (const ac of u.acs.filter((a) => levels.includes(a.level))) {
         const paths = list(levelDefs[ac.level].paths);
         if (paths.length && !u.scope.some((g) => overlaps(g, PROFILE) || paths.some((p) => overlaps(g, p)))) add('PLAN-TEST', u, ac.line, 'acNoTestPath', { ac: ac.id, level: ac.level, paths: paths.join(', ') });
@@ -332,12 +332,12 @@ export function computeLane(items, profile = {}, { paths = false } = {}) {
   ];
   for (const item of items) {
     const hit = full.find((f) => overlaps(anchor(item), f.glob));
-    if (hit) return { lane: 'full', reason: msg('laneFull', { item, ...hit }) };
+    if (hit) return { lane: FULL, reason: msg('laneFull', { item, ...hit }) };
   }
-  if (!items.length) return { lane: 'standard', reason: msg('laneEmpty', {}) };
+  if (!items.length) return { lane: STANDARD, reason: msg('laneEmpty', {}) };
   const quick = list(profile.lanes?.quick);
   const outside = items.find((item) => !quick.some((g) => inside(anchor(item), g)));
-  return outside ? { lane: 'standard', reason: msg('laneStandard', { item: outside }) } : { lane: 'quick', reason: msg('laneQuick', {}) };
+  return outside ? { lane: STANDARD, reason: msg('laneStandard', { item: outside }) } : { lane: QUICK, reason: msg('laneQuick', {}) };
 }
 
 // ---- Commands ----

@@ -118,6 +118,7 @@
     {
       "name": "mode",
       "usage": "mode attended|unattended [--stop <action>] [--report <to>]|off",
+      "flags": ["--stop", "--report"],
       "does": "record the owner's run mode: unattended or not, the next action to stop at, where to report (owner only)"
     },
     {
@@ -331,6 +332,10 @@
     "started": "on {{branch}} at {{base}}\n",
     "startMerged": "on {{branch}}, with the card's base {{base}} merged in\n",
     "startMergeMessage": "Merge base {{base}} into {{branch}}",
+    "mergeSubject": "Merge {{unit}}: {{title}}",
+    "producer": "aidlc/{{version}}",
+    "cardCommand": "aidlc card {{unit}}",
+    "boardLink": "https://github.com/{{repo}}/blob/{{base}}/{{path}}",
     "startConflict": "merging the card's base {{base}} into {{branch}} conflicts in {{files}} → resolve them inside the scope, commit, and run start again\n",
     "upgradeDirty": "the plugin checkout at {{path}} has uncommitted changes → upgrade from the installed plugin or a clean checkout, or pass --dirty on purpose\n",
     "badJson": "{{name}}: not a JSON object",
@@ -530,6 +535,7 @@
     "hints": ["Load when"],
     "stampSkew": 300,
     "otherType": "Other",
+    "descFields": ["title", "description"],
     "attested": {
       "type": "Attested Computation",
       "field": "runtime"
@@ -609,6 +615,7 @@
     "slice": "slice",
     "decisionType": "Decision",
     "interfaces": "Interfaces",
+    "outOfScope": "Out of scope",
     "runbookType": "Runbook",
     "codes": {
       "PLAN-DAG": {
@@ -692,7 +699,6 @@
     "researchHold": "research:",
     "hostDeniedKept": 5,
     "branchPrefix": "unit/",
-    "trailer": "Unit",
     "human": "human:",
     "stable": "stable",
     "hashExclude": [
@@ -703,11 +709,10 @@
       "priority",
       "board"
     ],
-    "verdicts": [
-      "pass",
-      "fix",
-      "escalate"
-    ],
+    "verdicts": { "pass": "pass", "fix": "fix", "escalate": "escalate" },
+    "stampFields": ["verified", "verified_hash", "status"],
+    "refusedLine": ": aidlc ([^()]+)$",
+    "testsPlaceholder": "<test globs>",
     "confirmed": "CONFIRMED",
     "statusMax": 1000,
     "openQuestions": "Open questions",
@@ -745,7 +750,6 @@
       "quick"
     ],
     "unitType": "Unit",
-    "decisionType": "Decision",
     "doorCode": "PLAN-DECISION",
     "gates": "gates",
     "reviewing": "reviewing",
@@ -855,6 +859,7 @@
     },
     "bin": ".aidlc/bin",
     "version": "VERSION",
+    "devVersion": "dev",
     "manifest": ".claude-plugin/plugin.json",
     "knownDirs": [
       ".git",
@@ -900,7 +905,6 @@
     "tested": "Tested",
     "proof": "Proof",
     "mutation": "mutation",
-    "pass": "pass",
     "lanes": [
       "quick",
       "standard",
@@ -1061,6 +1065,9 @@
       "--no-verify"
     ],
     "noVerifyShort": "n",
+    "wrappers": ["sudo", "env", "command", "exec"],
+    "commitAll": ["--all"],
+    "commitAllShort": "a",
     "deleteFlags": [
       "--delete",
       "-d",

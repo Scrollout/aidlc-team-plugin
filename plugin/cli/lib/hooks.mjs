@@ -36,7 +36,7 @@ export function segments(command) {
   return out.filter((s) => s.length).map((s) => {
     let k = 0;
     while (k < s.length && /^[A-Za-z_]\w*=/.test(s[k])) k++;
-    if (['sudo', 'env', 'command', 'exec'].includes(s[k])) k++;
+    if (H.wrappers.includes(s[k])) k++;
     return s.slice(k);
   });
 }
@@ -134,7 +134,7 @@ function guard(input, cwd) {
     if (sub === 'commit') {
       if (args.some((a) => H.noVerify.includes(a) || (/^-[^-]/.test(a) && a.slice(1).includes(H.noVerifyShort)))) return deny(cwd, input, 'GUARD-NOVERIFY', 'guardNoVerify', {});
       if (branch === base) {
-        const all = args.some((a) => a === '--all' || /^-[^-]*a/.test(a));
+        const all = args.some((a) => H.commitAll.includes(a) || new RegExp(`^-[^-]*${H.commitAllShort}`).test(a));
         const staged = [git(cwd, 'diff', '--cached', '--name-only'), all ? git(cwd, 'diff', '--name-only') : ''].join('\n').split('\n').filter(Boolean);
         const bad = staged.find((p) => !directAllowed(p, bundleRel));
         if (bad) return deny(cwd, input, 'GUARD-BASE-COMMIT', 'guardBaseCommit', { base, path: bad });

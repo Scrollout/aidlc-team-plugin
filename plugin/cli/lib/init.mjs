@@ -13,12 +13,12 @@ const I = config.init;
 // Two folders are the same one, short names and symlinks aside (Windows `RUNNER~1`, macOS `/var`).
 const sameDir = (a, b) => existsSync(a) && existsSync(b) && realpathSync.native(a) === realpathSync.native(b);
 
-function parseFlags(args, known) {
+function parseFlags(args, name, cmd = config.commands.find((c) => c.name === name)) {
   const out = { overwrite: [] };
   for (let k = 0; k < args.length; k++) {
     const a = args[k];
-    if (!known.includes(a)) throw new UsageError(msg('unknownFlag', { name: a }));
-    if (['--adopt', '--downgrade', '--dirty'].includes(a)) { out[a.slice(2)] = true; continue; }
+    if (!cmd.flags.includes(a)) throw new UsageError(msg('unknownFlag', { name: a }));
+    if (cmd.usage.includes(`[${a}]`)) { out[a.slice(2)] = true; continue; }
     const v = args[++k];
     if (v === undefined || v.startsWith('--')) throw new UsageError(msg('badFlag', { name: a }));
     if (a === '--overwrite' || a === '--run') (out[a.slice(2)] ??= []).push(v);
@@ -94,7 +94,7 @@ function leftovers(root) {
   return out;
 }
 
-const textVars = (name, bundle, version) => ({ name, bundle, date: new Date().toISOString().slice(0, 10), producer: `aidlc/${version}`, at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') });
+const textVars = (name, bundle, version) => ({ name, bundle, date: new Date().toISOString().slice(0, 10), producer: msg('producer', { version }), at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') });
 
 // What a project set up by an older release lacks: each doc template, and a constitution when the bundle holds
 // no Principles doc (docs/design/method.md). Nothing is overwritten.
@@ -117,7 +117,7 @@ function addMissing(root, version) {
 
 export const commands = {
   init(args, { cwd }) {
-    const flags = parseFlags(args, config.commands.find((c) => c.name === 'init').flags);
+    const flags = parseFlags(args, 'init');
     const root = projectRoot(cwd);
     const version = pluginVersion(root);
     let bundle = flags.bundle ?? DEFAULTS.docs.bundle;
@@ -204,7 +204,7 @@ export const commands = {
     const root = projectRoot(cwd);
     const version = pluginVersion(root);
     const pinned = existsSync(join(root, I.bin, I.version)) ? readFileSync(join(root, I.bin, I.version), 'utf8').trim() : '';
-    const flags = parseFlags(args, config.commands.find((c) => c.name === 'upgrade').flags);
+    const flags = parseFlags(args, 'upgrade');
     if (pinned.localeCompare(version, 'en', { numeric: true }) > 0 && !flags.downgrade) throw new UsageError(msg('upgradeOlder', { version, pinned }));
     // A release, not work in progress: a plugin checkout must have nothing uncommitted under the plugin folder.
     const tracked = tryGit(PLUGIN_DIR, 'ls-files', '--error-unmatch', I.manifest) !== null;

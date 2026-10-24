@@ -82,7 +82,7 @@ const SAMPLE = { verdict: 'fix', focus: 'general', findings: [{ path: 'src/a.mjs
 
 test('U8/AC-3 the reviewer prompt fixes the JSON contract of Verification, and a sample validates', () => {
   const c = contract();
-  assert.deepEqual(c.top.find((k) => k.name === 'verdict').values, CLI.state.verdicts);
+  assert.deepEqual(c.top.find((k) => k.name === 'verdict').values, Object.values(CLI.state.verdicts));
   const block = JSON.parse(parse(REVIEWER).body.match(/```json\n(.*)\n```/)[1]);
   assert.deepEqual(Object.keys(block).sort(), c.top.map((k) => k.name).sort());
   assert.deepEqual(Object.keys(block.findings[0]).sort(), c.finding.map((k) => k.name).sort());
