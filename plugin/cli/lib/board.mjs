@@ -225,11 +225,8 @@ function project(gh, docs, out, backoff, read) {
 // What sync last wrote, as a hash of the issues it wanted: `next` and `status` name sync once the plan moved past it.
 const boardFile = (cwd) => join(aidlcDir(cwd), config.state.board);
 const hashOf = (docs) => createHash('sha256').update(JSON.stringify(docs)).digest('hex');
-export function boardBehind(st) {
-  if (!st.profile.github?.repo) return '';
-  try {
-    return readJson(boardFile(st.cwd))?.hash === hashOf(wanted(st.cwd, st, st.profile.github)) ? '' : msg('boardBehind', {});
-  } catch { return ''; } // a board that cannot be planned offline is sync's error to report, not next's
+export function boardBehind(st) { // a board that cannot be planned offline is sync's error to report, not next's
+  try { return st.profile.github?.repo && readJson(boardFile(st.cwd))?.hash !== hashOf(wanted(st.cwd, st, st.profile.github)) ? msg('boardBehind', {}) : ''; } catch { return ''; }
 }
 
 // Syncs every intent and live unit; returns the writes it made, one line each.

@@ -436,6 +436,9 @@
     "gateOkf": "{{path}}:{{line}} {{code}} {{message}}",
     "gateConflict": "unit/{{unit}} conflicts with {{base}}",
     "archEdge": "{{from}} -> {{to}}: {{reason}}",
+    "archDataEdge": "{{from}} -> {{to}}: {{to}} belongs to {{owner}}; reach it through {{owner}}'s interface, an event or a shared service",
+    "archDataNoOwner": "{{from}} -> {{to}}: no module owns {{to}}; add it to one module's data, or to architecture.data.shared",
+    "archDataTwice": "{{to}} is claimed by {{owners}}; one module owns it",
     "archCheckCi": "{{command}} failed in CI; if it passes locally, the aidlc job lacks what it needs: add its toolchain setup to .github/workflows/aidlc.yml",
     "archExceptInUnit": "{{doc}} comes with {{unit}}, so the owner cannot approve it before this merge: the lead commits it on the base as a plan doc for the owner to approve, and {{unit}} merges the base and drops its copy",
     "gateMerged": "merged {{unit}} as {{sha}}\n",
@@ -476,6 +479,8 @@
     "planRunbook": "{{unit}} links no runbook, and the profile deploys",
     "planSliceIntent": "{{unit}} has no AC at the top level {{level}}: no unit tests it end to end",
     "planDesign": "{{unit}} is {{lane}} lane and has no # {{section}} section with content",
+    "cardDataOwned": "- {{module}} owns {{data}}\n",
+    "cardDataRest": "- shared, for any module: {{shared}}\nReach any other data only through its owning module's interface, an event or a shared service; the merge gate fails a direct read or write (ARCH-DATA).\n",
     "cardDesign": "the # {{sections}} section(s) of {{path}} at the base",
     "planSliceWaiver": "{{unit}} reaches the product ({{glob}} overlaps {{area}}), but {{intent}} skips its end-to-end test with slice:",
     "planSliceUnit": "{{unit}} crosses modules {{modules}} but tests only at the {{level}} level",
@@ -543,7 +548,7 @@
     "boardItemHidden": "#{{number}} is on the Project but not listed, also after waiting (an archived item?) → restore it or remove it on the Project, then run aidlc sync",
     "boardShort": "GitHub listed {{got}} of the repository's {{count}} issues, also after waiting → sync created nothing; run aidlc sync again later",
     "boardFailed": "warning: sync failed, run aidlc sync: {{error}}\n",
-    "nextMigrate": "elaborate the migration intent with the owner in {{dir}}/I-1-<slug>.md (adopted at {{commit}}): docs, always-on context, profile, architecture baseline, module audit, cleanup; then ask for approval",
+    "nextMigrate": "elaborate the migration intent with the owner in {{dir}}/I-1-<slug>.md (adopted at {{commit}}): docs, always-on context, profile, architecture baseline, data owners, module audit, cleanup; then ask for approval",
     "nextStopped": "the builder of {{unit}} stopped ({{reason}}): if the unit doc is wrong, fix it and ask the owner to re-approve it; otherwise remove the cause and start its builder again (card: aidlc card {{unit}})",
     "holdUsage": "usage: hold <unit> [off|<reason>]",
     "modeUsage": "usage: mode attended|unattended [--stop build|review|fix|merge|release] [--report <to>] | off",
@@ -1029,6 +1034,9 @@
       },
       "ARCH-CHECK": {
         "fix": "fix what the architecture check reports"
+      },
+      "ARCH-DATA": {
+        "fix": "go through the owning module (interface, event or shared service), give the data one owner, or the owner approves the edge in the architecture.data.except decision with a fix unit"
       },
       "GATE-SHARED": {
         "fix": "revert the change; merge writes indexes, logs and shared files"

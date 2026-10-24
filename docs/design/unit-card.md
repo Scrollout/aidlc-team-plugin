@@ -22,6 +22,7 @@ The cap counts the card without its findings and mutations: a review round adds 
 - **Test runs:** every level's `run`; the builder and the reviewer run each in full, and the gate again on the merge result, then once more with the unit's code reverted, when each level holding a tagged test must fail.
 - **Reserves:** e.g. migration number `regional/0005`.
 - **Checks:** the profile commands for the unit's modules, matched by `id`, or `name` when a module has none.
+- **Data:** the data the unit's modules own and the shared data; any other data only through its owner ([Data ownership](data-ownership.md)).
 - **Out of scope** and **stop and report if** (interface change, scope too small, AC ambiguous).
 - **Report format:** what the builder returns.
 

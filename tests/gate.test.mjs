@@ -5,7 +5,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { approve, CLI, commit, git, makeRepo, read, review, run, tempDir } from './state-repo.mjs';
 import { CODE, codes, FAIL, LOG, merge, OK, PROFILE, setup, TEST } from './gate-repo.mjs';
-import { boundaryFindings } from '../plugin/cli/lib/gate.mjs';
+import { boundaryFindings, dataFindings } from '../plugin/cli/lib/gate.mjs';
 
 test('U6/AC-2 a passing gate merges --no-ff with trailers, writes index and log, removes the branch', () => {
   const dir = setup();
@@ -107,6 +107,30 @@ test('U6/AC-9 boundaries: denied edges, same-service edges, approved exceptions'
     'internal/core/a.go -> internal/providers/b.go: core never uses a provider',
     'cmd/api/main.go -> cmd/admin/x.go: services build alone',
   ], 'an edge the decision does not list still fails');
+});
+
+test('U86/AC-1 data: a module reaches only the data it owns or shared data; every data node has one owner; a baseline lists edges', () => {
+  const profile = {
+    modules: [
+      { id: 'scope', paths: ['internal/scope/**'], data: ['data/regional/scopes'] },
+      { id: 'registry', paths: ['internal/registry/**'], data: ['data/regional/providers'] },
+      { id: 'audit', paths: ['internal/audit/**'], data: ['data/*/providers'] },
+    ],
+    architecture: { data: { prefix: 'data/', shared: ['data/*/outbox'], except: ['docs/decisions/0011-data.md'] } },
+  };
+  const edges = [
+    ['internal/scope', 'data/regional/scopes'], ['internal/scope', 'data/regional/outbox'], ['internal/scope/x.go', 'internal/registry'],
+    ['internal/registry', 'data/regional/scopes'], ['internal/scope', 'data/global/tenants'],
+  ];
+  assert.deepEqual(dataFindings(edges, profile).map((f) => [f.code, f.message]), [
+    ['ARCH-DATA', "internal/registry -> data/regional/scopes: data/regional/scopes belongs to scope; reach it through scope's interface, an event or a shared service"],
+    ['ARCH-DATA', 'internal/scope -> data/global/tenants: no module owns data/global/tenants; add it to one module\'s data, or to architecture.data.shared'],
+  ], 'own data, shared data and import edges pass');
+  assert.deepEqual(dataFindings([['internal/registry', 'data/regional/providers']], profile).map((f) => f.message),
+    ['data/regional/providers is claimed by registry, audit; one module owns it']);
+  const baseline = new Map([['docs/decisions/0011-data.md', '# Baseline\n- `internal/registry -> data/regional/scopes`\n']]);
+  assert.equal(dataFindings(edges, profile, baseline).length, 1, 'a listed crossing is covered, the unowned node still fails');
+  assert.deepEqual(dataFindings(edges, { modules: profile.modules }), [], 'off without architecture.data');
 });
 
 test('U6/AC-3 and AC-10 check --ci flags merges without trailers or out of scope, and direct code commits, after adopted', () => {

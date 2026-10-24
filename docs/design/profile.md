@@ -14,7 +14,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T21:50:00Z }
   "docs": { "bundle": "docs" },
   "levels": { "unit": { "paths": ["**/*_test.go"], "run": "make test" }, "integration": { "paths": ["tests/integration/**"], "run": "make it" } },
   "modules": [
-    { "id": "api", "paths": ["internal/**", "cmd/**"], "check": "make test" },
+    { "id": "api", "paths": ["internal/**", "cmd/**"], "check": "make test", "data": ["data/orders"] },
     { "id": "contracts", "paths": ["api-specs/**"], "check": "make contract-check" }
   ],
   "lanes": { "quick": ["docs/**", "*.md"], "full": ["migrations/**", "api-specs/**"] },
@@ -22,7 +22,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T21:50:00Z }
   "security": { "secrets": ["\\bACME-[0-9A-F]{32}\\b"], "content": ["BYPASSRLS", "InsecureSkipVerify"], "threatModel": "docs/threat-model.md", "check": ["make gate-trivy"] },
   "reserve": { "migration": { "dir": "migrations/{area}", "pattern": "{n:4}_*.sql" } },
   "parallel": { "max": 3 },
-  "architecture": { "graph": "make deps-graph", "boundaries": [{ "from": "internal/core/**", "deny": ["internal/providers/**"] }], "checks": ["make contract-check"] },
+  "architecture": { "graph": "make deps-graph", "boundaries": [{ "from": "internal/core/**", "deny": ["internal/providers/**"] }], "data": { "prefix": "data/", "shared": ["data/outbox"] }, "checks": ["make contract-check"] },
   "adopted": "<commit where init --adopt ran>",
   "deploy": { "check": ["make image"] },
   "release": "make release"

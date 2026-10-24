@@ -34,7 +34,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 - It lists leftovers of other workflow tools (old state dirs, tool-named trailers or docs) as a report; it never deletes them.
 - It records the adoption commit as `profile.adopted`; `check --ci` judges only merges after it, so history made under another tool never fails CI.
 - Approvals made by another tool carry no `verified_hash`, so they read as `stale`; the owner re-approves them in one `aidlc approve` command.
-- The migration itself is an ordinary intent: adopt, docs, architecture baseline (each current violation becomes a fix unit or an approved exception), module audit against the requirements, cleanup.
+- The migration itself is an ordinary intent: adopt, docs, architecture baseline (each current violation becomes a fix unit or an approved exception), data owners ([Data ownership](data-ownership.md)), module audit against the requirements, cleanup.
 
 # Removing the plugin
 Docs are plain OKF, the CLI is vendored, CI runs without the plugin. Uninstalling loses only the hooks, skill and agents; a test proves the project still checks green.

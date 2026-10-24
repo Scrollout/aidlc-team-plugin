@@ -31,7 +31,8 @@ Write only inside:
 {{/each}}
 ## Checks
 {{#each checks}}- {{module}}: {{check}}
-{{/each}}## Test runs (each in full, as one plain command)
+{{/each}}{{#each data}}## Data
+{{this}}{{/each}}## Test runs (each in full, as one plain command)
 {{#each runs}}- {{level}}: {{run}}
 {{/each}}{{#each proof}}The merge gate reverts your changes outside the test paths of {{this}} and reruns those levels: each one holding a tagged test must then fail.
 {{/each}}

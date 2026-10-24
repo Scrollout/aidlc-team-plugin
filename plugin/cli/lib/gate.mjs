@@ -96,14 +96,17 @@ function globRegex(glob) {
   return new RegExp(`^${body}$`);
 }
 
+const exceptDocs = (arch) => [...(arch.boundaries ?? []).flatMap((b) => list(b.except)), ...list(arch.data?.except)];
+
 // Denied edges of the dependency graph the project's `architecture.graph` command prints. An approved
 // `except` decision covers the edges it lists as `<from> -> <to>` lines, or the whole boundary if it lists none.
+const excepted = (docs, approved, from, to) => list(docs).filter((d) => approved.has(d)).map((d) => approved.get(d).split('\n').map((l) => l.replace(/^\s*[-*]\s+|`/g, '').trim())).some((t) => !t.some((l) => l.includes(G.edge)) || t.includes(`${from}${G.edge}${to}`));
+
 export function boundaryFindings(edges, architecture, approved = new Map()) {
   const out = [];
   for (const [from, to] of edges) {
     for (const b of architecture.boundaries ?? []) {
-      const texts = list(b.except).filter((d) => approved.has(d)).map((d) => approved.get(d).split('\n').map((l) => l.replace(/^\s*[-*]\s+|`/g, '').trim()));
-      if (texts.some((t) => !t.some((l) => l.includes(G.edge)) || t.includes(`${from}${G.edge}${to}`))) continue;
+      if (excepted(b.except, approved, from, to)) continue;
       const fm = from.match(globRegex(b.from));
       if (!fm) continue;
       for (const deny of list(b.deny)) {
@@ -117,6 +120,21 @@ export function boundaryFindings(edges, architecture, approved = new Map()) {
   return out;
 }
 
+// Data edges, `<path> -> <data node>`, against the module owning each node (docs/design/data-ownership.md).
+export function dataFindings(edges, profile, approved = new Map()) {
+  const data = profile.architecture?.data;
+  const hit = (globs, path) => list(globs).some((g) => globRegex('/' + g).test(path));
+  const out = [];
+  const seen = new Set();
+  for (const [from, to] of edges.filter(([, t]) => data?.prefix && t.startsWith(data.prefix))) {
+    const owners = (profile.modules ?? []).filter((m) => hit(m.data, to)).map((m) => ({ ...m, id: String(m.id ?? m.name) }));
+    if (!seen.has(to) && (seen.add(to), owners.length > 1)) out.push(finding('ARCH-DATA', to, 1, 'archDataTwice', { to, owners: owners.map((m) => m.id).join(', ') }));
+    if (owners.some((m) => hit(m.paths, from) || hit(m.paths, from + '/')) || (!owners.length && hit(data.shared, to)) || excepted(data.except, approved, from, to)) continue;
+    out.push(finding('ARCH-DATA', from, 1, owners.length ? 'archDataEdge' : 'archDataNoOwner', { from, to, owner: owners.map((m) => m.id).join(', ') }));
+  }
+  return out;
+}
+
 function architecture(cwd, profile, key = 'gateCheck') {
   const arch = profile.architecture;
   if (!arch) return [];
@@ -125,9 +143,9 @@ function architecture(cwd, profile, key = 'gateCheck') {
     const r = sh(cwd, arch.graph);
     if (r.status !== 0) out.push(finding('ARCH-CHECK', '.', 1, key, { command: arch.graph }));
     const edges = (r.stdout ?? '').split('\n').map((l) => l.split(G.edge).map((s) => s.trim())).filter((e) => e.length === 2 && e[0] && e[1]);
-    const approved = new Map(list(arch.boundaries?.flatMap((b) => list(b.except))).map((d) => [d, existsSync(join(cwd, d)) ? readFileSync(join(cwd, d), 'utf8') : ''])
+    const approved = new Map(exceptDocs(arch).map((d) => [d, existsSync(join(cwd, d)) ? readFileSync(join(cwd, d), 'utf8') : ''])
       .filter(([, text]) => text && approval(parseDoc(text)) === 'approved'));
-    out.push(...boundaryFindings(edges, arch, approved));
+    out.push(...boundaryFindings(edges, arch, approved), ...dataFindings(edges, profile, approved));
   }
   for (const command of list(arch.checks)) if (!shell(cwd, command)) out.push(finding('ARCH-CHECK', '.', 1, key, { command }));
   return out;
@@ -243,7 +261,7 @@ function runGate(cwd, st, unit) {
   for (const command of list(p.security?.check)) if (!shell(tree, command)) add('GATE-SECURITY', 'gateCheck', { command });
   out.push(...architecture(tree, merged)); // the boundaries as merged
   // An exception is approved on the base before the merge that needs it; one only on the unit branch cannot be (docs/design/architecture.md).
-  for (const d of new Set((merged.architecture?.boundaries ?? []).flatMap((b) => list(b.except)))) {
+  for (const d of new Set(exceptDocs(merged.architecture ?? {}))) {
     if (tryGit(cwd, 'cat-file', '-e', `${base}:${d}`) === null && existsSync(join(tree, d))) add('ARCH-BOUNDARY', 'archExceptInUnit', { doc: d }, d);
   }
 

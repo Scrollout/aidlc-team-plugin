@@ -18,7 +18,8 @@ Write only inside:
 {{/each}}
 ## Checks
 {{#each checks}}- {{module}}: {{check}}
-{{/each}}## Test runs (each in full, as one plain command)
+{{/each}}{{#each data}}## Data
+{{this}}{{/each}}## Test runs (each in full, as one plain command)
 {{#each runs}}- {{level}}: {{run}}
 {{/each}}
 ## Out of scope

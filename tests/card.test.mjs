@@ -265,6 +265,19 @@ test('U22/AC-2 the card lists the checks of a module the profile keys by name', 
   assert.match(r.out, /## Checks\n- sdk-go: make sdk-test\n/);
 });
 
+test('U86/AC-2 the card lists the data the unit\'s modules own and the shared data, only with architecture.data', () => {
+  const modules = [{ id: 'sdk-go', paths: ['sdk/**'], data: ['data/keys'] }, { id: 'api', paths: ['src/**'], data: ['data/prices'] }];
+  const files = { 'docs/intents/I-1-x.md': intentDoc('I-1'), 'docs/units/U-1-a.md': unitDoc({ scope: ['sdk/**'], modules: ['sdk-go'] }) };
+  const dir = makeRepo(files, { modules, architecture: { data: { prefix: 'data/', shared: ['data/outbox'] } } });
+  approve(dir, 'I-1', 'U-1');
+  const r = run(dir, ['card', 'U-1']);
+  assert.equal(r.code, 0, r.err);
+  assert.match(r.out, /## Data\n- sdk-go owns data\/keys\n- shared, for any module: data\/outbox\nReach any other data only through its owning module's interface, an event or a shared service; the merge gate fails a direct read or write \(ARCH-DATA\)\.\n## Test runs/);
+  const off = makeRepo(files, { modules });
+  approve(off, 'I-1', 'U-1');
+  assert.doesNotMatch(run(off, ['card', 'U-1']).out, /## Data/);
+});
+
 test('U27/AC-1 U27/AC-3 the card carries the project rules at the base, but a focus rule, and counts them toward its cap', () => {
   const plain = repo();
   approve(plain, 'I-1', 'U-1');
