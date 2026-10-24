@@ -22,7 +22,7 @@ function parseFlags(args, known) {
     if (['--adopt', '--downgrade', '--dirty'].includes(a)) { out[a.slice(2)] = true; continue; }
     const v = args[++k];
     if (v === undefined || v.startsWith('--')) throw new UsageError(msg('badFlag', { name: a }));
-    if (a === '--overwrite') out.overwrite.push(v);
+    if (a === '--overwrite' || a === '--run') (out[a.slice(2)] ??= []).push(v);
     else out[a.slice(2)] = v;
   }
   return out;
@@ -113,12 +113,19 @@ export const commands = {
     const name = flags.name ?? basename(root);
     const base = flags.base ?? tryGit(root, 'symbolic-ref', '--short', 'HEAD') ?? DEFAULTS.base;
     const text = { name, bundle, date: new Date().toISOString().slice(0, 10) };
+    // Each level's run command, as the owner gave it; a detected one is only offered (docs/design/method.md).
+    const levels = {};
+    for (const value of flags.run ?? []) {
+      const [, level, run] = value.match(/^([\w-]+)=(.+)$/) ?? [];
+      if (!(level in DEFAULTS.levels)) throw new UsageError(msg('initRunBad', { value, levels: Object.keys(DEFAULTS.levels).join(', ') }));
+      levels[level] = { run };
+    }
     const json = {
       name: JSON.stringify(name),
       base: JSON.stringify(base),
       bundle: JSON.stringify(bundle),
       quick: I.quick.map((q) => JSON.stringify(render(q, { bundle }))).join(', '),
-      extra: adopted ? [{ key: 'adopted', value: JSON.stringify(adopted) }] : [],
+      extra: [...(adopted ? [{ key: 'adopted', value: JSON.stringify(adopted) }] : []), ...(flags.run ? [{ key: 'levels', value: JSON.stringify(levels) }] : [])],
     };
 
     let kept = 0;
@@ -146,6 +153,7 @@ export const commands = {
       writeFileSync(ignore, have + (have && !have.endsWith('\n') ? '\n' : '') + missing.join('\n') + '\n');
       report.push(msg('initAdded', { what: missing.join(' '), path }));
     }
+    for (const d of flags.run ? [] : I.runDetect) if (d.name ? definedOnBase(root, d) : existsSync(join(root, d.file))) report.push(msg('initRun', { command: d.run }));
     // The project's lint target, offered as a module check; the owner adds it.
     for (const name of I.lintTargets) {
       for (const [runner, file] of Object.entries(config.grid.runners)) {
