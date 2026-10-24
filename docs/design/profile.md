@@ -53,7 +53,7 @@ Merge rules:
   - the bundle root (`index.md` with `okf_version`, `log.md`);
   - the constitution, `<bundle>/constitution/principles.md`;
   - requirement, intent, unit, decision and runbook templates in `.aidlc/templates/docs/`;
-  - `.github/workflows/aidlc.yml`.
+  - `.github/workflows/aidlc.yml`, with the runner and the `actions/checkout` and `actions/setup-node` pins the project's own workflows already use (defaults in `init.workflow`).
 
   It also adds `.aidlc/local/` and the builders' worktree folder `.claude/worktrees/` to `.gitignore`, adds the worktree folder to every other ignore file the project has (`init.ignoreFiles`: `.dockerignore`, `.prettierignore`, …) so tools and tests skip it, and sets `worktree.baseRef: "head"` in `.claude/settings.json`.
 - `review.fixRounds`: fix rounds per focus since the unit's last approval before a `fix` escalates (default 3). `decisions.paths` and `generated`: [Plan lint](plan-lint.md#profile-keys-it-reads).

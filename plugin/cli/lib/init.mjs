@@ -94,6 +94,14 @@ function leftovers(root) {
   return out;
 }
 
+// The runner and action pins the project's own workflows use, so the generated one matches them (first migration).
+function workflowVars(root) {
+  const dir = join(root, I.workflows);
+  const texts = existsSync(dir) ? readdirSync(dir).filter((f) => /\.ya?ml$/.test(f)).map((f) => readFileSync(join(dir, f), 'utf8')) : [];
+  const first = (re) => texts.map((t) => re.exec(t)?.[1]?.trim()).find(Boolean);
+  return { runsOn: first(/^\s*runs-on:\s*(.+)$/m) ?? I.workflow.runsOn, checkout: first(/^\s*-?\s*uses:\s*(actions\/checkout@.+)$/m) ?? I.workflow.checkout,
+    setupNode: first(/^\s*-?\s*uses:\s*(actions\/setup-node@.+)$/m) ?? I.workflow.setupNode };
+}
 const textVars = (name, bundle, version) => ({ name, bundle, date: new Date().toISOString().slice(0, 10), producer: msg('producer', { version }), at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') });
 
 // What a project set up by an older release lacks: each doc template, and a constitution when the bundle holds
@@ -131,7 +139,7 @@ export const commands = {
     }
     const name = flags.name ?? basename(root);
     const base = flags.base ?? tryGit(root, 'symbolic-ref', '--short', 'HEAD') ?? DEFAULTS.base;
-    const text = textVars(name, bundle, version);
+    const text = { ...textVars(name, bundle, version), ...workflowVars(root) };
     // Each level's run command, as the owner gave it; a detected one is only offered (docs/design/method.md).
     const levels = {};
     for (const value of flags.run ?? []) {

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cpSync, existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { commit, git, makeRepo, run, tempDir, write } from './state-repo.mjs';
 
@@ -285,4 +285,21 @@ test('U54/AC-1 upgrade adds each doc template and the constitution a project lac
   write(own, { 'docs/handbook/rules.md': '---\ntype: Principles\ntitle: Ours\ndescription: Ours.\n---\n' });
   assert.doesNotMatch(run(own, ['upgrade', '--dirty']).out, /constitution/, 'a bundle with its own Principles doc keeps it');
   assert.ok(!existsSync(join(own, 'docs/constitution')));
+});
+
+test('U73/AC-1 the generated workflow takes the runner and action pins of the project\'s own workflows', () => {
+  const plain = emptyRepo();
+  assert.equal(run(plain, ['init', '--name', 'demo']).code, 0);
+  const own = readFileSync(join(plain, '.github/workflows/aidlc.yml'), 'utf8');
+  assert.match(own, /runs-on: ubuntu-latest\n/);
+  assert.match(own, /- uses: actions\/checkout@v7\n/);
+
+  const dir = emptyRepo();
+  mkdirSync(join(dir, '.github/workflows'), { recursive: true });
+  writeFileSync(join(dir, '.github/workflows/ci.yml'), 'jobs:\n  go:\n    runs-on: platform-kernel\n    steps:\n      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1\n      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0\n');
+  assert.equal(run(dir, ['init', '--name', 'demo']).code, 0);
+  const matched = readFileSync(join(dir, '.github/workflows/aidlc.yml'), 'utf8');
+  assert.match(matched, /runs-on: platform-kernel\n/);
+  assert.match(matched, /- uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7\.0\.1\n/);
+  assert.match(matched, /- uses: actions\/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7\.1\.0\n/);
 });

@@ -31,7 +31,7 @@ Refused unless the base is pushed (its head is `origin/<base>`). It polls the ru
 # In next
 With `ci.wait` set (the owner's choices, 2026-10-24):
 - **Before new builders** (step 11 of [next](state.md#next)): a base with merges the remote lacks → `aidlc push`; no record for the base head, or a pending one → `aidlc ci wait`. Merges, reviews and fix rounds still go first, so the push carries them.
-- **Red base** (a red record, and no merge on the base since; a plan commit such as the fix unit's doc keeps it red) comes first, after a cut-off merge and a failed release or smoke: without a live fix unit (a unit without an intent, not merged), `next` asks for `aidlc fix` from the failing runs. While red only fix units build or merge; builders already running carry on, and other units' reviews and fix rounds go on. The merged fix moves the base, so the push and the wait come again.
+- **Red base** (a red record, and no merge on the base since; a plan commit such as the fix unit's doc keeps it red) comes first, after a cut-off merge and a failed release or smoke: without a live fix unit (a unit without an intent, not merged), `next` asks for `aidlc fix` from the failing runs, or, for a failure outside the repo (runner, registry, network), a rerun of the failed jobs and `aidlc ci wait` again, which reads the rerun on the same commit (from the first migration, where a registry cache broke a pull). While red only fix units build or merge; builders already running carry on, and other units' reviews and fix rounds go on. The merged fix moves the base, so the push and the wait come again.
 
 Units: [M9](../roadmap/m9.md).
 
