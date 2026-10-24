@@ -31,7 +31,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T21:50:00Z }
 
 # Rule layers
 Merged in order, later wins, except that a `deny` in an earlier layer cannot be removed (`cli.json` `layers`):
-1. plugin defaults (`plugin/cli/defaults.json`: base, bundle, parallel, research, review, levels, models), beside the CLI so a project's pinned copy carries them
+1. plugin defaults (`plugin/cli/defaults.json`: base, bundle, parallel, research, review, levels, models, board), beside the CLI so a project's pinned copy carries them
 2. project: `.aidlc/profile.json`, `.aidlc/rules/*.md`
 3. personal: `.aidlc/local/profile.json` (untracked); only this layer may delegate approvals ([0008](../decisions/0008-delegated-approvals.md))
 
