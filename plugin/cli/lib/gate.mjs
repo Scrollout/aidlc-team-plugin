@@ -242,6 +242,10 @@ function runGate(cwd, st, unit) {
   for (const m of touched.filter((x) => x.check)) if (!shell(tree, m.check)) add('GATE-CHECK', 'gateCheck', { command: m.check });
   for (const command of list(p.security?.check)) if (!shell(tree, command)) add('GATE-SECURITY', 'gateCheck', { command });
   out.push(...architecture(tree, merged)); // the boundaries as merged
+  // An exception is approved on the base before the merge that needs it; one only on the unit branch cannot be (docs/design/architecture.md).
+  for (const d of new Set((merged.architecture?.boundaries ?? []).flatMap((b) => list(b.except)))) {
+    if (tryGit(cwd, 'cat-file', '-e', `${base}:${d}`) === null && existsSync(join(tree, d))) add('ARCH-BOUNDARY', 'archExceptInUnit', { doc: d }, d);
+  }
 
   for (const f of checkBundle(treeBundle, { rules: p.docs?.rules ?? {}, base: tree }).filter((x) => x.level === 'error')) {
     out.push(finding('GATE-OKF', f.path, f.line, 'gateOkf', f));
