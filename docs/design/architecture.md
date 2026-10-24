@@ -2,7 +2,7 @@
 type: Design
 title: Requirements and architecture checks
 description: Lasting requirements as their own docs, and architecture rules as checks that fail a merge, so a project cannot drift from its intended shape.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T10:40:00Z }
 ---
 

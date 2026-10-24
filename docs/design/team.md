@@ -2,7 +2,7 @@
 type: Design
 title: Team
 description: The four roles, how parallel worktree workers are run and merged, and where tokens are spent.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T09:20:00Z }
 sources:
   - id: cc-subagents

@@ -2,7 +2,7 @@
 type: Design
 title: OKF
 description: How the plugin writes, indexes and validates OKF v0.2 bundles, following the official spec and its reference implementation.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T09:45:00Z }
 sources:
   - id: okf-spec

@@ -2,7 +2,7 @@
 type: Design
 title: Plan lint
 description: The checks aidlc check runs on intents and units before the owner approves them, each with its code.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T06:40:00Z }
 ---
 

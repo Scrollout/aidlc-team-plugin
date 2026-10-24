@@ -2,7 +2,7 @@
 type: Design
 title: Agents in flight
 description: How the CLI knows a builder, reviewer or researcher is still running - the marks the hooks touch and how long one stays fresh.
-status: draft
+status: stable
 sources:
   - id: cc-env
     resource: https://code.claude.com/docs/en/env-vars

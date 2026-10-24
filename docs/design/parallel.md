@@ -2,7 +2,7 @@
 type: Design
 title: Parallel builders
 description: How the lead runs builders side by side in worktrees, what the agents' frontmatter sets for that, and how their units are merged.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T10:28:02Z }
 sources:
   - id: cc-worktrees

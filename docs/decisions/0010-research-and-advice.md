@@ -2,7 +2,7 @@
 type: Decision
 title: 0010 Research for open questions
 description: A question the owner cannot answer, or one with no clearly best option, goes to a researcher subagent on a cheap model that writes a cited digest from the project's own sources, official ones first; the lead drafts the decision and the owner still approves.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T08:30:00Z }
 ---
 

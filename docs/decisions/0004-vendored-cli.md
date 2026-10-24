@@ -2,7 +2,7 @@
 type: Decision
 title: 0004 Vendored CLI
 description: The CLI is zero-dependency Node, copied into each project at .aidlc/bin and pinned there.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 ---
 

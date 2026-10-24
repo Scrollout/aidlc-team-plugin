@@ -2,7 +2,7 @@
 type: Design
 title: Resume
 description: How the lead survives a clear, a crash or a new session - what lives on disk instead of the conversation - and why the owner clears the lead between intents.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T07:20:00Z }
 ---
 
