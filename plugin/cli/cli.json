@@ -393,7 +393,7 @@
     "upgradeAdded": "added {{path}}: the project lacked it\n",
     "upgradeSame": "the CLI is already {{version}} in {{path}}: nothing changed\n",
     "upgradeFrom": "copied from {{version}} at {{path}}; for a newer release: claude plugin marketplace update, then claude plugin update {{name}}, restart, and upgrade again\n",
-    "initNotPlugin": "init and upgrade run from the installed plugin, not from {{path}}",
+    "initNotPlugin": "init and upgrade run from the installed plugin, not from {{path}} → run node <installed plugin>/cli/aidlc.mjs upgrade, the command the session-start status names",
     "initNeedsRepo": "init runs in a git repository",
     "badFlag": "{{name}} needs a value",
     "gateNotBase": "merge runs in the checkout of {{base}}",

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync, utimesSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { commands } from '../plugin/cli/lib/hooks.mjs';
 import { approve, commit, git, hook, intentDoc, pinnedRepo, read, run, tempDir, unitDoc, write } from './state-repo.mjs';
@@ -119,6 +119,16 @@ test('U7/AC-3 blocking hooks fail closed; unmanaged folders are left alone; a mi
   assert.match(r.err, /pinned CLI .* is missing → ask the owner to restore it from a terminal: node \S+cli[\\/]aidlc\.mjs upgrade/);
   const stop = hook('steer', { cwd: dir, hook_event_name: 'Stop' });
   assert.equal(stop.code, 0, 'a Stop hook lets the turn end, so it cannot block every stop');
+});
+
+test('U74/AC-3 the session-start status names the upgrade when the pinned CLI is older than the installed plugin', () => {
+  const dir = project();
+  const same = hook('status', { cwd: dir, hook_event_name: 'SessionStart', source: 'startup' });
+  assert.doesNotMatch(same.json.hookSpecificOutput.additionalContext, /pinned CLI/);
+  writeFileSync(join(dir, '.aidlc/bin/VERSION'), '0.1.0\n');
+  const text = hook('status', { cwd: dir, hook_event_name: 'SessionStart', source: 'startup' }).json.hookSpecificOutput.additionalContext;
+  const installed = JSON.parse(readFileSync(join(ROOT, 'plugin/.claude-plugin/plugin.json'), 'utf8')).version;
+  assert.ok(text.endsWith(`The pinned CLI is 0.1.0, the installed plugin ${installed} → between units, ask the owner to approve the upgrade, then run node ${join(ROOT, 'plugin/cli/aidlc.mjs')} upgrade (the pinned aidlc refuses it) and commit.\n`), text);
 });
 
 test('U7/AC-4 the status injection stays within 1,000 chars', () => {

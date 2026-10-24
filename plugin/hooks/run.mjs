@@ -21,6 +21,20 @@ if (!existsSync(cli)) {
 }
 const r = spawnSync(process.execPath, [cli, 'hook', name], { cwd: dir, input, encoding: 'utf8' });
 if (r.status !== 0 && event.hook_event_name === 'UserPromptSubmit') process.exit(0);
-process.stdout.write(r.stdout ?? '');
+process.stdout.write(name === 'status' && r.status === 0 ? withUpgrade(r.stdout) : r.stdout ?? '');
 process.stderr.write(r.stderr ?? '');
 process.exit(r.status === 0 || name === advisory ? 0 : 2);
+
+// The session-start status names an upgrade when the pinned CLI is older than this installed plugin, with the
+// command that works: the pinned copy refuses to upgrade itself. Inline, as an older pinned CLI cannot say it.
+function withUpgrade(out) {
+  const version = (file) => (existsSync(file) ? readFileSync(file, 'utf8').trim() : '');
+  const pinned = version(join(dir, '.aidlc', 'bin', 'VERSION'));
+  const installed = JSON.parse(version(join(import.meta.dirname, '..', '.claude-plugin', 'plugin.json')) || '{}').version ?? '';
+  const older = (a, b) => { const [x, y] = [a, b].map((v) => v.split('.').map(Number)); const k = x.findIndex((n, i) => n !== y[i]); return k >= 0 && x[k] < y[k]; };
+  if (!/^\d+\.\d+\.\d+$/.test(pinned) || !/^\d+\.\d+\.\d+$/.test(installed) || !older(pinned, installed)) return out;
+  const json = JSON.parse(out);
+  const upgrade = `node ${join(import.meta.dirname, '..', 'cli', 'aidlc.mjs')} upgrade`;
+  json.hookSpecificOutput.additionalContext += `The pinned CLI is ${pinned}, the installed plugin ${installed} → between units, ask the owner to approve the upgrade, then run ${upgrade} (the pinned aidlc refuses it) and commit.\n`;
+  return JSON.stringify(json);
+}
