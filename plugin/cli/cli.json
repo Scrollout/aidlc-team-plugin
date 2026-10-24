@@ -237,6 +237,7 @@
     "linkBroken": "link target {{target}} does not exist",
     "sizeOver": "{{size}} chars over the {{cap}} cap for {{type}}",
     "ruleUnknown": "docs.rules.{{code}}: unknown code",
+    "profileKey": "{{key}} is read by nothing in the plugin",
     "ruleFixed": "docs.rules.{{code}}: spec codes cannot be changed",
     "ruleLevel": "docs.rules.{{code}}: level must be error, warning or off",
     "yamlTab": "line {{line}}: tab in indentation",
@@ -422,6 +423,7 @@
     "gateCardStale": "the review was made against card {{reviewed}}, the current card is {{card}}",
     "gateSpecialist": "{{focus}} review required ({{why}}), no pass verdict for the current diff",
     "gateFocusPath": "{{path}} matches focus.{{focus}}",
+    "gateFocusContent": "{{path}}:{{line}} matches security.content {{pattern}}",
     "gateOkf": "{{path}}:{{line}} {{code}} {{message}}",
     "gateConflict": "unit/{{unit}} conflicts with {{base}}",
     "archEdge": "{{from}} -> {{to}}: {{reason}}",
@@ -467,7 +469,8 @@
     "planSliceUnit": "{{unit}} crosses modules {{modules}} but tests only at the {{level}} level",
     "planGenerated": "{{unit}} scope names {{has}} but not {{lacks}}: a generator links them",
     "planUntracked": "{{unit}} scope names {{path}}, which exists but git does not track: a builder cannot commit it",
-    "planDecision": "{{unit}} touches the one-way door {{door}} and links no decision",
+    "planDecision": "{{unit}} touches the one-way door {{door}} through scope {{glob}} and links no decision{{bare}}",
+    "planDecisionBare": " (a bare name matches at any depth: write /{{glob}} for the root file)",
     "scopeApproval": "{{path}}: approvals and verified_hash are the owner's",
     "secretFound": "{{path}} contains what looks like a secret",
     "modelUnit": "{{agent}} prompt names no unit",
@@ -547,6 +550,10 @@
     "delegated": "the lead may approve: {{classes}}\n"
   },
   "okf": {
+    "profileKeys": {
+      "top": ["name", "base", "docs", "levels", "modules", "lanes", "focus", "security", "shared", "reserve", "parallel", "architecture", "adopted", "deploy", "release", "regen", "review", "research", "models", "board", "ci", "github", "decisions", "generated", "run", "approvals"],
+      "security": ["secrets", "content", "threatModel", "check"]
+    },
     "index": "index.md",
     "log": "log.md",
     "ext": ".md",
@@ -624,6 +631,10 @@
       "PROFILE-RULE": {
         "level": "error",
         "fix": "set docs.rules entries to a HOUSE-* code and one of error, warning, off"
+      },
+      "PROFILE-KEY": {
+        "level": "warning",
+        "fix": "remove it, or use the key the profile doc names for what you meant"
       }
     }
   },
@@ -751,6 +762,7 @@
       "Requirement"
     ],
     "focus": "general",
+    "contentFocus": "security",
     "answered": "answered",
     "stdin": "-",
     "stopped": "stopped",

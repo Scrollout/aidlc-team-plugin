@@ -36,5 +36,7 @@ Warnings (house rules; `profile.docs.rules` sets each to `error`, `warning` or `
 
 `PROFILE-RULE` (error): a `docs.rules` entry that is not a `HOUSE-*` code set to `error`, `warning` or `off`.
 
+`PROFILE-KEY` (warning): a top-level or `security` key in the project or personal profile that the plugin reads nowhere ([Profile](profile.md)).
+
 [^okf-spec]: Open Knowledge Format v0.2 specification
 [^okf-ref]: OKF reference implementation (document.py, index.py)

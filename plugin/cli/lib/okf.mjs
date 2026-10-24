@@ -521,6 +521,15 @@ function lintRules(rules = {}, file = config.layers.find((l) => l.from === 'proj
   return out;
 }
 
+// PROFILE-KEY: a top-level or `security` key in a project layer that the plugin reads nowhere (docs/design/profile.md).
+function lintKeys(sources) {
+  const K = config.okf.profileKeys;
+  return sources.flatMap(({ path, data }) => [
+    ...Object.keys(data).filter((k) => !K.top.includes(k)),
+    ...(isMap(data.security) ? Object.keys(data.security).filter((k) => !K.security.includes(k)).map((k) => `security.${k}`) : []),
+  ].map((key) => finding('PROFILE-KEY', 'warning', path, 1, 'profileKey', { key })));
+}
+
 const finding = (code, level, path, line, key, data) => codeFinding(OKF.codes, code, path, line, key, data, level);
 
 // Validates a bundle; returns findings with paths relative to `base`. `rules` maps house codes to levels.
@@ -563,10 +572,10 @@ export const commands = {
   check(args, { cwd }) {
     const known = config.commands.find((c) => c.name === 'check').flags;
     for (const flag of args.filter((a) => a.startsWith('--') && !known.includes(a))) throw new UsageError(msg('unknownFlag', { name: flag }));
-    const { profile } = loadProfile(cwd);
+    const { profile, sources } = loadProfile(cwd);
     const rules = profile.docs?.rules ?? {};
     const bundle = bundleOf(cwd, profile);
-    const findings = lintRules(rules);
+    const findings = [...lintRules(rules), ...lintKeys(sources)];
     const given = args.filter((a) => !a.startsWith('--'));
     const paths = given.length ? given.map((a) => resolve(cwd, a)) : [bundle];
     for (const p of paths) {

@@ -249,9 +249,11 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   for (const u of units.filter((x) => !x.fm[GRID.twoWay])) {
     const links = linksOf(u, bundle);
     if (links.some((f) => parseDoc(existsSync(f) ? readFileSync(f, 'utf8') : '').fm?.type === GRID.decisionType)) continue;
-    const owned = (path) => u.scope.some((g) => overlaps('/' + path, g));
-    const door = doorGlobs.find((g) => u.scope.some((s) => overlaps(s, g))) ?? linksOf(u, bundle, GRID.interfaces).map((f) => relPath(base, f)).find(owned);
-    if (door) add('PLAN-DECISION', u, keyLine(u, 'scope'), 'planDecision', { door });
+    const owner = (door) => u.scope.find((s) => overlaps(s, door) || overlaps('/' + door, s));
+    const door = doorGlobs.find(owner) ?? linksOf(u, bundle, GRID.interfaces).map((f) => relPath(base, f)).find((f) => u.scope.some((g) => overlaps('/' + f, g)));
+    // A bare name such as `Makefile` matches at any depth, so it reaches into a door folder (first migration).
+    const glob = door && owner(door);
+    if (door) add('PLAN-DECISION', u, keyLine(u, 'scope'), 'planDecision', { door, glob, bare: /^[^/*]+$/.test(glob) ? msg('planDecisionBare', { glob }) : '' });
   }
   // Each intent ends to end once: an AC at the top level that runs; a unit crossing modules is tested above the
   // first level (docs/design/plan-lint.md).

@@ -19,7 +19,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T21:50:00Z }
   ],
   "lanes": { "quick": ["docs/**", "*.md"], "full": ["migrations/**", "api-specs/**"] },
   "focus": { "security": ["internal/auth/**", "**/rls*"], "data": ["migrations/**"] },
-  "security": { "secrets": ["\\bACME-[0-9A-F]{32}\\b"], "threatModel": "docs/threat-model.md", "check": ["make gate-trivy"] },
+  "security": { "secrets": ["\\bACME-[0-9A-F]{32}\\b"], "content": ["BYPASSRLS", "InsecureSkipVerify"], "threatModel": "docs/threat-model.md", "check": ["make gate-trivy"] },
   "reserve": { "migration": { "dir": "migrations/{area}", "pattern": "{n:4}_*.sql" } },
   "parallel": { "max": 3 },
   "architecture": { "graph": "make deps-graph", "boundaries": [{ "from": "internal/core/**", "deny": ["internal/providers/**"] }], "checks": ["make contract-check"] },
@@ -56,6 +56,8 @@ Merge rules:
   - `.github/workflows/aidlc.yml`, with the runner and the `actions/checkout` and `actions/setup-node` pins the project's own workflows already use (defaults in `init.workflow`).
 
   It also adds `.aidlc/local/` and the builders' worktree folder `.claude/worktrees/` to `.gitignore`, adds the worktree folder to every other ignore file the project has (`init.ignoreFiles`: `.dockerignore`, `.prettierignore`, …) so tools and tests skip it, and sets `worktree.baseRef: "head"` in `.claude/settings.json`.
+- `security.content`: regexes for code that needs a security review wherever it sits (RLS settings, TLS skips); an added line matching one requires the `security` focus as `focus.security` globs do ([Merge mechanics](gate.md)). `security.secrets` is for credentials: the write hook blocks them.
+- `check` warns `PROFILE-KEY` for a top-level or `security` key in a layer file that nothing reads, so a guessed key is not taken for a rule (first migration: `security.patterns`, `security.content` before it existed).
 - `review.fixRounds`: fix rounds per focus since the unit's last approval before a `fix` escalates (default 3). `decisions.paths` and `generated`: [Plan lint](plan-lint.md#profile-keys-it-reads).
 - `research.sources` lists sources the owner trusts for the researcher, and `research.max` its source budget (default 8); `models.research` its model ([0010](../decisions/0010-research-and-advice.md)).
 - When the project has a lint target (`make lint`, `npm run lint` or `just lint`, from `grid.runners` and `init.lintTargets`), `init` offers it as a module check, for the owner to add to `modules[].check`; it writes nothing for it.

@@ -16,5 +16,5 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T19:40:00Z }
 
 # What counts after a fix
 - Each round records the branch commit it reviewed.
-- After a fix round, a focus other than `general` keeps its last `pass` when the commits since that commit touch none of its globs; `next` and the gate count it, so the builder's fix is not reviewed again for a concern it did not touch (owner's choice, 2026-10-23).
+- After a fix round, a focus other than `general` keeps its last `pass` when the commits since that commit touch none of its globs (for `security`, add no line matching `security.content`); `next` and the gate count it, so the builder's fix is not reviewed again for a concern it did not touch (owner's choice, 2026-10-23).
 - `general` always reviews the current diff.
