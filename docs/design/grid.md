@@ -32,8 +32,8 @@ flowchart LR
 |---|---|---|---|
 | Intent | `intents/I-<n>-<slug>.md`: goal, why, success measures, out of scope | required sections | yes |
 | Units | `units/U-<n>-<slug>.md`: stories, ACs (`AC-<k>`), NFRs, risks, `depends`, `modules`, `scope`, `reserves` | DAG acyclic, AC IDs unique, scopes of parallel units disjoint, reservations unique, size | the plan, once |
-| Domain | `design/U-<n>-domain.md`: entities, aggregates, context map; no technology | required sections | no |
-| Logical | `## Logical` in the unit doc, or `design/U-<n>-logical.md` + decision docs | decision has options, choice, why; contract and migration checks | one-way doors only |
+| Domain | `# Domain` in the unit doc: entities, their one owning component, interactions; no technology | `PLAN-DESIGN` in the full lane ([Design rows](design-rows.md)) | with the plan |
+| Logical | `# Logical` in the unit doc + decision docs | `PLAN-DESIGN` in standard and full; decision has options, choice, why | with the plan; one-way doors as decisions |
 | Source | code + tests tagged `U-<n>/AC-<k>`, written first | every AC tagged by a test at its declared level; diff inside scope; module checks green; review verdict | no |
 | Deployment | the package the profile's CI builds | profile `deploy.check` commands | no |
 | Operation | release record or tag, runbook link | profile `deploy.run`, `release`, `deploy.smoke`; `deploy.rollback` on a failed smoke ([Intent states](intent-states.md)) | yes, by typing `release I-<n>` |

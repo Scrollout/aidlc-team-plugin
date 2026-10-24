@@ -7,6 +7,8 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** M10 U72 built: `PLAN-DESIGN` asks an unapproved full-lane unit for `# Domain` and `# Logical`, a standard-lane one for `# Logical`, unless `design: "<why none>"`; the card names the sections and the reviewer checks against them ([Design rows before code](design/design-rows.md)). Release 0.76.0.
+- **Creation** [Design rows before code](design/design-rows.md) and [M10](roadmap/m10.md) U72: the grid's Domain and Logical rows are checked by plan lint, named on the card and checked by review, after AWS AI-DLC's domain and functional design stages (owner: build fully vertically).
 - **Update** Fix from the first migration: the skill names the owner badges (👉 or ⛔, no other), since a lead drew its own 🟡 ([Skill and agents](design/prompts.md)). Release 0.75.2.
 - **Update** Fix from the first migration: `PLAN-GENERATED` no longer reports a root-anchored scope (`/Makefile`, as `PLAN-SCOPE` suggests) as untracked ([Plan lint](design/plan-lint.md)). Release 0.75.1.
 - **Update** M9 U71 built: `aidlc ci wait` reads the pushed base's GitHub Actions runs and records green, red, pending or none; with `ci.wait`, `next` pushes and waits before new builders, and a red base asks for a fix unit, with only fix units building or merging until a merge lands ([CI on the base](design/base-ci.md)). Release 0.75.0.

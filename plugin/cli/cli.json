@@ -461,6 +461,8 @@
     "planShared": "{{unit}} scope {{glob}} names a file only merge writes",
     "planRunbook": "{{unit}} links no runbook, and the profile deploys",
     "planSliceIntent": "{{unit}} has no AC at the top level {{level}}: no unit tests it end to end",
+    "planDesign": "{{unit}} is {{lane}} lane and has no # {{section}} section with content",
+    "cardDesign": "the # {{sections}} section(s) of {{path}} at the base",
     "planSliceUnit": "{{unit}} crosses modules {{modules}} but tests only at the {{level}} level",
     "planGenerated": "{{unit}} scope names {{has}} but not {{lacks}}: a generator links them",
     "planUntracked": "{{unit}} scope names {{path}}, which exists but git does not track: a builder cannot commit it",
@@ -631,6 +633,8 @@
     "dropped": "dropped",
     "twoWay": "twoWay",
     "slice": "slice",
+    "design": "design",
+    "designRows": { "full": ["Domain", "Logical"], "standard": ["Logical"] },
     "decisionType": "Decision",
     "interfaces": "Interfaces",
     "outOfScope": "Out of scope",
@@ -691,6 +695,10 @@
       "PLAN-SLICE": {
         "level": "error",
         "fix": "add an AC at the top level to one of the intent's units (or slice: \"<why no end-to-end AC>\" on the intent), and test a unit that crosses modules at the integration level or higher"
+      },
+      "PLAN-DESIGN": {
+        "level": "error",
+        "fix": "write the section before approval: Domain names the entities, the one component owning each and how components interact; Logical the services, interfaces and data shapes this unit changes. Or set design: \"<why none>\" when the unit adds no component or logic"
       },
       "PLAN-GENERATED": {
         "level": "error",

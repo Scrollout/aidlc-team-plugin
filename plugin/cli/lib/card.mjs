@@ -101,6 +101,9 @@ function renderCard(cwd, unitId) {
     runs: Object.entries(withDefaults(profile).levels).filter(([, l]) => l?.run).map(([level, l]) => ({ level, run: l.run })),
     checks: (profile.modules ?? []).filter((m) => modules.has(m.id ?? m.name) && m.check).map((m) => ({ module: m.id ?? m.name, check: m.check })),
     outOfScope: section(doc, config.grid.outOfScope),
+    // The design rows the builder builds to and every review checks (docs/design/design-rows.md).
+    design: [Object.values(config.grid.designRows).flat().filter((h, k, all) => all.indexOf(h) === k && section(doc, h).length).join(', ')]
+      .filter(Boolean).map((sections) => msg('cardDesign', { sections, path: relPath(top, unit.file) })),
     rules: projectRules(gitLines(cwd, 'ls-tree', '--name-only', `${baseSha}:${config.rules.dir}`), profile, (p) => git(cwd, 'show', `${baseSha}:${p}`)),
   };
   const file = templateFile(cwd, lane.lane === QUICK ? C.quickTemplate : C.template);

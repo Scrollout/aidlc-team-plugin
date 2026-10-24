@@ -224,7 +224,7 @@ test('U52/AC-2 without --run, init writes no run and offers each test command it
 });
 
 test('U52/AC-3 plan lint warns PLAN-RUN while no level has a run; a warning does not fail check', () => {
-  const unit = '---\ntype: Unit\ntitle: A\ndescription: A.\nscope: ["src/**"]\n---\n\n# Acceptance criteria\n\n- AC-1 (unit): x.\n';
+  const unit = '---\ntype: Unit\ntitle: A\ndescription: A.\nscope: ["src/**"]\ndesign: "none"\n---\n\n# Acceptance criteria\n\n- AC-1 (unit): x.\n';
   const dir = makeRepo({ 'docs/units/U-1-a.md': unit });
   const r = run(dir, ['check']);
   assert.equal(r.code, 0, r.out);

@@ -16,6 +16,12 @@ reserves: []
 # Acceptance criteria
 - AC-1 (<level>): <behaviour, tested before the code>
 
+# Domain
+<full lane: the entities this unit adds or changes, the one component owning each, how components interact; no technology. Else delete this section>
+
+# Logical
+<the services, interfaces and data shapes this unit adds or changes, and why; or delete both sections and set design: "<why none>">
+
 # Interfaces
 - [<spec it consumes or provides>](<path>)
 
