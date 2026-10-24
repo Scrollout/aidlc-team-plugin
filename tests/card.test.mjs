@@ -100,6 +100,14 @@ test('U4/AC-4 the card hash changes when the unit doc changes, even outside the 
   assert.notEqual(hashOf(run(dir, ['card', 'U-1']).out), h1);
 });
 
+test('U85/AC-1 the card hash ignores the frontmatter the approval hash ignores: board, priority, hold', () => {
+  const dir = repo();
+  approve(dir, 'U-1');
+  const h1 = hashOf(run(dir, ['card', 'U-1']).out);
+  commit(dir, 'plan the board', { [U1]: read(dir, U1).replace('---\n\n', 'priority: 1\nboard: { track: Kernel }\n---\n\n') });
+  assert.equal(hashOf(run(dir, ['card', 'U-1']).out), h1, 'a recorded review stays current');
+});
+
 test('U4/AC-4 a project template overrides the card; the quick lane uses the short card', () => {
   const dir = repo();
   approve(dir, 'U-1');

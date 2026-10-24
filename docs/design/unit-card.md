@@ -35,7 +35,7 @@ The cap counts the card without its findings and mutations: a review round adds 
 - Rendered from `git show <base>:<unit doc>`, so worktree edits cannot change a card.
 - `aidlc card` refuses an unapproved or stale unit.
 - Before parallel start, units whose scopes overlap or whose reservations collide are refused.
-- The card hash goes into the merge trailer `Card: <hash>`; the reviewer gets the same card, and a mismatch fails the merge gate.
+- The card hash goes into the merge trailer `Card: <hash>`; the reviewer gets the same card, and a mismatch fails the merge gate. It leaves out the frontmatter the approval hash leaves out (`board`, `priority`, `hold`), so planning a board value keeps recorded reviews (first migration).
 - A worker never changes an interface. It stops and reports; the lead updates the spec, the owner re-approves if it is a one-way door, and affected cards are re-rendered.
 
 # Quick lane
