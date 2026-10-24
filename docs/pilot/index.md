@@ -13,4 +13,5 @@
 * [M4 scripted pilot report](m4-4-report.md) - A pilot with no owner present - a scripted project, a test owner's approvals, a headless lead with real builders and reviewers - on CLI 0.46.1 and 0.46.2.
 * [M5 pilot 1 report](m5-report.md) - A short pilot of U40 to U42 on CLI 0.49.0 - a generated-files map on a real project, the clear between intents, and the findings for the next batch.
 * [M6 pilot report](m6-report.md) - A short pilot of U47 to U51 on CLI 0.58.0 to 0.58.2 - deploy check, release, a failed smoke, rollback, a fix unit and a second release on a real project with stand-in deploy scripts.
+* [M7 back-fill pilot report](m7-report.md) - A short pilot of U55 and U56 on CLI 0.63.0 - characterization tests for an existing function, proved by the builder's mutations at merge - and the findings for the next batch.
 * [Pilot interventions](interventions.md) - Every manual step in the M1 pilot, by the owner or by the lead outside aidlc next, and the release that fixed it or the M2 item it became.
