@@ -237,6 +237,8 @@ test('U40/AC-1 U40/AC-2 U40/AC-3 a scope names both sides of a generated entry, 
     'docs/units/U-3-c.md': unit(['api/tsp/**', 'api/openapi/**', 'web/schema.d.ts']),
     'docs/units/U-4-d.md': unit(['sdk/schema.d.ts']),
     'docs/units/U-5-e.md': unit(['src/new.mjs']),
+    'Makefile': 'all:\n',
+    'docs/units/U-6-f.md': unit(['/Makefile']),
   });
   git(dir, 'init', '-q');
   git(dir, 'add', '-A');
@@ -246,7 +248,7 @@ test('U40/AC-1 U40/AC-2 U40/AC-3 a scope names both sides of a generated entry, 
     ['docs/units/U-1-a.md', 'U-1 scope names api/openapi/*.yaml but not api/tsp/**: a generator links them'],
     ['docs/units/U-2-b.md', 'U-2 scope names api/tsp/** but not api/openapi/*.yaml, web/schema.d.ts: a generator links them'],
     ['docs/units/U-4-d.md', 'U-4 scope names sdk/schema.d.ts, which exists but git does not track: a builder cannot commit it'],
-  ], 'both sides pass; a new file passes');
+  ], 'both sides pass; a new file passes; a root-anchored tracked file passes');
   assert.match(lintPlan(join(dir, 'docs'), profile, { base: dir }).find((f) => f.code === 'PLAN-GENERATED').fix, /generated entry/);
 });
 

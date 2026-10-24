@@ -272,7 +272,9 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
       if (outs.length && !srcs.length) add('PLAN-GENERATED', u, keyLine(u, 'scope'), 'planGenerated', { has: outs.join(', '), lacks: list(entry.sources).join(', ') });
       if (srcs.length && !outs.length) add('PLAN-GENERATED', u, keyLine(u, 'scope'), 'planGenerated', { has: srcs.join(', '), lacks: list(entry.outputs).join(', ') });
     }
-    for (const path of files ? u.scope.filter((s) => !/[*?[]/.test(s) && !files.has(s) && existsSync(join(base, s))) : []) add('PLAN-GENERATED', u, keyLine(u, 'scope'), 'planUntracked', { path });
+    // A leading slash anchors a file at the root (PLAN-SCOPE suggests `/Makefile`); git lists it without one.
+    const untracked = (s) => !/[*?[]/.test(s) && !files.has(s.replace(/^\//, '')) && existsSync(join(base, s));
+    for (const path of files ? u.scope.filter(untracked) : []) add('PLAN-GENERATED', u, keyLine(u, 'scope'), 'planUntracked', { path });
   }
   for (const c of cycles(units)) add('PLAN-DAG', c.unit, keyLine(c.unit, 'depends'), 'depCycle', { cycle: c.text });
 
