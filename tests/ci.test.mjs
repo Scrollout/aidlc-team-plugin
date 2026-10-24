@@ -55,7 +55,7 @@ test('U71/AC-1 a red run ends the wait at once, exits 1 and names its log comman
 });
 
 test('U71/AC-1 runs still going when the wait ends are pending; no run at all is none', () => {
-  const pending = setup({ polls: [[run(1)]], ci: { wait: 0.2, interval: 0.05 } });
+  const pending = setup({ polls: [[run(1)]], ci: { wait: 2, interval: 0.05 } }); // a wait well above one gh spawn, slow on Windows
   assert.equal(aidlc(pending, 'ci', 'wait').code, 0);
   assert.equal(record(pending).state, 'pending');
   assert.ok(calls(pending).length > 1, 'it polled again within the wait');
