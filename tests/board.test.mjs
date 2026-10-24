@@ -89,6 +89,44 @@ test('U11/AC-1 a second sync changes nothing; a state change writes only its dif
   assert.match(u1.body, /^- \[x\] AC-1/m, 'ACs are ticked once merged');
 });
 
+test('U84/AC-1 next and status name sync while the board is behind the plan, and stop once it ran', () => {
+  const ctx = setup();
+  const behind = /^the board is behind: aidlc sync$/m;
+  assert.match(aidlc(ctx, 'next').out, behind, 'approved units with no issues yet');
+  aidlc(ctx, 'sync');
+  assert.doesNotMatch(aidlc(ctx, 'next').out, behind);
+  assert.doesNotMatch(aidlc(ctx, 'status').out, behind);
+  branch(ctx.dir, 'U-1', 'src/a/x.txt');
+  spawnSync(process.execPath, [CLI, 'report', 'U-1'], { cwd: ctx.dir, input: '{"status": "done"}' });
+  assert.match(aidlc(ctx, 'status').out, behind, 'a report moves U-1 to In review');
+  aidlc(ctx, 'sync');
+  assert.doesNotMatch(aidlc(ctx, 'next').out, behind);
+  const off = setup({ github: null });
+  assert.doesNotMatch(aidlc(off, 'next').out, behind, 'no line without a board');
+});
+
+test('U84/AC-2 a value the Project lacks stops sync before any write; plan lint then flags it from the kept options', () => {
+  const ctx = setup({ u2: 'board: { effort: XL }' });
+  approve(ctx.dir, 'U-2');
+  const r = aidlc(ctx, 'sync');
+  assert.notEqual(r.code, 0);
+  assert.match(r.err + r.out, /sync wrote nothing: the Project lacks Effort XL \(the board has S, M, L\)/);
+  assert.equal(writes(ctx).length, 0, 'no issue, label or milestone was written');
+  assert.match(aidlc(ctx, 'check').out, /PLAN-BOARD.*U-2's board\.effort gives Effort XL, which the board lacks \(it has S, M, L\)/);
+  write(ctx.dir, { [U(2)]: read(ctx.dir, U(2)).replace('effort: XL', 'effort: L') });
+  commit(ctx.dir, 'plan an effort the board has');
+  assert.equal(aidlc(ctx, 'sync').code, 0);
+  assert.doesNotMatch(aidlc(ctx, 'check').out, /which the board lacks/);
+});
+
+test('U84/AC-3 a unit waiting on a dependency is Todo, not On hold', () => {
+  const ctx = setup({ u2: 'depends: [U-1]' });
+  approve(ctx.dir, 'U-2');
+  assert.match(aidlc(ctx, 'status').out, /U-2 blocked/);
+  aidlc(ctx, 'sync');
+  assert.equal(item(ctx, byTitle(ctx, 'U-2').number).values.Status, 'Todo');
+});
+
 test('U11/AC-1 board.issue links an existing issue; a held unit is On hold; board fields never stale an approval', () => {
   const old = { number: 7, id: 1007, node_id: 'I_7', title: 'K2: currency', body: 'from another tool', state: 'open', labels: ['task'], parent: null };
   const ctx = setup({ issues: [old], u2: 'board: { issue: 7 }\nhold: true' });

@@ -2,7 +2,7 @@
 // Settings, codes and messages come from cli.json.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve, sep } from 'node:path';
-import { at, bundleOf, config, FULL, QUICK, STANDARD, done, fieldPaths, git, isMap, tryGit, list, UsageError, relPath } from './config.mjs';
+import { at, bundleOf, config, FULL, QUICK, STANDARD, done, fieldPaths, git, isMap, readJson, tryGit, list, UsageError, relPath } from './config.mjs';
 import { finding as codeFinding, msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { linksOf, parseDoc, proseLines, sectionOf } from './okf.mjs';
@@ -246,6 +246,15 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
       const example = path.split('.').reduceRight((inner, key, k) => (k ? `{ ${key}: ${inner} }` : `${key}: ${inner}`), value);
       const mapping = map ? msg('planBoardMap', { pairs: Object.entries(map).map(([from, to]) => msg('planBoardPair', { from, to })).join(', ') }) : '';
       add('PLAN-BOARD', u, 1, 'planBoard', { path, field, example, mapping });
+    }
+  }
+  // A value must be an option the Project has, as the last sync read them; no sync yet, no check.
+  const common = tryGit(base, 'rev-parse', '--git-common-dir');
+  const options = (common && readJson(join(resolve(base, common), config.state.dir, config.state.board))?.options) ?? {};
+  for (const u of units) {
+    for (const { field, path, map } of planned.filter((f) => options[f.field] && at(u.fm, f.path) !== undefined)) {
+      const value = map ? map[String(at(u.fm, path))] : at(u.fm, path);
+      if (value !== undefined && !options[field].includes(String(value))) add('PLAN-BOARD', u, 1, 'planBoardOption', { path, value, field, options: options[field].join(', ') });
     }
   }
   // A unit at a one-way door links a Decision doc or says why it is two-way (docs/design/approvals.md). Focus globs

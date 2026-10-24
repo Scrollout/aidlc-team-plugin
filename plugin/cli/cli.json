@@ -377,6 +377,7 @@
     "cardRequirement": "{{id}} {{path}}",
     "reqNone": "{{doc}} cites no requirement",
     "planBoard": "{{unit}} has no {{path}}, which the board shows as {{field}}: add {{example}}{{mapping}}",
+    "planBoardOption": "{{unit}}'s {{path}} gives {{field}} {{value}}, which the board lacks (it has {{options}}): plan one of those, or the owner adds the option on the Project",
     "planBoardMap": " ({{pairs}})",
     "planBoardPair": "{{from}} means {{to}}",
     "planBoardAny": "<value>",
@@ -536,6 +537,9 @@
     "boardAdded": "added #{{number}} to the project\n",
     "boardSet": "set {{field}} of #{{number}} to {{value}}\n",
     "boardInSync": "the board is in sync\n",
+    "boardBehind": "the board is behind: aidlc sync\n",
+    "boardMissingOption": "{{name}} {{value}} (the board has {{options}})",
+    "boardNoOptions": "sync wrote nothing: the Project lacks {{#each missing}}{{this}}; {{/each}}→ add the option on the Project, or plan a value it has, then run aidlc sync",
     "boardItemHidden": "#{{number}} is on the Project but not listed, also after waiting (an archived item?) → restore it or remove it on the Project, then run aidlc sync",
     "boardShort": "GitHub listed {{got}} of the repository's {{count}} issues, also after waiting → sync created nothing; run aidlc sync again later",
     "boardFailed": "warning: sync failed, run aidlc sync: {{error}}\n",
@@ -815,7 +819,8 @@
     },
     "researching": "researching",
     "deploys": "deploys",
-    "ci": "ci.json"
+    "ci": "ci.json",
+    "board": "board.json"
   },
   "card": {
     "template": "card.md",
@@ -1296,7 +1301,7 @@
       "gated": "In review",
       "stopped": "On hold",
       "started": "In Progress",
-      "blocked": "On hold",
+      "blocked": "Todo",
       "escalated": "On hold",
       "held": "On hold",
       "merged": "Done",

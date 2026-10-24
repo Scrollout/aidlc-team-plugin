@@ -8,6 +8,7 @@ import { bundleOf, config, QUICK, VERDICT, done, git, gitLines, isMap, list, rea
 import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { linksOf, parseDoc } from './okf.mjs';
+import { boardBehind } from './board.mjs';
 import { acsOf, computeLane, inside, lintPlan, overlaps, readPlan, reqId as reqIdOf, productGlobs, testsOnly } from './grid.mjs';
 
 const S = config.state;
@@ -572,12 +573,13 @@ export const commands = {
   status(args, { cwd }) {
     const st = readState(cwd);
     const next = nextAction(st);
-    return done(statusText(st, next), humanGate(next));
+    return done(statusText(st, next, boardBehind(st)), humanGate(next));
   },
 
   next(args, { cwd }) {
-    const next = nextAction(readState(cwd));
-    return done(msg('nextLine', next), humanGate(next));
+    const st = readState(cwd);
+    const next = nextAction(st);
+    return done(msg('nextLine', next) + boardBehind(st), humanGate(next));
   },
 
   approve(args, { cwd }) {
