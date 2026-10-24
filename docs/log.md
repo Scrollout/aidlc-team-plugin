@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Creation** [M6 pilot report](pilot/m6-report.md): deploy check, release, failed smoke, rollback, fix unit and second release held on 0.58.x; fixes 0.58.1 to 0.58.3; findings for the next batch.
 - **Update** 0.58.3: an owner prompt is recorded without a trailing redirect, and the retro of an intent counts the fix units started `--after` it, with their approvals (found by the M6 pilot retro).
 - **Update** 0.58.2: the guard matches a typed `release I-<n>` go on the command and the intent only, so a call with `2>&1` after it uses the go instead of asking the owner again (found by the M6 pilot).
 - **Update** 0.58.1: a release tag still marks an intent released when the profile has `deploy`, so intents tagged before the key was added are not sent back to deploy (found by the M6 pilot; owner's choice) ([Deployment and operation](design/operations.md#details)).
