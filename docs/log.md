@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** M10 U73 built from the first migration: `init` matches the generated workflow to the project's runner and action pins; a red base names the rerun path for a failure outside the repo; a unit adding an architecture boundary baselines today's edges ([CI on the base](design/base-ci.md), [Architecture](design/architecture.md)). Release 0.77.0.
 - **Update** M10 U72 built: `PLAN-DESIGN` asks an unapproved full-lane unit for `# Domain` and `# Logical`, a standard-lane one for `# Logical`, unless `design: "<why none>"`; the card names the sections and the reviewer checks against them ([Design rows before code](design/design-rows.md)). Release 0.76.0.
 - **Creation** [Design rows before code](design/design-rows.md) and [M10](roadmap/m10.md) U72: the grid's Domain and Logical rows are checked by plan lint, named on the card and checked by review, after AWS AI-DLC's domain and functional design stages (owner: build fully vertically).
 - **Update** Fix from the first migration: the skill names the owner badges (👉 or ⛔, no other), since a lead drew its own 🟡 ([Skill and agents](design/prompts.md)). Release 0.75.2.

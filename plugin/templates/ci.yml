@@ -6,12 +6,12 @@ permissions:
   contents: read
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: {{runsOn}}
     steps:
-      - uses: actions/checkout@v7
+      - uses: {{checkout}}
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v7
+      - uses: {{setupNode}}
         with:
           node-version: lts/*
           package-manager-cache: false

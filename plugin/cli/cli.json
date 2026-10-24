@@ -308,7 +308,7 @@
     "deployNotOnBase": "check out {{base}} first: deploy steps run on the base",
     "nextCiPush": "the base has merges its remote lacks: push it before new builders: aidlc push",
     "nextCiWait": "wait for the base's CI before new builders: aidlc ci wait",
-    "nextCiFix": "CI is red on the base ({{runs}}): only a fix unit builds; read the logs ({{logs}}) and draft one: aidlc fix \"<what failed>\" --scope <code globs> --scope \"{{tests}}\"",
+    "nextCiFix": "CI is red on the base ({{runs}}): only a fix unit builds; read the logs ({{logs}}). A failure outside this repo (runner, registry, network): fix or wait for it, rerun with gh run rerun <id> --failed, then aidlc ci wait. Else draft a fix: aidlc fix \"<what failed>\" --scope <code globs> --scope \"{{tests}}\"",
     "ciUsage": "usage: aidlc ci wait, with ci.wait (seconds) and github.repo in the profile",
     "ciNotPushed": "push {{base}} first: aidlc push; CI runs on the pushed base",
     "ciResult": "CI on {{base}} {{sha}}: {{state}}\n{{#each runs}}  {{name}}: {{status}} {{conclusion}} {{url}}\n{{/each}}",
@@ -861,6 +861,8 @@
         "to": ".github/workflows/aidlc.yml"
       }
     ],
+    "workflows": ".github/workflows",
+    "workflow": { "runsOn": "ubuntu-latest", "checkout": "actions/checkout@v7", "setupNode": "actions/setup-node@v7" },
     "quick": [
       "{{bundle}}/**",
       "*.md"
@@ -989,7 +991,7 @@
         "fix": "fix what the security check reports"
       },
       "ARCH-BOUNDARY": {
-        "fix": "remove the dependency, or the owner approves an exception decision"
+        "fix": "remove the dependency, or the owner approves an exception decision; a unit that adds a boundary lists the edges the base already has in its except decision, or its own merge fails"
       },
       "ARCH-CHECK": {
         "fix": "fix what the architecture check reports"
