@@ -14,6 +14,7 @@
 * [Overview](overview.md) - Goals, non-goals, budgets, repo layout and glossary of the plugin.
 * [Plan lint](plan-lint.md) - The checks aidlc check runs on intents and units before the owner approves them, each with its code.
 * [Profile and templates](profile.md) - The project profile, rule layers, the template engine and how the CLI is vendored and pinned.
+* [Proof for back-fill tests](backfill.md) - Draft - how a tests-only unit, one that adds characterization tests for code built before a migration, proves its tests can fail - the builder lists one mutation per AC and the gate applies each.
 * [Requirements and architecture checks](architecture.md) - Lasting requirements as their own docs, and architecture rules as checks that fail a merge, so a project cannot drift from its intended shape.
 * [Resume](resume.md) - How the lead survives a clear, a crash or a new session - what lives on disk instead of the conversation - and why the owner clears the lead between intents.
 * [Review rounds](review-rounds.md) - What review record does with a verdict - fix rounds and their limit, send-backs, and which focus passes still count after a fix.
