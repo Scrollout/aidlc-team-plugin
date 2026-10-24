@@ -79,7 +79,7 @@ test('U11/AC-1 a second sync changes nothing; a state change writes only its dif
   branch(ctx.dir, 'U-1', 'src/a/x.txt');
   spawnSync(process.execPath, [CLI, 'report', 'U-1'], { cwd: ctx.dir, input: '{"status": "done"}' });
   const moved = aidlc(ctx, 'sync');
-  assert.equal(moved.out, `set Status of #${byTitle(ctx, 'U-1').number} to In review\n`);
+  assert.equal(moved.out, `set Status of #${byTitle(ctx, 'I-1').number} to In Progress\nset Status of #${byTitle(ctx, 'U-1').number} to In review\n`, 'U82/AC-1 the intent is under way once a unit is past approval');
 
   merge(ctx.dir, 'U-1');
   aidlc(ctx, 'sync');
@@ -251,6 +251,16 @@ test('U74/AC-2 an item GitHub added after the read is read again, never added tw
   const hidden = aidlc(ctx, 'sync');
   assert.equal(hidden.code, 70);
   assert.match(hidden.err, new RegExp(`#${u1} is on the Project but not listed, also after waiting`));
+});
+
+test('U82/AC-1 a stopped unit is On hold; reviewing and a refused merge read as In review', () => {
+  const ctx = setup();
+  branch(ctx.dir, 'U-1', 'src/a/x.txt');
+  spawnSync(process.execPath, [CLI, 'report', 'U-1'], { cwd: ctx.dir, input: '{"status": "stopped", "stop": "an interface must change"}' });
+  aidlc(ctx, 'sync');
+  assert.equal(item(ctx, byTitle(ctx, 'U-1').number).values.Status, 'On hold');
+  const status = JSON.parse(readFileSync(join(ROOT, 'plugin/cli/cli.json'), 'utf8')).board.status;
+  assert.deepEqual([status.reviewing, status.gated, status.started], ['In review', 'In review', 'In Progress']);
 });
 
 test('U14/AC-2 PLAN-BOARD names the board field and gives an example from the profile map', () => {

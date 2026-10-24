@@ -1277,6 +1277,13 @@
       "merged",
       "released"
     ],
+    "unstarted": [
+      "draft",
+      "approved",
+      "stale",
+      "blocked"
+    ],
+    "started": "started",
     "status": {
       "draft": "Todo",
       "approved": "Todo",
@@ -1284,7 +1291,11 @@
       "building": "In Progress",
       "fix": "In Progress",
       "reported": "In review",
+      "reviewing": "In review",
       "reviewed": "In review",
+      "gated": "In review",
+      "stopped": "On hold",
+      "started": "In Progress",
       "blocked": "On hold",
       "escalated": "On hold",
       "held": "On hold",
