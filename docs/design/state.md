@@ -26,22 +26,32 @@ stateDiagram-v2
   draft --> approved: owner approves
   approved --> stale: doc edited
   stale --> approved: owner re-approves
-  approved --> blocked: a dependency not merged
+  approved --> blocked: dependency not merged
   blocked --> approved: dependency merged
-  approved --> building: branch unit/U-n
+  approved --> building: builder starts
+  building --> stopped: report stopped
+  stopped --> building: builder restarts
   building --> reported: aidlc report
-  reported --> reviewed: verdict pass
-  reported --> building: verdict fix
+  reported --> reviewing: reviewer starts
+  reviewing --> reported: pass, a focus left
+  reviewing --> fix: verdict fix
+  fix --> building: fix round starts
+  reviewing --> escalated: verdict escalate
+  escalated --> reported: owner re-approves
+  reviewing --> reviewed: pass in every focus
+  reviewed --> gated: gate refuses
+  gated --> reviewed: base or diff changes
   reviewed --> merged: aidlc merge
   merged --> [*]
 ```
+A quick-lane unit without an intent starts `approved`; its report makes it `reviewed`, with no review. Intents: [Intent states](intent-states.md).
 
 # Approvals
-Intents, requirements, units and one-way-door decisions carry the owner's approval; editing one makes it `stale` ([Approvals](approvals.md)).
+Intents, requirements, units and one-way-door decisions carry the owner's approval; an edit stales it ([Approvals](approvals.md)).
 
 # next
 `aidlc next` prints one line: the single next action and the command or agent that performs it. Badges (`state.badges`): 👉 an owner step, ⛔ a refusal or stop. It exits 2 when the owner acts. Order:
-1. A merge cut off midway → continue it. A merged intent's failed release or smoke → ⛔ the owner retries or rolls back; after a rollback, a fix unit from the smoke output ([Deployment and operation](operations.md#details)). A doc held with `research: <question>` unanswered in `research/` → research it, or wait for its researcher ([0010](../decisions/0010-research-and-advice.md)); the digest releases that hold.
+1. A merge cut off → continue it. A merged intent's failed release or smoke → ⛔ the owner retries or rolls back; after a rollback, a fix unit from the smoke output ([Deployment and operation](operations.md#details)). A doc held with `research: <question>` unanswered in `research/` → research it, or wait for its researcher ([0010](../decisions/0010-research-and-advice.md)); the digest ends that hold.
 2. Any `stale` approval → re-approve.
 3. A draft intent, requirement or unit with open points (a template `<…>` placeholder outside plan fields, or an `Open questions` item) → finish elaborating it with the owner, naming them; no approval or unit work first.
 4. No intent yet: elaborate one; in an adopted project with none, the migration intent ([Everyday paths](paths.md#adopting-an-existing-project)). Intent not approved → request approval, with the draft requirements it cites.
@@ -57,7 +67,7 @@ Intents, requirements, units and one-way-door decisions carry the owner's approv
 
 An owner gate in steps 2–5 holds back only the units that wait on its docs: `next` first returns an action of steps 6–11 for the other units, then the gate. A held unit (`hold`, by the owner, or by the lead with a reason while it parks a question) gets no action until the hold is released. An action auto mode refused at the current commit ([Hook checks](hook-checks.md)) goes to the owner: `aidlc approve <docs>` for a delegated approval, else the refused command.
 
-`aidlc status` prints it as a short table; SessionStart injects it (max 1,000 chars).
+`aidlc status` prints it as a table; SessionStart injects it (max 1,000 chars).
 
 # Surviving a clear, crash or new session
-Everything that matters is on disk before a turn ends: [Resume](resume.md).
+All that matters is on disk before a turn ends: [Resume](resume.md).

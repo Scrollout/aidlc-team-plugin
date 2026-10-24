@@ -17,14 +17,16 @@ flowchart LR
     D[Domain] --> L[Logical] --> S[Source]
   end
   subgraph Operations
-    P[Deployment] --> O[Operation]
+    P[Deployment: deploy check] --> O[Operation: release, smoke]
   end
   U --> D
   S --> P
-  owner -. approves .-> I
-  owner -. approves the plan .-> U
-  owner -. one-way doors .-> L
-  owner -. release .-> O
+  P -. check fails: fix unit .-> U
+  O -. smoke fails: rollback, fix unit .-> U
+  owner -. types approve I-n .-> I
+  owner -. types approve U-1 U-2 .-> U
+  owner -. approves one-way doors .-> L
+  owner -. types release I-n or rollback I-n .-> O
 ```
 | Row | Output | Deterministic check | Owner approves |
 |---|---|---|---|
@@ -34,7 +36,7 @@ flowchart LR
 | Logical | `## Logical` in the unit doc, or `design/U-<n>-logical.md` + decision docs | decision has options, choice, why; contract and migration checks | one-way doors only |
 | Source | code + tests tagged `U-<n>/AC-<k>`, written first | every AC tagged by a test at its declared level; diff inside scope; module checks green; review verdict | no |
 | Deployment | the package the profile's CI builds | profile `deploy.check` commands | no |
-| Operation | release tag, runbook link | profile `release` command, smoke | yes |
+| Operation | release record or tag, runbook link | profile `deploy.run`, `release`, `deploy.smoke`; `deploy.rollback` on a failed smoke ([Intent states](intent-states.md)) | yes, by typing `release I-<n>` |
 
 Paths are relative to the project's bundle (profile `docs.bundle`).
 
