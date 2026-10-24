@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** [M7](roadmap/m7.md) candidates: proof for back-fill tests, so characterization tests for code built before a migration are shown to fail when it breaks (owner's pick).
 - **Creation** [Build method from day one](design/method.md) and M7 units U52 to U54 for approval: level runs asked at `init` with `PLAN-RUN`, a constitution at `init`, and an `upgrade` that adds what is missing; the owner settled the two choices.
 - **Update** [M7](roadmap/m7.md) draft: the build method from day one comes first (level runs asked at `init`, a constitution template, `upgrade` adds what is missing), folding in templates on upgrade (owner's pick).
 - **Update** [M5](roadmap/m5.md) closed (owner); its candidates are in the [M7](roadmap/m7.md) draft.
