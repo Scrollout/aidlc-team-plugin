@@ -23,7 +23,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 
 # Pushing and base health
 - The lead commits on the base only the bundle, `.aidlc/**` and the files `init` writes; the guard denies a base commit with other files.
-- `aidlc push` lists the base commits the remote lacks; on a base never pushed, those after the commit that added `.aidlc/profile.json`, since history before the plugin follows no gate. Each must be a merge with the `Unit`, `Card` and `Review` trailers whose files are in the unit's scope or merge-written (`PUSH-COMMIT` otherwise), or touch only allowed direct paths: the bundle, `.aidlc/**`, and the files `init` writes. Then it pushes the base. A raw push of the base is denied. Tags and releases always ask the owner.
+- `aidlc push` lists the base commits the remote lacks; on a base never pushed, those after the commit that added `.aidlc/profile.json`, since history before the plugin follows no gate. Each must be a merge with the `Unit`, `Card` and `Review` trailers whose files are in the unit's scope or merge-written (`PUSH-COMMIT` otherwise, also for a `Unit:` trailer naming no unit in the plan), or touch only allowed direct paths: the bundle, `.aidlc/**`, and the files `init` writes. Then it pushes the base. A raw push of the base is denied. Tags and releases always ask the owner.
 
 # Cleanup
 `aidlc merge` removes the unit's worktree and branch after a successful merge. When a builder still holds a merged unit's worktree, `next` names the `git worktree remove` and `git branch -D` to run. A `clean` command is [Later](../roadmap/later.md).

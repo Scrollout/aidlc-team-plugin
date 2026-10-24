@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** M8 U70 security fixes: the U70 review's realistic mistakes and cheap evasions are blocked (`--auto` only on `approve`, base commit, push, move, merge and alias shapes, writes outside a worktree or into `.git/aidlc`, `aidlc hook` and `claude -p` with owner words, unquoted and notebook secrets, a merge-time secret scan, unknown-unit merges); the rest is recorded in [Guard limits](design/guard-limits.md) (owner's choice). Release 0.74.0.
 - **Creation** [M8 evals report](pilot/m8-evals-report.md): the reviewer and builder evals ran on 0.73.0 with back-fill units; every seeded case was found, about 1.60 USD; one builder mutation broke only part of its AC and passed review.
 - **Update** M8 U67 built: the hook run-time budget counts only the time beyond a bare `node` start timed beside it; tests share one hook and one pinned-project helper; `board.backoff` moved to the defaults, so its test no longer sleeps; the suite runs in 32 s instead of 46 s. Release 0.73.0.
 - **Update** M8 U64 built: the skill names the deploy steps and the typed words; the builder prompt says what the gate proves for code, back-fill and quick-lane units; the constitution template carries those exceptions; the README diagrams and lists match the code. Release 0.72.0.

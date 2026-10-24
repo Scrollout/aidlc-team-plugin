@@ -41,10 +41,4 @@ How the hooks are wired, fail and escalate: [Hook mechanics](hooks.md).
 - **status** (SessionStart) returns `aidlc status` and one resume line, at most 1,000 chars: run mode and last owner prompt first.
 - **denied** (PermissionDenied, Bash) records a command auto mode refused, with the commit `HEAD` was on, in `.git/aidlc/host-denied.json` (the last five).[^cc-hooks] While `HEAD` stays there, `next` hands that action to the owner ([State](state.md#next)), so steer lets the stop through.
 
-# What the guard does not stop
-The guard stops mistakes, not attackers ([Overview](overview.md)); these need a deliberate evasion, so they stay out of scope (U70):
-- Bash writes outside the scope or to the state files (`sed -i`, `echo >`): the gate's `SCOPE-OUT` and the secret scan of the unit's added lines are the backstop for code.
-- A command the guard cannot read as argv: quoted `bash -c`, `sh -c` or `eval`, variable indirection, `xargs`, a symlinked or copied CLI, `node -e` importing the CLI.
-- Raw API calls: `gh api` on refs, `git send-pack`.
-
-[^cc-hooks]: Claude Code hooks reference
+What the guard leaves to the gate or to the owner: [Guard limits](guard-limits.md).
