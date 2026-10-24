@@ -42,7 +42,7 @@ test('U79/AC-1 a push that can publish a tag asks the owner, as git tag does; a 
 
 test('U81/AC-1 a delegated upgrade runs without a prompt; a downgrade or a dirty copy still asks; the status says which', () => {
   const dir = project();
-  const upgrade = `node ${join(ROOT, 'plugin/cli/aidlc.mjs')} upgrade`;
+  const upgrade = 'node /opt/plugin/cli/aidlc.mjs upgrade'; // the installed plugin's CLI, as a shell line names it
   assert.equal(decision(guardIn(dir, upgrade)), 'ask', 'not delegated yet');
   write(dir, { '.aidlc/local/profile.json': { approvals: { auto: ['upgrade'] } } });
   assert.equal(decision(guardIn(dir, upgrade)), 'allow');
