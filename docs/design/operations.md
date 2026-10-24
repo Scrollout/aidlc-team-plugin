@@ -11,26 +11,27 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T08:00:00Z }
 ---
 
 # Why
-Before M6 the loop ended at a merged, tagged intent: the [Grid](grid.md)'s Deployment and Operation rows ran no check, release or smoke, and a failed release became no work. The owner asked for both rows (2026-10-24).
+Before M6 the loop ended at a merged, tagged intent: the [Grid](grid.md)'s Deployment and Operation rows ran nothing. The owner asked for both rows (2026-10-24).
 
 # What AWS AI-DLC does
 Seven operation stages, every one conditional (`execution: CONDITIONAL`) and skipped when "no deployable target exists": deployment pipeline, environment provisioning, deployment execution, observability, performance validation, incident response, feedback.[^aws-ops] The parts this plugin can take without building pipelines:
 - **Verify:** "Deployment is not done until smoke passes"; deployment execution runs smoke tests and health checks.
-- **Rollback:** a rollback runbook is an output of the pipeline stage and is read again at deployment; "Rollback is not optional".
+- **Rollback:** a rollback runbook, output by the pipeline stage; "Rollback is not optional".
 - **Gates:** "Bypassing a gate is an incident, not a shortcut"; each stage ends with the human's approve or request-changes.
 - **Feedback:** "Production insights that do not flow back to Ideation are wasted learning"; the last stage can start a new ideation cycle.
 
 # Shape
-Commands come from the profile, as every check does; the plugin ships no pipeline ([Overview](overview.md) non-goals). All keys are optional: a project without them skips the rows, as AWS skips a stage with no target.
+Commands come from the profile; the plugin ships no pipeline ([Overview](overview.md) non-goals). All keys are optional: without them the rows are skipped, as AWS skips a stage with no target.
 ```json
-"deploy": { "check": ["make image"], "run": "make deploy", "smoke": "make smoke", "rollback": "make rollback" },
+"deploy": { "check": ["make image"], "run": "make deploy", "smoke": "make smoke", "rollback": "make rollback", "platform": ["../infra"] },
 "release": "make release"
 ```
 1. **Deployment:** once an intent is merged, `next` asks the lead to run `deploy.check` on the merged base before it offers the release; a failure becomes a fix unit.
 2. **Release:** the owner's step, `aidlc release I-<n>`, which runs `deploy.run` and `release` and records the run.
 3. **Operation:** `deploy.smoke` runs after the release. A pass marks the intent released; a failure stops the loop with ⛔ and names the owner's rollback, then a fix unit from the smoke output.
 4. **Runbook:** an intent with a `deploy` profile links a runbook doc (how to roll back, what to watch, who to call), checked by plan lint as `PLAN-RUNBOOK`; `init` ships `.aidlc/templates/docs/runbook.md`.
-5. **Feedback:** each failed step adds `{ intent, step, command, at }` to the `deployFailures` counter list; the retro lists them with the fix units whose `after` names the intent.
+5. **Platform:** `deploy.platform` names where the target is already defined, or `[]`; plan lint asks (`PLAN-PLATFORM`) and cards list it.
+6. **Feedback:** each failed step adds `{ intent, step, command, at }` to the `deployFailures` counter list; the retro lists them with the fix units whose `after` names the intent.
 
 # Choices
 The owner's, 2026-10-24:

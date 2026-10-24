@@ -326,6 +326,18 @@ test('U50/AC-1 with deploy in the profile, a live intent links a Runbook doc', (
   assert.match(template, /^type: Runbook$/m);
 });
 
+test('U91/AC-1 with deploy in the profile and no deploy.platform, each intent that ships fails PLAN-PLATFORM; [] passes', () => {
+  const dir = project({
+    'docs/intents/I-1-a.md': '---\ntype: Intent\ntitle: I-1\ndescription: I-1.\n---\n\n# Goal\nx\n',
+    'docs/units/U-1-a.md': '---\ntype: Unit\ntitle: A\ndescription: A.\nintent: I-1\nscope: ["u1/**"]\n---\n\n# Acceptance criteria\n\n- AC-1 (unit): x.\n',
+  });
+  const platform = (profile) => lintPlan(join(dir, 'docs'), profile, { base: dir }).filter((f) => f.code === 'PLAN-PLATFORM').map((f) => `${f.path} ${f.message}`);
+  assert.deepEqual(platform({ deploy: { check: ['make image'] } }), ['docs/intents/I-1-a.md I-1 ships, and the profile does not say where the deploy target is defined (deploy.platform)']);
+  assert.deepEqual(platform({ deploy: { check: ['make image'], platform: [] } }), [], 'the project defines its own target');
+  assert.deepEqual(platform({ deploy: { platform: ['../infra/README.md'] } }), []);
+  assert.deepEqual(platform({}), [], 'no deploy, no platform check');
+});
+
 test('U89/AC-1 check on a unit file shows a slice finding on its intent, and approve refuses the unit until it is fixed', async () => {
   const { approve, commit, intentDoc, makeRepo, read, run, unitDoc, write } = await import('./state-repo.mjs');
   const U = 'docs/units/U-1-a.md';

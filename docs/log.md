@@ -5,6 +5,10 @@ title: aidlc-team-plugin docs history
 
 # Bundle history
 
+## 2026-10-25
+
+- **Update** M11 U91: with a deploy, the profile says where the target is already defined (`deploy.platform`, plan lint `PLAN-PLATFORM`), and each card lists it to build on ([Operations](design/operations.md)). Release 0.96.0.
+
 ## 2026-10-24
 
 - **Update** M10 U90: the [codebase map](design/codebase-map.md) is three linked pages (tree, diagram, table), each with a TL;DR line; the CLI budget goes to 3,800 lines; units from U86 on are [M11](roadmap/m11.md). Release 0.95.0.

@@ -278,6 +278,18 @@ test('U86/AC-2 the card lists the data the unit\'s modules own and the shared da
   assert.doesNotMatch(run(off, ['card', 'U-1']).out, /## Data/);
 });
 
+test('U91/AC-2 the card lists the deploy.platform refs to build on', () => {
+  const files = { 'docs/intents/I-1-x.md': intentDoc('I-1'), 'docs/units/U-1-a.md': unitDoc({ scope: ['deploy/**'] }) };
+  const dir = makeRepo(files, { deploy: { check: ['make image'], platform: ['../infra/README.md', 'https://example.com/infra'] } });
+  approve(dir, 'I-1', 'U-1');
+  const r = run(dir, ['card', 'U-1']);
+  assert.equal(r.code, 0, r.err);
+  assert.match(r.out, /## Platform\nThe deploy target is already defined in: \.\.\/infra\/README\.md, https:\/\/example\.com\/infra\nBuild on its conventions/);
+  const none = makeRepo(files, { deploy: { check: ['make image'], platform: [] } });
+  approve(none, 'I-1', 'U-1');
+  assert.doesNotMatch(run(none, ['card', 'U-1']).out, /## Platform/);
+});
+
 test('U27/AC-1 U27/AC-3 the card carries the project rules at the base, but a focus rule, and counts them toward its cap', () => {
   const plain = repo();
   approve(plain, 'I-1', 'U-1');

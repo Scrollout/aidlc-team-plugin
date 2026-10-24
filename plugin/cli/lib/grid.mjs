@@ -288,10 +288,11 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
       if (area) add('PLAN-SLICE', u, keyLine(u, 'scope'), 'planSliceWaiver', { intent: i.id, glob: u.scope.find((s) => overlaps(s, area)), area, level: top });
     }
   }
-  // With a deploy, each live intent links its runbook (docs/design/operations.md).
+  // With a deploy, each live intent links its runbook and the profile says where the target is defined (docs/design/operations.md).
   const live = (i) => units.some((u) => u.fm.intent === i.id) || !all.some((u) => u.fm.intent === i.id);
   for (const i of profile.deploy ? intents.filter((x) => x.fm.status !== GRID.dropped && live(x) && !shipsNothing(all.filter((u) => u.fm.intent === x.id), profile)) : []) {
     if (!linksOf(i, bundle).some((f) => existsSync(f) && parseDoc(readFileSync(f, 'utf8')).fm?.type === GRID.runbookType)) add('PLAN-RUNBOOK', i, 1, 'planRunbook', {});
+    if (!Object.hasOwn(profile.deploy, 'platform')) add('PLAN-PLATFORM', i, 1, 'planPlatform', {});
   }
   for (const u of units.filter((x) => x.modules.length > 1 && x.acs.length && x.acs.every((a) => a.level === levels[0]))) {
     add('PLAN-SLICE', u, keyLine(u, 'modules'), 'planSliceUnit', { modules: u.modules.join(', '), level: levels[0] });

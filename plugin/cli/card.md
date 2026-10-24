@@ -32,6 +32,7 @@ Write only inside:
 ## Checks
 {{#each checks}}- {{module}}: {{check}}
 {{/each}}{{#each data}}## Data
+{{this}}{{/each}}{{#each platform}}## Platform
 {{this}}{{/each}}## Test runs (each in full, as one plain command)
 {{#each runs}}- {{level}}: {{run}}
 {{/each}}{{#each proof}}The merge gate reverts your changes outside the test paths of {{this}} and reruns those levels: each one holding a tagged test must then fail.

@@ -484,9 +484,11 @@
     "scopeShared": "{{path}} is written by merge",
     "planShared": "{{unit}} scope {{glob}} names a file only merge writes",
     "planRunbook": "{{unit}} links no runbook, and the profile deploys",
+    "planPlatform": "{{unit}} ships, and the profile does not say where the deploy target is defined (deploy.platform)",
     "planSliceIntent": "{{unit}} has no AC at the top level {{level}}: no unit tests it end to end",
     "planDesign": "{{unit}} is {{lane}} lane and has no # {{section}} section with content",
     "cardDataOwned": "- {{module}} owns {{data}}\n",
+    "cardPlatform": "The deploy target is already defined in: {{refs}}\nBuild on its conventions (names, namespaces, registries, access); add nothing it already provides, and stop and report if the unit needs a change there.\n",
     "cardDataRest": "- shared, for any module: {{shared}}\nReach any other data only through its owning module's interface, an event or a shared service; the merge gate fails a direct read or write (ARCH-DATA).\n",
     "cardDesign": "the # {{sections}} section(s) of {{path}} at the base",
     "planSliceWaiver": "{{unit}} reaches the product ({{glob}} overlaps {{area}}), but {{intent}} skips its end-to-end test with slice:",
@@ -738,6 +740,10 @@
       "PLAN-RUN": {
         "level": "warning",
         "fix": "add levels.<level>.run to .aidlc/profile.json, at least for unit and e2e"
+      },
+      "PLAN-PLATFORM": {
+        "level": "error",
+        "fix": "find how the target is run today (an infra repo, its GitOps set-up, namespaces, registries, access) and list it in deploy.platform in .aidlc/profile.json, as paths or URLs; [] when this project defines its own target"
       },
       "PLAN-RUNBOOK": {
         "level": "error",

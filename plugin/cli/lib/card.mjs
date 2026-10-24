@@ -102,6 +102,8 @@ function renderCard(cwd, unitId) {
     checks: (profile.modules ?? []).filter((m) => modules.has(m.id ?? m.name) && m.check).map((m) => ({ module: m.id ?? m.name, check: m.check })),
     // The data the unit's modules own; any other through its owner (docs/design/data-ownership.md).
     data: profile.architecture?.data?.prefix ? [(profile.modules ?? []).filter((m) => modules.has(m.id ?? m.name) && list(m.data).length).map((m) => msg('cardDataOwned', { module: m.id ?? m.name, data: list(m.data).join(', ') })).join('') + msg('cardDataRest', { shared: list(profile.architecture.data.shared).join(', ') || '-' })] : [],
+    // Where the deploy target is already defined, so a unit builds on it (docs/design/operations.md).
+    platform: list(profile.deploy?.platform).length ? [msg('cardPlatform', { refs: list(profile.deploy.platform).join(', ') })] : [],
     outOfScope: section(doc, config.grid.outOfScope),
     // The design rows the builder builds to and every review checks (docs/design/design-rows.md).
     design: [Object.values(config.grid.designRows).flat().filter((h, k, all) => all.indexOf(h) === k && section(doc, h).length).join(', ')]
