@@ -74,6 +74,13 @@ test('U80/AC-1 a unit that carries its own except decision is told the owner app
   assert.match(r.out, /docs\/decisions\/0001-baseline\.md:1 ARCH-BOUNDARY docs\/decisions\/0001-baseline\.md comes with U-1, so the owner cannot approve it before this merge: the lead commits it on the base as a plan doc/);
 });
 
+test('U81/AC-2 an architecture command failing in check --ci names the CI job setup as the likely gap', () => {
+  const dir = setup({ profile: { ...PROFILE, architecture: { checks: [FAIL] } } });
+  const r = run(dir, ['check', '--ci']);
+  assert.equal(r.code, 1);
+  assert.match(r.out, /ARCH-CHECK node -e "process\.exit\(1\)" failed in CI; if it passes locally, the aidlc job lacks what it needs: add its toolchain setup to \.github\/workflows\/aidlc\.yml/);
+});
+
 test('U6/AC-8 a full-lane unit merges on its tests', () => {
   const dir = setup({ unit: { scope: ['db/**', 'tests/**'], twoWay: 'a pure function, no data' }, files: { 'db/add.mjs': 'export const add = (a, b) => a + b;\n', 'tests/add.test.mjs': TEST['tests/add.test.mjs'].replace('../src/add.mjs', '../db/add.mjs') } });
   assert.equal(JSON.parse(read(dir, '.git/aidlc/cards/U-1.json')).lane, 'full');
