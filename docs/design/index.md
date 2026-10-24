@@ -4,6 +4,7 @@
 * [Approvals](approvals.md) - How the owner approves intents, requirements, units and decisions, what makes an approval stale, what the lead may approve for them, and how owner prompts are recorded.
 * [Board](board.md) - An optional one-way projection of derived state onto GitHub issues and a GitHub Project, written by deterministic code at zero model tokens.
 * [Build method from day one](method.md) - Draft - how a project gets the build method on its first init - level runs asked at init, a constitution that names the check behind each rule, and an upgrade that adds what an older project lacks.
+* [CI on the base](base-ci.md) - Draft - with profile ci.wait, no builder starts on a base whose CI is unknown or red - push first, wait for the base's GitHub Actions runs, and on a red base only a fix unit builds.
 * [CLI](cli.md) - The aidlc commands, their exit codes and the terse output format.
 * [CLI engine](cli-engine.md) - How the CLI's command handlers and hook rules return data for adapters to render, and the limits the CLI is built within.
 * [Deployment and operation](operations.md) - How the grid's Deployment and Operation rows run after an intent merges - deploy check, release, smoke, rollback, runbook and feedback - with the commands from the project profile.

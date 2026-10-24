@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Creation** [CI on the base](design/base-ci.md) and [M9](roadmap/m9.md) U71: with `ci.wait`, `next` pushes and waits for the base's GitHub Actions runs before new builders, and a red base comes first with only fix units building (owner's choices); taken from Later.
 - **Update** [M8](roadmap/m8.md) closed on 0.74.0 (owner): the partial-AC mutation finding and `next` serving one intent at a time move to [Later](roadmap/later.md).
 - **Update** M8 U68: decisions 0001 to 0011, the principles and the settled design docs (architecture, OKF, OKF validation, board, in flight, review rounds, resume, unit card, plan lint, team, parallel builders) are `stable`; the docs that changed in M6 to M8 stay `draft` until the first migration settles them.
 - **Update** M8 U70 security fixes: the U70 review's realistic mistakes and cheap evasions are blocked (`--auto` only on `approve`, base commit, push, move, merge and alias shapes, writes outside a worktree or into `.git/aidlc`, `aidlc hook` and `claude -p` with owner words, unquoted and notebook secrets, a merge-time secret scan, unknown-unit merges); the rest is recorded in [Guard limits](design/guard-limits.md) (owner's choice). Release 0.74.0.
