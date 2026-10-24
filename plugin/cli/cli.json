@@ -438,6 +438,8 @@
     "archEdge": "{{from}} -> {{to}}: {{reason}}",
     "archDataEdge": "{{from}} -> {{to}}: {{to}} belongs to {{owner}}; reach it through {{owner}}'s interface, an event or a shared service",
     "archDataNoOwner": "{{from}} -> {{to}}: no module owns {{to}}; add it to one module's data, or to architecture.data.shared",
+    "archApi": "{{from}} -> {{to}}: {{to}} is inside {{module}}; depend only on its public paths ({{api}})",
+    "archCycle": "modules depend on each other in a circle: {{circle}}",
     "archDataTwice": "{{to}} is claimed by {{owners}}; one module owns it",
     "archCheckCi": "{{command}} failed in CI; if it passes locally, the aidlc job lacks what it needs: add its toolchain setup to .github/workflows/aidlc.yml",
     "archExceptInUnit": "{{doc}} comes with {{unit}}, so the owner cannot approve it before this merge: the lead commits it on the base as a plan doc for the owner to approve, and {{unit}} merges the base and drops its copy",
@@ -1034,6 +1036,12 @@
       },
       "ARCH-CHECK": {
         "fix": "fix what the architecture check reports"
+      },
+      "ARCH-API": {
+        "fix": "call the module through its public paths, move what is needed into them, or the owner approves the edge in the architecture.api.except decision with a fix unit"
+      },
+      "ARCH-CYCLE": {
+        "fix": "break the circle: move the shared part into its own module, or let one side publish an event the other reads; or the owner approves a module edge in the architecture.acyclic.except decision with a fix unit"
       },
       "ARCH-DATA": {
         "fix": "go through the owning module (interface, event or shared service), give the data one owner, or the owner approves the edge in the architecture.data.except decision with a fix unit"
