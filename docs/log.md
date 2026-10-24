@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** M10 U89: `check <files>` also reports findings on the units' intents, and `approve` refuses a slice finding on a doc or its intent ([Plan lint](design/plan-lint.md)). Release 0.94.0.
 - **Add** M10 U88 [Codebase map](design/codebase-map.md): a generated tree of the project's modules with their data, public paths and dependencies, written at every merge and by `aidlc map`. Release 0.93.0.
 - **Add** M10 U87 [Module surfaces and cycles](design/module-surface.md): `modules[].api` limits what other modules may depend on (`ARCH-API`), `architecture.acyclic` fails circles between modules (`ARCH-CYCLE`); the CLI budget goes to 3,700 lines ([Overview](design/overview.md)). Release 0.92.0.
 - **Add** M10 U86 [Data ownership](design/data-ownership.md): each data node has one owning module; the gate fails a direct crossing (`ARCH-DATA`), and the card names the module's data. Release 0.91.0.

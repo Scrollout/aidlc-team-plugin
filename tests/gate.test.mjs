@@ -258,7 +258,7 @@ test('U6/AC-1 a refused merge is not offered again until the base or the diff ch
 test('U18/AC-1 the card lists every level run; the gate runs them on the merge result and records them', () => {
   const card = run(setup(), ['card', 'U-1']).out;
   assert.match(card, /^## Test runs \(each in full, as one plain command\)\n- unit: node --test$/m);
-  const failing = setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: 'node --test' }, e2e: { run: FAIL } } } });
+  const failing = setup({ unit: { acs: ['- AC-1 (e2e): adds two numbers.'] }, profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: 'node --test' }, e2e: { paths: ['tests/**'], run: FAIL } } } }); // an e2e AC, as PLAN-SLICE asks
   assert.match(merge(failing).out, /GATE-RUN level e2e run node -e "process\.exit\(1\)" fails on the merge result/);
   const none = setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'] } } } });
   assert.equal(merge(none).code, 0);

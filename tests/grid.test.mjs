@@ -325,3 +325,19 @@ test('U50/AC-1 with deploy in the profile, a live intent links a Runbook doc', (
   for (const heading of ['# Roll back', '# Watch', '# Call']) assert.match(template, new RegExp(`^${heading}$`, 'm'));
   assert.match(template, /^type: Runbook$/m);
 });
+
+test('U89/AC-1 check on a unit file shows a slice finding on its intent, and approve refuses the unit until it is fixed', async () => {
+  const { approve, commit, intentDoc, makeRepo, read, run, unitDoc, write } = await import('./state-repo.mjs');
+  const U = 'docs/units/U-1-a.md';
+  const dir = makeRepo({ 'docs/intents/I-1-a.md': intentDoc('I-1') }, { levels: { unit: { run: 'u' }, e2e: { run: 'e' } } });
+  approve(dir, 'I-1'); // approved before its units, as in the first migration
+  commit(dir, 'plan U-1', { [U]: unitDoc({ scope: ['src/**'], acs: ['- AC-1 (unit): adds.'] }) });
+  const r = run(dir, ['check', U]);
+  assert.equal(r.code, 1, r.out);
+  assert.match(r.out, /docs\/intents\/I-1-a\.md:1 PLAN-SLICE I-1 has no AC at the top level e2e/);
+  const refused = run(dir, ['approve', 'U-1']);
+  assert.notEqual(refused.code, 0);
+  assert.match(refused.err, /PLAN-SLICE I-1 has no AC at the top level e2e/);
+  write(dir, { [U]: read(dir, U).replace('- AC-1 (unit): adds.', '- AC-1 (e2e): adds.') });
+  assert.equal(run(dir, ['approve', 'U-1']).code, 0, 'an e2e AC clears it');
+});

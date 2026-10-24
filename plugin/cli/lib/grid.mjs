@@ -112,6 +112,10 @@ export function readPlan(bundle) {
   return { intents: readDocs(bundle, GRID.intents, GRID.intentFile).map(cite), units, requirements };
 }
 
+// The given docs plus the intents of the units among them: a plan-wide finding lands on the intent (docs/design/plan-lint.md).
+export const withIntents = (bundle, files, { intents, units } = readPlan(bundle)) =>
+  new Set([...files, ...units.filter((u) => files.includes(u.file)).flatMap((u) => intents.filter((i) => i.id === u.fm.intent).map((i) => i.file))]);
+
 const finding = (code, file, line, key, data, base) => codeFinding(GRID.codes, code, relPath(base, file), line, key, data);
 
 const keyLine = (u, key) => {
@@ -407,11 +411,10 @@ export const commands = {
     const skip = [...(await import('./state.mjs')).mergedUnits(cwd, profile.base).keys()]; // merged units are history
     const paths = args.filter((a) => !a.startsWith('--')).map((a) => resolve(cwd, a));
     const findings = [];
-    for (const p of paths.length ? paths : [bundle]) {
-      if (!existsSync(p)) continue;
-      if (statSync(p).isDirectory()) findings.push(...lintPlan(p, profile, { base: cwd, skip }), ...noRun(cwd, p, profile, skip));
-      else if (p.startsWith(bundle + sep)) findings.push(...lintPlan(bundle, profile, { base: cwd, skip }).filter((f) => f.path === relPath(cwd, p)));
-    }
+    for (const p of (paths.length ? paths : [bundle]).filter((x) => existsSync(x) && statSync(x).isDirectory())) findings.push(...lintPlan(p, profile, { base: cwd, skip }), ...noRun(cwd, p, profile, skip));
+    const docs = paths.filter((p) => existsSync(p) && !statSync(p).isDirectory() && p.startsWith(bundle + sep));
+    const wanted = new Set([...withIntents(bundle, docs)].map((f) => relPath(cwd, f)));
+    if (docs.length) findings.push(...lintPlan(bundle, profile, { base: cwd, skip }).filter((f) => wanted.has(f.path)));
     return done('', findings.some((f) => f.level === 'error') ? config.exit.findings : config.exit.ok, findings); // a warning does not fail
   },
 };

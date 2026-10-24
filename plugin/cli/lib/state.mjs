@@ -9,7 +9,7 @@ import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { linksOf, parseDoc } from './okf.mjs';
 import { boardBehind } from './board.mjs';
-import { acsOf, computeLane, inside, lintPlan, overlaps, readPlan, reqId as reqIdOf, productGlobs, testsOnly } from './grid.mjs';
+import { acsOf, computeLane, inside, lintPlan, overlaps, readPlan, reqId as reqIdOf, productGlobs, testsOnly, withIntents } from './grid.mjs';
 
 const S = config.state;
 
@@ -590,11 +590,12 @@ export const commands = {
     const at = new Date().toISOString(); // to the millisecond: review rounds are compared with it
     const auto = args.includes(S.autoFlag) && delegated(cwd);
     let out = '';
-    // A unit at a one-way door is approved only with its decision or a twoWay reason (docs/design/approvals.md).
-    const doors = lintPlan(bundle, profile, { base: cwd }).filter((f) => f.code === S.doorCode);
+    // Not approved: a door without its decision, or a slice finding on the doc or its intent (docs/design/plan-lint.md).
+    const errors = lintPlan(bundle, profile, { base: cwd, skip: [...mergedUnits(cwd, withDefaults(profile).base).keys()] }).filter((f) => S.approveBlocks.includes(f.code));
     for (const name of args.filter((a) => a !== S.autoFlag)) {
-      const door = doors.find((f) => f.path === relPath(cwd, findDoc(cwd, bundle, name)));
-      if (door) throw new UsageError(msg('approveDoor', door));
+      const wanted = new Set([...withIntents(bundle, [findDoc(cwd, bundle, name)])].map((f) => relPath(cwd, f)));
+      const error = errors.find((f) => wanted.has(f.path));
+      if (error) throw new UsageError(msg('approveLint', error));
     }
     for (const name of args.filter((a) => a !== S.autoFlag)) {
       const file = findDoc(cwd, bundle, name);

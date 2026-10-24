@@ -7,7 +7,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T06:40:00Z }
 ---
 
 # Codes
-Plan lint compares every unit except `status: dropped` and the IDs its caller skips (U4 passes the merged ones, derived from git). Codes, all errors:
+Plan lint compares every unit except `status: dropped` and the IDs its caller skips (U4 passes the merged ones, derived from git). `aidlc check <files>` reports the findings on those files and on the intents of the units among them, since a plan-wide finding such as `PLAN-SLICE` lands on the intent; `approve` refuses a doc with a `PLAN-DECISION` or `PLAN-SLICE` finding on it or, for a unit, on its intent (first migration: per-file checks passed while I-3 lacked an end-to-end AC). Codes, all errors:
 - `PLAN-DAG` a `depends` cycle (named in full) or an unknown unit.
 - `PLAN-AC` a duplicate AC ID in a unit.
 - `PLAN-LEVEL` an AC without a level, or with one `profile.levels` does not define.

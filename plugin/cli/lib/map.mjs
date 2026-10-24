@@ -9,9 +9,7 @@ import { parseDoc } from './okf.mjs';
 import { globRegex, graphOf } from './gate.mjs';
 
 const M = config.map;
-const wild = (s) => /[*?[]/.test(s);
-const rootOf = (glob) => { const parts = glob.replace(/^\.?\//, '').split('/'); return parts.slice(0, parts.findIndex(wild) < 0 ? parts.length : parts.findIndex(wild)).join('/'); };
-const version = () => (existsSync(join(CLI_DIR, M.versionFile)) ? readFileSync(join(CLI_DIR, M.versionFile), 'utf8').trim() : readJson(join(CLI_DIR, M.manifest))?.version);
+const rootOf = (glob) => { const parts = glob.replace(/^\.?\//, '').split('/'); const k = parts.findIndex((p) => /[*?[]/.test(p)); return parts.slice(0, k < 0 ? parts.length : k).join('/'); };
 
 // The map's text, or null when the profile turns it off or has no modules.
 export function mapText(cwd, profile) {
@@ -57,7 +55,7 @@ export function writeMap(cwd, profile) {
   const old = existsSync(file) ? parseDoc(readFileSync(file, 'utf8')) : null;
   if (old?.fm && old.lines.slice(old.body).join('\n') === text) return null;
   mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, msg('mapDoc', { producer: msg('producer', { version: version() }), at: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), body: text }));
+  writeFileSync(file, msg('mapDoc', { producer: msg('producer', { version: existsSync(join(CLI_DIR, M.versionFile)) ? readFileSync(join(CLI_DIR, M.versionFile), 'utf8').trim() : readJson(join(CLI_DIR, M.manifest))?.version }), at: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), body: text }));
   return file;
 }
 
