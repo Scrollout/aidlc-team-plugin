@@ -59,7 +59,8 @@ function gitCall(argv) {
 
 // An option as git reads it: exact, or a long option by an unambiguous prefix (`--no-verif`), `--x=v` by its name.
 const opt = (a, names) => names.some((o) => a === o || (o.startsWith('--') && /^--[^=]{2}/.test(a) && o.startsWith(a.split('=')[0])));
-const isCli = (a) => H.cli.some((c) => a === c || a.endsWith('/' + c));
+// Any path ending in the CLI's name, with `/` or `\\` or none left after the shell's unescaping: a Windows path must not slip past (U81).
+const isCli = (a) => H.cli.some((c) => a.endsWith(c));
 // A ref that names a unit branch: `unit/U-1`, `refs/heads/unit/U-1`, `origin/unit/U-1`, or a range end.
 const unitRef = (r) => r.split(/\.{2,3}/).some((p) => new RegExp(`^(?:refs/(?:heads|remotes/[^/]+)/|heads/|[^/]+/)?${S.branchPrefix}`).test(p));
 // The files a commit takes: the index, plus its pathspecs' changes (`-m x a.md`, `--only`, `--include`), plus `--all`'s.

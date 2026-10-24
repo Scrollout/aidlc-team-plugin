@@ -47,6 +47,7 @@ test('U81/AC-1 a delegated upgrade runs without a prompt; a downgrade or a dirty
   write(dir, { '.aidlc/local/profile.json': { approvals: { auto: ['upgrade'] } } });
   assert.equal(decision(guardIn(dir, upgrade)), 'allow');
   for (const flag of ['--downgrade', '--dirty']) assert.equal(decision(guardIn(dir, `${upgrade} ${flag}`)), 'ask', flag);
+  for (const command of ['node "C:\\p\\.aidlc\\bin\\aidlc.mjs" approve U-1', "node 'C:\\p\\aidlc.mjs' approve U-1", 'node C:\\p\\aidlc.mjs approve U-1']) assert.equal(decision(guardIn(dir, command)), 'ask', `a Windows path: ${command}`);
   writeFileSync(join(dir, '.aidlc/bin/VERSION'), '0.1.0\n');
   assert.match(hook('status', { cwd: dir, hook_event_name: 'SessionStart', source: 'startup' }).json.hookSpecificOutput.additionalContext, /between units, the owner delegated upgrades: run node /);
 });
