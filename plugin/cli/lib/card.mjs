@@ -7,7 +7,7 @@ import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { linksOf, MD_LINK, parseDoc, sectionOf } from './okf.mjs';
 import { computeLane, overlaps, readPlan, reqId, unitFields } from './grid.mjs';
-import { aidlcDir, approval, baseOf, branchOf, diffHash, readReview, readState, researchOf, roundsOf, runtimeFile, sha256, worktrees, writeJson } from './state.mjs';
+import { aidlcDir, approval, baseOf, branchOf, diffHash, hashDoc, readReview, readState, researchOf, roundsOf, runtimeFile, sha256, worktrees, writeJson } from './state.mjs';
 
 const C = config.card;
 
@@ -109,7 +109,7 @@ function renderCard(cwd, unitId) {
   const file = templateFile(cwd, lane.lane === QUICK ? C.quickTemplate : C.template);
   const template = readFileSync(file, 'utf8');
   // The base is left out, so a base that moved for other units does not make a recorded review stale.
-  const hash = sha256(docText + '\n' + render(template, { ...data, base: '', hash: '' }, file)).slice(0, C.hashLength);
+  const hash = sha256(hashDoc(doc) + '\n' + render(template, { ...data, base: '', hash: '' }, file)).slice(0, C.hashLength);
   const card = render(template, { ...data, hash }, file);
   // Findings and mutations come from review rounds: outside the cap, so a fix round never needs a re-approval (docs/design/unit-card.md).
   const size = render(template, { ...data, hash, fixes: '', mutations: '' }, file).length;
