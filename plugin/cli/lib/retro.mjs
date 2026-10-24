@@ -20,11 +20,12 @@ export const commands = {
     let out = msg('retroHead', { intent: intent.id, since: stats.since ?? msg('retroNever', {}) });
     out += msg('retroCodes', {}) + (codes.map(([code, count]) => msg('retroCount', { key: code, count })).join('') || msg('retroNone', {}));
     // Each escalation of the intent's units, from the verdicts and reports on disk.
-    const escalations = intent.units.flatMap((u) => [
+    const units = [...intent.units, ...st.units.filter((u) => u.fm.after === intent.id)]; // and the fix units after its release
+    const escalations = units.flatMap((u) => [
       ...(readJson(runtimeFile(cwd, 'reviews', u.id))?.rounds ?? []).filter((r) => r.verdict === config.state.verdicts[2])
         .map((r) => msg('retroReview', { unit: u.id, focus: r.focus ?? config.state.focus, findings: (r.findings ?? []).length, at: r.at })),
     ]);
-    const mine = new Set(intent.units.map((u) => u.id));
+    const mine = new Set(units.map((u) => u.id));
     escalations.push(...(stats[R.stops] ?? []).filter((s) => mine.has(s.unit)).map((s) => msg('retroStopped', s)));
     escalations.push(...(stats[R.sendBacks] ?? []).filter((s) => mine.has(s.unit)).map((s) => msg('retroSentBack', s)));
     const denials = stats.escalations?.[R.reasons.denials];
@@ -32,7 +33,7 @@ export const commands = {
     out += msg('retroEscalations', {}) + (escalations.join('') || msg('retroNone', {}));
     // Owner approvals from the stamps of the intent's docs, however they ran; other owner commands; auto mode refusals.
     const since = Date.parse(stats.since ?? 0) || 0;
-    const docs = [intent, ...intent.units, ...st.requirements.filter((r) => intent.units.some((u) => u.requirements.includes(r.id)) || intent.requirements.includes(r.id))];
+    const docs = [intent, ...units, ...st.requirements.filter((r) => units.some((u) => u.requirements.includes(r.id)) || intent.requirements.includes(r.id))];
     docs.push(...decisionsOf(st, docs).map((d) => ({ id: basename(d.file, config.okf.ext), fm: d.doc.fm }))); // and the decisions they cite
     const owner = [
       ...docs.flatMap((d) => events(d.fm).filter((e) => String(e.by).startsWith(config.state.human) && Date.parse(e.at) >= since)
@@ -43,7 +44,7 @@ export const commands = {
     ].sort((a, b) => (a.at < b.at ? -1 : 1));
     out += msg('retroInterventions', {}) + (owner.map((o) => o.line).join('') || msg('retroNone', {}));
     // What production taught: each failed deploy step and the fix units it started (docs/design/operations.md).
-    const fixes = st.units.filter((u) => u.fm.after === intent.id).map((u) => u.id);
+    const fixes = units.filter((u) => u.fm.after === intent.id).map((u) => u.id);
     const failed = (stats[R.deployFailures] ?? []).filter((d) => d.intent === intent.id).map((d) => msg('retroDeploy', d)).join('');
     out += msg('retroDeploys', {}) + (failed + (fixes.length ? msg('retroDeployFixes', { intent: intent.id, units: fixes.join(', ') }) : '') || msg('retroNone', {}));
 
