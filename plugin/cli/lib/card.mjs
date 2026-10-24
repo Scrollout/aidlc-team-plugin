@@ -103,7 +103,7 @@ export function renderCard(cwd, unitId) {
     requirements: list(doc.fm.requirements).map(reqId).flatMap((id) => plan.requirements.filter((r) => reqId(r.id) === id)
       .map((r) => msg('cardRequirement', { id: r.id, path: relPath(top, r.file) }))), // as the file names it
     // A back-fill unit's reported mutations, for the reviewer to judge (docs/design/backfill.md).
-    mutations: [[readJson(runtimeFile(cwd, 'reports', unitId))?.mutations ?? []].flat().filter((m) => m?.ac).map((m) => msg('cardMutation', { path: '', ...m, find: JSON.stringify(m.find), replace: JSON.stringify(m.replace) })).join('')]
+    mutations: [[readJson(runtimeFile(cwd, 'reports', unitId))?.mutations ?? []].flat().filter((m) => m?.ac).map((m) => msg('cardMutation', { path: '', breaks: '', ...m, find: JSON.stringify(m.find), replace: JSON.stringify(m.replace) })).join('')]
       .map((l) => (l ? msg('cardMutations', { list: l }) : '')).join(''),
     fixes: [fixes.length ? msg('cardFixes', { list: fixes.join('') }) : '', answered.length ? msg('cardAnswered', { list: answered.join('') }) : ''].join(''),
     proof: [Object.entries(withDefaults(profile).levels).filter(([, l]) => l?.run && list(l.paths).length).map(([level]) => level).join(', ')].filter(Boolean),

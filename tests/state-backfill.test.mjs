@@ -17,7 +17,7 @@ function backfill({ scope = ['tests/**'], extra = {}, profile = PROFILE } = {}) 
 }
 const report = (dir, mutations) => run(dir, ['report', 'U-1'], JSON.stringify({ status: 'done', summary: 's', tests: ['tests/calc.test.txt: U-1/AC-1'], ...(mutations ? { mutations } : {}) }));
 
-test('U55/AC-1 a unit that changes only tests reports one mutation per AC of a file outside the tests and the diff, found once', () => {
+test('U55/AC-1 U61/AC-1 a unit that changes only tests reports one mutation per AC of a file outside the tests and the diff, found once', () => {
   const dir = backfill();
   let r = report(dir);
   assert.equal(r.code, 64);
@@ -27,6 +27,8 @@ test('U55/AC-1 a unit that changes only tests reports one mutation per AC of a f
   r = report(dir, [{ ac: 'U-1/AC-1', path: 'tests/calc.test.txt', find: 'total is', replace: 'x' }]);
   assert.equal(r.code, 64, 'a test file is no covered code');
   r = report(dir, [{ ac: 'U-1/AC-1', path: 'src/calc.txt', find: 'total = a + b', replace: 'total = a - b' }]);
+  assert.match(r.err, /U-1\/AC-1's mutation names no behaviour it breaks/, 'U61/AC-1 it says what it breaks');
+  r = report(dir, [{ ac: 'U-1/AC-1', path: 'src/calc.txt', find: 'total = a + b', replace: 'total = a - b', breaks: 'the total' }]);
   assert.equal(r.code, 0, r.err);
   assert.equal(run(dir, ['report', 'U-1'], '{"status": "stopped", "stop": "x"}').code, 0, 'a stop needs none');
 });
@@ -36,17 +38,19 @@ test('U55/AC-1 a unit that changes code, or one in the quick lane, needs no muta
   assert.equal(report(backfill({ profile: { ...PROFILE, lanes: { quick: ['tests/**'] } } })).code, 0);
 });
 
-test('U55/AC-2 the card says how to list mutations and shows the reported ones; the prompts say who writes and who judges them', () => {
+test('U55/AC-2 U61/AC-2 the card says how to list mutations and shows the reported ones; the prompts say who writes and who judges them', () => {
   const dir = backfill();
   git(dir, 'switch', '-q', 'main');
   let card = run(dir, ['card', 'U-1']).out;
   assert.match(card, /^If you changed only tests, add "mutations": \[\{"ac": "U-1\/AC-<k>"/m);
   assert.doesNotMatch(card, /Mutations to judge/);
   git(dir, 'switch', '-q', 'unit/U-1');
-  report(dir, [{ ac: 'U-1/AC-1', path: 'src/calc.txt', find: 'total = a + b', replace: 'total = a - b' }]);
+  report(dir, [{ ac: 'U-1/AC-1', path: 'src/calc.txt', find: 'total = a + b', replace: 'total = a - b', breaks: 'the total' }]);
   git(dir, 'switch', '-q', 'main');
   card = run(dir, ['card', 'U-1']).out;
-  assert.match(card, /^## Mutations to judge .*\n- U-1\/AC-1: in src\/calc\.txt, "total = a \+ b" → "total = a - b"$/m);
-  assert.match(readFileSync(join(ROOT, 'plugin/agents/builder.md'), 'utf8'), /changed only tests \(a back-fill\), add the card's `mutations`/);
-  assert.match(readFileSync(join(ROOT, 'plugin/agents/reviewer.md'), 'utf8'), /`Mutations to judge`: one that breaks nothing its AC names is a `fix` finding/);
+  assert.match(card, /^## Mutations to judge .*\n- U-1\/AC-1: in src\/calc\.txt, "total = a \+ b" → "total = a - b"; breaks: the total$/m);
+  assert.match(card, /"breaks": "<the AC's main behaviour it breaks>"\}\], one per AC, breaking the main behaviour, not only a boundary or an edge/, 'U61/AC-2');
+  assert.match(readFileSync(join(ROOT, 'plugin/agents/reviewer.md'), 'utf8'), /breaks nothing its AC names, or only an edge of it, is a `fix` finding/, 'U61/AC-2');
+  assert.match(readFileSync(join(ROOT, 'plugin/agents/builder.md'), 'utf8'), /changed only tests \(a back-fill\), add the card's `mutations`.*named in `breaks`/);
+  assert.match(readFileSync(join(ROOT, 'plugin/agents/reviewer.md'), 'utf8'), /`Mutations to judge`: one that breaks nothing its AC names/);
 });
