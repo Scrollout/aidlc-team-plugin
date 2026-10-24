@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { approve, commit, git, intentDoc, makeRepo, run, unitDoc } from './state-repo.mjs';
+import { approve, commit, git, intentDoc, makeRepo, run, tempDir, unitDoc } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const PROFILE = { levels: { unit: { paths: ['tests/**'], run: 'node -e "process.exit(0)"' } } };
@@ -36,6 +36,14 @@ test('U55/AC-1 U61/AC-1 a unit that changes only tests reports one mutation per 
 test('U55/AC-1 a unit that changes code, or one in the quick lane, needs no mutation', () => {
   assert.equal(report(backfill({ scope: ['tests/**', 'src/**'], extra: { 'src/calc.txt': 'total = a + b + 0\n' } })).code, 0);
   assert.equal(report(backfill({ profile: { ...PROFILE, lanes: { quick: ['tests/**'] } } })).code, 0);
+});
+
+test('U79/AC-2 report reads its JSON from a file named after the unit', () => {
+  const dir = backfill({ scope: ['tests/**', 'src/**'], extra: { 'src/calc.txt': 'total = a + b + 0\n' } });
+  const file = join(tempDir('report-'), 'report.json');
+  writeFileSync(file, JSON.stringify({ status: 'done', summary: 'from a file', tests: [] }));
+  assert.equal(run(dir, ['report', 'U-1', file]).code, 0);
+  assert.equal(JSON.parse(readFileSync(join(dir, '.git/aidlc/reports/U-1.json'), 'utf8')).summary, 'from a file');
 });
 
 test('U75/AC-4 a unit that changes code may report mutations; then each AC needs a valid one, which may edit its own diff', () => {

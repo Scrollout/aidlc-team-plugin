@@ -631,7 +631,7 @@ export const commands = {
   report(args, ctx) {
     const unit = args[0];
     if (!unit) throw new UsageError(msg('noDoc', { name: '' }));
-    const data = parseObject(readStdin(ctx), 'report');
+    const data = args[1] ? parseObject(readFileSync(resolve(ctx.cwd, args[1]), 'utf8'), args[1]) : parseObject(readStdin(ctx), 'report');
     const problems = data.status === S.stopped ? [] : mutationProblems(ctx.cwd, loadProfile(ctx.cwd).profile, unit, data.mutations);
     if (problems.length) throw new UsageError(msg('reportMutations', { problems: problems.join('; ') }));
     writeJson(runtimeFile(ctx.cwd, 'reports', unit), { ...data, unit, at: new Date().toISOString() });
