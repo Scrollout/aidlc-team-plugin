@@ -1,12 +1,11 @@
 // Init and upgrade: render a project's files from templates, pin the CLI, adopt an existing bundle
 // (docs/design/profile.md, docs/design/paths.md). Settings, file list and messages come from cli.json.
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join, relative, resolve } from 'node:path';
-import { CLI_DIR, PLUGIN_DIR, config, done, isMap, UsageError, relPath } from './config.mjs';
+import { basename, dirname, join, resolve } from 'node:path';
+import { CLI_DIR, PLUGIN_DIR, config, done, git, isMap, readJson, tryGit, UsageError, relPath } from './config.mjs';
 import { msg, render, renderFile } from './template.mjs';
 import { DEFAULTS, loadProfile } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
-import { git, tryGit } from './state.mjs';
 import { definedOnBase } from './grid.mjs';
 
 const I = config.init;
@@ -38,7 +37,7 @@ function projectRoot(cwd) {
 function pluginVersion(root) {
   const manifest = join(PLUGIN_DIR, I.manifest);
   if (!existsSync(manifest) || sameDir(CLI_DIR, resolve(root, I.bin))) throw new UsageError(msg('initNotPlugin', { path: CLI_DIR }));
-  return JSON.parse(readFileSync(manifest, 'utf8')).version;
+  return readJson(manifest).version;
 }
 
 function vendor(root, version) {
@@ -182,7 +181,7 @@ export const commands = {
     }
 
     const settingsFile = join(root, I.settings);
-    const settings = existsSync(settingsFile) ? JSON.parse(readFileSync(settingsFile, 'utf8')) : {};
+    const settings = readJson(settingsFile) ?? {};
     if (mergeSettings(settings, I.settingsKeys, [], report)) {
       mkdirSync(dirname(settingsFile), { recursive: true });
       writeFileSync(settingsFile, JSON.stringify(settings, null, 2) + '\n');
@@ -212,7 +211,7 @@ export const commands = {
     if (tracked && tryGit(PLUGIN_DIR, 'status', '--porcelain', '--', '.') !== '' && !flags.dirty) throw new UsageError(msg('upgradeDirty', { path: PLUGIN_DIR }));
     const same = pinned === version; // a re-copy of the same release changes nothing in the tree
     const copied = vendor(root, version);
-    const name = JSON.parse(readFileSync(join(PLUGIN_DIR, I.manifest), 'utf8')).name;
+    const name = readJson(join(PLUGIN_DIR, I.manifest)).name;
     return done((same ? msg('upgradeSame', { version, path: I.bin }) : copied) + addMissing(root, version) + msg('upgradeFrom', { version, path: PLUGIN_DIR, name }));
   },
 };

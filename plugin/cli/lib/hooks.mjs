@@ -1,13 +1,13 @@
 // Hook entry points: `aidlc hook <name>` reads the hook JSON on stdin and prints the decision JSON
 // (docs/design/hooks.md). Deny lists, patterns, codes and messages come from cli.json.
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, utimesSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join, relative, resolve, sep } from 'node:path';
-import { config, readJson, UsageError, relPath } from './config.mjs';
+import { basename, dirname, join, resolve, sep } from 'node:path';
+import { bundleOf, config, done, git, readJson, readStdin, tryGit, UsageError, relPath } from './config.mjs';
 import { msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
 import { inside, readPlan } from './grid.mjs';
-import { aidlcDir, baseOf, bump, bundleOf, commands as owner, git, heartbeatFresh, hostDeniedFile, nextAction, ownerLines, readState, runtimeFile, tryGit, writeJson } from './state.mjs';
+import { aidlcDir, baseOf, bump, commands as owner, heartbeatFresh, hostDeniedFile, nextAction, readState, runtimeFile, statusText, writeJson } from './state.mjs';
 import { directAllowed, mergeWritten } from './gate.mjs';
 
 const H = config.hooks;
@@ -73,6 +73,9 @@ export function ownerRefused(cwd, command) {
 }
 
 const allow = () => '{}';
+const context = (hookEventName, additionalContext) => JSON.stringify({ hookSpecificOutput: { hookEventName, additionalContext } });
+// The text a Write or Edit adds.
+const added = (t) => [t.content, t.new_string, ...(Array.isArray(t.edits) ? t.edits.map((e) => e.new_string) : [])].filter((x) => typeof x === 'string').join('\n');
 // Typed words as the owner ends a sentence: a trailing period or exclamation mark is no part of them.
 const typed = (text) => String(text ?? '').trim().replace(/[.!]+$/, '');
 const approveWords = (text) => typed(text).match(new RegExp(H.approveWords, 'i'))?.[1].trim().split(/\s+/);
@@ -81,7 +84,7 @@ function deny(cwd, input, code, key, data, decision = 'deny') {
   let reason = msg('hookDeny', { code, message, fix: H.codes[code].fix });
   if (decision === 'deny' && input.session_id) {
     const file = join(aidlcDir(cwd), H.denials);
-    const all = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : {};
+    const all = readJson(file) ?? {};
     const key2 = `${code} ${message}`;
     const counts = (all[input.session_id] ??= {});
     counts[key2] = (counts[key2] ?? 0) + 1;
@@ -161,10 +164,7 @@ const approvalPart = (text) => {
   return JSON.stringify([events, fm.verified_hash ?? null]);
 };
 
-const unitOfBranch = (cwd) => {
-  const b = tryGit(cwd, 'rev-parse', '--abbrev-ref', 'HEAD') ?? '';
-  return b.startsWith(S.branchPrefix) ? b.slice(S.branchPrefix.length) : null;
-};
+const unitOfBranch = (cwd) => { const b = tryGit(cwd, 'rev-parse', '--abbrev-ref', 'HEAD') ?? ''; return b.startsWith(S.branchPrefix) ? b.slice(S.branchPrefix.length) : null; };
 
 const real = (p) => (existsSync(p) ? realpathSync.native(p) : join(real(dirname(p)), basename(p))); // as git's top level: no symlink escape
 function scope(input, cwd) {
@@ -186,11 +186,9 @@ function scope(input, cwd) {
 
 function secrets(input, cwd) {
   const file = resolve(cwd, String(input.tool_input?.file_path ?? ''));
-  const t = input.tool_input ?? {};
-  const added = [t.content, t.new_string, ...(Array.isArray(t.edits) ? t.edits.map((e) => e.new_string) : [])].filter((x) => typeof x === 'string').join('\n');
   const { profile } = loadProfile(cwd);
   const patterns = [...H.secrets, ...(profile.security?.secrets ?? [])].map((p) => new RegExp(p, 'i'));
-  if (patterns.some((re) => re.test(added))) return deny(cwd, input, 'SECRET', 'secretFound', { path: relPath(cwd, real(file)) });
+  if (patterns.some((re) => re.test(added(input.tool_input ?? {})))) return deny(cwd, input, 'SECRET', 'secretFound', { path: relPath(cwd, real(file)) });
   return allow();
 }
 
@@ -207,7 +205,7 @@ function model(input, cwd) {
   if (!role) return allow();
   const unit = String(t.prompt ?? '').match(new RegExp(H.unitPattern))?.[0];
   if (!unit) return deny(cwd, input, 'MODEL-UNIT', 'modelUnit', { agent });
-  const card = existsSync(runtimeFile(cwd, 'cards', unit)) ? JSON.parse(readFileSync(runtimeFile(cwd, 'cards', unit), 'utf8')) : null;
+  const card = readJson(runtimeFile(cwd, 'cards', unit));
   const expected = role === H.agents[0] ? card?.model : withDefaults(loadProfile(cwd).profile).models.review;
   if (!expected) return deny(cwd, input, 'MODEL-UNIT', 'modelUnit', { agent });
   const source = msg(role === H.agents[0] ? 'modelSourceCard' : 'modelSourceReview', {});
@@ -219,8 +217,7 @@ function model(input, cwd) {
 
 // A `generated.at` the edit wrote far from the current UTC time (a local time marked Z) becomes the current UTC second.
 function restamp(input, file) {
-  const t = input.tool_input ?? {};
-  const written = [t.content, t.new_string, ...(Array.isArray(t.edits) ? t.edits.map((e) => e.new_string) : [])].filter((x) => typeof x === 'string').join('\n');
+  const written = added(input.tool_input ?? {});
   const doc = parseDoc(readFileSync(file, 'utf8'));
   const at = doc.fm?.generated?.at;
   if (typeof at !== 'string' || !written.includes(at) || Number.isNaN(Date.parse(at)) || Math.abs(Date.parse(at) - Date.now()) <= config.okf.stampSkew * 1000) return null;
@@ -242,7 +239,7 @@ function docs(input, cwd) {
   if (!unitOfBranch(cwd)) writeIndexes(bundle);
   const errors = checkBundle(bundle, { rules: profile.docs?.rules ?? {}, base: top }).filter((f) => f.level === 'error' && f.path === relPath(top, file));
   if (errors.length) return JSON.stringify({ decision: 'block', reason: (stamped ?? '') + msg('docsErrors', { errors: errors.map((f) => msg('finding', f).trim()).join('\n') }) });
-  return stamped ? JSON.stringify({ hookSpecificOutput: { hookEventName: 'PostToolUse', additionalContext: stamped } }) : allow();
+  return stamped ? context('PostToolUse', stamped) : allow();
 }
 
 function touch(file) {
@@ -287,17 +284,7 @@ function steer(input, cwd) {
 function status(input, cwd) {
   if (input.source === H.clearSource) touch(join(aidlcDir(cwd), S.cleared)); // next stops asking for the clear
   const st = readState(cwd);
-  const resume = msg('statusResume', {});
-  const lines = [...st.intents.map((i) => msg('statusIntent', { id: i.id, state: i.state, title: i.fm.title ?? '' })),
-    ...st.units.filter((u) => u.state !== 'merged').map((u) => msg('statusUnit', { id: u.id, state: u.state, title: u.fm.title ?? '' }))];
-  const tail = msg('statusNext', { line: nextAction(st).line }) + resume;
-  let out = ownerLines(cwd);
-  for (let k = 0; k < lines.length; k++) {
-    const more = msg('statusMore', { count: lines.length - k });
-    if ((out + lines[k] + more + tail).length > S.statusMax) { out += more; break; }
-    out += lines[k];
-  }
-  return JSON.stringify({ hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: out + tail } });
+  return context('SessionStart', statusText(st, nextAction(st), msg('statusResume', {})));
 }
 
 // Auto mode refused a command: kept with the commit it was refused at, so next hands it to the owner.
@@ -328,13 +315,13 @@ function prompt(input, cwd) {
   if (go) {
     const command = `${go[1].toLowerCase()} ${go[2].toUpperCase()}`;
     writeJson(goesFile(cwd), [...(readJson(goesFile(cwd)) ?? []), { command, head: tryGit(cwd, 'rev-parse', 'HEAD'), at: new Date().toISOString() }].slice(-H.promptsKept));
-    return JSON.stringify({ hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext: msg('promptGo', { command }) } });
+    return context('UserPromptSubmit', msg('promptGo', { command }));
   }
   const docs = approveWords(input.prompt);
   if (!docs) return allow();
-  let context;
-  try { context = msg('promptApproved', { out: owner.approve(docs, { cwd }).output }); } catch (e) { context = msg('promptApproveFailed', { error: e.message }); }
-  return JSON.stringify({ hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext: context } });
+  let text;
+  try { text = msg('promptApproved', { out: owner.approve(docs, { cwd }).output }); } catch (e) { text = msg('promptApproveFailed', { error: e.message }); }
+  return context('UserPromptSubmit', text);
 }
 
 const HOOKS = { guard, prompt, scope, secrets, model, docs, heartbeat, steer, status, denied };
@@ -343,8 +330,8 @@ export const commands = {
   hook(args, ctx) {
     const run = HOOKS[args[0]];
     if (!run) throw new UsageError(msg('unknownCommand', { name: args[0] ?? '' }));
-    const input = JSON.parse(ctx.stdin ? ctx.stdin() : readFileSync(0, 'utf8'));
+    const input = JSON.parse(readStdin(ctx));
     const cwd = input.cwd && tryGit(input.cwd, 'rev-parse', '--show-toplevel') ? real(input.cwd) : ctx.cwd; // .git/aidlc is no work tree
-    return { code: config.exit.ok, findings: [], output: run(input, cwd) + '\n' };
+    return done(run(input, cwd) + '\n');
   },
 };

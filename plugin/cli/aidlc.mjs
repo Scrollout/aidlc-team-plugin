@@ -15,8 +15,7 @@ import { commands as board } from './lib/board.mjs';
 import { commands as retro } from './lib/retro.mjs';
 import { commands as deploy } from './lib/deploy.mjs';
 
-export const EXIT = config.exit;
-export { UsageError };
+const EXIT = config.exit;
 
 // Runs handlers in order and merges their results; the highest exit code wins.
 const combine = (...handlers) => async (args, ctx) => {
@@ -32,12 +31,12 @@ const combine = (...handlers) => async (args, ctx) => {
 // Each unit that builds a command adds its handler here, keyed by the command name in cli.json.
 export const HANDLERS = { ...okf, ...state, ...card, ...init, ...gate, ...hooks, ...board, ...retro, ...deploy, lane: grid.lane, check: combine(okf.check, grid.check, gate.check) };
 
-export function help() {
+function help() {
   const width = Math.max(...config.commands.map((c) => c.usage.length));
   return msg('help', { commands: config.commands.map((c) => ({ ...c, usage: c.usage.padEnd(width) })) });
 }
 
-export async function main(argv, io = { out: process.stdout, err: process.stderr, cwd: process.cwd() }) {
+async function main(argv, io = { out: process.stdout, err: process.stderr, cwd: process.cwd() }) {
   const [name, ...args] = argv;
   if (config.helpFlags.includes(name)) {
     io.out.write(help());

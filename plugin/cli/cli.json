@@ -397,7 +397,6 @@
     "proofMutated": "proof: {{tag}}'s mutation of {{path}} failed level {{level}}\n",
     "proofSkipped": "proof skipped: {{why}}\n",
     "proofQuick": "quick lane",
-    "proofTests": "no change outside the test paths",
     "proofNoRun": "no level run holds a tagged test",
     "gateLevel": "{{tag}} is tested in {{files}}, outside the {{level}} paths",
     "gateCheck": "{{command}} failed",

@@ -77,11 +77,14 @@ export function msg(key, data) {
   return render(config.messages[key], data, `cli.json messages.${key}`);
 }
 
+// A finding of `code` from a cli.json code table, whose fix and level (error unless the table sets one) it carries.
+export const finding = (codes, code, path, line, key, data = {}, level = codes[code].level ?? 'error') => ({ code, level, path, line, message: msg(key, data), fix: codes[code].fix });
+
 // Template directories, highest priority first.
 const templateDirs = (root, pluginDir) => config.templates.map((t) => join(t.from === 'plugin' ? pluginDir : root, t.path));
 
 // The first template directory in cli.json holding `rel` wins (project overrides plugin).
-export function resolveTemplate(rel, { root, pluginDir = PLUGIN_DIR }) {
+function resolveTemplate(rel, { root, pluginDir = PLUGIN_DIR }) {
   for (const dir of templateDirs(root, pluginDir)) {
     if (existsSync(join(dir, rel))) return join(dir, rel);
   }

@@ -2,10 +2,10 @@
 // (docs/design/board.md). No other command reads the board; it writes only what differs.
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { at, config, list, relPath, UsageError } from './config.mjs';
+import { at, config, done, git, list, relPath, UsageError } from './config.mjs';
 import { msg, render } from './template.mjs';
 import { templateFile } from './card.mjs';
-import { git, readState } from './state.mjs';
+import { readState } from './state.mjs';
 
 const B = config.board;
 let ghCommand = [B.gh]; // `github.gh` overrides it (docs/design/board.md)
@@ -203,6 +203,6 @@ export const issueTitle = (profile, number) => rest('GET', `repos/${github(profi
 
 export const commands = {
   sync(args, { cwd }) {
-    return { code: config.exit.ok, findings: [], output: sync(cwd) };
+    return done(sync(cwd));
   },
 };

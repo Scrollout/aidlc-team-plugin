@@ -1,23 +1,22 @@
 // Profile loader: reads the rule layers named in cli.json and merges them (docs/design/profile.md).
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { CLI_DIR, config, posix } from './config.mjs';
+import { CLI_DIR, config, isMap, posix, readJson } from './config.mjs';
 import { msg } from './template.mjs';
 
 export class ProfileError extends Error {}
 
 const UNION = config.unionKey;
 const fail = (key, data) => new ProfileError(msg(key, { union: UNION, ...data }));
-const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 
 function hasUnion(v) {
-  if (!isObject(v)) return false;
+  if (!isMap(v)) return false;
   return Object.entries(v).some(([k, x]) => k === UNION || hasUnion(x));
 }
 
 // Merges `next` over `base`. Later wins, except that union-key arrays (`deny`) are unions and cannot be removed,
 // and a `replaceKeys` object (`levels`) replaces the earlier one whole.
-export function mergeLayer(base, next, layer, path = []) {
+function mergeLayer(base, next, layer, path = []) {
   const out = { ...base };
   for (const [key, value] of Object.entries(next)) {
     const at = [...path, key].join('.');
@@ -27,9 +26,9 @@ export function mergeLayer(base, next, layer, path = []) {
       const union = Array.isArray(prev) ? [...prev] : [];
       for (const v of value) if (!union.some((u) => JSON.stringify(u) === JSON.stringify(v))) union.push(v);
       out[key] = union;
-    } else if (config.replaceKeys.includes(key) && isObject(value)) {
+    } else if (config.replaceKeys.includes(key) && isMap(value)) {
       out[key] = value;
-    } else if (isObject(prev) && isObject(value)) {
+    } else if (isMap(prev) && isMap(value)) {
       out[key] = mergeLayer(prev, value, layer, [...path, key]);
     } else if (hasUnion(prev)) {
       throw fail('unionReplaced', { layer, key: at });
@@ -53,16 +52,16 @@ function readLayer(file) {
   } catch (e) {
     throw fail('invalidJson', { file: posix(file), error: e.message });
   }
-  if (!isObject(data)) throw fail('notObject', { file: posix(file) });
+  if (!isMap(data)) throw fail('notObject', { file: posix(file) });
   return data;
 }
 
-export function layerFiles(root, cliDir = CLI_DIR) {
+function layerFiles(root, cliDir = CLI_DIR) {
   return config.layers.map((l) => ({ name: l.name, file: join(l.from === 'cli' ? cliDir : root, l.path) }));
 }
 
 // The plugin defaults, beside the CLI so a project's pinned copy carries them.
-export const DEFAULTS = JSON.parse(readFileSync(join(CLI_DIR, config.layers.find((l) => l.from === 'cli').path), 'utf8'));
+export const DEFAULTS = readJson(join(CLI_DIR, config.layers.find((l) => l.from === 'cli').path));
 export const withDefaults = (profile = {}) => mergeLayer(DEFAULTS, profile, 'profile');
 
 // Returns the merged profile, the layers that were found and the project rule files.

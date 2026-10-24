@@ -3,27 +3,26 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { dirname, join, relative, resolve } from 'node:path';
-import { config, done, isMap, list, readJson, UsageError, relPath } from './config.mjs';
+import { dirname, join, resolve } from 'node:path';
+import { bundleOf, config, done, git, gitLines, isMap, list, readJson, readStdin, tryGit, UsageError, relPath } from './config.mjs';
 import { msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
-import { parseDoc } from './okf.mjs';
+import { linksOf, parseDoc } from './okf.mjs';
 import { acsOf, computeLane, inside, lintPlan, overlaps, readPlan, reqId as reqIdOf, testsOnly } from './grid.mjs';
 
 const S = config.state;
 
 // ---- git ----
 
-export const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-export const tryGit = (cwd, ...args) => {
-  try { return git(cwd, ...args); } catch { return null; }
-};
-
 export const aidlcDir = (cwd) => join(resolve(cwd, git(cwd, 'rev-parse', '--git-common-dir')), S.dir);
 export const runtimeFile = (cwd, kind, unit) => join(aidlcDir(cwd), S[kind], `${unit}.json`);
 export const branchOf = (unit) => S.branchPrefix + unit;
 export const baseOf = (profile) => profile.base;
-export const bundleOf = (cwd, profile) => resolve(cwd, profile.docs.bundle);
+// The paths a unit's branch changes since its merge base with the base branch.
+export const unitPaths = (cwd, base, unit) => gitLines(cwd, 'diff', '--name-only', `${base}...${branchOf(unit)}`);
+// The worktree holding each branch: branch → path.
+export const worktrees = (cwd) => new Map(git(cwd, 'worktree', 'list', '--porcelain').split('\n\n')
+  .flatMap((w) => [w.match(/^branch refs\/heads\/(.+)$/m)?.[1]].filter(Boolean).map((b) => [b, w.split('\n')[0].replace(/^worktree /, '')])));
 
 export function writeJson(file, data) {
   mkdirSync(dirname(file), { recursive: true });
@@ -46,11 +45,10 @@ export const roundsOf = (review, focus = S.focus) => (review?.rounds ?? []).filt
 // Diff of a unit branch against its merge base with the base branch.
 export const diffHash = (cwd, base, unit) => sha256(git(cwd, 'diff', `${base}...${branchOf(unit)}`));
 
-
 // Focuses the unit's diff needs a review in, each with why: general first, then each focus whose globs
 // the diff touches (docs/design/prompts.md).
 export function reviewFocuses(cwd, profile, base, unit) {
-  const paths = git(cwd, 'diff', '--name-only', `${base}...${branchOf(unit)}`).split('\n').filter(Boolean);
+  const paths = unitPaths(cwd, base, unit);
   const needed = new Map([[S.focus, '']]);
   for (const [focus, globs] of Object.entries(profile.focus ?? {})) {
     const path = paths.find((x) => list(globs).some((g) => overlaps('/' + x, g)));
@@ -70,7 +68,7 @@ export function keptPass(cwd, profile, unit, focus, last) {
 // ---- Back-fill ----
 
 // A path in one of the levels' test paths.
-export const isTestPath = (f, levels) => Object.values(levels ?? {}).some((l) => list(l?.paths).some((g) => inside('/' + f, g)));
+const isTestPath = (f, levels) => Object.values(levels ?? {}).some((l) => list(l?.paths).some((g) => inside('/' + f, g)));
 // A unit's changes outside the test paths, the bundle and the project folder: what proof-revert reverts. None
 // makes it a back-fill unit, proved by mutations instead (docs/design/backfill.md).
 export const codeChanges = (paths, levels, bundleRel) => {
@@ -78,17 +76,20 @@ export const codeChanges = (paths, levels, bundleRel) => {
   return paths.filter((f) => !isTestPath(f, levels) && !f.startsWith(bundleRel + '/') && !f.startsWith(project));
 };
 
+// The reported mutation for an AC tag.
+export const mutationOf = (mutations, tag) => (Array.isArray(mutations) ? mutations : []).find((x) => x?.ac === tag);
+
 // What a back-fill unit's mutations lack: one per AC, of a file outside the tests and the diff, whose `find`
 // occurs exactly once on the unit branch. A quick-lane unit or one that changes code needs none.
-export function mutationProblems(cwd, profile, unit, mutations) {
+function mutationProblems(cwd, profile, unit, mutations) {
   const u = readPlan(bundleOf(cwd, profile)).units.find((x) => x.id === unit);
   if (!u || computeLane(u.scope, profile).lane === 'quick') return [];
   const levels = withDefaults(profile).levels;
-  const paths = (tryGit(cwd, 'diff', '--name-only', `${baseOf(profile)}...${branchOf(unit)}`) ?? '').split('\n').filter(Boolean);
+  const paths = unitPaths(cwd, baseOf(profile), unit);
   if (codeChanges(paths, levels, relPath(git(cwd, 'rev-parse', '--show-toplevel'), bundleOf(cwd, profile))).length) return [];
   return u.acs.flatMap((ac) => {
     const tag = `${unit}/${ac.id}`;
-    const m = (Array.isArray(mutations) ? mutations : []).find((x) => x?.ac === tag);
+    const m = mutationOf(mutations, tag);
     if (!m) return [msg('mutationMissing', { tag })];
     const text = m.path && tryGit(cwd, 'show', `${branchOf(unit)}:${m.path}`);
     const count = text && m.find ? text.split(String(m.find)).length - 1 : 0;
@@ -119,7 +120,7 @@ const personal = (cwd) => join(cwd, config.layers.find((l) => l.name === 'person
 const delegated = (cwd) => list(readJson(personal(cwd))?.approvals?.auto);
 
 // The owner's run mode and the last owner prompt, as status shows them (docs/design/approvals.md#owner-prompts).
-export function ownerLines(cwd) {
+function ownerLines(cwd) {
   const run = readJson(personal(cwd))?.run;
   const prompt = readJson(join(aidlcDir(cwd), config.hooks.prompts))?.at(-1);
   return (run ? msg('statusRun', { run: msg('runLine', { mode: run.mode, stop: list(run.stop), report: list(run.report) }) }) : '')
@@ -129,17 +130,19 @@ export function ownerLines(cwd) {
 // The text of a doc as last approved: the newest commit of it whose content matches its verified_hash.
 function approvedText(cwd, file, hash) {
   const path = relPath(git(cwd, 'rev-parse', '--show-toplevel'), file);
-  for (const sha of (tryGit(cwd, 'log', '--format=%H', '--', path) ?? '').split('\n').filter(Boolean)) {
+  for (const sha of gitLines(cwd, 'log', '--format=%H', '--', path)) {
     const text = execFileSync('git', ['show', `${sha}:${path}`], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }); // untrimmed: the hash covers the last newline
     if (hashDoc(parseDoc(text)) === hash) return text;
   }
   return null;
 }
 const acLines = (doc) => acsOf(doc).map((a) => a.text.trim()).join('\n');
+// A stale unit's ACs read as last approved: a delegated re-approval keeps them, as what done means is the owner's.
+const acsKept = (cwd, file, doc) => { const before = approvedText(cwd, file, doc.fm.verified_hash); return before !== null && acLines(parseDoc(before)) === acLines(doc); };
 
 // The latest approval of a doc by one of `by`, in epoch ms (0 when none). Answering an escalation takes the
 // owner (human: only); a delegated re-approval of a fixed spec is enough to restart a stopped builder.
-export const approvedAt = (doc, by = S.approvers) => Math.max(0, ...events(doc.fm).filter((e) => by.some((b) => String(e.by ?? '').startsWith(b))).map((e) => Date.parse(String(e.at)) || 0));
+const approvedAt = (doc, by = S.approvers) => Math.max(0, ...events(doc.fm).filter((e) => by.some((b) => String(e.by ?? '').startsWith(b))).map((e) => Date.parse(String(e.at)) || 0));
 const beforeApproval = (round, at) => Date.parse(round.at) < at;
 
 // A unit's review rounds. An escalation the owner answered by re-approving the unit counts as answered: the unit
@@ -157,7 +160,7 @@ const scalar = (v) => (typeof v === 'string' && plain(v) ? v : JSON.stringify(v)
 const flowMap = (e) => `{ ${Object.entries(e).map(([k, v]) => `${k}: ${scalar(v)}`).join(', ')} }`;
 
 // Returns the doc text with the owner's stamp: earlier events kept, one appended, status and hash set.
-export function stamp(text, by, at) {
+function stamp(text, by, at) {
   const doc = parseDoc(text);
   if (doc.error || !doc.fm) throw new UsageError(msg('fmYaml', { error: doc.error ?? '' }));
   const drop = ['verified', 'verified_hash', 'status'];
@@ -188,10 +191,7 @@ export function mergedUnits(cwd, base) {
   return out;
 }
 
-export const heartbeatAt = (cwd, unit, kind = S.heartbeats) => {
-  const file = join(aidlcDir(cwd), kind, unit);
-  return existsSync(file) ? statSync(file).mtimeMs : 0;
-};
+const heartbeatAt = (cwd, unit, kind = S.heartbeats) => statSync(join(aidlcDir(cwd), kind, unit), { throwIfNoEntry: false })?.mtimeMs ?? 0;
 export const heartbeatFresh = (cwd, unit, now = Date.now(), kind = S.heartbeats) => now - heartbeatAt(cwd, unit, kind) < S.heartbeatMs;
 
 function mergeInProgress(cwd, units) {
@@ -210,7 +210,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
   const bundle = bundleOf(cwd, profile);
   const plan = readPlan(bundle);
   const merged = mergedUnits(cwd, base);
-  const branches = new Set((tryGit(cwd, 'for-each-ref', '--format=%(refname:short)', `refs/heads/${S.branchPrefix}`) ?? '').split('\n').filter(Boolean));
+  const branches = new Set(gitLines(cwd, 'for-each-ref', '--format=%(refname:short)', `refs/heads/${S.branchPrefix}`));
   const live = plan.units.filter((u) => u.fm.status !== config.grid.dropped).sort(byId);
 
   const answered = researched(bundle);
@@ -288,7 +288,7 @@ const priorityOf = (u) => Number(u.fm.priority ?? 0);
 // Open points of a draft: frontmatter fields and sections still holding a template placeholder, or items under
 // the open-questions heading (docs/design/state.md). Plan fields (a hold's question) are not doc content.
 const PLACEHOLDER = /<[^<>\n]+>/;
-export function openPoints(doc) {
+function openPoints(doc) {
   const points = new Set();
   doc.lines.slice(1, doc.body).forEach((l) => { const m = /^(\w+):(.*)$/.exec(l); if (m && !S.hashExclude.includes(m[1]) && PLACEHOLDER.test(m[2])) points.add(m[1]); });
   let heading = '';
@@ -300,16 +300,13 @@ export function openPoints(doc) {
   return [...points];
 }
 
-// Draft Decision docs the units' bodies link to: approved with the units (docs/design/approvals.md).
-// The Decision docs the given docs link to, as { file, doc }; `next` asks for the drafts with their units.
+// The Decision docs the given docs link to, as { file, doc }; `next` asks for the drafts with their units
+// (docs/design/approvals.md).
 export function decisionsOf(st, docs) {
   const out = new Map();
-  for (const u of docs) {
-    for (const [, link] of u.doc.lines.slice(u.doc.body).join('\n').matchAll(/\]\(([^)#\s]+\.md)(?:#[^)]*)?\)/g)) {
-      const file = link.startsWith('/') ? join(st.bundle, link) : resolve(dirname(u.file), link);
-      const doc = existsSync(file) ? parseDoc(readFileSync(file, 'utf8')) : null;
-      if (doc?.fm?.type === S.decisionType) out.set(file, { file, doc });
-    }
+  for (const file of docs.flatMap((u) => linksOf(u, st.bundle))) {
+    const doc = existsSync(file) ? parseDoc(readFileSync(file, 'utf8')) : null;
+    if (doc?.fm?.type === S.decisionType) out.set(file, { file, doc });
   }
   return [...out.values()];
 }
@@ -324,8 +321,8 @@ function gateOf(st, intent, scope) {
     const decisions = citedDecisions(st, stale.filter((d) => st.units.includes(d)));
     const docs = [ids(stale), ...decisions].join(' ');
     // A delegated re-approval keeps every unit's ACs, as `approve --auto` checks: what done means is the owner's.
-    const acsKept = stale.filter((d) => st.units.includes(d)).every((d) => { const before = approvedText(st.cwd, d.file, d.doc.fm.verified_hash); return before !== null && acLines(parseDoc(before)) === acLines(d.doc); });
-    return gate(...(st.auto.includes(S.auto[0]) && !decisions.length && acsKept ? ['nextAutoApprove', stale.map((d) => d.id), { docs }, 'act'] : ['nextReapprove', stale.map((d) => d.id), { docs }]));
+    const kept = stale.filter((d) => st.units.includes(d)).every((d) => acsKept(st.cwd, d.file, d.doc));
+    return gate(...(st.auto.includes(S.auto[0]) && !decisions.length && kept ? ['nextAutoApprove', stale.map((d) => d.id), { docs }, 'act'] : ['nextReapprove', stale.map((d) => d.id), { docs }]));
   }
   const open = [...st.requirements, ...st.intents, ...st.units].filter((d) => d.state === 'draft').map((d) => ({ d, points: openPoints(d.doc) })).find((x) => x.points.length);
   // An open conversation with the owner comes before any unit work: no docs, so nothing counts as independent.
@@ -353,7 +350,7 @@ function gateOf(st, intent, scope) {
 }
 
 // AC tags that no file on the unit branch carries outside the bundle, as the gate looks for them.
-export function untagged(st, u) {
+function untagged(st, u) {
   const tags = u.acs.map((a) => `${u.id}/${a.id}`);
   if (!tags.length) return [];
   const top = git(st.cwd, 'rev-parse', '--show-toplevel');
@@ -388,11 +385,9 @@ function unitWork(st, scope) {
   const lost = live.find((u) => u.state === 'building' && !u.fresh);
   if (lost) return action('act', 'nextRestart', { unit: lost.id, branch: branchOf(lost.id) });
   // A builder still holding a merged unit's worktree: the merge could not remove it.
-  const trees = git(st.cwd, 'worktree', 'list', '--porcelain').split('\n\n');
-  for (const u of st.units.filter((x) => x.state === 'merged')) {
-    const tree = trees.find((w) => w.split('\n').includes(`branch refs/heads/${branchOf(u.id)}`));
-    if (tree) return action('act', 'nextWorktreeLeft', { unit: u.id, path: tree.split('\n')[0].replace(/^worktree /, ''), branch: branchOf(u.id) });
-  }
+  const trees = worktrees(st.cwd);
+  const left = st.units.find((x) => x.state === 'merged' && trees.has(branchOf(x.id)));
+  if (left) return action('act', 'nextWorktreeLeft', { unit: left.id, path: trees.get(branchOf(left.id)), branch: branchOf(left.id) });
 
   const inFlight = [...scope.filter((u) => u.state === 'reviewing' || (u.state === 'building' && u.fresh)), ...backAtWork]; // a held unit's quiet builder is not in flight
   const max = st.profile.parallel.max;
@@ -483,10 +478,6 @@ function findDoc(cwd, bundle, name) {
   return hit.file;
 }
 
-function readStdin(ctx) {
-  return ctx.stdin ? ctx.stdin() : readFileSync(0, 'utf8');
-}
-
 function parseObject(text, name) {
   let data;
   try { data = JSON.parse(text); } catch { data = null; }
@@ -505,6 +496,24 @@ function setField(cwd, name, key, value) {
   return done(msg('recorded', { what: `${key} ${value ?? S.off}`, unit: name }));
 }
 
+// The status lines `status` and the session-start hook show: owner lines, intents, the units not yet history
+// (merged units of a released intent are), the requirements not delivered, then the next action and `tail`.
+export function statusText(st, next, tail = '') {
+  const lines = [...st.intents.map((i) => msg('statusIntent', { id: i.id, state: i.state, title: i.fm.title ?? '' })),
+    ...st.units.filter((x) => x.state !== 'merged' || !st.intents.some((i) => i.state === 'released' && i.id === x.fm.intent))
+      .map((u) => msg('statusUnit', { id: u.id, state: u.state, title: u.fm.title ?? '' }))];
+  const delivered = new Set(st.units.filter((u) => u.state === 'merged').flatMap((u) => u.requirements));
+  const open = st.requirements.filter((r) => !delivered.has(r.id));
+  const end = (open.length ? msg('statusUncovered', { reqs: ids(open) }) : '') + msg('statusNext', { line: next.line }) + tail;
+  let out = ownerLines(st.cwd);
+  for (let k = 0; k < lines.length; k++) {
+    const more = msg('statusMore', { count: lines.length - k });
+    if ((out + lines[k] + more + end).length > S.statusMax) { out += more; break; }
+    out += lines[k];
+  }
+  return out + end;
+}
+
 const usage = (key) => { throw new UsageError(msg(key, {})); };
 const humanGate = (a) => (a.kind === 'human' ? config.exit.blocked : config.exit.ok);
 
@@ -512,21 +521,7 @@ export const commands = {
   status(args, { cwd }) {
     const st = readState(cwd);
     const next = nextAction(st);
-    const lines = [];
-    for (const i of st.intents) lines.push(msg('statusIntent', { id: i.id, state: i.state, title: i.fm.title ?? '' }));
-    for (const u of st.units.filter((x) => x.state !== 'merged' || !st.intents.some((i) => i.state === 'released' && i.id === x.fm.intent))) {
-      lines.push(msg('statusUnit', { id: u.id, state: u.state, title: u.fm.title ?? '' }));
-    }
-    const delivered = new Set(st.units.filter((u) => u.state === 'merged').flatMap((u) => u.requirements));
-    const open = st.requirements.filter((r) => !delivered.has(r.id));
-    const tail = (open.length ? msg('statusUncovered', { reqs: ids(open) }) : '') + msg('statusNext', { line: next.line });
-    let out = ownerLines(cwd);
-    for (let k = 0; k < lines.length; k++) {
-      const more = msg('statusMore', { count: lines.length - k });
-      if ((out + lines[k] + more + tail).length > S.statusMax) { out += more; break; }
-      out += lines[k];
-    }
-    return done(out + tail, humanGate(next));
+    return done(statusText(st, next), humanGate(next));
   },
 
   next(args, { cwd }) {
@@ -556,10 +551,7 @@ export const commands = {
       const quick = doc.fm.type === S.unitType && approval(doc) === 'draft' && computeLane(list(doc.fm.scope), profile).lane === 'quick';
       const cls = approval(doc) === 'stale' ? S.auto[0] : quick ? S.auto[1] : null;
       if (auto && !auto.includes(cls)) throw new UsageError(msg('notDelegated', { name }));
-      if (auto && cls === S.auto[0] && doc.fm.type === S.unitType) {
-        const before = approvedText(cwd, file, doc.fm.verified_hash);
-        if (before === null || acLines(parseDoc(before)) !== acLines(doc)) throw new UsageError(msg('notDelegatedAcs', { name })); // what done means is the owner's
-      }
+      if (auto && cls === S.auto[0] && doc.fm.type === S.unitType && !acsKept(cwd, file, doc)) throw new UsageError(msg('notDelegatedAcs', { name }));
       writeFileSync(file, stamp(text, auto ? S.agent : S.human + by, at));
       out += msg('approved', { doc: relPath(cwd, file) });
     }
