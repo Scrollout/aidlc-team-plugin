@@ -138,8 +138,8 @@
     },
     {
       "name": "report",
-      "usage": "report <unit>",
-      "does": "store the builder's report (JSON on stdin)"
+      "usage": "report <unit> [file]",
+      "does": "store the builder's report (JSON from the file, or stdin)"
     },
     {
       "name": "hold",
@@ -1119,6 +1119,9 @@
       ],
       "alias": "alias.",
       "pushAll": ["--all", "--mirror", "--branches"],
+      "pushTags": ["--tags", "--follow-tags", "--mirror"],
+      "tagRef": "refs/tags/",
+      "followTags": "^push\\.followtags true$",
       "move": { "update-ref": [], "branch": ["-f", "--force", "-M", "-C"], "checkout": ["-B"], "switch": ["-C", "--force-create"] },
       "mergeLike": ["merge", "pull"],
       "onBase": ["cherry-pick", "rebase", "reset"],

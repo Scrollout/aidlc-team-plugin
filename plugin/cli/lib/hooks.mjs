@@ -1,6 +1,7 @@
 // Hook entry points: `aidlc hook <name>` reads the hook JSON on stdin and prints the decision JSON
 // (docs/design/hooks.md). Deny lists, patterns, codes and messages come from cli.json.
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, utimesSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join, resolve, sep } from 'node:path';
 import { bundleOf, config, done, git, gitLines, readJson, readStdin, tryGit, UsageError, relPath } from './config.mjs';
 import { msg } from './template.mjs';
@@ -163,6 +164,10 @@ function guard(input, cwd) {
       const hitsBase = specs.some((r) => r === base || r.endsWith(`:${base}`) || r.endsWith(`/${base}`) || r.includes('*') || (r === 'HEAD' && branch === base)) || args.some((a) => opt(a, H.git.pushAll)) || (!specs.length && (branch === base || configured()));
       if (args.some((a) => opt(a, H.deleteFlags)) && hitsBase || specs.some((r) => r === `:${base}`)) return deny(cwd, input, 'GUARD-BASE-DELETE', 'guardDelete', { base });
       if (hitsBase) return deny(cwd, input, 'GUARD-PUSH', 'guardPush', { base });
+      // A tag push can publish a release, as `git tag` and `gh release` can: the owner answers (docs/design/hook-checks.md).
+      const tag = (r) => r.replace(/^\+/, '').split(':').some((x) => x.startsWith(H.git.tagRef) || (x && tryGit(cwd, 'rev-parse', '-q', '--verify', H.git.tagRef + x) !== null));
+      const follow = () => [...configs, ...gitLines(cwd, 'config', '--get-regexp', '^push\\.followtags$')].some((c) => new RegExp(H.git.followTags, 'i').test(c.replace('=', ' ')));
+      if (args.some((a) => opt(a, H.git.pushTags)) || specs.some(tag) || follow()) return deny(cwd, input, 'GUARD-RELEASE', 'guardRelease', { what: `git push ${specs.join(' ')}`.trim() }, 'ask');
     }
     if (sub === 'branch' && args.some((a) => opt(a, H.deleteFlags)) && refs.includes(base)) return deny(cwd, input, 'GUARD-BASE-DELETE', 'guardDelete', { base });
     const move = H.git.move[sub];
@@ -210,6 +215,10 @@ function scope(input, cwd) {
   if ((file + sep).startsWith(join(common, S.dir) + sep)) return deny(cwd, input, 'SCOPE-STATE', 'scopeState', { path });
   const unit = unitOfBranch(cwd);
   if (!unit) return allow();
+  // The system temp folder, outside every checkout of the repo, holds a builder's report file (docs/design/hook-checks.md).
+  const under = (dir) => (file + sep).startsWith(real(dir) + sep);
+  const trees = gitLines(cwd, 'worktree', 'list', '--porcelain').filter((l) => l.startsWith('worktree ')).map((l) => l.slice(9));
+  if (under(tmpdir()) && !trees.some(under)) return allow();
   if (path.startsWith('..') || isAbsolute(path)) return deny(cwd, input, 'SCOPE-OUT', 'scopeOut', { path, unit }); // outside the worktree
   const { profile } = loadProfile(top);
   const bundleRel = relPath(top, bundleOf(top, profile));

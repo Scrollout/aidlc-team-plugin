@@ -27,6 +27,19 @@ function guardIn(dir, command) {
   return { code: 0, json: out ? JSON.parse(out) : {} };
 }
 
+test('U79/AC-1 a push that can publish a tag asks the owner, as git tag does; a unit branch push does not', () => {
+  const dir = project();
+  git(dir, 'tag', 'v1.0.0');
+  for (const command of ['git push origin HEAD:refs/tags/v9.9.9', 'git push origin v1.0.0', 'git push origin unit/U-1 --tags', 'git push --follow-tags origin unit/U-1', 'git -c push.followTags=true push origin unit/U-1', 'git push origin :refs/tags/v1.0.0']) {
+    const r = guardIn(dir, command);
+    assert.equal(decision(r), 'ask', command);
+    assert.match(reason(r), /^GUARD-RELEASE /, command);
+  }
+  assert.equal(decision(guardIn(dir, 'git push origin unit/U-1')), 'allow');
+  git(dir, 'config', 'push.followTags', 'true');
+  assert.equal(decision(guardIn(dir, 'git push origin unit/U-1')), 'ask', 'push.followTags in the repo config');
+});
+
 test('U7/AC-1 guard denies each listed command and allows the everyday ones', () => {
   const dir = project();
   const denied = {

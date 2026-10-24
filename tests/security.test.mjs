@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { realpathSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { commands } from '../plugin/cli/lib/hooks.mjs';
 import { commit, git, intentDoc, pinnedRepo, run, tempDir, unitDoc, write } from './state-repo.mjs';
 import { codes, merge, setup } from './gate-repo.mjs';
@@ -123,7 +123,8 @@ test('U70/AC-2 #6 #13 a unit worktree writes only inside itself; no session writ
   const dir = project();
   const wt = unitWorktree(dir);
   const writeTo = (cwd, file_path, tool_name = 'Write') => call('scope', { cwd, tool_name, tool_input: { file_path, notebook_path: file_path, content: '{}\n' } });
-  assert.match(writeTo(wt, join(wt, '..', '..', 'README.md')).reason, /^(escalate: )?SCOPE-OUT /);
+  assert.match(writeTo(wt, resolve('/', 'aidlc-outside-temp', 'README.md')).reason, /^(escalate: )?SCOPE-OUT /);
+  assert.equal(writeTo(wt, join(tempDir('report-'), 'report.json')).decision, 'allow', 'U79/AC-2 a report file in the temp folder, outside every checkout');
   assert.match(writeTo(wt, join(dir, 'src/a.mjs')).reason, /^(escalate: )?SCOPE-OUT /, 'the main checkout is outside the worktree');
   assert.equal(writeTo(wt, join(wt, 'src/b.mjs')).decision, 'allow');
   for (const cwd of [dir, wt]) {

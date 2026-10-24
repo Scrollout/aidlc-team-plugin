@@ -24,7 +24,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 | `research <doc>` | prints the researcher's brief for a question held on the doc: the question, the project's docs, stack files and `research.sources`, the budget, and where the digest goes ([0010](../decisions/0010-research-and-advice.md)) | lead |
 | `retro <intent>` | lists the codes that fired 3+ times, the intent's escalations, the owner's interventions and failed deploy steps, proposes at most three changes, and resets the counters ([Steering](steering.md#3-across-intents-the-retro)) | lead, owner |
 | `review record <unit> <file\|->` | stores a reviewer verdict keyed by diff hash; `-` reads it from stdin | reviewer |
-| `report <unit>` | stores the builder's report (JSON on stdin) | builder |
+| `report <unit> [file]` | stores the builder's report (JSON from the file, or stdin) | builder |
 | `hold <doc> [off\|<reason>]` | records an owner instruction in the plan: `hold: true` or the reason; `off` removes it. The lead also holds a doc with a reason while it parks a question for the owner, and holds a merged intent to park its release steps | lead |
 | `priority <unit> <n>` | records `priority: <n>` in the plan, higher first | lead |
 | `fix "<title>"\|--from-issue <n> --scope <glob>… [--requirement R-<n>…] [--after <intent>]` | one-unit plan without an intent; from an issue, titled like it and linked to it; `--after` links the release it fixes; prints the plan lint findings of the unit it wrote ([Everyday paths](paths.md#fixes-without-an-intent)) | lead |
