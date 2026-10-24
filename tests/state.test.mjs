@@ -185,6 +185,18 @@ test('U4/AC-6 after a clear, next returns the same action and loses nothing', ()
   }
 });
 
+test('U92/AC-2 approve refuses a doc its stamps would take over the project\'s cap, naming how much to trim', () => {
+  const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), [U(1)]: unitDoc({ scope: ['a/**'], extra: 'x'.repeat(200) }) }, { docs: { caps: { Unit: 0 } } });
+  const size = [...read(dir, U(1))].length;
+  write(dir, { '.aidlc/profile.json': JSON.stringify({ docs: { caps: { Unit: size + 10 } } }) });
+  const r = run(dir, ['approve', 'U-1']);
+  assert.equal(r.code, 64, r.out);
+  assert.match(r.err, new RegExp(`docs/units/U-1\\S*\\.md would be \\d+ chars with its approval stamps, over its ${size + 10} cap: trim it by \\d+ or more`));
+  assert.equal(approval(parseDoc(read(dir, U(1)))), 'draft', 'nothing written');
+  write(dir, { '.aidlc/profile.json': JSON.stringify({ docs: { caps: { default: size + 1000 } } }) });
+  assert.equal(run(dir, ['approve', 'U-1']).code, 0, 'a default cap counts for every type');
+});
+
 test('U4/AC-3 approve writes the stamp; editing makes it stale; reformatting or a hold does not', () => {
   const dir = twoUnits();
   const before = read(dir, U(1));

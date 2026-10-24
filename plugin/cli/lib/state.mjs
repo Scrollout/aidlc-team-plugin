@@ -7,7 +7,7 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { bundleOf, config, QUICK, VERDICT, done, git, gitLines, isMap, list, readJson, readStdin, tryGit, UsageError, relPath } from './config.mjs';
 import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
-import { linksOf, parseDoc } from './okf.mjs';
+import { linksOf, parseDoc, sizeCap } from './okf.mjs';
 import { boardBehind } from './board.mjs';
 import { acsOf, computeLane, inside, lintPlan, overlaps, readPlan, reqId as reqIdOf, productGlobs, testsOnly, withIntents } from './grid.mjs';
 
@@ -606,7 +606,11 @@ export const commands = {
       const cls = approval(doc) === 'stale' ? S.auto[0] : quick ? S.auto[1] : null;
       if (auto && !auto.includes(cls)) throw new UsageError(msg('notDelegated', { name }));
       if (auto && cls === S.auto[0] && doc.fm.type === S.unitType && !acsKept(cwd, file, doc)) throw new UsageError(msg('notDelegatedAcs', { name }));
-      writeFileSync(file, stamp(text, auto ? S.agent : S.human + by, at));
+      // The stamps count toward the doc's cap: an approved doc must still pass the docs check (docs/design/approvals.md).
+      const stamped = stamp(text, auto ? S.agent : S.human + by, at);
+      const cap = sizeCap(String(doc.fm.type), profile.docs?.caps);
+      if (profile.docs?.rules?.['HOUSE-SIZE'] !== 'off' && [...stamped].length > cap) throw new UsageError(msg('approveSize', { doc: relPath(cwd, file), size: [...stamped].length, cap, trim: [...stamped].length - cap }));
+      writeFileSync(file, stamped);
       out += msg('approved', { doc: relPath(cwd, file) });
     }
     return done(out);

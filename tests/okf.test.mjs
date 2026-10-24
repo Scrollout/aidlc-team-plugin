@@ -117,6 +117,18 @@ test('U2/AC-3 size caps follow the doc type', () => {
   }), ['decision-over.md', 'design-over.md', 'metric-over.md', 'unit-over.md']);
 });
 
+test('U92/AC-1 docs.caps sets the caps by type, with default for the rest', () => {
+  const doc = (type, size) => {
+    const head = `---\ntype: ${type}\ntitle: T\ndescription: D.\ngenerated: { by: x/1, at: 2026-01-01T00:00:00Z }\n---\n`;
+    return head + 'x'.repeat(size - head.length);
+  };
+  const root = bundle({ 'unit.md': doc('Unit', 4001), 'design.md': doc('Design', 3001), 'metric.md': doc('Metric', 3001) });
+  const sizes = (caps) => checkBundle(root, { caps }).filter((f) => f.code === 'HOUSE-SIZE').map((f) => f.path.split('/').pop()).sort();
+  assert.deepEqual(sizes({ default: 4000 }), ['unit.md']);
+  assert.deepEqual(sizes({ default: 4000, Design: 3000 }), ['design.md', 'unit.md']);
+  assert.deepEqual(sizes({ Metric: 3000 }), ['metric.md']);
+});
+
 for (const name of ['ga4', 'stackoverflow', 'crypto_bitcoin']) {
   test(`U2/AC-4 aidlc index reproduces the official ${name} indexes byte for byte`, () => {
     const dir = tempDir(`okf-${name}-`);

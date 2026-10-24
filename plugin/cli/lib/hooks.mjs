@@ -282,7 +282,7 @@ function docs(input, cwd) {
   if (!file.startsWith(bundle + sep)) return allow();
   const stamped = existsSync(file) ? restamp(input, file) : null;
   if (!unitOfBranch(cwd)) writeIndexes(bundle);
-  const errors = checkBundle(bundle, { rules: profile.docs?.rules ?? {}, base: top }).filter((f) => f.level === 'error' && f.path === relPath(top, file));
+  const errors = checkBundle(bundle, { rules: profile.docs?.rules ?? {}, caps: profile.docs?.caps, base: top }).filter((f) => f.level === 'error' && f.path === relPath(top, file));
   if (errors.length) return JSON.stringify({ decision: 'block', reason: (stamped ?? '') + msg('docsErrors', { errors: errors.map((f) => msg('finding', f).trim()).join('\n') }) });
   return stamped ? context('PostToolUse', stamped) : allow();
 }

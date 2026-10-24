@@ -285,6 +285,7 @@
     "unknownUnit": "no unit {{name}} in {{dir}}",
     "noEmail": "git config user.email is not set",
     "approveLint": "{{code}} {{message}} → {{fix}}",
+    "approveSize": "{{doc}} would be {{size}} chars with its approval stamps, over its {{cap}} cap: trim it by {{trim}} or more, then approve again",
     "notApprovable": "{{name}} is not an intent, unit or decision doc",
     "approved": "approved {{doc}}\n",
     "noDoc": "no doc {{name}}",
