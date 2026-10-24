@@ -111,7 +111,9 @@ function renderCard(cwd, unitId) {
   // The base is left out, so a base that moved for other units does not make a recorded review stale.
   const hash = sha256(docText + '\n' + render(template, { ...data, base: '', hash: '' }, file)).slice(0, C.hashLength);
   const card = render(template, { ...data, hash }, file);
-  if (card.length > C.max) return done(msg('cardTooLong', { unit: unitId, size: card.length, max: C.max, rules: data.rules.reduce((n, r) => n + r.text.length, 0) }), config.exit.findings);
+  // Findings and mutations come from review rounds: outside the cap, so a fix round never needs a re-approval (docs/design/unit-card.md).
+  const size = render(template, { ...data, hash, fixes: '', mutations: '' }, file).length;
+  if (size > C.max) return done(msg('cardTooLong', { unit: unitId, size, max: C.max, rules: data.rules.reduce((n, r) => n + r.text.length, 0) }), config.exit.findings);
   writeJson(runtimeFile(cwd, 'cards', unitId), { unit: unitId, hash, base: baseSha, lane: lane.lane, model, scope: atBase.scope });
   return done(card);
 }

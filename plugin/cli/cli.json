@@ -466,6 +466,7 @@
     "planSliceIntent": "{{unit}} has no AC at the top level {{level}}: no unit tests it end to end",
     "planDesign": "{{unit}} is {{lane}} lane and has no # {{section}} section with content",
     "cardDesign": "the # {{sections}} section(s) of {{path}} at the base",
+    "planSliceWaiver": "{{unit}} reaches the product ({{glob}} overlaps {{area}}), but {{intent}} skips its end-to-end test with slice:",
     "planSliceUnit": "{{unit}} crosses modules {{modules}} but tests only at the {{level}} level",
     "planGenerated": "{{unit}} scope names {{has}} but not {{lacks}}: a generator links them",
     "planUntracked": "{{unit}} scope names {{path}}, which exists but git does not track: a builder cannot commit it",
@@ -707,7 +708,7 @@
       },
       "PLAN-SLICE": {
         "level": "error",
-        "fix": "add an AC at the top level to one of the intent's units (or slice: \"<why no end-to-end AC>\" on the intent), and test a unit that crosses modules at the integration level or higher"
+        "fix": "add an AC at the top level to one of the intent's units (or slice: \"<why no end-to-end AC>\" on an intent whose units stay outside every module and one-way door), and test a unit that crosses modules at the integration level or higher"
       },
       "PLAN-DESIGN": {
         "level": "error",

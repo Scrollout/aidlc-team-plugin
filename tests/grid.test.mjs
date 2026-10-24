@@ -285,6 +285,24 @@ test('U43/AC-1 U43/AC-2 an intent ends to end once; a unit crossing modules is t
   assert.deepEqual(slices({ modules: profile.modules }), [['docs/units/U-4-d.md', 'U-4 crosses modules api, web but tests only at the unit level']], 'the defaults define no run: no intent check');
 });
 
+test('U76/AC-1 a slice waiver holds only for units outside every module and one-way door; approved units are not judged again', () => {
+  const unit = (n, scope, fm = '') => `---\ntype: Unit\ntitle: A\ndescription: A.\nintent: I-1\nscope: ${JSON.stringify(scope)}\n${fm}---\n\n# Acceptance criteria\n\n- AC-1 (unit): x.\n`;
+  const dir = project({
+    'docs/intents/I-1-a.md': '---\ntype: Intent\ntitle: I-1\ndescription: I-1.\nslice: "workflow only"\n---\n\n# Goal\nx\n',
+    'docs/units/U-1-a.md': unit(1, ['.github/scripts/**', 'docs/notes/**']),
+    'docs/units/U-2-b.md': unit(2, ['api/handler.go']),
+    'docs/units/U-3-c.md': unit(3, ['migrations/0001.sql'], 'twoWay: "x"\n'),
+    'docs/units/U-4-d.md': unit(4, ['api/old.go'], 'verified_hash: abc\n'),
+  });
+  const profile = { modules: [{ id: 'api', paths: ['api/**'] }], lanes: { full: ['migrations/**'] }, levels: { unit: { run: 'u' }, e2e: { run: 'e' } } };
+  const slices = (p) => lintPlan(join(dir, 'docs'), p, { base: dir }).filter((f) => f.code === 'PLAN-SLICE').map((f) => [f.path, f.message]);
+  assert.deepEqual(slices(profile), [
+    ['docs/units/U-2-b.md', 'U-2 reaches the product (api/handler.go overlaps api/**), but I-1 skips its end-to-end test with slice:'],
+    ['docs/units/U-3-c.md', 'U-3 reaches the product (migrations/0001.sql overlaps migrations/**), but I-1 skips its end-to-end test with slice:'],
+  ], 'U-1 stays outside; U-4 is approved');
+  assert.deepEqual(slices({ ...profile, levels: { unit: {} } }), [], 'no level runs: no slice check');
+});
+
 test('U50/AC-1 with deploy in the profile, a live intent links a Runbook doc', () => {
   const intent = (id, body = '') => `---\ntype: Intent\ntitle: ${id}\ndescription: ${id}.\n---\n\n# Goal\nx\n${body}`;
   const unit = (n, intentId) => `---\ntype: Unit\ntitle: A\ndescription: A.\nintent: ${intentId}\nscope: ["u${n}/**"]\n---\n\n# Acceptance criteria\n\n- AC-1 (unit): x.\n`;

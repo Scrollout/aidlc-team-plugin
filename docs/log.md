@@ -7,6 +7,8 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** M10 U76: a `slice:` waiver holds only for units outside every module and one-way door; an unapproved unit reaching one is `PLAN-SLICE` ([Plan lint](design/plan-lint.md)). Release 0.83.0.
+- **Update** M10 U77: the card cap counts the card without its findings and mutations, so a fix round never needs a re-approved doc ([Unit card](design/unit-card.md)). Release 0.83.0.
 - **Update** M10 U75 AC-5: the gate writes and stages the indexes, log and regenerated files before its checks, so a docs check that wants each doc indexed passes for a unit adding one ([Merge mechanics](design/gate.md)). Release 0.82.0.
 - **Update** M10 U75 AC-4: a unit that changes code may report mutations, which then prove it instead of the revert, for a change the revert cannot test such as wiring a test into the level's run ([Back-fill](design/backfill.md)). Release 0.81.0.
 - **Update** M10 U74 AC-4: `start` takes over a clean earlier worktree of the unit's branch even when the host still locks it to the lead session ([Skill and agents](design/prompts.md)). Release 0.80.1.
