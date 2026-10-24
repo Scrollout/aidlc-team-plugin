@@ -13,7 +13,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T11:46:55Z }
 # Trial merge
 `aidlc merge U-<n>` runs in the lead's checkout on the base:
 1. A temporary worktree at the base tip merges `unit/U-<n>` with `--no-ff --no-commit`. A conflict fails with `GATE-CONFLICT`: the builder merges the base into its branch and reports again.
-2. The bundle indexes and log, and `profile.regen` commands for `profile.shared` files, are updated there and staged first, so every condition of [Verification](verification.md) then runs on the tree the merge will commit: a docs check that wants each doc in its index passes for a unit that adds a doc (first migration).
+2. The bundle indexes and log, `profile.regen` commands for `profile.shared` files, and the [codebase map](codebase-map.md) are updated there and staged first, so every condition of [Verification](verification.md) then runs on the tree the merge will commit: a docs check that wants each doc in its index passes for a unit that adds a doc (first migration).
 3. Only when all pass, the merge is committed with five trailers (`Unit`, `Card`, `Review`, `Tested`, `Proof`) and the base fast-forwards to it. The unit's worktree and branch are then removed: a worktree whose tracked files are clean goes even when the host locked it (agent worktrees are locked), one with uncommitted tracked changes is kept and named.
 Nothing touches the base until every check passes, so a failed gate leaves no half merge.
 

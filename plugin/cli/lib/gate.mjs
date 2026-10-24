@@ -9,6 +9,7 @@ import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
 import { computeLane, inside, lintPlan, readPlan, runTarget, spansOf } from './grid.mjs';
 import { issueTitle, sync } from './board.mjs';
+import { writeMap } from './map.mjs';
 import { approval, baseOf, branchOf, bump, codeChanges, diffHash, keptPass, mergedUnits, mutationOf, readState, reviewFocuses, roundsOf, runtimeFile, unitPaths, worktrees, writeJson } from './state.mjs';
 
 const G = config.gate;
@@ -74,11 +75,11 @@ function runLevel(tree, level, l, add) {
   return r.status === 0;
 }
 
-// Paths only `merge` writes: bundle indexes and logs, and the profile's shared files.
+// Paths only `merge` writes: bundle indexes and logs, the codebase map, and the profile's shared files.
 export function mergeWritten(path, bundleRel, profile) {
   const name = basename(path);
   return ((name === config.okf.index || name === config.okf.log) && matches(path, `/${bundleRel}/**`))
-    || list(profile.shared).some((g) => matches(path, g));
+    || path === `${bundleRel}/${typeof profile.map === 'string' ? profile.map : config.map.file}` || list(profile.shared).some((g) => matches(path, g));
 }
 
 // Paths a direct (non-unit) commit may touch: the bundle, .aidlc and the files init writes.
@@ -89,7 +90,7 @@ export function directAllowed(path, bundleRel) {
 }
 
 // A glob as a regex whose single `*` segments are captured, for `same: false` boundaries.
-function globRegex(glob) {
+export function globRegex(glob) {
   let g = glob.replace(/^\.?\//, '');
   if (!glob.startsWith('/') && !g.includes('/')) g = '**/' + g;
   const body = g.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*\*\/?|\*|\?/g, (t) => (t.startsWith('**') ? (t.endsWith('/') ? '(?:.*/)?' : '.*') : t === '*' ? '([^/]*)' : '[^/]'));
@@ -153,14 +154,23 @@ export function moduleFindings(edges, profile, approved = new Map()) {
   return out;
 }
 
+// The project's dependency graph, run once per tree: the codebase map and the architecture checks share it.
+const graphs = new Map();
+export function graphOf(cwd, command) {
+  if (!graphs.has(cwd + command)) {
+    const r = sh(cwd, command);
+    graphs.set(cwd + command, { ok: r.status === 0, edges: (r.stdout ?? '').split('\n').map((l) => l.split(G.edge).map((x) => x.trim())).filter((e) => e.length === 2 && e[0] && e[1]) });
+  }
+  return graphs.get(cwd + command);
+}
+
 function architecture(cwd, profile, key = 'gateCheck') {
   const arch = profile.architecture;
   if (!arch) return [];
   const out = [];
   if (arch.graph) {
-    const r = sh(cwd, arch.graph);
-    if (r.status !== 0) out.push(finding('ARCH-CHECK', '.', 1, key, { command: arch.graph }));
-    const edges = (r.stdout ?? '').split('\n').map((l) => l.split(G.edge).map((s) => s.trim())).filter((e) => e.length === 2 && e[0] && e[1]);
+    const { ok, edges } = graphOf(cwd, arch.graph);
+    if (!ok) out.push(finding('ARCH-CHECK', '.', 1, key, { command: arch.graph }));
     const approved = new Map(exceptDocs(arch).map((d) => [d, existsSync(join(cwd, d)) ? readFileSync(join(cwd, d), 'utf8') : ''])
       .filter(([, text]) => text && approval(parseDoc(text)) === 'approved'));
     out.push(...boundaryFindings(edges, arch, approved), ...moduleFindings(edges, profile, approved));
@@ -241,6 +251,7 @@ function runGate(cwd, st, unit) {
 
   // What merge writes comes first and is staged, so each check sees the tree that will be committed (docs/design/gate.md).
   const treeBundle = join(tree, bundleRel);
+  writeMap(tree, withDefaults(loadProfile(tree).profile)); // before the indexes, which list it
   writeIndexes(treeBundle);
   addLogEntry(treeBundle, msg('gateLogEntry', { unit: unit.id, title: String(unit.fm.title ?? '') }));
   for (const command of list(p.regen)) shell(tree, command);

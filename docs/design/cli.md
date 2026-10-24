@@ -28,6 +28,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 | `hold <doc> [off\|<reason>]` | records an owner instruction in the plan: `hold: true` or the reason; `off` removes it. The lead also holds a doc with a reason while it parks a question for the owner, and holds a merged intent to park its release steps | lead |
 | `priority <unit> <n>` | records `priority: <n>` in the plan, higher first | lead |
 | `fix "<title>"\|--from-issue <n> --scope <glob>… [--requirement R-<n>…] [--after <intent>]` | one-unit plan without an intent; from an issue, titled like it and linked to it; `--after` links the release it fixes; prints the plan lint findings of the unit it wrote ([Everyday paths](paths.md#fixes-without-an-intent)) | lead |
+| `map` | writes the codebase map in the bundle ([Codebase map](codebase-map.md)) | lead, merge |
 | `sync` | projects intents and units onto GitHub issues and a Project ([Board](board.md)) | lead, merge |
 | `push` | checked base push | lead |
 | `ci wait` | waits for the pushed base's GitHub Actions runs and records green, red, pending or none ([CI on the base](base-ci.md)) | lead |
