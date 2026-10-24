@@ -39,8 +39,8 @@ test('U1/AC-1 cli.json matches the CLI design: commands and exit codes', () => {
 });
 
 test('every message the CLI uses is defined in cli.json, and none is unused', () => {
-  const { messages, retro } = readJson('plugin/cli/cli.json');
-  const named = new Set(retro.proposals.map((p) => p.text)); // the retro's proposal texts are named in cli.json
+  const { messages, retro, map } = readJson('plugin/cli/cli.json');
+  const named = new Set([...retro.proposals.map((p) => p.text), ...map.pages.map((p) => p.body)]); // the retro's proposals and the map's pages name theirs in cli.json
   const files = ['plugin/cli/aidlc.mjs', ...readdirSync(join(ROOT, 'plugin/cli/lib')).map((f) => `plugin/cli/lib/${f}`)];
   const code = files.map((f) => readFileSync(join(ROOT, f), 'utf8')).join('\n');
   const used = [...code.matchAll(/(?:msg|fail|yerr)\('(\w+)'|add\([^;]*?'[A-Z]+-[A-Z-]+', '(\w+)'/g)].map((m) => m[1] ?? m[2]);

@@ -79,7 +79,7 @@ function runLevel(tree, level, l, add) {
 export function mergeWritten(path, bundleRel, profile) {
   const name = basename(path);
   return ((name === config.okf.index || name === config.okf.log) && matches(path, `/${bundleRel}/**`))
-    || path === `${bundleRel}/${typeof profile.map === 'string' ? profile.map : config.map.file}` || list(profile.shared).some((g) => matches(path, g));
+    || config.map.pages.some((pg) => path === `${bundleRel}/${(typeof profile.map === 'string' ? profile.map : config.map.file).replace(/\.md$/, '')}${pg.suffix}.md`) || list(profile.shared).some((g) => matches(path, g));
 }
 
 // Paths a direct (non-unit) commit may touch: the bundle, .aidlc and the files init writes.

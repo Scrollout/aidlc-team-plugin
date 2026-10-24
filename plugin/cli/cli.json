@@ -552,9 +552,12 @@
     "mapOwns": "owns {{data}}",
     "mapApi": "public: {{api}}",
     "mapRow": "| {{id}} | {{uses}} | {{usedBy}} |\n",
-    "mapBody": "\n# Tree\nThe folders that hold a module, with its id, the data it owns and its public paths.\n```\n{{tree}}\n```\n{{#each flow}}\n# Dependencies\nModule to module, from the dependency graph.\n```mermaid\nflowchart LR\n{{this}}\n```\n{{/each}}{{#each table}}\n| Module | Uses | Used by |\n|---|---|---|\n{{this}}{{/each}}",
-    "mapDoc": "---\ntype: Map\ntitle: Codebase map\ndescription: The codebase as a tree of modules, with the data each owns, its public paths and what it depends on; written at every merge, never by hand.\ngenerated: { by: {{producer}}, at: {{at}} }\n---\n{{body}}",
-    "mapWritten": "wrote {{file}}\n",
+    "mapLink": "- [{{title}}]({{file}})",
+    "mapTree": "\n**TL;DR:** The folders that hold a module, with its id, the data it owns and its public paths; folders in no module are marked.\n\n# Tree\n```\n{{tree}}\n```\n{{#each links}}\n{{this}}{{/each}}\n",
+    "mapGraph": "\n**TL;DR:** Which module depends on which, from the dependency graph, as a diagram.\n\n# Dependencies\n```mermaid\nflowchart LR\n{{flow}}\n```\n{{#each links}}\n{{this}}{{/each}}\n",
+    "mapTable": "\n**TL;DR:** For each module, the modules it uses and the modules that use it.\n\n| Module | Uses | Used by |\n|---|---|---|\n{{table}}{{#each links}}\n{{this}}{{/each}}\n",
+    "mapDoc": "---\ntype: Map\ntitle: {{title}}\ndescription: {{description}}\ngenerated: { by: {{producer}}, at: {{at}} }\n---\n{{body}}",
+    "mapWritten": "wrote {{files}}\n",
     "mapSame": "the codebase map is current\n",
     "boardBehind": "the board is behind: aidlc sync\n",
     "boardMissingOption": "{{name}} {{value}} (the board has {{options}})",
@@ -1302,7 +1305,11 @@
     "last": "└── ",
     "pipe": "│   ",
     "space": "    ",
-    "cap": 15000,
+    "pages": [
+      { "suffix": "", "body": "mapTree", "title": "Codebase map", "description": "The codebase as a tree of module folders, with the data each module owns and its public paths; written at every merge, never by hand." },
+      { "suffix": "-graph", "body": "mapGraph", "title": "Module dependencies", "description": "A diagram of which module depends on which, from the dependency graph; written at every merge, never by hand." },
+      { "suffix": "-table", "body": "mapTable", "title": "Module dependency table", "description": "Each module with the modules it uses and the modules that use it; written at every merge, never by hand." }
+    ],
     "versionFile": "VERSION",
     "manifest": "../.claude-plugin/plugin.json"
   },
