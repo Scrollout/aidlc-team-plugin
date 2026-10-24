@@ -16,6 +16,9 @@ const TMP_ENV = { TMPDIR: TMP, TMP, TEMP: TMP };
 
 export const git = (dir, ...args) => execFileSync('git', args, { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 
+// The suite's own CI job summary is not the projects' under test: `check --ci` writes one when this is set.
+delete process.env.GITHUB_STEP_SUMMARY;
+
 // Without NODE_TEST_CONTEXT, project commands that run `node --test` behave as they would outside this suite.
 const { NODE_TEST_CONTEXT, ...ENV } = process.env;
 const CHILD_ENV = { ...ENV, ...TMP_ENV };
