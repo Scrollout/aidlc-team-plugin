@@ -377,3 +377,12 @@ test('U56/AC-2 an AC without a mutation, or one whose find no longer matches onc
   commit(moved, 'the base changes add', { 'src/add.mjs': 'export const add = (x, y) => x + y;\n' });
   assert.match(merge(moved).out, /GATE-PROOF U-1\/AC-1 has no mutation that applies/);
 });
+
+test('U60/AC-1 a quick-lane merge runs no level; other lanes still run every level', () => {
+  const profile = { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: FAIL } } };
+  const quick = setup({ profile, unit: { scope: ['docs/guide/**'], modules: [] }, files: { 'docs/guide/a.md': '---\ntype: Note\ntitle: A\ndescription: A note.\ngenerated: { by: x/1, at: 2026-01-01T00:00:00Z }\n---\n\nText.\n' } });
+  const r = merge(quick);
+  assert.equal(r.code, 0, r.out);
+  assert.match(git(quick, 'log', '-1', '--format=%(trailers:only,unfold)'), /^Tested: none$/m);
+  assert.deepEqual(codes(merge(setup({ profile }))), ['GATE-RUN'], 'a standard unit still runs the failing level');
+});
