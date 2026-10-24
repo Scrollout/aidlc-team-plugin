@@ -355,11 +355,12 @@ function backfill({ test = TEST, mutations } = {}) {
 }
 const BREAK = [{ ac: 'U-1/AC-1', path: 'src/add.mjs', find: 'a + b', replace: 'a - b' }];
 
-test('U56/AC-1 a back-fill unit merges when each mutation fails its AC\'s level, and is refused when one still passes', () => {
+test('U56/AC-1 U57/AC-2 a back-fill unit merges when each mutation fails its AC\'s level, and is refused when one still passes', () => {
   const dir = backfill({ mutations: BREAK });
   const r = merge(dir);
   assert.equal(r.code, 0, r.out);
   assert.match(git(dir, 'log', '-1', '--format=%(trailers:only,unfold)'), /^Proof: mutation unit$/m);
+  assert.match(r.out, /^proof: U-1\/AC-1's mutation of src\/add\.mjs failed level unit$/m, 'U57/AC-2 each mutation\'s result');
   assert.equal(read(dir, 'src/add.mjs'), CODE['src/add.mjs'], 'the mutated file is restored');
   assert.equal(git(dir, 'status', '--porcelain'), '');
 

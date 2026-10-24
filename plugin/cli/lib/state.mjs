@@ -8,7 +8,7 @@ import { config, done, isMap, list, readJson, UsageError, relPath } from './conf
 import { msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { parseDoc } from './okf.mjs';
-import { acsOf, computeLane, inside, lintPlan, overlaps, readPlan, reqId as reqIdOf } from './grid.mjs';
+import { acsOf, computeLane, inside, lintPlan, overlaps, readPlan, reqId as reqIdOf, testsOnly } from './grid.mjs';
 
 const S = config.state;
 
@@ -268,7 +268,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
     // Released: the owner tagged it, or its recorded release (and smoke) passed (docs/design/operations.md).
     const deploy = readJson(runtimeFile(cwd, 'deploys', i.id)) ?? {};
     const smoked = !profile.deploy?.smoke || (deploy.smoke?.ok && deploy.smoke.at >= deploy.release.at);
-    const released = complete && ((profile.deploy || profile.release) && Boolean(deploy.release?.ok && smoked)
+    const released = complete && (testsOnly(own, profile) || (profile.deploy || profile.release) && Boolean(deploy.release?.ok && smoked)
       || own.every((u) => (tryGit(cwd, 'tag', '--contains', merged.get(u.id)) ?? '') !== ''));
     return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own, deploy };
   });

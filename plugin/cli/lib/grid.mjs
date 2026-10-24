@@ -67,6 +67,9 @@ const segWithin = (x, y) => within(tokens(x), tokens(y), '*', charWithin);
 
 export const overlaps = (a, b) => intersects(segments(a), segments(b), '**', segOverlap);
 export const inside = (a, b) => within(segments(a), segments(b), '**', segWithin);
+// A back-fill: units whose scopes all lie inside the levels' test paths, so they ship no code (docs/design/backfill.md).
+export const testsOnly = (units, profile) => units.length > 0 && units.every((u) => u.scope.length
+  && u.scope.every((g) => Object.values(withDefaults(profile).levels).some((l) => list(l?.paths).some((p) => inside(g, p)))));
 
 // A scope holding the project profile can add its own test location to `levels` (docs/design/grid.md).
 const PROFILE = '/' + config.layers.find((l) => l.name === 'project').path;
@@ -268,7 +271,7 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   }
   // With a deploy, each live intent links its runbook (docs/design/operations.md).
   const live = (i) => units.some((u) => u.fm.intent === i.id) || !all.some((u) => u.fm.intent === i.id);
-  for (const i of profile.deploy ? intents.filter((x) => x.fm.status !== GRID.dropped && live(x)) : []) {
+  for (const i of profile.deploy ? intents.filter((x) => x.fm.status !== GRID.dropped && live(x) && !testsOnly(all.filter((u) => u.fm.intent === x.id), profile)) : []) {
     if (!linksOf(i, bundle).some((f) => existsSync(f) && parseDoc(readFileSync(f, 'utf8')).fm?.type === GRID.runbookType)) add('PLAN-RUNBOOK', i, 1, 'planRunbook', {});
   }
   for (const u of units.filter((x) => x.modules.length > 1 && x.acs.length && x.acs.every((a) => a.level === levels[0]))) {
