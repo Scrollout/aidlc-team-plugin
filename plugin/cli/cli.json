@@ -435,6 +435,7 @@
     "gateOkf": "{{path}}:{{line}} {{code}} {{message}}",
     "gateConflict": "unit/{{unit}} conflicts with {{base}}",
     "archEdge": "{{from}} -> {{to}}: {{reason}}",
+    "archCheckCi": "{{command}} failed in CI; if it passes locally, the aidlc job lacks what it needs: add its toolchain setup to .github/workflows/aidlc.yml",
     "archExceptInUnit": "{{doc}} comes with {{unit}}, so the owner cannot approve it before this merge: the lead commits it on the base as a plan doc for the owner to approve, and {{unit}} merges the base and drops its copy",
     "gateMerged": "merged {{unit}} as {{sha}}\n",
     "gateKept": "kept {{path}}: {{error}}\n",

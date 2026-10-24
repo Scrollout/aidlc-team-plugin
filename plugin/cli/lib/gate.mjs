@@ -117,19 +117,19 @@ export function boundaryFindings(edges, architecture, approved = new Map()) {
   return out;
 }
 
-function architecture(cwd, profile) {
+function architecture(cwd, profile, key = 'gateCheck') {
   const arch = profile.architecture;
   if (!arch) return [];
   const out = [];
   if (arch.graph) {
     const r = sh(cwd, arch.graph);
-    if (r.status !== 0) out.push(finding('ARCH-CHECK', '.', 1, 'gateCheck', { command: arch.graph }));
+    if (r.status !== 0) out.push(finding('ARCH-CHECK', '.', 1, key, { command: arch.graph }));
     const edges = (r.stdout ?? '').split('\n').map((l) => l.split(G.edge).map((s) => s.trim())).filter((e) => e.length === 2 && e[0] && e[1]);
     const approved = new Map(list(arch.boundaries?.flatMap((b) => list(b.except))).map((d) => [d, existsSync(join(cwd, d)) ? readFileSync(join(cwd, d), 'utf8') : ''])
       .filter(([, text]) => text && approval(parseDoc(text)) === 'approved'));
     out.push(...boundaryFindings(edges, arch, approved));
   }
-  for (const command of list(arch.checks)) if (!shell(cwd, command)) out.push(finding('ARCH-CHECK', '.', 1, 'gateCheck', { command }));
+  for (const command of list(arch.checks)) if (!shell(cwd, command)) out.push(finding('ARCH-CHECK', '.', 1, key, { command }));
   return out;
 }
 
@@ -382,7 +382,7 @@ export const commands = {
     if (!args.includes('--ci')) return done('');
     const st = readState(cwd);
     const range = st.profile.adopted ? `${st.profile.adopted}..HEAD` : 'HEAD';
-    const findings = [...historyFindings(cwd, range, st, { merge: 'CI-MERGE', commit: 'CI-COMMIT' }), ...architecture(cwd, withDefaults(st.profile))];
+    const findings = [...historyFindings(cwd, range, st, { merge: 'CI-MERGE', commit: 'CI-COMMIT' }), ...architecture(cwd, withDefaults(st.profile), 'archCheckCi')];
     return done('', findings.length ? config.exit.findings : config.exit.ok, findings);
   },
 };
