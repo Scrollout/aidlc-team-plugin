@@ -36,6 +36,6 @@ Nothing touches the base until every check passes, so a failed gate leaves no ha
 What `aidlc push` checks and what `aidlc fix` writes: [Everyday paths](paths.md).
 
 # check --ci
-After OKF validation and plan lint, every base commit after `profile.adopted` (all of them without it) is a gate merge with the `Unit`, `Card` and `Review` trailers and only in-scope or merge-written files, or a commit touching only allowed direct paths (`CI-MERGE`, `CI-COMMIT`). A merge whose `Unit` trailer names no unit in the plan fails, here and in `aidlc push` (`PUSH-COMMIT`). Architecture boundaries and checks run on the checked-out tree.
+The CI history check, architecture on the checked-out tree and the job summary: [CI check](ci-check.md).
 
 [^aws-aidlc]: AWS AI-DLC workflows

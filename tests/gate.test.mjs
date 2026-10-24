@@ -1,8 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { approve, commit, git, makeRepo, read, review, run, tempDir } from './state-repo.mjs';
+import { approve, CLI, commit, git, makeRepo, read, review, run, tempDir } from './state-repo.mjs';
 import { CODE, codes, FAIL, LOG, merge, OK, PROFILE, setup, TEST } from './gate-repo.mjs';
 import { boundaryFindings } from '../plugin/cli/lib/gate.mjs';
 
@@ -42,6 +43,26 @@ test('U75/AC-5 the checks see the indexes and log merge writes: a unit adding a 
   const r = merge(dir);
   assert.equal(r.code, 0, r.out);
   assert.match(read(dir, 'docs/notes/index.md'), /n\.md/);
+});
+
+test('U78/AC-1 check --ci on GitHub Actions writes a job summary: the verdict, the findings with fixes, the plan states', () => {
+  const dir = setup();
+  assert.equal(merge(dir).code, 0);
+  const summary = join(tempDir('summary-'), 'summary.md');
+  const ci = (env) => spawnSync(process.execPath, [CLI, 'check', '--ci'], { cwd: dir, encoding: 'utf8', env: { ...process.env, ...env } });
+  ci({});
+  assert.ok(!existsSync(summary), 'none outside Actions');
+  assert.equal(ci({ GITHUB_STEP_SUMMARY: summary }).status, 0);
+  const text = readFileSync(summary, 'utf8');
+  assert.match(text, /^## aidlc check\n\n⚠️ Passed with 2 warnings\.\n/);
+  assert.match(text, /^\| ⚠️ \| HOUSE-GENERATED \| `docs\/units\/U-1-add\.md:1` \| .+ \| add generated: .+ \|$/m);
+  assert.match(text, /^- \*\*I-1\*\* \w+: Math$/m);
+  assert.match(text, /^ {2}- \*\*U-1\*\* merged: /m);
+  commit(dir, 'a direct commit', { 'src/add.mjs': 'export const add = (a, b) => b + a;\n' });
+  assert.equal(ci({ GITHUB_STEP_SUMMARY: summary }).status, 1);
+  const failed = readFileSync(summary, 'utf8').slice(text.length);
+  assert.match(failed, /^❌ 1 errors, 2 warnings\.$/m);
+  assert.match(failed, /^\| ❌ \| CI-COMMIT \| `[^`]+` \| .+ \| .+ \|$/m);
 });
 
 test('U6/AC-8 a full-lane unit merges on its tests', () => {

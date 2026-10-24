@@ -1,6 +1,6 @@
 // Merge gate, push, fix and the CI history check (docs/design/verification.md, docs/design/gate.md).
 // Settings, codes and messages come from cli.json; project commands come from the owner's profile.
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { bundleOf, CLI_DIR, config, QUICK, VERDICT, done, git, gitLines, list, readJson, sh, slug, tryGit, UsageError, relPath } from './config.mjs';
@@ -381,4 +381,21 @@ export const commands = {
     const findings = [...historyFindings(cwd, range, st, { merge: 'CI-MERGE', commit: 'CI-COMMIT' }), ...architecture(cwd, withDefaults(st.profile))];
     return done('', findings.length ? config.exit.findings : config.exit.ok, findings);
   },
+};
+
+// `check --ci` on GitHub Actions: the result as the job summary, for the owner on the run page (docs/design/gate.md).
+export const withSummary = (handler) => async (args, ctx) => {
+  const r = await handler(args, ctx);
+  const file = process.env[G.summaryEnv];
+  if (!args.includes('--ci') || !file) return r;
+  const cell = (v) => String(v ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
+  const [errors, warnings] = ['error', 'warning'].map((l) => r.findings.filter((f) => f.level === l).length);
+  const verdict = errors ? msg('summaryFailed', { errors, warnings }) : warnings ? msg('summaryWarned', { warnings }) : msg('summaryPassed', {});
+  const shown = r.findings.slice(0, G.summaryMax).map((f) => msg('summaryRow', { mark: f.level === 'error' ? '❌' : '⚠️', code: f.code, path: f.path, line: f.line, message: cell(f.message), fix: cell(f.fix) }));
+  const st = readState(ctx.cwd);
+  const plan = st.intents.flatMap((i) => [i, ...st.units.filter((u) => u.fm.intent === i.id)]).concat(st.units.filter((u) => !u.fm.intent))
+    .map((d) => msg('summaryPlan', { indent: d.fm.intent ? '  ' : '', id: d.id, state: d.state, title: cell(d.fm.title) }));
+  const more = r.findings.length > G.summaryMax ? msg('summaryMore', { count: r.findings.length - G.summaryMax }) : '';
+  appendFileSync(file, msg('summary', { verdict, rows: shown.length ? [msg('summaryHead', {}), ...shown] : [], more, plan }));
+  return r;
 };

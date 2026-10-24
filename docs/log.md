@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** M10 U78: `check --ci` on GitHub Actions writes a job summary with the verdict, findings and plan states ([CI check](design/ci-check.md)). Release 0.84.0.
 - **Update** M10 U76: a `slice:` waiver holds only for units outside every module and one-way door; an unapproved unit reaching one is `PLAN-SLICE` ([Plan lint](design/plan-lint.md)). Release 0.83.0.
 - **Update** M10 U77: the card cap counts the card without its findings and mutations, so a fix round never needs a re-approved doc ([Unit card](design/unit-card.md)). Release 0.83.0.
 - **Update** M10 U75 AC-5: the gate writes and stages the indexes, log and regenerated files before its checks, so a docs check that wants each doc indexed passes for a unit adding one ([Merge mechanics](design/gate.md)). Release 0.82.0.
