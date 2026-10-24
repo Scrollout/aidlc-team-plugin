@@ -21,7 +21,7 @@ sources:
 - Extensible: rule layers (plugin, project, personal) and overridable templates.
 
 # Diagrams
-The whole lifecycle and the plugin's parts are drawn in the [README](../../README.md); one unit's path is below.
+The whole lifecycle and the plugin's parts are drawn in the [README](../../README.md); one unit's path to release is below.
 
 # How a unit flows
 ```mermaid
@@ -33,7 +33,7 @@ sequenceDiagram
   participant R as Reviewer
   L->>C: aidlc next
   C-->>L: plan pending (exit 2)
-  O->>C: ! aidlc approve U-1 U-2
+  O->>C: types approve U-1 U-2 (prompt hook stamps)
   L->>C: aidlc next
   C-->>L: build U-1, U-2
   L->>B: one builder per card
@@ -42,6 +42,11 @@ sequenceDiagram
   R->>C: aidlc review record
   L->>C: aidlc merge U-1
   C-->>L: gate passes, merge --no-ff
+  L->>C: aidlc deploy check I-1
+  C-->>L: release I-1 is the owner's (exit 2)
+  O->>C: types release I-1 (go recorded)
+  L->>C: aidlc release I-1
+  C-->>L: guard uses the go, release and smoke pass
 ```
 
 # Non-goals

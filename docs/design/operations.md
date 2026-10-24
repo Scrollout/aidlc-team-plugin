@@ -11,7 +11,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T08:00:00Z }
 ---
 
 # Why
-Before M6 the loop ended at a merged, tagged intent: the [Grid](grid.md)'s Deployment and Operation rows ran no deploy check, release or smoke test, and a failed release became no work. The owner asked for both rows (2026-10-24).
+Before M6 the loop ended at a merged, tagged intent: the [Grid](grid.md)'s Deployment and Operation rows ran no check, release or smoke, and a failed release became no work. The owner asked for both rows (2026-10-24).
 
 # What AWS AI-DLC does
 Seven operation stages, every one conditional (`execution: CONDITIONAL`) and skipped when "no deployable target exists": deployment pipeline, environment provisioning, deployment execution, observability, performance validation, incident response, feedback.[^aws-ops] The parts this plugin can take without building pipelines:
@@ -40,11 +40,11 @@ The owner's, 2026-10-24:
 - In: a runbook per intent, and the retro's feedback. Out: observability, SLO, load and incident stages.
 
 # Details
-- **Record:** `.git/aidlc/deploys/I-<n>.json` keeps the last run of each step (`check`, `release`, `smoke`, `rollback`) with its exit, the failing command, the tail of its output and the base commit it ran on. `aidlc deploy` writes it; `next` only reads it. Steps run in the work tree, which must be on the base.
+- **Record:** `.git/aidlc/deploys/I-<n>.json` keeps the last run of each step (`check`, `release`, `smoke`, `rollback`) with its exit, the failing command, the tail of its output and the base commit it ran on. `aidlc deploy` writes it; `next` only reads it. Steps run in the work tree, on the base.
 - **Check:** with `deploy.check`, a merged intent's `next` is `aidlc deploy check I-<n>` until a check ran on the current base; a failed check names the command and `aidlc fix … --scope …`. The fix unit is plan work and comes first; once it merges the base moves and the check runs again.
 - **Release:** with `deploy` or `release` in the profile, `next` names `aidlc release I-<n>` as the owner's step; it runs `deploy.run` and then `release`, and the intent is released when that run passed. With `deploy.check` set it is refused until a check passed on the current base. A release tag still counts as the owner's release, so intents tagged before `deploy` was added stay released (owner's choice, 2026-10-24, after the M6 pilot). Without either key the owner tags the release as before. A failed release is a ⛔ stop: the owner retries, or the lead drafts a fix.
 - **Smoke and rollback:** `aidlc release` runs `deploy.smoke` after a passing release; the intent is released once both passed. A failed smoke is a ⛔ stop before any other work: `next` names `aidlc rollback I-<n>`, the owner's command, which runs `deploy.rollback` (without one it records the owner's rollback by hand), on a merged or released intent. Then `next` asks for a fix unit from the smoke output, `aidlc fix … --after I-<n>`; once it merges, the check and release run again on the new base.
-- **Words to type:** a deploy outlasts the prompt hook's 10 s limit, so the hook does not run it (owner's choice, 2026-10-24). A prompt that is exactly `release I-<n>` or `rollback I-<n>` records the owner's go for that command at the current commit in `.git/aidlc/goes.json`; the lead then runs the command, and the guard lets that one call through without a permission prompt and uses the go up. The host's own permission check still applies.
+- **Words to type:** a deploy outlasts the prompt hook's 10 s limit, so the hook does not run it ([0012](../decisions/0012-typed-go.md)). A prompt that is exactly `release I-<n>` or `rollback I-<n>` records the owner's go for that command at the current commit in `.git/aidlc/goes.json`; the lead runs the command, and the guard lets that one call through without a prompt and uses the go up. States: [Intent states](intent-states.md).
 - **Parking:** `aidlc hold I-<n> <reason>` on a merged intent parks its check, release and fix lines; `next` names the hold as the owner's step until `hold I-<n> off`. A failed smoke still stops (from the M6 pilot).
 
 Units: [M6](../roadmap/m6.md).
