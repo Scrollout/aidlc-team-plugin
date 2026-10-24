@@ -106,7 +106,8 @@ function guard(input, cwd) {
     const owner = ownerCommand(argv);
     if (owner) {
       const command = argv.slice(argv.indexOf(owner)).join(' ');
-      if (useGo(cwd, command)) return allow(); // the owner typed it (docs/design/operations.md#details)
+      // The owner typed it (docs/design/operations.md#details); a redirect after the intent is no part of the go.
+      if (useGo(cwd, argv.slice(argv.indexOf(owner), argv.indexOf(owner) + 2).join(' '))) return allow();
       if (input.permission_mode === H.noPrompt) return deny(cwd, input, 'GUARD-OWNER', 'guardOwner', { command });
       recordPrompt(cwd, input, command);
       return deny(cwd, input, 'GUARD-OWNER', 'guardOwner', { command }, 'ask');
