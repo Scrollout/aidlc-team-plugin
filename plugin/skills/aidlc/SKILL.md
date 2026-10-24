@@ -20,7 +20,6 @@ When a command or hook refuses, its message names the fix: apply it. When it say
 - **wait**: end the turn; agent notices wake you.
 - **merge**: run the command; apply each finding's fix.
 - **research**: `aidlc research <id>` prints the brief; start one Agent, `subagent_type: aidlc-team:researcher`, `model` as `next` names it, the brief as prompt. File the digest as the brief says, draft the decision from it, commit both at once.
-- **release**: the owner tags and releases.
 
 Agents record their own results; never relay or rewrite them.
 
@@ -28,4 +27,4 @@ Agents record their own results; never relay or rewrite them.
 "Hold U-4" or "U-2 first": record it with `aidlc hold U-4` or `aidlc priority U-2 <n>`, never in chat memory. A run mode ("run unattended", "stop at X") is the owner command `aidlc mode`. When you park a step to ask the owner something `next` did not, run `aidlc hold U-<n> <the question>`; release it only on their word. Research asked, or no option clearly best: `aidlc hold <id> research: <question>`. A stamp whose owner prompt `status` shows as ran is the owner's: never revert it.
 
 # Setup
-Without `.aidlc/profile.json`, ask the owner for the project name, base branch and docs folder, offering what you detect. Then run `node ${CLAUDE_PLUGIN_ROOT}/cli/aidlc.mjs init --name <name> --base <branch> --bundle <dir>`, adding `--adopt` for a docs folder whose `index.md` has `okf_version`. Exit 2 lists files it kept: ask the owner before rerunning with `--overwrite <path>`. Commit what it wrote, then start the loop.
+Without `.aidlc/profile.json`, ask the owner for the project name, base branch, docs folder and each test level's run command, offering what you detect. Then run `node ${CLAUDE_PLUGIN_ROOT}/cli/aidlc.mjs init --name <name> --base <branch> --bundle <dir> --run <level>=<command>…`, adding `--adopt` for a docs folder whose `index.md` has `okf_version`. Exit 2 lists kept files: ask the owner before `--overwrite <path>`. Commit what it wrote, then start the loop.

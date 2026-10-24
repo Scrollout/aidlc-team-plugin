@@ -357,6 +357,13 @@ export function computeLane(items, profile = {}, { paths = false } = {}) {
 
 const bundleOf = (cwd, profile) => resolve(cwd, profile.docs.bundle);
 
+// Live units while no level runs: the gate would run no tests (docs/design/method.md).
+function noRun(cwd, bundle, profile, skip) {
+  const live = readPlan(bundle).units.some((u) => u.fm.status !== GRID.dropped && !skip.includes(u.id));
+  const path = join(cwd, config.layers.find((l) => l.from === 'project').path);
+  return live && !Object.values(withDefaults(profile).levels).some((l) => l?.run) ? [finding('PLAN-RUN', path, 1, 'planRun', {}, cwd)] : [];
+}
+
 export const commands = {
   lane(args, { cwd }) {
     const { profile } = loadProfile(cwd);
@@ -384,9 +391,9 @@ export const commands = {
     const findings = [];
     for (const p of paths.length ? paths : [bundle]) {
       if (!existsSync(p)) continue;
-      if (statSync(p).isDirectory()) findings.push(...lintPlan(p, profile, { base: cwd, skip }));
+      if (statSync(p).isDirectory()) findings.push(...lintPlan(p, profile, { base: cwd, skip }), ...noRun(cwd, p, profile, skip));
       else if (p.startsWith(bundle + sep)) findings.push(...lintPlan(bundle, profile, { base: cwd, skip }).filter((f) => f.path === relPath(cwd, p)));
     }
-    return { code: findings.length ? config.exit.findings : config.exit.ok, findings, output: '' };
+    return { code: findings.some((f) => f.level === 'error') ? config.exit.findings : config.exit.ok, findings, output: '' }; // a warning does not fail
   },
 };

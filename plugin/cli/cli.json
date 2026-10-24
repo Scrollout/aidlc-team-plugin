@@ -47,13 +47,14 @@
   "commands": [
     {
       "name": "init",
-      "usage": "init [--adopt] [--name n] [--base b] [--bundle dir] [--overwrite path]…",
+      "usage": "init [--adopt] [--name n] [--base b] [--bundle dir] [--run level=command]… [--overwrite path]…",
       "does": "ask questions, write the profile, render templates, vendor the CLI",
       "flags": [
         "--adopt",
         "--name",
         "--base",
         "--bundle",
+        "--run",
         "--overwrite"
       ]
     },
@@ -357,6 +358,9 @@
     "nextApproveRequirements": "ask the owner to approve the requirements the plan cites: aidlc approve {{reqs}} (the owner confirms the prompt or types: approve {{reqs}})",
     "statusUncovered": "not yet delivered: {{reqs}}\n",
     "initWrote": "wrote {{path}}\n",
+    "initRun": "{{command}} runs the tests → ask the owner how each level runs, offering: --run \"unit={{command}}\"\n",
+    "initRunBad": "--run takes <level>=<command> with a level from {{levels}}: {{value}}",
+    "planRun": "no test level has a run command: the gate runs no tests, proof-revert and the end-to-end check stay off",
     "initLint": "{{command}} is the project's lint target → add it as a module check (modules[].check in .aidlc/profile.json), so the gate runs it\n",
     "initKept": "kept {{path}}: it exists; rerun with --overwrite {{path}} to replace it\n",
     "initAdded": "added {{what}} to {{path}}\n",
@@ -640,6 +644,10 @@
         "level": "error",
         "fix": "add the other unit to depends, or move the AC to that unit"
       },
+      "PLAN-RUN": {
+        "level": "warning",
+        "fix": "add levels.<level>.run to .aidlc/profile.json, at least for unit and e2e"
+      },
       "PLAN-RUNBOOK": {
         "level": "error",
         "fix": "link a Runbook doc from the intent (template .aidlc/templates/docs/runbook.md: how to roll back, what to watch, who to call)"
@@ -811,7 +819,12 @@
     ],
     "worktrees": ".claude/worktrees/",
     "ignoreFiles": [".dockerignore", ".prettierignore", ".eslintignore", ".stylelintignore", ".markdownlintignore", ".npmignore", ".vscodeignore"],
-    "lintTargets": ["lint"],
+    "runDetect": [
+    { "file": "package.json", "name": "test", "run": "npm test" },
+    { "file": "Makefile", "name": "test", "run": "make test" },
+    { "file": "go.mod", "run": "go test ./..." }
+  ],
+  "lintTargets": ["lint"],
     "settings": ".claude/settings.json",
     "settingsKeys": {
       "worktree": {

@@ -196,3 +196,40 @@ test('U30/AC-1 U30/AC-2 upgrade says when nothing changed, where it copied from,
   assert.doesNotMatch(again.out, /^pinned the CLI/m);
   assert.match(again.out, new RegExp(`^copied from ${PLUGIN.version.replace(/\./g, '\\.')} at \\S+; for a newer release: claude plugin marketplace update, then claude plugin update ${PLUGIN.name}, restart, and upgrade again$`, 'm'));
 });
+
+test('U52/AC-1 init --run writes each level\'s run command; an unknown level or a value without = is refused', () => {
+  const dir = emptyRepo();
+  const r = run(dir, ['init', '--run', 'unit=npm test', '--run', 'e2e=npx playwright test']);
+  assert.equal(r.code, 0, r.err + r.out);
+  const profile = JSON.parse(readFileSync(join(dir, '.aidlc/profile.json'), 'utf8'));
+  assert.deepEqual(profile.levels, { unit: { run: 'npm test' }, e2e: { run: 'npx playwright test' } });
+  for (const bad of ['smoke=make smoke', 'unit']) {
+    const refused = run(emptyRepo(), ['init', '--run', bad]);
+    assert.equal(refused.code, 64, bad);
+    assert.match(refused.err, /--run takes <level>=<command> with a level from unit, integration, e2e/);
+  }
+});
+
+test('U52/AC-2 without --run, init writes no run and offers each test command it detects', () => {
+  const dir = emptyRepo();
+  writeFileSync(join(dir, 'Makefile'), 'test:\n\tgo test ./...\n');
+  writeFileSync(join(dir, 'package.json'), JSON.stringify({ scripts: { test: 'node --test' } }));
+  writeFileSync(join(dir, 'go.mod'), 'module demo\n');
+  const r = run(dir, ['init']);
+  assert.equal(r.code, 0, r.err);
+  assert.equal(JSON.parse(readFileSync(join(dir, '.aidlc/profile.json'), 'utf8')).levels, undefined, 'nothing guessed into the profile');
+  for (const command of ['npm test', 'make test', 'go test ./...']) assert.ok(r.out.includes(`${command} runs the tests → ask the owner how each level runs, offering: --run "unit=${command}"\n`), command);
+  assert.doesNotMatch(run(emptyRepo(), ['init', '--run', 'unit=make test']).out, /runs the tests/, 'given, not offered');
+  assert.match(readFileSync(join(ROOT, 'plugin/skills/aidlc/SKILL.md'), 'utf8'), /each test level's run command[^\n]*--run <level>=<command>/, 'the skill asks for them');
+});
+
+test('U52/AC-3 plan lint warns PLAN-RUN while no level has a run; a warning does not fail check', () => {
+  const unit = '---\ntype: Unit\ntitle: A\ndescription: A.\nscope: ["src/**"]\n---\n\n# Acceptance criteria\n\n- AC-1 (unit): x.\n';
+  const dir = makeRepo({ 'docs/units/U-1-a.md': unit });
+  const r = run(dir, ['check']);
+  assert.equal(r.code, 0, r.out);
+  assert.match(r.out, /^\.aidlc\/profile\.json:1 PLAN-RUN no test level has a run command/m);
+  const ran = makeRepo({ 'docs/units/U-1-a.md': unit }, { levels: { unit: { run: 'npm test' } } });
+  assert.doesNotMatch(run(ran, ['check']).out, /PLAN-RUN/);
+  assert.doesNotMatch(run(makeRepo({}), ['check']).out, /PLAN-RUN/, 'no units yet, nothing to warn about');
+});
