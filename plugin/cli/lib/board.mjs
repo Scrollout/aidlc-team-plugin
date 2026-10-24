@@ -96,7 +96,7 @@ function milestones(repo, docs, out) {
   }));
 }
 
-function issues(gh, docs, out) {
+function issues(gh, docs, out, backoff) {
   const repo = `repos/${gh.repo}`;
   const assignees = gh.assignees ?? [rest('GET', 'user').login];
   const typed = rest('GET', repo).owner?.type === B.typedOwner; // issue types exist on organisation repositories only
@@ -107,8 +107,8 @@ function issues(gh, docs, out) {
       const got = pages(`${repo}/issues?state=all`).filter((i) => !i.pull_request).sort((a, b) => a.number - b.number); // the oldest copy wins
       const count = graphql(B.queries.issueCount, { owner, name }).repository.issues.totalCount;
       if (got.length >= count) return got;
-      if (k === B.backoff.length) throw new Error(msg('boardShort', { got: got.length, count }));
-      sleep(B.backoff[k]);
+      if (k === backoff.length) throw new Error(msg('boardShort', { got: got.length, count }));
+      sleep(backoff[k]);
     }
   };
   let [all, relisted] = [list(), false];
@@ -194,7 +194,7 @@ export function sync(cwd) {
   const gh = github(st.profile);
   const docs = wanted(cwd, st, gh);
   const out = [];
-  issues(gh, docs, out);
+  issues(gh, docs, out, st.profile.board.backoff);
   if (gh.project) project(gh, docs, out);
   return out.join('') || msg('boardInSync', {});
 }

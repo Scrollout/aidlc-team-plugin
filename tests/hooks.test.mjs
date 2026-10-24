@@ -1,37 +1,31 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync, rmSync, statSync, symlinkSync, utimesSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync, utimesSync } from 'node:fs';
 import { join } from 'node:path';
-import { approve, commit, git, intentDoc, makeRepo, read, run, tempDir, unitDoc, write } from './state-repo.mjs';
+import { commands } from '../plugin/cli/lib/hooks.mjs';
+import { approve, commit, git, hook, intentDoc, pinnedRepo, read, run, tempDir, unitDoc, write } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
-const RUN = join(ROOT, 'plugin/hooks/run.mjs');
 const HOOKS = JSON.parse(readFileSync(join(ROOT, 'plugin/hooks/hooks.json'), 'utf8'));
 const U1 = 'docs/units/U-1-a.md';
 
 // A managed project: pinned CLI, intent and two units; U-1 approved with a card.
-function project() {
-  const dir = makeRepo({
-    'docs/intents/I-1-x.md': intentDoc('I-1'),
-    [U1]: unitDoc({ scope: ['src/**'] }),
-    'docs/units/U-2-b.md': unitDoc({ scope: ['lib/**'] }),
-    'docs/log.md': '---\ntype: Log\ntitle: History\n---\n\n# History\n\n## 2026-01-01\n\n- **Creation** docs.\n',
-  }, { security: { secrets: ['INTERNAL-[0-9]{6}'] } });
-  const init = run(dir, ['upgrade', '--dirty']);
-  assert.equal(init.code, 0, init.err);
-  commit(dir, 'pin the CLI');
-  return dir;
-}
+const project = () => pinnedRepo({
+  'docs/intents/I-1-x.md': intentDoc('I-1'),
+  [U1]: unitDoc({ scope: ['src/**'] }),
+  'docs/units/U-2-b.md': unitDoc({ scope: ['lib/**'] }),
+  'docs/log.md': '---\ntype: Log\ntitle: History\n---\n\n# History\n\n## 2026-01-01\n\n- **Creation** docs.\n',
+}, { security: { secrets: ['INTERNAL-[0-9]{6}'] } });
 
-function hook(name, input) {
-  const r = spawnSync(process.execPath, [RUN, name], { input: JSON.stringify({ session_id: 's1', ...input }), encoding: 'utf8' });
-  const out = r.stdout.trim();
-  return { code: r.status, json: out ? JSON.parse(out) : {}, err: r.stderr };
-}
 const decision = (r) => r.json.hookSpecificOutput?.permissionDecision ?? 'allow';
 const reason = (r) => r.json.hookSpecificOutput?.permissionDecisionReason ?? r.json.reason ?? '';
 const bash = (dir, command) => hook('guard', { cwd: dir, hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: { command } });
+// The guard's own handler in this process, for long command lists; run.mjs and the pinned CLI are the same code.
+function guardIn(dir, command) {
+  const input = { session_id: 's1', cwd: dir, hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: { command } };
+  const out = commands.hook(['guard'], { cwd: realpathSync.native(dir), stdin: () => JSON.stringify(input) }).output.trim();
+  return { code: 0, json: out ? JSON.parse(out) : {} };
+}
 
 test('U7/AC-1 guard denies each listed command and allows the everyday ones', () => {
   const dir = project();
@@ -48,24 +42,24 @@ test('U7/AC-1 guard denies each listed command and allows the everyday ones', ()
     'FOO=1 git -C . push -f': 'GUARD-FORCE',
   };
   for (const [command, code] of Object.entries(denied)) {
-    const r = bash(dir, command);
+    const r = guardIn(dir, command);
     assert.equal(decision(r), 'deny', command);
     assert.match(reason(r), new RegExp(`^(escalate: )?${code} .+ → \\S`), command);
   }
-  assert.equal(decision(bash(dir, 'git tag v1.0.0')), 'ask');
+  assert.equal(decision(guardIn(dir, 'git tag v1.0.0')), 'ask');
   const inGit = bash(join(dir, '.git'), 'cd ..');
   assert.equal(inGit.code, 0, `a shell left inside .git is not locked: ${inGit.err}`);
   assert.equal(decision(inGit), 'allow');
   assert.equal(decision(bash(join(dir, '.git'), 'git push --force origin unit/U-1')), 'deny', 'and is still guarded');
   for (const [command, shown] of [['node .aidlc/bin/aidlc.mjs approve U-1', 'approve U-1'], ['cd docs && aidlc approve U-1', 'approve U-1'], ['node .aidlc/bin/aidlc.mjs upgrade', 'upgrade'], ['aidlc delegate reapprove', 'delegate reapprove']]) {
-    const r = bash(dir, command);
+    const r = guardIn(dir, command);
     assert.equal(decision(r), 'ask', `${command}: the owner answers a prompt (decision 0009)`);
     assert.match(reason(r), new RegExp(`^GUARD-OWNER ${shown}: the owner answers this prompt`));
   }
   const bypass = hook('guard', { cwd: dir, hook_event_name: 'PreToolUse', tool_name: 'Bash', permission_mode: 'bypassPermissions', tool_input: { command: 'aidlc approve U-1' } });
   assert.equal(decision(bypass), 'deny', 'no prompt is guaranteed in bypass mode');
   for (const command of ['git status', 'git commit -m "docs: notes"', 'node .aidlc/bin/aidlc.mjs next', 'node .aidlc/bin/aidlc.mjs approve --auto U-1', 'git push origin unit/U-1', 'git log --oneline | head', 'echo "git push --force"']) {
-    assert.equal(decision(bash(dir, command)), 'allow', command);
+    assert.equal(decision(guardIn(dir, command)), 'allow', command);
   }
   write(dir, { 'src/a.mjs': '1;\n' });
   git(dir, 'add', 'src/a.mjs');

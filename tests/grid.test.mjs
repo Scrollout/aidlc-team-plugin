@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { computeLane, inside, lintPlan, overlaps, readPlan } from '../plugin/cli/lib/grid.mjs';
-import { tempDir } from './state-repo.mjs';
+import { git, tempDir } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const PLAN = join(ROOT, 'tests/fixtures/plan');
@@ -99,13 +99,12 @@ test('U3/AC-4 aidlc lane <unit> and lane --diff <range>', () => {
   assert.equal(run('lane', 'U-9').status, 64);
   assert.equal(run('lane').status, 64);
 
-  const git = (...args) => execFileSync('git', args, { cwd: dir, encoding: 'utf8' });
-  git('init', '-q');
-  git('-c', 'user.email=t@example.com', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'base');
+  git(dir, 'init', '-q');
+  git(dir, '-c', 'user.email=t@example.com', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'base');
   mkdirSync(join(dir, 'migrations'));
   writeFileSync(join(dir, 'migrations/0001_init.sql'), 'select 1;\n');
-  git('add', '.');
-  git('-c', 'user.email=t@example.com', '-c', 'user.name=t', 'commit', '-q', '-m', 'change');
+  git(dir, 'add', '.');
+  git(dir, '-c', 'user.email=t@example.com', '-c', 'user.name=t', 'commit', '-q', '-m', 'change');
   assert.match(run('lane', '--diff', 'HEAD~1..HEAD').stdout, /^full migrations\/0001_init\.sql overlaps lanes\.full migrations\/\*\*/);
 });
 
@@ -239,8 +238,8 @@ test('U40/AC-1 U40/AC-2 U40/AC-3 a scope names both sides of a generated entry, 
     'docs/units/U-4-d.md': unit(['sdk/schema.d.ts']),
     'docs/units/U-5-e.md': unit(['src/new.mjs']),
   });
-  execFileSync('git', ['init', '-q'], { cwd: dir });
-  execFileSync('git', ['add', '-A'], { cwd: dir });
+  git(dir, 'init', '-q');
+  git(dir, 'add', '-A');
   const profile = { generated: [{ outputs: ['api/openapi/*.yaml', 'web/schema.d.ts'], sources: ['api/tsp/**'] }] };
   const found = lintPlan(join(dir, 'docs'), profile, { base: dir }).filter((f) => f.code === 'PLAN-GENERATED').map((f) => [f.path, f.message]);
   assert.deepEqual(found, [

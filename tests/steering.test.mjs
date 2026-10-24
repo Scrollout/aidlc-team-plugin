@@ -1,24 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
 import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { approve, branch, commit, intentDoc, makeRepo, read, review, run, unitDoc, write } from './state-repo.mjs';
+import { approve, branch, commit, hook as hookCall, I1, pinnedRepo, read, review, run, U, unitDoc, write } from './state-repo.mjs';
 
-const RUN = join(import.meta.dirname, '..', 'plugin/hooks/run.mjs');
-const U = (n) => `docs/units/U-${n}-u${n}.md`;
-const I1 = { 'docs/intents/I-1-pricing.md': intentDoc('I-1') };
-
-function project(docs, profile) {
-  const dir = makeRepo({ ...I1, ...docs, '.gitignore': '.aidlc/local/\n' }, profile); // as init writes it
-  assert.equal(run(dir, ['upgrade', '--dirty']).code, 0);
-  commit(dir, 'pin the CLI');
-  return dir;
-}
-function hook(name, input) {
-  const r = spawnSync(process.execPath, [RUN, name], { input: JSON.stringify({ session_id: 's1', ...input }), encoding: 'utf8' });
-  return r.stdout.trim() ? JSON.parse(r.stdout) : {};
-}
+const project = (docs, profile) => pinnedRepo({ ...I1, ...docs, '.gitignore': '.aidlc/local/\n' }, profile); // as init writes it
+const hook = (name, input) => hookCall(name, input).json;
 const live = (dir, unit) => write(dir, { [`.git/aidlc/heartbeats/${unit}`]: '' });
 const steer = (dir) => hook('steer', { cwd: dir, hook_event_name: 'Stop', last_assistant_message: 'Done.' }).decision ?? 'allow';
 

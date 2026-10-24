@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { git } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const CLI = join(ROOT, 'plugin/cli/aidlc.mjs');
@@ -92,9 +93,8 @@ test('a release tag matches the plugin.json version', (t) => {
 
 test('plugin/ never changes under an already tagged version', (t) => {
   const { version } = readJson('plugin/.claude-plugin/plugin.json');
-  const git = (...args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
-  try { git('rev-parse', '-q', '--verify', `refs/tags/v${version}`); } catch { return t.skip(`v${version} not tagged yet`); }
-  assert.equal(git('diff', '--name-only', `v${version}`, '--', 'plugin/'), '', `plugin/ changed since v${version}; bump version in plugin.json`);
+  try { git(ROOT, 'rev-parse', '-q', '--verify', `refs/tags/v${version}`); } catch { return t.skip(`v${version} not tagged yet`); }
+  assert.equal(git(ROOT, 'diff', '--name-only', `v${version}`, '--', 'plugin/'), '', `plugin/ changed since v${version}; bump version in plugin.json`);
 });
 
 test('U1/AC-6 claude plugin validate . passes', (t) => {

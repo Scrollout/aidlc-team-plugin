@@ -2,20 +2,16 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { spawnSync } from 'node:child_process';
-import { approve, branch, commit, intentDoc, makeRepo, read, run, tempDir, unitDoc } from './state-repo.mjs';
+import { approve, branch, commit, hook, intentDoc, pinnedRepo, read, run, tempDir, unitDoc } from './state-repo.mjs';
 
-const RUN = join(import.meta.dirname, '..', 'plugin/hooks/run.mjs');
 const U1 = 'docs/units/U-1-export.md';
 
 // A project in a folder whose path has spaces (and, on Windows, a drive letter and maybe a short name).
 function spaced() {
   const parent = join(tempDir('with space-'), 'my projects');
   mkdirSync(parent);
-  const dir = makeRepo({ 'docs/intents/I-1-pricing.md': intentDoc('I-1'), [U1]: unitDoc({ scope: ['src/**'] }) }, {}, parent);
+  const dir = pinnedRepo({ 'docs/intents/I-1-pricing.md': intentDoc('I-1'), [U1]: unitDoc({ scope: ['src/**'] }) }, {}, parent); // the hooks run the pinned CLI
   approve(dir, 'I-1', 'U-1');
-  assert.equal(run(dir, ['upgrade', '--dirty']).code, 0, 'pins the CLI for the hooks');
-  commit(dir, 'pin the CLI');
   return dir;
 }
 
@@ -35,8 +31,8 @@ test('U12/AC-3 the CLI and hooks run from a path with spaces, and a CRLF doc kee
   const r = run(dir, ['next']);
   assert.equal(r.code, 0, r.err);
   assert.match(r.out, /^restart the builder of U-1|^build U-1|^wait/);
-  const hook = spawnSync(process.execPath, [RUN, 'guard'], { input: JSON.stringify({ cwd: dir, hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: { command: 'git status' } }), encoding: 'utf8' });
-  assert.equal(hook.status, 0, hook.stderr);
+  const guard = hook('guard', { cwd: dir, hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: { command: 'git status' } });
+  assert.equal(guard.code, 0, guard.err);
   writeFileSync(join(dir, U1), read(dir, U1).replace(/\n/g, '\r\n'));
   commit(dir, 'CRLF checkout');
   assert.match(run(dir, ['status']).out, /U-1 (building|approved)/, 'line ends alone never stale an approval');

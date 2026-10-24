@@ -33,7 +33,7 @@ function setup({ github = GITHUB, issues = [], u2 = '' } = {}) {
     [U(1)]: withFm(unitDoc({ title: 'Export', scope: ['src/a/**'], modules: ['api'], acs: ['- AC-1 (unit): exports `sku,price`.', '- AC-2 (unit): rejects an unknown region.'] }),
       'priority: 2\nboard: { effort: M, wave: 1, start: 2026-11-02 }'),
     [U(2)]: withFm(unitDoc({ title: 'Currency', scope: ['src/b/**'] }), u2),
-  }, { github: github && { gh: [process.execPath, STUB], ...github } }); // the stub, through github.gh on every platform
+  }, { github: github && { gh: [process.execPath, STUB], ...github }, board: { backoff: [0, 0, 0, 0] } }); // the stub, through github.gh on every platform; no wait between lists
   approve(dir, 'I-1', 'U-1');
   const bin = tempDir('gh-');
   const state = join(bin, 'state.json');

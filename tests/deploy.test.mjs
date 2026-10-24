@@ -2,13 +2,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { spawnSync } from 'node:child_process';
-import { approve, branch, CLI, commit, git, intentDoc, makeRepo, merge, read, run, unitDoc } from './state-repo.mjs';
+import { approve, branch, commit, git, hook as hookCall, intentDoc, makeRepo, merge, read, run, unitDoc } from './state-repo.mjs';
 
 const OK = 'node -e "require(\'fs\').writeFileSync(\'ran.txt\', \'x\')"';
 const FAIL = 'node -e "console.log(\'image build broke\'); process.exit(3)"';
 const mark = (file) => `node -e "require('fs').writeFileSync('${file}', 'x')"`;
-const hook = (dir, name, input) => spawnSync(process.execPath, [CLI, 'hook', name], { cwd: dir, encoding: 'utf8', input: JSON.stringify({ session_id: 's', cwd: dir, ...input }) }).stdout;
+const hook = (dir, name, input) => hookCall(name, { session_id: 's', cwd: dir, ...input }, { pinned: false }).out;
 const guard = (dir, command, mode = 'auto') => JSON.parse(hook(dir, 'guard', { tool_name: 'Bash', permission_mode: mode, tool_input: { command } })).hookSpecificOutput?.permissionDecision ?? 'none';
 const record = (dir) => JSON.parse(read(dir, '.git/aidlc/deploys/I-1.json'));
 

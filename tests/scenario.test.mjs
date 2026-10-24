@@ -2,18 +2,11 @@
 // builder restarted on a clean worktree, a fix round in flight, and a fix round reported with no new commit.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
 import { utimesSync } from 'node:fs';
 import { join } from 'node:path';
-import { aidlc, approve, commit, git, intentDoc, makeRepo, review, run, tempDir, unitDoc } from './state-repo.mjs';
+import { aidlc, approve, commit, git, hook, intentDoc, pinnedRepo, review, run, tempDir, unitDoc } from './state-repo.mjs';
 
-const RUN = join(import.meta.dirname, '..', 'plugin/hooks/run.mjs');
-
-function hook(name, input) {
-  const r = spawnSync(process.execPath, [RUN, name], { input: JSON.stringify({ session_id: 's1', hook_event_name: 'PreToolUse', ...input }), encoding: 'utf8' });
-  return r.stdout.trim() ? JSON.parse(r.stdout) : {};
-}
-const launch = (dir, agent, prompt, model) => hook('model', { cwd: dir, tool_name: 'Agent', tool_input: { subagent_type: `team:${agent}`, prompt, model } });
+const launch = (dir, agent, prompt, model) => hook('model', { cwd: dir, hook_event_name: 'PreToolUse', tool_name: 'Agent', tool_input: { subagent_type: `team:${agent}`, prompt, model } }).json;
 const next = (dir) => run(dir, ['next']).out;
 const quiet = (dir) => utimesSync(join(aidlc(dir), 'heartbeats', 'U-1'), new Date(0), new Date(0));
 function worktree(dir, n) {
@@ -23,9 +16,7 @@ function worktree(dir, n) {
 }
 
 test('U4/AC-6 a unit survives a clear, a lost builder and fix rounds with no duplicate builder and no lost commit', () => {
-  const dir = makeRepo({ 'docs/intents/I-1-p.md': intentDoc('I-1'), 'docs/units/U-1-p.md': unitDoc({ scope: ['src/**'] }) });
-  run(dir, ['upgrade', '--dirty']);
-  commit(dir, 'pin the CLI');
+  const dir = pinnedRepo({ 'docs/intents/I-1-p.md': intentDoc('I-1'), 'docs/units/U-1-p.md': unitDoc({ scope: ['src/**'] }) });
   approve(dir, 'I-1', 'U-1');
   assert.match(next(dir), /^build U-1 /);
   run(dir, ['card', 'U-1']);

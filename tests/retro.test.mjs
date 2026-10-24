@@ -1,11 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
-import { approve, branch, commit, git, intentDoc, makeRepo, read, review, run, unitDoc, write } from './state-repo.mjs';
+import { approve, branch, git, hook, intentDoc, makeRepo, read, review, run, unitDoc, write } from './state-repo.mjs';
 import { writeIndexes } from '../plugin/cli/lib/okf.mjs';
 
-const ROOT = join(import.meta.dirname, '..');
 const U = (n) => `docs/units/U-${n}-u.md`;
 const stats = (dir) => JSON.parse(read(dir, '.git/aidlc/stats.json'));
 
@@ -36,10 +34,9 @@ test('U19/AC-4 U19/AC-5 the counters feed aidlc retro, which lists, proposes at 
   for (let k = 0; k < 3; k++) review(dir, 'U-1', 'fix');
   run(dir, ['report', 'U-2'], '{"status": "stopped", "stop": "the scope is too small"}');
   for (let k = 0; k < 3; k++) run(dir, ['merge', 'U-1']);
-  const hook = (command) => spawnSync(process.execPath, [join(ROOT, 'plugin/cli/aidlc.mjs'), 'hook', 'guard'], { cwd: dir, encoding: 'utf8', input: JSON.stringify({ session_id: 's', cwd: dir, tool_input: { command } }) });
-  for (let k = 0; k < 3; k++) hook('git push --force origin unit/U-1');
+  for (let k = 0; k < 3; k++) hook('guard', { session_id: 's', cwd: dir, tool_input: { command: 'git push --force origin unit/U-1' } }, { pinned: false });
   write(dir, { '.git/aidlc/prompts.json': [{ id: 't1', command: 'approve U-1', at: '2026-10-23T10:00:00Z' }] });
-  spawnSync(process.execPath, [join(ROOT, 'plugin/cli/aidlc.mjs'), 'hook', 'heartbeat'], { cwd: dir, input: JSON.stringify({ cwd: dir, tool_use_id: 't1' }) });
+  hook('heartbeat', { cwd: dir, tool_use_id: 't1' }, { pinned: false });
 
   const counted = stats(dir);
   assert.equal(counted.codes['GATE-REVIEW'], 3);
@@ -76,9 +73,8 @@ test('U21/AC-1 U21/AC-2 a stop report a restart replaced still counts; the retro
   run(dir, ['report', 'U-1'], '{"status": "done", "summary": "built after the scope was widened"}');
   approve(dir, 'U-2'); // as the owner's ! command: no prompt recorded
   write(dir, { '.git/aidlc/prompts.json': [{ id: 't1', command: 'mode unattended', at: '2026-10-23T10:00:00Z' }] });
-  const cli = (args, input) => spawnSync(process.execPath, [join(ROOT, 'plugin/cli/aidlc.mjs'), ...args], { cwd: dir, encoding: 'utf8', input: JSON.stringify({ cwd: dir, ...input }) });
-  cli(['hook', 'heartbeat'], { tool_use_id: 't1' });
-  cli(['hook', 'denied'], { hook_event_name: 'PermissionDenied', tool_name: 'Bash', tool_input: { command: 'node .aidlc/bin/aidlc.mjs approve --auto U-2' }, reason: '[Self-Approval]' });
+  hook('heartbeat', { cwd: dir, tool_use_id: 't1' }, { pinned: false });
+  hook('denied', { cwd: dir, hook_event_name: 'PermissionDenied', tool_name: 'Bash', tool_input: { command: 'node .aidlc/bin/aidlc.mjs approve --auto U-2' }, reason: '[Self-Approval]' }, { pinned: false });
 
   const r = run(dir, ['retro', 'I-1']);
   assert.equal(r.code, 0, r.err);
@@ -105,11 +101,11 @@ test('U42/AC-1 U42/AC-2 an owner command the CLI refuses is marked refused, not 
   approve(dir, 'I-1', 'U-1');
   assert.equal(run(dir, ['retro', 'I-1']).code, 0, 'a first retro resets the counters');
   write(dir, { '.git/aidlc/prompts.json': [{ id: 't1', command: 'mode sideways', at: '2026-10-23T10:00:00Z' }, { id: 't2', command: 'mode unattended', at: '2026-10-23T10:01:00Z' }] });
-  const cli = (args, input) => spawnSync(process.execPath, [join(ROOT, 'plugin/cli/aidlc.mjs'), ...args], { cwd: dir, encoding: 'utf8', input: input && JSON.stringify({ cwd: dir, ...input }) });
-  assert.equal(cli(['mode', 'sideways']).status, 64);
-  cli(['hook', 'heartbeat'], { hook_event_name: 'PostToolUse', tool_use_id: 't1' }); // `; echo $?` made the call end well
-  assert.equal(cli(['mode', 'unattended']).status, 0);
-  cli(['hook', 'heartbeat'], { hook_event_name: 'PostToolUse', tool_use_id: 't2' });
+  const heartbeat = (tool_use_id) => hook('heartbeat', { cwd: dir, hook_event_name: 'PostToolUse', tool_use_id }, { pinned: false });
+  assert.equal(run(dir, ['mode', 'sideways']).code, 64);
+  heartbeat('t1'); // `; echo $?` made the call end well
+  assert.equal(run(dir, ['mode', 'unattended']).code, 0);
+  heartbeat('t2');
   const prompts = JSON.parse(read(dir, '.git/aidlc/prompts.json'));
   assert.ok(prompts[0].refused && !prompts[0].ran, 'the refused prompt');
   assert.ok(prompts[1].ran && !prompts[1].refused);
