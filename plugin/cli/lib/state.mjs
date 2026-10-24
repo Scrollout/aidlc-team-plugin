@@ -8,7 +8,7 @@ import { bundleOf, config, QUICK, VERDICT, done, git, gitLines, isMap, list, rea
 import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { linksOf, parseDoc } from './okf.mjs';
-import { acsOf, computeLane, inside, lintPlan, overlaps, readPlan, reqId as reqIdOf, testsOnly } from './grid.mjs';
+import { acsOf, computeLane, inside, lintPlan, overlaps, readPlan, reqId as reqIdOf, productGlobs, testsOnly } from './grid.mjs';
 
 const S = config.state;
 
@@ -292,7 +292,10 @@ export function readState(cwd, { now = Date.now() } = {}) {
     // Released: the owner tagged it, or its recorded release (and smoke) passed (docs/design/operations.md).
     const deploy = readJson(runtimeFile(cwd, 'deploys', i.id)) ?? {};
     const smoked = !profile.deploy?.smoke || (deploy.smoke?.ok && deploy.smoke.at >= deploy.release.at);
-    const released = complete && (testsOnly(own, profile) || (profile.deploy || profile.release) && Boolean(deploy.release?.ok && smoked)
+    // Ships nothing: all tests, or, with modules, merges that changed no file of the product (docs/design/operations.md).
+    const changed = () => own.flatMap((u) => gitLines(cwd, 'diff', '--name-only', `${merged.get(u.id)}^1`, merged.get(u.id)));
+    const nothing = complete && (testsOnly(own, profile) || ((profile.modules ?? []).length > 0 && !changed().some((f) => productGlobs(profile).some((g) => inside('/' + f, g)))));
+    const released = complete && (nothing || (profile.deploy || profile.release) && Boolean(deploy.release?.ok && smoked)
       || own.every((u) => (tryGit(cwd, 'tag', '--contains', merged.get(u.id)) ?? '') !== ''));
     return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own, deploy };
   });

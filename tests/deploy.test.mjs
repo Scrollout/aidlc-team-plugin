@@ -216,3 +216,12 @@ test('U62/AC-1 the lead cannot schedule a go: a scheduled release or rollback pr
     assert.equal(hook(dir, 'guard', { tool_name: tool, tool_input: { prompt: 'check the release notes' } }).trim(), '{}');
   }
 });
+
+test('U83/AC-1 an intent whose units reach no module or one-way door ships nothing: released once merged, with no release step', () => {
+  const outside = merged({ modules: [{ id: 'api', paths: ['src/**'] }], lanes: { full: ['db/**'] }, deploy: { check: [OK] } });
+  assert.match(run(outside, ['status']).out, /^I-1 released /m);
+  assert.ok(!existsSync(join(outside, 'ran.txt')), 'no deploy check ran');
+  const inside = merged({ modules: [{ id: 'api', paths: ['a/**'] }] });
+  assert.match(run(inside, ['status']).out, /^I-1 merged /m, 'a unit in a module ships it');
+  assert.match(run(merged({}), ['status']).out, /^I-1 merged /m, 'without modules nothing is known to be outside the product');
+});

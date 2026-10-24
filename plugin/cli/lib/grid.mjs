@@ -68,6 +68,11 @@ export const inside = (a, b) => within(segments(a), segments(b), '**', segWithin
 // A back-fill: units whose scopes all lie inside the levels' test paths, so they ship no code (docs/design/backfill.md).
 export const testsOnly = (units, profile) => units.length > 0 && units.every((u) => u.scope.length
   && u.scope.every((g) => Object.values(withDefaults(profile).levels).some((l) => list(l?.paths).some((p) => inside(g, p)))));
+// The running product: module paths and one-way doors. A unit whose scope reaches none of it ships nothing (U76, U83).
+export const productGlobs = (profile) => [...(profile.modules ?? []).flatMap((m) => list(m.paths)), ...list(profile.decisions?.paths ?? profile.lanes?.full)];
+// Units that ship nothing: all tests, or, when the profile names modules, all outside the product (docs/design/operations.md).
+export const shipsNothing = (units, profile) => testsOnly(units, profile) || (units.length > 0 && (profile.modules ?? []).length > 0
+  && units.every((u) => u.scope.length && !u.scope.some((s) => productGlobs(profile).some((g) => overlaps(s, g)))));
 
 // A scope holding the project profile can add its own test location to `levels` (docs/design/grid.md).
 const PROFILE = '/' + config.layers.find((l) => l.name === 'project').path;
@@ -263,7 +268,7 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
     if (top && own.length && !own.some((u) => u.acs.some((a) => a.level === top))) add('PLAN-SLICE', i, 1, 'planSliceIntent', { level: top });
   }
   // The waiver is for work outside the running product: a new unit reaching a module or a one-way door voids it.
-  const product = [...(profile.modules ?? []).flatMap((m) => list(m.paths)), ...doorGlobs];
+  const product = productGlobs(profile);
   for (const i of top ? intents.filter((x) => x.fm.status !== GRID.dropped && x.fm[GRID.slice]) : []) {
     for (const u of units.filter((x) => x.fm.intent === i.id && !x.fm.verified_hash)) {
       const area = product.find((g) => u.scope.some((s) => overlaps(s, g)));
@@ -272,7 +277,7 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   }
   // With a deploy, each live intent links its runbook (docs/design/operations.md).
   const live = (i) => units.some((u) => u.fm.intent === i.id) || !all.some((u) => u.fm.intent === i.id);
-  for (const i of profile.deploy ? intents.filter((x) => x.fm.status !== GRID.dropped && live(x) && !testsOnly(all.filter((u) => u.fm.intent === x.id), profile)) : []) {
+  for (const i of profile.deploy ? intents.filter((x) => x.fm.status !== GRID.dropped && live(x) && !shipsNothing(all.filter((u) => u.fm.intent === x.id), profile)) : []) {
     if (!linksOf(i, bundle).some((f) => existsSync(f) && parseDoc(readFileSync(f, 'utf8')).fm?.type === GRID.runbookType)) add('PLAN-RUNBOOK', i, 1, 'planRunbook', {});
   }
   for (const u of units.filter((x) => x.modules.length > 1 && x.acs.length && x.acs.every((a) => a.level === levels[0]))) {
