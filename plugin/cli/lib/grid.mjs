@@ -5,7 +5,7 @@ import { join, resolve, sep } from 'node:path';
 import { at, bundleOf, config, FULL, QUICK, STANDARD, done, fieldPaths, git, isMap, tryGit, list, UsageError, relPath } from './config.mjs';
 import { finding as codeFinding, msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
-import { linksOf, parseDoc, proseLines } from './okf.mjs';
+import { linksOf, parseDoc, proseLines, sectionOf } from './okf.mjs';
 
 const GRID = config.grid;
 const AC = /^\s*[-*]\s+(AC-\d+)\b\s*(?:\(([^)]*)\))?\s*:/;
@@ -208,6 +208,13 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
       for (const ac of u.acs.filter((a) => levels.includes(a.level))) {
         const paths = list(levelDefs[ac.level].paths);
         if (paths.length && !u.scope.some((g) => overlaps(g, PROFILE) || paths.some((p) => overlaps(g, p)))) add('PLAN-TEST', u, ac.line, 'acNoTestPath', { ac: ac.id, level: ac.level, paths: paths.join(', ') });
+      }
+    }
+    // Design rows before code: an unapproved unit carries its lane's design sections, or a reason it needs none (U72).
+    if (u.scope.length && !u.fm.verified_hash && !u.fm[GRID.design]) {
+      const lane = computeLane(u.scope, profile).lane;
+      for (const section of GRID.designRows[lane] ?? []) {
+        if (!sectionOf(u.doc, section).some(([, t]) => t.trim())) add('PLAN-DESIGN', u, 1, 'planDesign', { lane, section });
       }
     }
     // Builders never write what merge writes: bundle indexes and logs, and profile.shared files.

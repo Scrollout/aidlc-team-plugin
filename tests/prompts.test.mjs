@@ -120,7 +120,7 @@ test('U8/AC-6 the card lists cited requirements, next names each required focus,
   const card = run(dir, ['card', 'U-1']).out;
   assert.match(card, new RegExp(`^- R-1 ${REQ}$`, 'm'));
   assert.match(card, /^- AC-1 \(unit\): `GET \/x` returns 200\.$/m, 'inline code survives');
-  assert.match(read(REVIEWER), /The card's requirement and interface docs\. Check the diff against each\./);
+  assert.match(read(REVIEWER), /The card's design, requirement and interface docs\. Check the diff against each\./);
 
   branch(dir, 'U-1', 'src/auth/login.mjs');
   run(dir, ['report', 'U-1'], '{"status": "done"}');

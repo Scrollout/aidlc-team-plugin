@@ -17,7 +17,10 @@ Write each as a test tagged {{id}}/AC-<k> at its level, before the code.
 Write only inside:
 {{#each scope}}- {{this}}
 {{/each}}
-## Interfaces (read them at the base commit)
+{{#each design}}## Design (build to it; every review checks it)
+{{this}}
+
+{{/each}}## Interfaces (read them at the base commit)
 {{#each interfaces}}- {{this}}
 {{/each}}
 ## Requirements (meet them; every review checks them)

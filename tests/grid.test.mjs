@@ -3,12 +3,14 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { computeLane, inside, lintPlan, overlaps, readPlan } from '../plugin/cli/lib/grid.mjs';
+import { computeLane, inside, lintPlan as lintAll, overlaps, readPlan } from '../plugin/cli/lib/grid.mjs';
 import { git, tempDir } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const PLAN = join(ROOT, 'tests/fixtures/plan');
 const CLI = join(ROOT, 'plugin/cli/aidlc.mjs');
+// PLAN-DESIGN has its own tests (tests/design.test.mjs); these units carry no design on purpose.
+const lintPlan = (...args) => lintAll(...args).filter((f) => f.code !== 'PLAN-DESIGN');
 const lint = (name, profile = {}, opts = {}) => lintPlan(join(PLAN, name), profile, { base: PLAN, ...opts });
 const codes = (findings) => [...new Set(findings.map((f) => f.code))];
 

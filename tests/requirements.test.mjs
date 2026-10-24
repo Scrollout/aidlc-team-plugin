@@ -8,7 +8,7 @@ import { approve, branch, commit, intentDoc, makeRepo, merge, read, run, tempDir
 
 const ROOT = join(import.meta.dirname, '..');
 const FX = join(ROOT, 'tests/fixtures/requirements');
-const lint = (name) => lintPlan(join(FX, name), {}, { base: FX });
+const lint = (name) => lintPlan(join(FX, name), {}, { base: FX }).filter((f) => f.code !== 'PLAN-DESIGN'); // design rows: tests/design.test.mjs
 
 test('U10/AC-1 U22/AC-3 requirements are read by ID number and named as their files; PLAN-REQ fires on none or unknown citations', () => {
   const plan = readPlan(join(FX, 'cited'));

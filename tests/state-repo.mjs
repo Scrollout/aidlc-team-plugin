@@ -54,8 +54,9 @@ export function intentDoc(id, title = 'Pricing') {
   return `---\ntype: Intent\ntitle: ${title}\ndescription: ${title} for more regions.\n---\n\n# Goal\n\nSell in more regions.\n`;
 }
 
-export function unitDoc({ intent = 'I-1', depends = [], scope = ['src/**'], modules = [], acs = ['- AC-1 (unit): it works.'], title = 'Unit', extra = '', twoWay = '' } = {}) {
+export function unitDoc({ intent = 'I-1', depends = [], scope = ['src/**'], modules = [], acs = ['- AC-1 (unit): it works.'], title = 'Unit', extra = '', twoWay = '', design = 'a test unit' } = {}) {
   const fm = ['type: Unit', `title: ${title}`, `description: ${title} goal.`];
+  if (design) fm.push(`design: "${design}"`); // waives PLAN-DESIGN (U72)
   if (intent) fm.push(`intent: ${intent}`);
   if (depends.length) fm.push(`depends: [${depends.join(', ')}]`);
   fm.push(`scope: [${scope.map((s) => `"${s}"`).join(', ')}]`);
