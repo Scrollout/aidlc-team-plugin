@@ -152,7 +152,7 @@ test('U4/AC-7 start renames the worktree branch to unit/U-<n> and refuses a diff
   assert.match(taken.out, /unit\/U-1 is checked out in /);
 });
 
-test('U8/AC-7 start takes over the branch from a clean earlier worktree, even with a fresh heartbeat, and refuses a dirty one', () => {
+test('U8/AC-7 U74/AC-4 start takes over the branch from a clean earlier worktree, even locked or with a fresh heartbeat, and refuses a dirty one', () => {
   const dir = repo();
   approve(dir, 'I-1', 'U-1');
   run(dir, ['card', 'U-1']);
@@ -169,6 +169,7 @@ test('U8/AC-7 start takes over the branch from a clean earlier worktree, even wi
   write(wt1, { 'src/pricing/b.txt': 'dirty\n' });
   assert.equal(run(wt2, ['start', 'U-1']).code, 1, 'dirty');
   rmSync(join(wt1, 'src/pricing/b.txt'));
+  git(dir, 'worktree', 'lock', '--reason', 'claude agent agent-1 (pid 1, still running)', wt1); // U74/AC-4: the host's lock outlives the builder
   const beat = join(dir, '.git/aidlc/heartbeats/U-1');
   mkdirSync(join(beat, '..'), { recursive: true });
   writeFileSync(beat, ''); // the new builder's own launch mark

@@ -156,7 +156,7 @@ export const commands = {
         const path = worktrees(cwd).get(branch);
         if (path) { // an earlier builder's worktree is taken over only when it is clean; next never runs two builders for a unit
           if (tryGit(path, 'status', '--porcelain') !== '') return done(msg('branchTaken', { branch, path }), config.exit.findings);
-          git(cwd, 'worktree', 'remove', path);
+          git(cwd, 'worktree', 'remove', '--force', '--force', path); // the host's lock lasts as long as the lead session
         }
         git(cwd, 'switch', '-q', branch);
       } else git(cwd, 'branch', '-m', branch);
