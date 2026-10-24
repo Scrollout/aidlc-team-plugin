@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** Fix from the first migration: `PLAN-GENERATED` no longer reports a root-anchored scope (`/Makefile`, as `PLAN-SCOPE` suggests) as untracked ([Plan lint](design/plan-lint.md)). Release 0.75.1.
 - **Update** M9 U71 built: `aidlc ci wait` reads the pushed base's GitHub Actions runs and records green, red, pending or none; with `ci.wait`, `next` pushes and waits before new builders, and a red base asks for a fix unit, with only fix units building or merging until a merge lands ([CI on the base](design/base-ci.md)). Release 0.75.0.
 - **Creation** [CI on the base](design/base-ci.md) and [M9](roadmap/m9.md) U71: with `ci.wait`, `next` pushes and waits for the base's GitHub Actions runs before new builders, and a red base comes first with only fix units building (owner's choices); taken from Later.
 - **Update** [M8](roadmap/m8.md) closed on 0.74.0 (owner): the partial-AC mutation finding and `next` serving one intent at a time move to [Later](roadmap/later.md).
