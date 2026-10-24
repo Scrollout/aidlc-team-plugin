@@ -569,7 +569,7 @@ export const commands = {
     const opt = (flag) => { const k = rest.indexOf(flag); return k >= 0 ? rest[k + 1] : undefined; };
     const stop = opt('--stop');
     const data = readJson(personal(cwd)) ?? {};
-    if (mode === S.off) {
+    if (mode === S.off && !rest.length) {
       writeJson(personal(cwd), { ...data, run: undefined });
       return done(msg('modeSet', { run: S.off }));
     }

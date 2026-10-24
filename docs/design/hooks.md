@@ -3,7 +3,7 @@ type: Design
 title: Hook mechanics
 description: How the plugin's hooks reach the pinned CLI, how they fail, the host facts they rely on, and how repeated denials escalate.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T18:15:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T11:46:55Z }
 sources:
   - id: cc-hooks
     resource: https://code.claude.com/docs/en/hooks
@@ -30,6 +30,7 @@ From the hooks reference:[^cc-hooks]
 - The subagent tool is matched as `Agent`; its `tool_input` has `subagent_type` and `model`, which the model hook compares with the card.
 - SessionStart `source` is `startup`, `resume`, `clear`, `compact` or `fork`; context is returned as `additionalContext`.
 - PreToolUse runs only for Claude's tool calls, so an owner's `!` command is not subject to the guard.
+- Claude Code's worktree isolation refuses a compound command that names git and reads `.github` as git: the pilot's refusals of `.github/scripts/x.sh > out; echo $?` came from it, not from the guard.
 
 What each hook checks: [Hook checks](hook-checks.md).
 

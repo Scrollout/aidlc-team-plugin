@@ -14,6 +14,8 @@ import { approval, baseOf, branchOf, bump, codeChanges, diffHash, keptPass, merg
 const G = config.gate;
 const matches = (path, glob) => inside('/' + path, glob);
 const finding = (code, path, line, key, data) => codeFinding(G.codes, code, path, line, key, data);
+// Text that matches a built-in secret pattern or one in profile.security.secrets (the secrets hook and the gate).
+export const secretIn = (text, profile) => [...config.hooks.secrets, ...list(profile.security?.secrets)].some((p) => new RegExp(p, 'i').test(text));
 
 // Proof-revert: with the unit's code reverted, each level that holds a tagged test must fail (docs/design/gate.md).
 function proofRevert(tree, card, paths, levels, tagged, bundleRel, add, unit, mutations) {
@@ -167,6 +169,15 @@ function runGate(cwd, st, unit) {
     if (mergeWritten(path, bundleRel, profile)) add('GATE-SHARED', 'gateShared', { path }, path);
     else if (!unit.scope.some((g) => matches(path, g))) add('SCOPE-OUT', 'gateScope', { path }, path);
   }
+  // Each added line, so a secret written from Bash, which the secrets hook never sees, stops the merge.
+  let file = null;
+  let line = 0;
+  for (const l of gitLines(cwd, 'diff', '-U0', '--no-color', '--no-ext-diff', `${base}...${branchOf(unit.id)}`)) {
+    if (l.startsWith('+++ ')) file = l.slice(6);
+    else if (l.startsWith('@@')) line = Number(l.match(/\+(\d+)/)?.[1]);
+    else if (l.startsWith('+') && file && secretIn(l.slice(1), profile)) add('GATE-SECRET', 'gateSecret', { path: file, line }, file);
+    if (l.startsWith('+') && !l.startsWith('+++ ')) line++;
+  }
   const diffLane = computeLane(paths, profile, { paths: true });
   if (card && paths.length && G.lanes.indexOf(diffLane.lane) > G.lanes.indexOf(card.lane)) add('GATE-LANE', 'gateLane', { lane: diffLane.lane, reason: diffLane.reason, card: card.lane });
 
@@ -249,6 +260,7 @@ function historyFindings(cwd, range, st, codes) {
       for (const t of Object.values(G.trailers)) if (!value(t)) out.push(finding(codes.merge, '.', 1, 'ciTrailer', { sha: short, trailer: t }));
       const unitId = value(G.trailers.unit);
       const unit = unitId && st.units.find((u) => u.id === unitId);
+      if (unitId && !unit) out.push(finding(codes.merge, '.', 1, 'ciUnknownUnit', { sha: short, unit: unitId }));
       const doc = unit && tryGit(cwd, 'show', `${sha}:${relPath(top, unit.file)}`);
       const scope = doc ? list(parseDoc(doc + '\n').fm?.scope) : [];
       for (const path of changed) {

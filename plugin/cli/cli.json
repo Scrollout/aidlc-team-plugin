@@ -437,6 +437,12 @@
     "guardNoVerify": "commit without hooks",
     "guardBaseCommit": "commit on {{base}} stages {{path}}",
     "guardMerge": "raw merge of {{branch}}",
+    "guardMove": "moving {{base}} by git {{what}}",
+    "guardAlias": "a git alias set on the command line",
+    "guardHook": "running a hook by hand",
+    "scopeState": "{{path}} is the CLI's state",
+    "gateSecret": "{{path}}:{{line}} adds what looks like a secret",
+    "ciUnknownUnit": "merge {{sha}} names {{unit}}, a unit not in the plan",
     "guardRelease": "{{what}} needs the owner",
     "scopeOut": "{{path}} is outside the scope of {{unit}}",
     "scopeShared": "{{path}} is written by merge",
@@ -981,6 +987,9 @@
       },
       "PUSH-COMMIT": {
         "fix": "move the change into a unit; direct commits may touch only docs and workflow files"
+      },
+      "GATE-SECRET": {
+        "fix": "remove the secret from the unit branch; read it from the environment"
       }
     },
     "noReview": "none"
@@ -1052,9 +1061,20 @@
         "-c",
         "--git-dir",
         "--work-tree",
-        "--namespace"
-      ]
+        "--namespace",
+        "--config-env"
+      ],
+      "alias": "alias.",
+      "pushAll": ["--all", "--mirror", "--branches"],
+      "move": { "update-ref": [], "branch": ["-f", "--force", "-M", "-C"], "checkout": ["-B"], "switch": ["-C", "--force-create"] },
+      "mergeLike": ["merge", "pull"],
+      "onBase": ["cherry-pick", "rebase", "reset"],
+      "commitWithValue": ["-m", "-F", "-C", "-c", "-t", "--message", "--file", "--reuse-message", "--reedit-message", "--fixup", "--squash", "--author", "--date", "--cleanup", "--template", "--trailer", "--pathspec-from-file"]
     },
+    "autoOwner": "approve",
+    "hookCommand": "hook",
+    "runner": "hooks/run.mjs",
+    "claude": { "bin": "claude", "print": ["-p", "--print"] },
     "force": [
       "--force",
       "-f",
@@ -1094,7 +1114,8 @@
       "\\bxox[abprs]-[A-Za-z0-9-]{10,}",
       "\\bsk-ant-[A-Za-z0-9_-]{20,}",
       "\\bsk-[A-Za-z0-9]{32,}",
-      "(?:api[_-]?key|secret|token|password)\\s*[:=]\\s*[\"'][A-Za-z0-9/+_=-]{16,}[\"']"
+      "(?:api[_-]?key|secret|token|password)\\s*[:=]\\s*[\"'][A-Za-z0-9/+_=-]{16,}[\"']",
+      "(?:^|\\n)[ \\t-]*(?:export[ \\t]+)?[A-Z0-9_]*(?:SECRET|TOKEN|PASSWORD|PASSWD|API_KEY|ACCESS_KEY)[A-Z0-9_]*[ \\t]*=[ \\t]*(?=[A-Za-z0-9/+_=-]*\\d)[A-Za-z0-9/+_=-]{16,}[ \\t]*(?:\\r?\\n|$)"
     ],
     "codes": {
       "GUARD-FORCE": {
@@ -1114,6 +1135,18 @@
       },
       "GUARD-MERGE": {
         "fix": "merge units with aidlc merge"
+      },
+      "GUARD-BASE-MOVE": {
+        "fix": "the base moves only by aidlc merge and aidlc push"
+      },
+      "GUARD-ALIAS": {
+        "fix": "run the git command by its own name"
+      },
+      "GUARD-HOOK": {
+        "fix": "Claude Code runs the hooks; the agent never runs aidlc hook"
+      },
+      "SCOPE-STATE": {
+        "fix": "leave the state to the aidlc command that records it"
       },
       "GUARD-OWNER": {
         "fix": "allow the prompt to run it, deny to refuse; in a terminal the owner can also type it with !"
