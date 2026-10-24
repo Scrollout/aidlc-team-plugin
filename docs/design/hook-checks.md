@@ -3,7 +3,7 @@ type: Design
 title: Hook checks
 description: What each hook checks or records - guard, scope, secrets, model, docs, heartbeat, steer, prompt, status and denied.
 status: draft
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T10:28:02Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T11:46:55Z }
 sources:
   - id: cc-hooks
     resource: https://code.claude.com/docs/en/hooks
@@ -12,31 +12,39 @@ sources:
 
 # Checks
 How the hooks are wired, fail and escalate: [Hook mechanics](hooks.md).
-- **guard** (Bash, `CronCreate`, `ScheduleWakeup`) reads each command segment as argv. On `CronCreate` and `ScheduleWakeup` it denies a prompt the prompt hook would take as the owner's approval or go (`release I-<n>`, `rollback I-<n>`). On Bash it denies:
+- **guard** (Bash, `CronCreate`, `ScheduleWakeup`) reads each command segment as argv, up to a `#` comment and without redirect targets. On `CronCreate` and `ScheduleWakeup`, and for `claude -p`/`--print`, it denies a prompt the prompt hook would take as the owner's approval or go (`release I-<n>`, `rollback I-<n>`). On Bash it denies (a long option also by unambiguous prefix, as git does):
   - a force push or `+refspec`;
-  - pushing or deleting the base, so `aidlc push` is the only way;
+  - pushing, deleting or moving the base, so `aidlc push` is the only way: `--all`, `--mirror`, a glob refspec, a bare push while `remote.*.push` or `push.default=matching` is set, `update-ref`, `branch -f`, `checkout -B`;
   - `--no-verify` or `-n` on a commit;
-  - a commit on the base that stages files outside the bundle, `.aidlc/**` and the files `init` writes;
-  - `git merge` of a `unit/*` branch, since `aidlc merge` does it.
+  - a commit on the base whose index, `--all` files or pathspecs hold a file outside the bundle, `.aidlc/**` and `init`'s files;
+  - `merge` or `pull` of a `unit/*` branch in any spelling, and on the base `cherry-pick`, `rebase` or `reset` onto one, since `aidlc merge` does it;
+  - a git alias set with `-c alias.*` or `git config alias.*`;
+  - `aidlc hook <name>` or `hooks/run.mjs`: Claude Code runs the hooks, never the agent.
 
-  The owner commands (`hooks.owner`: `approve`, `upgrade`, `delegate`, `mode`, `release`, `rollback`) in any spelling it does not deny but asks the owner, and records the prompt ([Approvals](approvals.md#owner-prompts)): a yes/no prompt on any device. In `bypassPermissions` mode it denies them ([0009](../decisions/0009-approval-prompt.md)). A command with `--auto` passes, for what the owner delegated ([0008](../decisions/0008-delegated-approvals.md)). A `release I-<n>` or `rollback I-<n>` the owner typed at the current commit passes once without a prompt ([Deployment and operation](operations.md#details)).
+  The owner commands (`hooks.owner`: `approve`, `upgrade`, `delegate`, `mode`, `release`, `rollback`) it asks the owner about, and records the prompt ([Approvals](approvals.md#owner-prompts)). In `bypassPermissions` mode it denies them ([0009](../decisions/0009-approval-prompt.md)). Only `approve --auto` passes, for what the owner delegated ([0008](../decisions/0008-delegated-approvals.md)); the other owner commands refuse an unknown flag. A `release I-<n>` or `rollback I-<n>` the owner typed at the current commit passes once without a prompt ([Deployment and operation](operations.md#details)).
 
-  `git tag` and `gh release` ask the owner. Redirects, pipes and `; echo $?` pass: the guard reads argv, not the shell. The pilot's refusals of `.github/scripts/x.sh > out; echo $?` came from Claude Code's worktree isolation, which refuses a compound command that names git and reads `.github` as git.
-- **scope** (Edit, Write): in a `unit/*` worktree, a path outside the scope on the unit's card (the approved doc at the base) or a merge-written file is denied. Anywhere, a write that changes a doc's `verified` events or its `verified_hash`, or the personal profile, is denied.
-- **secrets** (Edit, Write): new content matching a built-in secret pattern or one in `profile.security.secrets` is denied. Pattern lists sit in data, not in rules prose, so a project adds one without editing code.
-- **model** (Agent): a builder or reviewer (`subagent_type` ending in `:builder` or `:reviewer`) must name its unit `U-<n>` in the prompt and pass `model` equal to the card's (builder) or `models.review` (reviewer). It touches the unit's heartbeat (builder) or `reviewing` marker (reviewer) at launch, so `next` waits for an agent from its start. A researcher must pass `models.research`; its brief's first line names the doc, whose `researching` marker it touches.
-- **docs** (PostToolUse on a bundle file) returns that file's OKF errors as a block reason so the agent fixes them at once. Outside a `unit/*` worktree it also regenerates the indexes. When the edit wrote a `generated.at` more than `okf.stampSkew` seconds from the current UTC time (a local time marked `Z`), it rewrites the stamp to the current UTC second and tells the agent to re-read the file.
+  `git tag` and `gh release` ask the owner. Pipes and `; echo $?` pass: the guard reads argv, not the shell.
+- **scope** (Edit, Write, MultiEdit, NotebookEdit): in a `unit/*` worktree, a path outside the worktree, outside the scope on the unit's card or merge-written is denied. From any worktree, a write under `.git/aidlc` (`SCOPE-STATE`), to the main checkout's personal profile, or that changes a doc's `verified` events or its `verified_hash` is denied.
+- **secrets** (Edit, Write, MultiEdit, NotebookEdit): new content, a notebook cell included, matching a built-in secret pattern or one in `profile.security.secrets` is denied. Patterns are data, so a project adds one without editing code.
+- **model** (Agent): a builder or reviewer (`subagent_type` ending in `:builder` or `:reviewer`) must name its unit `U-<n>` and pass `model` equal to the card's (builder) or `models.review` (reviewer). It touches the unit's heartbeat (builder) or `reviewing` marker (reviewer) at launch, so `next` waits for it from its start. A researcher must pass `models.research`; its brief's first line names the doc, whose `researching` marker it touches.
+- **docs** (PostToolUse on a bundle file) returns that file's OKF errors as a block reason. Outside a `unit/*` worktree it also regenerates the indexes. When the edit wrote a `generated.at` more than `okf.stampSkew` seconds from the current UTC time (a local time marked `Z`), it rewrites the stamp to the current UTC second and tells the agent to re-read the file.
 - **heartbeat** (PreToolUse and PostToolUse) keeps the mark of the builder, reviewer or researcher in flight fresh, and after a call marks an owner prompt the guard recorded as `ran` ([Agents in flight](in-flight.md), [Approvals](approvals.md#owner-prompts)).
 - **steer** (Stop) blocks with `next`'s line when the action is autonomous. It lets the stop through:
   - at a human gate, or while builders run;
   - when `stop_hook_active` is true;
-  - when a line of the last message ends with a question mark, so a question followed by its options counts;
+  - when a line of the last message ends with a question mark (a question followed by its options counts);
   - when `next`'s action is the stopping point the owner set with `aidlc mode --stop`.
 - **prompt** (UserPromptSubmit) reads the prompt with a trailing `.` or `!` dropped, in any case.[^cc-hooks]
   - Exactly `approve <doc>…`: it runs `approve` as the owner before the lead reads it, and passes the prompt on with what it stamped or the error as `additionalContext` ([0011](../decisions/0011-plain-word-approval.md)).
-  - Exactly `release I-<n>` or `rollback I-<n>`: it records the owner's go for that command at the current commit in `.git/aidlc/goes.json` and tells the lead to run it; the guard uses the go up on that one call. A deploy outlasts the hook's time limit, so the hook does not run it.
+  - Exactly `release I-<n>` or `rollback I-<n>`: it records the owner's go for that command at the current commit in `.git/aidlc/goes.json` and tells the lead to run it; the guard uses the go up on that one call. The hook does not run it: a deploy outlasts its time limit.
   - Any other prompt passes unchanged.
-- **status** (SessionStart) returns `aidlc status` and one resume line, at most 1,000 chars: the run mode and the last owner prompt come first.
-- **denied** (PermissionDenied, Bash) records a command auto mode refused, with the commit `HEAD` was on, in `.git/aidlc/host-denied.json` (the last five).[^cc-hooks] While `HEAD` stays there, `next` hands that action to the owner instead of demanding it again ([State](state.md#next)), so steer lets the stop through.
+- **status** (SessionStart) returns `aidlc status` and one resume line, at most 1,000 chars: run mode and last owner prompt first.
+- **denied** (PermissionDenied, Bash) records a command auto mode refused, with the commit `HEAD` was on, in `.git/aidlc/host-denied.json` (the last five).[^cc-hooks] While `HEAD` stays there, `next` hands that action to the owner ([State](state.md#next)), so steer lets the stop through.
+
+# What the guard does not stop
+The guard stops mistakes, not attackers ([Overview](overview.md)); these need a deliberate evasion, so they stay out of scope (U70):
+- Bash writes outside the scope or to the state files (`sed -i`, `echo >`): the gate's `SCOPE-OUT` and the secret scan of the unit's added lines are the backstop for code.
+- A command the guard cannot read as argv: quoted `bash -c`, `sh -c` or `eval`, variable indirection, `xargs`, a symlinked or copied CLI, `node -e` importing the CLI.
+- Raw API calls: `gh api` on refs, `git send-pack`.
 
 [^cc-hooks]: Claude Code hooks reference

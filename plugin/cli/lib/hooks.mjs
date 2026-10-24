@@ -1,14 +1,14 @@
 // Hook entry points: `aidlc hook <name>` reads the hook JSON on stdin and prints the decision JSON
 // (docs/design/hooks.md). Deny lists, patterns, codes and messages come from cli.json.
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, utimesSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join, resolve, sep } from 'node:path';
-import { bundleOf, config, done, git, readJson, readStdin, tryGit, UsageError, relPath } from './config.mjs';
+import { basename, dirname, isAbsolute, join, resolve, sep } from 'node:path';
+import { bundleOf, config, done, git, gitLines, readJson, readStdin, tryGit, UsageError, relPath } from './config.mjs';
 import { msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
 import { inside, readPlan } from './grid.mjs';
 import { aidlcDir, baseOf, bump, commands as owner, heartbeatFresh, hostDeniedFile, nextAction, readState, runtimeFile, statusText, writeJson } from './state.mjs';
-import { directAllowed, mergeWritten } from './gate.mjs';
+import { directAllowed, mergeWritten, secretIn } from './gate.mjs';
 
 const H = config.hooks;
 const S = config.state;
@@ -19,7 +19,8 @@ export function segments(command) {
   const out = [[]];
   let word = null;
   let quote = null;
-  const push = () => { if (word !== null) out[out.length - 1].push(word); word = null; };
+  let target = false; // the next word is a redirect's target, no part of the argv
+  const push = () => { if (word !== null && !target) out[out.length - 1].push(word); else if (word !== null) target = false; word = null; };
   for (let i = 0; i < command.length; i++) {
     const c = command[i];
     if (quote) {
@@ -28,8 +29,10 @@ export function segments(command) {
       else word += c;
     } else if (c === '"' || c === "'") { word = word ?? ''; quote = c; }
     else if (c === '\\' && i + 1 < command.length) word = (word ?? '') + command[++i];
+    else if (c === '#' && word === null) while (i + 1 < command.length && command[i + 1] !== '\n') i++; // a comment
+    else if (/[<>]/.test(c)) { if (/^\d+$/.test(word ?? '')) word = null; push(); while (/[<>&|]/.test(command[i + 1] ?? '')) i++; target = command[i + 1] !== '('; }
     else if (/\s/.test(c) && c !== '\n') push();
-    else if (/[;&|\n()]/.test(c)) { push(); if (out[out.length - 1].length) out.push([]); }
+    else if (/[;&|\n()]/.test(c)) { push(); target = false; if (out[out.length - 1].length) out.push([]); }
     else word = (word ?? '') + c;
   }
   push();
@@ -41,16 +44,40 @@ export function segments(command) {
   });
 }
 
-// `git [global options] <sub> <args>` → { sub, args }, or null.
+// `git [global options] <sub> <args>` → { sub, args, configs } (the `-c` settings), or null.
 function gitCall(argv) {
   if (!argv.length || argv[0].split('/').pop() !== 'git') return null;
   let k = 1;
-  while (k < argv.length && argv[k].startsWith('-')) k += H.git.globalWithValue.includes(argv[k]) ? 2 : 1;
-  return { sub: argv[k], args: argv.slice(k + 1) };
+  const configs = [];
+  for (; k < argv.length && argv[k].startsWith('-'); k += H.git.globalWithValue.includes(argv[k]) ? 2 : 1) {
+    const value = ['-c', '--config-env'].includes(argv[k]) ? argv[k + 1] : argv[k].match(/^(?:-c|--config-env=)(.+)/)?.[1];
+    if (value) configs.push(value.replace('=', ' ')); // as `git config --get-regexp` prints it
+  }
+  return { sub: argv[k], args: argv.slice(k + 1), configs };
 }
 
-// The owner command an argv runs (approve without --auto, upgrade, delegate), or undefined.
-const ownerCommand = (argv) => H.owner.find((o) => argv.some((a, k) => H.cli.some((c) => a === c || a.endsWith('/' + c)) && argv[k + 1] === o) && !argv.includes(S.autoFlag));
+// An option as git reads it: exact, or a long option by an unambiguous prefix (`--no-verif`), `--x=v` by its name.
+const opt = (a, names) => names.some((o) => a === o || (o.startsWith('--') && /^--[^=]{2}/.test(a) && o.startsWith(a.split('=')[0])));
+const isCli = (a) => H.cli.some((c) => a === c || a.endsWith('/' + c));
+// A ref that names a unit branch: `unit/U-1`, `refs/heads/unit/U-1`, `origin/unit/U-1`, or a range end.
+const unitRef = (r) => r.split(/\.{2,3}/).some((p) => new RegExp(`^(?:refs/(?:heads|remotes/[^/]+)/|heads/|[^/]+/)?${S.branchPrefix}`).test(p));
+// The files a commit takes: the index, plus its pathspecs' changes (`-m x a.md`, `--only`, `--include`), plus `--all`'s.
+function committed(cwd, args) {
+  const specs = [];
+  for (let k = 0; k < args.length; k++) {
+    const a = args[k];
+    if (a === '--') { specs.push(...args.slice(k + 1)); break; }
+    if (!a.startsWith('-')) specs.push(a);
+    // A value follows: `-m`, `-am` (the first short option that takes one ends the cluster), `--message` without `=`.
+    else if (/^-[^-]/.test(a) ? [...a.slice(1)].findIndex((c) => H.git.commitWithValue.includes(`-${c}`)) === a.length - 2 : !a.includes('=') && opt(a, H.git.commitWithValue.filter((o) => o.startsWith('--')))) k++;
+  }
+  const all = args.some((a) => opt(a, H.commitAll) || new RegExp(`^-[^-]*${H.commitAllShort}`).test(a));
+  const paths = specs.length ? tryGit(cwd, 'diff', '--name-only', 'HEAD', '--', ...specs) ?? specs.join('\n') : '';
+  return [git(cwd, 'diff', '--cached', '--name-only'), all ? git(cwd, 'diff', '--name-only') : '', paths].join('\n').split('\n').filter(Boolean);
+}
+
+// The owner command an argv runs, or undefined; `--auto` exempts only `approve`, for what the owner delegated.
+const ownerCommand = (argv) => H.owner.find((o) => argv.some((a, k) => isCli(a) && argv[k + 1] === o) && !(o === H.autoOwner && argv.includes(S.autoFlag)));
 
 // ---- Decisions ----
 
@@ -75,10 +102,11 @@ export function ownerRefused(cwd, command) {
 const allow = () => '{}';
 const context = (hookEventName, additionalContext) => JSON.stringify({ hookSpecificOutput: { hookEventName, additionalContext } });
 // The text a Write or Edit adds.
-const added = (t) => [t.content, t.new_string, ...(Array.isArray(t.edits) ? t.edits.map((e) => e.new_string) : [])].filter((x) => typeof x === 'string').join('\n');
+const added = (t) => [t.content, t.new_string, t.new_source, ...(Array.isArray(t.edits) ? t.edits.map((e) => e.new_string) : [])].filter((x) => typeof x === 'string').join('\n');
 // Typed words as the owner ends a sentence: a trailing period or exclamation mark is no part of them.
 const typed = (text) => String(text ?? '').trim().replace(/[.!]+$/, '');
 const approveWords = (text) => typed(text).match(new RegExp(H.approveWords, 'i'))?.[1].trim().split(/\s+/);
+const ownerWords = (text) => approveWords(text) || new RegExp(H.goWords, 'i').test(typed(text)); // the prompt hook's approve or go
 function deny(cwd, input, code, key, data, decision = 'deny') {
   const message = msg(key, data);
   let reason = msg('hookDeny', { code, message, fix: H.codes[code].fix });
@@ -105,45 +133,48 @@ function guard(input, cwd) {
   const bundleRel = relPath(top, bundleOf(top, profile));
   const branch = tryGit(cwd, 'rev-parse', '--abbrev-ref', 'HEAD');
   // A scheduled prompt reaches the prompt hook as if typed: the lead may not schedule an approval (decision 0011).
-  if (H.scheduled.includes(input.tool_name)) return approveWords(input.tool_input?.prompt) || new RegExp(H.goWords, 'i').test(typed(input.tool_input?.prompt)) ? deny(cwd, input, 'GUARD-SCHEDULE', 'guardSchedule', {}) : allow();
+  if (H.scheduled.includes(input.tool_name)) return ownerWords(input.tool_input?.prompt) ? deny(cwd, input, 'GUARD-SCHEDULE', 'guardSchedule', {}) : allow();
   for (const argv of segments(String(input.tool_input?.command ?? ''))) {
     // The owner answers a permission prompt for an owner command; without prompts (bypass) it stays a `!` command (decision 0009).
     const owner = ownerCommand(argv);
     if (owner) {
-      const rest = argv.slice(argv.indexOf(owner));
-      const cut = rest.findIndex((a) => /^\d*[<>]/.test(a)); // a redirect is no part of the command
-      const command = (cut < 0 ? rest : rest.slice(0, cut)).join(' ');
+      const command = argv.slice(argv.indexOf(owner)).join(' ');
       if (useGo(cwd, command)) return allow(); // the owner typed it (docs/design/operations.md#details)
       if (input.permission_mode === H.noPrompt) return deny(cwd, input, 'GUARD-OWNER', 'guardOwner', { command });
       recordPrompt(cwd, input, command);
       return deny(cwd, input, 'GUARD-OWNER', 'guardOwner', { command }, 'ask');
     }
+    // Claude Code runs the hooks; one run by hand could stamp an approval or record a go (U70).
+    if (argv.some((a, k) => (isCli(a) && argv[k + 1] === H.hookCommand) || a.endsWith(H.runner))) return deny(cwd, input, 'GUARD-HOOK', 'guardHook', {});
+    // A nested `claude -p` sends its prompt through the prompt hook as if the owner typed it.
+    if (argv[0]?.split('/').pop() === H.claude.bin && argv.some((a) => H.claude.print.includes(a)) && argv.slice(1).some((a) => !a.startsWith('-') && ownerWords(a))) return deny(cwd, input, 'GUARD-SCHEDULE', 'guardSchedule', {});
     for (const [tool, sub] of H.ask) if (argv[0]?.split('/').pop() === tool && argv.includes(sub)) return deny(cwd, input, 'GUARD-RELEASE', 'guardRelease', { what: `${tool} ${sub}` }, 'ask');
     const g = gitCall(argv);
     if (!g) continue;
-    const { sub, args } = g;
+    const { sub, args, configs } = g;
     const refs = args.filter((a) => !a.startsWith('-'));
+    const isBase = (r) => [base, `refs/heads/${base}`, `heads/${base}`].includes(r);
+    if (configs.some((c) => c.toLowerCase().startsWith(H.git.alias)) || (sub === 'config' && refs.some((r) => r.toLowerCase().startsWith(H.git.alias)))) return deny(cwd, input, 'GUARD-ALIAS', 'guardAlias', {});
     if (sub === 'push') {
-      if (args.some((a) => H.force.includes(a)) || refs.some((r) => r.startsWith('+'))) return deny(cwd, input, 'GUARD-FORCE', 'guardForce', {});
+      if (args.some((a) => opt(a, H.force)) || refs.some((r) => r.startsWith('+'))) return deny(cwd, input, 'GUARD-FORCE', 'guardForce', {});
       const specs = refs.slice(1);
-      const hitsBase = specs.some((r) => r === base || r.endsWith(`:${base}`) || r.endsWith(`/${base}`)) || (!specs.length && branch === base);
-      if (args.some((a) => H.deleteFlags.includes(a)) && hitsBase || specs.some((r) => r === `:${base}`)) return deny(cwd, input, 'GUARD-BASE-DELETE', 'guardDelete', { base });
+      // A bare push follows remote.<name>.push or push.default=matching, which can name the base.
+      const configured = () => [...configs, ...gitLines(cwd, 'config', '--get-regexp', '^(remote\\..*\\.push|push\\.default)$')].some((c) => /^remote\..+\.push /i.test(c) || /^push\.default matching$/i.test(c));
+      const hitsBase = specs.some((r) => r === base || r.endsWith(`:${base}`) || r.endsWith(`/${base}`) || r.includes('*') || (r === 'HEAD' && branch === base)) || args.some((a) => opt(a, H.git.pushAll)) || (!specs.length && (branch === base || configured()));
+      if (args.some((a) => opt(a, H.deleteFlags)) && hitsBase || specs.some((r) => r === `:${base}`)) return deny(cwd, input, 'GUARD-BASE-DELETE', 'guardDelete', { base });
       if (hitsBase) return deny(cwd, input, 'GUARD-PUSH', 'guardPush', { base });
     }
-    if (sub === 'branch' && args.some((a) => H.deleteFlags.includes(a)) && refs.includes(base)) return deny(cwd, input, 'GUARD-BASE-DELETE', 'guardDelete', { base });
+    if (sub === 'branch' && args.some((a) => opt(a, H.deleteFlags)) && refs.includes(base)) return deny(cwd, input, 'GUARD-BASE-DELETE', 'guardDelete', { base });
+    const move = H.git.move[sub];
+    if (move && (!move.length || args.some((a) => opt(a, move))) && (move.length ? refs.slice(0, 1) : refs).some(isBase)) return deny(cwd, input, 'GUARD-BASE-MOVE', 'guardMove', { base, what: sub });
     if (sub === 'commit') {
-      if (args.some((a) => H.noVerify.includes(a) || (/^-[^-]/.test(a) && a.slice(1).includes(H.noVerifyShort)))) return deny(cwd, input, 'GUARD-NOVERIFY', 'guardNoVerify', {});
-      if (branch === base) {
-        const all = args.some((a) => H.commitAll.includes(a) || new RegExp(`^-[^-]*${H.commitAllShort}`).test(a));
-        const staged = [git(cwd, 'diff', '--cached', '--name-only'), all ? git(cwd, 'diff', '--name-only') : ''].join('\n').split('\n').filter(Boolean);
-        const bad = staged.find((p) => !directAllowed(p, bundleRel));
-        if (bad) return deny(cwd, input, 'GUARD-BASE-COMMIT', 'guardBaseCommit', { base, path: bad });
-      }
+      if (args.some((a) => opt(a, H.noVerify) || (/^-[^-]/.test(a) && a.slice(1).includes(H.noVerifyShort)))) return deny(cwd, input, 'GUARD-NOVERIFY', 'guardNoVerify', {});
+      const bad = branch === base && committed(cwd, args).find((p) => !directAllowed(p, bundleRel));
+      if (bad) return deny(cwd, input, 'GUARD-BASE-COMMIT', 'guardBaseCommit', { base, path: bad });
     }
-    if (sub === 'merge') {
-      const unitBranch = refs.find((r) => r.startsWith(S.branchPrefix));
-      if (unitBranch) return deny(cwd, input, 'GUARD-MERGE', 'guardMerge', { branch: unitBranch });
-    }
+    // A merge shape: merge or pull anywhere; on the base also cherry-pick, rebase or reset onto a unit branch.
+    const unitBranch = (H.git.mergeLike.includes(sub) || (branch === base && H.git.onBase.includes(sub))) && refs.find(unitRef);
+    if (unitBranch) return deny(cwd, input, 'GUARD-MERGE', 'guardMerge', { branch: unitBranch });
   }
   return allow();
 }
@@ -173,9 +204,13 @@ function scope(input, cwd) {
   const path = relPath(top, file);
   const before = existsSync(file) ? readFileSync(file, 'utf8') : '';
   if (file.endsWith(config.okf.ext) && approvalPart(before) !== approvalPart(resulting(input, file))) return deny(cwd, input, 'SCOPE-APPROVAL', 'scopeApproval', { path });
-  if (path === personalProfile) return deny(cwd, input, 'SCOPE-APPROVAL', 'scopeApproval', { path });
+  // From any worktree: the main checkout's personal profile and the CLI's state under the git common dir.
+  const common = real(resolve(cwd, git(cwd, 'rev-parse', '--git-common-dir')));
+  if (path === personalProfile || file === join(dirname(common), personalProfile)) return deny(cwd, input, 'SCOPE-APPROVAL', 'scopeApproval', { path });
+  if ((file + sep).startsWith(join(common, S.dir) + sep)) return deny(cwd, input, 'SCOPE-STATE', 'scopeState', { path });
   const unit = unitOfBranch(cwd);
-  if (!unit || path.startsWith('..')) return allow();
+  if (!unit) return allow();
+  if (path.startsWith('..') || isAbsolute(path)) return deny(cwd, input, 'SCOPE-OUT', 'scopeOut', { path, unit }); // outside the worktree
   const { profile } = loadProfile(top);
   const bundleRel = relPath(top, bundleOf(top, profile));
   if (mergeWritten(path, bundleRel, profile)) return deny(cwd, input, 'SCOPE-SHARED', 'scopeShared', { path });
@@ -185,10 +220,8 @@ function scope(input, cwd) {
 }
 
 function secrets(input, cwd) {
-  const file = resolve(cwd, String(input.tool_input?.file_path ?? ''));
-  const { profile } = loadProfile(cwd);
-  const patterns = [...H.secrets, ...(profile.security?.secrets ?? [])].map((p) => new RegExp(p, 'i'));
-  if (patterns.some((re) => re.test(added(input.tool_input ?? {})))) return deny(cwd, input, 'SECRET', 'secretFound', { path: relPath(cwd, real(file)) });
+  const file = resolve(cwd, String(input.tool_input?.file_path ?? input.tool_input?.notebook_path ?? ''));
+  if (secretIn(added(input.tool_input ?? {}), loadProfile(cwd).profile)) return deny(cwd, input, 'SECRET', 'secretFound', { path: relPath(cwd, real(file)) });
   return allow();
 }
 

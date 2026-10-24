@@ -44,8 +44,8 @@ export const commands = {
   },
 
   // The owner's step: deploy.run, then the profile's release, after a deploy check passed on this base.
-  release([id], { cwd }) {
-    const t = target(cwd, id, 'releaseUsage');
+  release([id, ...more], { cwd }) { // an owner step takes no flag, so `--auto` passes no guard (U70)
+    const t = target(cwd, more.length ? null : id, 'releaseUsage');
     const { deploy = {}, release } = t.st.profile;
     const commands = [deploy.run, release].filter(Boolean);
     if (!commands.length) throw new UsageError(msg('releaseUsage', {}));
@@ -58,8 +58,8 @@ export const commands = {
   },
 
   // The owner's step after a failed smoke; without deploy.rollback it records the owner's rollback by hand.
-  rollback([id], { cwd }) {
-    const t = target(cwd, id, 'rollbackUsage', ['merged', 'released']);
+  rollback([id, ...more], { cwd }) {
+    const t = target(cwd, more.length ? null : id, 'rollbackUsage', ['merged', 'released']);
     const result = runAll(t.top, list(t.st.profile.deploy?.rollback));
     return done(record(t, 'rollback', result), result.ok ? config.exit.ok : config.exit.findings);
   },
