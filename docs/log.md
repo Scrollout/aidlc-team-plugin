@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-24
 
+- **Update** M10 U79: the quick-lane card also tells the builder to report from a file. Release 0.88.1.
 - **Update** M10 U82: the board maps `reviewing` and `gated` to In review and `stopped` to On hold, and shows an intent with a unit past approval as In Progress ([Board](design/board.md)). Release 0.88.0.
 - **Update** M10 U81 and [0008](decisions/0008-delegated-approvals.md) amended: the owner can delegate `upgrade`, so the lead copies each installed release with no prompt; a downgrade or a dirty copy still asks; an `ARCH-CHECK` in CI names the job's toolchain setup ([CI check](design/ci-check.md)); the guard knows the CLI by a Windows path, which had let an owner command run with no prompt ([Hook checks](design/hook-checks.md)). Release 0.87.0.
 - **Update** M10 U80 AC-2: `approve` finds a decision by its number, as the owner types it (`approve 0010`). Release 0.86.1.

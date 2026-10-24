@@ -1,9 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { approve, commit, git, intentDoc, makeRepo, read, review, run, tempDir, unitDoc, write } from './state-repo.mjs';
 import { routeModel } from '../plugin/cli/lib/card.mjs';
+const ROOT = join(import.meta.dirname, '..');
 
 const U1 = 'docs/units/U-1-pricing.md';
 const PROFILE = {
@@ -79,6 +80,14 @@ test('U77/AC-1 the findings of a fix round do not count toward the card cap', ()
   assert.equal(r.code, 0, r.out);
   assert.ok(r.out.length > 6000, 'the findings are listed in full');
   assert.match(r.out, /src\/pricing\/a\.txt:10:/);
+});
+
+test('U79/AC-2 both card templates tell the builder to report from a file, not a pipe', () => {
+  for (const f of ['card.md', 'card-quick.md']) {
+    const text = readFileSync(join(ROOT, 'plugin/cli', f), 'utf8');
+    assert.match(text, /aidlc report \{\{id\}\} <file>/, f);
+    assert.doesNotMatch(text, /pipe JSON/i, f);
+  }
 });
 
 test('U4/AC-4 the card hash changes when the unit doc changes, even outside the rendered parts', () => {
