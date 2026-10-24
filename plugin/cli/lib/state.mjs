@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { bundleOf, config, done, git, gitLines, isMap, list, readJson, readStdin, tryGit, UsageError, relPath } from './config.mjs';
+import { bundleOf, config, QUICK, VERDICT, done, git, gitLines, isMap, list, readJson, readStdin, tryGit, UsageError, relPath } from './config.mjs';
 import { msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { linksOf, parseDoc } from './okf.mjs';
@@ -60,7 +60,7 @@ export function reviewFocuses(cwd, profile, base, unit) {
 // A focus other than general keeps its last pass after a fix round when the commits since the reviewed commit
 // touch none of its globs (docs/design/review-rounds.md); general always reviews the current diff.
 export function keptPass(cwd, profile, unit, focus, last) {
-  if (focus === S.focus || last?.verdict !== S.verdicts[0] || !last.commit) return false;
+  if (focus === S.focus || last?.verdict !== VERDICT.pass || !last.commit) return false;
   const paths = tryGit(cwd, 'diff', '--name-only', last.commit, branchOf(unit));
   return paths !== null && !paths.split('\n').filter(Boolean).some((x) => list(profile.focus?.[focus]).some((g) => overlaps('/' + x, g)));
 }
@@ -83,7 +83,7 @@ export const mutationOf = (mutations, tag) => (Array.isArray(mutations) ? mutati
 // occurs exactly once on the unit branch. A quick-lane unit or one that changes code needs none.
 function mutationProblems(cwd, profile, unit, mutations) {
   const u = readPlan(bundleOf(cwd, profile)).units.find((x) => x.id === unit);
-  if (!u || computeLane(u.scope, profile).lane === 'quick') return [];
+  if (!u || computeLane(u.scope, profile).lane === QUICK) return [];
   const levels = withDefaults(profile).levels;
   const paths = unitPaths(cwd, baseOf(profile), unit);
   if (codeChanges(paths, levels, relPath(git(cwd, 'rev-parse', '--show-toplevel'), bundleOf(cwd, profile))).length) return [];
@@ -150,9 +150,8 @@ const beforeApproval = (round, at) => Date.parse(round.at) < at;
 export function readReview(cwd, unit, doc) {
   const review = readJson(runtimeFile(cwd, 'reviews', unit));
   const at = doc ? approvedAt(doc, [S.human]) : 0;
-  const escalate = S.verdicts[2];
   // The owner's re-approval answers an escalation: its findings are answered by the spec change, and a review follows.
-  return review && { ...review, rounds: review.rounds.map((r) => (r.verdict === escalate && at && beforeApproval(r, at) ? { ...r, verdict: S.answered } : r)) };
+  return review && { ...review, rounds: review.rounds.map((r) => (r.verdict === VERDICT.escalate && at && beforeApproval(r, at) ? { ...r, verdict: S.answered } : r)) };
 }
 
 const plain = (v) => /^[A-Za-z0-9_@.+/][A-Za-z0-9_@:.+/ -]*$/.test(v) && !/:(\s|$)/.test(v) && !/^\d+$/.test(v);
@@ -163,12 +162,11 @@ const flowMap = (e) => `{ ${Object.entries(e).map(([k, v]) => `${k}: ${scalar(v)
 function stamp(text, by, at) {
   const doc = parseDoc(text);
   if (doc.error || !doc.fm) throw new UsageError(msg('fmYaml', { error: doc.error ?? '' }));
-  const drop = ['verified', 'verified_hash', 'status'];
   const kept = [];
   let skipping = false;
   for (const line of doc.fmLines.slice(1, -1)) {
     const key = line.match(/^([A-Za-z_][\w-]*):/)?.[1];
-    if (key) skipping = drop.includes(key);
+    if (key) skipping = S.stampFields.includes(key);
     else if (!/^(\s|-)/.test(line) && line.trim()) skipping = false;
     if (!skipping) kept.push(line);
   }
@@ -183,7 +181,7 @@ function stamp(text, by, at) {
 
 export function mergedUnits(cwd, base) {
   const out = new Map();
-  const log = tryGit(cwd, 'log', base, `--format=%H%x1f%(trailers:key=${S.trailer},valueonly,separator=%x1e)%x1d`);
+  const log = tryGit(cwd, 'log', base, `--format=%H%x1f%(trailers:key=${config.gate.trailers.unit},valueonly,separator=%x1e)%x1d`);
   for (const rec of (log ?? '').split('\x1d')) {
     const [sha, values] = rec.trim().split('\x1f');
     for (const v of (values ?? '').split('\x1e').map((x) => x.trim()).filter(Boolean)) if (!out.has(v)) out.set(v, sha);
@@ -216,7 +214,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
   const answered = researched(bundle);
   const units = live.map((u) => {
     const lane = computeLane(u.scope, profile).lane;
-    const needsApproval = Boolean(u.fm.intent) || lane !== 'quick';
+    const needsApproval = Boolean(u.fm.intent) || lane !== QUICK;
     const approvalState = approval(u.doc);
     const report = readJson(runtimeFile(cwd, 'reports', u.id));
     const review = readReview(cwd, u.id, u.doc);
@@ -234,7 +232,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
     else if (branches.has(branchOf(u.id))) {
       // The last verdict of each required focus, counted only while it is for the current diff.
       // A quick-lane unit gets no review: its report alone makes it ready to merge.
-      const quick = lane === 'quick';
+      const quick = lane === QUICK;
       const hash = diffHash(cwd, base, u.id);
       const verdicts = (quick ? [] : [...reviewFocuses(cwd, profile, base, u.id).keys()]).map((f) => {
         const last = roundsOf(review, f).at(-1);
@@ -243,19 +241,19 @@ export function readState(cwd, { now = Date.now() } = {}) {
       });
       const has = (v) => verdicts.some((x) => x.verdict === v);
       const lastAt = review?.rounds?.at(-1)?.at;
-      focus = verdicts.find((x) => x.verdict !== 'pass')?.focus ?? null;
-      if (has('escalate')) state = 'escalated';
+      focus = verdicts.find((x) => x.verdict !== VERDICT.pass)?.focus ?? null;
+      if (has(VERDICT.escalate)) state = 'escalated';
       // A fix round is in flight once a builder was launched after the verdict: the builder that reported before
       // the review keeps its heartbeat fresh for minutes (docs/design/in-flight.md).
-      else if (has('fix')) {
-        const fixAt = Math.max(0, ...(review?.rounds ?? []).filter((r) => r.verdict === 'fix').map((r) => Date.parse(r.at)));
+      else if (has(VERDICT.fix)) {
+        const fixAt = Math.max(0, ...(review?.rounds ?? []).filter((r) => r.verdict === VERDICT.fix).map((r) => Date.parse(r.at)));
         state = heartbeatFresh(cwd, u.id, now) && heartbeatAt(cwd, u.id, S.launches) > fixAt ? 'building' : 'fix';
       }
       else if (!focus && (!quick || report)) {
         const gate = readJson(runtimeFile(cwd, 'gates', u.id));
         state = gate?.diffHash === hash && gate.base === tryGit(cwd, 'rev-parse', base) ? 'gated' : 'reviewed';
       }
-      else if (has('pass') || has(S.answered) || (report && report.status !== S.stopped && (!lastAt || report.at > lastAt) && Date.parse(report.at) > approvedAt(u.doc))) {
+      else if (has(VERDICT.pass) || has(S.answered) || (report && report.status !== S.stopped && (!lastAt || report.at > lastAt) && Date.parse(report.at) > approvedAt(u.doc))) {
         state = heartbeatFresh(cwd, u.id, now, S.reviewing) ? 'reviewing' : 'reported';
       }
       else state = 'building';
@@ -306,7 +304,7 @@ export function decisionsOf(st, docs) {
   const out = new Map();
   for (const file of docs.flatMap((u) => linksOf(u, st.bundle))) {
     const doc = existsSync(file) ? parseDoc(readFileSync(file, 'utf8')) : null;
-    if (doc?.fm?.type === S.decisionType) out.set(file, { file, doc });
+    if (doc?.fm?.type === config.grid.decisionType) out.set(file, { file, doc });
   }
   return [...out.values()];
 }
@@ -345,7 +343,7 @@ function gateOf(st, intent, scope) {
   const decisions = citedDecisions(st, drafts);
   const reqs = draftReqs; // the ones the intent and these units cite
   const docs = [ids([...drafts, ...reqs]), ...decisions].join(' ');
-  const auto = st.auto.includes(S.auto[1]) && drafts.every((u) => u.lane === 'quick') && !decisions.length && !reqs.length;
+  const auto = st.auto.includes(S.auto[1]) && drafts.every((u) => u.lane === QUICK) && !decisions.length && !reqs.length;
   return gate(auto ? 'nextAutoApprove' : 'nextApprovePlan', [...drafts, ...reqs].map((d) => d.id), { docs, units: docs }, auto ? 'act' : 'human');
 }
 
@@ -367,7 +365,7 @@ function unitWork(st, scope) {
   // A merge is offered only when each AC has a tagged test on the branch; a builder sent back for one is waited for.
   const backAtWork = [];
   for (const u of live.filter((x) => x.state === 'reviewed' && x.depends.every(merged))) {
-    const missing = u.lane === 'quick' ? [] : untagged(st, u);
+    const missing = u.lane === QUICK ? [] : untagged(st, u);
     if (!missing.length) return action('act', 'nextMerge', { unit: u.id });
     if (!u.fresh) return action('act', 'nextUntagged', { unit: u.id, tags: missing.join(', ') });
     backAtWork.push(u);
@@ -398,7 +396,7 @@ function unitWork(st, scope) {
     const clash = [...inFlight, ...picked].some((o) => u.scope.some((g) => o.scope.some((h) => overlaps(g, h))));
     if (!clash) picked.push(u);
   }
-  if (picked.length) return action('act', 'nextBuild', { units: picked.map((u) => u.id).join(', '), cards: picked.map((u) => `aidlc card ${u.id}`).join(', ') });
+  if (picked.length) return action('act', 'nextBuild', { units: picked.map((u) => u.id).join(', '), cards: picked.map((u) => msg('cardCommand', { unit: u.id })).join(', ') });
   if (inFlight.length) return action('wait', 'nextWait', { units: inFlight.map((u) => u.id).join(', ') });
   const held = scope.filter((u) => u.held && u.state !== 'merged');
   if (held.length) return action('human', 'nextHeld', { units: held.map((u) => (u.fm.hold === true ? u.id : msg('heldReason', { unit: u.id, reason: u.fm.hold }))).join(', ') });
@@ -409,7 +407,7 @@ function unitWork(st, scope) {
 export const hostDeniedFile = (cwd) => join(aidlcDir(cwd), S.hostDenied);
 export function nextAction(st) {
   const next = pickAction(st);
-  const refused = next.kind === 'act' && /: aidlc ([^()]+)$/.exec(next.line)?.[1];
+  const refused = next.kind === 'act' && new RegExp(S.refusedLine).exec(next.line)?.[1];
   const head = refused && tryGit(st.cwd, 'rev-parse', 'HEAD');
   if (!refused || !(readJson(hostDeniedFile(st.cwd)) ?? []).some((d) => d.head === head && String(d.command).includes(refused))) return next;
   return action('human', 'nextHostDenied', { refused, command: refused.split(' ').filter((a) => a !== S.autoFlag).join(' ') });
@@ -456,7 +454,7 @@ function releaseStep(st, i) {
   if (i.fm.hold && !smokeDown) return action('human', 'nextReleaseHeld', { intent: i.id, reason: i.fm.hold === true ? [] : [String(i.fm.hold)] });
   if (!st.profile.deploy && !st.profile.release) return action('human', 'nextRelease', { intent: i.id });
   // A fix unit's scope holds its test: the example names the first level's test location (U58).
-  const tests = Object.values(withDefaults(st.profile).levels).flatMap((l) => list(l?.paths))[0] ?? '<test globs>';
+  const tests = Object.values(withDefaults(st.profile).levels).flatMap((l) => list(l?.paths))[0] ?? S.testsPlaceholder;
   // A failed smoke stops everything until the owner rolled back; then a fix unit, after which the base moves.
   if (smokeDown) return action('human', 'nextSmokeFailed', { intent: i.id, ...rec.smoke });
   if (rec.smoke && !rec.smoke.ok && rec.smoke.base === base) return action('act', 'nextSmokeFix', { intent: i.id, tests, file: relPath(st.cwd, runtimeFile(st.cwd, 'deploys', i.id)) });
@@ -548,7 +546,7 @@ export const commands = {
       const text = readFileSync(file, 'utf8');
       const doc = parseDoc(text);
       if (!S.approvable.includes(String(doc.fm?.type))) throw new UsageError(msg('notApprovable', { name }));
-      const quick = doc.fm.type === S.unitType && approval(doc) === 'draft' && computeLane(list(doc.fm.scope), profile).lane === 'quick';
+      const quick = doc.fm.type === S.unitType && approval(doc) === 'draft' && computeLane(list(doc.fm.scope), profile).lane === QUICK;
       const cls = approval(doc) === 'stale' ? S.auto[0] : quick ? S.auto[1] : null;
       if (auto && !auto.includes(cls)) throw new UsageError(msg('notDelegated', { name }));
       if (auto && cls === S.auto[0] && doc.fm.type === S.unitType && !acsKept(cwd, file, doc)) throw new UsageError(msg('notDelegatedAcs', { name }));
@@ -576,7 +574,7 @@ export const commands = {
       return done(msg('modeSet', { run: S.off }));
     }
     const flags = rest.filter((_, k) => k % 2 === 0);
-    if (!S.modes.includes(mode) || (stop !== undefined && !S.stops[stop]) || rest.length % 2 || flags.some((f) => !['--stop', '--report'].includes(f))) usage('modeUsage');
+    if (!S.modes.includes(mode) || (stop !== undefined && !S.stops[stop]) || rest.length % 2 || flags.some((f) => !config.commands.find((c) => c.name === 'mode').flags.includes(f))) usage('modeUsage');
     const run = { mode, stop, report: opt('--report') };
     writeJson(personal(cwd), { ...data, run });
     return done(msg('modeSet', { run: msg('runLine', { mode, stop: list(stop), report: list(run.report) }) }));
@@ -605,7 +603,7 @@ export const commands = {
     if (sub !== 'record' || !unit || !file) throw new UsageError(msg('reviewUsage', {}));
     if (file !== S.stdin && !existsSync(resolve(cwd, file))) throw new UsageError(msg('noSuchPath', { name: file }));
     const data = parseObject(file === S.stdin ? readStdin(ctx) : readFileSync(resolve(cwd, file), 'utf8'), file);
-    if (!S.verdicts.includes(data.verdict)) throw new UsageError(msg('badVerdict', { verdicts: S.verdicts.join(', ') }));
+    if (!Object.values(VERDICT).includes(data.verdict)) throw new UsageError(msg('badVerdict', { verdicts: Object.values(VERDICT).join(', ') }));
     const { profile } = loadProfile(cwd);
     if (!tryGit(cwd, 'rev-parse', '-q', '--verify', branchOf(unit))) throw new UsageError(msg('noBranch', { branch: branchOf(unit) }));
     const target = runtimeFile(cwd, 'reviews', unit);
@@ -616,23 +614,23 @@ export const commands = {
     const planUnit = readPlan(bundleOf(cwd, profile)).units.find((u) => u.id === unit);
     const since = planUnit ? approvedAt(planUnit.doc, [S.human]) : 0;
     const limit = profile.review.fixRounds;
-    const round = roundsOf({ rounds: prior }, focus).filter((r) => r.verdict === 'fix' && !beforeApproval(r, since)).length + 1;
+    const round = roundsOf({ rounds: prior }, focus).filter((r) => r.verdict === VERDICT.fix && !beforeApproval(r, since)).length + 1;
     // A pass while an AC has no tagged test on the branch is a fix: the gate would refuse it (U32).
     // A pass carrying a CONFIRMED finding is a fix too: the reviewer saw the defect (U35).
-    const pass = data.verdict === S.verdicts[0];
+    const pass = data.verdict === VERDICT.pass;
     const missing = pass && planUnit ? untagged({ cwd, bundle: bundleOf(cwd, profile) }, planUnit) : [];
     const confirmed = pass ? (data.findings ?? []).filter((f) => f.confidence === S.confirmed).length : 0;
     const sentBack = missing.map((tag) => ({ path: '', line: '', claim: msg('untaggedClaim', { tag }), scenario: msg('untaggedScenario', {}), confidence: S.confirmed }));
-    if (missing.length || confirmed) Object.assign(data, { verdict: 'fix', findings: [...(data.findings ?? []), ...sentBack] });
+    if (missing.length || confirmed) Object.assign(data, { verdict: VERDICT.fix, findings: [...(data.findings ?? []), ...sentBack] });
     if (missing.length) bump(cwd, config.retro.sendBacks, { unit, tags: missing.join(', '), at: new Date().toISOString() });
     // A reviewer's own escalate is a fix round first, until the limit (U38).
-    const verdict = ['fix', S.verdicts[2]].includes(data.verdict) ? (round > limit ? S.verdicts[2] : 'fix') : data.verdict;
+    const verdict = [VERDICT.fix, VERDICT.escalate].includes(data.verdict) ? (round > limit ? VERDICT.escalate : VERDICT.fix) : data.verdict;
     const card = readJson(runtimeFile(cwd, 'cards', unit))?.hash ?? null;
     const commit = git(cwd, 'rev-parse', branchOf(unit)); // what a kept pass is measured from (U34)
     writeJson(target, { unit, rounds: [...prior, { ...data, focus, verdict, card, diffHash: diffHash(cwd, baseOf(profile), unit), commit, at: new Date().toISOString() }] });
-    if (verdict === S.verdicts[2]) bump(cwd, 'escalations', config.retro.reasons.review);
+    if (verdict === VERDICT.escalate) bump(cwd, 'escalations', config.retro.reasons.review);
     rmSync(join(aidlcDir(cwd), S.reviewing, unit), { force: true }); // the review is no longer in flight
-    const why = verdict === S.verdicts[2] ? 'recordedEscalate' : data.verdict === S.verdicts[2] ? 'recordedEscalateFix' : missing.length ? 'recordedUntagged' : confirmed ? 'recordedConfirmed' : verdict === 'fix' ? 'recordedFix' : 'recorded';
+    const why = verdict === VERDICT.escalate ? 'recordedEscalate' : data.verdict === VERDICT.escalate ? 'recordedEscalateFix' : missing.length ? 'recordedUntagged' : confirmed ? 'recordedConfirmed' : verdict === VERDICT.fix ? 'recordedFix' : 'recorded';
     return done(msg(why, { what: verdict, unit, focus, tags: missing.join(', '), round, limit, confirmed })); // the reviewer learns why
   },
 };

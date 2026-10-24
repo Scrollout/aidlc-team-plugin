@@ -2,7 +2,7 @@
 // and the model hook (docs/design/unit-card.md). Model routing follows docs/design/team.md.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { bundleOf, CLI_DIR, config, done, git, gitLines, list, readJson, slug, tryGit, UsageError, relPath } from './config.mjs';
+import { bundleOf, CLI_DIR, config, QUICK, STANDARD, VERDICT, done, git, gitLines, list, readJson, slug, tryGit, UsageError, relPath } from './config.mjs';
 import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { linksOf, MD_LINK, parseDoc, sectionOf } from './okf.mjs';
@@ -16,7 +16,7 @@ export function routeModel(unit, lane, profile = {}, review = null) {
   const m = withDefaults(profile).models;
   let model = m[lane];
   let reason = msg('laneModel', { lane });
-  if (lane === 'standard') {
+  if (lane === STANDARD) {
     const complex = (m.complex ?? []).find((g) => unit.scope.some((s) => overlaps(s, g)));
     const why = unit.modules.length >= m.modules ? msg('modelModules', { count: unit.modules.length })
       : unit.acs.length >= m.acs ? msg('modelAcs', { count: unit.acs.length })
@@ -24,7 +24,7 @@ export function routeModel(unit, lane, profile = {}, review = null) {
     if (why) [model, reason] = [m.escalate, msg('modelEscalated', { reason: why })];
   }
   const last = roundsOf(review).at(-1);
-  if (last?.verdict === 'fix' && model !== m.escalate && (last.findings ?? []).some((f) => f.confidence === config.state.confirmed)) {
+  if (last?.verdict === VERDICT.fix && model !== m.escalate && (last.findings ?? []).some((f) => f.confidence === config.state.confirmed)) {
     [model, reason] = [m.escalate, msg('modelFix', {})];
   }
   return { model, reason };
@@ -61,7 +61,7 @@ function renderCard(cwd, unitId) {
   const doc = docText === null ? null : parseDoc(docText + '\n');
   const atBase = doc && !doc.error && doc.fm ? { ...unit, ...unitFields(doc) } : null; // as written at the base commit
   const lane = atBase ? computeLane(atBase.scope, profile) : null;
-  const state = !atBase ? 'draft' : atBase.fm.intent || lane.lane !== 'quick' ? approval(doc) : 'approved';
+  const state = !atBase ? 'draft' : atBase.fm.intent || lane.lane !== QUICK ? approval(doc) : 'approved';
   if (state !== 'approved') return done(msg('cardRefused', { unit: unitId, state }), config.exit.blocked);
 
   const review = readReview(cwd, unitId, doc);
@@ -72,7 +72,7 @@ function renderCard(cwd, unitId) {
   const focuses = [...new Set((review?.rounds ?? []).map((r) => r.focus ?? config.state.focus))];
   const listed = (verdict) => focuses.map((f) => roundsOf(review, f).at(-1)).filter((r) => hashNow !== null && r.diffHash === hashNow && r.verdict === verdict)
     .flatMap((r) => (r.findings ?? []).map((f) => msg('cardFinding', { path: '', line: '', claim: '', scenario: '', confidence: '', ...f, focus: r.focus ?? config.state.focus })));
-  const fixes = listed('fix');
+  const fixes = listed(VERDICT.fix);
   const answered = listed(config.state.answered); // an escalation the owner's re-approval answered
   const modules = new Set(atBase.modules);
   const data = {
@@ -88,7 +88,7 @@ function renderCard(cwd, unitId) {
     acs: atBase.acs.map((a) => doc.lines[a.line - 1].trim()),
     scope: atBase.scope,
     // Interface links resolved from the unit doc's folder to repo paths, as `git show <base>:<path>` takes them.
-    interfaces: [...new Set([...section(doc, 'Interfaces').filter((l) => !l.match(MD_LINK)).map((l) => l.trim().replace(/^[-*]\s+/, '')),
+    interfaces: [...new Set([...section(doc, config.grid.interfaces).filter((l) => !l.match(MD_LINK)).map((l) => l.trim().replace(/^[-*]\s+/, '')),
       ...linksOf({ doc, file: unit.file }, bundle).map((f) => relPath(top, f))])], // plain lines as written
     reserves: atBase.reserves,
     requirements: list(doc.fm.requirements).map(reqId).flatMap((id) => plan.requirements.filter((r) => reqId(r.id) === id)
@@ -100,10 +100,10 @@ function renderCard(cwd, unitId) {
     proof: [Object.entries(withDefaults(profile).levels).filter(([, l]) => l?.run && list(l.paths).length).map(([level]) => level).join(', ')].filter(Boolean),
     runs: Object.entries(withDefaults(profile).levels).filter(([, l]) => l?.run).map(([level, l]) => ({ level, run: l.run })),
     checks: (profile.modules ?? []).filter((m) => modules.has(m.id ?? m.name) && m.check).map((m) => ({ module: m.id ?? m.name, check: m.check })),
-    outOfScope: section(doc, 'Out of scope'),
+    outOfScope: section(doc, config.grid.outOfScope),
     rules: projectRules(gitLines(cwd, 'ls-tree', '--name-only', `${baseSha}:${config.rules.dir}`), profile, (p) => git(cwd, 'show', `${baseSha}:${p}`)),
   };
-  const file = templateFile(cwd, lane.lane === 'quick' ? C.quickTemplate : C.template);
+  const file = templateFile(cwd, lane.lane === QUICK ? C.quickTemplate : C.template);
   const template = readFileSync(file, 'utf8');
   // The base is left out, so a base that moved for other units does not make a recorded review stale.
   const hash = sha256(docText + '\n' + render(template, { ...data, base: '', hash: '' }, file)).slice(0, C.hashLength);

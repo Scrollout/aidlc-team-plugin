@@ -3,7 +3,7 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
-import { bundleOf, CLI_DIR, config, done, git, gitLines, list, readJson, sh, slug, tryGit, UsageError, relPath } from './config.mjs';
+import { bundleOf, CLI_DIR, config, QUICK, VERDICT, done, git, gitLines, list, readJson, sh, slug, tryGit, UsageError, relPath } from './config.mjs';
 import { finding as codeFinding, msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
@@ -18,9 +18,9 @@ const finding = (code, path, line, key, data) => codeFinding(G.codes, code, path
 // Proof-revert: with the unit's code reverted, each level that holds a tagged test must fail (docs/design/gate.md).
 function proofRevert(tree, card, paths, levels, tagged, bundleRel, add, unit, mutations) {
   const code = codeChanges(paths, levels, bundleRel);
-  if (card && card.lane !== 'quick' && !code.length) return proofMutate(tree, unit, mutations, levels, add);
+  if (card && card.lane !== QUICK && !code.length) return proofMutate(tree, unit, mutations, levels, add);
   const runs = Object.entries(levels ?? {}).filter(([, l]) => l?.run && [...tagged].some((f) => list(l.paths).some((g) => matches(f, g))));
-  const skip = card?.lane === 'quick' ? 'proofQuick' : !runs.length ? 'proofNoRun' : null;
+  const skip = card?.lane === QUICK ? 'proofQuick' : !runs.length ? 'proofNoRun' : null;
   if (skip) return { levels: [], note: msg('proofSkipped', { why: msg(skip, {}) }) };
   // Index and files both go back, so a run that checks `git diff` sees a clean tree, not the revert.
   const merged = git(tree, 'write-tree');
@@ -172,15 +172,15 @@ function runGate(cwd, st, unit) {
 
   const hash = diffHash(cwd, base, unit.id);
   // Quick lane: no reviewer (docs/design/team.md#cost); the diff's own lane is checked above.
-  if (card?.lane !== 'quick') {
+  if (card?.lane !== QUICK) {
     const general = roundsOf(unit.review).at(-1);
-    if (!general || general.verdict !== G.pass || general.diffHash !== hash) add('GATE-REVIEW', 'gateReview', {});
+    if (!general || general.verdict !== VERDICT.pass || general.diffHash !== hash) add('GATE-REVIEW', 'gateReview', {});
     else if (card && general.card !== card.hash) add('GATE-CARD', 'gateCardStale', { reviewed: general.card, card: card.hash });
     const needed = reviewFocuses(cwd, p, base, unit.id);
     needed.delete(config.state.focus);
     for (const [focus, why] of needed) {
       const last = roundsOf(unit.review, focus).at(-1);
-      if (!last || last.verdict !== G.pass || (last.diffHash !== hash && !keptPass(cwd, p, unit.id, focus, last))) add('GATE-SPECIALIST', 'gateSpecialist', { focus, why });
+      if (!last || last.verdict !== VERDICT.pass || (last.diffHash !== hash && !keptPass(cwd, p, unit.id, focus, last))) add('GATE-SPECIALIST', 'gateSpecialist', { focus, why });
     }
   }
 
@@ -195,7 +195,7 @@ function runGate(cwd, st, unit) {
   const { levels } = merged;
   const levelPaths = (level) => list(levels?.[level]?.paths);
   const tagged = new Set();
-  for (const ac of card?.lane === 'quick' ? [] : unit.acs) { // a quick-lane card carries no ACs, so no AC tests
+  for (const ac of card?.lane === QUICK ? [] : unit.acs) { // a quick-lane card carries no ACs, so no AC tests
     const tag = `${unit.id}/${ac.id}`;
     const files = gitLines(tree, 'grep', '-l', '-F', tag).filter((f) => !f.startsWith(bundleRel + '/'));
     files.forEach((f) => tagged.add(f));
@@ -207,9 +207,9 @@ function runGate(cwd, st, unit) {
 
   // Every level's run in full, as the owner's verification of each unit; a quick unit runs none, its ACs name
   // their own commands (U60).
-  const tested = card?.lane === 'quick' ? [] : Object.entries(levels ?? {}).filter(([, l]) => l?.run);
+  const tested = card?.lane === QUICK ? [] : Object.entries(levels ?? {}).filter(([, l]) => l?.run);
   for (const [level, l] of tested) if (runLevel(tree, level, l, add) === false) add('GATE-RUN', 'gateRun', { level, command: l.run });
-  for (const ac of card?.lane === 'quick' ? unit.acs : []) {
+  for (const ac of card?.lane === QUICK ? unit.acs : []) {
     for (const t of spansOf(unit.doc.lines[ac.line - 1]).map(runTarget).filter(Boolean)) {
       const command = `${t.runner} ${t.name}`;
       if (!shell(tree, command)) add('GATE-AC', 'gateAcCommand', { ac: ac.id, command });
@@ -284,8 +284,8 @@ export const commands = {
       return done('', config.exit.findings, findings);
     }
     git(tree, 'add', '-A');
-    git(tree, 'commit', '-q', '-m', `Merge ${unit.id}: ${unit.fm.title ?? ''}`,
-      '-m', `${G.trailers.unit}: ${unit.id}\n${G.trailers.card}: ${card.hash}\n${G.trailers.review}: ${card.lane === 'quick' ? G.noReview : G.pass}\n${G.tested}: ${tested.join(', ') || G.noReview}\n${G.proof}: ${proof?.levels.join(', ') || G.noReview}`);
+    git(tree, 'commit', '-q', '-m', msg('mergeSubject', { unit: unit.id, title: unit.fm.title ?? '' }),
+      '-m', `${G.trailers.unit}: ${unit.id}\n${G.trailers.card}: ${card.hash}\n${G.trailers.review}: ${card.lane === QUICK ? G.noReview : VERDICT.pass}\n${G.tested}: ${tested.join(', ') || G.noReview}\n${G.proof}: ${proof?.levels.join(', ') || G.noReview}`);
     const sha = git(tree, 'rev-parse', 'HEAD');
     dropWorktree(cwd, tree);
     git(cwd, 'merge', '-q', '--ff-only', sha);
@@ -318,7 +318,7 @@ export const commands = {
   },
 
   fix(args, { cwd }) {
-    const flags = { scope: [], requirement: [], 'from-issue': [], after: [] };
+    const flags = Object.fromEntries(config.commands.find((c) => c.name === 'fix').flags.map((f) => [f.slice(2), []]));
     let title = null;
     for (let k = 0; k < args.length; k++) {
       if (args[k].startsWith('--') && args[k].slice(2) in flags) {
@@ -335,7 +335,7 @@ export const commands = {
     const bundle = bundleOf(cwd, profile);
     const id = nextUnitId(bundle);
     const file = join(bundle, config.grid.units, `${id}-${slug(title).slice(0, 40)}.md`);
-    const version = existsSync(join(CLI_DIR, config.init.version)) ? readFileSync(join(CLI_DIR, config.init.version), 'utf8').trim() : 'dev';
+    const version = existsSync(join(CLI_DIR, config.init.version)) ? readFileSync(join(CLI_DIR, config.init.version), 'utf8').trim() : config.init.devVersion;
     const text = render(readFileSync(join(CLI_DIR, G.fixTemplate), 'utf8'), {
       title: JSON.stringify(title),
       description: JSON.stringify(title),
@@ -344,7 +344,7 @@ export const commands = {
       requirements: flags.requirement.length ? [flags.requirement.join(', ')] : [],
       issue,
       after: flags.after.slice(0, 1), // the release it fixes (docs/design/operations.md)
-      producer: `aidlc/${version}`,
+      producer: msg('producer', { version }),
       at: new Date().toISOString().replace(/\.\d+Z$/, 'Z'),
       level: Object.keys(withDefaults(profile).levels)[0],
     }, G.fixTemplate);
@@ -352,7 +352,7 @@ export const commands = {
     writeFileSync(file, text);
     // The unit as plan lint sees it, so the lead completes what the skeleton cannot know (U58).
     const findings = lintPlan(bundle, profile, { base: cwd, skip: [...mergedUnits(cwd, baseOf(profile)).keys()] }).filter((f) => f.path === relPath(cwd, file));
-    const out = msg('fixWrote', { path: relPath(cwd, file), lane: lane.lane, approve: lane.lane === 'quick' ? [] : [id] }) + (findings.length ? msg('fixLint', { path: relPath(cwd, file) }) : '');
+    const out = msg('fixWrote', { path: relPath(cwd, file), lane: lane.lane, approve: lane.lane === QUICK ? [] : [id] }) + (findings.length ? msg('fixLint', { path: relPath(cwd, file) }) : '');
     return done(out, findings.some((f) => f.level === 'error') ? config.exit.findings : config.exit.ok, findings);
   },
 

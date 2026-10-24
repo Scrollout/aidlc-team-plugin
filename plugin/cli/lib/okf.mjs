@@ -502,7 +502,7 @@ function checkConcept(file, add) {
   if (!truthy(fm.type)) add(file, 1, 'OKF-TYPE', 'typeMissing');
   const type = truthy(fm.type) ? pyStr(fm.type) : '';
   if (type === OKF.attested.type && !truthy(fm[OKF.attested.field])) add(file, 1, 'OKF-RUNTIME', 'runtimeMissing', OKF.attested);
-  const missing = ['title', 'description'].filter((k) => !truthy(fm[k]));
+  const missing = OKF.descFields.filter((k) => !truthy(fm[k]));
   if (missing.length) add(file, 1, 'HOUSE-DESC', 'descMissing', { fields: missing.join(', ') });
   if (!truthy(fm.generated)) add(file, 1, 'HOUSE-GENERATED', 'generatedMissing');
   const cap = OKF.sizeCaps[type] ?? OKF.sizeCapDefault;
