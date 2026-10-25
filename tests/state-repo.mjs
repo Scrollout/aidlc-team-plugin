@@ -21,7 +21,7 @@ delete process.env.GITHUB_STEP_SUMMARY;
 
 // Without NODE_TEST_CONTEXT, project commands that run `node --test` behave as they would outside this suite.
 const { NODE_TEST_CONTEXT, ...ENV } = process.env;
-const CHILD_ENV = { ...ENV, ...TMP_ENV };
+export const CHILD_ENV = { ...ENV, ...TMP_ENV };
 
 export function run(dir, args, input) {
   const r = spawnSync(process.execPath, [CLI, ...args], { cwd: dir, encoding: 'utf8', input, env: CHILD_ENV });

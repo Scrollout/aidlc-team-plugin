@@ -280,7 +280,9 @@ export function readState(cwd, { now = Date.now() } = {}) {
       }
       else if (!focus && (!quick || report)) {
         const gate = readJson(runtimeFile(cwd, 'gates', u.id));
-        state = gate?.diffHash === hash && gate.base === tryGit(cwd, 'rev-parse', base) ? 'gated' : 'reviewed';
+        // A builder launched after the gate refused it is a fix round in flight, not a merge to offer again.
+        if (gate?.at && heartbeatFresh(cwd, u.id, now) && heartbeatAt(cwd, u.id, S.launches) > Date.parse(gate.at)) state = 'building';
+        else state = gate?.diffHash === hash && gate.base === tryGit(cwd, 'rev-parse', base) ? 'gated' : 'reviewed';
       }
       else if (has(VERDICT.pass) || has(S.answered) || (report && report.status !== S.stopped && (!lastAt || report.at > lastAt) && Date.parse(report.at) > approvedAt(u.doc))) {
         state = heartbeatFresh(cwd, u.id, now, S.reviewing) ? 'reviewing' : 'reported';

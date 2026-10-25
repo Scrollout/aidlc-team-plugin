@@ -30,7 +30,7 @@ export const tryGit = (cwd, ...args) => { try { return git(cwd, ...args); } catc
 // The lines git prints, none when it fails.
 export const gitLines = (cwd, ...args) => (tryGit(cwd, ...args) ?? '').split('\n').filter(Boolean);
 // A project command, as the shell runs it: { status, stdout, stderr }.
-export const sh = (cwd, command) => spawnSync(command, { cwd, shell: true, encoding: 'utf8' });
+export const sh = (cwd, command, env) => spawnSync(command, { cwd, shell: true, encoding: 'utf8', env: env && { ...process.env, ...env } });
 // A command's stdin: the test's, or the process's.
 export const readStdin = (ctx) => (ctx.stdin ? ctx.stdin() : readFileSync(0, 'utf8'));
 export const done = (output, code = config.exit.ok, findings = []) => ({ code, findings, output });

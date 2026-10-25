@@ -1026,6 +1026,7 @@
   },
   "gate": {
     "summaryEnv": "GITHUB_STEP_SUMMARY",
+    "fresh": { "GOFLAGS": "-count=1" },
     "summaryMax": 50,
     "remote": "origin",
     "fixTemplate": "fix.md",

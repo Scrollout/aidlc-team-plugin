@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path';
 import { bundleOf, CLI_DIR, config, QUICK, STANDARD, VERDICT, done, git, gitLines, list, readJson, slug, tryGit, UsageError, relPath } from './config.mjs';
 import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
-import { linksOf, MD_LINK, nameProblem, parseDoc, sectionOf } from './okf.mjs';
+import { linksOf, MD_LINK, nameProblem, parseDoc, sectionOf, sizeCap } from './okf.mjs';
 import { computeLane, overlaps, readPlan, reqId, unitFields } from './grid.mjs';
 import { aidlcDir, approval, baseOf, branchOf, diffHash, hashDoc, readReview, readState, heldDoc, researchOf, roundsOf, runtimeFile, sha256, worktrees, writeJson } from './state.mjs';
 
@@ -138,7 +138,7 @@ function researchBrief(cwd, id) {
     doc: doc.id, question, questionYaml: JSON.stringify(question), file: relPath(cwd, doc.file), model: st.profile.models.research,
     index: relPath(cwd, join(st.bundle, config.okf.index)), stack: C.stack.filter((f) => existsSync(join(cwd, f))),
     rules: projectRules(existsSync(join(cwd, config.rules.dir)) ? readdirSync(join(cwd, config.rules.dir)) : [], st.profile, (p) => readFileSync(join(cwd, p), 'utf8')),
-    sources: list(st.profile.research?.sources), max: st.profile.research.max, cap: config.okf.sizeCaps.Research ?? config.okf.sizeCapDefault, out: relPath(cwd, join(st.bundle, config.grid.research, `${doc.id}-${slug(question, 6)}.md`)),
+    sources: list(st.profile.research?.sources), max: st.profile.research.max, cap: sizeCap('Research', st.profile.docs?.caps), out: relPath(cwd, join(st.bundle, config.grid.research, `${doc.id}-${slug(question, 6)}.md`)),
   }, file);
 }
 

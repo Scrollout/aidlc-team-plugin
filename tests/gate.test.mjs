@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { approve, CLI, commit, git, makeRepo, read, review, run, tempDir } from './state-repo.mjs';
+import { approve, CHILD_ENV, CLI, commit, git, makeRepo, read, review, run, tempDir } from './state-repo.mjs';
 import { CODE, codes, FAIL, LOG, merge, OK, PROFILE, setup, TEST } from './gate-repo.mjs';
 import { boundaryFindings, moduleFindings } from '../plugin/cli/lib/gate.mjs';
 
@@ -304,4 +304,11 @@ test('U98/AC-2 check --ci runs deps.check, so an advisory published after a merg
   assert.match(r.out, /CI-DEPENDENCY .+ reports a dependency with a known advisory or out of date → plan a fix unit/);
   commit(dir, 'clean', { '.aidlc/profile.json': { ...PROFILE, deps: { manifests: ['package.json'], check: [OK] } } });
   assert.doesNotMatch(run(dir, ['check', '--ci']).out, /CI-DEPENDENCY/);
+});
+
+test('U109/AC-1 gate level runs bypass test caches (gate.fresh), added to the value already set', () => {
+  const check = 'node -e "process.exit(/^-mod=mod -count=1$/.test(process.env.GOFLAGS) ? 0 : 1)"';
+  const dir = setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: `${check} && node --test` } } } });
+  const r = spawnSync(process.execPath, [CLI, 'merge', 'U-1'], { cwd: dir, encoding: 'utf8', env: { ...CHILD_ENV, GOFLAGS: '-mod=mod' } });
+  assert.equal(r.status, 0, r.stdout + r.stderr);
 });

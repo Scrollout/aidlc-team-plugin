@@ -69,7 +69,7 @@ const shell = (cwd, command) => sh(cwd, command).status === 0;
 function runLevel(tree, level, l, add) {
   const unset = list(l.needs).filter((v) => !process.env[v]);
   if (unset.length) return add('GATE-RUN', 'gateNeeds', { level, vars: unset.join(', ') }), null;
-  const r = sh(tree, l.run);
+  const r = sh(tree, l.run, Object.fromEntries(Object.entries(G.fresh).map(([k, v]) => [k, [process.env[k], v].filter(Boolean).join(' ')]))); // no cached pass over a revert or mutation
   const skipped = l.skip && `${r.stdout}\n${r.stderr}`.split('\n').find((line) => new RegExp(l.skip).test(line));
   if (skipped) return add('GATE-SKIP', 'gateSkip', { level, line: skipped.trim() }), null;
   return r.status === 0;
@@ -362,7 +362,7 @@ export const commands = {
       dropWorktree(cwd, tree);
       // Remembered so `next` stops offering this merge until the base or the diff changes.
       const codes = [...new Set(findings.map((f) => f.code))];
-      writeJson(runtimeFile(cwd, 'gates', unit.id), { base: git(cwd, 'rev-parse', st.base), diffHash: diffHash(cwd, st.base, unit.id), codes });
+      writeJson(runtimeFile(cwd, 'gates', unit.id), { base: git(cwd, 'rev-parse', st.base), diffHash: diffHash(cwd, st.base, unit.id), codes, at: new Date().toISOString() });
       for (const code of codes) bump(cwd, 'codes', code);
       return done('', config.exit.findings, findings);
     }

@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-25
 
+- **Fix** M12 U109: gate level runs bypass test caches, a fix round after a refusal reads as building, and the research brief states the project's cap ([Gate](design/gate.md)). Release 0.108.1.
 - **Creation** M12 U108: [workload identity](design/workload-identity.md): constitution rule 10 and `GATE-IDENTITY` for static credentials between components. Release 0.108.0.
 - **Update** M12 U107: plan lint warns `PLAN-SKELETON` when end to end comes last, and `next` asks for a walking skeleton first ([Plan lint](design/plan-lint.md)). Release 0.107.0.
 - **Fix** M12 U106: an edited approved decision goes back to the owner, and Principles docs are capped at 6,000 chars ([State](design/state.md#next)). Release 0.106.0.

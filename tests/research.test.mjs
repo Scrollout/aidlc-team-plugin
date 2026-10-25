@@ -77,7 +77,7 @@ test('U25/AC-2 U25/AC-3 an answered research hold no longer holds the doc; the b
   commit(dir, 'hold U-1');
   const brief = run(dir, ['research', 'U-1']).out;
   assert.match(brief, / Keep the whole digest, frontmatter included, under 6000 characters\.$/m);
-  assert.match(brief, /^generated: \{ by: <your model>, at: <the current UTC time> \}$/m);
+  assert.match(brief, /^generated: \{ by: claude-code\/<your model id>, at: <the current UTC time> \}$/m);
   write(dir, { 'docs/research/U-1-which-proxy.md': '---\ntype: Research\ntitle: Proxy\ndescription: The file proxy.\nquestion: "which proxy?"\n---\n\n# Options\nOne.\n' });
   commit(dir, 'digest');
   assert.match(run(dir, ['next']).out, /^build U-1/);
@@ -127,4 +127,11 @@ test('U102/AC-1 a research hold on any doc gets a brief by its name and holds ne
   assert.equal(run(dir, ['hold', 'docs/catalogue/reputation.md', 'research:', 'what do RFC 5782 DNSBLs say?']).code, 0);
   assert.match(run(dir, ['next']).out, /^research for reputation: researcher on \w+ \(brief: aidlc research reputation\)/);
   for (const name of ['reputation', 'docs/catalogue/reputation.md']) assert.match(run(dir, ['research', name]).out, /^Question: what do RFC 5782 DNSBLs say\?$/m, name);
+});
+
+test('U109/AC-3 the research brief states the project\'s Research cap', () => {
+  const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), [U1]: unitDoc({ scope: ['sdk/**'] }) }, { docs: { bundle: 'docs', caps: { default: 4000 } } });
+  approve(dir, 'I-1', 'U-1');
+  run(dir, ['hold', 'U-1', 'research:', 'which proxy?']);
+  assert.match(run(dir, ['research', 'U-1']).out, /under 4000 characters\.$/m);
 });

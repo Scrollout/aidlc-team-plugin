@@ -395,3 +395,18 @@ test('U106/AC-1 an approved decision edited since its approval goes back to the 
   assert.equal(run(dir, ['approve', D]).code, 0);
   assert.doesNotMatch(run(dir, ['next']).out, /re-approve/);
 });
+
+test('U109/AC-2 a builder launched after the gate refused the unit is a fix round in flight, not a merge to offer', () => {
+  const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['a/**'] }) });
+  approve(dir, 'I-1', 'U-1');
+  git(dir, 'switch', '-q', '-c', 'unit/U-1');
+  commit(dir, 'work', { 'a/x.txt': 'U-1/AC-1\n' });
+  git(dir, 'switch', '-q', 'main');
+  report(dir, 'U-1');
+  review(dir, 'U-1', 'pass');
+  write(dir, { '.git/aidlc/gates/U-1.json': { base: 'x', diffHash: 'y', codes: ['GATE-PROOF'], at: new Date(Date.now() - 60000).toISOString() } });
+  assert.match(run(dir, ['next']).out, /^merge U-1/);
+  write(dir, { '.git/aidlc/launches/U-1': '' });
+  heartbeat(dir, 'U-1');
+  assert.match(run(dir, ["next"]).out, /^wait for the builders and reviewers of U-1/);
+});

@@ -23,7 +23,7 @@ type: Research
 title: "<the question in a few words>"
 description: "<the answer in one line>"
 question: {{questionYaml}}
-generated: { by: <your model>, at: <the current UTC time> }
+generated: { by: claude-code/<your model id>, at: <the current UTC time> }
 sources:
   - id: <short id>
     resource: <url>
