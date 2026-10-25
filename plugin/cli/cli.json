@@ -410,6 +410,7 @@
     "initLeftoverTrailer": "leftover: commit trailer {{key}} in {{count}} commits; history is left as is\n",
     "initVendored": "pinned the CLI {{version}} in {{path}}\n",
     "upgradeAdded": "added {{path}}: the project lacked it\n",
+    "upgradeFindings": "{{version}} reports findings the pinned release did not; plan a fix before the next merge:\n{{list}}\n",
     "upgradeSame": "the CLI is already {{version}} in {{path}}: nothing changed\n",
     "upgradeFrom": "copied from {{version}} at {{path}}; for a newer release: claude plugin marketplace update, then claude plugin update {{name}}, restart, and upgrade again\n",
     "initNotPlugin": "init and upgrade run from the installed plugin, not from {{path}} → run node <installed plugin>/cli/aidlc.mjs upgrade, the command the session-start status names",
@@ -966,6 +967,7 @@
       }
     },
     "bin": ".aidlc/bin",
+    "cli": "aidlc.mjs",
     "version": "VERSION",
     "devVersion": "dev",
     "manifest": ".claude-plugin/plugin.json",

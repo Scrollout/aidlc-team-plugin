@@ -1,5 +1,6 @@
 // Init and upgrade: render a project's files from templates, pin the CLI, adopt an existing bundle
 // (docs/design/profile.md, docs/design/paths.md). Settings, file list and messages come from cli.json.
+import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { CLI_DIR, PLUGIN_DIR, config, done, git, isMap, readJson, tryGit, UsageError, relPath } from './config.mjs';
@@ -218,8 +219,14 @@ export const commands = {
     const tracked = tryGit(PLUGIN_DIR, 'ls-files', '--error-unmatch', I.manifest) !== null;
     if (tracked && tryGit(PLUGIN_DIR, 'status', '--porcelain', '--', '.') !== '' && !flags.dirty) throw new UsageError(msg('upgradeDirty', { path: PLUGIN_DIR }));
     const same = pinned === version; // a re-copy of the same release changes nothing in the tree
+    // The findings the new release adds, by place and code, to plan a fix before a merge turns red (docs/design/vendoring.md).
+    const checked = () => (existsSync(join(root, I.bin, I.cli)) ? spawnSync(process.execPath, [join(root, I.bin, I.cli), 'check'], { cwd: root, encoding: 'utf8' }).stdout ?? '' : '').split('\n').filter(Boolean);
+    const key = (l) => l.split(' ').slice(0, 2).join(' ');
+    const before = new Set(checked().map(key));
     const copied = vendor(root, version);
+    const added = addMissing(root, version);
+    const fresh = checked().filter((l) => !before.has(key(l)));
     const name = readJson(join(PLUGIN_DIR, I.manifest)).name;
-    return done((same ? msg('upgradeSame', { version, path: I.bin }) : copied) + addMissing(root, version) + msg('upgradeFrom', { version, path: PLUGIN_DIR, name }));
+    return done((same ? msg('upgradeSame', { version, path: I.bin }) : copied) + added + (fresh.length ? msg('upgradeFindings', { version, list: fresh.join('\n') }) : '') + msg('upgradeFrom', { version, path: PLUGIN_DIR, name }));
   },
 };

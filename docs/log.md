@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-25
 
+- **Update** M11 U97: `upgrade` lists the findings the new release adds, to plan before a merge ([Vendoring](design/vendoring.md)). Release 0.102.0.
 - **Update** M11 U96: [naming](design/names.md#lifecycle) through the lifecycle: path rules, a naming decision template per stage, a warning for a codebase with no naming rule. Release 0.101.0.
 - **Creation** M11 U95: [naming rules](design/names.md): `names` in the profile, checked on added lines at merge (`GATE-NAME`) and listed on cards. Release 0.100.0.
 - **Fix** M11 U94: the guard compares git dirs by their real path, and the test quotes Windows paths as a shell needs. Release 0.99.1.

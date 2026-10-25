@@ -79,6 +79,19 @@ test('U5/AC-2 rendered files contain no plugin name', () => {
   }
 });
 
+test('U97/AC-1 upgrade lists the findings the new release reports and the pinned one did not', () => {
+  const dir = emptyRepo();
+  run(dir, ['init']);
+  writeFileSync(join(dir, '.aidlc/bin/VERSION'), '0.0.1\n');
+  writeFileSync(join(dir, '.aidlc/bin/aidlc.mjs'), "console.log('docs/a.md:1 HOUSE-SIZE an old finding');\n"); // an older release that checks less
+  const profile = JSON.parse(readFileSync(join(dir, '.aidlc/profile.json'), 'utf8'));
+  writeFileSync(join(dir, '.aidlc/profile.json'), JSON.stringify({ ...profile, modules: [{ id: 'core', paths: ['src/**'] }] }));
+  const r = run(dir, ['upgrade', '--dirty']);
+  assert.equal(r.code, 0, r.err);
+  assert.match(r.out, new RegExp(`${PLUGIN.version.replace(/\./g, '\\.')} reports findings the pinned release did not; plan a fix before the next merge:\n\\.aidlc/profile\\.json:1 PROFILE-NAMES `));
+  assert.doesNotMatch(run(dir, ['upgrade', '--dirty']).out, /reports findings the pinned release did not/, 'none new the second time');
+});
+
 test('U5/AC-3 upgrade replaces .aidlc/bin and changes nothing the project has; the pinned copy cannot upgrade itself', () => {
   const dir = emptyRepo();
   run(dir, ['init']);
