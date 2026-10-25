@@ -300,6 +300,7 @@ function runGate(cwd, st, unit) {
   const touched = (p.modules ?? []).filter((m) => paths.some((x) => list(m.paths).some((g) => matches(x, g))));
   for (const m of touched.filter((x) => x.check)) if (!shell(tree, m.check)) add('GATE-CHECK', 'gateCheck', { command: m.check });
   for (const command of list(p.security?.check)) if (!shell(tree, command)) add('GATE-SECURITY', 'gateCheck', { command });
+  for (const command of list(p.deps?.check)) if (!shell(tree, command)) add('GATE-DEPENDENCY', 'depsCheck', { command }); // docs/design/dependencies.md
   out.push(...architecture(tree, merged)); // the boundaries as merged
   // An exception is approved on the base before the merge that needs it; one only on the unit branch cannot be (docs/design/architecture.md).
   for (const d of new Set(exceptDocs(merged.architecture ?? {}))) {
@@ -441,7 +442,9 @@ export const commands = {
     if (!args.includes('--ci')) return done('');
     const st = readState(cwd);
     const range = st.profile.adopted ? `${st.profile.adopted}..HEAD` : 'HEAD';
-    const findings = [...historyFindings(cwd, range, st, { merge: 'CI-MERGE', commit: 'CI-COMMIT' }), ...architecture(cwd, withDefaults(st.profile), 'archCheckCi')];
+    const findings = [...historyFindings(cwd, range, st, { merge: 'CI-MERGE', commit: 'CI-COMMIT' }), ...architecture(cwd, withDefaults(st.profile), 'archCheckCi'),
+      // An advisory published after the merge turns the base red (docs/design/dependencies.md).
+      ...list(st.profile.deps?.check).filter((command) => !shell(cwd, command)).map((command) => finding('CI-DEPENDENCY', config.layers.find((l) => l.from === 'project').path, 1, 'depsCheck', { command }))];
     return done('', findings.length ? config.exit.findings : config.exit.ok, findings);
   },
 };

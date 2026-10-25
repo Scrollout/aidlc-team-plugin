@@ -2,6 +2,8 @@ name: aidlc
 on:
   push:
   pull_request:
+  schedule:
+    - cron: '23 5 * * *' # daily: an advisory published after a merge turns the base red
 permissions:
   contents: read
 jobs:

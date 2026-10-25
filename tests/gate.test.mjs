@@ -294,3 +294,14 @@ test('U13/AC-4 push on a base never pushed checks only the commits after the one
   assert.equal(git(remote, 'rev-parse', 'main'), git(dir, 'rev-parse', 'main'));
 });
 
+
+test('U98/AC-2 check --ci runs deps.check, so an advisory published after a merge turns the base red', () => {
+  const dir = setup();
+  assert.equal(merge(dir).code, 0);
+  commit(dir, 'a scanner', { '.aidlc/profile.json': { ...PROFILE, deps: { manifests: ['package.json'], check: [FAIL] } } });
+  const r = run(dir, ['check', '--ci']);
+  assert.equal(r.code, 1);
+  assert.match(r.out, /CI-DEPENDENCY .+ reports a dependency with a known advisory or out of date → plan a fix unit/);
+  commit(dir, 'clean', { '.aidlc/profile.json': { ...PROFILE, deps: { manifests: ['package.json'], check: [OK] } } });
+  assert.doesNotMatch(run(dir, ['check', '--ci']).out, /CI-DEPENDENCY/);
+});

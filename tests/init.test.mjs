@@ -259,7 +259,8 @@ test('U53/AC-1 U53/AC-2 init writes a constitution naming only checks the CLI de
   const named = [...text.matchAll(/`([A-Z]+-[A-Z-]+)`/g)].map((m) => m[1]);
   assert.ok(named.length >= 10, named.join(' '));
   assert.deepEqual(named.filter((c) => !known.has(c)), [], 'every code it names exists');
-  for (const code of ['PLAN-SLICE', 'PLAN-RUN', 'GATE-PROOF', 'GATE-SKIP']) assert.ok(named.includes(code), code);
+  for (const code of ['PLAN-SLICE', 'PLAN-RUN', 'GATE-PROOF', 'GATE-SKIP', 'GATE-DEPENDENCY', 'CI-DEPENDENCY']) assert.ok(named.includes(code), code); // U98/AC-2 rule 8
+  assert.match(readFileSync(join(dir, '.github/workflows/aidlc.yml'), 'utf8'), /^ {2}schedule:\n {4}- cron: /m, 'U98/AC-2 daily');
   assert.match(readFileSync(join(dir, 'docs/index.md'), 'utf8'), /\[constitution\]\(constitution\/index\.md\)/);
   assert.match(readFileSync(join(dir, 'docs/constitution/index.md'), 'utf8'), /principles\.md/);
   const check = run(dir, ['check']);

@@ -13,6 +13,7 @@ generated: { by: {{producer}}, at: {{at}} }
 5. **Fresh eyes review.** A reviewer who did not build the unit passes it before the merge; a quick-lane unit gets no review. Checked by `GATE-REVIEW` and `GATE-LANE`.
 6. **The owner decides.** Intents, plans, one-way doors and releases wait for the owner; agents never approve. Checked by `PLAN-DECISION` and `GUARD-OWNER`.
 7. **Released means running.** When the profile deploys, a release counts once its deploy check and smoke pass, and each intent links a runbook; the owner releases and rolls back. A back-fill intent ships no code: it needs no runbook and is released once merged. Checked by `PLAN-RUNBOOK` and `GUARD-OWNER`.
+8. **Current dependencies.** Each dependency is the newest stable release with every known security fix, looked up from its registry when added or bumped, never from memory, and reported with its source; the project's scanners run at merge and daily in CI. Checked by `GATE-DEPENDENCY`, `CI-DEPENDENCY` and `aidlc report`.
 
 # Project rules
 Add the rules this project keeps beyond these, each with why and, where one exists, the check that enforces it.

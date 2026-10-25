@@ -649,8 +649,13 @@ export const commands = {
     const unit = args[0];
     if (!unit) throw new UsageError(msg('noDoc', { name: '' }));
     const data = args[1] ? parseObject(readFileSync(resolve(ctx.cwd, args[1]), 'utf8'), args[1]) : parseObject(readStdin(ctx), 'report');
-    const problems = data.status === S.stopped ? [] : mutationProblems(ctx.cwd, loadProfile(ctx.cwd).profile, unit, data.mutations);
+    const { profile } = loadProfile(ctx.cwd);
+    const problems = data.status === S.stopped ? [] : mutationProblems(ctx.cwd, profile, unit, data.mutations);
     if (problems.length) throw new UsageError(msg(problems.wired ? 'reportMutationsWired' : 'reportMutations', { problems: problems.join('; ') }));
+    // A changed manifest names each version's source: the registry, not memory (docs/design/dependencies.md).
+    const pins = data.status === S.stopped ? [] : unitPaths(ctx.cwd, baseOf(profile), unit).filter((f) => list(profile.deps?.manifests).some((g) => inside('/' + f, g)));
+    const sourced = [data.deps ?? []].flat().filter((d) => d?.name && d.version && d.source);
+    if (pins.length && (!sourced.length || sourced.length < [data.deps].flat().length)) throw new UsageError(msg('reportDeps', { unit, files: pins.join(', ') }));
     writeJson(runtimeFile(ctx.cwd, 'reports', unit), { ...data, unit, at: new Date().toISOString() });
     if (data.status === S.stopped) {
       bump(ctx.cwd, 'escalations', config.retro.reasons.stopped);

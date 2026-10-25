@@ -71,3 +71,16 @@ test('U55/AC-2 U61/AC-2 the card says how to list mutations and shows the report
   assert.match(readFileSync(join(ROOT, 'plugin/agents/builder.md'), 'utf8'), /changed only tests, or as above, add the card's `mutations`.*named in `breaks`/);
   assert.match(readFileSync(join(ROOT, 'plugin/agents/reviewer.md'), 'utf8'), /`Mutations to judge`: one that breaks nothing its AC names/);
 });
+
+test('U98/AC-1 a report of a unit that changes a manifest lists each version with its source; the card says to look them up', () => {
+  const profile = { ...PROFILE, deps: { manifests: ['**/package.json'], check: ['npm audit'] } };
+  const dir = backfill({ scope: ['tests/**', 'package.json'], extra: { 'package.json': '{"dependencies":{"undici":"7.30.1"}}\n' }, profile });
+  const send = (deps) => run(dir, ['report', 'U-1'], JSON.stringify({ status: 'done', summary: 's', ...(deps ? { deps } : {}) }));
+  const bare = send();
+  assert.equal(bare.code, 64);
+  assert.match(bare.err, /U-1 changes package\.json: list each dependency added or bumped as "deps"/);
+  assert.equal(send([{ name: 'undici', version: '7.30.1' }]).code, 64, 'a source is required');
+  assert.equal(send([{ name: 'undici', version: '7.30.1', source: 'npm view undici version' }]).code, 0);
+  git(dir, 'switch', '-q', 'main');
+  assert.match(run(dir, ['card', 'U-1']).out, /## Dependencies\nYour scope pins dependencies \(\*\*\/package\.json\)\. Your training data is out of date: look up each version .+ The merge gate runs: npm audit\.\n/);
+});

@@ -31,6 +31,7 @@ const BROKEN = {
   'ARCH-CYCLE': () => setup({ profile: { ...PROFILE, modules: [{ id: 'core', paths: ['src/**'] }, { id: 'store', paths: ['lib/**'] }],
     architecture: { graph: 'node -e "console.log(\'src -> lib\\nlib -> src\')"', acyclic: true } } }),
   'GATE-NAME': () => setup({ profile: { ...PROFILE, names: [{ id: 'export', files: ['src/**'], find: 'export const (\\w+)', pattern: '[a-z]+Total', why: 'docs/decisions/names.md' }] } }),
+  'GATE-DEPENDENCY': () => setup({ profile: { ...PROFILE, deps: { manifests: ['package.json'], check: [FAIL] } } }),
   'ARCH-CHECK': () => setup({ profile: { ...PROFILE, architecture: { checks: [FAIL] } } }),
   'GATE-SHARED': () => setup({ unit: { scope: ['src/**', 'tests/**', 'docs/**'] }, files: { ...CODE, ...TEST, 'docs/log.md': 'edited by a builder\n' } }),
   'GATE-CONFLICT': () => setup({ unit: { scope: ['src/**', 'tests/**', 'README.md'], twoWay: 'a readme line' }, files: { ...CODE, ...TEST, 'README.md': 'unit\n' }, beforeReview: (d) => commit(d, 'base moves', { 'README.md': 'base\n' }) }),

@@ -451,6 +451,7 @@
     "archApi": "{{from}} -> {{to}}: {{to}} is inside {{module}}; depend only on its public paths ({{api}})",
     "archCycle": "modules depend on each other in a circle: {{circle}}",
     "archDataTwice": "{{to}} is claimed by {{owners}}; one module owns it",
+    "depsCheck": "{{command}} reports a dependency with a known advisory or out of date",
     "archCheckCi": "{{command}} failed in CI; if it passes locally, the aidlc job lacks what it needs: add its toolchain setup to .github/workflows/aidlc.yml",
     "archExceptInUnit": "{{doc}} comes with {{unit}}, so the owner cannot approve it before this merge: the lead commits it on the base as a plan doc for the owner to approve, and {{unit}} merges the base and drops its copy",
     "gateMerged": "merged {{unit}} as {{sha}}\n",
@@ -464,6 +465,7 @@
     "mutationBreaks": "{{tag}}'s mutation names no behaviour it breaks: add \"breaks\": \"<the AC's main behaviour it breaks>\"",
     "mutationMissing": "{{tag}} has no mutation",
     "mutationBad": "{{tag}}'s mutation of {{path}} needs a file outside the tests and the diff whose find text occurs once (found {{count}}), and a replace",
+    "reportDeps": "{{unit}} changes {{files}}: list each dependency added or bumped as \"deps\": [{\"name\", \"version\", \"source\"}], the source being the registry URL or command that showed the version (docs: Current dependencies)",
     "reportMutationsWired": "a unit that changes code and reports mutations is proved by them instead of by revert, so each AC needs one (docs: Proof for back-fill tests, wiring): {{problems}}",
     "reportMutations": "a unit that changes only tests proves each AC with a mutation of the code it covers (docs: Proof for back-fill tests): {{problems}}",
     "cardMutations": "## Mutations to judge (the gate applies each; send back one that breaks nothing its AC names)\n{{list}}\n",
@@ -498,6 +500,7 @@
     "cardDataOwned": "- {{module}} owns {{data}}\n",
     "cardName": "- {{id}} in {{files}}: {{pattern}} ({{why}})\n",
     "cardNamePath": "- {{id}}, paths under {{files}}: {{pattern}} ({{why}})\n",
+    "cardDeps": "Your scope pins dependencies ({{manifests}}). Your training data is out of date: look up each version you add or bump from its registry or official release page, take the newest stable release that fixes every known advisory, pin it exactly, and list it in your report as \"deps\": [{\"name\", \"version\", \"source\"}] (the URL or command that showed it). The merge gate runs: {{checks}}.\n",
     "cardPlatform": "The deploy target is already defined in: {{refs}}\nBuild on its conventions (names, namespaces, registries, access); add nothing it already provides, and stop and report if the unit needs a change there.\n",
     "cardDataRest": "- shared, for any module: {{shared}}\nReach any other data only through its owning module's interface, an event or a shared service; the merge gate fails a direct read or write (ARCH-DATA).\n",
     "cardDesign": "the # {{sections}} section(s) of {{path}} at the base",
@@ -600,7 +603,7 @@
   },
   "okf": {
     "profileKeys": {
-      "top": ["name", "base", "docs", "levels", "modules", "lanes", "focus", "security", "shared", "reserve", "parallel", "architecture", "adopted", "deploy", "release", "regen", "review", "research", "models", "board", "ci", "github", "decisions", "generated", "run", "approvals", "names"],
+      "top": ["name", "base", "docs", "levels", "modules", "lanes", "focus", "security", "shared", "reserve", "parallel", "architecture", "adopted", "deploy", "release", "regen", "review", "research", "models", "board", "ci", "github", "decisions", "generated", "run", "approvals", "names", "deps"],
       "security": ["secrets", "content", "threatModel", "check"]
     },
     "index": "index.md",
@@ -1073,6 +1076,9 @@
       "GATE-SECURITY": {
         "fix": "fix what the security check reports"
       },
+      "GATE-DEPENDENCY": {
+        "fix": "bump each flagged dependency to the newest stable release that fixes it, looked up from its registry, and report the source"
+      },
       "ARCH-BOUNDARY": {
         "fix": "remove the dependency, or the owner approves an exception decision; a unit that adds a boundary lists the edges the base already has in its except decision, or its own merge fails"
       },
@@ -1093,6 +1099,9 @@
       },
       "GATE-CONFLICT": {
         "fix": "merge the base into the unit branch, resolve, and report again"
+      },
+      "CI-DEPENDENCY": {
+        "fix": "plan a fix unit (aidlc fix) that bumps each flagged dependency to the newest stable release, looked up from its registry"
       },
       "CI-MERGE": {
         "fix": "merge units only with aidlc merge"

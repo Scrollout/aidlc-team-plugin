@@ -105,6 +105,8 @@ function renderCard(cwd, unitId) {
     // The naming rules for the files the unit may write (docs/design/names.md).
     names: [[profile.names ?? []].flat().filter((r) => !nameProblem(r) && list(r.files).some((g) => atBase.scope.some((s) => overlaps(s, g))))
       .map((r) => msg(r.find ? 'cardName' : 'cardNamePath', { id: r.id, files: list(r.files).join(', '), pattern: r.pattern, why: r.why ?? '-' })).join('')].filter(Boolean),
+    // Versions from the registry, never from memory (docs/design/dependencies.md).
+    deps: list(profile.deps?.manifests).some((g) => atBase.scope.some((s) => overlaps(s, g))) ? [msg('cardDeps', { manifests: list(profile.deps.manifests).join(', '), checks: list(profile.deps.check).join('; ') || '-' })] : [],
     // Where the deploy target is already defined, so a unit builds on it (docs/design/operations.md).
     platform: list(profile.deploy?.platform).length ? [msg('cardPlatform', { refs: list(profile.deploy.platform).join(', ') })] : [],
     outOfScope: section(doc, config.grid.outOfScope),
