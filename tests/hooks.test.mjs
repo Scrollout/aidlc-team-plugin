@@ -50,6 +50,9 @@ test('U94/AC-1 a git call cd or -C takes into another repository passes the guar
   for (const command of [`(cd '${other}') ; git push origin main`, `cd '${other}' | git push origin main`, `cd '${other}' && cd - && git push origin main`, `git -C '${other}' --git-dir='${dir}/.git' push origin main`, `git -C '${other}' push https://github.com/org/app main`, `git -C '${other}' push '${dir}' main`]) {
     assert.equal(decision(guardIn(dir, command)), 'deny', command);
   }
+  // U120/AC-1 a pipe or || after the cd keeps its folder; a cd in a background job loses it.
+  for (const command of [`cd '${other}' && git push -q origin main 2>&1 | tail -3`, `cd '${other}' && git push origin main || echo failed`]) assert.equal(decision(guardIn(dir, command)), 'allow', command);
+  for (const command of [`cd '${other}' & git push origin main`, `echo x | cd '${other}' && git push origin main`]) assert.equal(decision(guardIn(dir, command)), 'deny', command);
   git(other, 'remote', 'add', 'mirror', 'ssh://git@github.com/Org/app');
   assert.equal(decision(guardIn(dir, `git -C '${other}' push origin main`)), 'deny', 'shares a remote with the project');
   const clone = tempDir('clone-');

@@ -33,7 +33,7 @@ export function segments(command) {
     else if (c === '#' && word === null) while (i + 1 < command.length && command[i + 1] !== '\n') i++; // a comment
     else if (/[<>]/.test(c)) { if (/^\d+$/.test(word ?? '')) word = null; push(); while (/[<>&|]/.test(command[i + 1] ?? '')) i++; target = command[i + 1] !== '('; }
     else if (/\s/.test(c) && c !== '\n') push();
-    else if (/[;&|\n()]/.test(c)) { push(); target = false; if (out[out.length - 1].length) out.push([]); }
+    else if (/[;&|\n()]/.test(c)) { push(); target = false; const s = out[out.length - 1]; if (s.length) { s.sep = c + (/[&|]/.test(c) && command[i + 1] === c ? c : ''); out.push([]); } }
     else word = (word ?? '') + c;
   }
   push();
@@ -41,7 +41,7 @@ export function segments(command) {
     let k = 0;
     while (k < s.length && /^[A-Za-z_]\w*=/.test(s[k])) k++;
     if (H.wrappers.includes(s[k])) k++;
-    return s.slice(k);
+    return Object.assign(s.slice(k), { sep: s.sep });
   });
 }
 
@@ -155,8 +155,11 @@ function guard(input, cwd) {
   // Where each segment runs, as `cd` moves it; a subshell, pipe or background job leaves that unknown.
   const command = String(input.tool_input?.command ?? '');
   let dir = input.cwd ? resolve(input.cwd) : cwd;
-  for (const argv of segments(command)) {
-    if (['cd', 'pushd'].includes(argv[0])) { const to = argv[1]?.replace(/^~(?=\/|$)/, homedir()); dir = dir && to && to !== '-' && !/[()|]|(^|[^&])&([^&]|$)/.test(command) ? resolve(dir, to) : null; continue; }
+  const all = segments(command);
+  for (const [k, argv] of all.entries()) {
+    // A cd's folder is lost in a subshell, or when the cd itself is in a pipeline or a background job (U120).
+    const lost = /[()]/.test(command) || ['|', '&'].includes(argv.sep) || all[k - 1]?.sep === '|';
+    if (['cd', 'pushd'].includes(argv[0])) { const to = argv[1]?.replace(/^~(?=\/|$)/, homedir()); dir = dir && to && to !== '-' && !lost ? resolve(dir, to) : null; continue; }
     // The owner answers a permission prompt for an owner command; without prompts (bypass) it stays a `!` command (decision 0009).
     const owner = ownerCommand(argv);
     if (owner) {
