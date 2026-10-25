@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-25
 
+- **Update** M12 U114: a quick-lane merge runs the first level, and a level red on the base alone is `GATE-BASE`, so `next` asks for a fix unit first ([Gate](design/gate.md)). Release 0.110.0.
 - **Fix** M12 U113: `approve` writes all or nothing, a re-approval replaces its approver's stamp, and `next` names a decision that shares its number by file name ([Approvals](design/approvals.md)). Release 0.109.2.
 - **Fix** M12 U112: `check` warns `PLAN-CARD` on an unapproved unit whose card would pass the cap, before the owner's approval ([Unit card](design/unit-card.md)). Release 0.109.1.
 - **Update** M12 U111: each finding line names its run-time level, `error` or `warning` ([CLI](design/cli.md)). Release 0.109.0.

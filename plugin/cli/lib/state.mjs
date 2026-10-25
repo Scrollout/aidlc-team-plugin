@@ -18,6 +18,7 @@ const S = config.state;
 export const aidlcDir = (cwd) => join(resolve(cwd, git(cwd, 'rev-parse', '--git-common-dir')), S.dir);
 export const runtimeFile = (cwd, kind, unit) => join(aidlcDir(cwd), S[kind], `${unit}.json`);
 export const ciFile = (cwd) => join(aidlcDir(cwd), S.ci); // the base's last CI poll (docs/design/base-ci.md)
+export const baseRedFile = (cwd) => join(aidlcDir(cwd), S.baseRed); // a level the gate found red on the base alone
 export const branchOf = (unit) => S.branchPrefix + unit;
 export const baseOf = (profile) => profile.base;
 // The paths a unit's branch changes since its merge base with the base branch.
@@ -327,7 +328,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
     return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own, deploy };
   });
   const requirements = plan.requirements.map((r) => ({ ...r, state: approval(r.doc) }));
-  return { cwd, profile, base, bundle, intents, units, requirements, decisions: bundleHeld(bundle), answered, auto: delegated(cwd), mergeUnit: mergeInProgress(cwd, units), ci: ciOf(cwd, profile, base) };
+  return { cwd, profile, base, bundle, intents, units, requirements, decisions: bundleHeld(bundle), answered, auto: delegated(cwd), mergeUnit: mergeInProgress(cwd, units), ci: ciOf(cwd, profile, base), red: redOf(cwd, base) };
 }
 
 // With ci.wait: the base head, its remote, the last CI poll, and whether the base is red: the poll found it red and
@@ -338,6 +339,12 @@ function ciOf(cwd, profile, base) {
   const rec = readJson(ciFile(cwd));
   const red = rec?.state === 'red' && tryGit(cwd, 'rev-list', '--count', '--merges', `${rec.sha}..${head}`) === '0';
   return { head, remote: tryGit(cwd, 'rev-parse', '-q', '--verify', `${config.gate.remote}/${base}`), rec, red };
+}
+
+// The gate's red-base record while no merge has landed on the base since: a plan commit keeps it red.
+function redOf(cwd, base) {
+  const rec = readJson(baseRedFile(cwd));
+  return rec && tryGit(cwd, 'rev-list', '--count', '--merges', `${rec.sha}..${base}`) === '0' ? rec : null;
 }
 
 // ---- next ----
@@ -432,7 +439,7 @@ function untagged(st, u) {
 function unitWork(st, scope) {
   const merged = (id) => st.units.find((x) => x.id === id)?.state === 'merged';
   const live = scope.filter((u) => !u.held);
-  const fixOnly = (u) => !st.ci?.red || !u.fm.intent; // on a red base only fix units build or merge
+  const fixOnly = (u) => !(st.ci?.red || st.red) || !u.fm.intent; // on a red base only fix units build or merge
   // A merge is offered only when each AC has a tagged test on the branch; a builder sent back for one is waited for.
   const backAtWork = [];
   for (const u of live.filter((x) => x.state === 'reviewed' && x.depends.every(merged) && fixOnly(x))) {
@@ -515,6 +522,7 @@ function pickAction(st) {
     const red = st.ci.rec.runs.filter((r) => config.ci.red.includes(r.conclusion));
     return action('act', 'nextCiFix', { runs: red.map((r) => r.name).join(', '), logs: red.map((r) => render(config.ci.log, r, 'ci.log')).join('; '), tests: firstTests(st.profile) });
   }
+  if (st.red && !st.units.some((u) => !u.fm.intent && u.state !== 'merged')) return action('act', 'nextBaseFix', { level: st.red.level, unit: st.red.unit, tests: firstTests(st.profile) });
   const asked = [...st.requirements, ...st.intents, ...st.units, ...st.decisions].find((d) => researchOf(d) && !st.answered.has(researchOf(d)));
   if (asked) return heartbeatFresh(st.cwd, asked.id, Date.now(), S.researching) ? action('wait', 'nextWaitResearch', { doc: asked.id }) : action('act', 'nextResearch', { doc: asked.id, model: st.profile.models.research });
   const intent = st.intents.find((i) => !['released', 'merged'].includes(i.state)) ?? unreleased;

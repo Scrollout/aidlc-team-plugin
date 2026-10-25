@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { approve, commit, git, read, unitDoc, write } from './state-repo.mjs';
-import { CODE, codes, FAIL, merge, PROFILE, setup, TEST, U1 } from './gate-repo.mjs';
+import { CODE, codes, FAIL, FAIL_MERGED, merge, PROFILE, setup, TEST, U1 } from './gate-repo.mjs';
 
 // AC-1: each gate condition fails on its own fixture with its code and a fix.
 const BROKEN = {
@@ -12,7 +12,7 @@ const BROKEN = {
   'GATE-AC': () => setup({ files: { ...CODE, 'tests/add.test.mjs': "import { test } from 'node:test';\ntest('adds', () => {});\n" } }),
   'GATE-LEVEL': () => setup({ files: { ...CODE, 'src/add.check.mjs': '// U-1/AC-1\n' } }),
   'GATE-CHECK': () => setup({ profile: { ...PROFILE, modules: [{ id: 'core', paths: ['src/**'], check: FAIL }] } }),
-  'GATE-RUN': () => setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: FAIL } } } }),
+  'GATE-RUN': () => setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: FAIL_MERGED } } } }),
   'GATE-SKIP': () => setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: 'node -e "console.log(\'# SKIP U-1/AC-1 needs a database\')"', skip: '^# SKIP' } } } }),
   'GATE-REVIEW': () => setup({ verdict: 'fix' }),
   'GATE-CARD': () => {

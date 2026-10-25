@@ -4,6 +4,8 @@ import { approve, commit, git, intentDoc, makeRepo, review, run, unitDoc } from 
 
 export const OK = 'node -e "process.exit(0)"';
 export const FAIL = 'node -e "process.exit(1)"';
+// Fails only once the unit's code is in: a level FAIL fails on the base too, which is GATE-BASE (U114).
+export const FAIL_MERGED = 'node -e "process.exit(require(\'fs\').existsSync(\'src/add.mjs\') ? 1 : 0)"';
 export const U1 = 'docs/units/U-1-add.md';
 export const PROFILE = {
   levels: { unit: { paths: ['tests/**'], run: 'node --test' } },

@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { approve, CHILD_ENV, CLI, commit, git, makeRepo, read, review, run, tempDir } from './state-repo.mjs';
-import { CODE, codes, FAIL, LOG, merge, OK, PROFILE, setup, TEST } from './gate-repo.mjs';
+import { CODE, codes, FAIL, FAIL_MERGED, LOG, merge, OK, PROFILE, setup, TEST } from './gate-repo.mjs';
 import { boundaryFindings, moduleFindings } from '../plugin/cli/lib/gate.mjs';
 
 test('U6/AC-2 a passing gate merges --no-ff with trailers, writes index and log, removes the branch', () => {
@@ -259,8 +259,8 @@ test('U6/AC-1 a refused merge is not offered again until the base or the diff ch
 test('U18/AC-1 the card lists every level run; the gate runs them on the merge result and records them', () => {
   const card = run(setup(), ['card', 'U-1']).out;
   assert.match(card, /^## Test runs \(each in full, as one plain command\)\n- unit: node --test$/m);
-  const failing = setup({ unit: { acs: ['- AC-1 (e2e): adds two numbers.'] }, profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: 'node --test' }, e2e: { paths: ['tests/**'], run: FAIL } } } }); // an e2e AC, as PLAN-SLICE asks
-  assert.match(merge(failing).out, /GATE-RUN level e2e run node -e "process\.exit\(1\)" fails on the merge result/);
+  const failing = setup({ unit: { acs: ['- AC-1 (e2e): adds two numbers.'] }, profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: 'node --test' }, e2e: { paths: ['tests/**'], run: FAIL_MERGED } } } }); // an e2e AC, as PLAN-SLICE asks
+  assert.match(merge(failing).out, /GATE-RUN level e2e run node -e .* fails on the merge result/);
   const none = setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'] } } } });
   assert.equal(merge(none).code, 0);
   assert.match(git(none, 'log', '-1', '--format=%(trailers:only,unfold)'), /^Tested: none$/m);
@@ -311,4 +311,17 @@ test('U109/AC-1 gate level runs bypass test caches (gate.fresh), added to the va
   const dir = setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: `${check} && node --test` } } } });
   const r = spawnSync(process.execPath, [CLI, 'merge', 'U-1'], { cwd: dir, encoding: 'utf8', env: { ...CHILD_ENV, GOFLAGS: '-mod=mod' } });
   assert.equal(r.status, 0, r.stdout + r.stderr);
+});
+
+test('U114/AC-2 a level red on the base alone is GATE-BASE: only fix units build or merge, and next asks for one', () => {
+  const dir = setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: `node --test && ${FAIL}` } } } });
+  const r = merge(dir);
+  assert.equal(r.code, 1);
+  assert.deepEqual(codes(r), ['GATE-BASE'], r.out);
+  assert.match(r.out, /level unit run .* fails on the base alone too → not this unit's to fix/);
+  assert.match(run(dir, ['next']).out, /^the base fails its unit level on its own \(found merging U-1\): only a fix unit builds or merges/);
+  commit(dir, 'a plan commit', { 'docs/notes.md': '---\ntype: Note\n---\n' });
+  assert.match(run(dir, ['next']).out, /^the base fails its unit level/, 'a plan commit keeps it red');
+  assert.equal(run(dir, ['fix', 'the unit level', '--scope', 'docs/guide/**']).code, 0);
+  assert.doesNotMatch(run(dir, ['next']).out, /merge U-1/, 'U-1 waits while the fix unit is live');
 });

@@ -10,7 +10,7 @@ import { checkBundle, nameProblem, parseDoc, writeIndexes } from './okf.mjs';
 import { computeLane, inside, lintPlan, readPlan, runTarget, spansOf } from './grid.mjs';
 import { issueTitle, sync } from './board.mjs';
 import { writeMap } from './map.mjs';
-import { approval, baseOf, branchOf, bump, codeChanges, diffHash, keptPass, verdictCurrent, mergedUnits, mutationOf, readState, reviewFocuses, roundsOf, runtimeFile, unitPaths, worktrees, writeJson } from './state.mjs';
+import { approval, baseOf, baseRedFile, branchOf, bump, codeChanges, diffHash, keptPass, verdictCurrent, mergedUnits, mutationOf, readState, reviewFocuses, roundsOf, runtimeFile, unitPaths, worktrees, writeJson } from './state.mjs';
 
 const G = config.gate;
 const matches = (path, glob) => inside('/' + path, glob);
@@ -198,6 +198,12 @@ function trialWorktree(cwd, base) {
 }
 const dropWorktree = (cwd, dir) => { tryGit(cwd, 'worktree', 'remove', '--force', dir); rmSync(dirname(dir), { recursive: true, force: true }); }; // with its temp parent
 
+// A level that fails on the base alone too is the base's, not the unit's (docs/design/base-ci.md).
+function baseFails(cwd, base, level, l) {
+  const tree = trialWorktree(cwd, base);
+  try { return runLevel(tree, level, l, () => {}) === false; } finally { dropWorktree(cwd, tree); }
+}
+
 // All gate conditions on a trial merge; returns { findings, tree } with the merged tree left for commit.
 function runGate(cwd, st, unit) {
   const { profile, base } = st;
@@ -286,10 +292,14 @@ function runGate(cwd, st, unit) {
     }
   }
 
-  // Every level's run in full, as the owner's verification of each unit; a quick unit runs none, its ACs name
-  // their own commands (U60).
-  const tested = card?.lane === QUICK ? [] : Object.entries(levels ?? {}).filter(([, l]) => l?.run);
-  for (const [level, l] of tested) if (runLevel(tree, level, l, add) === false) add('GATE-RUN', 'gateRun', { level, command: l.run });
+  // Every level's run in full, as the owner's verification of each unit; a quick unit's ACs name
+  // their own commands (U60), and the first level, as a quick change can break a test that reads it (U114).
+  const tested = Object.entries(levels ?? {}).filter(([, l]) => l?.run).slice(0, card?.lane === QUICK ? 1 : undefined);
+  for (const [level, l] of tested) {
+    if (runLevel(tree, level, l, add) !== false) continue;
+    if (!baseFails(cwd, base, level, l)) add('GATE-RUN', 'gateRun', { level, command: l.run });
+    else add('GATE-BASE', 'gateBase', { level, command: l.run }), (out.at(-1).red = level); // recorded by merge
+  }
   for (const ac of card?.lane === QUICK ? unit.acs : []) {
     for (const t of spansOf(unit.doc.lines[ac.line - 1]).map(runTarget).filter(Boolean)) {
       const command = `${t.runner} ${t.name}`;
@@ -364,6 +374,8 @@ export const commands = {
       const codes = [...new Set(findings.map((f) => f.code))];
       writeJson(runtimeFile(cwd, 'gates', unit.id), { base: git(cwd, 'rev-parse', st.base), diffHash: diffHash(cwd, st.base, unit.id), codes, at: new Date().toISOString() });
       for (const code of codes) bump(cwd, 'codes', code);
+      const red = findings.find((f) => f.code === 'GATE-BASE');
+      if (red) writeJson(baseRedFile(cwd), { sha: git(cwd, 'rev-parse', st.base), unit: unit.id, level: red.red, at: new Date().toISOString() });
       return done('', config.exit.findings, findings);
     }
     git(tree, 'add', '-A');

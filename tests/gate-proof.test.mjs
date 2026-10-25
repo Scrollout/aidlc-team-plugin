@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { approve, commit, git, intentDoc, makeRepo, read, review, run, tempDir, unitDoc, write } from './state-repo.mjs';
-import { CODE, codes, FAIL, LOG, merge, PROFILE, setup, TEST, U1 } from './gate-repo.mjs';
+import { CODE, codes, FAIL, FAIL_MERGED, LOG, merge, PROFILE, setup, TEST, U1 } from './gate-repo.mjs';
 
 const VACUOUS = { 'tests/add.test.mjs': "import { test } from 'node:test';\nimport assert from 'node:assert';\ntest('U-1/AC-1 adds', () => assert.ok(true));\n" };
 
@@ -137,11 +137,13 @@ test('U56/AC-2 an AC without a mutation, or one whose find no longer matches onc
   assert.match(merge(moved).out, /GATE-PROOF U-1\/AC-1 has no mutation that applies/);
 });
 
-test('U60/AC-1 a quick-lane merge runs no level; other lanes still run every level', () => {
-  const profile = { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: FAIL } } };
-  const quick = setup({ profile, unit: { scope: ['docs/guide/**'], modules: [] }, files: { 'docs/guide/a.md': '---\ntype: Note\ntitle: A\ndescription: A note.\ngenerated: { by: x/1, at: 2026-01-01T00:00:00Z }\n---\n\nText.\n' } });
-  const r = merge(quick);
-  assert.equal(r.code, 0, r.out);
-  assert.match(git(quick, 'log', '-1', '--format=%(trailers:only,unfold)'), /^Tested: none$/m);
-  assert.deepEqual(codes(merge(setup({ profile }))), ['GATE-RUN'], 'a standard unit still runs the failing level');
+test('U60/AC-1 U114/AC-1 a quick-lane merge runs the first level in full, a failure refuses it; other lanes still run every level', () => {
+  const reads = 'node -e "process.exit(require(\'fs\').existsSync(\'docs/guide/a.md\') ? 1 : 0)"'; // a test that reads the doc
+  const quick = (run) => setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run } } }, unit: { scope: ['docs/guide/**'], modules: [] }, files: { 'docs/guide/a.md': '---\ntype: Note\ntitle: A\ndescription: A note.\ngenerated: { by: x/1, at: 2026-01-01T00:00:00Z }\n---\n\nText.\n' } });
+  const bad = merge(quick(reads));
+  assert.deepEqual(codes(bad), ['GATE-RUN'], bad.out);
+  const good = quick('node --test');
+  assert.equal(merge(good).code, 0);
+  assert.match(git(good, 'log', '-1', '--format=%(trailers:only,unfold)'), /^Tested: unit$/m);
+  assert.deepEqual(codes(merge(setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: FAIL_MERGED } } } }))), ['GATE-RUN'], 'a standard unit still runs the failing level');
 });
