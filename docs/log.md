@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-25
 
+- **Fix** M11 U102: a research hold on any doc in the bundle gets its brief by name and holds `next` ([State](design/state.md#next)). Release 0.104.1.
 - **Update** M11 U101: the draft decisions an intent links come before its units in `next` ([State](design/state.md#next)). Release 0.104.0.
 - **Fix** M11 U100: a research hold on a decision gets its brief and holds `next` ([State](design/state.md)). Release 0.103.2.
 - **Fix** M11 U99: a unit whose AC is a profile setting may prove it by a mutation of `.aidlc/profile.json` ([Back-fill](design/backfill.md)). Release 0.103.1.

@@ -304,7 +304,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
     return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own, deploy };
   });
   const requirements = plan.requirements.map((r) => ({ ...r, state: approval(r.doc) }));
-  return { cwd, profile, base, bundle, intents, units, requirements, decisions: bundleDecisions(bundle), answered, auto: delegated(cwd), mergeUnit: mergeInProgress(cwd, units), ci: ciOf(cwd, profile, base) };
+  return { cwd, profile, base, bundle, intents, units, requirements, decisions: bundleHeld(bundle), answered, auto: delegated(cwd), mergeUnit: mergeInProgress(cwd, units), ci: ciOf(cwd, profile, base) };
 }
 
 // With ci.wait: the base head, its remote, the last CI poll, and whether the base is red: the poll found it red and
@@ -467,11 +467,13 @@ export function nextAction(st) {
 // A question the lead held for research (decision 0010) and the questions the bundle's research docs answer.
 export const researchOf = (doc) => (typeof doc.fm.hold === 'string' && doc.fm.hold.startsWith(S.researchHold) ? doc.fm.hold.slice(S.researchHold.length).trim() : null);
 // The decisions, by number as the owner types them: an architecture choice is a usual research question (second project).
-const bundleDecisions = (bundle) => (existsSync(bundle) ? readdirSync(bundle, { recursive: true }).map(String) : [])
-  .map((f) => ({ f, n: basename(f).match(/^(\d+)-.*\.md$/)?.[1] })).filter((x) => x.n)
-  .map(({ f, n }) => ({ id: n, file: join(bundle, f), fm: parseDoc(readFileSync(join(bundle, f), 'utf8')).fm ?? {} }))
-  .filter((d) => d.fm.type === config.grid.decisionType);
-// The doc a research question is held on: a requirement, intent, unit or decision, named as `hold` takes it.
+// The other docs a research question can be held on: decisions by number, any other doc by its name (second project).
+const bundleHeld = (bundle) => (existsSync(bundle) ? readdirSync(bundle, { recursive: true }).map(String) : [])
+  .filter((f) => f.endsWith(config.okf.ext) && ![config.okf.index, config.okf.log].includes(basename(f)))
+  .map((f) => ({ f, fm: parseDoc(readFileSync(join(bundle, f), 'utf8')).fm ?? {} }))
+  .filter(({ fm }) => fm.type === config.grid.decisionType || researchOf({ fm }))
+  .map(({ f, fm }) => ({ id: fm.type === config.grid.decisionType ? basename(f).match(/^(\d+)-/)?.[1] ?? basename(f, config.okf.ext) : basename(f, config.okf.ext), file: join(bundle, f), fm }));
+// The doc a research question is held on, named as `hold` takes it.
 export const heldDoc = (st, name) => { const file = findDoc(st.cwd, st.bundle, String(name)); return [...st.requirements, ...st.intents, ...st.units, ...st.decisions].find((d) => d.file === file); };
 function researched(bundle) {
   const dir = join(bundle, config.grid.research);
@@ -541,8 +543,11 @@ function findDoc(cwd, bundle, name) {
   const decision = /^\d+$/.test(name) && readdirSync(bundle, { recursive: true }).map(String)
     .filter((f) => Number(basename(f).match(/^(\d+)-.*\.md$/)?.[1]) === Number(name)).map((f) => join(bundle, f))
     .find((f) => parseDoc(readFileSync(f, 'utf8')).fm?.type === config.grid.decisionType);
-  if (!decision) throw new UsageError(msg('noDoc', { name }));
-  return decision;
+  if (decision) return decision;
+  // Any other doc by its file name, as `next` names a held one: `aidlc research reputation`.
+  const named = readdirSync(bundle, { recursive: true }).map(String).filter((f) => basename(f) === `${name}${config.okf.ext}`);
+  if (named.length !== 1) throw new UsageError(msg('noDoc', { name }));
+  return join(bundle, named[0]);
 }
 
 function parseObject(text, name) {

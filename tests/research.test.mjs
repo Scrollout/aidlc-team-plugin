@@ -119,3 +119,12 @@ test('U100/AC-1 a decision held for research gets a brief by its number and hold
   write(dir, { [out]: `---\ntype: Research\ntitle: MTA core\ndescription: d.\nquestion: "which MTA core meets R-2?"\n---\n` });
   assert.match(run(dir, ['next']).out, /^build U-1/, 'the digest ends the hold');
 });
+
+test('U102/AC-1 a research hold on any doc gets a brief by its name and holds next', () => {
+  const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), [U1]: unitDoc({ scope: ['sdk/**'] }),
+    'docs/catalogue/reputation.md': '---\ntype: Design\ntitle: Reputation\ndescription: Reputation checks.\n---\n\n# Today\nx\n' });
+  approve(dir, 'I-1', 'U-1');
+  assert.equal(run(dir, ['hold', 'docs/catalogue/reputation.md', 'research:', 'what do RFC 5782 DNSBLs say?']).code, 0);
+  assert.match(run(dir, ['next']).out, /^research for reputation: researcher on \w+ \(brief: aidlc research reputation\)/);
+  for (const name of ['reputation', 'docs/catalogue/reputation.md']) assert.match(run(dir, ['research', name]).out, /^Question: what do RFC 5782 DNSBLs say\?$/m, name);
+});
