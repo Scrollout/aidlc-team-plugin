@@ -376,3 +376,12 @@ test('U101/AC-1 the draft decisions an approved intent links come before its uni
   assert.equal(run(dir, ['approve', D]).code, 0);
   assert.match(run(dir, ['next']).out, /^draft the units of I-1/);
 });
+
+test('U104/AC-1 a re-approval names the new draft requirements the stale intent cites', () => {
+  const R = (n) => `---\ntype: Requirement\ntitle: R-${n}\ndescription: R-${n}.\n---\n\n# Requirement\nx\n`;
+  const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1').replace('type: Intent', 'type: Intent\nrequirements: [R-1]'), 'docs/requirements/R-1.md': R(1) });
+  approve(dir, 'I-1', 'R-1');
+  write(dir, { 'docs/requirements/R-2.md': R(2), 'docs/intents/I-1-x.md': read(dir, 'docs/intents/I-1-x.md').replace('requirements: [R-1]', 'requirements: [R-1, R-2]') });
+  const r = run(dir, ['next']);
+  assert.match(r.out, /re-approve I-1 R-2/, r.out);
+});

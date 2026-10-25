@@ -358,7 +358,7 @@ function gateOf(st, intent, scope) {
   const gate = (key, docs, data, kind = 'human') => ({ action: action(kind, key, data), docs: new Set(docs) });
   const stale = [...st.requirements, ...st.intents, ...st.units].filter((d) => d.state === 'stale');
   if (stale.length) {
-    const decisions = citedDecisions(st, stale.filter((d) => st.units.includes(d)));
+    const decisions = [...citedDecisions(st, stale.filter((d) => st.units.includes(d))), ...st.requirements.filter((r) => r.state === 'draft' && stale.some((d) => (d.requirements ?? []).includes(r.id))).map((r) => r.id)]; // and the new drafts they cite
     const docs = [ids(stale), ...decisions].join(' ');
     // A delegated re-approval keeps every unit's ACs, as `approve --auto` checks: what done means is the owner's.
     const kept = stale.filter((d) => st.units.includes(d)).every((d) => acsKept(st.cwd, d.file, d.doc));
