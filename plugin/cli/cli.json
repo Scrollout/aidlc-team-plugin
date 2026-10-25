@@ -297,6 +297,8 @@
     "nextNoIntent": "elaborate an intent with the owner in {{dir}}/I-1-<slug>.md, then ask for approval",
     "nextOpenDraft": "finish elaborating {{doc}} with the owner: {{points}} still open in {{file}}; then ask for approval",
     "nextApproveIntent": "ask the owner to approve {{intent}}: aidlc approve {{intent}} (the owner confirms the prompt or types: approve {{intent}})",
+    "nextFinishDecision": "finish {{doc}}, which {{intent}} links, with the owner before its units: {{points}}",
+    "nextApproveDecisions": "ask the owner to approve the decisions {{intent}} links before its units: aidlc approve {{docs}} (the owner confirms the prompt or types: approve {{docs}})",
     "nextDraftUnits": "draft the units of {{intent}} in {{dir}}/U-<n>-<slug>.md, then ask for the plan approval",
     "nextApprovePlan": "ask the owner to approve the plan: aidlc approve {{units}} (the owner confirms the prompt or types: approve {{units}})",
     "nextMerge": "merge {{unit}}: aidlc merge {{unit}}",

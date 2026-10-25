@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, utimesSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
-import { aidlc, approve, branch, commit, git, heartbeat, I1, makeRepo, merge, read, report, review, run, tempDir, twoUnits, U, unitDoc, write } from './state-repo.mjs';
+import { aidlc, approve, branch, commit, git, heartbeat, I1, intentDoc, makeRepo, merge, read, report, review, run, tempDir, twoUnits, U, unitDoc, write } from './state-repo.mjs';
 import { approval } from '../plugin/cli/lib/state.mjs';
 
 test('U4/AC-2 a stopped builder sends the unit back to the lead; re-approval restarts it', () => {
@@ -361,4 +361,18 @@ test('U65/AC-2 status and the session-start hook show the same units: merged uni
   assert.match(status, /^I-1 released /m);
   assert.deepEqual(units(status), ['U-2 merged'], 'U-1 belongs to the released I-1');
   assert.deepEqual(units(context), units(status));
+});
+
+test('U101/AC-1 the draft decisions an approved intent links come before its units: finish, then approve', () => {
+  const D = 'docs/decisions/0002-language.md';
+  const intent = intentDoc('I-1').replace('# Goal', 'Language: [0002](../decisions/0002-language.md).\n\n# Goal');
+  const dir = makeRepo({ 'docs/intents/I-1-x.md': intent, [D]: '---\ntype: Decision\ntitle: 0002 Language\ndescription: Which language.\n---\n\n# Decision\n<the option chosen>\n' });
+  approve(dir, 'I-1');
+  assert.match(run(dir, ['next']).out, /^finish docs\/decisions\/0002-language\.md, which I-1 links, with the owner before its units: Decision/);
+  write(dir, { [D]: read(dir, D).replace('<the option chosen>', 'Go, by the owner.') });
+  const ask = run(dir, ['next']);
+  assert.equal(ask.code, 2, 'the owner acts');
+  assert.match(ask.out, /ask the owner to approve the decisions I-1 links before its units: aidlc approve docs\/decisions\/0002-language\.md/);
+  assert.equal(run(dir, ['approve', D]).code, 0);
+  assert.match(run(dir, ['next']).out, /^draft the units of I-1/);
 });

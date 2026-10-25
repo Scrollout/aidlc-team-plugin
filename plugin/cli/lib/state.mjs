@@ -377,6 +377,11 @@ function gateOf(st, intent, scope) {
     const docs = [intent, ...draftCited([intent])];
     return gate('nextApproveIntent', docs.map((d) => d.id), { intent: ids(docs) });
   }
+  // The draft decisions an approved intent links come before its units: an architecture choice shapes the cut.
+  const linked = intent && intent.state === 'approved' && !intent.units.length ? decisionsOf(st, [intent]).filter((d) => approval(d.doc) === 'draft') : [];
+  const unfinished = linked.find((d) => openPoints(d.doc).length);
+  if (unfinished) return gate('nextFinishDecision', [], { intent: intent.id, doc: relPath(st.cwd, unfinished.file), points: openPoints(unfinished.doc).join(', ') }, 'act');
+  if (linked.length) return gate('nextApproveDecisions', [], { intent: intent.id, docs: linked.map((d) => relPath(st.cwd, d.file)).join(' ') });
   if (intent && intent.state === 'approved' && !intent.units.length) return gate('nextDraftUnits', [], { intent: intent.id, dir: rel(config.grid.units) }, 'act');
   const cited = new Set([...(intent?.requirements ?? []), ...scope.filter((u) => u.state !== 'merged').flatMap((u) => u.requirements)]);
   const draftReqs = st.requirements.filter((r) => r.state === 'draft' && cited.has(r.id));
