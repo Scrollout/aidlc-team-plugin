@@ -14,6 +14,7 @@ generated: { by: {{producer}}, at: {{at}} }
 6. **The owner decides.** Intents, plans, one-way doors and releases wait for the owner; agents never approve. Checked by `PLAN-DECISION` and `GUARD-OWNER`.
 7. **Released means running.** When the profile deploys, a release counts once its deploy check and smoke pass, and each intent links a runbook; the owner releases and rolls back. A back-fill intent ships no code: it needs no runbook and is released once merged. Checked by `PLAN-RUNBOOK` and `GUARD-OWNER`.
 8. **Current dependencies.** Each dependency is the newest stable release with every known security fix, looked up from its registry when added or bumped, never from memory, and reported with its source; the project's scanners run at merge and daily in CI. Checked by `GATE-DEPENDENCY`, `CI-DEPENDENCY` and `aidlc report`.
+9. **Slices own their data.** The code is vertical slices, each with inward-pointing layers. One slice never directly calls the internal database layer of another slice. If slices need to communicate, they do so through well-defined interfaces, events, or shared domain services. No slices depend on each other in a circle. Checked by `ARCH-DATA`, `ARCH-API`, `ARCH-CYCLE`, `ARCH-BOUNDARY` and `PROFILE-ARCH`.
 
 # Project rules
 Add the rules this project keeps beyond these, each with why and, where one exists, the check that enforces it.

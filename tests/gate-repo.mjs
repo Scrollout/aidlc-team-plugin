@@ -7,7 +7,8 @@ export const FAIL = 'node -e "process.exit(1)"';
 export const U1 = 'docs/units/U-1-add.md';
 export const PROFILE = {
   levels: { unit: { paths: ['tests/**'], run: 'node --test' } },
-  modules: [{ id: 'core', paths: ['src/**'], check: OK }],
+  modules: [{ id: 'core', paths: ['src/**'], check: OK, api: ['src/**'] }],
+  architecture: { data: { prefix: 'data/' }, acyclic: true }, // the slice architecture every project gets (U105)
   lanes: { quick: ['docs/**'], full: ['db/**'] },
   focus: { security: ['auth/**'] },
   security: { content: ['password'], check: [OK] },

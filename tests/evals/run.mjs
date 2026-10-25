@@ -87,7 +87,7 @@ export function setup(dir) {
   aidlc(dir, ['init', '--name', 'evals']);
   const profile = JSON.parse(readFileSync(join(dir, '.aidlc/profile.json'), 'utf8'));
   const levels = { unit: { paths: ['tests/**'], run: 'node --test' } }; // a level that runs: proof and mutations need it
-  write(dir, { ...BASE, '.aidlc/profile.json': JSON.stringify({ ...profile, modules: [{ id: 'api', paths: ['src/**', 'tests/**'], check: 'node --test' }], levels }, null, 2) + '\n' });
+  write(dir, { ...BASE, '.aidlc/profile.json': JSON.stringify({ ...profile, modules: [{ id: 'api', paths: ['src/**', 'tests/**'], check: 'node --test', api: ['src/**'] }], architecture: { data: { prefix: 'data/' }, acyclic: true }, levels }, null, 2) + '\n' });
   aidlc(dir, ['index']);
   commit(dir, 'Fixture project');
   aidlc(dir, ['approve', 'R-1', 'I-1', 'U-1', 'U-2', 'R-2', 'U-3', 'U-4']);

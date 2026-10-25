@@ -140,10 +140,29 @@ test('U95/AC-1 check fails a malformed naming rule', () => {
   assert.match(r.stdout + r.stderr, /PROFILE-NAMES names rule a: find or pattern is no valid regex/);
   assert.match(r.stdout + r.stderr, /PROFILE-NAMES names rule b needs id, files and pattern/);
   assert.doesNotMatch(r.stdout + r.stderr, /names rule c/);
-  writeFileSync(join(dir, '.aidlc/profile.json'), JSON.stringify({ modules: [{ id: 'core', paths: ['src/**'] }] }));
+  writeFileSync(join(dir, '.aidlc/profile.json'), JSON.stringify({ modules: [{ id: 'core', paths: ['src/**'], api: ['src/**'] }], architecture: { data: { prefix: 'data/' }, acyclic: true } }));
   const none = spawnSync(process.execPath, [join(import.meta.dirname, '../plugin/cli/aidlc.mjs'), 'check'], { cwd: dir, encoding: 'utf8' });
   assert.match(none.stdout + none.stderr, /PROFILE-NAMES the profile has modules but no names rule/, 'U96/AC-2');
   assert.equal(none.status, 0, 'a warning');
+});
+
+test('U105/AC-1 a profile with modules fails without data ownership (a warning once adopted) and warns without acyclic or an api', () => {
+  const dir = tempDir('arch-');
+  spawnSync('git', ['init', '-q'], { cwd: dir });
+  mkdirSync(join(dir, '.aidlc'));
+  mkdirSync(join(dir, 'docs'));
+  const check = (profile) => { writeFileSync(join(dir, '.aidlc/profile.json'), JSON.stringify({ names: [{ id: 'x', files: ['src/**'], pattern: '.+' }], ...profile })); return spawnSync(process.execPath, [join(import.meta.dirname, '../plugin/cli/aidlc.mjs'), 'check'], { cwd: dir, encoding: 'utf8' }); };
+  const modules = [{ id: 'core', paths: ['src/**'] }];
+  const bare = check({ modules });
+  assert.equal(bare.status, 1);
+  assert.match(bare.stdout, /PROFILE-ARCH the profile has modules but no data ownership/);
+  assert.match(bare.stdout, /PROFILE-ARCH the profile has modules but architecture\.acyclic is off/);
+  assert.match(bare.stdout, /PROFILE-ARCH modules without an api surface: core/);
+  assert.equal(check({ modules, adopted: 'abc' }).status, 0, 'adopted: a warning until the migration sets owners');
+  const full = check({ modules: [{ ...modules[0], api: ['src/api/**'] }], architecture: { data: { prefix: 'data/' }, acyclic: true } });
+  assert.equal(full.status, 0);
+  assert.doesNotMatch(full.stdout, /PROFILE-ARCH/);
+  assert.doesNotMatch(check({}).stdout, /PROFILE-ARCH/, 'no modules yet');
 });
 
 for (const name of ['ga4', 'stackoverflow', 'crypto_bitcoin']) {

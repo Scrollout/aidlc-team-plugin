@@ -35,4 +35,5 @@ An exception is an approved decision under `architecture.data.except`, listing t
 A unit's card lists the data its modules own and the shared data, and says to reach any other data only through its owner's interface, an event or a shared service, so the builder knows the rule before writing code and every review checks it ([Unit card](unit-card.md)).
 
 # Adoption
+The method's default architecture puts this first ([Slice architecture](slice-architecture.md)); `check` fails a profile with modules and no data ownership.
 The migration intent `init --adopt` asks for includes data ownership: the owners, the shared list, the data edges in the graph, and a baseline decision for the crossings found.

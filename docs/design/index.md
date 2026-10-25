@@ -33,6 +33,7 @@
 * [Resume](resume.md) - How the lead survives a clear, a crash or a new session - what lives on disk instead of the conversation - and why the owner clears the lead between intents.
 * [Review rounds](review-rounds.md) - What review record does with a verdict - fix rounds and their limit, send-backs, and which focus passes still count after a fix.
 * [Skill and agents](prompts.md) - What the lead's skill and the builder and reviewer prompts say, how a review is picked and run, and why the prompts restate no enforced rule.
+* [Slice architecture](slice-architecture.md) - The architecture the method sets for every project - vertical slices as bounded contexts with inward-pointing layers, each owning its data, talking through published interfaces and events, with no cycles - and the merge checks that act as its fitness functions.
 * [State](state.md) - How the CLI derives progress from git and docs, how approvals work, and how next picks the one allowed step.
 * [Steering](steering.md) - How the plugin corrects the agent during work, keeps it moving, and improves its rules over time without growing.
 * [Team](team.md) - The four roles, how parallel worktree workers are run and merged, and where tokens are spent.

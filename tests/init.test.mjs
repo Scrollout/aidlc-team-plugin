@@ -88,7 +88,7 @@ test('U97/AC-1 upgrade lists the findings the new release reports and the pinned
   writeFileSync(join(dir, '.aidlc/profile.json'), JSON.stringify({ ...profile, modules: [{ id: 'core', paths: ['src/**'] }] }));
   const r = run(dir, ['upgrade', '--dirty']);
   assert.equal(r.code, 0, r.err);
-  assert.match(r.out, new RegExp(`${PLUGIN.version.replace(/\./g, '\\.')} reports findings the pinned release did not; plan a fix before the next merge:\n\\.aidlc/profile\\.json:1 PROFILE-NAMES `));
+  assert.match(r.out, new RegExp(`${PLUGIN.version.replace(/\./g, '\\.')} reports findings the pinned release did not; plan a fix before the next merge:\n[\\s\\S]*\\.aidlc/profile\\.json:1 PROFILE-NAMES `));
   assert.doesNotMatch(run(dir, ['upgrade', '--dirty']).out, /reports findings the pinned release did not/, 'none new the second time');
 });
 
@@ -259,7 +259,8 @@ test('U53/AC-1 U53/AC-2 init writes a constitution naming only checks the CLI de
   const named = [...text.matchAll(/`([A-Z]+-[A-Z-]+)`/g)].map((m) => m[1]);
   assert.ok(named.length >= 10, named.join(' '));
   assert.deepEqual(named.filter((c) => !known.has(c)), [], 'every code it names exists');
-  for (const code of ['PLAN-SLICE', 'PLAN-RUN', 'GATE-PROOF', 'GATE-SKIP', 'GATE-DEPENDENCY', 'CI-DEPENDENCY']) assert.ok(named.includes(code), code); // U98/AC-2 rule 8
+  for (const code of ['PLAN-SLICE', 'PLAN-RUN', 'GATE-PROOF', 'GATE-SKIP', 'GATE-DEPENDENCY', 'CI-DEPENDENCY', 'ARCH-DATA', 'ARCH-API', 'ARCH-CYCLE', 'PROFILE-ARCH']) assert.ok(named.includes(code), code);
+  assert.ok(text.includes('One slice never directly calls the internal database layer of another slice. If slices need to communicate, they do so through well-defined interfaces, events, or shared domain services.'), 'U105/AC-2 rule 9, word for word'); // U98/AC-2 rule 8
   assert.match(readFileSync(join(dir, '.github/workflows/aidlc.yml'), 'utf8'), /^ {2}schedule:\n {4}- cron: /m, 'U98/AC-2 daily');
   assert.match(readFileSync(join(dir, 'docs/index.md'), 'utf8'), /\[constitution\]\(constitution\/index\.md\)/);
   assert.match(readFileSync(join(dir, 'docs/constitution/index.md'), 'utf8'), /principles\.md/);

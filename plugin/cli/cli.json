@@ -251,6 +251,9 @@
     "sizeOver": "{{size}} chars over the {{cap}} cap for {{type}}",
     "ruleUnknown": "docs.rules.{{code}}: unknown code",
     "namesShape": "names rule {{id}} needs id, files and pattern",
+    "archNoData": "the profile has modules but no data ownership (architecture.data): one slice could read another's data unseen",
+    "archNoAcyclic": "the profile has modules but architecture.acyclic is off",
+    "archNoApi": "modules without an api surface: {{modules}}",
     "namesNone": "the profile has modules but no names rule",
     "namesRegex": "names rule {{id}}: find or pattern is no valid regex",
     "profileKey": "{{key}} is read by nothing in the plugin",
@@ -683,6 +686,10 @@
         "level": "warning",
         "house": true,
         "fix": "split the doc or move detail into linked docs"
+      },
+      "PROFILE-ARCH": {
+        "level": "error",
+        "fix": "give each module its data globs and set architecture.graph (printing data edges) and architecture.data; add architecture.acyclic and each module's api (docs: Slice architecture)"
       },
       "PROFILE-NAMES": {
         "level": "error",
