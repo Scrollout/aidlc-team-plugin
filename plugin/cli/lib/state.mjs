@@ -200,7 +200,7 @@ function stamp(text, by, at) {
     else if (!/^(\s|-)/.test(line) && line.trim()) skipping = false;
     if (!skipping) kept.push(line);
   }
-  const all = [...events(doc.fm), { by, at }];
+  const all = [...events(doc.fm).filter((e) => e.by !== by), { by, at }]; // one stamp per approver: git keeps the rest
   const body = doc.lines.slice(doc.body).join('\n');
   const draft = ['---', ...kept, `status: ${S.stable}`, 'verified:', ...all.map((e) => `  - ${flowMap(e)}`), '---', body].join('\n');
   const hash = hashDoc(parseDoc(draft));
@@ -495,7 +495,9 @@ const bundleHeld = (bundle) => (existsSync(bundle) ? readdirSync(bundle, { recur
   .filter((f) => f.endsWith(config.okf.ext) && ![config.okf.index, config.okf.log].includes(basename(f)))
   .map((f) => ({ f, fm: parseDoc(readFileSync(join(bundle, f), 'utf8')).fm ?? {} }))
   .filter(({ fm }) => fm.type === config.grid.decisionType || researchOf({ fm }))
-  .map(({ f, fm }) => ({ id: fm.type === config.grid.decisionType ? basename(f).match(/^(\d+)-/)?.[1] ?? basename(f, config.okf.ext) : basename(f, config.okf.ext), file: join(bundle, f), fm, doc: parseDoc(readFileSync(join(bundle, f), 'utf8')) }));
+  .map(({ f, fm }) => ({ f, fm, num: fm.type === config.grid.decisionType ? basename(f).match(/^(\d+)-/)?.[1] : null }))
+  // A decision by its number, as the owner types it, unless another shares it: then by its file name (U113).
+  .map(({ f, fm, num }, k, all) => ({ id: num && all.filter((d) => d.num === num).length === 1 ? num : basename(f, config.okf.ext), file: join(bundle, f), fm, doc: parseDoc(readFileSync(join(bundle, f), 'utf8')) }));
 // The doc a research question is held on, named as `hold` takes it.
 export const heldDoc = (st, name) => { const file = findDoc(st.cwd, st.bundle, String(name)); return [...st.requirements, ...st.intents, ...st.units, ...st.decisions].find((d) => d.file === file); };
 function researched(bundle) {
@@ -640,8 +642,11 @@ export const commands = {
       const error = errors.find((f) => wanted.has(f.path));
       if (error) throw new UsageError(msg('approveLint', error));
     }
+    // All or nothing: every doc is checked before any is written; a doc named twice is stamped once.
+    const writes = new Map();
     for (const name of args.filter((a) => a !== S.autoFlag)) {
       const file = findDoc(cwd, bundle, name);
+      if (writes.has(file)) continue;
       const text = readFileSync(file, 'utf8');
       const doc = parseDoc(text);
       if (!S.approvable.includes(String(doc.fm?.type))) throw new UsageError(msg('notApprovable', { name }));
@@ -653,6 +658,9 @@ export const commands = {
       const stamped = stamp(text, auto ? S.agent : S.human + by, at);
       const over = stampOver(stamped, doc, profile);
       if (over) throw new UsageError(msg('approveSize', { doc: relPath(cwd, file), ...over }));
+      writes.set(file, stamped);
+    }
+    for (const [file, stamped] of writes) {
       writeFileSync(file, stamped);
       out += msg('approved', { doc: relPath(cwd, file) });
     }

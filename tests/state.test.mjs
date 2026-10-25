@@ -197,6 +197,28 @@ test('U92/AC-2 approve refuses a doc its stamps would take over the project\'s c
   assert.equal(run(dir, ['approve', 'U-1']).code, 0, 'a default cap counts for every type');
 });
 
+test('U113/AC-1 U113/AC-3 approve writes nothing when one doc is refused and stamps a doc named twice once; next names a shared decision number by file', () => {
+  const dec = (title) => `---\ntype: Decision\ntitle: ${title}\ndescription: D.\ngenerated: { by: x/1, at: 2026-01-01T00:00:00Z }\n---\n\n# Decision\nUse X.\n`;
+  const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), [U(1)]: unitDoc({ scope: ['a/**'] }), [U(2)]: unitDoc({ id: 'U-2', scope: ['b/**'], extra: 'x'.repeat(200) }),
+    'docs/decisions/0001-a.md': dec('A'), 'docs/decisions/0001-a-detail.md': dec('A detail'), 'docs/decisions/0002-b.md': dec('B') });
+  const size = [...read(dir, U(2))].length;
+  write(dir, { '.aidlc/profile.json': JSON.stringify({ docs: { caps: { Unit: size + 10 } } }) });
+  const before = read(dir, U(1));
+  assert.equal(run(dir, ['approve', 'U-1', 'U-2']).code, 64, 'U-2 is over once stamped');
+  assert.equal(read(dir, U(1)), before, 'nothing written');
+  write(dir, { '.aidlc/profile.json': '{}' });
+  assert.equal(run(dir, ['approve', 'U-1', 'U-1', 'docs/decisions/0001-a-detail.md', '0002', '0002']).code, 0);
+  assert.equal(parseDoc(read(dir, U(1))).fm.verified.length, 1);
+  assert.equal(parseDoc(read(dir, 'docs/decisions/0002-b.md')).fm.verified.length, 1);
+  const decs = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), 'docs/decisions/0001-a.md': dec('A'), 'docs/decisions/0001-a-detail.md': dec('A detail'), 'docs/decisions/0002-b.md': dec('B') });
+  assert.equal(run(decs, ['approve', 'I-1', 'docs/decisions/0001-a-detail.md', '0002']).code, 0);
+  for (const f of ['docs/decisions/0001-a-detail.md', 'docs/decisions/0002-b.md']) write(decs, { [f]: read(decs, f).replace('Use X.', 'Use Y.') });
+  const next = run(decs, ['next']).out;
+  assert.match(next, /0001-a-detail/, 'a shared number: by file name');
+  assert.match(next, /\b0002\b/);
+  assert.doesNotMatch(next, /\b0001 /);
+});
+
 test('U110/AC-1 check warns HOUSE-SIZE on an unapproved doc its stamps would take over its cap, with the trim approve names', () => {
   const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), [U(1)]: unitDoc({ scope: ['a/**'], extra: 'x'.repeat(200) }) }, { docs: { caps: { Unit: 0 } } });
   const size = [...read(dir, U(1))].length;
@@ -233,10 +255,11 @@ test('U4/AC-3 approve writes the stamp; editing makes it stale; reformatting or 
   const held = parseDoc(read(dir, U(1)).replace('status: stable', 'status: stable\nhold: true\npriority: 2'));
   assert.equal(approval(held), 'approved');
 
-  write(dir, { [U(1)]: read(dir, U(1)).replace('it works.', 'it works fast.') });
+  write(dir, { [U(1)]: read(dir, U(1)).replace('it works.', 'it works fast.').replace('verified:\n', 'verified:\n  - { by: human:other@example.com, at: 2026-01-01T00:00:00.000Z }\n') });
   assert.equal(run(dir, ['approve', 'U-1']).code, 0);
   const twice = parseDoc(read(dir, U(1)));
-  assert.equal(twice.fm.verified.length, 2, 'earlier events are kept');
+  assert.deepEqual(twice.fm.verified.map((e) => e.by), ['human:other@example.com', 'human:owner@example.com'], 'U113/AC-2 one stamp per approver: the own one replaced, the others kept');
+  assert.notEqual(twice.fm.verified[1].at, doc.fm.verified[0].at);
   assert.equal(approval(twice), 'approved');
 
   assert.equal(run(dir, ['approve', 'docs/units/U-9.md']).code, 64);
