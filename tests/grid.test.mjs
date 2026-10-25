@@ -353,3 +353,18 @@ test('U89/AC-1 check on a unit file shows a slice finding on its intent, and app
   write(dir, { [U]: read(dir, U).replace('- AC-1 (unit): adds.', '- AC-1 (e2e): adds.') });
   assert.equal(run(dir, ['approve', 'U-1']).code, 0, 'an e2e AC clears it');
 });
+
+test('U107/AC-1 PLAN-SKELETON warns when the first top-level AC waits on more than half the product units', () => {
+  const unit = (n, depends, level) => `---\ntype: Unit\ntitle: U${n}\ndescription: U${n}.\nintent: I-1\nscope: ["src/s${n}/**"]\ndepends: [${depends.join(', ')}]\n---\n\n# Acceptance criteria\n\n- AC-1 (${level}): x.\n`;
+  const plan = (late) => project({
+    'docs/intents/I-1-a.md': '---\ntype: Intent\ntitle: I-1\ndescription: I-1.\n---\n\n# Goal\nx\n',
+    'docs/units/U-1-a.md': unit(1, [], 'unit'),
+    'docs/units/U-2-b.md': unit(2, ['U-1'], 'unit'),
+    'docs/units/U-3-c.md': unit(3, ['U-2'], 'unit'),
+    'docs/units/U-4-d.md': unit(4, late ? ['U-3'] : ['U-1'], 'e2e'),
+  });
+  const profile = { modules: [{ id: 'app', paths: ['src/**'] }], levels: { unit: { run: 'u' }, e2e: { run: 'e' } } };
+  const skeleton = (dir) => lintPlan(join(dir, 'docs'), profile, { base: dir }).filter((f) => f.code === 'PLAN-SKELETON').map((f) => `${f.level} ${f.message}`);
+  assert.deepEqual(skeleton(plan(true)), ["warning I-1's first e2e AC waits on 3 of its 4 product units: end to end comes last"]);
+  assert.deepEqual(skeleton(plan(false)), [], 'a skeleton after U-1');
+});

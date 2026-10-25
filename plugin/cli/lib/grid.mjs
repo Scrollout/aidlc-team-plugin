@@ -279,6 +279,10 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   for (const i of intents.filter((x) => x.fm.status !== GRID.dropped && !x.fm[GRID.slice])) {
     const own = units.filter((u) => u.fm.intent === i.id);
     if (top && own.length && !own.some((u) => u.acs.some((a) => a.level === top))) add('PLAN-SLICE', i, 1, 'planSliceIntent', { level: top });
+    // A walking skeleton first: the first end-to-end AC waits on at most half the intent's product units (second project).
+    const made = new Set(own.filter((u) => u.scope.some((s) => productGlobs(profile).some((g) => overlaps(s, g)))).map((u) => u.id));
+    const wait = Math.min(...own.filter((u) => u.acs.some((a) => a.level === top)).map((u) => [...reachable(own)(u.id)].filter((d) => made.has(d)).length));
+    if (top && made.size > 2 && wait > made.size / 2) add('PLAN-SKELETON', i, 1, 'planSkeleton', { level: top, wait, units: made.size });
   }
   // The waiver is for work outside the running product: a new unit reaching a module or a one-way door voids it.
   const product = productGlobs(profile);

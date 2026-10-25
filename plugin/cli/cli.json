@@ -302,7 +302,7 @@
     "nextApproveIntent": "ask the owner to approve {{intent}}: aidlc approve {{intent}} (the owner confirms the prompt or types: approve {{intent}})",
     "nextFinishDecision": "finish {{doc}}, which {{intent}} links, with the owner before its units: {{points}}",
     "nextApproveDecisions": "ask the owner to approve the decisions {{intent}} links before its units: aidlc approve {{docs}} (the owner confirms the prompt or types: approve {{docs}})",
-    "nextDraftUnits": "draft the units of {{intent}} in {{dir}}/U-<n>-<slug>.md, then ask for the plan approval",
+    "nextDraftUnits": "draft the units of {{intent}} in {{dir}}/U-<n>-<slug>.md, a walking skeleton first (the top-level test harness and the thinnest real path end to end), then slices that each prove what they add at the top level; then ask for the plan approval",
     "nextApprovePlan": "ask the owner to approve the plan: aidlc approve {{units}} (the owner confirms the prompt or types: approve {{units}})",
     "nextMerge": "merge {{unit}}: aidlc merge {{unit}}",
     "nextUntagged": "{{unit}} has no test tagged {{tags}} on its branch: send the builder back (card: aidlc card {{unit}})",
@@ -498,6 +498,7 @@
     "scopeOut": "{{path}} is outside the scope of {{unit}}",
     "scopeShared": "{{path}} is written by merge",
     "planShared": "{{unit}} scope {{glob}} names a file only merge writes",
+    "planSkeleton": "{{unit}}'s first {{level}} AC waits on {{wait}} of its {{units}} product units: end to end comes last",
     "planRunbook": "{{unit}} links no runbook, and the profile deploys",
     "planPlatform": "{{unit}} ships, and the profile does not say where the deploy target is defined (deploy.platform)",
     "planSliceIntent": "{{unit}} has no AC at the top level {{level}}: no unit tests it end to end",
@@ -772,6 +773,10 @@
       "PLAN-PLATFORM": {
         "level": "error",
         "fix": "find how the target is run today (an infra repo, its GitOps set-up, namespaces, registries, access) and list it in deploy.platform in .aidlc/profile.json, as paths or URLs; [] when this project defines its own target"
+      },
+      "PLAN-SKELETON": {
+        "level": "warning",
+        "fix": "cut a walking skeleton first: an early unit that builds the top-level test harness and the thinnest real path through every stage, with a top-level AC; then each slice adds a top-level AC for what it adds"
       },
       "PLAN-RUNBOOK": {
         "level": "error",
