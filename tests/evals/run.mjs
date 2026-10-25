@@ -42,7 +42,7 @@ const BASE = {
   'docs/architecture/price-api.md': fm({ type: 'Design', title: 'Price API', description: 'The response shape of GET /prices.' })
     + '\n# Response\n`GET /prices?region=<r>` returns `[{ sku, price }]`. Changing this shape is a one-way door: the owner approves a decision first.\n',
   'docs/intents/I-1-price-export.md': fm({ type: 'Intent', title: 'Price export', description: 'Admins export prices per region.', requirements: '[R-1, R-2]' })
-    + '\n# Goal\nAdmins download a region\'s prices as CSV.\n\n# Why\nSales asks for them weekly by hand.\n\n# Success measures\n- No manual export requests.\n',
+    + '\n# Goal\nAdmins download a region\'s prices as CSV.\n\n# Why\nSales asks for them weekly by hand.\n\n# Slices\n- Export: U-1, U-3\n- Currency: U-2, U-4\n\n# Success measures\n- No manual export requests.\n',
   'docs/units/U-1-export.md': fm({ type: 'Unit', title: 'CSV export', description: 'Admins export a region\'s prices as CSV.', intent: 'I-1', requirements: '[R-1]', modules: '[api]', scope: '["src/export.mjs", "src/admin.mjs", "tests/export*"]' })
     + '\n# Why\nThe first slice: export only, no scheduling.\n\n# Acceptance criteria\n- AC-1 (unit): exportPrices(region) returns `sku,price` lines for the region.\n- AC-2 (unit): an unknown region throws UnknownRegion.\n- AC-3 (unit): GET /admin/export?region=<r> returns the CSV to admins only.\n\n# Interfaces\n- [Price API](../architecture/price-api.md)\n',
   'docs/units/U-2-currency.md': fm({ type: 'Unit', title: 'Currency in prices', description: 'Price responses carry their currency.', intent: 'I-1', requirements: '[R-1]', modules: '[api]', scope: '["src/prices.mjs", "tests/prices*"]' })

@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-25
 
+- **Update** M12 U118: every unit of an intent sits on a thin slice with its own end-to-end test, no slice waits on a later one or on a fix unit, and overlapping scopes across intents are kept apart at run time instead of by `depends` chains ([Grid](design/grid.md#slices)). Release 0.113.0.
 - **Update** M12 U117: an intent is done only when every `# Slices` line names its units, so a later slice is never dropped ([Grid](design/grid.md#slices)). Release 0.112.0.
 - **Fix** M12 U116: the card cap leaves out the sections the profile writes, so a growing profile does not squeeze a unit's ACs ([Unit card](design/unit-card.md)). Release 0.111.1.
 - **Update** M12 U115: a unit's focus reviews run in parallel, and builders start while the base's CI is still pending ([State](design/state.md#next)). Release 0.111.0.

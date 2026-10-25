@@ -471,10 +471,11 @@ function unitWork(st, scope) {
   const inFlight = [...scope.filter((u) => u.state === 'reviewing' || (u.state === 'building' && u.fresh)), ...backAtWork]; // a held unit's quiet builder is not in flight
   const max = st.profile.parallel.max;
   const picked = [];
-  const ready = live.filter((u) => u.state === 'approved' && fixOnly(u)).sort((a, b) => priorityOf(b) - priorityOf(a) || byId(a, b));
+  const ready = live.filter((u) => u.state === 'approved' && fixOnly(u)).sort((a, b) => priorityOf(b) - priorityOf(a) || !a.fm.intent - !b.fm.intent || byId(a, b));
+  const started = [...inFlight, ...st.units.filter((u) => !inFlight.includes(u) && !['draft', 'stale', 'approved', 'blocked', 'merged'].includes(u.state))];
   for (const u of ready) {
     if (inFlight.length + picked.length >= max) break;
-    const clash = [...inFlight, ...picked].some((o) => u.scope.some((g) => o.scope.some((h) => overlaps(g, h))));
+    const clash = [...started, ...picked].some((o) => u.scope.some((g) => o.scope.some((h) => overlaps(g, h))));
     if (!clash) picked.push(u);
   }
   // With ci.wait, builders start on a pushed base; a CI not yet known holds none: its wait runs beside them,

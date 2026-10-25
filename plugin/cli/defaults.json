@@ -6,6 +6,7 @@
   "review": { "fixRounds": 3 },
   "board": { "backoff": [500, 1000, 2000, 4000] },
   "ci": { "interval": 15 },
+  "plan": { "sliceUnits": 3 },
   "levels": { "unit": {}, "integration": {}, "e2e": {} },
   "models": { "quick": "sonnet", "standard": "sonnet", "full": "opus", "escalate": "opus", "review": "opus", "research": "sonnet", "modules": 2, "acs": 6, "complex": [] }
 }

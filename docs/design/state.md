@@ -61,7 +61,7 @@ Intents, requirements, units and one-way-door decisions carry the owner's approv
 8. A builder that reported `stopped` → the lead fixes the spec (re-approved) or the cause; the builder restarts, and is building from then on. Verdict `fix` → fix round, findings on the card, none while its builder runs. A verdict older than the builder's last report no longer counts.
 9. Reported, not reviewed → review, one reviewer per required focus without a `pass` for the current diff, in parallel ([Skill and agents](prompts.md#review)).
 10. Building with a stale heartbeat ([Agents in flight](in-flight.md)) and no report → restart its builder. A merged unit still in a worktree → stop its builder, remove it.
-11. Approved, unblocked units → build, on one line; up to `parallel.max` in flight, with scopes disjoint from units in flight; with `ci.wait`, the base pushed first and `ci wait` run beside them.
+11. Approved, unblocked units → build, on one line; up to `parallel.max` in flight, with scopes disjoint from every unit started and not merged, intent units before fix units at the same priority; with `ci.wait`, the base pushed first and `ci wait` run beside them.
 12. Builders running → wait. A `# Slices` line naming no unit, the intent's units merged → cut its units ([Grid](grid.md#slices)).
 13. Intent merged, not released → its release steps: a hold, the deploy check, a fix unit, the release ([Deployment and operation](operations.md#details)). 4–12 serve the next intent meanwhile. All released → the owner clears the lead's session first ([Resume](resume.md#between-intents)).
 

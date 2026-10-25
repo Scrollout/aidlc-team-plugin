@@ -15,7 +15,7 @@ sources:
 
 # Parallel work
 The roles and model routing: [Team](team.md).
-- `aidlc next` lists buildable units: approved, deps merged, scopes disjoint from units in flight, up to `parallel.max` (default 3).
+- `aidlc next` lists buildable units: approved, deps merged, scopes disjoint from every unit started and not yet merged (built, in review or waiting to merge too), up to `parallel.max` (default 3) in flight. At the same priority a unit of an intent goes before a fix unit: fix units take the free slots.
 - The lead starts one builder per unit in a single message. The builder agent's frontmatter sets `isolation: worktree`; Claude Code creates a temporary worktree under `.claude/worktrees/`, removes it if nothing changed, and keeps one holding work until a sweep finds it safe to remove.[^cc-worktrees] By default the worktree branches from the remote's default branch, so local merges not yet pushed would be invisible; `aidlc init` therefore sets `worktree.baseRef: "head"` in the project's `.claude/settings.json`, so builders branch from the lead's local base.[^cc-worktrees] The builder's first command is `aidlc start U-<n>`, which renames its auto-named branch to `unit/U-<n>` and refuses if the base differs from the card's.
 - Builders and reviewers set `omitClaudeMd: true`: the card carries what they need, so they do not pay for the project's AGENTS.md on every run.[^cc-subagents] Worktree subagents read instruction files from the main conversation, not their branch, so unit-specific rules travel in the card, never in a file on the branch.[^cc-worktrees]
 - Plugin agents are named `<plugin>:<name>` (e.g. `aidlc-team:builder`); hooks recognise them by `agent_type`.

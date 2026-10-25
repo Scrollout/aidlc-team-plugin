@@ -276,6 +276,9 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   // Each intent ends to end once: an AC at the top level that runs; a unit crossing modules is tested above the
   // first level (docs/design/plan-lint.md).
   const top = levels.filter((l) => levelDefs[l]?.run).at(-1);
+  const wide = withDefaults(profile).plan.sliceUnits;
+  const fixes = new Set(units.filter((u) => !u.fm.intent).map((u) => u.id));
+  for (const u of units.filter((x) => x.fm.intent)) for (const dep of u.depends.filter((d) => fixes.has(d))) add('PLAN-SLICE', u, keyLine(u, 'depends'), 'planSliceAhead', { dep });
   for (const i of intents.filter((x) => x.fm.status !== GRID.dropped && !x.fm[GRID.slice])) {
     const own = units.filter((u) => u.fm.intent === i.id);
     if (top && own.length && !own.some((u) => u.acs.some((a) => a.level === top))) add('PLAN-SLICE', i, 1, 'planSliceIntent', { level: top });
@@ -283,6 +286,17 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
     const made = new Set(own.filter((u) => u.scope.some((s) => productGlobs(profile).some((g) => overlaps(s, g)))).map((u) => u.id));
     const wait = Math.min(...own.filter((u) => u.acs.some((a) => a.level === top)).map((u) => [...reachable(own)(u.id)].filter((d) => made.has(d)).length));
     if (top && made.size > 2 && wait > made.size / 2) add('PLAN-SKELETON', i, 1, 'planSkeleton', { level: top, wait, units: made.size });
+    // Slices stay vertical: every unit on a thin slice with its own top-level AC, none waiting on a later one (U118).
+    if (!top || !made.size) continue;
+    const lines = sectionOf(i.doc, GRID.slices).filter(([, t]) => /^\s*([-*]|\d+\.)\s/.test(t)).map(([n, t]) => [n, [...new Set(t.match(/\bU-\d+\b/g))]]);
+    const slot = new Map(lines.flatMap(([, ids], k) => ids.map((id) => [id, k])));
+    if (!lines.length && own.length > wide) add('PLAN-SLICE', i, 1, 'planSlicesNone', { count: own.length, max: wide });
+    for (const u of lines.length ? own.filter((x) => !slot.has(x.id)) : []) add('PLAN-SLICE', u, 1, 'planSlicesOff', { intent: i.id });
+    for (const [n, ids] of lines.filter(([, x]) => x.length)) {
+      if (!ids.some((id) => all.find((x) => x.id === id)?.acs.some((a) => a.level === top))) add('PLAN-SLICE', i, n, 'planSlicesLayer', { slice: ids.join(', '), level: top });
+      if (ids.length > wide) add('PLAN-SLICE', i, n, 'planSlicesWide', { slice: ids.join(', '), count: ids.length, max: wide });
+    }
+    for (const u of own) for (const dep of u.depends.filter((d) => slot.get(d) > slot.get(u.id))) add('PLAN-SLICE', u, keyLine(u, 'depends'), 'planSlicesOrder', { dep });
   }
   // The waiver is for work outside the running product: a new unit reaching a module or a one-way door voids it.
   const product = productGlobs(profile);
@@ -351,7 +365,8 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   for (let i = 0; i < units.length; i++) {
     for (let j = i + 1; j < units.length; j++) {
       const [a, b] = [units[i], units[j]];
-      if (reach(a.id).has(b.id) || reach(b.id).has(a.id)) continue;
+      // Across intents and fix units, next keeps overlapping scopes apart at run time (U118).
+      if (!a.fm.intent || a.fm.intent !== b.fm.intent || reach(a.id).has(b.id) || reach(b.id).has(a.id)) continue;
       const pair = a.scope.flatMap((g) => b.scope.filter((h) => overlaps(g, h)).map((h) => [g, h]))[0];
       if (!pair) continue;
       // A bare name matches at any depth; anchored with `/` it may no longer overlap.

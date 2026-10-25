@@ -151,11 +151,11 @@ test('U17/AC-1 a non-quick unit whose scope cannot hold an AC test is PLAN-TEST 
 
 test('U17/AC-2 a bare root-file scope overlapping a ** glob suggests the leading /', () => {
   const dir = project({
-    'docs/units/U-1-a.md': unitDoc('scope: ["build/**"]', '- AC-1 (unit): x.'),
-    'docs/units/U-2-b.md': unitDoc('scope: ["Makefile"]', '- AC-1 (unit): x.'),
-    'docs/units/U-3-c.md': unitDoc('depends: [U-1]\nscope: ["go.mod"]', '- AC-1 (unit): x.'),
-    'docs/units/U-4-d.md': unitDoc('depends: [U-1]\nscope: ["go.mod"]', '- AC-1 (unit): x.'),
-    'docs/units/U-5-e.md': unitDoc('scope: ["/README.md"]', '- AC-1 (unit): x.'),
+    'docs/units/U-1-a.md': unitDoc('intent: I-1\nscope: ["build/**"]', '- AC-1 (unit): x.'),
+    'docs/units/U-2-b.md': unitDoc('intent: I-1\nscope: ["Makefile"]', '- AC-1 (unit): x.'),
+    'docs/units/U-3-c.md': unitDoc('intent: I-1\ndepends: [U-1]\nscope: ["go.mod"]', '- AC-1 (unit): x.'),
+    'docs/units/U-4-d.md': unitDoc('intent: I-1\ndepends: [U-1]\nscope: ["go.mod"]', '- AC-1 (unit): x.'),
+    'docs/units/U-5-e.md': unitDoc('intent: I-1\nscope: ["/README.md"]', '- AC-1 (unit): x.'),
   });
   const found = lintPlan(join(dir, 'docs'), {}, { base: dir }).map((f) => f.message);
   assert.deepEqual(found, [
@@ -367,4 +367,35 @@ test('U107/AC-1 PLAN-SKELETON warns when the first top-level AC waits on more th
   const skeleton = (dir) => lintPlan(join(dir, 'docs'), profile, { base: dir }).filter((f) => f.code === 'PLAN-SKELETON').map((f) => `${f.level} ${f.message}`);
   assert.deepEqual(skeleton(plan(true)), ["warning I-1's first e2e AC waits on 3 of its 4 product units: end to end comes last"]);
   assert.deepEqual(skeleton(plan(false)), [], 'a skeleton after U-1');
+});
+
+// U118: units of an intent sit on thin vertical slices, never behind a later slice or a fix unit.
+const sliced = (slices, units) => {
+  const unit = (n, { depends = [], level = 'unit', intent = 'I-1', scope = `src/s${n}/**` }) => `---\ntype: Unit\ntitle: U${n}\ndescription: U${n}.\n${intent ? `intent: ${intent}\n` : ''}scope: ["${scope}"]\ndepends: [${depends.join(', ')}]\n---\n\n# Acceptance criteria\n\n- AC-1 (${level}): x.\n`;
+  const files = { 'docs/intents/I-1-a.md': `---\ntype: Intent\ntitle: I-1\ndescription: I-1.\n---\n\n# Goal\nx\n${slices === null ? '' : `\n# Slices\n${slices}\n`}` };
+  for (const [n, o] of Object.entries(units)) files[`docs/units/U-${n}-u.md`] = unit(n, o);
+  const dir = project(files);
+  const profile = { modules: [{ id: 'app', paths: ['src/**'] }], levels: { unit: { run: 'u' }, e2e: { run: 'e' } } };
+  return lintPlan(join(dir, 'docs'), profile, { base: dir }).filter((f) => f.code === 'PLAN-SLICE' || f.code === 'PLAN-SCOPE').map((f) => f.message);
+};
+
+test('U118/AC-1 PLAN-SLICE: # Slices named, every unit on a slice with its own top-level AC, thin, none waiting on a later slice', () => {
+  const four = { 1: { level: 'e2e' }, 2: { depends: ['U-1'], level: 'e2e' }, 3: { depends: ['U-2'], level: 'e2e' }, 4: { depends: ['U-3'], level: 'e2e' } };
+  assert.deepEqual(sliced(null, four), ['I-1 has 4 live units, more than plan.sliceUnits 3, and no # Slices section: name its slices, the walking skeleton first']);
+  assert.deepEqual(sliced(null, { 1: { level: 'e2e' } }), [], 'a small intent is one slice');
+  assert.deepEqual(sliced('1. Skeleton: U-1\n2. Create: U-2', { 1: { level: 'e2e' }, 2: { depends: ['U-1'], level: 'e2e' } }), [], 'two vertical slices');
+  assert.deepEqual(sliced('1. Skeleton: U-1', { 1: { level: 'e2e' }, 2: { depends: ['U-1'], level: 'e2e' } }), ["U-2 is on no slice line of I-1's # Slices"]);
+  assert.deepEqual(sliced('1. Skeleton: U-1\n2. API: U-2', { 1: { level: 'e2e' }, 2: { depends: ['U-1'] } }), ['the slice U-2 of I-1 has no AC at the top level e2e: a layer, not a slice']);
+  assert.deepEqual(sliced('1. All: U-1, U-2, U-3, U-4', { 1: { level: 'e2e' }, 2: { depends: ['U-1'] }, 3: { depends: ['U-2'] }, 4: { depends: ['U-3'] } }), ['the slice U-1, U-2, U-3, U-4 of I-1 names 4 units, more than plan.sliceUnits 3']);
+  assert.deepEqual(sliced('1. Skeleton: U-1\n2. Create: U-2', { 1: { level: 'e2e', depends: ['U-2'] }, 2: { level: 'e2e' } }), ['U-1 waits on U-2, a unit of a later slice']);
+  assert.deepEqual(sliced('1. Skeleton: U-1\n2. Later, not cut yet', { 1: { level: 'e2e' } }), [], 'an uncut slice is next\'s to ask for');
+});
+
+test('U118/AC-2 PLAN-SLICE reports a unit of an intent waiting on a fix unit not yet merged', () => {
+  assert.deepEqual(sliced('1. Skeleton: U-1', { 1: { level: 'e2e', depends: ['U-2'] }, 2: { intent: '', scope: 'go.mod' } }), ['U-1 waits on the fix unit U-2: fix units build beside the slices, never ahead']);
+});
+
+test('U118/AC-3 PLAN-SCOPE asks for depends only between overlapping units of one intent', () => {
+  assert.deepEqual(sliced('1. Skeleton: U-1', { 1: { level: 'e2e', scope: 'src/**' }, 2: { intent: '', scope: 'src/go.mod' } }), [], 'a fix unit beside the slice');
+  assert.equal(sliced('1. Skeleton: U-1\n2. Create: U-2', { 1: { level: 'e2e', scope: 'src/**' }, 2: { level: 'e2e', scope: 'src/a/**' } }).length, 1, 'one intent still needs the path');
 });

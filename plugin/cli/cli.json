@@ -506,6 +506,12 @@
     "planSkeleton": "{{unit}}'s first {{level}} AC waits on {{wait}} of its {{units}} product units: end to end comes last",
     "planRunbook": "{{unit}} links no runbook, and the profile deploys",
     "planPlatform": "{{unit}} ships, and the profile does not say where the deploy target is defined (deploy.platform)",
+    "planSlicesNone": "{{unit}} has {{count}} live units, more than plan.sliceUnits {{max}}, and no # Slices section: name its slices, the walking skeleton first",
+    "planSlicesOff": "{{unit}} is on no slice line of {{intent}}'s # Slices",
+    "planSlicesLayer": "the slice {{slice}} of {{unit}} has no AC at the top level {{level}}: a layer, not a slice",
+    "planSlicesWide": "the slice {{slice}} of {{unit}} names {{count}} units, more than plan.sliceUnits {{max}}",
+    "planSlicesOrder": "{{unit}} waits on {{dep}}, a unit of a later slice",
+    "planSliceAhead": "{{unit}} waits on the fix unit {{dep}}: fix units build beside the slices, never ahead",
     "planSliceIntent": "{{unit}} has no AC at the top level {{level}}: no unit tests it end to end",
     "planDesign": "{{unit}} is {{lane}} lane and has no # {{section}} section with content",
     "cardDataOwned": "- {{module}} owns {{data}}\n",
@@ -614,7 +620,7 @@
   },
   "okf": {
     "profileKeys": {
-      "top": ["name", "base", "docs", "levels", "modules", "lanes", "focus", "security", "shared", "reserve", "parallel", "architecture", "adopted", "deploy", "release", "regen", "review", "research", "models", "board", "ci", "github", "decisions", "generated", "run", "approvals", "names", "deps"],
+      "top": ["name", "base", "docs", "levels", "modules", "lanes", "focus", "security", "shared", "reserve", "parallel", "architecture", "adopted", "deploy", "release", "regen", "review", "research", "models", "board", "ci", "github", "decisions", "generated", "run", "approvals", "names", "deps", "plan"],
       "security": ["secrets", "content", "threatModel", "check"]
     },
     "index": "index.md",
@@ -794,7 +800,7 @@
       },
       "PLAN-SLICE": {
         "level": "error",
-        "fix": "add an AC at the top level to one of the intent's units (or slice: \"<why no end-to-end AC>\" on an intent whose units stay outside every module and one-way door), and test a unit that crosses modules at the integration level or higher"
+        "fix": "name each slice's units under # Slices, at most plan.sliceUnits with a top-level AC among them, the walking skeleton first; no unit waits on a later slice or a fix unit (move what a slice needs into it); an intent without one runs end to end once with a top-level AC (or slice: \"<why>\" outside every module and one-way door); a unit crossing modules is tested at integration or higher"
       },
       "PLAN-DESIGN": {
         "level": "error",

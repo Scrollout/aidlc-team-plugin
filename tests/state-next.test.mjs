@@ -423,3 +423,15 @@ test('U117/AC-1 U117/AC-2 an intent with a slice line naming no unit is not done
   assert.doesNotMatch(run(dir, ['status']).out, /^I-1 approved/m, 'every slice names its units');
   assert.match(readFileSync(join(import.meta.dirname, '../plugin/templates/docs/intent.md'), 'utf8'), /^# Slices\n- <a vertical slice, end to end>: /m);
 });
+
+test('U118/AC-3 next never starts a unit whose scope overlaps one started and not merged; intent units before fix units', () => {
+  const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['src/**'], acs: ['- AC-1 (e2e): it works.'] }), [U(2)]: unitDoc({ intent: '', scope: ['src/go.mod'] }) }, { levels: { unit: {}, e2e: {} } });
+  approve(dir, 'I-1', 'U-1', 'U-2');
+  branch(dir, 'U-1');
+  report(dir, 'U-1');
+  assert.equal(run(dir, ['hold', 'U-1', 'owner looks first']).code, 0);
+  assert.doesNotMatch(run(dir, ['next']).out, /^build U-2/, 'U-1 is built and waits: U-2 shares src/go.mod');
+  const two = makeRepo({ ...I1, [U(1)]: unitDoc({ intent: '', scope: ['a/**'] }), [U(2)]: unitDoc({ scope: ['b/**'], acs: ['- AC-1 (e2e): it works.'] }), '.aidlc/profile.json': { parallel: { max: 1 } } });
+  approve(two, 'I-1', 'U-1', 'U-2');
+  assert.match(run(two, ['next']).out, /^build U-2 /);
+});

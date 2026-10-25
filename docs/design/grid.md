@@ -84,6 +84,15 @@ Tests are the Source row's second output, derived from the ACs written in Units,
 # Slices
 An intent lists its vertical slices under `# Slices`, one line each, naming the units that build it once they are cut (`- Owners and the gate: U-31, U-32`). While a line names no unit the intent is not done, even when every unit it has is merged: `next` asks to cut that slice's units. So a slice planned "for later" cannot be forgotten when the first slices ship nothing and the intent counts as released (first migration: I-3 closed after 2 of its 4 slices). An intent without the section counts its units only.
 
+Each slice is vertical, checked by `PLAN-SLICE` before approval and at every `check` ([Plan lint](plan-lint.md)), for an intent whose live units reach the product:
+- An intent with more live units than `plan.sliceUnits` has the section (a smaller one is one slice), and with the section every live unit is named on a slice line.
+- Each slice line naming units names one with an AC at the top level: a slice without its own end-to-end test is a layer, not a slice.
+- A slice names at most `plan.sliceUnits` units (default 3): a fat slice is a layer cake in disguise.
+- No unit waits on a unit of a later slice, so the first slice is the walking skeleton and each slice builds on the ones before it.
+- No unit of an intent waits on a fix unit not yet merged. Fix units build in the free slots beside the slices; work a slice truly needs moves into that slice.
+
+Why: on both migrations the plan drifted into chains of layer and hygiene units ahead of the product. The second project's only intent cut its units as layers (foundation, API kit, sign-in, tenancy) with the walking skeleton behind them, and the first project's portal and identity slices waited behind dependency and renaming fix units (owner, 2026-10-25: prevent drifting from vertical end-to-end slices).
+
 # Vertical and horizontal specs
 - `capabilities/`: one doc per user journey (vertical); written in Units.
 - `architecture/`: one doc per layer or module (horizontal); updated in Logical.
