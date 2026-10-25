@@ -132,7 +132,7 @@ function deny(cwd, input, code, key, data, decision = 'deny') {
 
 // A repository other than the project's that shares no remote or path with it: the guard leaves it alone
 // (docs/design/hooks.md#wiring). Anything it cannot resolve is the project's.
-const commonDir = (d) => tryGit(d, 'rev-parse', '--path-format=absolute', '--git-common-dir');
+const commonDir = (d) => { const c = tryGit(d, 'rev-parse', '--path-format=absolute', '--git-common-dir'); return c && real(c); }; // a Windows short name too
 const urlId = (dir, url) => (/^[\w.+-]+:\/\/|^[^/\\]+:/.test(url) && !url.startsWith('file://')
   ? url.replace(/^[\w.+-]+:\/\//, '').replace(/^[^@/]*@/, '').replace(/^([^/:]+):(?!\d)/, '$1/').replace(/(\.git)?\/?$/, '').toLowerCase()
   : commonDir(resolve(dir, url.replace(/^file:\/\//, ''))) ?? resolve(dir, url));
