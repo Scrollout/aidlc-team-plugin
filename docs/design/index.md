@@ -20,6 +20,7 @@
 * [Intent states](intent-states.md) - The states an intent passes through, from draft to released, with the deploy check, the owner's typed release, smoke, rollback, the fix unit after it, the back-fill shortcut and release by tag.
 * [Merge mechanics](gate.md) - How aidlc merge and check --ci carry out the gate in Verification - the trial merge, the codes, shared files, test runs, proof-revert and the CI history check.
 * [Module surfaces and cycles](module-surface.md) - A module other modules may reach only through the public paths it declares, and modules that never depend on each other in a circle, both checked at merge.
+* [Naming rules](names.md) - A project's naming conventions as profile rules - where a kind of name is written and the pattern it must match - checked on every added line at merge and shown on each card whose scope holds such files.
 * [OKF](okf.md) - How the plugin writes, indexes and validates OKF v0.2 bundles, following the official spec and its reference implementation.
 * [OKF validation](okf-validation.md) - The OKF errors and house-rule warnings the validator reports, and the YAML subset it reads frontmatter with.
 * [Overview](overview.md) - Goals, non-goals, budgets, repo layout and glossary of the plugin.

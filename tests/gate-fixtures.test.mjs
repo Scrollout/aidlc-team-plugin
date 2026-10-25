@@ -30,6 +30,7 @@ const BROKEN = {
     architecture: { graph: 'node -e "console.log(\'src -> lib/db\')"' } } }),
   'ARCH-CYCLE': () => setup({ profile: { ...PROFILE, modules: [{ id: 'core', paths: ['src/**'] }, { id: 'store', paths: ['lib/**'] }],
     architecture: { graph: 'node -e "console.log(\'src -> lib\\nlib -> src\')"', acyclic: true } } }),
+  'GATE-NAME': () => setup({ profile: { ...PROFILE, names: [{ id: 'export', files: ['src/**'], find: 'export const (\\w+)', pattern: '[a-z]+Total', why: 'docs/decisions/names.md' }] } }),
   'ARCH-CHECK': () => setup({ profile: { ...PROFILE, architecture: { checks: [FAIL] } } }),
   'GATE-SHARED': () => setup({ unit: { scope: ['src/**', 'tests/**', 'docs/**'] }, files: { ...CODE, ...TEST, 'docs/log.md': 'edited by a builder\n' } }),
   'GATE-CONFLICT': () => setup({ unit: { scope: ['src/**', 'tests/**', 'README.md'], twoWay: 'a readme line' }, files: { ...CODE, ...TEST, 'README.md': 'unit\n' }, beforeReview: (d) => commit(d, 'base moves', { 'README.md': 'base\n' }) }),
@@ -47,3 +48,11 @@ for (const [code, make] of Object.entries(BROKEN)) {
     assert.equal(git(dir, 'worktree', 'list').split('\n').length, 1, 'no trial worktree left behind');
   });
 }
+
+test('U95/AC-1 GATE-NAME names the file, line, name, rule and why; a name that matches, or a file no rule looks at, passes', () => {
+  const rule = { id: 'export', files: ['src/**'], find: 'export const (\\w+)', pattern: '[a-z]+', why: 'docs/decisions/names.md' };
+  const r = merge(setup({ profile: { ...PROFILE, names: [{ ...rule, pattern: '[a-z]+Total' }] } }));
+  assert.match(r.out, /GATE-NAME src\/add\.mjs:1 names add, which does not match the export rule \[a-z\]\+Total \(docs\/decisions\/names\.md\)/);
+  assert.ok(!codes(merge(setup({ profile: { ...PROFILE, names: [rule] } }))).includes('GATE-NAME'), 'add matches');
+  assert.ok(!codes(merge(setup({ profile: { ...PROFILE, names: [{ ...rule, files: ['lib/**'], pattern: 'x' }] } }))).includes('GATE-NAME'), 'no rule looks at src');
+});

@@ -129,6 +129,18 @@ test('U92/AC-1 docs.caps sets the caps by type, with default for the rest', () =
   assert.deepEqual(sizes({ Metric: 3000 }), ['metric.md']);
 });
 
+test('U95/AC-1 check fails a malformed naming rule', () => {
+  const dir = tempDir('names-');
+  spawnSync('git', ['init', '-q'], { cwd: dir });
+  mkdirSync(join(dir, '.aidlc'));
+  mkdirSync(join(dir, 'docs'));
+  writeFileSync(join(dir, '.aidlc/profile.json'), JSON.stringify({ names: [{ id: 'a', files: ['x/**'], find: '(', pattern: 'y' }, { id: 'b', files: [] }, { id: 'c', files: ['x/**'], find: 'v (\\w+)', pattern: '[a-z]+' }] }));
+  const r = spawnSync(process.execPath, [join(import.meta.dirname, '../plugin/cli/aidlc.mjs'), 'check'], { cwd: dir, encoding: 'utf8' });
+  assert.match(r.stdout + r.stderr, /PROFILE-NAMES names rule a: find or pattern is no valid regex/);
+  assert.match(r.stdout + r.stderr, /PROFILE-NAMES names rule b needs id, files, find and pattern/);
+  assert.doesNotMatch(r.stdout + r.stderr, /names rule c/);
+});
+
 for (const name of ['ga4', 'stackoverflow', 'crypto_bitcoin']) {
   test(`U2/AC-4 aidlc index reproduces the official ${name} indexes byte for byte`, () => {
     const dir = tempDir(`okf-${name}-`);

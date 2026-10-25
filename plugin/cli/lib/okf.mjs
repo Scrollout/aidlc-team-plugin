@@ -1,7 +1,7 @@
 // OKF v0.2 validator and index generator (docs/design/okf.md). Settings, codes and messages come from cli.json.
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
-import { bundleOf, config, done, isMap, UsageError, relPath } from './config.mjs';
+import { bundleOf, config, done, isMap, list, UsageError, relPath } from './config.mjs';
 import { finding as codeFinding, msg } from './template.mjs';
 import { loadProfile } from './profile.mjs';
 
@@ -524,6 +524,15 @@ function lintRules(rules = {}, file = config.layers.find((l) => l.from === 'proj
   return out;
 }
 
+// A naming rule's problem, or null (docs/design/names.md); the gate skips a rule with one.
+export function nameProblem(r) {
+  if (!isMap(r) || !r.id || !list(r.files).length || !r.find || !r.pattern) return 'namesShape';
+  try { new RegExp(r.find); new RegExp(r.pattern); } catch { return 'namesRegex'; }
+  return null;
+}
+const lintNames = (names, file = config.layers.find((l) => l.from === 'project').path) => [names ?? []].flat()
+  .map((r) => [r, nameProblem(r)]).filter(([, key]) => key).map(([r, key]) => finding('PROFILE-NAMES', 'error', file, 1, key, { id: r?.id ?? '-' }));
+
 // PROFILE-KEY: a top-level or `security` key in a project layer that the plugin reads nowhere (docs/design/profile.md).
 function lintKeys(sources) {
   const K = config.okf.profileKeys;
@@ -578,7 +587,7 @@ export const commands = {
     const { profile, sources } = loadProfile(cwd);
     const rules = profile.docs?.rules ?? {};
     const bundle = bundleOf(cwd, profile);
-    const findings = [...lintRules(rules), ...lintKeys(sources)];
+    const findings = [...lintRules(rules), ...lintNames(profile.names), ...lintKeys(sources)];
     const given = args.filter((a) => !a.startsWith('--'));
     const paths = given.length ? given.map((a) => resolve(cwd, a)) : [bundle];
     for (const p of paths) {

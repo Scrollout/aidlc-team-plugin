@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-25
 
+- **Creation** M11 U95: [naming rules](design/names.md): `names` in the profile, checked on added lines at merge (`GATE-NAME`) and listed on cards. Release 0.100.0.
 - **Fix** M11 U94: the guard compares git dirs by their real path, and the test quotes Windows paths as a shell needs. Release 0.99.1.
 - **Update** M11 U94: the guard judges a git call in the repository its `cd` and `-C` lead to, and leaves another repository alone ([Hook mechanics](design/hooks.md#wiring)). Release 0.99.0.
 - **Update** M11 U93: the gate counts a verdict only when newer than the last report, as `next` does, and `report` words a code unit's missing mutation right ([Gate](design/gate.md)). Release 0.98.0.

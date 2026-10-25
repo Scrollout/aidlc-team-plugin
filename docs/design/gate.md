@@ -18,7 +18,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T11:46:55Z }
 Nothing touches the base until every check passes, so a failed gate leaves no half merge.
 
 # Codes
-`GATE-APPROVAL`, `GATE-DEPS`, `SCOPE-OUT`, `GATE-LANE`, `GATE-AC`, `GATE-LEVEL`, `GATE-PROOF`, `GATE-CHECK`, `GATE-REVIEW`, `GATE-CARD`, `GATE-SPECIALIST`, `GATE-OKF`, `GATE-SECURITY`, `ARCH-BOUNDARY`, `ARCH-CHECK`, `GATE-SHARED`, `GATE-CONFLICT`, `GATE-RUN`, `GATE-SKIP`, `GATE-SECRET`. Each finding names its fix.
+`GATE-APPROVAL`, `GATE-DEPS`, `SCOPE-OUT`, `GATE-LANE`, `GATE-AC`, `GATE-LEVEL`, `GATE-PROOF`, `GATE-CHECK`, `GATE-REVIEW`, `GATE-CARD`, `GATE-SPECIALIST`, `GATE-OKF`, `GATE-SECURITY`, `ARCH-BOUNDARY`, `ARCH-CHECK`, `GATE-SHARED`, `GATE-CONFLICT`, `GATE-RUN`, `GATE-SKIP`, `GATE-SECRET`, `GATE-NAME` ([Naming rules](names.md)). Each finding names its fix.
 
 # Details
 - **Scope:** every path in the unit's diff matches its scope. A builder's diff touching an `index.md`, a `log.md` or a `profile.shared` glob is `GATE-SHARED`: merge writes those.

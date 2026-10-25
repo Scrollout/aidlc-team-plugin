@@ -250,6 +250,8 @@
     "linkBroken": "link target {{target}} does not exist",
     "sizeOver": "{{size}} chars over the {{cap}} cap for {{type}}",
     "ruleUnknown": "docs.rules.{{code}}: unknown code",
+    "namesShape": "names rule {{id}} needs id, files, find and pattern",
+    "namesRegex": "names rule {{id}}: find or pattern is no valid regex",
     "profileKey": "{{key}} is read by nothing in the plugin",
     "ruleFixed": "docs.rules.{{code}}: spec codes cannot be changed",
     "ruleLevel": "docs.rules.{{code}}: level must be error, warning or off",
@@ -480,6 +482,7 @@
     "guardHook": "running a hook by hand",
     "scopeState": "{{path}} is the CLI's state",
     "gateSecret": "{{path}}:{{line}} adds what looks like a secret",
+    "gateName": "{{path}}:{{line}} names {{name}}, which does not match the {{rule}} rule {{pattern}} ({{why}})",
     "ciUnknownUnit": "merge {{sha}} names {{unit}}, a unit not in the plan",
     "guardRelease": "{{what}} needs the owner",
     "scopeOut": "{{path}} is outside the scope of {{unit}}",
@@ -490,6 +493,7 @@
     "planSliceIntent": "{{unit}} has no AC at the top level {{level}}: no unit tests it end to end",
     "planDesign": "{{unit}} is {{lane}} lane and has no # {{section}} section with content",
     "cardDataOwned": "- {{module}} owns {{data}}\n",
+    "cardName": "- {{id}} in {{files}}: {{pattern}} ({{why}})\n",
     "cardPlatform": "The deploy target is already defined in: {{refs}}\nBuild on its conventions (names, namespaces, registries, access); add nothing it already provides, and stop and report if the unit needs a change there.\n",
     "cardDataRest": "- shared, for any module: {{shared}}\nReach any other data only through its owning module's interface, an event or a shared service; the merge gate fails a direct read or write (ARCH-DATA).\n",
     "cardDesign": "the # {{sections}} section(s) of {{path}} at the base",
@@ -569,7 +573,7 @@
     "boardItemHidden": "#{{number}} is on the Project but not listed, also after waiting (an archived item?) → restore it or remove it on the Project, then run aidlc sync",
     "boardShort": "GitHub listed {{got}} of the repository's {{count}} issues, also after waiting → sync created nothing; run aidlc sync again later",
     "boardFailed": "warning: sync failed, run aidlc sync: {{error}}\n",
-    "nextMigrate": "elaborate the migration intent with the owner in {{dir}}/I-1-<slug>.md (adopted at {{commit}}): docs, always-on context, profile, architecture baseline, data owners, module audit, cleanup; then ask for approval",
+    "nextMigrate": "elaborate the migration intent with the owner in {{dir}}/I-1-<slug>.md (adopted at {{commit}}): docs, always-on context, profile, architecture baseline, data owners, naming rules, module audit, cleanup; then ask for approval",
     "nextStopped": "the builder of {{unit}} stopped ({{reason}}): if the unit doc is wrong, fix it and ask the owner to re-approve it; otherwise remove the cause and start its builder again (card: aidlc card {{unit}})",
     "holdUsage": "usage: hold <unit> [off|<reason>]",
     "modeUsage": "usage: mode attended|unattended [--stop build|review|fix|merge|release] [--report <to>] | off",
@@ -592,7 +596,7 @@
   },
   "okf": {
     "profileKeys": {
-      "top": ["name", "base", "docs", "levels", "modules", "lanes", "focus", "security", "shared", "reserve", "parallel", "architecture", "adopted", "deploy", "release", "regen", "review", "research", "models", "board", "ci", "github", "decisions", "generated", "run", "approvals"],
+      "top": ["name", "base", "docs", "levels", "modules", "lanes", "focus", "security", "shared", "reserve", "parallel", "architecture", "adopted", "deploy", "release", "regen", "review", "research", "models", "board", "ci", "github", "decisions", "generated", "run", "approvals", "names"],
       "security": ["secrets", "content", "threatModel", "check"]
     },
     "index": "index.md",
@@ -669,6 +673,10 @@
         "level": "warning",
         "house": true,
         "fix": "split the doc or move detail into linked docs"
+      },
+      "PROFILE-NAMES": {
+        "level": "error",
+        "fix": "give each names rule an id, files globs, a find regex whose first group is the name, and a pattern regex"
       },
       "PROFILE-RULE": {
         "level": "error",
@@ -1087,6 +1095,9 @@
       },
       "GATE-SECRET": {
         "fix": "remove the secret from the unit branch; read it from the environment"
+      },
+      "GATE-NAME": {
+        "fix": "rename it to match the rule's pattern; if the rule is wrong, the owner changes its decision and the profile first"
       }
     },
     "noReview": "none"

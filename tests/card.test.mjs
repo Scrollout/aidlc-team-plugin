@@ -278,6 +278,20 @@ test('U86/AC-2 the card lists the data the unit\'s modules own and the shared da
   assert.doesNotMatch(run(off, ['card', 'U-1']).out, /## Data/);
 });
 
+test('U95/AC-2 the card lists the naming rules whose files overlap the unit scope', () => {
+  const files = { 'docs/intents/I-1-x.md': intentDoc('I-1'), 'docs/units/U-1-a.md': unitDoc({ scope: ['deploy/**'] }) };
+  const names = [{ id: 'image', files: ['deploy/**/*.yaml'], find: 'image: (\\S+)', pattern: 'ghcr\\.io/acme/[a-z-]+', why: 'docs/decisions/0011-names.md' }, { id: 'pkg', files: ['src/**'], find: 'package (\\w+)', pattern: '[a-z]+' }];
+  const dir = makeRepo(files, { names });
+  approve(dir, 'I-1', 'U-1');
+  const r = run(dir, ['card', 'U-1']);
+  assert.equal(r.code, 0, r.err);
+  assert.match(r.out, /## Names \(the merge gate checks each name you add\)\n- image in deploy\/\*\*\/\*\.yaml: ghcr\\\.io\/acme\/\[a-z-\]\+ \(docs\/decisions\/0011-names\.md\)\n## /);
+  assert.doesNotMatch(r.out, /- pkg in/, 'src is outside the scope');
+  const none = makeRepo(files, {});
+  approve(none, 'I-1', 'U-1');
+  assert.doesNotMatch(run(none, ['card', 'U-1']).out, /## Names/);
+});
+
 test('U91/AC-2 the card lists the deploy.platform refs to build on', () => {
   const files = { 'docs/intents/I-1-x.md': intentDoc('I-1'), 'docs/units/U-1-a.md': unitDoc({ scope: ['deploy/**'] }) };
   const dir = makeRepo(files, { deploy: { check: ['make image'], platform: ['../infra/README.md', 'https://example.com/infra'] } });

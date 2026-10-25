@@ -6,7 +6,7 @@ import { basename, dirname, join } from 'node:path';
 import { bundleOf, CLI_DIR, config, QUICK, VERDICT, done, git, gitLines, list, readJson, sh, slug, tryGit, UsageError, relPath } from './config.mjs';
 import { finding as codeFinding, msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
-import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
+import { checkBundle, nameProblem, parseDoc, writeIndexes } from './okf.mjs';
 import { computeLane, inside, lintPlan, readPlan, runTarget, spansOf } from './grid.mjs';
 import { issueTitle, sync } from './board.mjs';
 import { writeMap } from './map.mjs';
@@ -216,6 +216,7 @@ function runGate(cwd, st, unit) {
     if (mergeWritten(path, bundleRel, profile)) add('GATE-SHARED', 'gateShared', { path }, path);
     else if (!unit.scope.some((g) => matches(path, g))) add('SCOPE-OUT', 'gateScope', { path }, path);
   }
+  const names = [profile.names ?? []].flat().filter((r) => !nameProblem(r));
   // Each added line, so a secret written from Bash, which the secrets hook never sees, stops the merge.
   let file = null;
   let line = 0;
@@ -223,6 +224,13 @@ function runGate(cwd, st, unit) {
     if (l.startsWith('+++ ')) file = l.slice(6);
     else if (l.startsWith('@@')) line = Number(l.match(/\+(\d+)/)?.[1]);
     else if (l.startsWith('+') && file && secretIn(l.slice(1), profile)) add('GATE-SECRET', 'gateSecret', { path: file, line }, file);
+    // A name the line adds where a naming rule looks, which its pattern does not match (docs/design/names.md).
+    if (l.startsWith('+') && !l.startsWith('+++ ') && file) for (const r of names.filter((x) => list(x.files).some((g) => matches(file, g)))) {
+      for (const m of l.slice(1).matchAll(new RegExp(r.find, 'g'))) {
+        const name = m[1] ?? m[0];
+        if (!new RegExp(`^(?:${r.pattern})$`).test(name)) add('GATE-NAME', 'gateName', { path: file, line, rule: r.id, name, pattern: r.pattern, why: r.why ?? '-' }, file);
+      }
+    }
     if (l.startsWith('+') && !l.startsWith('+++ ')) line++;
   }
   const diffLane = computeLane(paths, profile, { paths: true });

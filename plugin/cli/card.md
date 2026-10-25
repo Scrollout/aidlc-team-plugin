@@ -32,6 +32,7 @@ Write only inside:
 ## Checks
 {{#each checks}}- {{module}}: {{check}}
 {{/each}}{{#each data}}## Data
+{{this}}{{/each}}{{#each names}}## Names (the merge gate checks each name you add)
 {{this}}{{/each}}{{#each platform}}## Platform
 {{this}}{{/each}}## Test runs (each in full, as one plain command)
 {{#each runs}}- {{level}}: {{run}}

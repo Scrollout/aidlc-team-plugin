@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path';
 import { bundleOf, CLI_DIR, config, QUICK, STANDARD, VERDICT, done, git, gitLines, list, readJson, slug, tryGit, UsageError, relPath } from './config.mjs';
 import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
-import { linksOf, MD_LINK, parseDoc, sectionOf } from './okf.mjs';
+import { linksOf, MD_LINK, nameProblem, parseDoc, sectionOf } from './okf.mjs';
 import { computeLane, overlaps, readPlan, reqId, unitFields } from './grid.mjs';
 import { aidlcDir, approval, baseOf, branchOf, diffHash, hashDoc, readReview, readState, researchOf, roundsOf, runtimeFile, sha256, worktrees, writeJson } from './state.mjs';
 
@@ -102,6 +102,9 @@ function renderCard(cwd, unitId) {
     checks: (profile.modules ?? []).filter((m) => modules.has(m.id ?? m.name) && m.check).map((m) => ({ module: m.id ?? m.name, check: m.check })),
     // The data the unit's modules own; any other through its owner (docs/design/data-ownership.md).
     data: profile.architecture?.data?.prefix ? [(profile.modules ?? []).filter((m) => modules.has(m.id ?? m.name) && list(m.data).length).map((m) => msg('cardDataOwned', { module: m.id ?? m.name, data: list(m.data).join(', ') })).join('') + msg('cardDataRest', { shared: list(profile.architecture.data.shared).join(', ') || '-' })] : [],
+    // The naming rules for the files the unit may write (docs/design/names.md).
+    names: [[profile.names ?? []].flat().filter((r) => !nameProblem(r) && list(r.files).some((g) => atBase.scope.some((s) => overlaps(s, g))))
+      .map((r) => msg('cardName', { id: r.id, files: list(r.files).join(', '), pattern: r.pattern, why: r.why ?? '-' })).join('')].filter(Boolean),
     // Where the deploy target is already defined, so a unit builds on it (docs/design/operations.md).
     platform: list(profile.deploy?.platform).length ? [msg('cardPlatform', { refs: list(profile.deploy.platform).join(', ') })] : [],
     outOfScope: section(doc, config.grid.outOfScope),
