@@ -11,7 +11,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:30:00Z }
 - What units share (the DAG, interfaces) lives in approved docs that stay frozen during construction; the card links to them, pinned to the base commit.
 
 # Contents (≤ 6,000 chars)
-The cap counts the card without its findings and mutations: a review round adds those, and a unit that fitted when it was built must not need a re-approved doc to get its fix round (first migration).
+The cap counts the card without its findings and mutations: a review round adds those, and a unit that fitted when it was built must not need a re-approved doc to get its fix round (first migration). Plan lint warns `PLAN-CARD` on a draft or stale unit whose card would pass the cap, counted the same way from the doc on disk, so the trim comes before the approval.
 - Unit ID, title, goal and why, lane, model (see [Team](team.md#model-routing)), base commit, card hash.
 - **Project rules:** each `.aidlc/rules/*.md` at the base commit, before the ACs, except a rule named after a `profile.focus` key, which only that focus's reviewer reads. Builders run without `CLAUDE.md`, so this is how a project's conventions reach them; the rules count toward the cap.
 - ACs with IDs; each becomes a test tagged `U-<n>/AC-<k>`.

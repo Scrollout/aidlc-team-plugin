@@ -249,6 +249,7 @@
     "generatedMissing": "no generated:",
     "linkBroken": "link target {{target}} does not exist",
     "sizeOver": "{{size}} chars over the {{cap}} cap for {{type}}",
+    "planCard": "the card for {{unit}} would be {{size}} chars, over {{max}}, {{rules}} of them project rules",
     "stampOver": "{{size}} chars with its approval stamps, over the {{cap}} cap for {{type}}: trim {{trim}} or more before approve",
     "ruleUnknown": "docs.rules.{{code}}: unknown code",
     "namesShape": "names rule {{id}} needs id, files and pattern",
@@ -775,6 +776,10 @@
       "PLAN-PLATFORM": {
         "level": "error",
         "fix": "find how the target is run today (an infra repo, its GitOps set-up, namespaces, registries, access) and list it in deploy.platform in .aidlc/profile.json, as paths or URLs; [] when this project defines its own target"
+      },
+      "PLAN-CARD": {
+        "level": "warning",
+        "fix": "shorten the unit doc (ACs, Interfaces, Out of scope) or the project rules before the approval: card renders only an approved doc"
       },
       "PLAN-SKELETON": {
         "level": "warning",

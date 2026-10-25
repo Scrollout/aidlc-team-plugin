@@ -345,3 +345,15 @@ test('U29/AC-1 U29/AC-2 U29/AC-3 the card names requirements as their files do, 
   assert.match(card.out, /^The merge gate reverts your changes outside the test paths of unit and reruns those levels: each one holding a tagged test must then fail\.$/m);
   assert.doesNotMatch(card.out, /outside src\//);
 });
+
+test('U112/AC-1 check warns PLAN-CARD on an unapproved unit whose card would pass the cap, with the size card counts', () => {
+  const acs = (n) => Array.from({ length: n }, (_, k) => `- AC-${k + 1} (unit): ${'x'.repeat(80)}.`);
+  const big = repo({ acs: acs(80) });
+  const warned = (dir) => run(dir, ['check']).out.split('\n').filter((l) => l.includes('PLAN-CARD'));
+  const [line] = warned(big);
+  assert.match(line ?? '', /^docs\/units\/U-1-pricing\.md:1 PLAN-CARD the card for U-1 would be (\d+) chars, over 6000, \d+ of them project rules → .* \(warning\)$/);
+  approve(big, 'I-1', 'U-1');
+  assert.match(run(big, ['card', 'U-1']).out, new RegExp(`card for U-1 is ${line.match(/would be (\d+)/)[1]} chars`), 'the same count as card');
+  assert.deepEqual(warned(big), [], 'an approved unit: card itself says so');
+  assert.deepEqual(warned(repo({ acs: acs(3) })), [], 'a card under the cap');
+});

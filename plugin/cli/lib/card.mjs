@@ -45,8 +45,9 @@ function projectRules(names, profile, at) {
     .map((f) => ({ name: `${dir}/${f}`, text: at(`${dir}/${f}`).replace(/\n*$/, '\n') }));
 }
 
-// Renders the card for `unitId` from the base commit, or a refusal.
-function renderCard(cwd, unitId) {
+// Renders the card for `unitId` from the base commit, or a refusal; `preview` renders the doc on disk, whatever its
+// approval, and returns only the size `card` would count (PLAN-CARD, docs/design/unit-card.md).
+function renderCard(cwd, unitId, { preview = false } = {}) {
   const { profile } = loadProfile(cwd);
   const base = baseOf(profile);
   const baseSha = tryGit(cwd, 'rev-parse', '-q', '--verify', `${base}^{commit}`);
@@ -57,14 +58,14 @@ function renderCard(cwd, unitId) {
   if (!unit) throw new UsageError(msg('unknownUnit', { name: unitId, dir: relPath(cwd, join(bundle, config.grid.units)) }));
 
   const top = git(cwd, 'rev-parse', '--show-toplevel');
-  const docText = tryGit(cwd, 'show', `${baseSha}:${relPath(top, unit.file)}`);
+  const docText = preview ? readFileSync(unit.file, 'utf8') : tryGit(cwd, 'show', `${baseSha}:${relPath(top, unit.file)}`);
   const doc = docText === null ? null : parseDoc(docText + '\n');
   const atBase = doc && !doc.error && doc.fm ? { ...unit, ...unitFields(doc) } : null; // as written at the base commit
   const lane = atBase ? computeLane(atBase.scope, profile) : null;
   const state = !atBase ? 'draft' : atBase.fm.intent || lane.lane !== QUICK ? approval(doc) : 'approved';
-  if (state !== 'approved') return done(msg('cardRefused', { unit: unitId, state }), config.exit.blocked);
+  if (state !== 'approved' && !preview) return done(msg('cardRefused', { unit: unitId, state }), config.exit.blocked);
 
-  const review = readReview(cwd, unitId, doc);
+  const review = preview ? null : readReview(cwd, unitId, doc);
   const hashNow = review && tryGit(cwd, 'rev-parse', '-q', '--verify', branchOf(unitId)) ? diffHash(cwd, base, unitId) : null;
   const current = hashNow !== null && roundsOf(review).at(-1)?.diffHash === hashNow;
   const { model, reason } = routeModel(atBase, lane.lane, profile, current ? review : null);
@@ -122,9 +123,17 @@ function renderCard(cwd, unitId) {
   const card = render(template, { ...data, hash }, file);
   // Findings and mutations come from review rounds: outside the cap, so a fix round never needs a re-approval (docs/design/unit-card.md).
   const size = render(template, { ...data, hash, fixes: '', mutations: '' }, file).length;
+  if (preview) return atBase ? { size, max: C.max, rules: data.rules.reduce((n, r) => n + r.text.length, 0) } : null;
   if (size > C.max) return done(msg('cardTooLong', { unit: unitId, size, max: C.max, rules: data.rules.reduce((n, r) => n + r.text.length, 0) }), config.exit.findings);
   writeJson(runtimeFile(cwd, 'cards', unitId), { unit: unitId, hash, base: baseSha, lane: lane.lane, model, scope: atBase.scope });
   return done(card);
+}
+
+// PLAN-CARD: the card size of each unit in `ids` over the cap, from the doc on disk; none without a base commit.
+export function cardsOver(cwd, ids) {
+  const { profile } = loadProfile(cwd);
+  if (!tryGit(cwd, 'rev-parse', '-q', '--verify', `${baseOf(profile)}^{commit}`)) return [];
+  return ids.map((id) => ({ id, ...renderCard(cwd, id, { preview: true }) })).filter((c) => c.size > c.max);
 }
 
 // The researcher's brief: the held question and the project's own context, never a plugin source list (decision 0010).
