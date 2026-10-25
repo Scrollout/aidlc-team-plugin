@@ -40,6 +40,27 @@ test('U79/AC-1 a push that can publish a tag asks the owner, as git tag does; a 
   assert.equal(decision(guardIn(dir, 'git push origin unit/U-1')), 'ask', 'push.followTags in the repo config');
 });
 
+test('U94/AC-1 a git call cd or -C takes into another repository passes the guard; a clone of the project or its URL does not', () => {
+  const dir = project();
+  git(dir, 'remote', 'add', 'origin', 'git@github.com:Org/app.git');
+  const other = tempDir('infra-');
+  git(other, 'init', '-q', '-b', 'main');
+  git(other, 'remote', 'add', 'origin', 'https://github.com/Org/infra.git');
+  for (const command of [`git -C ${other} push origin main`, `cd ${other} && git push`, `cd ${other}; git push origin main --force`]) assert.equal(decision(guardIn(dir, command)), 'allow', command);
+  for (const command of [`(cd ${other}) ; git push origin main`, `cd ${other} | git push origin main`, `cd ${other} && cd - && git push origin main`, `git -C ${other} --git-dir=${dir}/.git push origin main`, `git -C ${other} push https://github.com/org/app main`, `git -C ${other} push ${dir} main`]) {
+    assert.equal(decision(guardIn(dir, command)), 'deny', command);
+  }
+  git(other, 'remote', 'add', 'mirror', 'ssh://git@github.com/Org/app');
+  assert.equal(decision(guardIn(dir, `git -C ${other} push origin main`)), 'deny', 'shares a remote with the project');
+  const clone = tempDir('clone-');
+  git(clone, 'clone', '-q', dir, '.');
+  assert.equal(decision(guardIn(dir, `git -C ${clone} push origin main`)), 'deny', 'a clone of the project');
+  const managed = tempDir('managed-');
+  git(managed, 'init', '-q', '-b', 'main');
+  write(managed, { '.aidlc/profile.json': {} });
+  assert.equal(decision(guardIn(dir, `git -C ${managed} push origin main`)), 'deny', 'a project of its own');
+});
+
 test('U81/AC-1 a delegated upgrade runs without a prompt; a downgrade or a dirty copy still asks; the status says which', () => {
   const dir = project();
   const upgrade = 'node /opt/plugin/cli/aidlc.mjs upgrade'; // the installed plugin's CLI, as a shell line names it

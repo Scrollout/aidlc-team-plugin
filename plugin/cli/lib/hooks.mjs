@@ -1,7 +1,7 @@
 // Hook entry points: `aidlc hook <name>` reads the hook JSON on stdin and prints the decision JSON
 // (docs/design/hooks.md). Deny lists, patterns, codes and messages come from cli.json.
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, utimesSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join, resolve, sep } from 'node:path';
 import { bundleOf, config, done, git, gitLines, readJson, readStdin, tryGit, UsageError, relPath } from './config.mjs';
 import { msg } from './template.mjs';
@@ -49,12 +49,14 @@ export function segments(command) {
 function gitCall(argv) {
   if (!argv.length || argv[0].split('/').pop() !== 'git') return null;
   let k = 1;
-  const configs = [];
+  const [configs, dirs] = [[], []];
   for (; k < argv.length && argv[k].startsWith('-'); k += H.git.globalWithValue.includes(argv[k]) ? 2 : 1) {
     const value = ['-c', '--config-env'].includes(argv[k]) ? argv[k + 1] : argv[k].match(/^(?:-c|--config-env=)(.+)/)?.[1];
     if (value) configs.push(value.replace('=', ' ')); // as `git config --get-regexp` prints it
+    if (argv[k] === '-C' || argv[k].startsWith('-C')) dirs.push(argv[k] === '-C' ? argv[k + 1] : argv[k].slice(2));
+    else if (/^--(git-dir|work-tree)/.test(argv[k])) dirs.push(null); // judged as the project
   }
-  return { sub: argv[k], args: argv.slice(k + 1), configs };
+  return { sub: argv[k], args: argv.slice(k + 1), configs, dirs };
 }
 
 // An option as git reads it: exact, or a long option by an unambiguous prefix (`--no-verif`), `--x=v` by its name.
@@ -128,6 +130,20 @@ function deny(cwd, input, code, key, data, decision = 'deny') {
   return JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: decision, permissionDecisionReason: reason } });
 }
 
+// A repository other than the project's that shares no remote or path with it: the guard leaves it alone
+// (docs/design/hooks.md#wiring). Anything it cannot resolve is the project's.
+const commonDir = (d) => tryGit(d, 'rev-parse', '--path-format=absolute', '--git-common-dir');
+const urlId = (dir, url) => (/^[\w.+-]+:\/\/|^[^/\\]+:/.test(url) && !url.startsWith('file://')
+  ? url.replace(/^[\w.+-]+:\/\//, '').replace(/^[^@/]*@/, '').replace(/^([^/:]+):(?!\d)/, '$1/').replace(/(\.git)?\/?$/, '').toLowerCase()
+  : commonDir(resolve(dir, url.replace(/^file:\/\//, ''))) ?? resolve(dir, url));
+function foreign(cwd, dir, remote) {
+  const there = dir && existsSync(dir) && commonDir(dir);
+  if (!there || there === commonDir(cwd) || existsSync(join(git(dir, 'rev-parse', '--show-toplevel'), '.aidlc', 'profile.json'))) return false;
+  const ids = (d) => [commonDir(d), ...gitLines(d, 'config', '--get-regexp', '^remote\\..*url$').map((l) => urlId(d, l.split(' ').slice(1).join(' ')))];
+  const ours = new Set(ids(cwd));
+  return ![...ids(dir), ...(remote ? [urlId(dir, remote)] : [])].some((x) => ours.has(x));
+}
+
 function guard(input, cwd) {
   const { profile } = loadProfile(cwd);
   const base = baseOf(profile);
@@ -136,7 +152,11 @@ function guard(input, cwd) {
   const branch = tryGit(cwd, 'rev-parse', '--abbrev-ref', 'HEAD');
   // A scheduled prompt reaches the prompt hook as if typed: the lead may not schedule an approval (decision 0011).
   if (H.scheduled.includes(input.tool_name)) return ownerWords(input.tool_input?.prompt) ? deny(cwd, input, 'GUARD-SCHEDULE', 'guardSchedule', {}) : allow();
-  for (const argv of segments(String(input.tool_input?.command ?? ''))) {
+  // Where each segment runs, as `cd` moves it; a subshell, pipe or background job leaves that unknown.
+  const command = String(input.tool_input?.command ?? '');
+  let dir = input.cwd ? resolve(input.cwd) : cwd;
+  for (const argv of segments(command)) {
+    if (['cd', 'pushd'].includes(argv[0])) { const to = argv[1]?.replace(/^~(?=\/|$)/, homedir()); dir = dir && to && to !== '-' && !/[()|]|(^|[^&])&([^&]|$)/.test(command) ? resolve(dir, to) : null; continue; }
     // The owner answers a permission prompt for an owner command; without prompts (bypass) it stays a `!` command (decision 0009).
     const owner = ownerCommand(argv);
     if (owner) {
@@ -155,8 +175,9 @@ function guard(input, cwd) {
     for (const [tool, sub] of H.ask) if (argv[0]?.split('/').pop() === tool && argv.includes(sub)) return deny(cwd, input, 'GUARD-RELEASE', 'guardRelease', { what: `${tool} ${sub}` }, 'ask');
     const g = gitCall(argv);
     if (!g) continue;
-    const { sub, args, configs } = g;
+    const { sub, args, configs, dirs } = g;
     const refs = args.filter((a) => !a.startsWith('-'));
+    if (foreign(cwd, dirs.reduce((d, x) => d && x && resolve(d, x), dir), ['push', 'fetch', 'pull'].includes(sub) ? refs[0] : null)) continue;
     const isBase = (r) => [base, `refs/heads/${base}`, `heads/${base}`].includes(r);
     if (configs.some((c) => c.toLowerCase().startsWith(H.git.alias)) || (sub === 'config' && refs.some((r) => r.toLowerCase().startsWith(H.git.alias)))) return deny(cwd, input, 'GUARD-ALIAS', 'guardAlias', {});
     if (sub === 'push') {
