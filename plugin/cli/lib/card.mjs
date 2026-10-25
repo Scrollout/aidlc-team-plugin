@@ -104,7 +104,7 @@ function renderCard(cwd, unitId) {
     data: profile.architecture?.data?.prefix ? [(profile.modules ?? []).filter((m) => modules.has(m.id ?? m.name) && list(m.data).length).map((m) => msg('cardDataOwned', { module: m.id ?? m.name, data: list(m.data).join(', ') })).join('') + msg('cardDataRest', { shared: list(profile.architecture.data.shared).join(', ') || '-' })] : [],
     // The naming rules for the files the unit may write (docs/design/names.md).
     names: [[profile.names ?? []].flat().filter((r) => !nameProblem(r) && list(r.files).some((g) => atBase.scope.some((s) => overlaps(s, g))))
-      .map((r) => msg('cardName', { id: r.id, files: list(r.files).join(', '), pattern: r.pattern, why: r.why ?? '-' })).join('')].filter(Boolean),
+      .map((r) => msg(r.find ? 'cardName' : 'cardNamePath', { id: r.id, files: list(r.files).join(', '), pattern: r.pattern, why: r.why ?? '-' })).join('')].filter(Boolean),
     // Where the deploy target is already defined, so a unit builds on it (docs/design/operations.md).
     platform: list(profile.deploy?.platform).length ? [msg('cardPlatform', { refs: list(profile.deploy.platform).join(', ') })] : [],
     outOfScope: section(doc, config.grid.outOfScope),

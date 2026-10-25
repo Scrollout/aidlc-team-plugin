@@ -225,13 +225,17 @@ function runGate(cwd, st, unit) {
     else if (l.startsWith('@@')) line = Number(l.match(/\+(\d+)/)?.[1]);
     else if (l.startsWith('+') && file && secretIn(l.slice(1), profile)) add('GATE-SECRET', 'gateSecret', { path: file, line }, file);
     // A name the line adds where a naming rule looks, which its pattern does not match (docs/design/names.md).
-    if (l.startsWith('+') && !l.startsWith('+++ ') && file) for (const r of names.filter((x) => list(x.files).some((g) => matches(file, g)))) {
+    if (l.startsWith('+') && !l.startsWith('+++ ') && file) for (const r of names.filter((x) => x.find && list(x.files).some((g) => matches(file, g)))) {
       for (const m of l.slice(1).matchAll(new RegExp(r.find, 'g'))) {
         const name = m[1] ?? m[0];
         if (!new RegExp(`^(?:${r.pattern})$`).test(name)) add('GATE-NAME', 'gateName', { path: file, line, rule: r.id, name, pattern: r.pattern, why: r.why ?? '-' }, file);
       }
     }
     if (l.startsWith('+') && !l.startsWith('+++ ')) line++;
+  }
+  // A path rule: each file the unit adds or renames under its files (docs/design/names.md).
+  for (const path of gitLines(cwd, 'diff', '--name-only', '--diff-filter=AR', `${base}...${branchOf(unit.id)}`)) {
+    for (const r of names.filter((x) => !x.find && list(x.files).some((g) => matches(path, g)) && !new RegExp(`^(?:${x.pattern})$`).test(path))) add('GATE-NAME', 'gateNamePath', { path, rule: r.id, pattern: r.pattern, why: r.why ?? '-' }, path);
   }
   const diffLane = computeLane(paths, profile, { paths: true });
   if (card && paths.length && G.lanes.indexOf(diffLane.lane) > G.lanes.indexOf(card.lane)) add('GATE-LANE', 'gateLane', { lane: diffLane.lane, reason: diffLane.reason, card: card.lane });

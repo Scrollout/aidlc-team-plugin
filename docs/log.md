@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-25
 
+- **Update** M11 U96: [naming](design/names.md#lifecycle) through the lifecycle: path rules, a naming decision template per stage, a warning for a codebase with no naming rule. Release 0.101.0.
 - **Creation** M11 U95: [naming rules](design/names.md): `names` in the profile, checked on added lines at merge (`GATE-NAME`) and listed on cards. Release 0.100.0.
 - **Fix** M11 U94: the guard compares git dirs by their real path, and the test quotes Windows paths as a shell needs. Release 0.99.1.
 - **Update** M11 U94: the guard judges a git call in the repository its `cd` and `-C` lead to, and leaves another repository alone ([Hook mechanics](design/hooks.md#wiring)). Release 0.99.0.

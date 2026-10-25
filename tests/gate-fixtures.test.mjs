@@ -56,3 +56,10 @@ test('U95/AC-1 GATE-NAME names the file, line, name, rule and why; a name that m
   assert.ok(!codes(merge(setup({ profile: { ...PROFILE, names: [rule] } }))).includes('GATE-NAME'), 'add matches');
   assert.ok(!codes(merge(setup({ profile: { ...PROFILE, names: [{ ...rule, files: ['lib/**'], pattern: 'x' }] } }))).includes('GATE-NAME'), 'no rule looks at src');
 });
+
+test('U96/AC-1 a rule without find checks the path of each file the unit adds', () => {
+  const rule = { id: 'source', files: ['src/**'], pattern: 'src/[a-z]+\\.mjs', why: 'docs/decisions/names.md' };
+  const r = merge(setup({ profile: { ...PROFILE, names: [rule] }, files: { ...CODE, ...TEST, 'src/Bad_Name.mjs': 'export const x = 1;\n' } }));
+  assert.match(r.out, /GATE-NAME src\/Bad_Name\.mjs does not match the source rule src\/\[a-z\]\+\\\.mjs \(docs\/decisions\/names\.md\)/);
+  assert.doesNotMatch(r.out, /GATE-NAME src\/add\.mjs/, 'add.mjs matches');
+});

@@ -137,8 +137,12 @@ test('U95/AC-1 check fails a malformed naming rule', () => {
   writeFileSync(join(dir, '.aidlc/profile.json'), JSON.stringify({ names: [{ id: 'a', files: ['x/**'], find: '(', pattern: 'y' }, { id: 'b', files: [] }, { id: 'c', files: ['x/**'], find: 'v (\\w+)', pattern: '[a-z]+' }] }));
   const r = spawnSync(process.execPath, [join(import.meta.dirname, '../plugin/cli/aidlc.mjs'), 'check'], { cwd: dir, encoding: 'utf8' });
   assert.match(r.stdout + r.stderr, /PROFILE-NAMES names rule a: find or pattern is no valid regex/);
-  assert.match(r.stdout + r.stderr, /PROFILE-NAMES names rule b needs id, files, find and pattern/);
+  assert.match(r.stdout + r.stderr, /PROFILE-NAMES names rule b needs id, files and pattern/);
   assert.doesNotMatch(r.stdout + r.stderr, /names rule c/);
+  writeFileSync(join(dir, '.aidlc/profile.json'), JSON.stringify({ modules: [{ id: 'core', paths: ['src/**'] }] }));
+  const none = spawnSync(process.execPath, [join(import.meta.dirname, '../plugin/cli/aidlc.mjs'), 'check'], { cwd: dir, encoding: 'utf8' });
+  assert.match(none.stdout + none.stderr, /PROFILE-NAMES the profile has modules but no names rule/, 'U96/AC-2');
+  assert.equal(none.status, 0, 'a warning');
 });
 
 for (const name of ['ga4', 'stackoverflow', 'crypto_bitcoin']) {

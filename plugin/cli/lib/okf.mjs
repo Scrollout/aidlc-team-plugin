@@ -526,8 +526,8 @@ function lintRules(rules = {}, file = config.layers.find((l) => l.from === 'proj
 
 // A naming rule's problem, or null (docs/design/names.md); the gate skips a rule with one.
 export function nameProblem(r) {
-  if (!isMap(r) || !r.id || !list(r.files).length || !r.find || !r.pattern) return 'namesShape';
-  try { new RegExp(r.find); new RegExp(r.pattern); } catch { return 'namesRegex'; }
+  if (!isMap(r) || !r.id || !list(r.files).length || !r.pattern) return 'namesShape';
+  try { new RegExp(r.find ?? ''); new RegExp(r.pattern); } catch { return 'namesRegex'; }
   return null;
 }
 const lintNames = (names, file = config.layers.find((l) => l.from === 'project').path) => [names ?? []].flat()
@@ -588,6 +588,8 @@ export const commands = {
     const rules = profile.docs?.rules ?? {};
     const bundle = bundleOf(cwd, profile);
     const findings = [...lintRules(rules), ...lintNames(profile.names), ...lintKeys(sources)];
+    // A codebase in modules grows names from the first unit: without a rule nothing holds them (docs/design/names.md#lifecycle).
+    if ((profile.modules ?? []).length && ![profile.names ?? []].flat().length) findings.push(finding('PROFILE-NAMES', 'warning', config.layers.find((l) => l.from === 'project').path, 1, 'namesNone', {}));
     const given = args.filter((a) => !a.startsWith('--'));
     const paths = given.length ? given.map((a) => resolve(cwd, a)) : [bundle];
     for (const p of paths) {

@@ -52,7 +52,7 @@ Merge rules:
   - CLAUDE.md (one line: `@AGENTS.md`);
   - the bundle root (`index.md` with `okf_version`, `log.md`);
   - the constitution, `<bundle>/constitution/principles.md`;
-  - requirement, intent, unit, decision and runbook templates in `.aidlc/templates/docs/`;
+  - requirement, intent, unit, decision, runbook and naming templates in `.aidlc/templates/docs/`;
   - `.github/workflows/aidlc.yml`, with the runner and the `actions/checkout` and `actions/setup-node` pins the project's own workflows already use (defaults in `init.workflow`).
 
   It also adds `.aidlc/local/` and the builders' worktree folder `.claude/worktrees/` to `.gitignore`, adds the worktree folder to every other ignore file the project has (`init.ignoreFiles`: `.dockerignore`, `.prettierignore`, …) so tools and tests skip it, and sets `worktree.baseRef: "head"` in `.claude/settings.json`.

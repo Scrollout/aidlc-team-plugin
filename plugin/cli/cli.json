@@ -250,7 +250,8 @@
     "linkBroken": "link target {{target}} does not exist",
     "sizeOver": "{{size}} chars over the {{cap}} cap for {{type}}",
     "ruleUnknown": "docs.rules.{{code}}: unknown code",
-    "namesShape": "names rule {{id}} needs id, files, find and pattern",
+    "namesShape": "names rule {{id}} needs id, files and pattern",
+    "namesNone": "the profile has modules but no names rule",
     "namesRegex": "names rule {{id}}: find or pattern is no valid regex",
     "profileKey": "{{key}} is read by nothing in the plugin",
     "ruleFixed": "docs.rules.{{code}}: spec codes cannot be changed",
@@ -482,6 +483,7 @@
     "guardHook": "running a hook by hand",
     "scopeState": "{{path}} is the CLI's state",
     "gateSecret": "{{path}}:{{line}} adds what looks like a secret",
+    "gateNamePath": "{{path}} does not match the {{rule}} rule {{pattern}} ({{why}})",
     "gateName": "{{path}}:{{line}} names {{name}}, which does not match the {{rule}} rule {{pattern}} ({{why}})",
     "ciUnknownUnit": "merge {{sha}} names {{unit}}, a unit not in the plan",
     "guardRelease": "{{what}} needs the owner",
@@ -494,6 +496,7 @@
     "planDesign": "{{unit}} is {{lane}} lane and has no # {{section}} section with content",
     "cardDataOwned": "- {{module}} owns {{data}}\n",
     "cardName": "- {{id}} in {{files}}: {{pattern}} ({{why}})\n",
+    "cardNamePath": "- {{id}}, paths under {{files}}: {{pattern}} ({{why}})\n",
     "cardPlatform": "The deploy target is already defined in: {{refs}}\nBuild on its conventions (names, namespaces, registries, access); add nothing it already provides, and stop and report if the unit needs a change there.\n",
     "cardDataRest": "- shared, for any module: {{shared}}\nReach any other data only through its owning module's interface, an event or a shared service; the merge gate fails a direct read or write (ARCH-DATA).\n",
     "cardDesign": "the # {{sections}} section(s) of {{path}} at the base",
@@ -676,7 +679,7 @@
       },
       "PROFILE-NAMES": {
         "level": "error",
-        "fix": "give each names rule an id, files globs, a find regex whose first group is the name, and a pattern regex"
+        "fix": "write the naming decision from .aidlc/templates/docs/naming.md; give each pattern a names rule: id, files globs, pattern, and a find regex whose first group is the name (none for a rule on paths)"
       },
       "PROFILE-RULE": {
         "level": "error",
@@ -925,6 +928,11 @@
       {
         "template": "docs/runbook.md",
         "to": ".aidlc/templates/docs/runbook.md",
+        "upgrade": true
+      },
+      {
+        "template": "docs/naming.md",
+        "to": ".aidlc/templates/docs/naming.md",
         "upgrade": true
       },
       {

@@ -285,8 +285,11 @@ test('U95/AC-2 the card lists the naming rules whose files overlap the unit scop
   approve(dir, 'I-1', 'U-1');
   const r = run(dir, ['card', 'U-1']);
   assert.equal(r.code, 0, r.err);
-  assert.match(r.out, /## Names \(the merge gate checks each name you add\)\n- image in deploy\/\*\*\/\*\.yaml: ghcr\\\.io\/acme\/\[a-z-\]\+ \(docs\/decisions\/0011-names\.md\)\n## /);
+  assert.match(r.out, /## Names\nThe merge gate checks each name and path you add against these; use the naming decision's words for the rest, which the reviewer checks\.\n- image in deploy\/\*\*\/\*\.yaml: ghcr\\\.io\/acme\/\[a-z-\]\+ \(docs\/decisions\/0011-names\.md\)\n## /);
   assert.doesNotMatch(r.out, /- pkg in/, 'src is outside the scope');
+  const paths = makeRepo(files, { names: [{ id: 'overlay', files: ['deploy/**'], pattern: 'deploy/(base|dev)/.+' }] });
+  approve(paths, 'I-1', 'U-1');
+  assert.match(run(paths, ['card', 'U-1']).out, /^- overlay, paths under deploy\/\*\*: deploy\/\(base\|dev\)\/\.\+ \(-\)$/m, 'U96/AC-3 a path rule');
   const none = makeRepo(files, {});
   approve(none, 'I-1', 'U-1');
   assert.doesNotMatch(run(none, ['card', 'U-1']).out, /## Names/);
