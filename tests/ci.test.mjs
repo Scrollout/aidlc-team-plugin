@@ -75,15 +75,15 @@ test('U71/AC-1 ci wait is refused on a base not pushed, and without ci.wait or g
   assert.match(aidlc({ dir: noRepo, stub: ctx.stub }, 'ci', 'wait').err, /ci\.wait \(seconds\) and github\.repo/);
 });
 
-test('U71/AC-2 with ci.wait a builder starts only on a pushed base whose CI is known', () => {
+test('U71/AC-2 U115/AC-2 with ci.wait a builder starts only on a pushed base, its CI waited for beside it', () => {
   const ctx = setup({ push: false });
   assert.equal(aidlc(ctx, 'next').out, 'the base has merges its remote lacks: push it before new builders: aidlc push\n');
   git(ctx.dir, 'push', '-q', 'origin', 'main');
-  assert.equal(aidlc(ctx, 'next').out, "wait for the base's CI before new builders: aidlc ci wait\n");
+  assert.match(aidlc(ctx, 'next').out, /^build U-1 \(cards: [^)]+\); meanwhile run aidlc ci wait in the background$/m);
   setRecord(ctx, 'pending');
-  assert.match(aidlc(ctx, 'next').out, /aidlc ci wait/, 'a pending poll asks again');
+  assert.match(aidlc(ctx, 'next').out, /^build U-1 .*aidlc ci wait in the background/, 'a pending poll asks again');
   setRecord(ctx, 'green');
-  assert.match(aidlc(ctx, 'next').out, /^build U-1/);
+  assert.match(aidlc(ctx, 'next').out, /^build U-1 \(cards: [^)]+\)$/m);
   commit(ctx.dir, 'docs on the base', { 'notes.md': 'x\n' });
   assert.match(aidlc(ctx, 'next').out, /aidlc push/, 'a newer base asks for its own CI');
 

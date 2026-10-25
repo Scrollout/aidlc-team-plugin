@@ -271,7 +271,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
     const report = readJson(runtimeFile(cwd, 'reports', u.id));
     const review = readReview(cwd, u.id, u.doc);
     let state;
-    let focus = null;
+    let focus = null, focuses = [];
     if (merged.has(u.id)) state = 'merged';
     else if (needsApproval && approvalState !== 'approved') state = approvalState;
     // A builder that stopped hands the unit back to the lead until the owner re-approves its fixed spec.
@@ -293,6 +293,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
       const has = (v) => verdicts.some((x) => x.verdict === v);
       const lastAt = review?.rounds?.at(-1)?.at;
       focus = verdicts.find((x) => x.verdict !== VERDICT.pass)?.focus ?? null;
+      focuses = verdicts.filter((x) => !x.verdict).map((x) => x.focus); // each one a reviewer of its own, in parallel (U115)
       if (has(VERDICT.escalate)) state = 'escalated';
       // A fix round is in flight once a builder was launched after the verdict: the builder that reported before
       // the review keeps its heartbeat fresh for minutes (docs/design/in-flight.md).
@@ -311,7 +312,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
       }
       else state = 'building';
     } else state = heartbeatFresh(cwd, u.id, now) ? 'building' : 'approved';
-    return { ...u, lane, state, focus, fresh: heartbeatFresh(cwd, u.id, now), report, review, held: Boolean(u.fm.hold) && !answered.has(researchOf(u)) }; // an answered research hold no longer holds
+    return { ...u, lane, state, focus, focuses, fresh: heartbeatFresh(cwd, u.id, now), report, review, held: Boolean(u.fm.hold) && !answered.has(researchOf(u)) }; // an answered research hold no longer holds
   });
 
   const intents = plan.intents.sort(byId).map((i) => {
@@ -457,7 +458,7 @@ function unitWork(st, scope) {
   const fix = live.find((u) => u.state === 'fix');
   if (fix) return action('act', 'nextFixRound', { unit: fix.id });
   const reported = live.find((u) => u.state === 'reported');
-  if (reported) return action('act', 'nextReview', { unit: reported.id, focus: reported.focus, model: st.profile.models.review });
+  if (reported) return action('act', 'nextReview', { unit: reported.id, focus: (reported.focuses.length ? reported.focuses : [reported.focus]).join(', '), model: st.profile.models.review });
   const lost = live.find((u) => u.state === 'building' && !u.fresh);
   if (lost) return action('act', 'nextRestart', { unit: lost.id, branch: branchOf(lost.id) });
   // A builder still holding a merged unit's worktree: the merge could not remove it.
@@ -474,10 +475,12 @@ function unitWork(st, scope) {
     const clash = [...inFlight, ...picked].some((o) => u.scope.some((g) => o.scope.some((h) => overlaps(g, h))));
     if (!clash) picked.push(u);
   }
-  // With ci.wait, builders start on a pushed base whose CI is known; on a red one the fix unit builds.
-  const ci = st.ci && !st.ci.red && (st.ci.head !== st.ci.remote ? 'nextCiPush' : st.ci.rec?.sha !== st.ci.head || st.ci.rec.state === 'pending' ? 'nextCiWait' : null);
-  if (picked.length && ci) return action('act', ci);
-  if (picked.length) return action('act', 'nextBuild', { units: picked.map((u) => u.id).join(', '), cards: picked.map((u) => msg('cardCommand', { unit: u.id })).join(', ') });
+  // With ci.wait, builders start on a pushed base; a CI not yet known holds none: its wait runs beside them,
+  // and a red result holds their merges (U115). On a red base the fix unit builds.
+  const ci = st.ci && !st.ci.red;
+  if (picked.length && ci && st.ci.head !== st.ci.remote) return action('act', 'nextCiPush');
+  const wait = ci && (st.ci.rec?.sha !== st.ci.head || st.ci.rec.state === 'pending') ? [true] : [];
+  if (picked.length) return action('act', 'nextBuild', { units: picked.map((u) => u.id).join(', '), cards: picked.map((u) => msg('cardCommand', { unit: u.id })).join(', '), wait });
   if (inFlight.length) return action('wait', 'nextWait', { units: inFlight.map((u) => u.id).join(', ') });
   const held = scope.filter((u) => u.held && u.state !== 'merged');
   if (held.length) return action('human', 'nextHeld', { units: held.map((u) => (u.fm.hold === true ? u.id : msg('heldReason', { unit: u.id, reason: u.fm.hold }))).join(', ') });

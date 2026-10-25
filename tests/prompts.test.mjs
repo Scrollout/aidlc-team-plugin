@@ -124,7 +124,7 @@ test('U8/AC-6 the card lists cited requirements, next names each required focus,
 
   branch(dir, 'U-1', 'src/auth/login.mjs');
   run(dir, ['report', 'U-1'], '{"status": "done"}');
-  assert.match(run(dir, ['next']).out, /^review U-1, focus general: reviewer on opus/);
+  assert.match(run(dir, ['next']).out, /^review U-1, focus general, security: reviewer on opus/, 'U115/AC-1 every focus at once, in parallel');
   review(dir, 'U-1', 'pass');
   assert.match(run(dir, ['next']).out, /^review U-1, focus security: reviewer on opus/);
   const finding = { path: 'src/auth/login.mjs', line: 1, claim: 'no rate limit', scenario: '1000 tries → no lockout', confidence: 'PLAUSIBLE' };

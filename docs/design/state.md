@@ -12,7 +12,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T22:00:00Z }
 | Intent and plan approved | a `human:` entry in the doc's OKF `verified` field, with `verified_hash` still matching the content |
 | Unit exists, its deps, scope | the unit doc |
 | Unit in progress | branch `unit/U-<n>` exists |
-| Unit reviewed | `.git/aidlc/reviews/U-<n>.json`, keyed by diff hash: a `pass` in `general` and each focus the gate requires |
+| Unit reviewed | `.git/aidlc/reviews/U-<n>.json`, by diff hash: a `pass` in `general` and each focus the gate needs |
 | Unit done | a merge commit on the base branch with trailer `Unit: U-<n>` |
 | Released | every unit of the intent merged, and: a tag contains each unit's merge; or, with `deploy` or `release` in the profile, the recorded `aidlc release` passed, and its smoke when `deploy.smoke` is set; or every unit's scope lies in the levels' test paths |
 
@@ -59,9 +59,9 @@ Intents, requirements, units and one-way-door decisions carry the owner's approv
 6. Reviewed units → merge in DAG order, once each AC has a tagged test on the branch (else back to the builder). One the gate refused → ⛔ the owner, until the base or the diff changes.
 7. Verdict `escalate` in any focus → the owner decides; their re-approval marks its findings answered on the card and sends the unit straight to review.
 8. A builder that reported `stopped` → the lead fixes the spec (re-approved) or the cause; the builder restarts, and is building from then on. Verdict `fix` → fix round, findings on the card, none while its builder runs. A verdict older than the builder's last report no longer counts.
-9. Reported, not reviewed → review, naming the first required focus without a `pass` for the current diff ([Skill and agents](prompts.md#review)).
+9. Reported, not reviewed → review, one reviewer per required focus without a `pass` for the current diff, in parallel ([Skill and agents](prompts.md#review)).
 10. Building with a stale heartbeat ([Agents in flight](in-flight.md)) and no report → restart its builder. A merged unit still in a worktree → stop its builder, remove the worktree.
-11. Approved, unblocked units → build, on one line; up to `parallel.max` in flight, with scopes disjoint from units in flight; with `ci.wait`, the base pushed and its CI waited for first.
+11. Approved, unblocked units → build, on one line; up to `parallel.max` in flight, with scopes disjoint from units in flight; with `ci.wait`, the base pushed first and `ci wait` run beside them.
 12. Builders running → wait.
 13. Intent merged, not released → its release steps: a hold, the deploy check, a fix unit, the owner's release ([Deployment and operation](operations.md#details)). 4–12 serve the next intent meanwhile. All released → the owner clears the lead's session first ([Resume](resume.md#between-intents)).
 
