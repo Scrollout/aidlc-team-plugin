@@ -32,6 +32,7 @@ const BROKEN = {
     architecture: { graph: 'node -e "console.log(\'src -> lib\\nlib -> src\')"', acyclic: true } } }),
   'GATE-NAME': () => setup({ profile: { ...PROFILE, names: [{ id: 'export', files: ['src/**'], find: 'export const (\\w+)', pattern: '[a-z]+Total', why: 'docs/decisions/names.md' }] } }),
   'GATE-DEPENDENCY': () => setup({ profile: { ...PROFILE, deps: { manifests: ['package.json'], check: [FAIL] } } }),
+  'GATE-IDENTITY': () => setup({ files: { ...CODE, ...TEST, 'src/db.mjs': "export const url = 'postgres://app:s3cretpw@db:5432/app';\n" } }),
   'ARCH-CHECK': () => setup({ profile: { ...PROFILE, architecture: { checks: [FAIL] } } }),
   'GATE-SHARED': () => setup({ unit: { scope: ['src/**', 'tests/**', 'docs/**'] }, files: { ...CODE, ...TEST, 'docs/log.md': 'edited by a builder\n' } }),
   'GATE-CONFLICT': () => setup({ unit: { scope: ['src/**', 'tests/**', 'README.md'], twoWay: 'a readme line' }, files: { ...CODE, ...TEST, 'README.md': 'unit\n' }, beforeReview: (d) => commit(d, 'base moves', { 'README.md': 'base\n' }) }),
@@ -63,4 +64,9 @@ test('U96/AC-1 a rule without find checks the path of each file the unit adds', 
   const r = merge(setup({ profile: { ...PROFILE, names: [rule] }, files: { ...CODE, ...TEST, 'src/Bad_Name.mjs': 'export const x = 1;\n' } }));
   assert.match(r.out, /GATE-NAME src\/Bad_Name\.mjs does not match the source rule src\/\[a-z\]\+\\\.mjs \(docs\/decisions\/names\.md\)/);
   assert.doesNotMatch(r.out, /GATE-NAME src\/add\.mjs/, 'add.mjs matches');
+});
+
+test('U108/AC-1 GATE-IDENTITY skips the test paths: a throwaway password belongs in a fixture', () => {
+  const r = merge(setup({ files: { ...CODE, ...TEST, 'tests/db.fixture.mjs': "export const url = 'postgres://app:s3cretpw@db:5432/app';\n" } }));
+  assert.ok(!codes(r).includes('GATE-IDENTITY'), r.out);
 });

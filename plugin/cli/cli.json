@@ -490,6 +490,7 @@
     "guardAlias": "a git alias set on the command line",
     "guardHook": "running a hook by hand",
     "scopeState": "{{path}} is the CLI's state",
+    "gateIdentity": "{{path}}:{{line}} adds a static credential between components (trust auth, a password in a URL or a client secret)",
     "gateSecret": "{{path}}:{{line}} adds what looks like a secret",
     "gateNamePath": "{{path}} does not match the {{rule}} rule {{pattern}} ({{why}})",
     "gateName": "{{path}}:{{line}} names {{name}}, which does not match the {{rule}} rule {{pattern}} ({{why}})",
@@ -1131,6 +1132,9 @@
       "GATE-SECRET": {
         "fix": "remove the secret from the unit branch; read it from the environment"
       },
+      "GATE-IDENTITY": {
+        "fix": "use the component's workload identity: mTLS or a token bound to it, a database role reached with short-lived certificates or tokens, federated credentials outside the cluster; a throwaway password belongs in a test path"
+      },
       "GATE-NAME": {
         "fix": "rename it to match the rule's pattern; if the rule is wrong, the owner changes its decision and the profile first"
       }
@@ -1257,6 +1261,12 @@
     "cli": [
       "aidlc",
       "aidlc.mjs"
+    ],
+    "identity": [
+      "(?:^|\\s)host(?:ssl|nossl)?\\s+\\S+\\s+\\S+\\s+\\S+\\s+trust\\b",
+      "POSTGRES_HOST_AUTH_METHOD\\W{0,3}trust",
+      "\\b[a-z][a-z0-9+.-]*://[^\\s:/@'\"]+:[^\\s@/'\"$]{3,}@",
+      "\\b(?:client_?secret|AZURE_CLIENT_SECRET)\\W{0,3}[:=]\\s*['\"]?[^\\s'\"$<{]{6,}"
     ],
     "secrets": [
       "AKIA[0-9A-Z]{16}",

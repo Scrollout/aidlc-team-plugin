@@ -224,6 +224,8 @@ function runGate(cwd, st, unit) {
     if (l.startsWith('+++ ')) file = l.slice(6);
     else if (l.startsWith('@@')) line = Number(l.match(/\+(\d+)/)?.[1]);
     else if (l.startsWith('+') && file && secretIn(l.slice(1), profile)) add('GATE-SECRET', 'gateSecret', { path: file, line }, file);
+    // A static credential between components, outside the tests: identities, not secrets (docs/design/workload-identity.md).
+    else if (l.startsWith('+') && file && codeChanges([file], p.levels, bundleRel).length && config.hooks.identity.some((x) => new RegExp(x, 'i').test(l.slice(1)))) add('GATE-IDENTITY', 'gateIdentity', { path: file, line }, file);
     // A name the line adds where a naming rule looks, which its pattern does not match (docs/design/names.md).
     if (l.startsWith('+') && !l.startsWith('+++ ') && file) for (const r of names.filter((x) => x.find && list(x.files).some((g) => matches(file, g)))) {
       for (const m of l.slice(1).matchAll(new RegExp(r.find, 'g'))) {
