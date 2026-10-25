@@ -357,3 +357,13 @@ test('U112/AC-1 check warns PLAN-CARD on an unapproved unit whose card would pas
   assert.deepEqual(warned(big), [], 'an approved unit: card itself says so');
   assert.deepEqual(warned(repo({ acs: acs(3) })), [], 'a card under the cap');
 });
+
+test('U116/AC-1 the card cap leaves out the sections the profile writes; card and PLAN-CARD count alike', () => {
+  const names = [{ id: 'long', files: ['src/**'], pattern: 'x'.repeat(5000), why: 'docs/decisions/0001-naming.md' }];
+  const dir = makeRepo({ 'docs/intents/I-1-pricing.md': intentDoc('I-1'), [U1]: doc() }, { ...PROFILE, names });
+  assert.doesNotMatch(run(dir, ['check']).out, /PLAN-CARD/);
+  approve(dir, 'I-1', 'U-1');
+  const r = run(dir, ['card', 'U-1']);
+  assert.equal(r.code, 0, r.out);
+  assert.ok(r.out.length > 6000 && r.out.includes('x'.repeat(5000)), 'the builder still gets the whole section');
+});
