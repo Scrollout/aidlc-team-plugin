@@ -81,6 +81,9 @@ Tests are the Source row's second output, derived from the ACs written in Units,
 - A fix unit always has one AC: a regression test that fails before the fix.
 - Quick lane adds no tests and runs no level: the gate runs only the commands its ACs name ([Merge mechanics](gate.md#details)).
 
+# Slices
+An intent lists its vertical slices under `# Slices`, one line each, naming the units that build it once they are cut (`- Owners and the gate: U-31, U-32`). While a line names no unit the intent is not done, even when every unit it has is merged: `next` asks to cut that slice's units. So a slice planned "for later" cannot be forgotten when the first slices ship nothing and the intent counts as released (first migration: I-3 closed after 2 of its 4 slices). An intent without the section counts its units only.
+
 # Vertical and horizontal specs
 - `capabilities/`: one doc per user journey (vertical); written in Units.
 - `architecture/`: one doc per layer or module (horizontal); updated in Logical.

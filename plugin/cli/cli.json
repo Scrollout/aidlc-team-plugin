@@ -312,6 +312,7 @@
     "nextFixRound": "fix round for {{unit}}: builder (card: aidlc card {{unit}})",
     "nextReview": "review {{unit}}, focus {{focus}}: reviewer on {{model}} (card: aidlc card {{unit}})",
     "nextRestart": "restart the builder of {{unit}} from branch {{branch}} (card: aidlc card {{unit}})",
+    "nextCutSlices": "cut the units of {{intent}}'s slices that name none yet, then name them on each line: {{slices}}",
     "nextBuild": "build {{units}} (cards: {{cards}}){{#each wait}}; meanwhile run aidlc ci wait in the background{{/each}}",
     "nextWait": "wait for the builders and reviewers of {{units}}",
     "nextWaitResearch": "wait for the researcher of {{doc}}",
@@ -724,6 +725,7 @@
     "decisionType": "Decision",
     "interfaces": "Interfaces",
     "outOfScope": "Out of scope",
+    "slices": "Slices",
     "runbookType": "Runbook",
     "codes": {
       "PLAN-DAG": {

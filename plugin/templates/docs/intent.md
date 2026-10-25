@@ -11,6 +11,9 @@ requirements: [R-<n>]
 # Why
 <the reason>
 
+# Slices
+- <a vertical slice, end to end>: <its units, U-<n>, once cut>
+
 # Success measures
 - <measurable outcome>
 

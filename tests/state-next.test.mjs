@@ -410,3 +410,16 @@ test('U109/AC-2 a builder launched after the gate refused the unit is a fix roun
   heartbeat(dir, 'U-1');
   assert.match(run(dir, ["next"]).out, /^wait for the builders and reviewers of U-1/);
 });
+
+test('U117/AC-1 U117/AC-2 an intent with a slice line naming no unit is not done when its units merge; next asks to cut it', () => {
+  const sliced = intentDoc('I-1') + '\n# Slices\n- Prices in EUR: U-1\n- Prices in USD, later\n';
+  const dir = makeRepo({ 'docs/intents/I-1-pricing.md': sliced, [U(1)]: unitDoc({ scope: ['src/**'] }) });
+  approve(dir, 'I-1', 'U-1');
+  branch(dir, 'U-1');
+  merge(dir, 'U-1');
+  assert.match(run(dir, ['status']).out, /^I-1 approved/m, 'not merged, not released');
+  assert.match(run(dir, ['next']).out, /^cut the units of I-1's slices that name none yet, then name them on each line: Prices in USD, later$/m);
+  write(dir, { 'docs/intents/I-1-pricing.md': sliced.replace('USD, later', 'USD: U-2') });
+  assert.doesNotMatch(run(dir, ['status']).out, /^I-1 approved/m, 'every slice names its units');
+  assert.match(readFileSync(join(import.meta.dirname, '../plugin/templates/docs/intent.md'), 'utf8'), /^# Slices\n- <a vertical slice, end to end>: /m);
+});

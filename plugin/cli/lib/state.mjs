@@ -7,7 +7,7 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { bundleOf, config, QUICK, VERDICT, done, git, gitLines, isMap, list, readJson, readStdin, tryGit, UsageError, relPath } from './config.mjs';
 import { finding as codeFinding, msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
-import { linksOf, parseDoc, sizeCap } from './okf.mjs';
+import { linksOf, parseDoc, sectionOf, sizeCap } from './okf.mjs';
 import { boardBehind } from './board.mjs';
 import { acsOf, computeLane, inside, lintPlan, overlaps, readPlan, reqId as reqIdOf, productGlobs, testsOnly, withIntents } from './grid.mjs';
 
@@ -317,7 +317,9 @@ export function readState(cwd, { now = Date.now() } = {}) {
 
   const intents = plan.intents.sort(byId).map((i) => {
     const own = units.filter((u) => u.fm.intent === i.id);
-    const complete = own.length > 0 && own.every((u) => u.state === 'merged');
+    // A slice line naming no unit is a slice still to cut: the intent is not done (docs/design/grid.md#slices).
+    const uncut = sectionOf(i.doc, config.grid.slices).map(([, t]) => t.trim()).filter((t) => /^([-*]|\d+\.)\s/.test(t) && !/\bU-\d+\b/.test(t));
+    const complete = own.length > 0 && own.every((u) => u.state === 'merged') && !uncut.length;
     // Released: the owner tagged it, or its recorded release (and smoke) passed (docs/design/operations.md).
     const deploy = readJson(runtimeFile(cwd, 'deploys', i.id)) ?? {};
     const smoked = !profile.deploy?.smoke || (deploy.smoke?.ok && deploy.smoke.at >= deploy.release.at);
@@ -326,7 +328,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
     const nothing = complete && (testsOnly(own, profile) || ((profile.modules ?? []).length > 0 && !changed().some((f) => productGlobs(profile).some((g) => inside('/' + f, g)))));
     const released = complete && (nothing || (profile.deploy || profile.release) && Boolean(deploy.release?.ok && smoked)
       || own.every((u) => (tryGit(cwd, 'tag', '--contains', merged.get(u.id)) ?? '') !== ''));
-    return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own, deploy };
+    return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own, deploy, uncut };
   });
   const requirements = plan.requirements.map((r) => ({ ...r, state: approval(r.doc) }));
   return { cwd, profile, base, bundle, intents, units, requirements, decisions: bundleHeld(bundle), answered, auto: delegated(cwd), mergeUnit: mergeInProgress(cwd, units), ci: ciOf(cwd, profile, base), red: redOf(cwd, base) };
@@ -540,6 +542,9 @@ function pickAction(st) {
   }
   const work = unitWork(st, scope);
   if (work) return work;
+  if (intent?.state === 'approved' && intent.uncut.length && intent.units.length && intent.units.every((u) => u.state === 'merged')) {
+    return action('act', 'nextCutSlices', { intent: intent.id, slices: intent.uncut.map((t) => t.replace(/^([-*]|\d+\.)\s+/, '')).join('; ') });
+  }
   if (ops) return ops;
   // A clear newer than the last merge on the base already gave the lead a fresh session (docs/design/resume.md).
   const lastMerge = Number(tryGit(st.cwd, 'log', '-1', '--merges', '--format=%ct', st.base) || 0) * 1000;
