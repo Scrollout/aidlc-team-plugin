@@ -5,6 +5,10 @@ title: aidlc-team-plugin docs history
 
 # Bundle history
 
+## 2026-10-26
+
+- **Fix** M12 U122: `next` asks to name the merged units of a slice built before its line named them, not only to cut new ones ([Grid](design/grid.md#slices)). Release 0.115.1.
+
 ## 2026-10-25
 
 - **Update** M12 U121: each merged slice of an intent ships to dev with the deploy check, the owner's release and smoke, while the next slices build ([Deployment and operation](design/operations.md)). Release 0.115.0.

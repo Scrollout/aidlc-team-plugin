@@ -82,7 +82,7 @@ Tests are the Source row's second output, derived from the ACs written in Units,
 - Quick lane adds no tests and runs no level: the gate runs only the commands its ACs name ([Merge mechanics](gate.md#details)).
 
 # Slices
-An intent lists its vertical slices under `# Slices`, one line each, naming the units that build it once they are cut (`- Owners and the gate: U-31, U-32`). While a line names no unit the intent is not done, even when every unit it has is merged: `next` asks to cut that slice's units. So a slice planned "for later" cannot be forgotten when the first slices ship nothing and the intent counts as released (first migration: I-3 closed after 2 of its 4 slices). An intent without the section counts its units only.
+An intent lists its vertical slices under `# Slices`, one line each, naming the units that build it once they are cut (`- Owners and the gate: U-31, U-32`). While a line names no unit the intent is not done, even when every unit it has is merged: `next` asks to cut that slice's units, or, for a slice built before the line named its units, to name the merged units that built it (first migration: I-1 came back ahead of I-5). So a slice planned "for later" cannot be forgotten when the first slices ship nothing and the intent counts as released (first migration: I-3 closed after 2 of its 4 slices). An intent without the section counts its units only.
 
 Each slice is vertical, checked by `PLAN-SLICE` before approval and at every `check` ([Plan lint](plan-lint.md)), for an intent whose live units reach the product:
 - An intent with more live units than `plan.sliceUnits` has the section (a smaller one is one slice), and with the section every live unit is named on a slice line.
