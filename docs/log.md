@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-25
 
+- **Update** M12 U111: each finding line names its run-time level, `error` or `warning` ([CLI](design/cli.md)). Release 0.109.0.
 - **Fix** M12 U110: `check` warns `HOUSE-SIZE` on an unapproved doc its approval stamps would take over its cap, so `approve` is not refused a round later ([Approvals](design/approvals.md)). Release 0.108.2.
 - **Fix** M12 U109: gate level runs bypass test caches, a fix round after a refusal reads as building, and the research brief states the project's cap ([Gate](design/gate.md)). Release 0.108.1.
 - **Creation** M12 U108: [workload identity](design/workload-identity.md): constitution rule 10 and `GATE-IDENTITY` for static credentials between components. Release 0.108.0.

@@ -80,16 +80,16 @@ test('U2/AC-2 house rules follow profile.docs.rules; a rule set to error exits 1
   assert.match(r.stdout, /PROFILE-RULE docs\.rules\.HOUSE-LINK: level must be/);
 });
 
-test('U75/AC-3 check warns PROFILE-KEY for a top-level or security key nothing reads, in the project and personal layers', () => {
+test('U75/AC-3 U111/AC-1 check warns PROFILE-KEY for a top-level or security key nothing reads, in the project and personal layers', () => {
   const docs = { 'kb/a.md': '---\ntype: Note\ntitle: A\ndescription: A.\ngenerated: { by: x/1, at: 2026-01-01T00:00:00Z }\n---\n' };
   const dir = bundle({ ...docs, '.aidlc/profile.json': JSON.stringify({ docs: { bundle: 'kb' }, security: { patterns: ['x'], content: ['y'] }, colour: 'red' }), '.aidlc/local/profile.json': JSON.stringify({ run: { mode: 'attended' }, tempo: 1 }) });
   const r = run(dir, 'check');
   assert.equal(r.status, 0, 'a warning');
   const lines = r.stdout.split('\n').filter((l) => l.includes('PROFILE-KEY'));
   assert.deepEqual(lines, [
-    '.aidlc/profile.json:1 PROFILE-KEY colour is read by nothing in the plugin → remove it, or use the key the profile doc names for what you meant',
-    '.aidlc/profile.json:1 PROFILE-KEY security.patterns is read by nothing in the plugin → remove it, or use the key the profile doc names for what you meant',
-    '.aidlc/local/profile.json:1 PROFILE-KEY tempo is read by nothing in the plugin → remove it, or use the key the profile doc names for what you meant',
+    '.aidlc/profile.json:1 PROFILE-KEY colour is read by nothing in the plugin → remove it, or use the key the profile doc names for what you meant (warning)',
+    '.aidlc/profile.json:1 PROFILE-KEY security.patterns is read by nothing in the plugin → remove it, or use the key the profile doc names for what you meant (warning)',
+    '.aidlc/local/profile.json:1 PROFILE-KEY tempo is read by nothing in the plugin → remove it, or use the key the profile doc names for what you meant (warning)',
   ]);
 });
 
@@ -156,10 +156,12 @@ test('U105/AC-1 a profile with modules fails without data ownership (a warning o
   const modules = [{ id: 'core', paths: ['src/**'] }];
   const bare = check({ modules });
   assert.equal(bare.status, 1);
-  assert.match(bare.stdout, /PROFILE-ARCH the profile has modules but no data ownership/);
+  assert.match(bare.stdout, /PROFILE-ARCH the profile has modules but no data ownership.* \(error\)$/m);
   assert.match(bare.stdout, /PROFILE-ARCH the profile has modules but architecture\.acyclic is off/);
   assert.match(bare.stdout, /PROFILE-ARCH modules without an api surface: core/);
-  assert.equal(check({ modules, adopted: 'abc' }).status, 0, 'adopted: a warning until the migration sets owners');
+  const adopted = check({ modules, adopted: 'abc' });
+  assert.equal(adopted.status, 0, 'adopted: a warning until the migration sets owners');
+  assert.match(adopted.stdout, /PROFILE-ARCH the profile has modules but no data ownership.* \(warning\)$/m, 'U111/AC-1 the line names the level that counts');
   const full = check({ modules: [{ ...modules[0], api: ['src/api/**'] }], architecture: { data: { prefix: 'data/' }, acyclic: true } });
   assert.equal(full.status, 0);
   assert.doesNotMatch(full.stdout, /PROFILE-ARCH/);

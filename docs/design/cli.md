@@ -40,7 +40,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 
 # Output
 - Paths in output, cards and runtime files are relative and use `/` on every platform; the CLI resolves its working folder to its real long path first (Windows short names, symlinks), and reads docs with CRLF line ends as LF.
-- Findings: `path:line CODE message`, one per line. Codes are stable (`OKF-TYPE`, `PLAN-DAG`, `SCOPE-OUT`, …).
+- Findings: `path:line CODE message → fix (level)`, one per line, with the level as run (`docs.rules` and adoption change it). Codes are stable.
 - Advice: one line, imperative, naming the command or agent to run.
 - No banners, no colour unless a TTY, no summaries longer than the findings.
 

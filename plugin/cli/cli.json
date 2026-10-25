@@ -222,7 +222,7 @@
     "unclosedEach": "{{file}}: each block {{name}} is not closed",
     "strayEnd": "{{file}}: end of each block without a start",
     "templateNotFound": "template not found: {{name}}",
-    "finding": "{{path}}:{{line}} {{code}} {{message}} → {{fix}}\n",
+    "finding": "{{path}}:{{line}} {{code}} {{message}} → {{fix}} ({{level}})\n",
     "summary": "## aidlc check\n\n{{verdict}}\n\n{{#each rows}}{{this}}{{/each}}{{more}}\n### Plan\n\n{{#each plan}}{{this}}{{/each}}",
     "summaryPassed": "✅ Passed: no findings.",
     "summaryFailed": "❌ {{errors}} errors, {{warnings}} warnings.",
