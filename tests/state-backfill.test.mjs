@@ -84,3 +84,10 @@ test('U98/AC-1 a report of a unit that changes a manifest lists each version wit
   git(dir, 'switch', '-q', 'main');
   assert.match(run(dir, ['card', 'U-1']).out, /## Dependencies\nYour scope pins dependencies \(\*\*\/package\.json\)\. Your training data is out of date: look up each version .+ The merge gate runs: npm audit\.\n/);
 });
+
+test('U99/AC-1 a unit whose AC is a profile setting may mutate the profile in its own diff', () => {
+  const dir = backfill({ scope: ['tests/**', '.aidlc/profile.json'], extra: { '.aidlc/profile.json': JSON.stringify({ ...PROFILE, names: [{ id: 'src', files: ['src/**'], pattern: 'src/.+' }] }) + '\n' } });
+  const m = { ac: 'U-1/AC-1', path: '.aidlc/profile.json', find: '"names"', replace: '"unnamed"', breaks: 'the naming rule' };
+  const r = report(dir, [m]);
+  assert.equal(r.code, 0, r.err);
+});

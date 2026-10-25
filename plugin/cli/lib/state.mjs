@@ -109,6 +109,7 @@ export const mutationOf = (mutations, tag) => (Array.isArray(mutations) ? mutati
 // What a back-fill unit's mutations lack: one per AC, of a file outside the tests and the diff, whose `find`
 // occurs exactly once on the unit branch. A quick-lane unit needs none; one that changes code only when it reports
 // some, which may then edit its own diff (docs/design/backfill.md).
+const profilePath = config.layers.find((l) => l.from === 'project').path; // a profile AC is proved by mutating it, not reverting it
 function mutationProblems(cwd, profile, unit, mutations) {
   const u = readPlan(bundleOf(cwd, profile)).units.find((x) => x.id === unit);
   if (!u || computeLane(u.scope, profile).lane === QUICK) return [];
@@ -122,7 +123,7 @@ function mutationProblems(cwd, profile, unit, mutations) {
     if (!m) return [msg('mutationMissing', { tag })];
     const text = m.path && tryGit(cwd, 'show', `${branchOf(unit)}:${m.path}`);
     const count = text && m.find ? text.split(String(m.find)).length - 1 : 0;
-    if (!(count === 1 && typeof m.replace === 'string' && !isTestPath(m.path, levels) && (code || !paths.includes(m.path)))) return [msg('mutationBad', { tag, path: m.path ?? '', count })];
+    if (!(count === 1 && typeof m.replace === 'string' && !isTestPath(m.path, levels) && (code || m.path === profilePath || !paths.includes(m.path)))) return [msg('mutationBad', { tag, path: m.path ?? '', count })];
     return String(m.breaks ?? '').trim() ? [] : [msg('mutationBreaks', { tag })]; // what it breaks, for the reviewer to judge (U61)
   }), { wired: code });
 }
