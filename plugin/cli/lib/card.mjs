@@ -123,14 +123,16 @@ function renderCard(cwd, unitId, { preview = false } = {}) {
   const card = render(template, { ...data, hash }, file);
   // Findings and mutations come from review rounds: outside the cap, so a fix round never needs a re-approval; the
   // profile's sections grow with the project, not the unit, so they are outside it too (docs/design/unit-card.md).
-  const size = render(template, { ...data, hash, fixes: '', mutations: '', data: [], names: [], deps: [], platform: [] }, file).length;
-  if (preview) return atBase ? { size, max: C.max, rules: data.rules.reduce((n, r) => n + r.text.length, 0) } : null;
-  if (size > C.max) return done(msg('cardTooLong', { unit: unitId, size, max: C.max, rules: data.rules.reduce((n, r) => n + r.text.length, 0) }), config.exit.findings);
+  const lines = (t) => t.replace(/\n$/, '').split('\n').length;
+  const size = lines(render(template, { ...data, hash, fixes: '', mutations: '', data: [], names: [], deps: [], platform: [] }, file));
+  const rules = data.rules.reduce((n, r) => n + lines(r.text), 0);
+  if (preview) return atBase ? { size, max: C.max, rules } : null;
+  if (size > C.max) return done(msg('cardTooLong', { unit: unitId, size, max: C.max, rules }), config.exit.findings);
   writeJson(runtimeFile(cwd, 'cards', unitId), { unit: unitId, hash, base: baseSha, lane: lane.lane, model, scope: atBase.scope });
   return done(card);
 }
 
-// PLAN-CARD: the card size of each unit in `ids` over the cap, from the doc on disk; none without a base commit.
+// PLAN-CARD: the card size in lines of each unit in `ids` over the cap, from the doc on disk; none without a base commit.
 export function cardsOver(cwd, ids) {
   const { profile } = loadProfile(cwd);
   if (!tryGit(cwd, 'rev-parse', '-q', '--verify', `${baseOf(profile)}^{commit}`)) return [];

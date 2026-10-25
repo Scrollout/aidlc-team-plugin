@@ -38,12 +38,12 @@ test('U4/AC-4 card renders from the base commit with the unit fields', () => {
   assert.match(r.out, /^- api: make test$/m);
   assert.match(r.out, /^- Currency conversion\.$/m);
   assert.doesNotMatch(r.out, /As a buyer/);
-  assert.ok(r.out.length <= 6000);
+  assert.ok(r.out.split('\n').length <= 100);
   const record = JSON.parse(read(dir, '.git/aidlc/cards/U-1.json'));
   assert.deepEqual(record, { unit: 'U-1', hash: hashOf(r.out), base, lane: 'standard', model: 'sonnet', scope: ['src/pricing/**'] });
 });
 
-test('U4/AC-4 card refuses an unapproved or stale unit, and one over 6,000 chars', () => {
+test('U4/AC-4 U119/AC-1 card refuses an unapproved or stale unit, and one over 100 lines', () => {
   const dir = repo();
   let r = run(dir, ['card', 'U-1']);
   assert.equal(r.code, 2);
@@ -63,7 +63,7 @@ test('U4/AC-4 card refuses an unapproved or stale unit, and one over 6,000 chars
   approve(big, 'U-1');
   r = run(big, ['card', 'U-1']);
   assert.equal(r.code, 1);
-  assert.match(r.out, /over 6000/);
+  assert.match(r.out, /^card for U-1 is \d+ lines, over 100,/);
 });
 
 test('U77/AC-1 the findings of a fix round do not count toward the card cap', () => {
@@ -71,14 +71,15 @@ test('U77/AC-1 the findings of a fix round do not count toward the card cap', ()
   approve(dir, 'I-1', 'U-1');
   const fits = run(dir, ['card', 'U-1']);
   assert.equal(fits.code, 0, fits.out);
-  assert.ok(fits.out.length > 5000 && fits.out.length <= 6000, String(fits.out.length));
+  const n = fits.out.replace(/\n$/, '').split('\n').length;
+  assert.ok(n > 80 && n <= 100, String(n));
   git(dir, 'switch', '-q', '-c', 'unit/U-1');
   commit(dir, 'work', { 'src/pricing/a.txt': 'a\n' });
   git(dir, 'switch', '-q', 'main');
-  review(dir, 'U-1', 'fix', Array.from({ length: 10 }, (_, k) => ({ path: 'src/pricing/a.txt', line: k + 1, claim: 'c'.repeat(150), scenario: 's'.repeat(150), confidence: 'PLAUSIBLE' })));
+  review(dir, 'U-1', 'fix', Array.from({ length: 30 }, (_, k) => ({ path: 'src/pricing/a.txt', line: k + 1, claim: 'c'.repeat(150), scenario: 's'.repeat(150), confidence: 'PLAUSIBLE' })));
   const r = run(dir, ['card', 'U-1']);
   assert.equal(r.code, 0, r.out);
-  assert.ok(r.out.length > 6000, 'the findings are listed in full');
+  assert.ok(r.out.split('\n').length > 100, 'the findings are listed in full');
   assert.match(r.out, /src\/pricing\/a\.txt:10:/);
 });
 
@@ -324,11 +325,11 @@ test('U27/AC-1 U27/AC-3 the card carries the project rules at the base, but a fo
   assert.doesNotMatch(card, /idempotency|notes\.txt/, 'a focus rule stays the reviewer\'s; only .md files');
   assert.equal(before.replace(/^(Base|Card): .*$/gm, ''), run(plain, ['card', 'U-1']).out.replace(/^(Base|Card): .*$/gm, ''));
 
-  commit(dir, 'a long rule', { '.aidlc/rules/style.md': '# Style\n\n' + 'Keep it short. '.repeat(400) + '\n' });
+  commit(dir, 'a long rule', { '.aidlc/rules/style.md': '# Style\n\n' + 'Keep it short.\n'.repeat(120) });
   approve(dir, 'U-1');
   const long = run(dir, ['card', 'U-1']);
   assert.notEqual(long.code, 0);
-  assert.match(long.out, /^card for U-1 is \d+ chars, over 6000, \d{4} of them project rules: shorten the unit doc or the rules$/m);
+  assert.match(long.out, /^card for U-1 is \d+ lines, over 100, 122 of them project rules: shorten the unit doc or the rules$/m);
 });
 
 test('U29/AC-1 U29/AC-2 U29/AC-3 the card names requirements as their files do, keeps plain interface lines and names the proof levels', () => {
@@ -346,15 +347,15 @@ test('U29/AC-1 U29/AC-2 U29/AC-3 the card names requirements as their files do, 
   assert.doesNotMatch(card.out, /outside src\//);
 });
 
-test('U112/AC-1 check warns PLAN-CARD on an unapproved unit whose card would pass the cap, with the size card counts', () => {
+test('U112/AC-1 U119/AC-2 check warns PLAN-CARD on a unit not yet merged whose card would pass the cap, with the size card counts', () => {
   const acs = (n) => Array.from({ length: n }, (_, k) => `- AC-${k + 1} (unit): ${'x'.repeat(80)}.`);
   const big = repo({ acs: acs(80) });
   const warned = (dir) => run(dir, ['check']).out.split('\n').filter((l) => l.includes('PLAN-CARD'));
   const [line] = warned(big);
-  assert.match(line ?? '', /^docs\/units\/U-1-pricing\.md:1 PLAN-CARD the card for U-1 would be (\d+) chars, over 6000, \d+ of them project rules → .* \(warning\)$/);
+  assert.match(line ?? '', /^docs\/units\/U-1-pricing\.md:1 PLAN-CARD the card for U-1 would be (\d+) lines, over 100, \d+ of them project rules → .* \(warning\)$/);
   approve(big, 'I-1', 'U-1');
-  assert.match(run(big, ['card', 'U-1']).out, new RegExp(`card for U-1 is ${line.match(/would be (\d+)/)[1]} chars`), 'the same count as card');
-  assert.deepEqual(warned(big), [], 'an approved unit: card itself says so');
+  assert.match(run(big, ['card', 'U-1']).out, new RegExp(`card for U-1 is ${line.match(/would be (\d+)/)[1]} lines`), 'the same count as card');
+  assert.equal(warned(big).length, 1, 'an approved unit not yet merged is sized too');
   assert.deepEqual(warned(repo({ acs: acs(3) })), [], 'a card under the cap');
 });
 

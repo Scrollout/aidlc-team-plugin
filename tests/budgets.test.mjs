@@ -60,7 +60,7 @@ const CHECKS = {
     real: () => files('plugin/skills', /^SKILL\.md$/).concat(files('plugin/agents', /\.md$/)).map((f) => ({ name: f, text: read(f) })),
   },
   'Unit card': {
-    check: (items, limit) => sizes(items, limit, 'chars', (t) => t.length),
+    check: (items, limit) => sizes(items, limit, 'lines', (t) => t.replace(/\n$/, '').split('\n').length),
     real: () => files('plugin/cli', /^card.*\.md$/).map((f) => ({ name: f, text: read(f) })), // templates; rendered cards are capped at runtime
   },
   'CLI source (`plugin/cli/`)': {
@@ -121,7 +121,7 @@ const OVER = {
   'SessionStart status injection': (n) => [{ name: 'status', text: 'x'.repeat(n + 1) }],
   'Skill body / agent prompt': (n) => [{ name: 'SKILL.md', text: 'x'.repeat(n * 1024 + 1) }],
   'Skill and agent descriptions': (n) => [{ name: 'builder.md', text: `---\nname: b\ndescription: ${'x'.repeat(n + 1)}\n---\n` }],
-  'Unit card': (n) => [{ name: 'card', text: 'x'.repeat(n + 1) }],
+  'Unit card': (n) => [{ name: 'card', text: 'x\n'.repeat(n + 1) }],
   'CLI source (`plugin/cli/`)': (n) => [{ name: 'a.mjs', text: 'x\n'.repeat(n) }, { name: 'b.mjs', text: 'y\n' }],
   'Blocking hook run time': (n) => [{ name: 'guard', text: String(n + 1) }],
   'Hook timeout': (n) => [

@@ -63,7 +63,7 @@ sequenceDiagram
 | SessionStart status injection | 1,000 chars |
 | Skill body / agent prompt | 3 KB each |
 | Skill and agent descriptions | 300 chars each |
-| Unit card | 6,000 chars |
+| Unit card | 100 lines |
 | CLI source (`plugin/cli/`) | 4,000 lines |
 | Hook timeout | 10 s explicit, `onFailure: "block"` on blocking hooks |
 | Blocking hook run time | 500 ms beyond a bare `node` start timed beside it, median of 5 calls on a small project |

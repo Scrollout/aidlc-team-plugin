@@ -249,7 +249,7 @@
     "generatedMissing": "no generated:",
     "linkBroken": "link target {{target}} does not exist",
     "sizeOver": "{{size}} chars over the {{cap}} cap for {{type}}",
-    "planCard": "the card for {{unit}} would be {{size}} chars, over {{max}}, {{rules}} of them project rules",
+    "planCard": "the card for {{unit}} would be {{size}} lines, over {{max}}, {{rules}} of them project rules",
     "stampOver": "{{size}} chars with its approval stamps, over the {{cap}} cap for {{type}}: trim {{trim}} or more before approve",
     "ruleUnknown": "docs.rules.{{code}}: unknown code",
     "namesShape": "names rule {{id}} needs id, files and pattern",
@@ -355,7 +355,7 @@
     "statusMore": "  … {{count}} more\n",
     "statusNext": "next: {{line}}\n",
     "cardRefused": "{{unit}} is {{state}}: the owner approves it before a card is rendered\n",
-    "cardTooLong": "card for {{unit}} is {{size}} chars, over {{max}}, {{rules}} of them project rules: shorten the unit doc or the rules\n",
+    "cardTooLong": "card for {{unit}} is {{size}} lines, over {{max}}, {{rules}} of them project rules: shorten the unit doc or the rules\n",
     "noBase": "base branch {{base}} has no commits",
     "laneModel": "lane {{lane}}",
     "modelEscalated": "escalated: {{reason}}",
@@ -906,7 +906,7 @@
     "researchTemplate": "research.md",
     "stack": ["go.mod", "package.json", "pyproject.toml", "requirements.txt", "Cargo.toml", "pom.xml", "build.gradle", "Gemfile", "composer.json", "Makefile", "justfile", "Dockerfile"],
     "quickTemplate": "card-quick.md",
-    "max": 6000,
+    "max": 100,
     "hashLength": 16
   },
   "replaceKeys": [

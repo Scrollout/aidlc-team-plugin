@@ -439,8 +439,8 @@ export const commands = {
     const dirs = (paths.length ? paths : [bundle]).filter((x) => existsSync(x) && statSync(x).isDirectory());
     const mds = dirs.flatMap((d) => readdirSync(d, { recursive: true }).map((f) => join(d, f)).filter((f) => f.endsWith('.md') && f.startsWith(bundle + sep)));
     findings.push(...state.stampFindings(cwd, profile, [...new Set([...mds, ...docs])]));
-    // A card renders only from an approved doc: size the unapproved ones here, before the owner's round.
-    const live = readPlan(bundle).units.filter((u) => u.fm.status !== GRID.dropped && !skip.includes(u.id) && state.approval(u.doc) !== 'approved' && [...mds, ...docs].includes(u.file));
+    // Size every unit not yet merged: before the owner's round, and after a rule or template change grew an approved card.
+    const live = readPlan(bundle).units.filter((u) => u.fm.status !== GRID.dropped && !skip.includes(u.id) && [...mds, ...docs].includes(u.file));
     const { cardsOver } = await import('./card.mjs');
     for (const c of cardsOver(cwd, live.map((u) => u.id))) findings.push(finding('PLAN-CARD', live.find((u) => u.id === c.id).file, 1, 'planCard', { unit: c.id, ...c }, cwd));
     return done('', findings.some((f) => f.level === 'error') ? config.exit.findings : config.exit.ok, findings); // a warning does not fail
