@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-25
 
+- **Fix** M11 U100: a research hold on a decision gets its brief and holds `next` ([State](design/state.md)). Release 0.103.2.
 - **Fix** M11 U99: a unit whose AC is a profile setting may prove it by a mutation of `.aidlc/profile.json` ([Back-fill](design/backfill.md)). Release 0.103.1.
 - **Creation** M11 U98: [current dependencies](design/dependencies.md): versions from the registry with their source, scanners at merge and daily in CI, constitution rule 8. Release 0.103.0.
 - **Update** M11 U97: `upgrade` lists the findings the new release adds, to plan before a merge ([Vendoring](design/vendoring.md)). Release 0.102.0.

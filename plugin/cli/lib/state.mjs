@@ -304,7 +304,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
     return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own, deploy };
   });
   const requirements = plan.requirements.map((r) => ({ ...r, state: approval(r.doc) }));
-  return { cwd, profile, base, bundle, intents, units, requirements, answered, auto: delegated(cwd), mergeUnit: mergeInProgress(cwd, units), ci: ciOf(cwd, profile, base) };
+  return { cwd, profile, base, bundle, intents, units, requirements, decisions: bundleDecisions(bundle), answered, auto: delegated(cwd), mergeUnit: mergeInProgress(cwd, units), ci: ciOf(cwd, profile, base) };
 }
 
 // With ci.wait: the base head, its remote, the last CI poll, and whether the base is red: the poll found it red and
@@ -461,6 +461,13 @@ export function nextAction(st) {
 
 // A question the lead held for research (decision 0010) and the questions the bundle's research docs answer.
 export const researchOf = (doc) => (typeof doc.fm.hold === 'string' && doc.fm.hold.startsWith(S.researchHold) ? doc.fm.hold.slice(S.researchHold.length).trim() : null);
+// The decisions, by number as the owner types them: an architecture choice is a usual research question (second project).
+const bundleDecisions = (bundle) => (existsSync(bundle) ? readdirSync(bundle, { recursive: true }).map(String) : [])
+  .map((f) => ({ f, n: basename(f).match(/^(\d+)-.*\.md$/)?.[1] })).filter((x) => x.n)
+  .map(({ f, n }) => ({ id: n, file: join(bundle, f), fm: parseDoc(readFileSync(join(bundle, f), 'utf8')).fm ?? {} }))
+  .filter((d) => d.fm.type === config.grid.decisionType);
+// The doc a research question is held on: a requirement, intent, unit or decision, named as `hold` takes it.
+export const heldDoc = (st, name) => { const file = findDoc(st.cwd, st.bundle, String(name)); return [...st.requirements, ...st.intents, ...st.units, ...st.decisions].find((d) => d.file === file); };
 function researched(bundle) {
   const dir = join(bundle, config.grid.research);
   return new Set((existsSync(dir) ? readdirSync(dir) : []).filter((f) => f.endsWith(config.okf.ext)).map((f) => parseDoc(readFileSync(join(dir, f), 'utf8')).fm?.question));
@@ -476,7 +483,7 @@ function pickAction(st) {
     const red = st.ci.rec.runs.filter((r) => config.ci.red.includes(r.conclusion));
     return action('act', 'nextCiFix', { runs: red.map((r) => r.name).join(', '), logs: red.map((r) => render(config.ci.log, r, 'ci.log')).join('; '), tests: firstTests(st.profile) });
   }
-  const asked = [...st.requirements, ...st.intents, ...st.units].find((d) => researchOf(d) && !st.answered.has(researchOf(d)));
+  const asked = [...st.requirements, ...st.intents, ...st.units, ...st.decisions].find((d) => researchOf(d) && !st.answered.has(researchOf(d)));
   if (asked) return heartbeatFresh(st.cwd, asked.id, Date.now(), S.researching) ? action('wait', 'nextWaitResearch', { doc: asked.id }) : action('act', 'nextResearch', { doc: asked.id, model: st.profile.models.research });
   const intent = st.intents.find((i) => !['released', 'merged'].includes(i.state)) ?? unreleased;
   const scope = st.units.filter((u) => !u.fm.intent || u.fm.intent === intent?.id);

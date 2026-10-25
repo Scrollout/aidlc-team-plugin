@@ -104,3 +104,18 @@ test('U27/AC-2 the research brief carries the project rules', () => {
   const brief = run(dir, ['research', 'U-1']).out;
   assert.match(brief, /^## Project rule: \.aidlc\/rules\/docs\.md\nEvery doc starts with a \*\*TL;DR:\*\* line\.$/m);
 });
+
+test('U100/AC-1 a decision held for research gets a brief by its number and holds next until a digest answers it', () => {
+  const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), [U1]: unitDoc({ scope: ['sdk/**'] }),
+    'docs/decisions/0003-mta-core.md': '---\ntype: Decision\ntitle: 0003 MTA core\ndescription: Which MTA core.\n---\n\n# Context\nx\n' });
+  approve(dir, 'I-1', 'U-1');
+  assert.equal(run(dir, ['hold', '0003', 'research:', 'which MTA core meets R-2?']).code, 0);
+  assert.match(run(dir, ['next']).out, /^research for 0003: researcher on \w+ \(brief: aidlc research 0003\)/);
+  const brief = run(dir, ['research', '0003']);
+  assert.equal(brief.code, 0, brief.err);
+  assert.match(brief.out, /^Question: which MTA core meets R-2\?$/m);
+  const out = brief.out.match(/writes it unchanged to (\S+)/)[1];
+  assert.equal(out, 'docs/research/0003-which-mta-core-meets-r-2.md');
+  write(dir, { [out]: `---\ntype: Research\ntitle: MTA core\ndescription: d.\nquestion: "which MTA core meets R-2?"\n---\n` });
+  assert.match(run(dir, ['next']).out, /^build U-1/, 'the digest ends the hold');
+});

@@ -7,7 +7,7 @@ import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { linksOf, MD_LINK, nameProblem, parseDoc, sectionOf } from './okf.mjs';
 import { computeLane, overlaps, readPlan, reqId, unitFields } from './grid.mjs';
-import { aidlcDir, approval, baseOf, branchOf, diffHash, hashDoc, readReview, readState, researchOf, roundsOf, runtimeFile, sha256, worktrees, writeJson } from './state.mjs';
+import { aidlcDir, approval, baseOf, branchOf, diffHash, hashDoc, readReview, readState, heldDoc, researchOf, roundsOf, runtimeFile, sha256, worktrees, writeJson } from './state.mjs';
 
 const C = config.card;
 
@@ -130,7 +130,7 @@ function renderCard(cwd, unitId) {
 // The researcher's brief: the held question and the project's own context, never a plugin source list (decision 0010).
 function researchBrief(cwd, id) {
   const st = readState(cwd);
-  const doc = [...st.requirements, ...st.intents, ...st.units].find((d) => reqId(d.id) === reqId(String(id)));
+  const doc = id ? heldDoc(st, id) : null;
   const question = doc && researchOf(doc);
   if (!question) throw new UsageError(msg('researchNone', { doc: id ?? '' }));
   const file = templateFile(cwd, C.researchTemplate);
