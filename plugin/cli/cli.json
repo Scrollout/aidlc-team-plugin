@@ -249,6 +249,7 @@
     "generatedMissing": "no generated:",
     "linkBroken": "link target {{target}} does not exist",
     "sizeOver": "{{size}} chars over the {{cap}} cap for {{type}}",
+    "stampOver": "{{size}} chars with its approval stamps, over the {{cap}} cap for {{type}}: trim {{trim}} or more before approve",
     "ruleUnknown": "docs.rules.{{code}}: unknown code",
     "namesShape": "names rule {{id}} needs id, files and pattern",
     "archNoData": "the profile has modules but no data ownership (architecture.data): one slice could read another's data unseen",

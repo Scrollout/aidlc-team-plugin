@@ -413,13 +413,17 @@ export const commands = {
   async check(args, { cwd }) {
     const { profile } = loadProfile(cwd);
     const bundle = bundleOf(cwd, profile);
-    const skip = [...(await import('./state.mjs')).mergedUnits(cwd, profile.base).keys()]; // merged units are history
+    const state = await import('./state.mjs');
+    const skip = [...state.mergedUnits(cwd, profile.base).keys()]; // merged units are history
     const paths = args.filter((a) => !a.startsWith('--')).map((a) => resolve(cwd, a));
     const findings = [];
     for (const p of (paths.length ? paths : [bundle]).filter((x) => existsSync(x) && statSync(x).isDirectory())) findings.push(...lintPlan(p, profile, { base: cwd, skip }), ...noRun(cwd, p, profile, skip));
     const docs = paths.filter((p) => existsSync(p) && !statSync(p).isDirectory() && p.startsWith(bundle + sep));
     const wanted = new Set([...withIntents(bundle, docs)].map((f) => relPath(cwd, f)));
     if (docs.length) findings.push(...lintPlan(bundle, profile, { base: cwd, skip }).filter((f) => wanted.has(f.path)));
+    const dirs = (paths.length ? paths : [bundle]).filter((x) => existsSync(x) && statSync(x).isDirectory());
+    const mds = dirs.flatMap((d) => readdirSync(d, { recursive: true }).map((f) => join(d, f)).filter((f) => f.endsWith('.md') && f.startsWith(bundle + sep)));
+    findings.push(...state.stampFindings(cwd, profile, [...new Set([...mds, ...docs])]));
     return done('', findings.some((f) => f.level === 'error') ? config.exit.findings : config.exit.ok, findings); // a warning does not fail
   },
 };

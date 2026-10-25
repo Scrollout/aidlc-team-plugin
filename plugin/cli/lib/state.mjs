@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { bundleOf, config, QUICK, VERDICT, done, git, gitLines, isMap, list, readJson, readStdin, tryGit, UsageError, relPath } from './config.mjs';
-import { msg, render } from './template.mjs';
+import { finding as codeFinding, msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { linksOf, parseDoc, sizeCap } from './okf.mjs';
 import { boardBehind } from './board.mjs';
@@ -205,6 +205,27 @@ function stamp(text, by, at) {
   const draft = ['---', ...kept, `status: ${S.stable}`, 'verified:', ...all.map((e) => `  - ${flowMap(e)}`), '---', body].join('\n');
   const hash = hashDoc(parseDoc(draft));
   return draft.replace(/\nverified:\n/, `\nverified_hash: ${hash}\nverified:\n`);
+}
+
+// How far a stamped doc is over its cap, or null; HOUSE-SIZE off counts nothing (docs/design/approvals.md).
+function stampOver(stamped, doc, profile) {
+  const cap = sizeCap(String(doc.fm.type), profile.docs?.caps), size = [...stamped].length;
+  return profile.docs?.rules?.['HOUSE-SIZE'] !== 'off' && size > cap ? { size, cap, trim: size - cap, type: doc.fm.type } : null;
+}
+
+// HOUSE-SIZE for each draft or stale doc in `files` its next approval would take over its cap, so `check` warns before `approve` refuses.
+export function stampFindings(cwd, profile, files) {
+  const by = tryGit(cwd, 'config', 'user.email');
+  const out = [];
+  for (const file of by ? files : []) {
+    const text = readFileSync(file, 'utf8'), doc = parseDoc(text);
+    if (doc.error || !S.approvable.includes(String(doc.fm?.type)) || approval(doc) === 'approved') continue;
+    if ([...text].length > sizeCap(String(doc.fm.type), profile.docs?.caps)) continue; // the docs check reports it already
+    const over = stampOver(stamp(text, S.human + by, new Date().toISOString()), doc, profile);
+    const level = config.okf.levels.includes(profile.docs?.rules?.['HOUSE-SIZE']) ? profile.docs.rules['HOUSE-SIZE'] : config.okf.codes['HOUSE-SIZE'].level;
+    if (over) out.push(codeFinding(config.okf.codes, 'HOUSE-SIZE', relPath(cwd, file), 1, 'stampOver', over, level));
+  }
+  return out;
 }
 
 // ---- State ----
@@ -630,8 +651,8 @@ export const commands = {
       if (auto && cls === S.auto[0] && doc.fm.type === S.unitType && !acsKept(cwd, file, doc)) throw new UsageError(msg('notDelegatedAcs', { name }));
       // The stamps count toward the doc's cap: an approved doc must still pass the docs check (docs/design/approvals.md).
       const stamped = stamp(text, auto ? S.agent : S.human + by, at);
-      const cap = sizeCap(String(doc.fm.type), profile.docs?.caps);
-      if (profile.docs?.rules?.['HOUSE-SIZE'] !== 'off' && [...stamped].length > cap) throw new UsageError(msg('approveSize', { doc: relPath(cwd, file), size: [...stamped].length, cap, trim: [...stamped].length - cap }));
+      const over = stampOver(stamped, doc, profile);
+      if (over) throw new UsageError(msg('approveSize', { doc: relPath(cwd, file), ...over }));
       writeFileSync(file, stamped);
       out += msg('approved', { doc: relPath(cwd, file) });
     }

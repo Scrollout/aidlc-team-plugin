@@ -197,6 +197,23 @@ test('U92/AC-2 approve refuses a doc its stamps would take over the project\'s c
   assert.equal(run(dir, ['approve', 'U-1']).code, 0, 'a default cap counts for every type');
 });
 
+test('U110/AC-1 check warns HOUSE-SIZE on an unapproved doc its stamps would take over its cap, with the trim approve names', () => {
+  const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), [U(1)]: unitDoc({ scope: ['a/**'], extra: 'x'.repeat(200) }) }, { docs: { caps: { Unit: 0 } } });
+  const size = [...read(dir, U(1))].length;
+  write(dir, { '.aidlc/profile.json': JSON.stringify({ docs: { caps: { Unit: size + 10 } } }) });
+  const stamps = (r) => r.out.split('\n').filter((l) => /HOUSE-SIZE/.test(l) && /approval stamps/.test(l));
+  const r = run(dir, ['check']);
+  assert.equal(stamps(r).length, 1, r.out);
+  assert.match(stamps(r)[0], /^docs\/units\/U-1\S*\.md:1 /);
+  const trim = stamps(r)[0].match(/trim (\d+) or more/)[1];
+  assert.match(run(dir, ['approve', 'U-1']).err, new RegExp(`trim it by ${trim} or more`), 'check and approve count the same');
+  assert.equal(stamps(run(dir, ['check', U(1)])).length, 1, 'a file path checks that doc');
+  write(dir, { '.aidlc/profile.json': JSON.stringify({ docs: { caps: { Unit: size + 1000 } } }) });
+  assert.equal(run(dir, ['approve', 'U-1']).code, 0);
+  write(dir, { '.aidlc/profile.json': JSON.stringify({ docs: { caps: { Unit: size + 10 } } }) });
+  assert.equal(stamps(run(dir, ['check'])).length, 0, 'an approved doc needs no headroom');
+});
+
 test('U4/AC-3 approve writes the stamp; editing makes it stale; reformatting or a hold does not', () => {
   const dir = twoUnits();
   const before = read(dir, U(1));
