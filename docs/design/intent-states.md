@@ -40,5 +40,6 @@ stateDiagram-v2
 - **Check:** without `deploy.check` the release is offered at once. A check counts only for the base commit it ran on: a merged fix unit moves the base, and the check runs again.
 - **Release and smoke:** the owner types `release I-<n>`; the guard lets the lead's `aidlc release I-<n>` through once ([0012](../decisions/0012-typed-go.md)). It runs `deploy.run` and `release`, then `deploy.smoke`. The intent is released once the release passed and, with `deploy.smoke` set, the smoke after it.
 - **Smoke failed:** a ⛔ stop before any other work, held or not, until the owner types `rollback I-<n>`; then a fix unit from the smoke output, `aidlc fix … --after I-<n>`.
+- **Slice release:** an `approved` intent whose newest merged slice is not in its last passing release runs the release steps too, while its next slices build; it is `released` only by a release whose base holds every merge ([Deployment and operation](operations.md)).
 - **Held:** `hold I-<n>` parks every release step but a failed smoke, until `hold I-<n> off`.
 - The next intent's units are built while one waits on its release steps ([State](state.md#next)).

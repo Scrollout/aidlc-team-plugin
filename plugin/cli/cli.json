@@ -327,7 +327,7 @@
     "nextSmokeFix": "{{intent}} was rolled back: draft a fix from the smoke output in {{file}}: aidlc fix \"<what failed>\" --after {{intent}} --scope <code globs> --scope \"{{tests}}\"",
     "rollbackUsage": "usage: aidlc rollback <intent>, for a merged or released intent",
     "nextReleaseHeld": "{{intent}}'s release steps are held{{#each reason}}: {{this}}{{/each}}; when the owner says to resume: aidlc hold {{intent}} off",
-    "nextDeployCheck": "{{intent}} is merged: run its deploy check on the base: aidlc deploy check {{intent}}",
+    "nextDeployCheck": "{{intent}} has merged work to ship: run its deploy check on the base: aidlc deploy check {{intent}}",
     "nextDeployFailed": "{{intent}} deploy check failed on the base: {{command}} exited {{exit}}; draft a fix: aidlc fix \"<what failed>\" --after {{intent}} --scope <code globs> --scope \"{{tests}}\"",
     "deployUsage": "usage: aidlc deploy check <intent>, for a merged intent with deploy.check in the profile",
     "deployNotMerged": "{{intent}} is {{state}}: deploy steps run on a merged intent",

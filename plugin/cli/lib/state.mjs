@@ -326,9 +326,13 @@ export function readState(cwd, { now = Date.now() } = {}) {
     // Ships nothing: all tests, or, with modules, merges that changed no file of the product (docs/design/operations.md).
     const changed = () => own.flatMap((u) => gitLines(cwd, 'diff', '--name-only', `${merged.get(u.id)}^1`, merged.get(u.id)));
     const nothing = complete && (testsOnly(own, profile) || ((profile.modules ?? []).length > 0 && !changed().some((f) => productGlobs(profile).some((g) => inside('/' + f, g)))));
-    const released = complete && (nothing || (profile.deploy || profile.release) && Boolean(deploy.release?.ok && smoked)
+    // A slice ships when its units merge: due while a merged slice is not in the last passing release (U121).
+    const shipped = (ids) => deploy.release?.ok && smoked && ids.every((id) => tryGit(cwd, 'merge-base', '--is-ancestor', merged.get(id), deploy.release.base) !== null);
+    const slices = sectionOf(i.doc, config.grid.slices).filter(([, t]) => /^\s*([-*]|\d+\.)\s/.test(t)).map(([, t]) => t.match(/\bU-\d+\b/g) ?? []).filter((ids) => ids.length && ids.every((id) => merged.has(id)));
+    const sliceDue = !complete && Boolean(profile.deploy || profile.release) && slices.length > 0 && !shipped(slices.flat());
+    const released = complete && (nothing || (profile.deploy || profile.release) && Boolean(shipped(own.map((u) => u.id)))
       || own.every((u) => (tryGit(cwd, 'tag', '--contains', merged.get(u.id)) ?? '') !== ''));
-    return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own, deploy, uncut };
+    return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own, deploy, uncut, sliceDue };
   });
   const requirements = plan.requirements.map((r) => ({ ...r, state: approval(r.doc) }));
   return { cwd, profile, base, bundle, intents, units, requirements, decisions: bundleHeld(bundle), answered, auto: delegated(cwd), mergeUnit: mergeInProgress(cwd, units), ci: ciOf(cwd, profile, base), red: redOf(cwd, base) };
@@ -520,7 +524,7 @@ function researched(bundle) {
 
 function pickAction(st) {
   if (st.mergeUnit) return action('act', 'nextContinueMerge', { unit: st.mergeUnit });
-  const unreleased = st.intents.find((i) => i.state === 'merged'); // its release does not hold back the next intent
+  const unreleased = st.intents.find((i) => i.state === 'merged' || i.sliceDue); // its release does not hold back the next intent
   const ops = unreleased && releaseStep(st, unreleased);
   if (S.badges.stops.includes(ops?.key) || ops?.key === 'nextSmokeFix') return ops; // a failed release or smoke comes first
   // A red base comes next: a fix unit, unless one is live (docs/design/base-ci.md).
@@ -542,7 +546,7 @@ function pickAction(st) {
     return work?.kind === 'act' ? work : gate.action;
   }
   const work = unitWork(st, scope);
-  if (work) return work;
+  if (work && !(work.kind === 'wait' && ops)) return work; // a due release step beats waiting (U121)
   if (intent?.state === 'approved' && intent.uncut.length && intent.units.length && intent.units.every((u) => u.state === 'merged')) {
     return action('act', 'nextCutSlices', { intent: intent.id, slices: intent.uncut.map((t) => t.replace(/^([-*]|\d+\.)\s+/, '')).join('; ') });
   }

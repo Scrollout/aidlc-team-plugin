@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { approve, branch, commit, git, hook as hookCall, intentDoc, makeRepo, merge, read, run, unitDoc } from './state-repo.mjs';
+import { approve, branch, commit, git, heartbeat, hook as hookCall, intentDoc, makeRepo, merge, read, run, unitDoc } from './state-repo.mjs';
 
 const OK = 'node -e "require(\'fs\').writeFileSync(\'ran.txt\', \'x\')"';
 const FAIL = 'node -e "console.log(\'image build broke\'); process.exit(3)"';
@@ -23,7 +23,7 @@ function merged(profile) {
 test('U47/AC-1 a merged intent with deploy.check: next names the check and runs nothing; the check records its result with the base', () => {
   const dir = merged({ deploy: { check: [OK] } });
   const next = run(dir, ['next']);
-  assert.equal(next.out, 'I-1 is merged: run its deploy check on the base: aidlc deploy check I-1\n');
+  assert.equal(next.out, 'I-1 has merged work to ship: run its deploy check on the base: aidlc deploy check I-1\n');
   assert.equal(next.code, 0, 'the lead runs it');
   assert.ok(!existsSync(join(dir, 'ran.txt')), 'next runs nothing itself');
   const r = run(dir, ['deploy', 'check', 'I-1']);
@@ -43,7 +43,7 @@ test('U47/AC-2 the release is offered only after a check passed on the current b
   run(dir, ['deploy', 'check', 'I-1']);
   assert.match(run(dir, ['next']).out, /^👉 I-1 is ready to release: the owner releases it/m);
   commit(dir, 'docs on the base', { 'notes.md': 'x\n' });
-  assert.match(run(dir, ['next']).out, /^I-1 is merged: run its deploy check on the base/, 'a check on an older base does not count');
+  assert.match(run(dir, ['next']).out, /^I-1 has merged work to ship: run its deploy check on the base/, 'a check on an older base does not count');
 
   const failing = merged({ deploy: { check: [OK, FAIL] } });
   const r = run(failing, ['deploy', 'check', 'I-1']);
@@ -224,4 +224,25 @@ test('U83/AC-1 an intent whose units reach no module or one-way door ships nothi
   const inside = merged({ modules: [{ id: 'api', paths: ['a/**'] }] });
   assert.match(run(inside, ['status']).out, /^I-1 merged /m, 'a unit in a module ships it');
   assert.match(run(merged({}), ['status']).out, /^I-1 merged /m, 'without modules nothing is known to be outside the product');
+});
+
+test('U121/AC-1 U121/AC-2 U121/AC-3 each merged slice ships while the next builds; the intent is released only by a release holding every merge', () => {
+  const intent = intentDoc('I-1') + '\n# Slices\n1. Skeleton: U-1\n2. More: U-2\n';
+  const dir = makeRepo({ 'docs/intents/I-1-x.md': intent, 'docs/units/U-1-u.md': unitDoc({ scope: ['a/**'] }), 'docs/units/U-2-u.md': unitDoc({ scope: ['b/**'], depends: ['U-1'] }) }, { deploy: { check: [OK], run: mark('run.txt') } });
+  approve(dir, 'I-1', 'U-1', 'U-2');
+  branch(dir, 'U-1', 'a/x.txt');
+  merge(dir, 'U-1');
+  heartbeat(dir, 'U-2'); // its builder is at work
+  assert.match(run(dir, ['next']).out, /^I-1 has merged work to ship: run its deploy check on the base/, 'slice 1 is due while U-2 builds');
+  assert.equal(run(dir, ['deploy', 'check', 'I-1']).code, 0);
+  assert.match(run(dir, ['next']).out, /^👉 I-1 is ready to release/, 'the owner\'s step, while U-2 builds');
+  assert.equal(run(dir, ['release', 'I-1']).code, 0);
+  assert.match(run(dir, ['status']).out, /^I-1 approved/m, 'a slice release does not release the intent');
+  assert.doesNotMatch(run(dir, ['next']).out, /deploy check|ready to release/, 'slice 1 shipped');
+  branch(dir, 'U-2', 'b/x.txt');
+  merge(dir, 'U-2');
+  assert.match(run(dir, ['status']).out, /^I-1 merged/m, 'the last slice still needs its release');
+  assert.equal(run(dir, ['deploy', 'check', 'I-1']).code, 0);
+  assert.equal(run(dir, ['release', 'I-1']).code, 0);
+  assert.match(run(dir, ['status']).out, /^I-1 released/m);
 });

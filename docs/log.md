@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-25
 
+- **Update** M12 U121: each merged slice of an intent ships to dev with the deploy check, the owner's release and smoke, while the next slices build ([Deployment and operation](design/operations.md)). Release 0.115.0.
 - **Fix** M12 U120: a pipe or `||` after a `cd` no longer makes the guard judge another repository's push as the project's ([Hooks](design/hooks.md#wiring)). Release 0.114.1.
 - **Update** M12 U119: the card cap is 100 lines instead of 6,000 chars, and PLAN-CARD also sizes approved units not yet merged ([Unit card](design/unit-card.md)). Release 0.114.0.
 - **Update** M12 U118: every unit of an intent sits on a thin slice with its own end-to-end test, no slice waits on a later one or on a fix unit, and overlapping scopes across intents are kept apart at run time instead of by `depends` chains ([Grid](design/grid.md#slices)). Release 0.113.0.
