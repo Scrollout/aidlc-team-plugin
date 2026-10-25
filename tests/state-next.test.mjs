@@ -204,6 +204,21 @@ test('U32/AC-1 U32/AC-2 U32/AC-3 a pass with an untagged AC is recorded as fix a
   assert.match(retro, /^ {2}U-1 sent back at \S+: no test tagged U-1\/AC-1$/m);
 });
 
+test('U93/AC-1 the gate counts a verdict only when newer than the last report, as next does', () => {
+  const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['a/**'] }) });
+  approve(dir, 'I-1', 'U-1');
+  git(dir, 'switch', '-q', '-c', 'unit/U-1');
+  commit(dir, 'work', { 'a/x.txt': 'U-1/AC-1\n' });
+  git(dir, 'switch', '-q', 'main');
+  report(dir, 'U-1');
+  review(dir, 'U-1', 'pass');
+  report(dir, 'U-1'); // a new report, the diff unchanged
+  assert.match(run(dir, ['next']).out, /^review U-1, focus general/);
+  assert.match(run(dir, ['merge', 'U-1']).out, /GATE-REVIEW no pass verdict for the current diff and last report of U-1/);
+  review(dir, 'U-1', 'pass');
+  assert.doesNotMatch(run(dir, ['merge', 'U-1']).out, /GATE-REVIEW/);
+});
+
 test('U34/AC-1 U34/AC-2 each round records its commit; a focus pass outlives a fix its globs did not see, general does not', () => {
   const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['a/**', 'sec/**'] }) }, { focus: { security: ['sec/**'] } });
   approve(dir, 'I-1', 'U-1');

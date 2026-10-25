@@ -82,6 +82,9 @@ function contentHit(cwd, profile, range) {
 
 // A focus other than general keeps its last pass after a fix round when the commits since the reviewed commit
 // touch none of its globs (docs/design/review-rounds.md); general always reviews the current diff.
+// A verdict counts for the diff it saw, and only until a later report: a report's mutations are the reviewer's to judge.
+export const verdictCurrent = (last, hash, report) => last?.diffHash === hash && !(report?.at > last.at);
+
 export function keptPass(cwd, profile, unit, focus, last) {
   if (focus === S.focus || last?.verdict !== VERDICT.pass || !last.commit) return false;
   const paths = tryGit(cwd, 'diff', '--name-only', last.commit, branchOf(unit));
@@ -113,7 +116,7 @@ function mutationProblems(cwd, profile, unit, mutations) {
   const paths = unitPaths(cwd, baseOf(profile), unit);
   const code = codeChanges(paths, levels, relPath(git(cwd, 'rev-parse', '--show-toplevel'), bundleOf(cwd, profile))).length > 0;
   if (code && ![mutations].flat().some((m) => m?.ac)) return [];
-  return u.acs.flatMap((ac) => {
+  return Object.assign(u.acs.flatMap((ac) => {
     const tag = `${unit}/${ac.id}`;
     const m = mutationOf(mutations, tag);
     if (!m) return [msg('mutationMissing', { tag })];
@@ -121,7 +124,7 @@ function mutationProblems(cwd, profile, unit, mutations) {
     const count = text && m.find ? text.split(String(m.find)).length - 1 : 0;
     if (!(count === 1 && typeof m.replace === 'string' && !isTestPath(m.path, levels) && (code || !paths.includes(m.path)))) return [msg('mutationBad', { tag, path: m.path ?? '', count })];
     return String(m.breaks ?? '').trim() ? [] : [msg('mutationBreaks', { tag })]; // what it breaks, for the reviewer to judge (U61)
-  });
+  }), { wired: code });
 }
 
 // ---- Approvals ----
@@ -262,8 +265,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
       const hash = diffHash(cwd, base, u.id);
       const verdicts = (quick ? [] : [...reviewFocuses(cwd, profile, base, u.id).keys()]).map((f) => {
         const last = roundsOf(review, f).at(-1);
-        const current = last?.diffHash === hash && !(report?.at > last.at); // a later report asks for a new verdict
-        return { focus: f, verdict: current || keptPass(cwd, profile, u.id, f, last) ? last.verdict : null };
+        return { focus: f, verdict: verdictCurrent(last, hash, report) || keptPass(cwd, profile, u.id, f, last) ? last.verdict : null };
       });
       const has = (v) => verdicts.some((x) => x.verdict === v);
       const lastAt = review?.rounds?.at(-1)?.at;
@@ -648,7 +650,7 @@ export const commands = {
     if (!unit) throw new UsageError(msg('noDoc', { name: '' }));
     const data = args[1] ? parseObject(readFileSync(resolve(ctx.cwd, args[1]), 'utf8'), args[1]) : parseObject(readStdin(ctx), 'report');
     const problems = data.status === S.stopped ? [] : mutationProblems(ctx.cwd, loadProfile(ctx.cwd).profile, unit, data.mutations);
-    if (problems.length) throw new UsageError(msg('reportMutations', { problems: problems.join('; ') }));
+    if (problems.length) throw new UsageError(msg(problems.wired ? 'reportMutationsWired' : 'reportMutations', { problems: problems.join('; ') }));
     writeJson(runtimeFile(ctx.cwd, 'reports', unit), { ...data, unit, at: new Date().toISOString() });
     if (data.status === S.stopped) {
       bump(ctx.cwd, 'escalations', config.retro.reasons.stopped);

@@ -49,7 +49,10 @@ test('U79/AC-2 report reads its JSON from a file named after the unit', () => {
 test('U75/AC-4 a unit that changes code may report mutations; then each AC needs a valid one, which may edit its own diff', () => {
   const wired = () => backfill({ scope: ['tests/**', 'src/**'], extra: { 'src/calc.txt': 'total = a + b + 0\n' } });
   assert.equal(report(wired(), [{ ac: 'U-1/AC-1', path: 'src/calc.txt', find: 'a + b + 0', replace: 'a - b', breaks: 'the total' }]).code, 0, 'its own diff');
-  assert.equal(report(wired(), [{ ac: 'U-1/AC-9', path: 'src/calc.txt', find: 'a + b + 0', replace: 'a - b', breaks: 'x' }]).code, 64, 'AC-1 still needs one');
+  const partial = report(wired(), [{ ac: 'U-1/AC-9', path: 'src/calc.txt', find: 'a + b + 0', replace: 'a - b', breaks: 'x' }]);
+  assert.equal(partial.code, 64, 'AC-1 still needs one');
+  assert.match(partial.err, /a unit that changes code and reports mutations is proved by them instead of by revert, so each AC needs one .*U-1\/AC-1 has no mutation/, 'U93/AC-2 in its own words');
+  assert.doesNotMatch(partial.err, /changes only tests/);
 });
 
 test('U55/AC-2 U61/AC-2 the card says how to list mutations and shows the reported ones; the prompts say who writes and who judges them', () => {

@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-25
 
+- **Update** M11 U93: the gate counts a verdict only when newer than the last report, as `next` does, and `report` words a code unit's missing mutation right ([Gate](design/gate.md)). Release 0.98.0.
 - **Update** M11 U92: `docs.caps` sets a project's doc size caps, and `approve` refuses a doc its stamps would take over its cap ([Approvals](design/approvals.md)). Release 0.97.0.
 - **Update** M11 U91: with a deploy, the profile says where the target is already defined (`deploy.platform`, plan lint `PLAN-PLATFORM`), and each card lists it to build on ([Operations](design/operations.md)). Release 0.96.0.
 

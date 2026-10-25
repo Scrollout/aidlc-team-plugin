@@ -10,7 +10,7 @@ import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
 import { computeLane, inside, lintPlan, readPlan, runTarget, spansOf } from './grid.mjs';
 import { issueTitle, sync } from './board.mjs';
 import { writeMap } from './map.mjs';
-import { approval, baseOf, branchOf, bump, codeChanges, diffHash, keptPass, mergedUnits, mutationOf, readState, reviewFocuses, roundsOf, runtimeFile, unitPaths, worktrees, writeJson } from './state.mjs';
+import { approval, baseOf, branchOf, bump, codeChanges, diffHash, keptPass, verdictCurrent, mergedUnits, mutationOf, readState, reviewFocuses, roundsOf, runtimeFile, unitPaths, worktrees, writeJson } from './state.mjs';
 
 const G = config.gate;
 const matches = (path, glob) => inside('/' + path, glob);
@@ -232,13 +232,13 @@ function runGate(cwd, st, unit) {
   // Quick lane: no reviewer (docs/design/team.md#cost); the diff's own lane is checked above.
   if (card?.lane !== QUICK) {
     const general = roundsOf(unit.review).at(-1);
-    if (!general || general.verdict !== VERDICT.pass || general.diffHash !== hash) add('GATE-REVIEW', 'gateReview', {});
+    if (general?.verdict !== VERDICT.pass || !verdictCurrent(general, hash, unit.report)) add('GATE-REVIEW', 'gateReview', {});
     else if (card && general.card !== card.hash) add('GATE-CARD', 'gateCardStale', { reviewed: general.card, card: card.hash });
     const needed = reviewFocuses(cwd, p, base, unit.id);
     needed.delete(config.state.focus);
     for (const [focus, why] of needed) {
       const last = roundsOf(unit.review, focus).at(-1);
-      if (!last || last.verdict !== VERDICT.pass || (last.diffHash !== hash && !keptPass(cwd, p, unit.id, focus, last))) add('GATE-SPECIALIST', 'gateSpecialist', { focus, why });
+      if (!last || last.verdict !== VERDICT.pass || (!verdictCurrent(last, hash, unit.report) && !keptPass(cwd, p, unit.id, focus, last))) add('GATE-SPECIALIST', 'gateSpecialist', { focus, why });
     }
   }
 
