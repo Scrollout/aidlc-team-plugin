@@ -76,7 +76,7 @@ test('U25/AC-2 U25/AC-3 an answered research hold no longer holds the doc; the b
   run(dir, ['hold', 'U-1', 'research:', 'which proxy?']);
   commit(dir, 'hold U-1');
   const brief = run(dir, ['research', 'U-1']).out;
-  assert.match(brief, / Keep the whole digest, frontmatter included, under 4000 characters\.$/m);
+  assert.match(brief, / Keep the whole digest, frontmatter included, under 6000 characters\.$/m);
   assert.match(brief, /^generated: \{ by: <your model>, at: <the current UTC time> \}$/m);
   write(dir, { 'docs/research/U-1-which-proxy.md': '---\ntype: Research\ntitle: Proxy\ndescription: The file proxy.\nquestion: "which proxy?"\n---\n\n# Options\nOne.\n' });
   commit(dir, 'digest');

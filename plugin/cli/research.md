@@ -20,8 +20,8 @@ Read at most {{max}} sources. Keep the whole digest, frontmatter included, under
 The lead then runs `aidlc check {{out}}` and the project's own doc checks, and sends any finding back to you to fix; it never edits the digest itself.
 ---
 type: Research
-title: <the question in a few words>
-description: <the answer in one line>
+title: "<the question in a few words>"
+description: "<the answer in one line>"
 question: {{questionYaml}}
 generated: { by: <your model>, at: <the current UTC time> }
 sources:

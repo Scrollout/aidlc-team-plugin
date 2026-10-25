@@ -114,7 +114,8 @@ test('U2/AC-3 size caps follow the doc type', () => {
     'unit-ok.md': doc('Unit', 12000), 'unit-over.md': doc('Unit', 12001),
     'plan-ok.md': doc('Plan', 9000), 'decision-over.md': doc('Decision', 6001),
     'metric-ok.md': doc('Metric', 4000), 'metric-over.md': doc('Metric', 4001),
-  }), ['decision-over.md', 'design-over.md', 'metric-over.md', 'unit-over.md']);
+    'research-ok.md': doc('Research', 6000), 'research-over.md': doc('Research', 6001), // U103/AC-1
+  }), ['decision-over.md', 'design-over.md', 'metric-over.md', 'research-over.md', 'unit-over.md']);
 });
 
 test('U92/AC-1 docs.caps sets the caps by type, with default for the rest', () => {
