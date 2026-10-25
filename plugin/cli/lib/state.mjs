@@ -356,7 +356,7 @@ const citedDecisions = (st, units) => decisionsOf(st, units).filter((d) => appro
 function gateOf(st, intent, scope) {
   const rel = (dir) => relPath(st.cwd, join(st.bundle, dir)) || dir;
   const gate = (key, docs, data, kind = 'human') => ({ action: action(kind, key, data), docs: new Set(docs) });
-  const stale = [...st.requirements, ...st.intents, ...st.units].filter((d) => d.state === 'stale');
+  const stale = [...st.requirements, ...st.intents, ...st.units, ...st.decisions.filter((d) => d.fm.type === config.grid.decisionType && approval(d.doc) === 'stale').map((d) => ({ ...d, state: 'stale' }))].filter((d) => d.state === 'stale'); // an approved decision edited is the owner's again
   if (stale.length) {
     const decisions = [...citedDecisions(st, stale.filter((d) => st.units.includes(d))), ...st.requirements.filter((r) => r.state === 'draft' && stale.some((d) => (d.requirements ?? []).includes(r.id))).map((r) => r.id)]; // and the new drafts they cite
     const docs = [ids(stale), ...decisions].join(' ');
@@ -472,7 +472,7 @@ const bundleHeld = (bundle) => (existsSync(bundle) ? readdirSync(bundle, { recur
   .filter((f) => f.endsWith(config.okf.ext) && ![config.okf.index, config.okf.log].includes(basename(f)))
   .map((f) => ({ f, fm: parseDoc(readFileSync(join(bundle, f), 'utf8')).fm ?? {} }))
   .filter(({ fm }) => fm.type === config.grid.decisionType || researchOf({ fm }))
-  .map(({ f, fm }) => ({ id: fm.type === config.grid.decisionType ? basename(f).match(/^(\d+)-/)?.[1] ?? basename(f, config.okf.ext) : basename(f, config.okf.ext), file: join(bundle, f), fm }));
+  .map(({ f, fm }) => ({ id: fm.type === config.grid.decisionType ? basename(f).match(/^(\d+)-/)?.[1] ?? basename(f, config.okf.ext) : basename(f, config.okf.ext), file: join(bundle, f), fm, doc: parseDoc(readFileSync(join(bundle, f), 'utf8')) }));
 // The doc a research question is held on, named as `hold` takes it.
 export const heldDoc = (st, name) => { const file = findDoc(st.cwd, st.bundle, String(name)); return [...st.requirements, ...st.intents, ...st.units, ...st.decisions].find((d) => d.file === file); };
 function researched(bundle) {

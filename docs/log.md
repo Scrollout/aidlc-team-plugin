@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-25
 
+- **Fix** M12 U106: an edited approved decision goes back to the owner, and Principles docs are capped at 6,000 chars ([State](design/state.md#next)). Release 0.106.0.
 - **Creation** M12 U105: [slice architecture](design/slice-architecture.md) by default: constitution rule 9, `PROFILE-ARCH` for a profile with modules and no data ownership; CLI budget 4,000 lines. Release 0.105.0.
 - **Fix** M11 U104: a re-approval names the new draft requirements the stale docs cite ([State](design/state.md#next)). Release 0.104.3. Units from U99 on are [M12](roadmap/m12.md).
 - **Fix** M11 U103: Research digests are capped at 6,000 chars, and the brief quotes their title and description ([OKF validation](design/okf-validation.md)). Release 0.104.2.

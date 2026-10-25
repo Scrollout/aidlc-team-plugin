@@ -52,7 +52,7 @@ Intents, requirements, units and one-way-door decisions carry the owner's approv
 # next
 `aidlc next` prints one line: the single next action and the command or agent that performs it. Badges (`state.badges`): 👉 an owner step, ⛔ a refusal or stop. It exits 2 when the owner acts. Order:
 1. A merge cut off → continue it. A merged intent's failed release or smoke → ⛔ the owner retries or rolls back; after a rollback, a fix unit from the smoke output ([Deployment and operation](operations.md#details)). A red base CI → a fix unit; only fix units build or merge ([CI on the base](base-ci.md)). Any doc held with `research: <question>` unanswered in `research/` → research it (a decision by its number, `aidlc research 0003`, another doc by its name, `aidlc research reputation`), or wait for its researcher ([0010](../decisions/0010-research-and-advice.md)); the digest ends that hold.
-2. Any `stale` approval → re-approve, with the drafts the stale docs cite.
+2. Any `stale` approval, decisions included → re-approve, with the drafts the stale docs cite.
 3. A draft intent, requirement or unit with open points (a template `<…>` placeholder outside plan fields, or an `Open questions` item) → finish elaborating it with the owner, naming them; no approval or unit work first.
 4. No intent yet: elaborate one; in an adopted project with none, the migration intent ([Everyday paths](paths.md#adopting-an-existing-project)). Intent not approved → request approval, with the draft requirements it cites.
 5. Plan not approved → first the draft decisions the intent links: finish those with open points, then request their approval; an architecture choice shapes the cut (second project). Then draft units, request approval with the draft decisions and requirements they cite.

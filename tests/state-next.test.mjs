@@ -385,3 +385,13 @@ test('U104/AC-1 a re-approval names the new draft requirements the stale intent 
   const r = run(dir, ['next']);
   assert.match(r.out, /re-approve I-1 R-2/, r.out);
 });
+
+test('U106/AC-1 an approved decision edited since its approval goes back to the owner', () => {
+  const D = 'docs/decisions/0002-language.md';
+  const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), [D]: '---\ntype: Decision\ntitle: 0002 Language\ndescription: Which language.\n---\n\n# Decision\nGo.\n' });
+  approve(dir, 'I-1', D);
+  write(dir, { [D]: read(dir, D).replace('Go.', 'Go, see rule 10.') });
+  assert.match(run(dir, ['next']).out, /re-approve 0002 after their edits/);
+  assert.equal(run(dir, ['approve', D]).code, 0);
+  assert.doesNotMatch(run(dir, ['next']).out, /re-approve/);
+});
