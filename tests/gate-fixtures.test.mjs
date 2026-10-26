@@ -79,6 +79,14 @@ test('U140/AC-1 the profile\'s checks run on every merge, whatever modules the u
   assert.match(r.out + r.err, /GATE-CHECK/);
 });
 
+test('U147/AC-1 a refused merge keeps the last lines of each failed command and names the file', () => {
+  const dir = setup({ profile: { ...PROFILE, checks: ['node -e "console.log(\'lint: 3 issues\'); process.exit(2)"'] } });
+  const r = merge(dir);
+  assert.match(r.out + r.err, /GATE-CHECK/);
+  assert.match(r.out, /^the last lines of each command that failed: \.git\/aidlc\/gates\/U-1\.log$/m);
+  assert.match(read(dir, '.git/aidlc/gates/U-1.log'), /\(exit 2\)\nlint: 3 issues/);
+});
+
 test('U144/AC-1 merge marks the base as merging while its gate runs, and clears the mark after', () => {
   const dir = setup({ profile: PROFILE });
   const mark = join(dir, '.git/aidlc/merging');

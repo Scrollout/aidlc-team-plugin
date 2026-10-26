@@ -308,3 +308,14 @@ test('U14/AC-2 PLAN-BOARD names the board field and gives an example from the pr
   assert.ok(lines.some((l) => l.includes('U-2 has no board.effort, which the board shows as Effort: add board: { effort: <value> }')), lines.join('\n'));
   assert.ok(!lines.some((l) => l.includes('board.wave')), 'the wave is derived');
 });
+
+test('U148/AC-1 a unit issue carries the card\'s Spec line, and a Spec field can show its kind', () => {
+  const fields = [...FIELDS, { id: 'F_spec', name: 'Spec', dataType: 'SINGLE_SELECT', options: ['Vertical', 'Horizontal', 'Fix', 'Unsliced'].map((name, k) => ({ id: `V${k}`, name })) }];
+  const ctx = setup({ github: { ...GITHUB, fields: { ...GITHUB.fields, Spec: { from: 'board.spec', map: { vertical: 'Vertical', horizontal: 'Horizontal', fix: 'Fix', unsliced: 'Unsliced' } } } } });
+  const s = stub(ctx); s.project.fields = fields; writeFileSync(ctx.state, JSON.stringify(s));
+  assert.equal(aidlc(ctx, 'sync').code, 0);
+  const u1 = byTitle(ctx, 'U-1 Export');
+  assert.match(u1.body, /^Spec: horizontal: supports I-1 slice 1 \(Shop\), needed by - \(docs\/intents\/I-1-shop\.md\)$/m, 'an intent without slice lines is one slice; no top-level AC here');
+  assert.equal(item(ctx, u1.number).values.Spec, 'Horizontal');
+  assert.doesNotMatch(byTitle(ctx, 'I-1 Shop').body, /^Spec:/m, 'intents carry none');
+});

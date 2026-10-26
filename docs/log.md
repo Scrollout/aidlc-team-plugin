@@ -7,6 +7,8 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-26
 
+- **Update** M14 U148: each unit's board issue carries the card's Spec line, and a derived `board.spec` field shows vertical, horizontal, fix or unsliced; checks must be safe to run in parallel ([Board](design/board.md)). Release 0.120.4.
+- **Fix** M14 U147: a refused merge keeps each failed command's last lines in a gate log and names it ([Merge mechanics](design/gate.md)). Release 0.120.4.
 - **Fix** M14 U146: the guard expands `~` in `git -C ~/repo`, so another repository's push is judged as that repository's ([Hooks](design/hooks.md)). Release 0.120.3.
 - **Fix** M14 U145: a unit refused for a red base stays refused until a merge lands, and the base's fix unit builds past its scope ([CI on the base](design/base-ci.md)). Release 0.120.2.
 - **Fix** M14 U144: the guard refuses a commit on the base while `aidlc merge` runs its gate, so the merge's fast-forward is never lost ([Verification](design/verification.md)). Release 0.120.1.

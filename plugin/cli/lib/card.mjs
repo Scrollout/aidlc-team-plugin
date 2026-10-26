@@ -46,10 +46,11 @@ function projectRules(names, profile, at) {
 }
 
 // The card's Spec line, from the sliceRole PLAN-SLICE checks, so card and lint never disagree (U131).
-function specOf(unit, plan, profile, top) {
+// The Spec line and its kind (vertical, horizontal, fix, unsliced), for the card and the board's unit issue (U148).
+export function specOf(unit, plan, profile, top) {
   const level = topLevel(profile), role = sliceRole(unit, plan.intents, plan.units.map((u) => (u.id === unit.id ? unit : u)), level);
   const data = role.intent && { intent: role.intent.id, unit: unit.id, path: relPath(top, role.intent.file), k: role.k, slice: role.slice, level, proof: role.proof?.join(', '), neededBy: role.neededBy?.join(', ') || '-' };
-  return msg({ fix: 'cardSpecFix', unsliced: 'cardSpecUnsliced', vertical: 'cardSpecVertical', supports: 'cardSpecSupports' }[role.kind], data ?? {});
+  return { kind: role.kind === 'supports' ? C.horizontal : role.kind, line: msg({ fix: 'cardSpecFix', unsliced: 'cardSpecUnsliced', vertical: 'cardSpecVertical', supports: 'cardSpecSupports' }[role.kind], data ?? {}) };
 }
 
 // Each intent, unit, requirement or decision the text names, with its path, but those the card lists already.
@@ -98,13 +99,8 @@ function renderCard(cwd, unitId, { preview = false } = {}) {
   const answered = listed(config.state.answered); // an escalation the owner's re-approval answered
   const modules = new Set(atBase.modules);
   const data = {
-    id: unitId,
-    title: String(atBase.fm.title ?? ''),
-    goal: String(atBase.fm.description ?? ''),
-    lane: lane.lane,
-    laneReason: lane.reason,
-    model,
-    modelReason: reason,
+    id: unitId, title: String(atBase.fm.title ?? ''), goal: String(atBase.fm.description ?? ''),
+    lane: lane.lane, laneReason: lane.reason, model, modelReason: reason,
     reviewModel: withDefaults(profile).models.review,
     base: baseSha,
     acs: atBase.acs.map((a) => doc.lines[a.line - 1].trim()),
@@ -112,7 +108,7 @@ function renderCard(cwd, unitId, { preview = false } = {}) {
     // Interface links resolved from the unit doc's folder to repo paths, as `git show <base>:<path>` takes them.
     // Interface lines as written, each link with the repo path it resolves to (U128).
     interfaces: section(doc, config.grid.interfaces).map((l) => resolveLinks(l.trim().replace(/^[-*]\s+/, ''), unit.file, bundle, top)),
-    spec: specOf(atBase, plan, profile, top),
+    spec: specOf(atBase, plan, profile, top).line,
     why: [section(doc, config.grid.why).map((l) => l.trim() + '\n').join('')].filter(Boolean),
     reserves: atBase.reserves,
     requirements: list(doc.fm.requirements).map(reqId).flatMap((id) => plan.requirements.filter((r) => reqId(r.id) === id)

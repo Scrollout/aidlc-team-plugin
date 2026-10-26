@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { at, config, done, git, list, readJson, relPath, tryGit, UsageError } from './config.mjs';
 import { msg, render } from './template.mjs';
-import { templateFile } from './card.mjs';
+import { specOf, templateFile } from './card.mjs';
 import { aidlcDir, ciFile, readState, writeJson } from './state.mjs';
 
 const B = config.board;
@@ -59,13 +59,14 @@ function wanted(cwd, st, gh) {
     return waves.get(u.id);
   };
   const one = (d, kind, state, parent) => {
-    const value = (path) => at(d.fm, path) ?? (kind === 'unit' && path === B.wave ? wave(d) : undefined);
+    const spec = kind === 'unit' ? specOf(d, st, st.profile, top) : null; // as the card says it (U148)
+    const value = (path) => at(d.fm, path) ?? (kind === 'unit' && path === B.wave ? wave(d) : path === B.spec ? spec?.kind : undefined);
     const done = B.done.includes(state);
     const acs = (d.acs ?? []).map((a) => ({ box: done ? 'x' : ' ', text: d.doc.lines[a.line - 1].replace(/^\s*[-*]\s+/, '') }));
     const marker = msg('boardMarker', { kind, id: d.id });
     const data = { description: String(d.fm.description ?? ''), link: msg('boardLink', { repo: gh.repo, base: st.base, path: relPath(top, d.file) }), marker };
     let body;
-    do body = render(template, { ...data, acs }, file); while (body.length > B.maxBody && acs.pop());
+    do body = render(template, { ...data, acs, spec: spec ? [spec.line] : [] }, file); while (body.length > B.maxBody && acs.pop());
     const fields = Object.fromEntries(Object.entries(gh.fields ?? {}).map(([name, spec]) => {
       const raw = value(typeof spec === 'string' ? spec : spec.from);
       return [name, raw === undefined || raw === null ? undefined : spec.map ? spec.map[String(raw)] : raw];

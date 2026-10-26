@@ -265,7 +265,7 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   // With a board, each live unit carries the values it maps, except the derived wave (docs/design/board.md).
   // The example uses the profile's own map, so the lead writes a value the board knows.
   const planned = Object.entries(profile.github?.fields ?? {}).map(([field, spec]) => ({ field, path: fieldPaths({ field: spec })[0], map: spec.map }))
-    .filter((f) => f.path !== config.board.wave);
+    .filter((f) => ![config.board.wave, config.board.spec].includes(f.path));
   for (const u of units) {
     for (const { field, path, map } of planned.filter((f) => at(u.fm, f.path) === undefined)) {
       const value = map ? Object.keys(map)[0] : msg('planBoardAny', {});

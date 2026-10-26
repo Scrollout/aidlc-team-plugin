@@ -39,7 +39,7 @@ An org layer (a pinned git repo of rules) is [Later](../roadmap/later.md).
 
 Merge rules:
 - Objects merge key by key; any other value from a later layer replaces the earlier one. `levels` is replaced whole, so a project can drop a default level.
-- An array under a key named `deny`, at any depth, is a union: later layers add entries, never remove them. A later layer that sets a `deny` to a non-array, or replaces an object holding a `deny` with a non-object, is refused with the layer and key it conflicts with.
+- An array under a key named `deny`, at any depth, is a union: later layers add entries, never remove them; a layer setting a `deny` to a non-array, or replacing an object holding one, is refused.
 - A missing layer file is an empty layer; invalid JSON is an error naming the file.
 - `.aidlc/rules/*.md` are not merged; the loader returns their paths for the hooks and agents that read them.
 
@@ -57,10 +57,10 @@ Merge rules:
   - `.github/dependabot.yml`, weekly bumps for the workflow actions ([Current dependencies](dependencies.md)).
 
   It also adds `.aidlc/local/` and `.claude/worktrees/` to `.gitignore` and the worktree folder to every other ignore file (`init.ignoreFiles`), so tools skip it, and sets `worktree.baseRef: "head"` in `.claude/settings.json`.
-- `security.content`: regexes for code that needs a security review wherever it sits (RLS, TLS skips); an added line matching one requires the `security` focus ([Merge mechanics](gate.md)). `security.secrets` is for credentials: the write hook blocks them.
-- `check` warns `PROFILE-KEY` for a top-level or `security` key in a layer file that nothing reads, so a guessed key is not taken for a rule (first migration: `security.patterns`, `security.content` before it existed).
+- `security.content`: regexes for code that needs a security review wherever it sits (RLS, TLS skips); a line adding one requires the `security` focus ([Merge mechanics](gate.md)). `security.secrets` is for credentials: the write hook blocks them.
+- `check` warns `PROFILE-KEY` for a top-level or `security` key in a layer file that nothing reads, so a guessed key is not taken for a rule.
 - `levels.<name>.paths`: the test files (`**/*_test.go`), never a folder holding helpers, which are code the proof reverts.
-- `checks`: commands run on every merge: lint, format, static analysis.
+- `checks`: commands run on every merge: lint, format, static analysis. Each must be safe to run several at once, as the gate, builders and reviewers run in parallel.
 - `review.fixRounds`: fix rounds per focus before a `fix` escalates (default 3). `decisions.paths` and `generated`: [Plan lint](plan-lint.md#profile-keys-it-reads).
 - `names`: [Naming rules](names.md); `deps`: [Current dependencies](dependencies.md); `deploy.platform`: [Operations](operations.md).
 - `research.sources` lists sources the owner trusts for the researcher, and `research.max` its source budget (default 8); `models.research` its model ([0010](../decisions/0010-research-and-advice.md)).

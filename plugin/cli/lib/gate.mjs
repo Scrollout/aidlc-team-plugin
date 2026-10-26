@@ -62,7 +62,10 @@ function proofMutate(tree, unit, mutations, levels, add) {
   return { levels: ran.size ? [`${G.mutation} ${[...ran].join(', ')}`] : [], note };
 }
 
-const shell = (cwd, command) => sh(cwd, command).status === 0;
+// Each failed command's last lines, for the refusal to show where they are (U147).
+let failed = [];
+const logged = (command, r) => r.status === 0 || (failed.push(`$ ${command} (exit ${r.status})\n${`${r.stdout ?? ''}\n${r.stderr ?? ''}`.trim().split('\n').slice(-G.logLines).join('\n')}`), false);
+const shell = (cwd, command) => logged(command, sh(cwd, command));
 
 // A level run: refused while a variable it needs is unset, and failed when its runner reports a skip, so a
 // skipped test never counts as passed (docs/design/gate.md). Returns whether the run itself exited 0, or null.
@@ -72,7 +75,7 @@ function runLevel(tree, level, l, add) {
   const r = sh(tree, l.run, Object.fromEntries(Object.entries(G.fresh).map(([k, v]) => [k, [process.env[k], v].filter(Boolean).join(' ')]))); // no cached pass over a revert or mutation
   const skipped = l.skip && `${r.stdout}\n${r.stderr}`.split('\n').find((line) => new RegExp(l.skip).test(line));
   if (skipped) return add('GATE-SKIP', 'gateSkip', { level, line: skipped.trim() }), null;
-  return r.status === 0;
+  return logged(l.run, r);
 }
 
 // Paths only `merge` writes: bundle indexes and logs, the codebase map, and the profile's shared files.
@@ -344,12 +347,8 @@ function historyFindings(cwd, range, st, codes) {
       if (unitId && !unit) out.push(finding(codes.merge, '.', 1, 'ciUnknownUnit', { sha: short, unit: unitId }));
       const doc = unit && tryGit(cwd, 'show', `${sha}:${relPath(top, unit.file)}`);
       const scope = doc ? list(parseDoc(doc + '\n').fm?.scope) : [];
-      for (const path of changed) {
-        if (unit && !mergeWritten(path, bundleRel, st.profile) && !scope.some((g) => matches(path, g))) out.push(finding(codes.merge, path, 1, 'ciScope', { sha: short, unit: unitId, path }));
-      }
-    } else {
-      for (const path of changed.filter((x) => !directAllowed(x, bundleRel))) out.push(finding(codes.commit, path, 1, 'ciCommit', { sha: short, path }));
-    }
+      for (const path of changed) if (unit && !mergeWritten(path, bundleRel, st.profile) && !scope.some((g) => matches(path, g))) out.push(finding(codes.merge, path, 1, 'ciScope', { sha: short, unit: unitId, path }));
+    } else for (const path of changed.filter((x) => !directAllowed(x, bundleRel))) out.push(finding(codes.commit, path, 1, 'ciCommit', { sha: short, path }));
   }
   return out;
 }
@@ -378,7 +377,8 @@ export const commands = {
       for (const code of codes) bump(cwd, 'codes', code);
       const red = findings.find((f) => f.code === 'GATE-BASE');
       if (red) writeJson(baseRedFile(cwd), { sha: git(cwd, 'rev-parse', st.base), unit: unit.id, level: red.red, at: new Date().toISOString() });
-      return done('', config.exit.findings, findings);
+      const log = join(aidlcDir(cwd), 'gates', `${unit.id}.log`); // the failed commands' last lines, beside the refusal (U147)
+      return done(failed.length ? (writeFileSync(log, failed.join('\n\n') + '\n'), msg('gateLog', { path: relPath(cwd, log) })) : '', config.exit.findings, findings);
     }
     git(tree, 'add', '-A');
     git(tree, 'commit', '-q', '-m', msg('mergeSubject', { unit: unit.id, title: unit.fm.title ?? '' }),

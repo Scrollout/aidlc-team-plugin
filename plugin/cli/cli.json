@@ -451,6 +451,7 @@
     "gateLevel": "{{tag}} is tested in {{files}}, outside the {{level}} paths",
     "gateLevelNoPaths": "{{tag}} is at level {{level}}, which has a run but no paths, so no merge can prove its test",
     "gateCheck": "{{command}} failed",
+    "gateLog": "the last lines of each command that failed: {{path}}\n",
     "gateReview": "no pass verdict for the current diff and last report of {{unit}}",
     "gateCardStale": "the review was made against card {{reviewed}}, the current card is {{card}}",
     "gateSpecialist": "{{focus}} review required ({{why}}), no pass verdict for the current diff",
@@ -927,6 +928,7 @@
   },
   "card": {
     "bannedPattern": "(?!)",
+    "horizontal": "horizontal",
     "everyMerge": "every merge",
     "refs": "\\b([IUR]-\\d+|0\\d{3})\\b",
     "template": "card.md",
@@ -1079,6 +1081,7 @@
   "gate": {
     "summaryEnv": "GITHUB_STEP_SUMMARY",
     "fresh": { "GOFLAGS": "-count=1" },
+    "logLines": 25,
     "summaryMax": 50,
     "remote": "origin",
     "fixTemplate": "fix.md",
@@ -1492,6 +1495,7 @@
       "setField": "mutation($project: ID!, $item: ID!, $field: ID!, $value: ProjectV2FieldValue!) { updateProjectV2ItemFieldValue(input: { projectId: $project, itemId: $item, fieldId: $field, value: $value }) { projectV2Item { id } } }"
     },
     "wave": "board.wave",
+    "spec": "board.spec",
     "types": {
       "intent": "Feature",
       "unit": "Task",
