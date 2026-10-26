@@ -12,7 +12,7 @@ On `resource-manager` the profile could say only "module with layers":
 - Nothing kept the layers pointing inward.
 - The front door linked the registry's internals through a package that held both its client and server, and every check passed.
 
-The core-versus-provider shape was the reason the project exists, yet it had nowhere to be declared ([0013](../decisions/0013-deterministic-ai-dlc.md)).
+The core-versus-provider shape was the reason the project exists, yet it had nowhere to be declared ([0013](../decisions/0013-a-deterministic-ai-dlc.md)).
 
 # Profile
 ```json

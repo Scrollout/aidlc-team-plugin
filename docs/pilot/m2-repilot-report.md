@@ -55,7 +55,7 @@ owner approvals and commands:
 proposals: new check: reviews escalated 1 times: a profile check (modules[].check or architecture.checks) that catches what the reviewers found
 ```
 
-It lists the escalation, the re-approval and the owner's prompts; the proposal fits the gap (the fix round never ran the project lint). One error: the approval of the cited decision is missing. Both `upgrade` lines are the owner's, though the lead saw no prompt: a hook's `ask` prompts the owner even in auto mode ([0009](../decisions/0009-approval-prompt.md)).
+It lists the escalation, the re-approval and the owner's prompts; the proposal fits the gap (the fix round never ran the project lint). One error: the cited decision's approval is lost. Both `upgrade` lines are the owner's though the lead saw none: a hook's `ask` asks the owner in auto mode too ([0009](../decisions/0009-owner-commands-by-permission-prompt.md)).
 
 # M2 exit criteria
 - `node --test` green on Linux, macOS and Windows, required by CI: **met**. The last run on main (0.29.0) passed.

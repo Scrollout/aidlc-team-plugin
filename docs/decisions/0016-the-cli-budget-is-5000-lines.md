@@ -7,7 +7,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T01:10:00Z }
 ---
 
 # Context
-[0013](0013-deterministic-ai-dlc.md) kept the CLI at 4,000 lines on one condition: room was to come from moving rules into data and retiring superseded incident patches, and a raise needed its own decision (plan decision D5). The CLI stood at 3,997 lines on 2026-10-27, and M15 to M19 add about 25 checks.
+[0013](0013-a-deterministic-ai-dlc.md) kept the CLI at 4,000 lines on one condition: room was to come from moving rules into data and retiring superseded incident patches, and a raise needed its own decision (plan decision D5). The CLI stood at 3,997 lines on 2026-10-27, and M15 to M19 add about 25 checks.
 
 The audit for B149 read all 39 incident citations in the design docs:
 - **31 are evidence:** a general rule that names the incident that showed it was needed, such as `PLAN-SKELETON`, `PLAN-CARD` and the base-CI holds. Deleting the citation saves no code, and deleting the rule loses a check a test pins.

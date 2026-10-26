@@ -101,3 +101,18 @@ test('B156/AC-3 a generated doc carries its body digest: a hand edit, or one wri
   assert.equal(run(dir, ['map']).code, 0);
   assert.deepEqual(generated(), [], 'the CLI writes it again');
 });
+
+test('B157/AC-1 a doc named by an id carries the slug of its title: lower case, no apostrophes, at most 48 characters, cut at a word', async () => {
+  const { docSlug } = await import('../plugin/cli/lib/okf.mjs');
+  assert.equal(docSlug("Dependabot's docker update fails on main"), 'dependabots-docker-update-fails-on-main');
+  assert.equal(docSlug('The CLI budget is 5,000 lines'), 'the-cli-budget-is-5000-lines');
+  assert.equal(docSlug('Contract specs compiled from TypeSpec with generated Go'), 'contract-specs-compiled-from-typespec-with');
+  const unit = (title) => unitDoc({ title, scope: ['src/**'] });
+  const docs = { 'docs/units/U-4-dependabot-s-docker-update-fails-on-main.md': unit("Dependabot's docker update fails on main"), 'docs/units/U-5-contract-specs-compiled-from-typespec-wi.md': unit('Contract specs compiled from TypeSpec with generated Go'), 'docs/units/U-6-clean.md': unit('Clean') };
+  const slugs = (profile) => run(makeRepo(docs, profile), ['check']).out.split('\n').filter((l) => /DOC-SLUG/.test(l)).map((l) => l.replace(/ → .*( \((?:warning|error)\))$/, '$1'));
+  assert.deepEqual(slugs({}), [
+    'docs/units/U-4-dependabot-s-docker-update-fails-on-main.md:1 DOC-SLUG U-4-dependabot-s-docker-update-fails-on-main.md is not named from its title: U-4-dependabots-docker-update-fails-on-main.md (warning)',
+    'docs/units/U-5-contract-specs-compiled-from-typespec-wi.md:1 DOC-SLUG U-5-contract-specs-compiled-from-typespec-wi.md is not named from its title: U-5-contract-specs-compiled-from-typespec-with.md (warning)',
+  ], 'a v1 bundle: warnings');
+  assert.ok(slugs({ system: { core: ['src/**'] } }).every((l) => l.endsWith('(error)')), 'a v2 bundle: errors');
+});

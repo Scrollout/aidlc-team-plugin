@@ -253,6 +253,7 @@
     "docSchemaKey": "a {{type}} lacks {{key}}",
     "docSchemaEnum": "a {{type}}'s {{key}} is {{value}}, not one of {{values}}",
     "docFolder": "a {{type}} lives in {{folder}}/, not {{at}}",
+    "docSlug": "{{file}} is not named from its title: {{expected}}",
     "docGeneratedHand": "this {{type}} is written only by the CLI, and its body no longer matches its digest: it was edited by hand",
     "docGeneratedBy": "this {{type}} is written only by the CLI, not by {{by}}",
     "descMissing": "missing {{fields}}",
@@ -658,6 +659,9 @@
     "index": "index.md",
     "bundle": {
       "producer": "aidlc/",
+      "idFile": "^((?:[A-Z]-\\d+)|\\d{4})-(.+)\\.md$",
+      "slugWords": 8,
+      "slugMax": 48,
       "generated": ["Map"],
       "folders": { "Bolt": "bolts", "Domain": "domains", "Fact": "platform", "System": "system", "Map": "architecture" },
       "schemas": {
@@ -742,6 +746,10 @@
         "level": "error",
         "fix": "add the keys the type requires (okf.bundle.schemas), use a value its list allows, and keep the doc in its type's folder (docs: Bundle v2)"
       },
+      "DOC-SLUG": {
+        "level": "error",
+        "fix": "rename the file to its id and the slug of its title (lower case, hyphens, no apostrophes, at most 48 characters, cut at a word), keeping the id; aidlc new names new docs this way"
+      },
       "DOC-GENERATED": {
         "level": "error",
         "fix": "never edit a generated doc: change what it is drawn from and let the CLI write it again (aidlc map, aidlc index, or the next merge)"
@@ -778,8 +786,6 @@
     "bolts": "bolts",
     "boltPrefix": "B-",
     "boltTemplate": "templates/docs/bolt.md",
-    "slugWords": 8,
-    "slugMax": 48,
     "boltFile": "^(B-\\d+)(?:-[^/]*)?\\.md$",
     "intents": "intents",
     "unitFile": "^(U-\\d+)(?:-[^/]*)?\\.md$",

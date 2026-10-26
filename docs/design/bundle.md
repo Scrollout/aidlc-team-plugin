@@ -64,7 +64,7 @@ Each type's required keys and allowed values live in `cli.json` (`okf.bundle.sch
 
 # Names in the bundle
 - IDs come from `aidlc new <type> "<title>"`.
-- Slugs are generated (`DOC-SLUG`): lower case ASCII, hyphens, no apostrophes, at most 48 characters, cut at a word boundary, no trailing hyphen.
+- Slugs are generated (`docSlug`, used by `new` and `fix`): lower case ASCII words of the title, apostrophes and the commas inside numbers dropped, at most 8 words and 48 characters, cut at a word. A file named by an ID (`I-<n>`, `B-<n>`, `NNNN`…) whose slug is not its title's is `DOC-SLUG`: an error in a v2 bundle, a warning in v1.
 - A description is one sentence of at most 200 characters.
 - The glossary and banned-word checks cover doc bodies.
 

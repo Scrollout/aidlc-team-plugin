@@ -11,7 +11,7 @@ sources:
 ---
 
 # Context
-`release` and `rollback` are owner commands ([0009](0009-approval-prompt.md), [Deployment and operation](../design/operations.md)). [0011](0011-plain-word-approval.md) lets the owner approve by typing the words, and the prompt hook runs the approval itself. A release cannot work that way: it runs `deploy.run`, `release` and `deploy.smoke`, which can take minutes, and the plugin sets each hook's timeout to 10 s ([Overview](../design/overview.md) budgets).[^cc-hooks] A hook cut off midway would leave a deploy half run and nothing recorded.
+`release` and `rollback` are owner commands ([0009](0009-owner-commands-by-permission-prompt.md), [Deployment and operation](../design/operations.md)). [0011](0011-plain-word-approval.md) lets the owner approve by typing the words, and the prompt hook runs the approval itself. A release cannot work that way: it runs `deploy.run`, `release` and `deploy.smoke`, which can take minutes, and the plugin sets each hook's timeout to 10 s ([Overview](../design/overview.md) budgets).[^cc-hooks] A hook cut off midway would leave a deploy half run and nothing recorded.
 
 # Options
 1. **A typed go, recorded and used once by the guard**: a prompt that is exactly `release I-<n>` or `rollback I-<n>` records the owner's go for that command; the lead runs it, and the guard lets that one call through without a prompt.

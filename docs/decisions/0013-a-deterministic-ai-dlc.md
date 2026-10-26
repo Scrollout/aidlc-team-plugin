@@ -16,7 +16,7 @@ The third project, `resource-manager` (2026-10-26), built a sound control-plane 
 - The delivered count trusted citations, not proof.
 - Fix units carried a feature and a design change.
 
-[0007](0007-requirements-and-architecture-checks.md) made requirements docs and architecture rules gate checks. That still holds, but its boundaries were written by hand per project, over a model that could not express the shape.
+[0007](0007-requirements-and-architecture-as-checks.md) made requirements docs and architecture rules gate checks. That still holds, but its boundaries were written by hand per project, over a model that could not express the shape.
 
 # Options
 1. Patch each finding as it comes. That is how 39 incident rules accumulated, and the drift came from their interaction.

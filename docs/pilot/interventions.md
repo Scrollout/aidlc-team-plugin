@@ -7,7 +7,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T16:21:38Z }
 ---
 
 # Owner
-- Typed `aidlc approve`, which is no shell command: messages show the runnable command (0.10.1); owner commands became permission prompts ([0009](../decisions/0009-approval-prompt.md), 0.13.0).
+- Typed `aidlc approve`, which is no shell command: messages show the runnable command (0.10.1); owner commands became permission prompts ([0009](../decisions/0009-owner-commands-by-permission-prompt.md), 0.13.0).
 - Steered the lead to the migration intent after adopt: `next` names it (0.10.1).
 - Re-approved after dropping U-1, whose whole job was a merge-written file: `PLAN-SHARED` (0.10.3).
 - Answered an escalation with no command for it: re-approval turns it into a fix round (0.10.5).

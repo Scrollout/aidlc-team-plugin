@@ -6,7 +6,7 @@ import { basename, dirname, join } from 'node:path';
 import { bundleOf, CLI_DIR, PLUGIN_DIR, config, QUICK, VERDICT, done, git, gitLines, list, readJson, sh, slug, tryGit, UsageError, relPath } from './config.mjs';
 import { finding as codeFinding, msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
-import { checkBundle, nameProblem, parseDoc, writeIndexes } from './okf.mjs';
+import { checkBundle, docSlug, nameProblem, parseDoc, writeIndexes } from './okf.mjs';
 import { computeLane, inside, lintPlan, readPlan, runTarget, spansOf } from './grid.mjs';
 import { issueTitle, sync } from './board.mjs';
 import { writeMap } from './map.mjs';
@@ -430,7 +430,7 @@ export const commands = {
     const lane = computeLane(flags.scope, profile); // a full-lane fix waits for the owner's approval like any other unit
     const bundle = bundleOf(cwd, profile);
     const id = nextUnitId(bundle, Boolean(profile.system)), dir = profile.system ? config.grid.bolts : config.grid.units;
-    const file = join(bundle, dir, `${id}-${slug(title).slice(0, 40)}.md`);
+    const file = join(bundle, dir, `${id}-${docSlug(title)}.md`);
     const version = existsSync(join(CLI_DIR, config.init.version)) ? readFileSync(join(CLI_DIR, config.init.version), 'utf8').trim() : config.init.devVersion;
     const text = render(readFileSync(join(CLI_DIR, G.fixTemplate), 'utf8'), {
       title: JSON.stringify(title),
@@ -458,8 +458,7 @@ export const commands = {
     if (kind !== 'bolt' || !title?.trim()) throw new UsageError(msg('newUsage', {}));
     const { profile } = loadProfile(cwd);
     const bundle = bundleOf(cwd, profile), id = nextUnitId(bundle, true);
-    const words = slug(title.replace(/['’]/g, ''), config.grid.slugWords), name = words.length > config.grid.slugMax ? words.slice(0, config.grid.slugMax + 1).replace(/-[^-]*$/, '') : words; // cut at a word, never in one
-    const file = join(bundle, config.grid.bolts, `${id}-${name}.md`);
+    const file = join(bundle, config.grid.bolts, `${id}-${docSlug(title)}.md`);
     const text = readFileSync(join(PLUGIN_DIR, config.grid.boltTemplate), 'utf8').replace(/^title: .*$/m, `title: ${JSON.stringify(title.trim())}`);
     mkdirSync(dirname(file), { recursive: true });
     writeFileSync(file, text);

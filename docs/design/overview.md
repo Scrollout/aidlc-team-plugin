@@ -66,7 +66,7 @@ sequenceDiagram
 | Skill body / agent prompt | 3 KB each |
 | Skill and agent descriptions | 300 chars each |
 | Unit card | 100 lines |
-| CLI source (`plugin/cli/`) | 5,000 lines ([0016](../decisions/0016-cli-budget-5000.md)) |
+| CLI source (`plugin/cli/`) | 5,000 lines ([0016](../decisions/0016-the-cli-budget-is-5000-lines.md)) |
 | Hook timeout | 10 s explicit, `onFailure: "block"` on blocking hooks |
 | Blocking hook run time | 500 ms beyond a bare `node` start timed beside it, median of 5 calls on a small project |
 

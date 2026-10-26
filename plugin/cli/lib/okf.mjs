@@ -1,7 +1,7 @@
 // OKF v0.2 validator and index generator (docs/design/okf.md). Settings, codes and messages come from cli.json.
 import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { dirname, join, relative, resolve, sep } from 'node:path';
+import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { bundleOf, config, done, isMap, list, UsageError, relPath } from './config.mjs';
 import { finding as codeFinding, msg } from './template.mjs';
 import { loadProfile } from './profile.mjs';
@@ -498,6 +498,13 @@ function checkLog(file, add) {
 // A type's size cap: the project's `docs.caps` first, then the plugin's (docs/design/okf-validation.md).
 export const sizeCap = (type, caps = {}) => caps[type] ?? caps.default ?? OKF.sizeCaps[type] ?? OKF.sizeCapDefault;
 
+// The file name a title gives: lower case words without apostrophes or the commas inside numbers, at most
+// slugMax characters, cut at a word, never in one (docs/design/bundle.md).
+export function docSlug(title) {
+  const words = String(title).toLowerCase().replace(/['’]/g, '').replace(/(\d),(?=\d)/g, '$1').split(/[^a-z0-9]+/).filter(Boolean).slice(0, OKF.bundle.slugWords).join('-');
+  return words.length > OKF.bundle.slugMax ? words.slice(0, OKF.bundle.slugMax + 1).replace(/-[^-]*$/, '') : words;
+}
+
 // A generated doc's digest: its body's, so a hand edit shows (docs/design/bundle.md).
 export const digestOf = (body) => createHash('sha256').update(body).digest('hex').slice(0, 16);
 
@@ -533,6 +540,9 @@ function checkConcept(file, add, caps, root, v2) {
   const size = [...text].length;
   if (size > cap) add(file, 1, 'HOUSE-SIZE', 'sizeOver', { size, cap, type: type || OKF.otherType });
   if (type) checkSchema(root, file, doc, type, add, v2);
+  // A file named by an id carries the slug of its title after it, the id dropped from the title (DOC-SLUG).
+  const named = basename(file).match(OKF.bundle.idFile), title = String(fm.title ?? '').replace(new RegExp(`^${named?.[1]}\\s+`), '');
+  if (named && title && named[2] !== docSlug(title)) add(file, 1, 'DOC-SLUG', 'docSlug', { file: basename(file), expected: `${named[1]}-${docSlug(title)}.md` }, v2 ? 'error' : 'warning');
   return doc;
 }
 
@@ -570,8 +580,8 @@ const finding = (code, level, path, line, key, data) => codeFinding(OKF.codes, c
 export function checkBundle(root, { rules = {}, caps, base = process.cwd(), v2 = false } = {}) {
   root = resolve(root);
   const findings = [];
-  const add = (file, line, code, key, data) => {
-    const level = (OKF.codes[code].house && OKF.levels.includes(rules[code]) ? rules[code] : null) ?? OKF.codes[code].level;
+  const add = (file, line, code, key, data, as) => { // `as`: a level a v1 bundle softens to
+    const level = (OKF.codes[code].house && OKF.levels.includes(rules[code]) ? rules[code] : null) ?? as ?? OKF.codes[code].level;
     if (level !== 'off') findings.push(finding(code, level, relPath(base, file), line, key, data));
   };
   for (const file of walk(root).filter((f) => f.endsWith(OKF.ext))) {

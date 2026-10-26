@@ -12,7 +12,7 @@ sources:
 ---
 
 # Context
-In the [M2 re-pilot](../pilot/m2-repilot-interventions.md) an escalation reached the owner with no command named, and the lead offered `! node .aidlc/bin/aidlc.mjs approve U-22`. The owner drives the pilot from the mobile app, where `!` does not run; the permission prompt of [0009](0009-approval-prompt.md) works there, but only once the lead runs the command, and the owner has to read a script path to approve.
+In the [M2 re-pilot](../pilot/m2-repilot-interventions.md) an escalation reached the owner with no command named, and the lead offered `! node .aidlc/bin/aidlc.mjs approve U-22`. The owner drives the pilot from the mobile app, where `!` does not run; the permission prompt of [0009](0009-owner-commands-by-permission-prompt.md) works there, but only once the lead runs the command, and the owner has to read a script path to approve.
 
 # Options
 1. Keep 0009 only, and make every message name the prompt path.

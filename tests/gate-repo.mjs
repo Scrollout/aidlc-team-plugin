@@ -24,7 +24,7 @@ export function setup({ profile = PROFILE, unit = {}, files = { ...CODE, ...TEST
   const dir = makeRepo({
     ...LOG,
     'docs/intents/I-1-math.md': intentDoc('I-1', 'Math'),
-    [U1]: unitDoc({ scope: ['src/**', 'tests/**'], modules: ['core'], acs: ['- AC-1 (unit): adds two numbers.'], ...unit }),
+    [U1]: unitDoc({ title: 'Add', scope: ['src/**', 'tests/**'], modules: ['core'], acs: ['- AC-1 (unit): adds two numbers.'], ...unit }),
   }, profile);
   approve(dir, 'I-1', 'U-1');
   assert.equal(run(dir, ['card', 'U-1']).code, 0);

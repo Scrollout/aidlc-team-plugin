@@ -17,7 +17,7 @@ test('U6/AC-2 a passing gate merges --no-ff with trailers, writes index and log,
   const card = JSON.parse(read(dir, '.git/aidlc/cards/U-1.json')).hash;
   assert.equal(git(dir, 'log', '-1', '--format=%(trailers:only,unfold)').trim(), `Unit: U-1\nCard: ${card}\nReview: pass\nTested: unit\nProof: unit`);
   assert.equal(git(dir, 'rev-list', '--parents', '-n', '1', 'HEAD').split(' ').length, 3, 'a merge commit');
-  assert.match(read(dir, 'docs/log.md'), /- \*\*Update\*\* U-1 Unit merged\./);
+  assert.match(read(dir, 'docs/log.md'), /- \*\*Update\*\* U-1 Add merged\./);
   assert.ok(existsSync(join(dir, 'docs/units/index.md')), 'indexes written');
   assert.equal(git(dir, 'branch', '--list', 'unit/U-1'), '');
   assert.ok(!existsSync(wt), 'the unit worktree is removed');

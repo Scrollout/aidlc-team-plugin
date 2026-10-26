@@ -16,7 +16,7 @@ The owner made it a permanent rule of the method (2026-10-25), asking whether pr
 - Anything outside the cluster (cloud APIs, CI deploys) uses federated credentials (OIDC), never a stored client secret.
 - Local development and tests use the same mechanism where they can; a test fixture may hold a throwaway password inside the levels' test paths.
 
-The mechanism is a project decision, from official sources ([research](../decisions/0010-research-and-advice.md)).
+The mechanism is a project decision, from official sources ([research](../decisions/0010-research-for-open-questions.md)).
 
 # Check
 `GATE-IDENTITY`: an added line outside the levels' test paths and the bundle matching one of `config.identity` patterns:
