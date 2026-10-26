@@ -42,6 +42,8 @@ sequenceDiagram
   R->>C: aidlc review record
   L->>C: aidlc merge U-1
   C-->>L: gate passes, merge --no-ff
+  L->>C: aidlc push, then aidlc ci wait
+  C-->>L: CI green on the pushed base
   L->>C: aidlc deploy check I-1
   C-->>L: release I-1 is the owner's (exit 2)
   O->>C: types release I-1 (go recorded)

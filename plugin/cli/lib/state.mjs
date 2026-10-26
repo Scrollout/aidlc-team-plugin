@@ -322,7 +322,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
 
   const intents = plan.intents.sort(byId).map((i) => {
     const own = units.filter((u) => u.fm.intent === i.id);
-    // A slice line naming no unit is a slice still to cut: the intent is not done (docs/design/grid.md#slices).
+    // A slice line naming no unit is a slice still to cut: the intent is not done (docs/design/slices.md).
     const uncut = sectionOf(i.doc, config.grid.slices).map(([, t]) => t.trim()).filter((t) => /^([-*]|\d+\.)\s/.test(t) && !/\bU-\d+\b/.test(t));
     const complete = own.length > 0 && own.every((u) => u.state === 'merged') && !uncut.length;
     // Released: the owner tagged it, or its recorded release (and smoke) passed (docs/design/operations.md).

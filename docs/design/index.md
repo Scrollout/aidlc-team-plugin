@@ -26,6 +26,7 @@
 * [OKF validation](okf-validation.md) - The OKF errors and house-rule warnings the validator reports, and the YAML subset it reads frontmatter with.
 * [Overview](overview.md) - Goals, non-goals, budgets, repo layout and glossary of the plugin.
 * [Parallel builders](parallel.md) - How the lead runs builders side by side in worktrees, what the agents' frontmatter sets for that, and how their units are merged.
+* [Pipeline](pipeline.md) - The governance pipeline a unit passes through, in order - the checks before any work reaches a builder, and the checks after, each with its command, hook and codes.
 * [Plan lint](plan-lint.md) - The checks aidlc check runs on intents and units before the owner approves them, each with its code.
 * [Profile and templates](profile.md) - The project profile, rule layers, the template engine and what init renders and reports.
 * [Proof for back-fill tests](backfill.md) - Draft - how a tests-only unit, one that adds characterization tests for code built before a migration, proves its tests can fail - the builder lists one mutation per AC and the gate applies each.
@@ -34,6 +35,7 @@
 * [Review rounds](review-rounds.md) - What review record does with a verdict - fix rounds and their limit, send-backs, and which focus passes still count after a fix.
 * [Skill and agents](prompts.md) - What the lead's skill and the builder and reviewer prompts say, how a review is picked and run, and why the prompts restate no enforced rule.
 * [Slice architecture](slice-architecture.md) - The architecture the method sets for every project - vertical slices as bounded contexts with inward-pointing layers, each owning its data, talking through published interfaces and events, with no cycles - and the merge checks that act as its fitness functions.
+* [Slices](slices.md) - An intent's vertical slices - the plan rules PLAN-SLICE checks, the card's Spec line computed from the same facts, and how each merged slice ships to dev before the next one builds.
 * [State](state.md) - How the CLI derives progress from git and docs, how approvals work, and how next picks the one allowed step.
 * [Steering](steering.md) - How the plugin corrects the agent during work, keeps it moving, and improves its rules over time without growing.
 * [Team](team.md) - The four roles, how parallel worktree workers are run and merged, and where tokens are spent.

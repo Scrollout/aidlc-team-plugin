@@ -22,7 +22,7 @@ flowchart TB
 
   subgraph inception["Inception: owner and lead"]
     req["Requirements R-n<br/>lasting, approved"]
-    intent["Intent I-n<br/>goal, why, success measures"]
+    intent["Intent I-n<br/>goal, why, slices, risks"]
     plan["Plan: units U-n<br/>ACs with test levels, scope,<br/>depends, reservations"]
     researcher["Researcher<br/>cited digest for a held question,<br/>official sources first"]
     decision["Decisions"]
@@ -31,9 +31,9 @@ flowchart TB
   end
 
   subgraph construction["Construction: per unit, in parallel worktrees"]
-    card["Card<br/>rendered from the base commit"]
+    card["Card<br/>from the base commit: spec line,<br/>why, ACs, scope, references"]
     builder["Builder<br/>tests first, only inside scope"]
-    reviewer["Reviewer<br/>fresh context, JSON verdict"]
+    reviewer["Reviewer<br/>one per focus, fresh context,<br/>JSON verdict"]
     gate{"Merge gate<br/>scope, AC tests, checks, review,<br/>proof: code reverted or mutations,<br/>OKF, security, architecture"}
     card --> builder --> reviewer
     reviewer -- "fix, at most 3 rounds" --> builder
@@ -42,13 +42,14 @@ flowchart TB
 
   subgraph operations["Deployment and Operation: when the profile deploys"]
     base["Base branch<br/>merges carry Unit, Card, Review,<br/>Tested, Proof trailers"]
-    check["Deploy check<br/>aidlc deploy check I-n, on the base"]
+    ci["Push and CI<br/>aidlc push, aidlc ci wait"]
+    check["Deploy check<br/>aidlc deploy check I-n, per merged slice"]
     release["Release, owner step<br/>aidlc release I-n"]
     smoke["Smoke<br/>runs after the release"]
     rollback["Rollback, owner step<br/>aidlc rollback I-n"]
     fixunit["Fix unit<br/>aidlc fix --after I-n"]
     released(["Released"])
-    base --> check -- pass --> release --> smoke -- pass --> released
+    base --> ci -- green --> check -- pass --> release --> smoke -- pass --> released
     check -- fail --> fixunit
     smoke -- fail --> rollback --> fixunit
   end
@@ -87,7 +88,7 @@ flowchart LR
     profile[".aidlc/profile.json<br/>modules, lanes, levels,<br/>rules, architecture, deploy"]
     bin[".aidlc/bin<br/>pinned copy of the CLI"]
     docs["docs/ OKF bundle<br/>constitution, requirements, intents,<br/>units, runbooks, design, decisions"]
-    runtime[".git/aidlc<br/>cards, reports, reviews, heartbeats,<br/>deploys, goes, prompts, stats,<br/>denials, never committed"]
+    runtime[".git/aidlc<br/>cards, reports, reviews, heartbeats,<br/>reviewing, launches, ci, deploys,<br/>goes, prompts, stats, denials, never committed"]
     ci["CI<br/>aidlc check --ci"]
   end
 

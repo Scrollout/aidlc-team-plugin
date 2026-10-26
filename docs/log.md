@@ -7,26 +7,27 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-26
 
-- **Fix** M12 U133: `review record` is safe to retry, the same verdict for the same diff replacing its round; `deploy.run` must be rerunnable ([Review rounds](design/review-rounds.md), [Operations](design/operations.md)). Release 0.118.2.
-- **Update** M12 U132: the card's Dependencies section says currency and advisories are checked live by `deps.check` only, and a unit's tests prove a check offline on fixed inputs ([Current dependencies](design/dependencies.md)). Release 0.118.1.
-- **Update** M12 U131: the card's Spec line comes from the same function as `PLAN-SLICE` and names its evidence (the proving top-level ACs, or the vertical units that need it); `PLAN-SLICE` reports a unit on a slice that no vertical unit needs ([Unit card](design/unit-card.md)). Release 0.118.0.
-- **Fix** M12 U130: a fix-round builder at work keeps its unit building, so a kept pass of another focus no longer makes `next` ask for a review of a moving head ([In flight](design/in-flight.md)). Release 0.117.2.
-- **Fix** M12 U129: with `ci.wait`, the owner's release ships only a pushed base whose CI passed; `next` asks for the push and the wait first ([CI on the base](design/base-ci.md)). Release 0.117.1.
-- **Update** M12 U128: the card names the unit's slice (vertical or horizontal) and intent path, carries its why, keeps each interface line's text with its path, and lists the docs its text names with their paths ([Unit card](design/unit-card.md)). Release 0.117.0.
-- **Fix** M12 U127: the card shows what each name rule finds, and a banned-word rule as its word list instead of `(?!)` ([Naming rules](design/names.md)). Release 0.116.3.
-- **Update** M12 U126: the intent is the vertical spec, with `# Risks` and a why for each rule; horizontal docs are extracted when a second slice reuses a pattern ([Grid](design/grid.md)). Release 0.116.2.
-- **Fix** M12 U125: the reviewing mark counts the reviewers in flight, so a focus that records first leaves the others waited for ([In flight](design/in-flight.md)). Release 0.116.1.
-- **Update** M12 U124: `report` asks for sourced `deps` only when the diff adds a pin line (`deps.pin`) to a manifest, so files that pin among other content can be manifests ([Current dependencies](design/dependencies.md)). Release 0.116.0.
-- **Fix** M12 U123: a slice is due to ship only from its own intent's merged units, so a draft intent citing another intent's unit is not offered a release ([Deployment and operation](design/operations.md)). Release 0.115.2.
-- **Fix** M12 U122: `next` asks to name the merged units of a slice built before its line named them, not only to cut new ones ([Grid](design/grid.md#slices)). Release 0.115.1.
+- **Update** M13 U134: the design docs gain [Pipeline](design/pipeline.md) and [Slices](design/slices.md), the README, grid, overview and intent-state diagrams show slices, the Spec line, reviews per focus and the CI wait before a release, and M12 closes at U122 with [M13](roadmap/m13.md) holding the rest. Release 0.118.3.
+- **Fix** M13 U133: `review record` is safe to retry, the same verdict for the same diff replacing its round; `deploy.run` must be rerunnable ([Review rounds](design/review-rounds.md), [Operations](design/operations.md)). Release 0.118.2.
+- **Update** M13 U132: the card's Dependencies section says currency and advisories are checked live by `deps.check` only, and a unit's tests prove a check offline on fixed inputs ([Current dependencies](design/dependencies.md)). Release 0.118.1.
+- **Update** M13 U131: the card's Spec line comes from the same function as `PLAN-SLICE` and names its evidence (the proving top-level ACs, or the vertical units that need it); `PLAN-SLICE` reports a unit on a slice that no vertical unit needs ([Unit card](design/unit-card.md)). Release 0.118.0.
+- **Fix** M13 U130: a fix-round builder at work keeps its unit building, so a kept pass of another focus no longer makes `next` ask for a review of a moving head ([In flight](design/in-flight.md)). Release 0.117.2.
+- **Fix** M13 U129: with `ci.wait`, the owner's release ships only a pushed base whose CI passed; `next` asks for the push and the wait first ([CI on the base](design/base-ci.md)). Release 0.117.1.
+- **Update** M13 U128: the card names the unit's slice (vertical or horizontal) and intent path, carries its why, keeps each interface line's text with its path, and lists the docs its text names with their paths ([Unit card](design/unit-card.md)). Release 0.117.0.
+- **Fix** M13 U127: the card shows what each name rule finds, and a banned-word rule as its word list instead of `(?!)` ([Naming rules](design/names.md)). Release 0.116.3.
+- **Update** M13 U126: the intent is the vertical spec, with `# Risks` and a why for each rule; horizontal docs are extracted when a second slice reuses a pattern ([Grid](design/grid.md)). Release 0.116.2.
+- **Fix** M13 U125: the reviewing mark counts the reviewers in flight, so a focus that records first leaves the others waited for ([In flight](design/in-flight.md)). Release 0.116.1.
+- **Update** M13 U124: `report` asks for sourced `deps` only when the diff adds a pin line (`deps.pin`) to a manifest, so files that pin among other content can be manifests ([Current dependencies](design/dependencies.md)). Release 0.116.0.
+- **Fix** M13 U123: a slice is due to ship only from its own intent's merged units, so a draft intent citing another intent's unit is not offered a release ([Deployment and operation](design/operations.md)). Release 0.115.2.
+- **Fix** M13 U122: `next` asks to name the merged units of a slice built before its line named them, not only to cut new ones ([Grid](design/grid.md#slices)). Release 0.115.1.
 
 ## 2026-10-25
 
-- **Update** M12 U121: each merged slice of an intent ships to dev with the deploy check, the owner's release and smoke, while the next slices build ([Deployment and operation](design/operations.md)). Release 0.115.0.
-- **Fix** M12 U120: a pipe or `||` after a `cd` no longer makes the guard judge another repository's push as the project's ([Hooks](design/hooks.md#wiring)). Release 0.114.1.
-- **Update** M12 U119: the card cap is 100 lines instead of 6,000 chars, and PLAN-CARD also sizes approved units not yet merged ([Unit card](design/unit-card.md)). Release 0.114.0.
-- **Update** M12 U118: every unit of an intent sits on a thin slice with its own end-to-end test, no slice waits on a later one or on a fix unit, and overlapping scopes across intents are kept apart at run time instead of by `depends` chains ([Grid](design/grid.md#slices)). Release 0.113.0.
-- **Update** M12 U117: an intent is done only when every `# Slices` line names its units, so a later slice is never dropped ([Grid](design/grid.md#slices)). Release 0.112.0.
+- **Update** M13 U121: each merged slice of an intent ships to dev with the deploy check, the owner's release and smoke, while the next slices build ([Deployment and operation](design/operations.md)). Release 0.115.0.
+- **Fix** M13 U120: a pipe or `||` after a `cd` no longer makes the guard judge another repository's push as the project's ([Hooks](design/hooks.md#wiring)). Release 0.114.1.
+- **Update** M13 U119: the card cap is 100 lines instead of 6,000 chars, and PLAN-CARD also sizes approved units not yet merged ([Unit card](design/unit-card.md)). Release 0.114.0.
+- **Update** M13 U118: every unit of an intent sits on a thin slice with its own end-to-end test, no slice waits on a later one or on a fix unit, and overlapping scopes across intents are kept apart at run time instead of by `depends` chains ([Grid](design/grid.md#slices)). Release 0.113.0.
+- **Update** M13 U117: an intent is done only when every `# Slices` line names its units, so a later slice is never dropped ([Grid](design/grid.md#slices)). Release 0.112.0.
 - **Fix** M12 U116: the card cap leaves out the sections the profile writes, so a growing profile does not squeeze a unit's ACs ([Unit card](design/unit-card.md)). Release 0.111.1.
 - **Update** M12 U115: a unit's focus reviews run in parallel, and builders start while the base's CI is still pending ([State](design/state.md#next)). Release 0.111.0.
 - **Update** M12 U114: a quick-lane merge runs the first level, and a level red on the base alone is `GATE-BASE`, so `next` asks for a fix unit first ([Gate](design/gate.md)). Release 0.110.0.

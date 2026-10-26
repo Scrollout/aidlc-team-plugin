@@ -152,7 +152,7 @@ export const sliceLines = (intent) => sectionOf(intent.doc, GRID.slices).filter(
 export function sliceRole(unit, intents, units, top) {
   const intent = intents.find((i) => i.id === unit.fm.intent);
   if (!intent) return { kind: 'fix' };
-  const written = sliceLines(intent); // without slice lines an intent is one slice (docs/design/grid.md#slices)
+  const written = sliceLines(intent); // without slice lines an intent is one slice (docs/design/slices.md)
   const lines = written.length ? written : [{ ids: units.filter((u) => u.fm.intent === intent.id).map((u) => u.id), name: String(intent.fm.title ?? '') }];
   const k = lines.findIndex((l) => l.ids.includes(unit.id));
   if (k < 0) return { kind: 'unsliced', intent };

@@ -11,13 +11,13 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T06:40:00Z }
 flowchart LR
   owner([Owner])
   subgraph Inception
-    I[Intent] --> U[Units]
+    I[Intent: slices, risks] --> U[Units]
   end
   subgraph Construction
     D[Domain] --> L[Logical] --> S[Source]
   end
   subgraph Operations
-    P[Deployment: deploy check] --> O[Operation: release, smoke]
+    P[Deployment: deploy check, per merged slice] --> O[Operation: release, smoke]
   end
   U --> D
   S --> P
@@ -82,21 +82,4 @@ Tests are the Source row's second output, derived from the ACs written in Units,
 - Quick lane adds no tests and runs no level: the gate runs only the commands its ACs name ([Merge mechanics](gate.md#details)).
 
 # Slices
-An intent lists its vertical slices under `# Slices`, one line each, naming the units that build it once they are cut (`- Owners and the gate: U-31, U-32`). While a line names no unit the intent is not done, even when every unit it has is merged: `next` asks to cut that slice's units, or, for a slice built before the line named its units, to name the merged units that built it (first migration: I-1 came back ahead of I-5). So a slice planned "for later" cannot be forgotten when the first slices ship nothing and the intent counts as released (first migration: I-3 closed after 2 of its 4 slices). An intent without the section counts its units only.
-
-Each slice is vertical, checked by `PLAN-SLICE` before approval and at every `check` ([Plan lint](plan-lint.md)), for an intent whose live units reach the product:
-- An intent with more live units than `plan.sliceUnits` has the section (a smaller one is one slice), and with the section every live unit is named on a slice line.
-- Each slice line naming units names one with an AC at the top level: a slice without its own end-to-end test is a layer, not a slice.
-- A slice names at most `plan.sliceUnits` units (default 3): a fat slice is a layer cake in disguise.
-- No unit waits on a unit of a later slice, so the first slice is the walking skeleton and each slice builds on the ones before it.
-- A unit on a slice without an AC at the top level is there because a vertical unit of the slice depends on it, directly or through others; else it is a layer riding along. An intent without slice lines is one slice.
-- No unit of an intent waits on a fix unit not yet merged. Fix units build in the free slots beside the slices; work a slice truly needs moves into that slice.
-
-Why: on both migrations the plan drifted into chains of layer and hygiene units ahead of the product. The second project's only intent cut its units as layers (foundation, API kit, sign-in, tenancy) with the walking skeleton behind them, and the first project's portal and identity slices waited behind dependency and renaming fix units (owner, 2026-10-25: prevent drifting from vertical end-to-end slices).
-
-# Vertical and horizontal specs
-- **Vertical:** the intent is the spec of one capability, end to end: goal, why, risks and its slices, each a step of the user journey through every layer; its units carry the ACs, the domain and logical design. Each rule or limit says why, so a later change knows what it may move.
-- **Horizontal:** a layer or standards doc (API conventions, schema, UI kit, platform) in the project's design or architecture docs, linked from a unit's `# Interfaces` rather than copied.
-- Inception writes vertical specs only. A horizontal doc is extracted when a second slice needs the same pattern, by that slice's unit; it is never its own unit ahead of the slices, which `PLAN-SLICE` reports as a layer.
-
-Why: AWS's AI-DLC guidance on spec architecture (2026-05) starts vertical, extracts horizontal specs as reuse appears, and keeps the why beside each rule; the intent template already held the vertical spec, so the plugin adds the risks and the why per rule instead of a second doc per journey.
+An intent lists its vertical slices under `# Slices`; each is thin, ends to end, and ships to dev as soon as its units merge. The rules, the card's Spec line and the slice release: [Slices](slices.md).

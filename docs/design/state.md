@@ -14,9 +14,9 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T22:00:00Z }
 | Unit in progress | branch `unit/U-<n>` exists |
 | Unit reviewed | `.git/aidlc/reviews/U-<n>.json`, by diff hash: a `pass` in `general` and each focus the gate needs |
 | Unit done | a merge commit on the base branch with trailer `Unit: U-<n>` |
-| Released | every unit of the intent merged, all slices cut, and: a tag contains each unit's merge; or, with `deploy` or `release` in the profile, the recorded `aidlc release` passed, and its smoke when `deploy.smoke` is set; or every unit's scope lies in the levels' test paths |
+| Released | every unit merged, every slice line naming units, and a release holding each merge: a tag, a passed `aidlc release` (and smoke), or test-only scopes ([Slices](slices.md)) |
 
-`.git/aidlc/` is in git's common dir: every worktree sees it, and it is never committed.
+`.git/aidlc/` sits in git's common dir: every worktree sees it; it is never committed.
 
 # Unit states
 ```mermaid
@@ -62,12 +62,12 @@ Intents, requirements, units and one-way-door decisions carry the owner's approv
 9. Reported, not reviewed → review, one reviewer per required focus without a `pass` for the current diff, in parallel ([Skill and agents](prompts.md#review)).
 10. Building with a stale heartbeat ([Agents in flight](in-flight.md)) and no report → restart its builder. A merged unit still in a worktree → stop its builder, remove it.
 11. Approved, unblocked units → build, on one line; up to `parallel.max` in flight, with scopes disjoint from every unit started and not merged, intent units before fix units at the same priority; with `ci.wait`, the base pushed first and `ci wait` run beside them.
-12. Builders running → wait. A `# Slices` line naming no unit, the intent's units merged → cut its units ([Grid](grid.md#slices)).
+12. Builders running → wait. A slice line naming no unit once the intent's units merged → cut its units ([Slices](slices.md)).
 13. Intent merged, not released → its release steps: a hold, the deploy check, a fix unit, the release ([Deployment and operation](operations.md#details)). 4–12 serve the next intent meanwhile. All released → the owner clears the lead's session first ([Resume](resume.md#between-intents)).
 
 An owner gate in steps 2–5 holds back only the units that wait on its docs: `next` first returns an action of steps 6–11 for the other units, then the gate. A held unit (`hold`, by the owner, or by the lead with a reason while it parks a question) gets no action until the hold is released. An action auto mode refused at this commit goes to the owner: `aidlc approve <docs>` for a delegated approval, else the refused command ([Hook checks](hook-checks.md)).
 
-`aidlc status` prints it as a table; SessionStart injects it (max 1,000 chars).
+`aidlc status` prints it as a table; SessionStart injects it (≤ 1,000 chars).
 
 # Surviving a clear, crash or new session
 All that matters is on disk before a turn ends: [Resume](resume.md).
