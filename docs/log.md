@@ -7,6 +7,8 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-26
 
+- **Update** M13 U140: the profile's `checks` (lint, format, static analysis) run on every merge and show on the card ([Profile and templates](design/profile.md)). Release 0.119.4.
+- **Fix** M13 U141: a unit refused at the gate, escalated or stopped holds back no other unit's review, fix round or restart ([State](design/state.md)). Release 0.119.4.
 - **Fix** M13 U139: a draft intent with no decision asks for the decisions to be drafted while the owner answers, and the last vendor names and URLs leave the docs ([State](design/state.md), [OKF](design/okf.md)). Release 0.119.3.
 - **Fix** M13 U138: the AGENTS.md init writes names the bundle's root `index.md` as the entry point, read first ([Profile and templates](design/profile.md)). Release 0.119.2.
 - **Update** M13 U137: `init` writes `.github/dependabot.yml` for the workflow actions, among the files a direct commit may carry ([Current dependencies](design/dependencies.md)). Release 0.119.0; 0.119.1 trims the profile doc under its cap.

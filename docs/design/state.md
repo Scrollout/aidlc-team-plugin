@@ -65,7 +65,7 @@ Intents, requirements, units and one-way-door decisions carry the owner's approv
 12. Builders running → wait. A slice line naming no unit once the intent's units merged → cut its units ([Slices](slices.md)).
 13. Intent merged, not released → its release steps: a hold, the deploy check, a fix unit, the release ([Deployment and operation](operations.md#details)). 4–12 serve the next intent meanwhile. All released → the owner clears the lead's session first ([Resume](resume.md#between-intents)).
 
-An owner gate in steps 2–5 holds back only the units that wait on its docs: `next` first returns an action of steps 6–11 for the other units, then the gate. A held unit (`hold`) gets no action until released. An action auto mode refused at this commit goes to the owner: `aidlc approve <docs>` for a delegated approval, else the refused command ([Hook checks](hook-checks.md)).
+A gated, escalated or stopped unit holds back no other unit's review, fix or restart. An owner gate in steps 2–5 holds back only the units that wait on its docs: `next` first returns an action of steps 6–11 for the other units, then the gate. A held unit gets none until released. An action auto mode refused at this commit goes to the owner: `aidlc approve <docs>` for a delegated approval, else the refused command ([Hook checks](hook-checks.md)).
 
 `aidlc status` prints it as a table; SessionStart injects it (≤ 1,000 chars).
 

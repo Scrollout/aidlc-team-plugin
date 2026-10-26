@@ -632,7 +632,7 @@
   },
   "okf": {
     "profileKeys": {
-      "top": ["name", "base", "docs", "levels", "modules", "lanes", "focus", "security", "shared", "reserve", "parallel", "architecture", "adopted", "deploy", "release", "regen", "review", "research", "models", "board", "ci", "github", "decisions", "generated", "run", "approvals", "names", "deps", "plan"],
+      "top": ["name", "base", "docs", "levels", "modules", "lanes", "focus", "security", "shared", "reserve", "parallel", "architecture", "adopted", "deploy", "release", "regen", "review", "research", "models", "board", "ci", "github", "decisions", "generated", "run", "approvals", "names", "deps", "plan", "checks"],
       "security": ["secrets", "content", "threatModel", "check"]
     },
     "index": "index.md",
@@ -917,6 +917,7 @@
   },
   "card": {
     "bannedPattern": "(?!)",
+    "everyMerge": "every merge",
     "refs": "\\b([IUR]-\\d+|0\\d{3})\\b",
     "template": "card.md",
     "researchTemplate": "research.md",

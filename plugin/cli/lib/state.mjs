@@ -460,18 +460,19 @@ function unitWork(st, scope) {
     if (!u.fresh) return action('act', 'nextUntagged', { unit: u.id, tags: missing.join(', ') });
     backAtWork.push(u);
   }
-  const gated = live.find((u) => u.state === 'gated');
-  if (gated) return action('human', 'nextGated', { unit: gated.id, codes: readJson(runtimeFile(st.cwd, 'gates', gated.id)).codes.join(', ') });
-  const escalated = live.find((u) => u.state === 'escalated');
-  if (escalated) return action('human', 'nextEscalated', { unit: escalated.id });
-  const stopped = live.find((u) => u.state === 'stopped');
-  if (stopped) return action('act', 'nextStopped', { unit: stopped.id, reason: String(stopped.report.stop ?? stopped.report.summary ?? '') });
   const fix = live.find((u) => u.state === 'fix');
   if (fix) return action('act', 'nextFixRound', { unit: fix.id });
   const reported = live.find((u) => u.state === 'reported');
   if (reported) return action('act', 'nextReview', { unit: reported.id, focus: (reported.focuses.length ? reported.focuses : [reported.focus]).join(', '), model: st.profile.models.review });
   const lost = live.find((u) => u.state === 'building' && !u.fresh);
   if (lost) return action('act', 'nextRestart', { unit: lost.id, branch: branchOf(lost.id) });
+  // A unit waiting on the owner or on its spec holds back no other unit's review, fix or restart (U141).
+  const gated = live.find((u) => u.state === 'gated');
+  if (gated) return action('human', 'nextGated', { unit: gated.id, codes: readJson(runtimeFile(st.cwd, 'gates', gated.id)).codes.join(', ') });
+  const escalated = live.find((u) => u.state === 'escalated');
+  if (escalated) return action('human', 'nextEscalated', { unit: escalated.id });
+  const stopped = live.find((u) => u.state === 'stopped');
+  if (stopped) return action('act', 'nextStopped', { unit: stopped.id, reason: String(stopped.report.stop ?? stopped.report.summary ?? '') });
   // A builder still holding a merged unit's worktree: the merge could not remove it.
   const trees = worktrees(st.cwd);
   const left = st.units.find((x) => x.state === 'merged' && trees.has(branchOf(x.id)));

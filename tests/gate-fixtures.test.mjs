@@ -70,3 +70,9 @@ test('U108/AC-1 GATE-IDENTITY skips the test paths: a throwaway password belongs
   const r = merge(setup({ files: { ...CODE, ...TEST, 'tests/db.fixture.mjs': "export const url = 'postgres://app:s3cretpw@db:5432/app';\n" } }));
   assert.ok(!codes(r).includes('GATE-IDENTITY'), r.out);
 });
+
+test('U140/AC-1 the profile\'s checks run on every merge, whatever modules the unit touches', () => {
+  const r = merge(setup({ profile: { ...PROFILE, checks: [FAIL] } }));
+  assert.equal(r.code, 1);
+  assert.match(r.out + r.err, /GATE-CHECK/);
+});

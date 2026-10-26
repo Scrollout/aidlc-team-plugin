@@ -59,7 +59,8 @@ Merge rules:
   It also adds `.aidlc/local/` and `.claude/worktrees/` to `.gitignore` and the worktree folder to every other ignore file (`init.ignoreFiles`), so tools skip it, and sets `worktree.baseRef: "head"` in `.claude/settings.json`.
 - `security.content`: regexes for code that needs a security review wherever it sits (RLS, TLS skips); an added line matching one requires the `security` focus ([Merge mechanics](gate.md)). `security.secrets` is for credentials: the write hook blocks them.
 - `check` warns `PROFILE-KEY` for a top-level or `security` key in a layer file that nothing reads, so a guessed key is not taken for a rule (first migration: `security.patterns`, `security.content` before it existed).
-- `levels.<name>.paths`: the test files (`**/*_test.go`), never a folder that also holds helpers: a harness is code, which the proof reverts and a mutation may target (second project, 2026-10-26).
+- `levels.<name>.paths`: the test files (`**/*_test.go`), never a folder holding helpers, which are code the proof reverts.
+- `checks`: commands run on every merge: lint, format, static analysis.
 - `review.fixRounds`: fix rounds per focus before a `fix` escalates (default 3). `decisions.paths` and `generated`: [Plan lint](plan-lint.md#profile-keys-it-reads).
 - `names`: [Naming rules](names.md); `deps`: [Current dependencies](dependencies.md); `deploy.platform`: [Operations](operations.md).
 - `research.sources` lists sources the owner trusts for the researcher, and `research.max` its source budget (default 8); `models.research` its model ([0010](../decisions/0010-research-and-advice.md)).

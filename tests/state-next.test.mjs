@@ -146,6 +146,18 @@ test('U130/AC-1 a fix-round builder at work is waited for though another focus k
   assert.match(run(dir, ['next']).out, /^review U-1, focus general/);
 });
 
+test('U141/AC-1 a stopped unit holds back no other unit\'s review; its stop comes once the others have no step', () => {
+  const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['a/**'] }), [U(2)]: unitDoc({ scope: ['b/**'] }) });
+  approve(dir, 'I-1', 'U-1', 'U-2');
+  branch(dir, 'U-1', 'a/x.txt');
+  branch(dir, 'U-2', 'b/x.txt');
+  run(dir, ['report', 'U-1'], '{"status": "stopped", "stop": "the interface must change"}');
+  run(dir, ['report', 'U-2'], '{"status": "done"}');
+  assert.match(run(dir, ['next']).out, /^review U-2, focus general/);
+  write(dir, { '.git/aidlc/reviewing/U-2': 'reviewer\n' });
+  assert.match(run(dir, ['next']).out, /^⛔ the builder of U-1 stopped \(the interface must change\)/);
+});
+
 test('U4/AC-3 delegate writes the owner\'s delegation into the personal profile only', () => {
   const dir = makeRepo({ ...I1 });
   assert.equal(run(dir, ['delegate', 'everything']).code, 64);

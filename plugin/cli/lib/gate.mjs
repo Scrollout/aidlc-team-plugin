@@ -310,7 +310,7 @@ function runGate(cwd, st, unit) {
   const proof = out.length ? null : proofRevert(tree, card, paths, levels, tagged, bundleRel, add, unit, readJson(runtimeFile(cwd, 'reports', unit.id))?.mutations); // only on a green merge result
 
   const touched = (p.modules ?? []).filter((m) => paths.some((x) => list(m.paths).some((g) => matches(x, g))));
-  for (const m of touched.filter((x) => x.check)) if (!shell(tree, m.check)) add('GATE-CHECK', 'gateCheck', { command: m.check });
+  for (const command of [...touched.filter((x) => x.check).map((m) => m.check), ...list(p.checks)]) if (!shell(tree, command)) add('GATE-CHECK', 'gateCheck', { command }); // the touched modules', then the project's on every merge (U140)
   for (const command of list(p.security?.check)) if (!shell(tree, command)) add('GATE-SECURITY', 'gateCheck', { command });
   for (const command of list(p.deps?.check)) if (!shell(tree, command)) add('GATE-DEPENDENCY', 'depsCheck', { command }); // docs/design/dependencies.md
   out.push(...architecture(tree, merged)); // the boundaries as merged
