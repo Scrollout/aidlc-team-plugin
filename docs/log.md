@@ -5,6 +5,11 @@ title: aidlc-team-plugin docs history
 
 # Bundle history
 
+## 2026-10-27
+
+- **Update** M15 B149: the 39 incident citations audited (31 evidence for general rules, 8 go with the slice rules); the CLI budget rises to 5,000 lines ([0016](decisions/0016-cli-budget-5000.md)).
+- **Creation** Plan M15-M21, a deterministic AI-DLC: decisions [0013](decisions/0013-deterministic-ai-dlc.md), [0014](decisions/0014-cloud-api-and-event-conventions.md), [0015](decisions/0015-one-way-doors-approved-singly.md); draft designs [Canonical model](design/canonical-model.md), [Increments and bolts](design/increments-and-bolts.md), [Architecture model](design/architecture-model.md), [Bundle v2](design/bundle.md).
+
 ## 2026-10-26
 
 - **Update** M14 U148: each unit's board issue carries the card's Spec line, and a derived `board.spec` field shows vertical, horizontal, fix or unsliced; checks must be safe to run in parallel ([Board](design/board.md)). Release 0.120.4.
