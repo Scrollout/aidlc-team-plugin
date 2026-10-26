@@ -1,8 +1,8 @@
 ---
 type: Design
 title: Guard limits
-description: Draft - what the hooks do not stop, by the owner's choice of 2026-10-24 - deliberate evasion such as shell wrappers, Bash writes to state files and raw API calls - and what catches each instead.
-status: draft
+description: What the hooks do not stop, by the owner's choice of 2026-10-24 - deliberate evasion such as shell wrappers, Bash writes to state files and raw API calls - and what catches each instead.
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T11:48:25Z }
 ---
 

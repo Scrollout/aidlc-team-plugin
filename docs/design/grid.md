@@ -2,7 +2,7 @@
 type: Design
 title: Grid
 description: The AI-DLC rows, the plan-execute-validate loop in each cell, lanes and the doc types each row produces.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T06:40:00Z }
 ---
 

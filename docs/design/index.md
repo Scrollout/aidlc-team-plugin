@@ -4,21 +4,21 @@
 * [Approvals](approvals.md) - How the owner approves intents, requirements, units and decisions, what makes an approval stale, what the lead may approve for them, and how owner prompts are recorded.
 * [Architecture model](architecture-model.md) - Draft - the system's core and extensions, seven closed module kinds with what each may depend on, four inward-pointing layers, client, server and event surfaces, and data owned by one domain; boundaries are computed from these declarations, never written by hand.
 * [Board](board.md) - An optional one-way projection of derived state onto GitHub issues and a GitHub Project, written by deterministic code at zero model tokens.
-* [Build method from day one](method.md) - Draft - how a project gets the build method on its first init - level runs asked at init, a constitution that names the check behind each rule, and an upgrade that adds what an older project lacks.
+* [Build method from day one](method.md) - How a project gets the build method on its first init - level runs asked at init, a constitution that names the check behind each rule, and an upgrade that adds what an older project lacks.
 * [Bundle v2](bundle.md) - Draft - the project's OKF bundle as AI-DLC's context memory - one folder per closed doc type, authored and generated docs kept apart, a front-matter schema per type, typed references, decisions superseded never amended, CLI-made ids and slugs, and errors on the base.
 * [Canonical model](canonical-model.md) - Draft - one word per concept at each scale (system, domain, code, delivery), mapped to AI-DLC's Intent, Unit and Bolt, with the rule that a word used in another sense fails a check and that an approved intent keeps the method version it was approved under.
 * [CI check](ci-check.md) - What aidlc check --ci adds in CI - the base history since adoption, architecture on the checked-out tree, and a GitHub Actions job summary the owner reads on the run page.
-* [CI on the base](base-ci.md) - Draft - with profile ci.wait, no builder starts on a base whose CI is unknown or red - push first, wait for the base's GitHub Actions runs, and on a red base only a fix unit builds.
+* [CI on the base](base-ci.md) - With profile ci.wait, no builder starts on a base whose CI is unknown or red - push first, wait for the base's GitHub Actions runs, and on a red base only a fix unit builds.
 * [CLI](cli.md) - The aidlc commands, their exit codes and the terse output format.
 * [CLI engine](cli-engine.md) - How the CLI's command handlers and hook rules return data for adapters to render, and the limits the CLI is built within.
 * [Codebase map](codebase-map.md) - A generated doc in the project's bundle showing the codebase as a tree of modules, with each module's data, public paths and dependencies, rewritten at every merge so it never drifts.
 * [Current dependencies](dependencies.md) - Every dependency is the newest stable release with every known security fix, looked up from its registry when it is added or bumped, never from a model's memory, and scanned at merge and in CI.
 * [Data ownership](data-ownership.md) - Each piece of stored data has one owning module; another module reaches it only through the owner's interface, an event or a shared service, and the merge gate checks it.
 * [Deployment and operation](operations.md) - How the grid's Deployment and Operation rows run after an intent merges - deploy check, release, smoke, rollback, runbook and feedback - with the commands from the project profile.
-* [Design rows before code](design-rows.md) - Draft - the grid's Domain and Logical rows are checked - a full-lane unit carries a Domain and a Logical section, a standard-lane unit a Logical one, approved with the plan, on the card, and checked by every review.
+* [Design rows before code](design-rows.md) - The grid's Domain and Logical rows are checked - a full-lane unit carries a Domain and a Logical section, a standard-lane unit a Logical one, approved with the plan, on the card, and checked by every review.
 * [Everyday paths](paths.md) - Fixes without an intent, changes mid-flight, shared files, pushing and base health, cleanup, adopting an existing project, and removing the plugin.
 * [Grid](grid.md) - The AI-DLC rows, the plan-execute-validate loop in each cell, lanes and the doc types each row produces.
-* [Guard limits](guard-limits.md) - Draft - what the hooks do not stop, by the owner's choice of 2026-10-24 - deliberate evasion such as shell wrappers, Bash writes to state files and raw API calls - and what catches each instead.
+* [Guard limits](guard-limits.md) - What the hooks do not stop, by the owner's choice of 2026-10-24 - deliberate evasion such as shell wrappers, Bash writes to state files and raw API calls - and what catches each instead.
 * [Hook checks](hook-checks.md) - What each hook checks or records - guard, scope, secrets, model, docs, heartbeat, steer, prompt, status and denied.
 * [Hook mechanics](hooks.md) - How the plugin's hooks reach the pinned CLI, how they fail, the host facts they rely on, and how repeated denials escalate.
 * [Increments and bolts](increments-and-bolts.md) - Draft - an intent ships in increments (increment 1 the walking skeleton on its target), each built by bolts B-<n> that the CLI allocates, with legacy units read as aliases only; replaces the intent's Slices section, the Spec labels and the slice cap.
@@ -33,7 +33,7 @@
 * [Pipeline](pipeline.md) - The governance pipeline a unit passes through, in order - the checks before any work reaches a builder, and the checks after, each with its command, hook and codes.
 * [Plan lint](plan-lint.md) - The checks aidlc check runs on intents and units before the owner approves them, each with its code.
 * [Profile and templates](profile.md) - The project profile, rule layers, the template engine and what init renders and reports.
-* [Proof for back-fill tests](backfill.md) - Draft - how a tests-only unit, one that adds characterization tests for code built before a migration, proves its tests can fail - the builder lists one mutation per AC and the gate applies each.
+* [Proof for back-fill tests](backfill.md) - How a tests-only unit, one that adds characterization tests for code built before a migration, proves its tests can fail - the builder lists one mutation per AC and the gate applies each.
 * [Requirements and architecture checks](architecture.md) - Lasting requirements as their own docs, and architecture rules as checks that fail a merge, so a project cannot drift from its intended shape.
 * [Resume](resume.md) - How the lead survives a clear, a crash or a new session - what lives on disk instead of the conversation - and why the owner clears the lead between intents.
 * [Review rounds](review-rounds.md) - What review record does with a verdict - fix rounds and their limit, send-backs, and which focus passes still count after a fix.

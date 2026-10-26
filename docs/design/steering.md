@@ -2,7 +2,7 @@
 type: Design
 title: Steering
 description: How the plugin corrects the agent during work, keeps it moving, and improves its rules over time without growing.
-status: draft
+status: stable
 
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T22:20:00Z }
 ---

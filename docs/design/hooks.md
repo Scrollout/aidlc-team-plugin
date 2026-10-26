@@ -2,7 +2,7 @@
 type: Design
 title: Hook mechanics
 description: How the plugin's hooks reach the pinned CLI, how they fail, the host facts they rely on, and how repeated denials escalate.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T11:46:55Z }
 sources:
   - id: cc-hooks

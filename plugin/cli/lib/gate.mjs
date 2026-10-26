@@ -322,7 +322,7 @@ function runGate(cwd, st, unit) {
     if (tryGit(cwd, 'cat-file', '-e', `${base}:${d}`) === null && existsSync(join(tree, d))) add('ARCH-BOUNDARY', 'archExceptInUnit', { doc: d }, d);
   }
 
-  for (const f of checkBundle(treeBundle, { rules: p.docs?.rules ?? {}, caps: p.docs?.caps, base: tree, v2: Boolean(p.system) }).filter((x) => x.level === 'error')) {
+  for (const f of checkBundle(treeBundle, { rules: p.docs?.rules ?? {}, caps: p.docs?.caps, base: tree, v2: Boolean(p.system), strict: true }).filter((x) => x.level === 'error')) {
     out.push(finding('GATE-OKF', f.path, f.line, 'gateOkf', f));
   }
   return { findings: out, tree, tested: tested.map(([level]) => level), proof, card };

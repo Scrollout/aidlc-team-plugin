@@ -2,7 +2,7 @@
 type: Design
 title: State
 description: How the CLI derives progress from git and docs, how approvals work, and how next picks the one allowed step.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T22:00:00Z }
 ---
 

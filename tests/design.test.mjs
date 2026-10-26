@@ -67,3 +67,28 @@ test('B150/AC-1 every vocabulary word has one scale, and the AI-DLC terms Intent
   for (const term of ['Intent', 'Unit', 'Bolt']) assert.equal(words.filter((w) => w.method === `**${term}**`).length, 1, term);
   assert.match(readFileSync(join(ROOT, 'docs/design/method.md'), 'utf8'), /\[Canonical model\]\(canonical-model\.md\)/);
 });
+
+test('B158/AC-2 a design doc or roadmap is draft exactly while it names a bolt not yet built, and only a draft says Draft', async () => {
+  const { readdirSync } = await import('node:fs');
+  const fm = (t, k) => t.match(new RegExp(`^${k}: (.*)$`, 'm'))?.[1] ?? '';
+  const roadmap = readdirSync(join(ROOT, 'docs/roadmap')).filter((f) => /^m\d+\.md$/.test(f)).map((f) => [f, readFileSync(join(ROOT, 'docs/roadmap', f), 'utf8')]);
+  const heads = (t) => t.match(/^## ([UB]\d+)\b/gm)?.map((h) => h.slice(3)) ?? [];
+  const built = new Set(roadmap.flatMap(([, t]) => [...t.split('\n').filter((l) => /^Built on /.test(l)).flatMap((l) => l.match(/\b[UB]\d+\b/g) ?? []), ...(/^(Closed|Done) /m.test(t) ? heads(t) : [])]));
+  const planned = new Set(roadmap.flatMap(([, t]) => heads(t)));
+  const docs = [...readdirSync(join(ROOT, 'docs/design')).filter((f) => f.endsWith('.md') && f !== 'index.md').map((f) => [`design/${f}`, readFileSync(join(ROOT, 'docs/design', f), 'utf8'), null]), ...roadmap.map(([f, t]) => [`roadmap/${f}`, t, heads(t)])];
+  const wrong = docs.flatMap(([f, t, own]) => {
+    const pending = (own ?? [...new Set(t.match(/\b[UB]\d+\b/g) ?? [])].filter((id) => planned.has(id))).filter((id) => !built.has(id));
+    const want = pending.length ? 'draft' : 'stable';
+    return (fm(t, 'status') || 'stable') === want && fm(t, 'description').startsWith('Draft') === (want === 'draft') ? [] : [`${f} should be ${want}`];
+  });
+  assert.deepEqual(wrong, []);
+});
+
+test('B158/AC-1 on the base (check --ci) a stale index or a broken link is an error, unless the profile sets its level', async () => {
+  const { makeRepo, run } = await import('./state-repo.mjs');
+  const docs = { 'docs/notes/a.md': '---\ntype: Note\ntitle: A\ndescription: A.\ngenerated: { by: x/1, at: 2026-10-27T00:00:00Z }\n---\n\nSee [b](b.md).\n' };
+  const levels = (profile, args) => run(makeRepo(docs, profile), ['check', ...args]).out.split('\n').filter((l) => /HOUSE-(LINK|INDEX-STALE)/.test(l)).map((l) => `${l.match(/HOUSE-[A-Z-]+/)[0]} ${l.match(/\((\w+)\)$/)[1]}`).sort();
+  assert.deepEqual(levels({}, []), ['HOUSE-INDEX-STALE warning', 'HOUSE-INDEX-STALE warning', 'HOUSE-LINK warning']);
+  assert.deepEqual(levels({}, ['--ci']), ['HOUSE-INDEX-STALE error', 'HOUSE-INDEX-STALE error', 'HOUSE-LINK error']);
+  assert.deepEqual(levels({ docs: { rules: { 'HOUSE-LINK': 'warning' } } }, ['--ci']), ['HOUSE-INDEX-STALE error', 'HOUSE-INDEX-STALE error', 'HOUSE-LINK warning'], "the profile's level wins");
+});

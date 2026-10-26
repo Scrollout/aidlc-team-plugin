@@ -2,7 +2,7 @@
 type: Design
 title: Hook checks
 description: What each hook checks or records - guard, scope, secrets, model, docs, heartbeat, steer, prompt, status and denied.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T11:46:55Z }
 sources:
   - id: cc-hooks

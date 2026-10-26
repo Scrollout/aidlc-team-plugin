@@ -2,11 +2,11 @@
 
 * [Later](later.md) - Ideas kept for after the first real migration, none planned - org rule packs, domain row templates, a CI evaluator agent, other agent hosts, staged checks, reserve and clean.
 * [M1 Core loop](m1.md) - The first usable plugin - CLI, grid state, cards, merge gate, six hooks, builder and reviewer - piloted on a copy of a real project.
-* [M10 Draft](m10.md) - Draft - a fully vertical build - the Domain and Logical rows checked before code, from the first migration.
-* [M11 Draft](m11.md) - Draft - slices that own their data, code surface and place in a codebase map, from the first migration.
+* [M10 A fully vertical build](m10.md) - A fully vertical build - the Domain and Logical rows checked before code, from the first migration.
+* [M11 Slices that own their data](m11.md) - Slices that own their data, code surface and place in a codebase map, from the first migration.
 * [M12 Second project and later migration fixes](m12.md) - fixes from the second project and the first migration's later units - research holds on any doc, decisions before units, profile proofs.
 * [M13 Steering two migrations](m13.md) - Fixes and refinements from steering the first migration and the second project side by side - slices that ship, cards that name their evidence, retry-safe records, and the docs aligned.
-* [M14 Owner fixes and a third project](m14.md) - Draft - fixes the owner asked for directly and from starting a third project - init's Dependabot config, the root index in AGENTS.md, decisions drafted with the intent, project checks, stops that block nothing, and architecture you can see.
+* [M14 Owner fixes and a third project](m14.md) - Fixes the owner asked for directly and from starting a third project - init's Dependabot config, the root index in AGENTS.md, decisions drafted with the intent, project checks, stops that block nothing, and architecture you can see.
 * [M15 One vocabulary and a true bundle](m15.md) - Draft - the canonical model mapped to AI-DLC (core and extensions, domains of a fixed kind, slices and layers, intents, increments and bolts), profile v2 with module kinds, rules pinned per intent, the map drawn by kind, and an OKF bundle v2 whose layout, schemas, slugs and statuses are checked, with room made in the CLI budget first.
 * [M16 Names composed, never invented](m16.md) - Draft - a naming registry (tokens, domains, closed vocabularies, banned words) with the reference cloud's API and event grammar as default, names printed by the CLI, rules generated from the registry and checked on code, contracts and docs.
 * [M17 Kinds, scaffolds and boundaries](m17.md) - Draft - boundaries computed from module kinds, layers that point inward, client and server surfaces, transitive reach per runtime, reference graph extractors, and stack packs for Go then TypeScript that scaffold every kind with a tested reference domain.
@@ -21,4 +21,4 @@
 * [M6 Deployment and operation](m6.md) - The grid's Deployment and Operation rows - deploy check, release, smoke, rollback, runbook and feedback - run from the project profile, built and piloted on 0.54.0 to 0.58.3.
 * [M7 Build method and back-fill](m7.md) - The build method from day one (level runs at init, a constitution, upgrade adds what is missing), proof for back-fill tests by mutation, and the M6 and M7 pilot findings, built on 0.59.0 to 0.67.0.
 * [M8 Alignment and cleanup](m8.md) - Mutations that break an AC's main behaviour, then a full alignment and cleanup before the first real migration - docs that match the code, dead code out, values into cli.json, steadier tests, evals and a security pass, built on 0.68.0 to 0.74.0.
-* [M9 Draft](m9.md) - Draft - CI on the base before the first real migration - push before new builders, wait for the base's CI, and a red base comes first in next.
+* [M9 CI on the base](m9.md) - CI on the base before the first real migration - push before new builders, wait for the base's CI, and a red base comes first in next.

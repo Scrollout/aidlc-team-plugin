@@ -48,4 +48,4 @@ B152 removed the section, the `Spec:` line, `plan.sliceUnits` and `slices.md`, k
 - Old test tags `U-<n>/AC-<k>` still count for their bolt.
 - The aliases expire one milestone after the last pilot migrates (M21).
 
-Bolts: [M15](../roadmap/m15.md) B152, B153.
+Bolts: [M15](../roadmap/m15.md) B152, B153; still to build: B182 (binding), B186 (`INCR-SKELETON`, `INCR-DONE`), B188 (`FIX-SHAPE`).

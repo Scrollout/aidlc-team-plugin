@@ -2,7 +2,7 @@
 type: Design
 title: Skill and agents
 description: What the lead's skill and the builder and reviewer prompts say, how a review is picked and run, and why the prompts restate no enforced rule.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T16:00:00Z }
 sources:
   - id: cc-subagents

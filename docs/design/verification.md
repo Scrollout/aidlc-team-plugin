@@ -2,7 +2,7 @@
 type: Design
 title: Verification
 description: The inner loop (hooks), the merge gate, the reviewer's output contract and the CI mode.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T18:15:00Z }
 sources:
   - id: cc-hooks

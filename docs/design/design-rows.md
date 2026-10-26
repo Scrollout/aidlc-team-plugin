@@ -1,8 +1,8 @@
 ---
 type: Design
 title: Design rows before code
-description: Draft - the grid's Domain and Logical rows are checked - a full-lane unit carries a Domain and a Logical section, a standard-lane unit a Logical one, approved with the plan, on the card, and checked by every review.
-status: draft
+description: The grid's Domain and Logical rows are checked - a full-lane unit carries a Domain and a Logical section, a standard-lane unit a Logical one, approved with the plan, on the card, and checked by every review.
+status: stable
 
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T13:19:54Z }
 ---

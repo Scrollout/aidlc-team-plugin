@@ -2,7 +2,7 @@
 type: Design
 title: Overview
 description: Goals, non-goals, budgets, repo layout and glossary of the plugin.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T13:10:00Z }
 sources:
   - id: cc-host

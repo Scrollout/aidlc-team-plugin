@@ -659,6 +659,7 @@
     "index": "index.md",
     "bundle": {
       "producer": "aidlc/",
+      "baseErrors": ["HOUSE-INDEX-STALE", "HOUSE-LINK"],
       "idFile": "^((?:[A-Z]-\\d+)|\\d{4})-(.+)\\.md$",
       "slugWords": 8,
       "slugMax": 48,

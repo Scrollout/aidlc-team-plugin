@@ -1,8 +1,8 @@
 ---
 type: Design
 title: Proof for back-fill tests
-description: Draft - how a tests-only unit, one that adds characterization tests for code built before a migration, proves its tests can fail - the builder lists one mutation per AC and the gate applies each.
-status: draft
+description: How a tests-only unit, one that adds characterization tests for code built before a migration, proves its tests can fail - the builder lists one mutation per AC and the gate applies each.
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T09:00:00Z }
 ---
 

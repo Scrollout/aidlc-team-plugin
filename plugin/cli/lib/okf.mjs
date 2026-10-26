@@ -577,11 +577,12 @@ function lintKeys(sources) {
 const finding = (code, level, path, line, key, data) => codeFinding(OKF.codes, code, path, line, key, data, level);
 
 // Validates a bundle; returns findings with paths relative to `base`. `rules` maps house codes to levels.
-export function checkBundle(root, { rules = {}, caps, base = process.cwd(), v2 = false } = {}) {
+export function checkBundle(root, { rules = {}, caps, base = process.cwd(), v2 = false, strict = false } = {}) {
   root = resolve(root);
   const findings = [];
-  const add = (file, line, code, key, data, as) => { // `as`: a level a v1 bundle softens to
-    const level = (OKF.codes[code].house && OKF.levels.includes(rules[code]) ? rules[code] : null) ?? as ?? OKF.codes[code].level;
+  // `as`: a level a v1 bundle softens to; `strict`, on the base (check --ci, the gate): a stale index or a broken link is an error unless the profile says otherwise.
+  const add = (file, line, code, key, data, as) => {
+    const level = (OKF.codes[code].house && OKF.levels.includes(rules[code]) ? rules[code] : null) ?? as ?? (strict && OKF.bundle.baseErrors.includes(code) ? 'error' : OKF.codes[code].level);
     if (level !== 'off') findings.push(finding(code, level, relPath(base, file), line, key, data));
   };
   for (const file of walk(root).filter((f) => f.endsWith(OKF.ext))) {
@@ -635,9 +636,9 @@ export const commands = {
     for (const p of paths) {
       if (!existsSync(p)) throw new UsageError(msg('noSuchPath', { name: relPath(cwd, p) }));
       // A folder below the bundle root is checked within the bundle, so bundle-root links resolve from the root.
-      if (statSync(p).isDirectory() && p !== bundle && inside(bundle, p)) findings.push(...checkBundle(bundle, { rules, caps: profile.docs?.caps, base: cwd, v2: Boolean(profile.system) }).filter((f) => inside(p, resolve(cwd, f.path))));
-      else if (statSync(p).isDirectory()) findings.push(...checkBundle(p, { rules, caps: profile.docs?.caps, base: cwd, v2: Boolean(profile.system) }));
-      else if (inside(bundle, p)) findings.push(...checkBundle(bundle, { rules, caps: profile.docs?.caps, base: cwd, v2: Boolean(profile.system) }).filter((f) => f.path === relPath(cwd, p)));
+      if (statSync(p).isDirectory() && p !== bundle && inside(bundle, p)) findings.push(...checkBundle(bundle, { rules, caps: profile.docs?.caps, base: cwd, v2: Boolean(profile.system), strict: args.includes('--ci') }).filter((f) => inside(p, resolve(cwd, f.path))));
+      else if (statSync(p).isDirectory()) findings.push(...checkBundle(p, { rules, caps: profile.docs?.caps, base: cwd, v2: Boolean(profile.system), strict: args.includes('--ci') }));
+      else if (inside(bundle, p)) findings.push(...checkBundle(bundle, { rules, caps: profile.docs?.caps, base: cwd, v2: Boolean(profile.system), strict: args.includes('--ci') }).filter((f) => f.path === relPath(cwd, p)));
     }
     return done('', hasErrors(findings) ? config.exit.findings : config.exit.ok, findings);
   },

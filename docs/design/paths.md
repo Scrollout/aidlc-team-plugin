@@ -2,7 +2,7 @@
 type: Design
 title: Everyday paths
 description: Fixes without an intent, changes mid-flight, shared files, pushing and base health, cleanup, adopting an existing project, and removing the plugin.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 ---
 

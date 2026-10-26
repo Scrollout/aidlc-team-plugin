@@ -65,4 +65,4 @@ All of them run at every gate on the merged tree. A project writes only exceptio
 - `slice-architecture.md`, `module-surface.md` and `data-ownership.md` fold into this doc.
 - Hand-written `architecture.boundaries` remain only as `except` lists.
 
-Bolts: [M15](../roadmap/m15.md) B151, B155; [M17](../roadmap/m17.md).
+Bolts: [M15](../roadmap/m15.md) B151, B155; still to build: [M17](../roadmap/m17.md) B166 to B170.

@@ -2,7 +2,7 @@
 type: Design
 title: Deployment and operation
 description: How the grid's Deployment and Operation rows run after an intent merges - deploy check, release, smoke, rollback, runbook and feedback - with the commands from the project profile.
-status: draft
+status: stable
 
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T08:00:00Z }
 ---

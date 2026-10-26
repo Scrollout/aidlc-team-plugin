@@ -2,7 +2,7 @@
 type: Design
 title: CI check
 description: What aidlc check --ci adds in CI - the base history since adoption, architecture on the checked-out tree, and a GitHub Actions job summary the owner reads on the run page.
-status: draft
+status: stable
 sources:
   - id: gh-summary
     resource: https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands

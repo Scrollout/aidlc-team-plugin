@@ -2,7 +2,7 @@
 type: Design
 title: Approvals
 description: How the owner approves intents, requirements, units and decisions, what makes an approval stale, what the lead may approve for them, and how owner prompts are recorded.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T22:20:00Z }
 ---
 

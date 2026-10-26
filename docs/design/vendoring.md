@@ -2,7 +2,7 @@
 type: Design
 title: Vendoring
 description: How init and upgrade copy the CLI into a project and pin it, and why only a release is copied.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T10:28:02Z }
 
 ---

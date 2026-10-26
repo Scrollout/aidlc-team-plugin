@@ -2,7 +2,7 @@
 type: Design
 title: Intent states
 description: The states an intent passes through, from draft to released, with the deploy check, the owner's typed release, smoke, rollback, the fix unit after it, the back-fill shortcut and release by tag.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T14:00:00Z }
 ---
 

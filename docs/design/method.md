@@ -1,8 +1,8 @@
 ---
 type: Design
 title: Build method from day one
-description: Draft - how a project gets the build method on its first init - level runs asked at init, a constitution that names the check behind each rule, and an upgrade that adds what an older project lacks.
-status: draft
+description: How a project gets the build method on its first init - level runs asked at init, a constitution that names the check behind each rule, and an upgrade that adds what an older project lacks.
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T08:00:00Z }
 ---
 

@@ -2,7 +2,7 @@
 type: Design
 title: Profile and templates
 description: The project profile, rule layers, the template engine and what init renders and reports.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T21:50:00Z }
 ---
 

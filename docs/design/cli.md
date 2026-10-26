@@ -2,7 +2,7 @@
 type: Design
 title: CLI
 description: The aidlc commands, their exit codes and the terse output format.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 ---
 

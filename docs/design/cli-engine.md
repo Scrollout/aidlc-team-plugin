@@ -2,7 +2,7 @@
 type: Design
 title: CLI engine
 description: How the CLI's command handlers and hook rules return data for adapters to render, and the limits the CLI is built within.
-status: draft
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T10:28:02Z }
 ---
 

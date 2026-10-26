@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M15 B158: on the base (`check --ci`, the merge gate) a stale index or a broken link is an error unless the profile sets its level; a test keeps each design doc and roadmap draft exactly while it names a bolt not yet built, and about 25 statuses are corrected ([OKF validation](design/okf-validation.md)). Release 0.129.0.
 - **Update** M15 B157: one slug generator names every doc from its title (no apostrophes or number commas, at most 48 characters, cut at a word), used by `new` and `fix`; a file named by an ID whose slug is not its title's is `DOC-SLUG`; this repo's eight misnamed decisions are renamed, IDs kept ([Bundle v2](design/bundle.md)). Release 0.128.0.
 - **Update** M15 B156: bundle v2: each type's required keys, allowed values and folder are data, checked as `DOC-SCHEMA`; generated docs carry their body's digest, so a hand edit or another producer is `DOC-GENERATED`; a v2 project's map lives in `architecture/` ([Bundle v2](design/bundle.md)). Release 0.127.0.
 - **Update** M15 B155: the codebase map draws the domains side by side with their layers and the horizontal kinds as bands (`codebase-map-kinds.md`), leaving delivery out; the slices-and-layers page and `PLAN-ARCHDOC` are gone, and constitution rule 11 is checked by `PROFILE-KIND` and the map ([Codebase map](design/codebase-map.md)). Release 0.126.0.

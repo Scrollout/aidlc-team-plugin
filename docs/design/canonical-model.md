@@ -60,4 +60,4 @@ Docs and messages say "the method" for the first group and "the plugin" for the 
 - **Pinned method.** Approving an intent writes `method: <version>` (`cli.json` `method.version`), a stamp field outside the doc's hash. An intent is judged by that method; one approved before pinning by method 1, a draft by the current one. A rule a later method added is listed in `method.since` by its message key, and holds only for intents pinned at or after it. `upgrade` lists the changes since the pinned CLI's method (`method.changes`).
 - An approved intent's `method/` pages are frozen at its version ([Bundle](bundle.md)).
 
-Bolts: [M15](../roadmap/m15.md) B150, B154.
+Bolts: [M15](../roadmap/m15.md) B150, B154; still to build: B163 and B193 (`TERM-SYNONYM`).
