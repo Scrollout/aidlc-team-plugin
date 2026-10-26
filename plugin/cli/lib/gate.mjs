@@ -10,7 +10,7 @@ import { checkBundle, nameProblem, parseDoc, writeIndexes } from './okf.mjs';
 import { computeLane, inside, lintPlan, readPlan, runTarget, spansOf } from './grid.mjs';
 import { issueTitle, sync } from './board.mjs';
 import { writeMap } from './map.mjs';
-import { approval, baseOf, baseRedFile, branchOf, bump, codeChanges, diffHash, keptPass, verdictCurrent, mergedUnits, mutationOf, readState, reviewFocuses, roundsOf, runtimeFile, unitPaths, worktrees, writeJson } from './state.mjs';
+import { aidlcDir, approval, baseOf, baseRedFile, branchOf, bump, codeChanges, diffHash, keptPass, verdictCurrent, mergedUnits, mutationOf, readState, reviewFocuses, roundsOf, runtimeFile, unitPaths, worktrees, writeJson } from './state.mjs';
 
 const G = config.gate;
 const matches = (path, glob) => inside('/' + path, glob);
@@ -366,7 +366,9 @@ export const commands = {
     if (!unit) throw new UsageError(msg('unknownUnit', { name: args[0] ?? '', dir: relPath(cwd, join(st.bundle, config.grid.units)) }));
     if (git(cwd, 'rev-parse', '--abbrev-ref', 'HEAD') !== st.base) throw new UsageError(msg('gateNotBase', { base: st.base }));
     if (!tryGit(cwd, 'rev-parse', '-q', '--verify', branchOf(unit.id))) throw new UsageError(msg('noBranch', { branch: branchOf(unit.id) }));
-    const { findings, tree, tested, proof, card } = runGate(cwd, st, unit);
+    const marker = join(aidlcDir(cwd), config.state.merging); // the guard refuses a commit on the base while the gate runs (U144)
+    writeFileSync(marker, unit.id);
+    const { findings, tree, tested, proof, card } = (() => { try { return runGate(cwd, st, unit); } finally { rmSync(marker, { force: true }); } })();
     if (findings.length) {
       tryGit(tree, 'merge', '--abort');
       dropWorktree(cwd, tree);

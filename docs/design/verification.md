@@ -14,7 +14,7 @@ sources:
 All hooks are thin wrappers in the plugin's `hooks/hooks.json`, run in exec form with `${CLAUDE_PLUGIN_ROOT}`, that call the vendored CLI.[^cc-hooks] How they are wired and fail: [Hook mechanics](hooks.md); what each checks: [Hook checks](hook-checks.md).
 | Hook | Event | Blocks or records |
 |---|---|---|
-| guard | PreToolUse Bash, `CronCreate`, `ScheduleWakeup` | blocks force push; `--no-verify` / `-n` on commit; raw `git merge` of a `unit/*` branch; pushing or deleting the base; a code commit on the base; a scheduled approval or go. Asks the owner for an owner command, `git tag` and `gh release` |
+| guard | PreToolUse Bash, `CronCreate`, `ScheduleWakeup` | blocks force push; `--no-verify` / `-n` on commit; raw `git merge` of a `unit/*` branch; pushing or deleting the base; a code commit on the base; any commit on the base while `aidlc merge` runs its gate (`.git/aidlc/merging`, two hours at most); a scheduled approval or go. Asks the owner for an owner command, `git tag` and `gh release` |
 | scope | PreToolUse Edit/Write | in a `unit/*` worktree: writes outside the card's scope and merge-written files; anywhere: an edit changing `verified` events, `verified_hash` or the personal profile |
 | secrets | PreToolUse Edit/Write | content matching secret patterns (keys, tokens, private keys); `profile.security.secrets` adds patterns |
 | model | PreToolUse Agent | a builder, reviewer or researcher started with a `model` other than the card's, `models.review` or `models.research` |

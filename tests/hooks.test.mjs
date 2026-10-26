@@ -113,6 +113,12 @@ test('U7/AC-1 guard denies each listed command and allows the everyday ones', ()
   write(dir, { 'src/a.mjs': '1;\n' });
   git(dir, 'add', 'src/a.mjs');
   assert.match(reason(bash(dir, 'git commit -m x')), /GUARD-BASE-COMMIT commit on main stages src\/a\.mjs/);
+  git(dir, 'reset', '-q', 'src/a.mjs');
+  write(dir, { '.git/aidlc/merging': 'U-1' });
+  assert.match(reason(bash(dir, 'git commit -m "docs: plan"')), /GUARD-MERGING commit on main while aidlc merge U-1 runs its gate/, 'U144/AC-1 a doc commit too');
+  const old = (Date.now() - 3 * 3600 * 1000) / 1000;
+  utimesSync(join(dir, '.git/aidlc/merging'), old, old);
+  assert.equal(decision(bash(dir, 'git commit -m "docs: plan"')), 'allow', 'a merge that died hours ago holds nothing');
 });
 
 function unitWorktree(dir) {

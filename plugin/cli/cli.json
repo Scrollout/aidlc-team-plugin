@@ -493,6 +493,7 @@
     "guardDelete": "deleting {{base}}",
     "guardNoVerify": "commit without hooks",
     "guardBaseCommit": "commit on {{base}} stages {{path}}",
+    "guardMerging": "commit on {{base}} while aidlc merge {{unit}} runs its gate: the merge fast-forwards {{base}} when it ends",
     "guardMerge": "raw merge of {{branch}}",
     "guardMove": "moving {{base}} by git {{what}}",
     "guardAlias": "a git alias set on the command line",
@@ -508,7 +509,7 @@
     "scopeShared": "{{path}} is written by merge",
     "planShared": "{{unit}} scope {{glob}} names a file only merge writes",
     "planSkeleton": "{{unit}}'s first {{level}} AC waits on {{wait}} of its {{units}} product units: end to end comes last",
-    "planArchDoc": "{{unit}} changes what the architecture diagrams show (a module, a process, a store, a deploy) and its scope holds none of {{docs}}",
+    "planArchDoc": "{{unit}} changes what the architecture diagrams show (a module, a process, a store, a deploy) and neither holds nor links under Interfaces any of {{docs}}",
     "planRunbook": "{{unit}} links no runbook, and the profile deploys",
     "planPlatform": "{{unit}} ships, and the profile does not say where the deploy target is defined (deploy.platform)",
     "planSlicesNone": "{{unit}} has {{count}} live units, more than plan.sliceUnits {{max}}, and no # Slices section: name its slices, the walking skeleton first",
@@ -812,7 +813,7 @@
       },
       "PLAN-ARCHDOC": {
         "level": "error",
-        "fix": "add the architecture doc it changes to the unit's scope and an AC that it shows the change: the logical and technical diagrams stay true (template .aidlc/templates/docs/architecture.md)"
+        "fix": "update the architecture doc on the base first (docs before code) and link it under the unit's # Interfaces, or add it to the unit's scope with an AC that it shows the change (template .aidlc/templates/docs/architecture.md)"
       },
       "PLAN-RUNBOOK": {
         "level": "error",
@@ -847,6 +848,8 @@
     "cards": "cards",
     "heartbeats": "heartbeats",
     "heartbeatMs": 720000,
+    "merging": "merging",
+    "mergingMs": 7200000,
     "hostDenied": "host-denied.json",
     "researchHold": "research:",
     "hostDeniedKept": 5,
@@ -1346,6 +1349,9 @@
       },
       "GUARD-BASE-COMMIT": {
         "fix": "commit code only in a unit worktree; on the base commit only docs"
+      },
+      "GUARD-MERGING": {
+        "fix": "wait for the merge to end, then commit; a merge that died leaves .git/aidlc/merging, which counts for two hours, or remove it"
       },
       "GUARD-MERGE": {
         "fix": "merge units with aidlc merge"

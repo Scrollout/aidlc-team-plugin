@@ -32,9 +32,7 @@ function mergeLayer(base, next, layer, path = []) {
       out[key] = mergeLayer(prev, value, layer, [...path, key]);
     } else if (hasUnion(prev)) {
       throw fail('unionReplaced', { layer, key: at });
-    } else {
-      out[key] = value;
-    }
+    } else out[key] = value;
   }
   return out;
 }

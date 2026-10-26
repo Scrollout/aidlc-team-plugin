@@ -338,9 +338,9 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
     if (!linksOf(i, bundle).some((f) => existsSync(f) && parseDoc(readFileSync(f, 'utf8')).fm?.type === GRID.runbookType)) add('PLAN-RUNBOOK', i, 1, 'planRunbook', {});
     if (!Object.hasOwn(profile.deploy, 'platform')) add('PLAN-PLATFORM', i, 1, 'planPlatform', {});
   }
-  // A unit that changes what the architecture diagrams show updates them in its own scope (U142).
+  // A unit that changes what the architecture diagrams show updates them in its scope, or builds to them as updated on the base, linked under Interfaces (U142, U143).
   const arch = profile.architecture?.docs, holds = (u, globs) => u.scope.some((x) => list(globs).some((g) => overlaps(x, g)));
-  for (const u of arch ? units.filter((x) => holds(x, [...list(arch.when), '/' + config.layers.find((l) => l.from === 'project').path]) && !holds(x, arch.paths)) : []) add('PLAN-ARCHDOC', u, keyLine(u, 'scope'), 'planArchDoc', { docs: list(arch.paths).join(', ') });
+  for (const u of arch ? units.filter((x) => holds(x, [...list(arch.when), '/' + config.layers.find((l) => l.from === 'project').path]) && !holds(x, arch.paths) && !linksOf(x, bundle, GRID.interfaces).some((f) => list(arch.paths).some((g) => overlaps('/' + relPath(base, f), g)))) : []) add('PLAN-ARCHDOC', u, keyLine(u, 'scope'), 'planArchDoc', { docs: list(arch.paths).join(', ') });
   for (const u of units.filter((x) => x.modules.length > 1 && x.acs.length && x.acs.every((a) => a.level === levels[0]))) {
     add('PLAN-SLICE', u, keyLine(u, 'modules'), 'planSliceUnit', { modules: u.modules.join(', '), level: levels[0] });
   }

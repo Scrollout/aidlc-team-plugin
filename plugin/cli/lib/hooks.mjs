@@ -1,6 +1,6 @@
 // Hook entry points: `aidlc hook <name>` reads the hook JSON on stdin and prints the decision JSON
 // (docs/design/hooks.md). Deny lists, patterns, codes and messages come from cli.json.
-import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, utimesSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync, utimesSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join, resolve, sep } from 'node:path';
 import { bundleOf, config, done, git, gitLines, readJson, readStdin, tryGit, UsageError, relPath } from './config.mjs';
@@ -203,6 +203,8 @@ function guard(input, cwd) {
       if (args.some((a) => opt(a, H.noVerify) || (/^-[^-]/.test(a) && a.slice(1).includes(H.noVerifyShort)))) return deny(cwd, input, 'GUARD-NOVERIFY', 'guardNoVerify', {});
       const bad = branch === base && committed(cwd, args).find((p) => !directAllowed(p, bundleRel));
       if (bad) return deny(cwd, input, 'GUARD-BASE-COMMIT', 'guardBaseCommit', { base, path: bad });
+      const merging = branch === base && statSync(join(aidlcDir(cwd), S.merging), { throwIfNoEntry: false }); // a commit would stop its fast-forward (U144)
+      if (merging && Date.now() - merging.mtimeMs < S.mergingMs) return deny(cwd, input, 'GUARD-MERGING', 'guardMerging', { base, unit: readFileSync(join(aidlcDir(cwd), S.merging), 'utf8') });
     }
     // A merge shape: merge or pull anywhere; on the base also cherry-pick, rebase or reset onto a unit branch.
     const unitBranch = (H.git.mergeLike.includes(sub) || (branch === base && H.git.onBase.includes(sub))) && refs.find(unitRef);

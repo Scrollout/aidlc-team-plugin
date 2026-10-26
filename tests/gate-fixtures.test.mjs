@@ -1,5 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { approve, commit, git, read, unitDoc, write } from './state-repo.mjs';
 import { CODE, codes, FAIL, FAIL_MERGED, merge, PROFILE, setup, TEST, U1 } from './gate-repo.mjs';
 
@@ -75,4 +77,14 @@ test('U140/AC-1 the profile\'s checks run on every merge, whatever modules the u
   const r = merge(setup({ profile: { ...PROFILE, checks: [FAIL] } }));
   assert.equal(r.code, 1);
   assert.match(r.out + r.err, /GATE-CHECK/);
+});
+
+test('U144/AC-1 merge marks the base as merging while its gate runs, and clears the mark after', () => {
+  const dir = setup({ profile: PROFILE });
+  const mark = join(dir, '.git/aidlc/merging');
+  write(dir, { '.aidlc/profile.json': JSON.stringify({ ...PROFILE, checks: [`node -e "process.exit(require('fs').existsSync(process.argv[1]) ? 0 : 1)" "${mark}"`] }) });
+  commit(dir, 'a check that sees the mark');
+  const r = merge(dir);
+  assert.doesNotMatch(r.out + r.err, /GATE-CHECK/, 'the mark exists while the gate runs');
+  assert.equal(existsSync(mark), false, 'cleared after the gate');
 });

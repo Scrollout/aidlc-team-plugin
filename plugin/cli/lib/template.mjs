@@ -39,9 +39,7 @@ function parse(text, file) {
     } else if (tag === '/each') {
       if (stack.length === 1) throw fail('strayEnd', { file });
       stack.pop();
-    } else {
-      top.body.push({ name: tag });
-    }
+    } else top.body.push({ name: tag });
   }
   if (stack.length > 1) throw fail('unclosedEach', { file, name: stack[stack.length - 1].each });
   if (last < text.length) root.push({ text: text.slice(last) });

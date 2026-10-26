@@ -415,8 +415,10 @@ test('U142/AC-2 PLAN-ARCHDOC: a unit that changes what the diagrams show holds a
     'docs/units/U-2-b.md': unit(2, ['deploy/dev/**', 'docs/architecture/**']),
     'docs/units/U-3-c.md': unit(3, ['src/**']),
     'docs/units/U-4-d.md': unit(4, ['.aidlc/profile.json']),
+    'docs/units/U-5-e.md': unit(5, ['deploy/prod/**']) + '\n# Interfaces\n- [Technical](../architecture/technical.md): the target, updated on the base\n',
+    'docs/architecture/technical.md': '---\ntype: Design\ntitle: T\ndescription: T.\n---\n',
   });
   const arch = (profile) => lintAll(join(dir, 'docs'), profile, { base: dir }).filter((f) => f.code === 'PLAN-ARCHDOC').map((f) => f.path);
-  assert.deepEqual(arch({ architecture: { docs: { paths: ['docs/architecture/**'], when: ['deploy/**'] } } }), ['docs/units/U-1-a.md', 'docs/units/U-4-d.md'], 'a deploy change, and a profile change (a module or a layer)');
+  assert.deepEqual(arch({ architecture: { docs: { paths: ['docs/architecture/**'], when: ['deploy/**'] } } }), ['docs/units/U-1-a.md', 'docs/units/U-4-d.md'], 'a deploy change, and a profile change (a module or a layer); U-5 links the doc updated on the base (U143/AC-1)');
   assert.deepEqual(arch({}), [], 'off without architecture.docs');
 });
