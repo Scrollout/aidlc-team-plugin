@@ -246,3 +246,12 @@ test('U121/AC-1 U121/AC-2 U121/AC-3 each merged slice ships while the next build
   assert.equal(run(dir, ['release', 'I-1']).code, 0);
   assert.match(run(dir, ['status']).out, /^I-1 released/m);
 });
+
+test('U123/AC-1 a slice line citing another intent\'s merged unit ships nothing of its own intent', () => {
+  const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1') + '\n# Slices\n1. Skeleton: U-1\n', 'docs/intents/I-2-y.md': intentDoc('I-2') + '\n# Slices\n1. Gate, from the graph U-1 drew\n', 'docs/units/U-1-u.md': unitDoc({ scope: ['a/**'] }) }, { deploy: { check: [OK], run: mark('run.txt') } });
+  approve(dir, 'I-1', 'U-1');
+  branch(dir, 'U-1', 'a/x.txt');
+  merge(dir, 'U-1');
+  assert.doesNotMatch(run(dir, ['next']).out, /I-2 has merged work/, 'I-2 has no merged unit of its own');
+  assert.notEqual(run(dir, ['deploy', 'check', 'I-2']).code, 0);
+});

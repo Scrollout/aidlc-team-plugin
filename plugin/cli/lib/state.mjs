@@ -328,7 +328,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
     const nothing = complete && (testsOnly(own, profile) || ((profile.modules ?? []).length > 0 && !changed().some((f) => productGlobs(profile).some((g) => inside('/' + f, g)))));
     // A slice ships when its units merge: due while a merged slice is not in the last passing release (U121).
     const shipped = (ids) => deploy.release?.ok && smoked && ids.every((id) => tryGit(cwd, 'merge-base', '--is-ancestor', merged.get(id), deploy.release.base) !== null);
-    const slices = sectionOf(i.doc, config.grid.slices).filter(([, t]) => /^\s*([-*]|\d+\.)\s/.test(t)).map(([, t]) => t.match(/\bU-\d+\b/g) ?? []).filter((ids) => ids.length && ids.every((id) => merged.has(id)));
+    const slices = sectionOf(i.doc, config.grid.slices).filter(([, t]) => /^\s*([-*]|\d+\.)\s/.test(t)).map(([, t]) => (t.match(/\bU-\d+\b/g) ?? []).filter((id) => own.some((u) => u.id === id))).filter((ids) => ids.length && ids.every((id) => merged.has(id))); // another intent's unit cited on a line is not this intent's work (U123)
     const sliceDue = !complete && Boolean(profile.deploy || profile.release) && slices.length > 0 && !shipped(slices.flat());
     const released = complete && (nothing || (profile.deploy || profile.release) && Boolean(shipped(own.map((u) => u.id)))
       || own.every((u) => (tryGit(cwd, 'tag', '--contains', merged.get(u.id)) ?? '') !== ''));

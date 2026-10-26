@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-26
 
+- **Fix** M12 U123: a slice is due to ship only from its own intent's merged units, so a draft intent citing another intent's unit is not offered a release ([Deployment and operation](design/operations.md)). Release 0.115.2.
 - **Fix** M12 U122: `next` asks to name the merged units of a slice built before its line named them, not only to cut new ones ([Grid](design/grid.md#slices)). Release 0.115.1.
 
 ## 2026-10-25
