@@ -435,6 +435,7 @@ test('U117/AC-1 U117/AC-2 U122/AC-1 an intent with a slice line naming no unit i
   write(dir, { 'docs/intents/I-1-pricing.md': sliced.replace('USD, later', 'USD: U-2') });
   assert.doesNotMatch(run(dir, ['status']).out, /^I-1 approved/m, 'every slice names its units');
   assert.match(readFileSync(join(import.meta.dirname, '../plugin/templates/docs/intent.md'), 'utf8'), /^# Slices\n- <a vertical slice, end to end>: /m);
+  assert.match(readFileSync(join(import.meta.dirname, '../plugin/templates/docs/intent.md'), 'utf8'), /^# Risks\n- <what could sink this, riskiest first/m, 'U126/AC-1');
 });
 
 test('U118/AC-3 next never starts a unit whose scope overlaps one started and not merged; intent units before fix units', () => {

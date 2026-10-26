@@ -30,8 +30,8 @@ flowchart LR
 ```
 | Row | Output | Deterministic check | Owner approves |
 |---|---|---|---|
-| Intent | `intents/I-<n>-<slug>.md`: goal, why, success measures, out of scope | required sections | yes |
-| Units | `units/U-<n>-<slug>.md`: stories, ACs (`AC-<k>`), NFRs, risks, `depends`, `modules`, `scope`, `reserves` | DAG acyclic, AC IDs unique, scopes of parallel units disjoint, reservations unique, size | the plan, once |
+| Intent | `intents/I-<n>-<slug>.md`: goal, why, slices, risks, success measures, out of scope | required sections | yes |
+| Units | `units/U-<n>-<slug>.md`: why, ACs (`AC-<k>`), cited requirements (NFRs among them), `depends`, `modules`, `scope`, `reserves` | DAG acyclic, AC IDs unique, scopes of parallel units disjoint, reservations unique, size | the plan, once |
 | Domain | `# Domain` in the unit doc: entities, their one owning component, interactions; no technology | `PLAN-DESIGN` in the full lane ([Design rows](design-rows.md)) | with the plan |
 | Logical | `# Logical` in the unit doc + decision docs | `PLAN-DESIGN` in standard and full; decision has options, choice, why | with the plan; one-way doors as decisions |
 | Source | code + tests tagged `U-<n>/AC-<k>`, written first | every AC tagged by a test at its declared level; diff inside scope; module checks green; review verdict | no |
@@ -94,6 +94,8 @@ Each slice is vertical, checked by `PLAN-SLICE` before approval and at every `ch
 Why: on both migrations the plan drifted into chains of layer and hygiene units ahead of the product. The second project's only intent cut its units as layers (foundation, API kit, sign-in, tenancy) with the walking skeleton behind them, and the first project's portal and identity slices waited behind dependency and renaming fix units (owner, 2026-10-25: prevent drifting from vertical end-to-end slices).
 
 # Vertical and horizontal specs
-- `capabilities/`: one doc per user journey (vertical); written in Units.
-- `architecture/`: one doc per layer or module (horizontal); updated in Logical.
-- Units link to both rather than copying them.
+- **Vertical:** the intent is the spec of one capability, end to end: goal, why, risks and its slices, each a step of the user journey through every layer; its units carry the ACs, the domain and logical design. Each rule or limit says why, so a later change knows what it may move.
+- **Horizontal:** a layer or standards doc (API conventions, schema, UI kit, platform) in the project's design or architecture docs, linked from a unit's `# Interfaces` rather than copied.
+- Inception writes vertical specs only. A horizontal doc is extracted when a second slice needs the same pattern, by that slice's unit; it is never its own unit ahead of the slices, which `PLAN-SLICE` reports as a layer.
+
+Why: AWS's AI-DLC guidance on spec architecture (2026-05) starts vertical, extracts horizontal specs as reuse appears, and keeps the why beside each rule; the intent template already held the vertical spec, so the plugin adds the risks and the why per rule instead of a second doc per journey.

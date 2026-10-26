@@ -13,6 +13,10 @@ requirements: [R-<n>]
 
 # Slices
 - <a vertical slice, end to end>: <its units, U-<n>, once cut>
+<each rule or limit a slice sets says why, as in "quantity 1-10: bulk buyers go through sales">
+
+# Risks
+- <what could sink this, riskiest first; the first slices retire it>
 
 # Success measures
 - <measurable outcome>

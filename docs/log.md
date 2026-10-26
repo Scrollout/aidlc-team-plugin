@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-26
 
+- **Update** M12 U126: the intent is the vertical spec, with `# Risks` and a why for each rule; horizontal docs are extracted when a second slice reuses a pattern ([Grid](design/grid.md)). Release 0.116.2.
 - **Fix** M12 U125: the reviewing mark counts the reviewers in flight, so a focus that records first leaves the others waited for ([In flight](design/in-flight.md)). Release 0.116.1.
 - **Update** M12 U124: `report` asks for sourced `deps` only when the diff adds a pin line (`deps.pin`) to a manifest, so files that pin among other content can be manifests ([Current dependencies](design/dependencies.md)). Release 0.116.0.
 - **Fix** M12 U123: a slice is due to ship only from its own intent's merged units, so a draft intent citing another intent's unit is not offered a release ([Deployment and operation](design/operations.md)). Release 0.115.2.
