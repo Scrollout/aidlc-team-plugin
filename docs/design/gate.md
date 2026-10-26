@@ -4,6 +4,7 @@ title: Merge mechanics
 description: How aidlc merge and check --ci carry out the gate in Verification - the trial merge, the codes, shared files, test runs, proof-revert and the CI history check.
 status: draft
 
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T11:46:55Z }
 ---
 
 # Trial merge
