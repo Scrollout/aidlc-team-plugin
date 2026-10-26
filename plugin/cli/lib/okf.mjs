@@ -1,4 +1,5 @@
 // OKF v0.2 validator and index generator (docs/design/okf.md). Settings, codes and messages come from cli.json.
+import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { bundleOf, config, done, isMap, list, UsageError, relPath } from './config.mjs';
@@ -497,7 +498,26 @@ function checkLog(file, add) {
 // A type's size cap: the project's `docs.caps` first, then the plugin's (docs/design/okf-validation.md).
 export const sizeCap = (type, caps = {}) => caps[type] ?? caps.default ?? OKF.sizeCaps[type] ?? OKF.sizeCapDefault;
 
-function checkConcept(file, add, caps) {
+// A generated doc's digest: its body's, so a hand edit shows (docs/design/bundle.md).
+export const digestOf = (body) => createHash('sha256').update(body).digest('hex').slice(0, 16);
+
+// Bundle v2: each type's required keys and allowed values, its folder in a v2 project, and generated docs left to the CLI.
+function checkSchema(root, file, doc, type, add, v2) {
+  const B = OKF.bundle, schema = B.schemas[type] ?? {};
+  for (const key of schema.required ?? []) if (!truthy(doc.fm[key])) add(file, 1, 'DOC-SCHEMA', 'docSchemaKey', { type, key });
+  for (const [key, from] of Object.entries(schema.enums ?? {})) {
+    const values = config.vocabulary[from], value = doc.fm[key];
+    if (truthy(value) && !values.includes(String(value))) add(file, 1, 'DOC-SCHEMA', 'docSchemaEnum', { type, key, value: String(value), values: values.join(', ') });
+  }
+  const folder = B.folders[type], at = relative(root, dirname(file)).split(sep)[0] || '.';
+  if (v2 && folder && at !== folder) add(file, 1, 'DOC-SCHEMA', 'docFolder', { type, folder, at: `${at}/` });
+  if (!B.generated.includes(type)) return;
+  const gen = isMap(doc.fm.generated) ? doc.fm.generated : {}, by = String(gen.by ?? '');
+  if (!by.startsWith(B.producer)) add(file, 1, 'DOC-GENERATED', 'docGeneratedBy', { type, by: by || '-' });
+  else if (gen.digest && String(gen.digest) !== digestOf(doc.lines.slice(doc.body).join('\n'))) add(file, 1, 'DOC-GENERATED', 'docGeneratedHand', { type });
+}
+
+function checkConcept(file, add, caps, root, v2) {
   const text = read(file);
   const doc = parseDoc(text);
   if (doc.error) return add(file, doc.line, 'OKF-FM', doc.error, { error: doc.detail ?? '' });
@@ -512,6 +532,7 @@ function checkConcept(file, add, caps) {
   const cap = sizeCap(type, caps);
   const size = [...text].length;
   if (size > cap) add(file, 1, 'HOUSE-SIZE', 'sizeOver', { size, cap, type: type || OKF.otherType });
+  if (type) checkSchema(root, file, doc, type, add, v2);
   return doc;
 }
 
@@ -546,7 +567,7 @@ function lintKeys(sources) {
 const finding = (code, level, path, line, key, data) => codeFinding(OKF.codes, code, path, line, key, data, level);
 
 // Validates a bundle; returns findings with paths relative to `base`. `rules` maps house codes to levels.
-export function checkBundle(root, { rules = {}, caps, base = process.cwd() } = {}) {
+export function checkBundle(root, { rules = {}, caps, base = process.cwd(), v2 = false } = {}) {
   root = resolve(root);
   const findings = [];
   const add = (file, line, code, key, data) => {
@@ -558,7 +579,7 @@ export function checkBundle(root, { rules = {}, caps, base = process.cwd() } = {
     let doc;
     if (name === OKF.index) checkIndex(file, dirname(file) === root, add);
     else if (name === OKF.log) checkLog(file, add);
-    else doc = checkConcept(file, add, caps);
+    else doc = checkConcept(file, add, caps, root, v2);
     const parsed = doc ?? parseDoc(read(file));
     if (!parsed.error) checkLinks(root, file, parsed.lines, parsed.body, add);
   }
@@ -604,9 +625,9 @@ export const commands = {
     for (const p of paths) {
       if (!existsSync(p)) throw new UsageError(msg('noSuchPath', { name: relPath(cwd, p) }));
       // A folder below the bundle root is checked within the bundle, so bundle-root links resolve from the root.
-      if (statSync(p).isDirectory() && p !== bundle && inside(bundle, p)) findings.push(...checkBundle(bundle, { rules, caps: profile.docs?.caps, base: cwd }).filter((f) => inside(p, resolve(cwd, f.path))));
-      else if (statSync(p).isDirectory()) findings.push(...checkBundle(p, { rules, caps: profile.docs?.caps, base: cwd }));
-      else if (inside(bundle, p)) findings.push(...checkBundle(bundle, { rules, caps: profile.docs?.caps, base: cwd }).filter((f) => f.path === relPath(cwd, p)));
+      if (statSync(p).isDirectory() && p !== bundle && inside(bundle, p)) findings.push(...checkBundle(bundle, { rules, caps: profile.docs?.caps, base: cwd, v2: Boolean(profile.system) }).filter((f) => inside(p, resolve(cwd, f.path))));
+      else if (statSync(p).isDirectory()) findings.push(...checkBundle(p, { rules, caps: profile.docs?.caps, base: cwd, v2: Boolean(profile.system) }));
+      else if (inside(bundle, p)) findings.push(...checkBundle(bundle, { rules, caps: profile.docs?.caps, base: cwd, v2: Boolean(profile.system) }).filter((f) => f.path === relPath(cwd, p)));
     }
     return done('', hasErrors(findings) ? config.exit.findings : config.exit.ok, findings);
   },

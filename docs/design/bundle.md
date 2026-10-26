@@ -31,17 +31,19 @@ Every agent reads the bundle before it acts, so it must be true. OKF v0.2 confor
 | `architecture/` | Map | generated only: context map, containers, codebase tree, dependency graph, kinds × layers, traceability |
 
 `DOC-GENERATED` refuses two things:
-- a hand edit to a generated doc;
-- a generated type in an authored folder.
+- a hand edit to a generated doc: the CLI writes `generated: { by: aidlc/<version>, at, digest }`, the digest of the body, and a body that no longer matches it was edited by hand;
+- a generated type written by any producer but the CLI.
+
+The folder of each type is data (`okf.bundle.folders`), checked in a v2 project as `DOC-SCHEMA`; a v2 project's codebase map lives in `architecture/`.
 
 Pictures of the structure exist only in `architecture/`, drawn from declarations.
 
 # Schemas
-Each type's required keys live in `cli.json` and are checked as `DOC-SCHEMA`:
+Each type's required keys and allowed values live in `cli.json` (`okf.bundle.schemas`) and are checked as `DOC-SCHEMA`. Built so far (B156): Bolt `scope`; Domain `code` and `kind` (from the vocabulary's kinds); Fact `command`, `environment`, `digest`, `at`. The other keys arrive with the bolts that read them (M18, M19):
 
 | Type | Required keys |
 |---|---|
-| Intent | `pathway`, `method`, `requirements`, `domains`, `increments` |
+| Intent | `pathway`, `method`, `requirements`, `domains`; its increments are the `# Increments` section |
 | Domain | `code`, `kind`, `owns`, `surface`, `relationships`, `glossary` |
 | Bolt | `intent`, `increment`, `binding`, `scope`, `acs`, `fix` |
 | Decision | `affects`, `options`, `chosen`, `supersedes`, `facts`, `oneWayDoor` |

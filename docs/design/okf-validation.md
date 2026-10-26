@@ -27,6 +27,8 @@ Warnings (house rules; `profile.docs.rules` sets each to `error`, `warning` or `
 - `HOUSE-LINK` a link that does not resolve (the spec says consumers must tolerate these).
 - `HOUSE-SIZE` a doc over its type's cap, counted in code points over the whole file: Unit, Plan, Intent 12,000; Design, Decision, Research, Principles 6,000 (the research brief states the project's cap) (a digest carries its question and sources before any finding; second project); others 4,000. A project whose own docs check caps lower sets `docs.caps` by type, with `default` for every type it does not name (`{ "default": 4000 }`), so `check` and the gate count with its numbers (first migration).
 
+`DOC-SCHEMA` and `DOC-GENERATED` (errors, not house rules): a doc missing a key its type requires, with a value its list does not allow, or outside its type's folder in a v2 project; a generated doc edited by hand or written by anyone but the CLI ([Bundle v2](bundle.md)).
+
 `PROFILE-RULE` (error): a `docs.rules` entry that is not a `HOUSE-*` code set to `error`, `warning` or `off`.
 
 `PROFILE-KEY` (warning): a top-level or `security` key in the project or personal profile that the plugin reads nowhere ([Profile](profile.md)).

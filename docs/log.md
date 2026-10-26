@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M15 B156: bundle v2: each type's required keys, allowed values and folder are data, checked as `DOC-SCHEMA`; generated docs carry their body's digest, so a hand edit or another producer is `DOC-GENERATED`; a v2 project's map lives in `architecture/` ([Bundle v2](design/bundle.md)). Release 0.127.0.
 - **Update** M15 B155: the codebase map draws the domains side by side with their layers and the horizontal kinds as bands (`codebase-map-kinds.md`), leaving delivery out; the slices-and-layers page and `PLAN-ARCHDOC` are gone, and constitution rule 11 is checked by `PROFILE-KIND` and the map ([Codebase map](design/codebase-map.md)). Release 0.126.0.
 - **Update** M15 B154: approving an intent pins it to the method it is approved under (`method: 2`); a rule a later method added (`method.since`) leaves an intent approved before alone, and `upgrade` lists the method changes it brings ([Canonical model](design/canonical-model.md)). Release 0.125.0.
 - **Update** M15 B153: work items are bolts: `aidlc new bolt "<title>"` writes `B-<n>` under `bolts/`, numbered on from every unit and bolt; bolts build on `bolt/B-<n>` and tag tests `B-<n>/AC-<k>`; a v2 project's fixes are bolts and a new doc under `units/` is `PLAN-BOLT`, while v1 units keep working ([Increments and bolts](design/increments-and-bolts.md)). Release 0.124.0.

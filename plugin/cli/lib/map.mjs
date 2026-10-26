@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { bundleOf, CLI_DIR, config, done, gitLines, list, readJson } from './config.mjs';
 import { msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
-import { parseDoc } from './okf.mjs';
+import { digestOf, parseDoc } from './okf.mjs';
 import { globRegex, graphOf } from './gate.mjs';
 
 const M = config.map;
@@ -52,7 +52,7 @@ export function mapText(cwd, profile) {
   const bands = [...new Set(shown.map(kindOf))].map((kind, b) => [`  subgraph b${b}[${kind}]`, '    direction LR', ...shown.flatMap((m, i) => (kindOf(m) === kind ? box(m, i) : [])), '  end'].join('\n')).join('\n');
   const matrix = [`| Kind | Module | ${names.join(' | ')} |`, `|---|---|${names.map(() => '---|').join('')}`, ...shown.map((m) => `| ${kindOf(m)} | ${m.id} | ${names.map((l) => list(m.layers?.[l]).join(', ') || '-').join(' | ')} |`)].join('\n');
   // One page per part, each small enough for an agent to load: the tree, the diagram, the table.
-  const base = (typeof profile.map === 'string' ? profile.map : M.file).replace(/\.md$/, '');
+  const base = (typeof profile.map === 'string' ? profile.map : profile.system ? M.fileV2 : M.file).replace(/\.md$/, ''); // a v2 bundle keeps generated maps in architecture/
   const pages = M.pages.filter((pg) => !pg.needs || { pairs: pairs.length, kinds: shown.some((m) => m.kind) }[pg.needs]).map((pg) => ({ ...pg, file: `${base}${pg.suffix}.md` }));
   const link = (pg) => msg('mapLink', { title: pg.title, file: pg.file.split('/').at(-1) });
   return pages.map((pg) => ({ ...pg, body: msg(pg.body, { tree: lines.join('\n'), flow, table, bands, matrix, links: pages.filter((x) => x !== pg).map(link) }) }));
@@ -64,10 +64,10 @@ export function writeMap(cwd, profile) {
   for (const pg of mapText(cwd, profile) ?? []) {
     const file = join(bundleOf(cwd, profile), pg.file);
     const old = existsSync(file) ? parseDoc(readFileSync(file, 'utf8')) : null;
-    if (old?.fm && old.lines.slice(old.body).join('\n') === pg.body) continue;
+    if (old?.fm && old.lines.slice(old.body).join('\n') === pg.body && old.fm.generated?.digest) continue;
     mkdirSync(dirname(file), { recursive: true });
     const version = existsSync(join(CLI_DIR, M.versionFile)) ? readFileSync(join(CLI_DIR, M.versionFile), 'utf8').trim() : readJson(join(CLI_DIR, M.manifest))?.version;
-    writeFileSync(file, msg('mapDoc', { ...pg, producer: msg('producer', { version }), at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') }));
+    writeFileSync(file, msg('mapDoc', { ...pg, producer: msg('producer', { version }), digest: digestOf(pg.body), at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') }));
     written.push(file);
   }
   return written;

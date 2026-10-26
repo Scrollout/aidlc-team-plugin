@@ -68,3 +68,36 @@ test('B154/AC-2 upgrade lists the method changes it brings and says approved int
   assert.match(r.out, new RegExp(`^Method 1 to ${config.method.version}: intents ship # Increments.*An intent approved before keeps method 1's rules; one approved from now on is judged by method ${config.method.version}\\.$`, 'm'));
   assert.doesNotMatch(run(dir, ['upgrade', '--dirty']).out, /^Method /m, 'nothing new the second time');
 });
+
+test('B156/AC-2 each v2 type carries the keys its schema requires, with allowed values, in its folder', () => {
+  const domain = (fm) => `---\ntype: Domain\ntitle: Providers\ndescription: Providers.\ngenerated: { by: x/1, at: 2026-10-27T00:00:00Z }\n${fm}---\n\n# Glossary\nx\n`;
+  const docs = {
+    'docs/domains/providers.md': domain('code: providers\nkind: domain\n'),
+    'docs/domains/quotas.md': domain('code: quotas\nkind: library\n'),
+    'docs/domains/scopes.md': domain(''),
+    'docs/notes/access.md': domain('code: access\nkind: domain\n'),
+  };
+  const found = (profile) => run(makeRepo(docs, profile), ['check']).out.split('\n').filter((l) => /DOC-SCHEMA/.test(l)).map((l) => l.replace(/ → .*$/, ''));
+  assert.deepEqual(found({}), [
+    "docs/domains/quotas.md:1 DOC-SCHEMA a Domain's kind is library, not one of domain, pipeline, foundation, adapter, runtime, extension, delivery",
+    'docs/domains/scopes.md:1 DOC-SCHEMA a Domain lacks code',
+    'docs/domains/scopes.md:1 DOC-SCHEMA a Domain lacks kind',
+  ], 'a v1 bundle: keys and values only');
+  assert.ok(found({ system: { core: ['src/**'] } }).includes('docs/notes/access.md:1 DOC-SCHEMA a Domain lives in domains/, not notes/'), 'a v2 bundle: folders too');
+});
+
+test('B156/AC-3 a generated doc carries its body digest: a hand edit, or one written by anyone but the CLI, is DOC-GENERATED', () => {
+  const modules = [{ id: 'orders', kind: 'domain', paths: ['src/orders/**'] }];
+  const dir = makeRepo({ 'src/orders/a.mjs': '1;\n' }, { system: { core: ['src/**'] }, modules });
+  assert.equal(run(dir, ['map']).code, 0);
+  const file = 'docs/architecture/codebase-map.md';
+  assert.match(read(dir, file), /^generated: \{ by: aidlc\/[^,]+, at: [^,]+, digest: [0-9a-f]{16} \}$/m, 'a v2 map lives in architecture/, with its digest');
+  const generated = () => run(dir, ['check']).out.split('\n').filter((l) => /DOC-GENERATED/.test(l)).map((l) => l.replace(/ → .*$/, ''));
+  assert.deepEqual(generated(), []);
+  writeFileSync(join(dir, file), read(dir, file).replace('# Tree', '# Tree, tidied'));
+  assert.deepEqual(generated(), [`${file}:1 DOC-GENERATED this Map is written only by the CLI, and its body no longer matches its digest: it was edited by hand`]);
+  writeFileSync(join(dir, file), read(dir, file).replace(/by: aidlc\/[^,]+/, 'by: claude-code/x'));
+  assert.deepEqual(generated(), [`${file}:1 DOC-GENERATED this Map is written only by the CLI, not by claude-code/x`]);
+  assert.equal(run(dir, ['map']).code, 0);
+  assert.deepEqual(generated(), [], 'the CLI writes it again');
+});
