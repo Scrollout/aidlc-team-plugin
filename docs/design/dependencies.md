@@ -16,11 +16,11 @@ On the first migration (2026-10-25) the project's Dependabot listed seven open a
   "check": ["npm audit --prefix api-specs --audit-level=low", "govulncheck ./..."]
 }
 ```
-- `manifests`: globs of the files that pin dependencies. `check`: the project's scanners, each failing on a known advisory (and, if the project wants it, on an outdated pin). Both are the project's: the plugin names no tool.
+- `manifests`: globs of the files that pin dependencies. `pin` (optional): the pattern of a line that pins a version; by default a semver-like version, a 40-hex commit or an `@sha256:` digest. `check`: the project's scanners, each failing on a known advisory (and, if the project wants it, on an outdated pin). Both are the project's: the plugin names no tool.
 
 # Rules
 - **Card:** a unit whose scope overlaps `manifests` gets `## Dependencies`: look up each version you add or bump from its registry or official release page (your training data is out of date), take the newest stable release that fixes every known advisory, pin it exactly, and report it.
-- **Report:** `aidlc report` refuses a `done` report of a unit whose diff changes a manifest without `deps`: `[{ "name", "version", "source" }]`, where `source` is the registry URL or the command that showed the version. The reviewer checks the versions against those sources.
+- **Report:** `aidlc report` refuses a `done` report of a unit whose diff adds a pin line to a manifest without `deps`: `[{ "name", "version", "source" }]`, where `source` is the registry URL or the command that showed the version. The reviewer checks the versions against those sources. Only an added line matching `pin` counts, so a Makefile, workflow or deployment edited for another reason can be a manifest without asking for sources (first migration, 2026-10-26).
 - **Gate:** each `deps.check` command runs on the trial merge (`GATE-DEPENDENCY`).
 - **CI:** `check --ci` runs them too (`CI-DEPENDENCY`), and the workflow `init` writes also runs daily, so an advisory published after a merge turns the base red; on a red base only fix units build or merge ([Base CI](base-ci.md)).
 - **Constitution:** rule 8, current dependencies, in the template `init` writes.

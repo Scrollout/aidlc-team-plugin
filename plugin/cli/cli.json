@@ -1381,6 +1381,7 @@
       "refused"
     ]
   },
+  "deps": { "pin": "@sha256:[0-9a-f]{64}|\\b[0-9a-f]{40}\\b|\\bv?\\d+\\.\\d+(\\.\\d+)?\\b" },
   "map": {
     "file": "codebase-map.md",
     "noModule": "(no module)",

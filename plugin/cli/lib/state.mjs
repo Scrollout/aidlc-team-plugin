@@ -723,7 +723,10 @@ export const commands = {
     const problems = data.status === S.stopped ? [] : mutationProblems(ctx.cwd, profile, unit, data.mutations);
     if (problems.length) throw new UsageError(msg(problems.wired ? 'reportMutationsWired' : 'reportMutations', { problems: problems.join('; ') }));
     // A changed manifest names each version's source: the registry, not memory (docs/design/dependencies.md).
-    const pins = data.status === S.stopped ? [] : unitPaths(ctx.cwd, baseOf(profile), unit).filter((f) => list(profile.deps?.manifests).some((g) => inside('/' + f, g)));
+    // Only an added line that looks like a pin counts: a Makefile or workflow edited for other reasons needs no source (U124).
+    const pin = new RegExp(profile.deps?.pin ?? config.deps.pin);
+    const pinned = (f) => gitLines(ctx.cwd, 'diff', '-U0', `${baseOf(profile)}...${branchOf(unit)}`, '--', f).some((l) => l.startsWith('+') && !l.startsWith('+++') && pin.test(l));
+    const pins = data.status === S.stopped ? [] : unitPaths(ctx.cwd, baseOf(profile), unit).filter((f) => list(profile.deps?.manifests).some((g) => inside('/' + f, g)) && pinned(f));
     const sourced = [data.deps ?? []].flat().filter((d) => d?.name && d.version && d.source);
     if (pins.length && (!sourced.length || sourced.length < [data.deps].flat().length)) throw new UsageError(msg('reportDeps', { unit, files: pins.join(', ') }));
     writeJson(runtimeFile(ctx.cwd, 'reports', unit), { ...data, unit, at: new Date().toISOString() });

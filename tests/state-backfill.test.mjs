@@ -85,6 +85,12 @@ test('U98/AC-1 a report of a unit that changes a manifest lists each version wit
   assert.match(run(dir, ['card', 'U-1']).out, /## Dependencies\nYour scope pins dependencies \(\*\*\/package\.json\)\. Your training data is out of date: look up each version .+ The merge gate runs: npm audit\.\n/);
 });
 
+test('U124/AC-1 a manifest edited with no pin line needs no deps in the report', () => {
+  const profile = { ...PROFILE, deps: { manifests: ['Makefile'], check: ['npm audit'] } };
+  const dir = backfill({ scope: ['tests/**', 'Makefile'], extra: { Makefile: 'test:\n\tnode --test\n' }, profile });
+  assert.equal(run(dir, ['report', 'U-1'], JSON.stringify({ status: 'done', summary: 's' })).code, 0, 'a target, not a pin');
+});
+
 test('U99/AC-1 a unit whose AC is a profile setting may mutate the profile in its own diff', () => {
   const dir = backfill({ scope: ['tests/**', '.aidlc/profile.json'], extra: { '.aidlc/profile.json': JSON.stringify({ ...PROFILE, names: [{ id: 'src', files: ['src/**'], pattern: 'src/.+' }] }) + '\n' } });
   const m = { ac: 'U-1/AC-1', path: '.aidlc/profile.json', find: '"names"', replace: '"unnamed"', breaks: 'the naming rule' };

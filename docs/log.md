@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-26
 
+- **Update** M12 U124: `report` asks for sourced `deps` only when the diff adds a pin line (`deps.pin`) to a manifest, so files that pin among other content can be manifests ([Current dependencies](design/dependencies.md)). Release 0.116.0.
 - **Fix** M12 U123: a slice is due to ship only from its own intent's merged units, so a draft intent citing another intent's unit is not offered a release ([Deployment and operation](design/operations.md)). Release 0.115.2.
 - **Fix** M12 U122: `next` asks to name the merged units of a slice built before its line named them, not only to cut new ones ([Grid](design/grid.md#slices)). Release 0.115.1.
 
