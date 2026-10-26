@@ -7,7 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-26
 
-- **Update** M13 U137: `init` writes `.github/dependabot.yml` for the workflow actions, among the files a direct commit may carry ([Current dependencies](design/dependencies.md)). Release 0.119.0.
+- **Update** M13 U137: `init` writes `.github/dependabot.yml` for the workflow actions, among the files a direct commit may carry ([Current dependencies](design/dependencies.md)). Release 0.119.0; 0.119.1 trims the profile doc under its cap.
 - **Update** M13 U136: the public docs are name neutral: no vendor or product name in prose, headings, source titles or examples; a test keeps them out (owner, 2026-10-26). Release 0.118.5; 0.118.6 renames the footnote ids and trims the docs under their caps; 0.118.7 drops the vendor's source URLs too (owner's yes).
 - **Update** M13 U135: a level's `paths` name the test files, never a folder holding helpers, which are code the proof reverts ([Profile](design/profile.md)). Release 0.118.4.
 - **Update** M13 U134: the design docs gain [Pipeline](design/pipeline.md) and [Slices](design/slices.md), the README, grid, overview and intent-state diagrams show slices, the Spec line, reviews per focus and the CI wait before a release, and M12 closes at U122 with [M13](roadmap/m13.md) holding the rest. Release 0.118.3.
