@@ -294,7 +294,12 @@ export function readState(cwd, { now = Date.now() } = {}) {
       const lastAt = review?.rounds?.at(-1)?.at;
       focus = verdicts.find((x) => x.verdict !== VERDICT.pass)?.focus ?? null;
       focuses = verdicts.filter((x) => !x.verdict).map((x) => x.focus); // each one a reviewer of its own, in parallel (U115)
+      // A builder launched after the last verdict and the last report is at work on a new diff, whatever verdict a
+      // focus kept: no review of a head it is still moving (U130).
+      const launched = heartbeatAt(cwd, u.id, S.launches);
+      const atWork = heartbeatFresh(cwd, u.id, now) && launched > Date.parse(lastAt ?? 0) && launched > Date.parse(report?.at ?? 0);
       if (has(VERDICT.escalate)) state = 'escalated';
+      else if (atWork && review?.rounds?.length) state = 'building';
       // A fix round is in flight once a builder was launched after the verdict: the builder that reported before
       // the review keeps its heartbeat fresh for minutes (docs/design/in-flight.md).
       else if (has(VERDICT.fix)) {

@@ -130,6 +130,22 @@ test('U125/AC-1 a focus that records first leaves the other reviewers in flight 
   assert.doesNotMatch(run(dir, ['next']).out, /^wait/);
 });
 
+test('U130/AC-1 a fix-round builder at work is waited for though another focus kept its pass', () => {
+  const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['src/**'] }) }, { focus: { security: ['src/auth/**'] } });
+  approve(dir, 'I-1', 'U-1');
+  branch(dir, 'U-1', 'src/auth/a.txt');
+  run(dir, ['report', 'U-1'], '{"status": "done"}');
+  run(dir, ['review', 'record', 'U-1', '-'], '{"verdict": "pass", "focus": "security", "findings": []}');
+  run(dir, ['review', 'record', 'U-1', '-'], '{"verdict": "fix", "findings": [{"path": "src/a", "line": 1, "claim": "c", "scenario": "s", "confidence": "PLAUSIBLE"}]}');
+  write(dir, { '.git/aidlc/launches/U-1': '', '.git/aidlc/heartbeats/U-1': '' }); // the fix-round builder
+  git(dir, 'switch', '-q', 'unit/U-1');
+  commit(dir, 'half a fix', { 'src/b.txt': 'b' });
+  git(dir, 'switch', '-q', 'main');
+  assert.match(run(dir, ['next']).out, /^wait for the builders and reviewers of U-1/, 'security kept its pass; the builder still moves the head');
+  run(dir, ['report', 'U-1'], '{"status": "done"}');
+  assert.match(run(dir, ['next']).out, /^review U-1, focus general/);
+});
+
 test('U4/AC-3 delegate writes the owner\'s delegation into the personal profile only', () => {
   const dir = makeRepo({ ...I1 });
   assert.equal(run(dir, ['delegate', 'everything']).code, 64);
