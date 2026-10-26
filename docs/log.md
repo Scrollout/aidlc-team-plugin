@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-26
 
+- **Update** M12 U131: the card's Spec line comes from the same function as `PLAN-SLICE` and names its evidence (the proving top-level ACs, or the vertical units that need it); `PLAN-SLICE` reports a unit on a slice that no vertical unit needs ([Unit card](design/unit-card.md)). Release 0.118.0.
 - **Fix** M12 U130: a fix-round builder at work keeps its unit building, so a kept pass of another focus no longer makes `next` ask for a review of a moving head ([In flight](design/in-flight.md)). Release 0.117.2.
 - **Fix** M12 U129: with `ci.wait`, the owner's release ships only a pushed base whose CI passed; `next` asks for the push and the wait first ([CI on the base](design/base-ci.md)). Release 0.117.1.
 - **Update** M12 U128: the card names the unit's slice (vertical or horizontal) and intent path, carries its why, keeps each interface line's text with its path, and lists the docs its text names with their paths ([Unit card](design/unit-card.md)). Release 0.117.0.

@@ -386,9 +386,16 @@ test('U118/AC-1 PLAN-SLICE: # Slices named, every unit on a slice with its own t
   assert.deepEqual(sliced('1. Skeleton: U-1\n2. Create: U-2', { 1: { level: 'e2e' }, 2: { depends: ['U-1'], level: 'e2e' } }), [], 'two vertical slices');
   assert.deepEqual(sliced('1. Skeleton: U-1', { 1: { level: 'e2e' }, 2: { depends: ['U-1'], level: 'e2e' } }), ["U-2 is on no slice line of I-1's # Slices"]);
   assert.deepEqual(sliced('1. Skeleton: U-1\n2. API: U-2', { 1: { level: 'e2e' }, 2: { depends: ['U-1'] } }), ['the slice U-2 of I-1 has no AC at the top level e2e: a layer, not a slice']);
-  assert.deepEqual(sliced('1. All: U-1, U-2, U-3, U-4', { 1: { level: 'e2e' }, 2: { depends: ['U-1'] }, 3: { depends: ['U-2'] }, 4: { depends: ['U-3'] } }), ['the slice U-1, U-2, U-3, U-4 of I-1 names 4 units, more than plan.sliceUnits 3']);
+  assert.deepEqual(sliced('1. All: U-1, U-2, U-3, U-4', { 1: { level: 'e2e', depends: ['U-2'] }, 2: { depends: ['U-3'] }, 3: { depends: ['U-4'] }, 4: {} }), ['the slice U-1, U-2, U-3, U-4 of I-1 names 4 units, more than plan.sliceUnits 3']);
   assert.deepEqual(sliced('1. Skeleton: U-1\n2. Create: U-2', { 1: { level: 'e2e', depends: ['U-2'] }, 2: { level: 'e2e' } }), ['U-1 waits on U-2, a unit of a later slice']);
   assert.deepEqual(sliced('1. Skeleton: U-1\n2. Later, not cut yet', { 1: { level: 'e2e' } }), [], 'an uncut slice is next\'s to ask for');
+});
+
+test('U131/AC-2 PLAN-SLICE reports a unit on a slice that no vertical unit of the slice needs', () => {
+  const loose = "U-2 sits on slice 1 with no e2e AC, and no unit of that slice with one depends on it: give it a e2e AC, make the slice's vertical unit depend on it, or move it to the slice that needs it";
+  assert.deepEqual(sliced('1. Skeleton: U-1, U-2', { 1: { level: 'e2e' }, 2: { scope: 'b/**' } }), [loose]);
+  assert.deepEqual(sliced('1. Skeleton: U-1, U-2', { 1: { level: 'e2e', depends: ['U-2'] }, 2: { scope: 'b/**' } }), [], 'U-1 needs it');
+  assert.deepEqual(sliced(null, { 1: { level: 'e2e' }, 2: { scope: 'b/**' } }), [loose], 'an intent without slice lines is one slice');
 });
 
 test('U118/AC-2 PLAN-SLICE reports a unit of an intent waiting on a fix unit not yet merged', () => {

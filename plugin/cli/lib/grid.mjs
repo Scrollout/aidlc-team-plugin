@@ -140,6 +140,28 @@ function reachable(units) {
   return reach;
 }
 
+// The top test level: the last level that runs. A unit with an AC there proves its slice end to end.
+export const topLevel = (profile) => { const l = withDefaults(profile).levels; return Object.keys(l).filter((k) => l[k]?.run).at(-1); };
+
+// An intent's slice lines: line number, the units each names, its name (the text before the colon).
+export const sliceLines = (intent) => sectionOf(intent.doc, GRID.slices).filter(([, t]) => /^\s*([-*]|\d+\.)\s/.test(t))
+  .map(([n, t]) => ({ n, ids: [...new Set(t.match(/\bU-\d+\b/g))], name: t.replace(/^\s*([-*]|\d+\.)\s+/, '').split(':')[0].trim() }));
+
+// One unit's place in the plan, the same for the card's Spec line and PLAN-SLICE (U131): fix (no intent), unsliced (no
+// slice line names it), vertical (an AC at the top level: its proof) or supports (needed by the slice's vertical units).
+export function sliceRole(unit, intents, units, top) {
+  const intent = intents.find((i) => i.id === unit.fm.intent);
+  if (!intent) return { kind: 'fix' };
+  const written = sliceLines(intent); // without slice lines an intent is one slice (docs/design/grid.md#slices)
+  const lines = written.length ? written : [{ ids: units.filter((u) => u.fm.intent === intent.id).map((u) => u.id), name: String(intent.fm.title ?? '') }];
+  const k = lines.findIndex((l) => l.ids.includes(unit.id));
+  if (k < 0) return { kind: 'unsliced', intent };
+  const [base, proof] = [{ intent, k: k + 1, slice: lines[k].name, ids: lines[k].ids }, unit.acs.filter((a) => top && a.level === top).map((a) => a.id)];
+  if (proof.length) return { kind: 'vertical', ...base, proof };
+  const reach = reachable(units), vertical = lines[k].ids.filter((id) => units.find((x) => x.id === id)?.acs.some((a) => a.level === top));
+  return { kind: 'supports', ...base, vertical, neededBy: vertical.filter((id) => reach(id).has(unit.id)) };
+}
+
 export const spansOf = (line) => [...line.matchAll(SPAN)].map((m) => m[1].trim());
 
 // `make docs-check` and the like: the runner, its build file (grid.runners) and the target.
@@ -275,7 +297,7 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   }
   // Each intent ends to end once: an AC at the top level that runs; a unit crossing modules is tested above the
   // first level (docs/design/plan-lint.md).
-  const top = levels.filter((l) => levelDefs[l]?.run).at(-1);
+  const top = topLevel(profile);
   const wide = withDefaults(profile).plan.sliceUnits;
   const fixes = new Set(units.filter((u) => !u.fm.intent).map((u) => u.id));
   for (const u of units.filter((x) => x.fm.intent)) for (const dep of u.depends.filter((d) => fixes.has(d))) add('PLAN-SLICE', u, keyLine(u, 'depends'), 'planSliceAhead', { dep });
@@ -288,7 +310,7 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
     if (top && made.size > 2 && wait > made.size / 2) add('PLAN-SKELETON', i, 1, 'planSkeleton', { level: top, wait, units: made.size });
     // Slices stay vertical: every unit on a thin slice with its own top-level AC, none waiting on a later one (U118).
     if (!top || !made.size) continue;
-    const lines = sectionOf(i.doc, GRID.slices).filter(([, t]) => /^\s*([-*]|\d+\.)\s/.test(t)).map(([n, t]) => [n, [...new Set(t.match(/\bU-\d+\b/g))]]);
+    const lines = sliceLines(i).map((l) => [l.n, l.ids]);
     const slot = new Map(lines.flatMap(([, ids], k) => ids.map((id) => [id, k])));
     if (!lines.length && own.length > wide) add('PLAN-SLICE', i, 1, 'planSlicesNone', { count: own.length, max: wide });
     for (const u of lines.length ? own.filter((x) => !slot.has(x.id)) : []) add('PLAN-SLICE', u, 1, 'planSlicesOff', { intent: i.id });
@@ -297,6 +319,10 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
       if (ids.length > wide) add('PLAN-SLICE', i, n, 'planSlicesWide', { slice: ids.join(', '), count: ids.length, max: wide });
     }
     for (const u of own) for (const dep of u.depends.filter((d) => slot.get(d) > slot.get(u.id))) add('PLAN-SLICE', u, keyLine(u, 'depends'), 'planSlicesOrder', { dep });
+    // A unit on a slice without its own top-level AC is there only if a vertical unit of that slice needs it (U131).
+    for (const u of own.filter((x) => slot.has(x.id) || !lines.length).map((x) => [x, sliceRole(x, intents, all, top)])) {
+      if (u[1].kind === 'supports' && u[1].vertical.length && !u[1].neededBy.length) add('PLAN-SLICE', u[0], keyLine(u[0], 'depends'), 'planSliceLoose', { slice: u[1].k, level: top });
+    }
   }
   // The waiver is for work outside the running product: a new unit reaching a module or a one-way door voids it.
   const product = productGlobs(profile);

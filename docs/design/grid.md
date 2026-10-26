@@ -89,6 +89,7 @@ Each slice is vertical, checked by `PLAN-SLICE` before approval and at every `ch
 - Each slice line naming units names one with an AC at the top level: a slice without its own end-to-end test is a layer, not a slice.
 - A slice names at most `plan.sliceUnits` units (default 3): a fat slice is a layer cake in disguise.
 - No unit waits on a unit of a later slice, so the first slice is the walking skeleton and each slice builds on the ones before it.
+- A unit on a slice without an AC at the top level is there because a vertical unit of the slice depends on it, directly or through others; else it is a layer riding along. An intent without slice lines is one slice.
 - No unit of an intent waits on a fix unit not yet merged. Fix units build in the free slots beside the slices; work a slice truly needs moves into that slice.
 
 Why: on both migrations the plan drifted into chains of layer and hygiene units ahead of the product. The second project's only intent cut its units as layers (foundation, API kit, sign-in, tenancy) with the walking skeleton behind them, and the first project's portal and identity slices waited behind dependency and renaming fix units (owner, 2026-10-25: prevent drifting from vertical end-to-end slices).

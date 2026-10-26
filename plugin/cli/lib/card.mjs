@@ -6,7 +6,7 @@ import { bundleOf, CLI_DIR, config, QUICK, STANDARD, VERDICT, done, git, gitLine
 import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { nameProblem, parseDoc, sectionOf, sizeCap } from './okf.mjs';
-import { computeLane, overlaps, readPlan, reqId, unitFields } from './grid.mjs';
+import { computeLane, overlaps, readPlan, reqId, sliceRole, topLevel, unitFields } from './grid.mjs';
 import { aidlcDir, approval, baseOf, branchOf, diffHash, hashDoc, readReview, readState, heldDoc, researchOf, roundsOf, runtimeFile, sha256, worktrees, writeJson } from './state.mjs';
 
 const C = config.card;
@@ -45,19 +45,11 @@ function projectRules(names, profile, at) {
     .map((f) => ({ name: `${dir}/${f}`, text: at(`${dir}/${f}`).replace(/\n*$/, '\n') }));
 }
 
-// Vertical or horizontal: the slice line naming the unit, and whether it holds a top-level AC (docs/design/unit-card.md).
+// The card's Spec line, from the sliceRole PLAN-SLICE checks, so card and lint never disagree (U131).
 function specOf(unit, plan, profile, top) {
-  const intent = plan.intents.find((i) => i.id === unit.fm.intent);
-  if (!intent) return msg('cardSpecFix', {});
-  const path = relPath(top, intent.file);
-  const lines = sectionOf(intent.doc, config.grid.slices).map(([, t]) => t).filter((t) => /^\s*([-*]|\d+\.)\s/.test(t));
-  const k = lines.findIndex((t) => (t.match(/\bU-\d+\b/g) ?? []).includes(unit.id));
-  if (k < 0) return msg('cardSpecIntent', { intent: intent.id, title: String(intent.fm.title ?? ''), path });
-  const levels = withDefaults(profile).levels;
-  const highest = Object.keys(levels).filter((l) => levels[l]?.run).at(-1);
-  const kind = unit.acs.some((a) => a.level === highest) ? C.vertical : C.supporting;
-  const slice = lines[k].replace(/^\s*([-*]|\d+\.)\s+/, '').split(':')[0].trim();
-  return msg('cardSpecSlice', { kind, intent: intent.id, k: k + 1, slice, path });
+  const level = topLevel(profile), role = sliceRole(unit, plan.intents, plan.units.map((u) => (u.id === unit.id ? unit : u)), level);
+  const data = role.intent && { intent: role.intent.id, unit: unit.id, path: relPath(top, role.intent.file), k: role.k, slice: role.slice, level, proof: role.proof?.join(', '), neededBy: role.neededBy?.join(', ') || '-' };
+  return msg({ fix: 'cardSpecFix', unsliced: 'cardSpecUnsliced', vertical: 'cardSpecVertical', supports: 'cardSpecSupports' }[role.kind], data ?? {});
 }
 
 // Each intent, unit, requirement or decision the text names, with its path, but those the card lists already.
