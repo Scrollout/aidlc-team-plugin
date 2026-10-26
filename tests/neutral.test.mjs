@@ -8,8 +8,8 @@ const ROOT = join(import.meta.dirname, '..');
 const NAMES = /\b(AWS|Amazon|awslabs|Azure|Google Cloud|Dependabot|Argo ?CD|Playwright|Keycloak|Kiro|Cursor|Windsurf|Copilot|Trivy|Semgrep|Gitleaks|Snyk)\b/;
 const walk = (dir) => readdirSync(dir).flatMap((f) => (statSync(join(dir, f)).isDirectory() ? walk(join(dir, f)) : join(dir, f)));
 
-test('U136/AC-1 the docs, README and templates name no vendor or product outside a source URL', () => {
+test('U136/AC-1 the docs, README and templates name no vendor or product, source URLs included', () => {
   const files = [join(ROOT, 'README.md'), join(ROOT, 'AGENTS.md'), ...walk(join(ROOT, 'docs')), ...walk(join(ROOT, 'plugin'))].filter((f) => /\.(md|json)$/.test(f));
-  const hits = files.flatMap((f) => readFileSync(f, 'utf8').split('\n').map((line, k) => [k + 1, line]).filter(([, l]) => NAMES.test(l) && !/^\s*resource: https?:/.test(l)).map(([k, l]) => `${f.slice(ROOT.length + 1)}:${k}: ${l.trim().slice(0, 80)}`));
+  const hits = files.flatMap((f) => readFileSync(f, 'utf8').split('\n').map((line, k) => [k + 1, line]).filter(([, l]) => NAMES.test(l)).map(([k, l]) => `${f.slice(ROOT.length + 1)}:${k}: ${l.trim().slice(0, 80)}`));
   assert.deepEqual(hits, []);
 });

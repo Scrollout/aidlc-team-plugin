@@ -3,10 +3,7 @@ type: Design
 title: Deployment and operation
 description: How the grid's Deployment and Operation rows run after an intent merges - deploy check, release, smoke, rollback, runbook and feedback - with the commands from the project profile.
 status: draft
-sources:
-  - id: ref-ops
-    resource: https://github.com/awslabs/aidlc-workflows/tree/ec48a1c421ef/core/aidlc-common/stages/operation
-    title: Reference AI-DLC operation stages
+
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T08:00:00Z }
 ---
 
@@ -14,7 +11,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T08:00:00Z }
 Before M6 the loop ended at a merged, tagged intent: the [Grid](grid.md)'s Deployment and Operation rows ran nothing. The owner asked for both rows (2026-10-24).
 
 # The reference stages
-Seven operation stages, every one conditional (`execution: CONDITIONAL`) and skipped when "no deployable target exists": deployment pipeline, environment provisioning, deployment execution, observability, performance validation, incident response, feedback.[^ref-ops] What the plugin takes without building pipelines:
+Seven operation stages, every one conditional (`execution: CONDITIONAL`) and skipped when "no deployable target exists": deployment pipeline, environment provisioning, deployment execution, observability, performance validation, incident response, feedback. What the plugin takes without building pipelines:
 - **Verify:** "Deployment is not done until smoke passes"; deployment execution runs smoke tests and health checks.
 - **Rollback:** a rollback runbook, output by the pipeline stage; "Rollback is not optional".
 - **Gates:** "Bypassing a gate is an incident, not a shortcut"; each stage ends with the human's approve or request-changes.
@@ -51,4 +48,4 @@ The owner's, 2026-10-24:
 
 Units: [M6](../roadmap/m6.md).
 
-[^ref-ops]: Reference AI-DLC operation stages
+: Reference AI-DLC operation stages
