@@ -41,6 +41,7 @@ test('U5/AC-1 U50/AC-1 init on an empty repo writes a valid profile, a short AGE
   const profile = JSON.parse(readFileSync(join(dir, '.aidlc/profile.json'), 'utf8'));
   assert.deepEqual(profile, { name: 'demo', base: 'main', docs: { bundle: 'docs' }, modules: [], lanes: { quick: ['docs/**', '*.md'], full: [] }, focus: {} });
   assert.ok(readFileSync(join(dir, 'AGENTS.md'), 'utf8').split('\n').length <= 60);
+  assert.match(readFileSync(join(dir, 'AGENTS.md'), 'utf8'), /^- `docs\/index\.md` is the root of the docs bundle \(OKF\): read it first/m, 'U138/AC-1 the root index is the entry point');
   assert.equal(readFileSync(join(dir, 'CLAUDE.md'), 'utf8'), '@AGENTS.md\n');
   assert.equal(readFileSync(join(dir, '.aidlc/bin/VERSION'), 'utf8'), PLUGIN.version + '\n');
   assert.deepEqual(JSON.parse(readFileSync(join(dir, '.claude/settings.json'), 'utf8')), { worktree: { baseRef: 'head' } });
