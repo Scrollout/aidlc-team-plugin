@@ -528,7 +528,7 @@
     "cardRefMissing": "- {{id}}: no such doc at the base\n",
     "cardNameBanned": "- {{id}} in {{files}}: nothing may match {{find}} ({{why}})\n",
     "cardNamePath": "- {{id}}, paths under {{files}}: {{pattern}} ({{why}})\n",
-    "cardDeps": "Your scope pins dependencies ({{manifests}}). Your training data is out of date: look up each version you add or bump from its registry or official release page, take the newest stable release that fixes every known advisory, pin it exactly, and list it in your report as \"deps\": [{\"name\", \"version\", \"source\"}] (the URL or command that showed it). The merge gate runs: {{checks}}.\n",
+    "cardDeps": "Your scope pins dependencies ({{manifests}}). Your training data is out of date: look up each version you add or bump from its registry or official release page, take the newest stable release that fixes every known advisory, pin it exactly, and list it in your report as \"deps\": [{\"name\", \"version\", \"source\"}] (the URL or command that showed it). The merge gate, CI and the daily run check currency and advisories live: {{checks}}; a test of yours never queries a registry, it proves a check on fixed inputs offline.\n",
     "cardPlatform": "The deploy target is already defined in: {{refs}}\nBuild on its conventions (names, namespaces, registries, access); add nothing it already provides, and stop and report if the unit needs a change there.\n",
     "cardDataRest": "- shared, for any module: {{shared}}\nReach any other data only through its owning module's interface, an event or a shared service; the merge gate fails a direct read or write (ARCH-DATA).\n",
     "cardDesign": "the # {{sections}} section(s) of {{path}} at the base",

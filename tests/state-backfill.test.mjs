@@ -82,7 +82,7 @@ test('U98/AC-1 a report of a unit that changes a manifest lists each version wit
   assert.equal(send([{ name: 'undici', version: '7.30.1' }]).code, 64, 'a source is required');
   assert.equal(send([{ name: 'undici', version: '7.30.1', source: 'npm view undici version' }]).code, 0);
   git(dir, 'switch', '-q', 'main');
-  assert.match(run(dir, ['card', 'U-1']).out, /## Dependencies\nYour scope pins dependencies \(\*\*\/package\.json\)\. Your training data is out of date: look up each version .+ The merge gate runs: npm audit\.\n/);
+  assert.match(run(dir, ['card', 'U-1']).out, /## Dependencies\nYour scope pins dependencies \(\*\*\/package\.json\)\. Your training data is out of date: look up each version .+ The merge gate, CI and the daily run check currency and advisories live: npm audit; a test of yours never queries a registry, it proves a check on fixed inputs offline\.\n/, 'U132/AC-1');
 });
 
 test('U124/AC-1 a manifest edited with no pin line needs no deps in the report', () => {
