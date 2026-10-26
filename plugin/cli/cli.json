@@ -508,6 +508,7 @@
     "scopeShared": "{{path}} is written by merge",
     "planShared": "{{unit}} scope {{glob}} names a file only merge writes",
     "planSkeleton": "{{unit}}'s first {{level}} AC waits on {{wait}} of its {{units}} product units: end to end comes last",
+    "planArchDoc": "{{unit}} changes what the architecture diagrams show (a module, a process, a store, a deploy) and its scope holds none of {{docs}}",
     "planRunbook": "{{unit}} links no runbook, and the profile deploys",
     "planPlatform": "{{unit}} ships, and the profile does not say where the deploy target is defined (deploy.platform)",
     "planSlicesNone": "{{unit}} has {{count}} live units, more than plan.sliceUnits {{max}}, and no # Slices section: name its slices, the walking skeleton first",
@@ -595,6 +596,8 @@
     "boardInSync": "the board is in sync\n",
     "mapOwns": "owns {{data}}",
     "mapApi": "public: {{api}}",
+    "mapLayers": "layers {{layers}}",
+    "mapSlices": "\n**TL;DR:** The vertical slices, each a module, across the horizontal layers inside them, outer to inner: a diagram, then the matrix of which paths hold each layer.\n\n# Slices and layers\n```mermaid\nflowchart LR\n{{slices}}\n```\n\n{{matrix}}\n{{#each links}}\n{{this}}{{/each}}\n",
     "mapRow": "| {{id}} | {{uses}} | {{usedBy}} |\n",
     "mapLink": "- [{{title}}]({{file}})",
     "mapTree": "\n**TL;DR:** The folders that hold a module, with its id, the data it owns and its public paths; folders in no module are marked.\n\n# Tree\n```\n{{tree}}\n```\n{{#each links}}\n{{this}}{{/each}}\n",
@@ -807,6 +810,10 @@
         "level": "warning",
         "fix": "cut a walking skeleton first: an early unit that builds the top-level test harness and the thinnest real path through every stage, with a top-level AC; then each slice adds a top-level AC for what it adds"
       },
+      "PLAN-ARCHDOC": {
+        "level": "error",
+        "fix": "add the architecture doc it changes to the unit's scope and an AC that it shows the change: the logical and technical diagrams stay true (template .aidlc/templates/docs/architecture.md)"
+      },
       "PLAN-RUNBOOK": {
         "level": "error",
         "fix": "link a Runbook doc from the intent (template .aidlc/templates/docs/runbook.md: how to roll back, what to watch, who to call)"
@@ -987,6 +994,11 @@
       {
         "template": "docs/naming.md",
         "to": ".aidlc/templates/docs/naming.md",
+        "upgrade": true
+      },
+      {
+        "template": "docs/architecture.md",
+        "to": ".aidlc/templates/docs/architecture.md",
         "upgrade": true
       },
       {
@@ -1413,8 +1425,9 @@
     "space": "    ",
     "pages": [
       { "suffix": "", "body": "mapTree", "title": "Codebase map", "description": "The codebase as a tree of module folders, with the data each module owns and its public paths; written at every merge, never by hand." },
-      { "suffix": "-graph", "body": "mapGraph", "title": "Module dependencies", "description": "A diagram of which module depends on which, from the dependency graph; written at every merge, never by hand." },
-      { "suffix": "-table", "body": "mapTable", "title": "Module dependency table", "description": "Each module with the modules it uses and the modules that use it; written at every merge, never by hand." }
+      { "suffix": "-graph", "needs": "pairs", "body": "mapGraph", "title": "Module dependencies", "description": "A diagram of which module depends on which, from the dependency graph; written at every merge, never by hand." },
+      { "suffix": "-table", "needs": "pairs", "body": "mapTable", "title": "Module dependency table", "description": "Each module with the modules it uses and the modules that use it; written at every merge, never by hand." },
+      { "suffix": "-layers", "needs": "layers", "body": "mapSlices", "title": "Slices and layers", "description": "The vertical slices across their horizontal layers, as a diagram and a matrix of paths; written at every merge, never by hand." }
     ],
     "versionFile": "VERSION",
     "manifest": "../.claude-plugin/plugin.json"

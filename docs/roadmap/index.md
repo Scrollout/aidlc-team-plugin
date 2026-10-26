@@ -6,6 +6,7 @@
 * [M11 Draft](m11.md) - Draft - slices that own their data, code surface and place in a codebase map, from the first migration.
 * [M12 Second project and later migration fixes](m12.md) - fixes from the second project and the first migration's later units - research holds on any doc, decisions before units, profile proofs.
 * [M13 Steering two migrations](m13.md) - Fixes and refinements from steering the first migration and the second project side by side - slices that ship, cards that name their evidence, retry-safe records, and the docs aligned.
+* [M14 Owner fixes and a third project](m14.md) - Draft - fixes the owner asked for directly and from starting a third project - init's Dependabot config, the root index in AGENTS.md, decisions drafted with the intent, project checks, stops that block nothing, and architecture you can see.
 * [M2 Hardening and retro](m2.md) - Close what the M1 pilot left to a person, run on Windows, and add the retro that shows whether the loop improves.
 * [M3 Conventions and proof](m3.md) - Builders follow each project's own rules, and a test must fail without its change.
 * [M4 Review rounds and owner steps](m4.md) - Card fixes, owner badges, send-back reasons, bounded and targeted review rounds, decisions for one-way doors and fewer owner prompts, built from the M3 and M4 pilots.

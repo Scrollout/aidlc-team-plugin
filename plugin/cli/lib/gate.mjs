@@ -394,9 +394,7 @@ export const commands = {
     }
     tryGit(cwd, 'branch', '-q', '-D', branchOf(unit.id));
     // The board follows a merge; it is best effort and never fails one (docs/design/board.md).
-    if (st.profile.github) {
-      try { output += sync(cwd); } catch (e) { output += msg('boardFailed', { error: e.message.split('\n')[0] }); }
-    }
+    if (st.profile.github) try { output += sync(cwd); } catch (e) { output += msg('boardFailed', { error: e.message.split('\n')[0] }); }
     return done(output);
   },
 

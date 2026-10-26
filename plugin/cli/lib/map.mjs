@@ -9,6 +9,7 @@ import { parseDoc } from './okf.mjs';
 import { globRegex, graphOf } from './gate.mjs';
 
 const M = config.map;
+const layersOf = (m) => Object.keys(m.layers ?? {}); // a module's layers, outer to inner (U142)
 const rootOf = (glob) => { const parts = glob.replace(/^\.?\//, '').split('/'); const k = parts.findIndex((p) => /[*?[]/.test(p)); return parts.slice(0, k < 0 ? parts.length : k).join('/'); };
 
 // The map's pages, or null when the profile turns it off or has no modules.
@@ -26,7 +27,7 @@ export function mapText(cwd, profile) {
     const kids = sorted.filter((n) => n.startsWith(parent ? parent + '/' : '') && n.split('/').length === (parent ? parent.split('/').length + 1 : 1));
     kids.forEach((n, k, all) => {
       const [last, at] = [k === all.length - 1, nodes.get(n)];
-      const about = at === null ? M.noModule : at.map((m) => [m.id, list(m.data).length && msg('mapOwns', { data: list(m.data).join(', ') }), list(m.api).length && msg('mapApi', { api: list(m.api).join(', ') })].filter(Boolean).join(M.sep)).join('; ');
+      const about = at === null ? M.noModule : at.map((m) => [m.id, layersOf(m).length && msg('mapLayers', { layers: layersOf(m).join(' → ') }), list(m.data).length && msg('mapOwns', { data: list(m.data).join(', ') }), list(m.api).length && msg('mapApi', { api: list(m.api).join(', ') })].filter(Boolean).join(M.sep)).join('; ');
       lines.push(`${pad}${last ? M.last : M.branch}${n.split('/').at(-1)}/${about ? ` — ${about}` : ''}`);
       draw(n, pad + (last ? M.space : M.pipe));
     });
@@ -41,11 +42,15 @@ export function mapText(cwd, profile) {
   const n = (id) => `n${ids.indexOf(id)}`; // short node ids keep the diagram small; the label is the module
   const flow = [...ids.map((id) => `  ${n(id)}[${id}]`), ...pairs.map(([a, b]) => `  ${n(a)} --> ${n(b)}`)].join('\n');
   const table = mods.map((m) => msg('mapRow', { id: m.id, uses: [...deps.get(m.id)].sort().join(', ') || '-', usedBy: pairs.filter(([, b]) => b === m.id).map(([a]) => a).sort().join(', ') || '-' })).join('');
+  // Vertical slices across horizontal layers: one subgraph per slice, its layers outer to inner, and the matrix (U142).
+  const [layered, names] = [mods.filter((m) => layersOf(m).length), [...new Set(mods.flatMap(layersOf))]];
+  const slices = layered.map((m, i) => [`  subgraph s${i}[${m.id}]`, ...layersOf(m).map((l, k) => `    s${i}l${k}[${l}]`), ...layersOf(m).slice(1).map((_, k) => `    s${i}l${k} --> s${i}l${k + 1}`), '  end'].join('\n')).join('\n');
+  const matrix = [`| Slice | ${names.join(' | ')} |`, `|---|${names.map(() => '---|').join('')}`, ...layered.map((m) => `| ${m.id} | ${names.map((l) => list(m.layers[l]).join(', ') || '-').join(' | ')} |`)].join('\n');
   // One page per part, each small enough for an agent to load: the tree, the diagram, the table.
   const base = (typeof profile.map === 'string' ? profile.map : M.file).replace(/\.md$/, '');
-  const pages = M.pages.filter((pg) => !pg.suffix || pairs.length).map((pg) => ({ ...pg, file: `${base}${pg.suffix}.md` }));
+  const pages = M.pages.filter((pg) => !pg.needs || { pairs: pairs.length, layers: layered.length }[pg.needs]).map((pg) => ({ ...pg, file: `${base}${pg.suffix}.md` }));
   const link = (pg) => msg('mapLink', { title: pg.title, file: pg.file.split('/').at(-1) });
-  return pages.map((pg) => ({ ...pg, body: msg(pg.body, { tree: lines.join('\n'), flow, table, links: pages.filter((x) => x !== pg).map(link) }) }));
+  return pages.map((pg) => ({ ...pg, body: msg(pg.body, { tree: lines.join('\n'), flow, table, slices, matrix, links: pages.filter((x) => x !== pg).map(link) }) }));
 }
 
 // Writes each page whose body changed; returns the files written.

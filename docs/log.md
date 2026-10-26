@@ -7,11 +7,12 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-26
 
-- **Update** M13 U140: the profile's `checks` (lint, format, static analysis) run on every merge and show on the card ([Profile and templates](design/profile.md)). Release 0.119.4.
-- **Fix** M13 U141: a unit refused at the gate, escalated or stopped holds back no other unit's review, fix round or restart ([State](design/state.md)). Release 0.119.4.
-- **Fix** M13 U139: a draft intent with no decision asks for the decisions to be drafted while the owner answers, and the last vendor names and URLs leave the docs ([State](design/state.md), [OKF](design/okf.md)). Release 0.119.3.
-- **Fix** M13 U138: the AGENTS.md init writes names the bundle's root `index.md` as the entry point, read first ([Profile and templates](design/profile.md)). Release 0.119.2.
-- **Update** M13 U137: `init` writes `.github/dependabot.yml` for the workflow actions, among the files a direct commit may carry ([Current dependencies](design/dependencies.md)). Release 0.119.0; 0.119.1 trims the profile doc under its cap.
+- **Update** M14 U142: architecture you can see: module `layers` in the codebase map with a slices-and-layers page, `PLAN-ARCHDOC` for a unit that changes the diagrams, and an architecture doc template and constitution rule 11 from `init` ([Codebase map](design/codebase-map.md)). Release 0.120.0.
+- **Update** M14 U140: the profile's `checks` (lint, format, static analysis) run on every merge and show on the card ([Profile and templates](design/profile.md)). Release 0.119.4.
+- **Fix** M14 U141: a unit refused at the gate, escalated or stopped holds back no other unit's review, fix round or restart ([State](design/state.md)). Release 0.119.4.
+- **Fix** M14 U139: a draft intent with no decision asks for the decisions to be drafted while the owner answers, and the last vendor names and URLs leave the docs ([State](design/state.md), [OKF](design/okf.md)). Release 0.119.3.
+- **Fix** M14 U138: the AGENTS.md init writes names the bundle's root `index.md` as the entry point, read first ([Profile and templates](design/profile.md)). Release 0.119.2.
+- **Update** M14 U137: `init` writes `.github/dependabot.yml` for the workflow actions, among the files a direct commit may carry ([Current dependencies](design/dependencies.md)). Release 0.119.0; 0.119.1 trims the profile doc under its cap.
 - **Update** M13 U136: the public docs are name neutral: no vendor or product name in prose, headings, source titles or examples; a test keeps them out (owner, 2026-10-26). Release 0.118.5; 0.118.6 renames the footnote ids and trims the docs under their caps; 0.118.7 drops the vendor's source URLs too (owner's yes).
 - **Update** M13 U135: a level's `paths` name the test files, never a folder holding helpers, which are code the proof reverts ([Profile](design/profile.md)). Release 0.118.4.
 - **Update** M13 U134: the design docs gain [Pipeline](design/pipeline.md) and [Slices](design/slices.md), the README, grid, overview and intent-state diagrams show slices, the Spec line, reviews per focus and the CI wait before a release, and M12 closes at U122 with [M13](roadmap/m13.md) holding the rest. Release 0.118.3.

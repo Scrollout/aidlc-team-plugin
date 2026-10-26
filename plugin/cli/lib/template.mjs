@@ -68,14 +68,10 @@ function emit(nodes, scopes, file) {
   return out;
 }
 
-export function render(text, data, file = '<template>') {
-  return emit(parse(text, file), [data], file);
-}
+export const render = (text, data, file = '<template>') => emit(parse(text, file), [data], file);
 
 // Renders a message template from cli.json.
-export function msg(key, data) {
-  return render(config.messages[key], data, `cli.json messages.${key}`);
-}
+export const msg = (key, data) => render(config.messages[key], data, `cli.json messages.${key}`);
 
 // A finding of `code` from a cli.json code table, whose fix and level (error unless the table sets one) it carries.
 export const finding = (codes, code, path, line, key, data = {}, level = codes[code].level ?? 'error') => ({ code, level, path, line, message: msg(key, data), fix: codes[code].fix });
@@ -85,9 +81,7 @@ const templateDirs = (root, pluginDir) => config.templates.map((t) => join(t.fro
 
 // The first template directory in cli.json holding `rel` wins (project overrides plugin).
 function resolveTemplate(rel, { root, pluginDir = PLUGIN_DIR }) {
-  for (const dir of templateDirs(root, pluginDir)) {
-    if (existsSync(join(dir, rel))) return join(dir, rel);
-  }
+  for (const dir of templateDirs(root, pluginDir)) if (existsSync(join(dir, rel))) return join(dir, rel);
   throw fail('templateNotFound', { name: rel });
 }
 

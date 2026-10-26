@@ -30,3 +30,15 @@ test('U88/AC-2 merge writes the codebase map with the indexes, so the merge comm
   assert.match(read(dir, 'docs/codebase-map.md'), /── src\/ — core/);
   assert.equal(git(dir, 'status', '--porcelain'), '');
 });
+
+test('U142/AC-1 a module with layers shows them in the tree, and a slices-and-layers page draws each slice across its layers', () => {
+  const layers = { api: ['src/api/http/**'], domain: ['src/api/domain/**'], store: ['src/api/store/**'] };
+  const dir = makeRepo({ 'src/api/a.mjs': '1;\n', 'lib/db/b.mjs': '1;\n' }, { modules: [{ ...MODULES[0], layers }, MODULES[1]] });
+  assert.equal(run(dir, ['map']).code, 0);
+  assert.match(read(dir, 'docs/codebase-map.md'), /└── api\/ — api · layers api → domain → store · public: src\/api$/m);
+  const page = read(dir, 'docs/codebase-map-layers.md');
+  assert.match(page, /^title: Slices and layers$/m);
+  assert.match(page, /```mermaid\nflowchart LR\n  subgraph s0\[api\]\n    s0l0\[api\]\n    s0l1\[domain\]\n    s0l2\[store\]\n    s0l0 --> s0l1\n    s0l1 --> s0l2\n  end\n```/);
+  assert.match(page, /^\| Slice \| api \| domain \| store \|\n\|---\|---\|---\|---\|\n\| api \| src\/api\/http\/\*\* \| src\/api\/domain\/\*\* \| src\/api\/store\/\*\* \|$/m);
+  assert.equal(run(makeRepo({ 'src/api/a.mjs': '1;\n' }, { modules: MODULES }), ['map']).out.includes('layers'), false, 'no layers, no page');
+});

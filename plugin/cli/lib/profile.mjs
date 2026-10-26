@@ -40,9 +40,7 @@ function mergeLayer(base, next, layer, path = []) {
 }
 
 // layers: [{ name, data }] in merge order.
-export function mergeLayers(layers) {
-  return layers.reduce((acc, l) => mergeLayer(acc, l.data, l.name), {});
-}
+export const mergeLayers = (layers) => layers.reduce((acc, l) => mergeLayer(acc, l.data, l.name), {});
 
 function readLayer(file) {
   if (!existsSync(file)) return null;
