@@ -34,7 +34,7 @@ test('U4/AC-4 card renders from the base commit with the unit fields', () => {
   assert.match(r.out, new RegExp(`^Base: ${base}$`, 'm'));
   assert.match(r.out, /^- AC-1 \(unit\): rounds half-even\.$/m, 'the base content, not the worktree edit');
   assert.match(r.out, /^- src\/pricing\/\*\*$/m);
-  assert.match(r.out, /^- docs\/architecture\/api\.md$/m, 'interface links become repo paths');
+  assert.match(r.out, /^- See the API spec \(docs\/architecture\/api\.md\)\.$/m, 'U128/AC-2 the line as written, each link with its repo path');
   assert.match(r.out, /^- api: make test$/m);
   assert.match(r.out, /^- Currency conversion\.$/m);
   assert.doesNotMatch(r.out, /As a buyer/);
@@ -127,7 +127,7 @@ test('U4/AC-4 a project template overrides the card; the quick lane uses the sho
 test('U4/AC-4 bundle-root interface links render as repo paths', () => {
   const dir = repo({ extra: '\n# Interfaces\n\n- [I-1](/intents/I-1-pricing.md)\n' });
   approve(dir, 'I-1', 'U-1');
-  assert.match(run(dir, ['card', 'U-1']).out, /^- docs\/intents\/I-1-pricing\.md$/m);
+  assert.match(run(dir, ['card', 'U-1']).out, /^- I-1 \(docs\/intents\/I-1-pricing\.md\)$/m);
 });
 
 test('U4/AC-5 the model follows the routing table, escalation signals and fix rounds', () => {
@@ -345,7 +345,7 @@ test('U29/AC-1 U29/AC-2 U29/AC-3 the card names requirements as their files do, 
   assert.equal(card.code, 0, card.out + card.err);
   assert.match(card.out, /^- R-057 docs\/requirements\/R-057\.md$/m);
   assert.match(card.out, /^- internal\/buildinfo: Get\(\) Info, Info\.String\(\)$/m, 'a plain interface line is kept');
-  assert.match(card.out, /^- docs\/architecture\/api\.md$/m);
+  assert.match(card.out, /^- See the API spec \(docs\/architecture\/api\.md\)\.$/m);
   assert.match(card.out, /^The merge gate reverts your changes outside the test paths of unit and reruns those levels: each one holding a tagged test must then fail\.$/m);
   assert.doesNotMatch(card.out, /outside src\//);
 });
@@ -370,4 +370,17 @@ test('U116/AC-1 the card cap leaves out the sections the profile writes; card an
   const r = run(dir, ['card', 'U-1']);
   assert.equal(r.code, 0, r.out);
   assert.ok(r.out.length > 6000 && r.out.includes('x'.repeat(5000)), 'the builder still gets the whole section');
+});
+
+test('U128/AC-1 U128/AC-2 the card names its slice, its why and the docs its text names, with their paths', () => {
+  const intent = intentDoc('I-1') + '\n# Slices\n1. Skeleton: U-1, U-2\n';
+  const u1 = doc({ extra: '\n# Why\nBuyers see local prices (decision 0003).\n\n# Interfaces\n\n- [rates](https://rates.example/api): daily rates\n\n# Out of scope\n\n- Refunds: U-2. Taxes: U-9.\n' });
+  const dir = makeRepo({ 'docs/intents/I-1-pricing.md': intent, [U1]: u1, 'docs/units/U-2-b.md': unitDoc({ scope: ['b/**'], acs: ['- AC-1 (unit): it works.'] }), 'docs/decisions/0003-money.md': '---\ntype: Decision\ntitle: Money\ndescription: d\n---\n\n# Choice\nx\n' }, { ...PROFILE, levels: { unit: { paths: ['tests/**'] }, integration: { run: 'make it' } } });
+  approve(dir, 'I-1', 'U-1', 'U-2');
+  const out = run(dir, ['card', 'U-1']).out;
+  assert.match(out, /^Spec: vertical, builds I-1 slice 1: Skeleton \(docs\/intents\/I-1-pricing\.md\)$/m, 'an AC at the top level');
+  assert.match(out, /^## Why\nBuyers see local prices \(decision 0003\)\.\n/m);
+  assert.match(out, /^- rates \(https:\/\/rates\.example\/api\): daily rates$/m);
+  assert.match(out, /^## References .*\n- 0003 docs\/decisions\/0003-money\.md\n- U-2 docs\/units\/U-2-b\.md\n- U-9: no such doc at the base\n/m);
+  assert.match(run(dir, ['card', 'U-2']).out, /^Spec: horizontal, supports I-1 slice 1: Skeleton /m, 'no AC at the top level');
 });

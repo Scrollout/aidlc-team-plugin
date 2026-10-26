@@ -12,11 +12,14 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:30:00Z }
 
 # Contents (≤ 100 lines)
 The cap counts the card without its findings and mutations: a review round adds those, and a unit that fitted when it was built must not need a re-approved doc to get its fix round (first migration). Nor does it count the sections the profile writes (Data, Names, Dependencies, Platform): they grow with the project, not the unit, and took 3,500 chars from every 7-AC unit (second project). The cap counts lines, not chars (owner, 2026-10-25): a line is what a reader scans, while a char cap made the lead squeeze wording without dropping a single point. Plan lint warns `PLAN-CARD` on any unit not yet merged whose card would pass the cap, counted the same way from the doc on disk: before the approval, and again when a rule or a template change grows an approved card, so `card` never refuses a unit `next` hands out unwarned (second project: U-2).
-- Unit ID, title, goal and why, lane, model (see [Team](team.md#model-routing)), base commit, card hash.
+- Unit ID, title, goal, lane, model (see [Team](team.md#model-routing)), base commit, card hash.
+- **Spec:** one line, read from the intent's slice lines: `vertical, builds I-<n> slice <k>` for a unit with an AC at the top level, `horizontal, supports I-<n> slice <k>` for one without, the intent alone when no slice line names the unit, or `horizontal, a fix unit of no intent`; with the intent's path.
+- **Why:** the unit's `# Why` as written, so the builder knows the business reason behind each rule and limit.
 - **Project rules:** each `.aidlc/rules/*.md` at the base commit, before the ACs, except a rule named after a `profile.focus` key, which only that focus's reviewer reads. Builders run without `CLAUDE.md`, so this is how a project's conventions reach them; the rules count toward the cap.
 - ACs with IDs; each becomes a test tagged `U-<n>/AC-<k>`.
 - **Scope:** globs the builder may write.
-- **Interfaces:** linked specs it consumes and provides (paths at the base commit), and the plain lines of the unit's `Interfaces` section as written.
+- **Interfaces:** each line of the unit's `Interfaces` section as written, what it consumes or provides, each link followed by the path it resolves to at the base commit (a URL as written). An outside source, a web page or a database, is written there as a link or a name with its location.
+- **References:** each intent, unit, requirement or decision (`0003`) the goal, why, ACs or out of scope name and the card lists nowhere else, with its path at the base, or `no such doc`. Why: cards named "the suite of U-13" or "(0003)" with no path (owner, 2026-10-26).
 - **Requirements:** the requirement docs the unit cites, named as their files are, which the builder meets and every review checks.
 - **Findings to fix:** in a fix round, the findings of each focus whose last verdict for the current diff is `fix`. After an escalation the owner re-approved, its findings are listed as answered by that re-approval, for the reviewer to report again only if one still holds against the spec as it is now.
 - **Test runs:** every level's `run`; the builder and the reviewer run each in full, and the gate again on the merge result, then once more with the unit's code reverted, when each level holding a tagged test must fail.

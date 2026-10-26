@@ -516,6 +516,11 @@
     "planDesign": "{{unit}} is {{lane}} lane and has no # {{section}} section with content",
     "cardDataOwned": "- {{module}} owns {{data}}\n",
     "cardName": "- {{id}} in {{files}}: each name {{find}} takes must fully match {{pattern}} ({{why}})\n",
+    "cardSpecSlice": "{{kind}} {{intent}} slice {{k}}: {{slice}} ({{path}})",
+    "cardSpecIntent": "vertical, {{intent}}: {{title}} ({{path}})",
+    "cardSpecFix": "horizontal, a fix unit of no intent",
+    "cardRef": "- {{id}} {{path}}\n",
+    "cardRefMissing": "- {{id}}: no such doc at the base\n",
     "cardNameBanned": "- {{id}} in {{files}}: nothing may match {{find}} ({{why}})\n",
     "cardNamePath": "- {{id}}, paths under {{files}}: {{pattern}} ({{why}})\n",
     "cardDeps": "Your scope pins dependencies ({{manifests}}). Your training data is out of date: look up each version you add or bump from its registry or official release page, take the newest stable release that fixes every known advisory, pin it exactly, and list it in your report as \"deps\": [{\"name\", \"version\", \"source\"}] (the URL or command that showed it). The merge gate runs: {{checks}}.\n",
@@ -733,6 +738,7 @@
     "interfaces": "Interfaces",
     "outOfScope": "Out of scope",
     "slices": "Slices",
+    "why": "Why",
     "runbookType": "Runbook",
     "codes": {
       "PLAN-DAG": {
@@ -905,6 +911,9 @@
   },
   "card": {
     "bannedPattern": "(?!)",
+    "vertical": "vertical, builds",
+    "supporting": "horizontal, supports",
+    "refs": "\\b([IUR]-\\d+|0\\d{3})\\b",
     "template": "card.md",
     "researchTemplate": "research.md",
     "stack": ["go.mod", "package.json", "pyproject.toml", "requirements.txt", "Cargo.toml", "pom.xml", "build.gradle", "Gemfile", "composer.json", "Makefile", "justfile", "Dockerfile"],

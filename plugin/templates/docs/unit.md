@@ -23,7 +23,7 @@ reserves: []
 <the services, interfaces and data shapes this unit adds or changes, and why; or delete both sections and set design: "<why none>">
 
 # Interfaces
-- [<spec it consumes or provides>](<path>)
+- [<spec it consumes or provides>](<path>): <what it consumes or provides>; a web page or database as a link or a name with its location
 
 # Out of scope
 - <what the builder must not do>

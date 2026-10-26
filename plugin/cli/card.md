@@ -1,6 +1,7 @@
 # {{id}} {{title}}
 
 Goal: {{goal}}
+Spec: {{spec}}
 Lane: {{lane}} ({{laneReason}})
 Model: {{model}} ({{modelReason}})
 Review model: {{reviewModel}} (profile models.review)
@@ -9,7 +10,8 @@ Card: {{hash}}
 
 {{#each rules}}## Project rule: {{name}}
 {{text}}
-{{/each}}## Acceptance criteria
+{{/each}}{{#each why}}## Why
+{{this}}{{/each}}## Acceptance criteria
 Write each as a test tagged {{id}}/AC-<k> at its level, before the code.
 {{#each acs}}{{this}}
 {{/each}}
@@ -22,7 +24,8 @@ Write only inside:
 
 {{/each}}## Interfaces (read them at the base commit)
 {{#each interfaces}}- {{this}}
-{{/each}}
+{{/each}}{{#each references}}## References (named above; read them at the base commit)
+{{this}}{{/each}}
 ## Requirements (meet them; every review checks them)
 {{#each requirements}}- {{this}}
 {{/each}}

@@ -1,11 +1,11 @@
 // Unit card: rendered from the base commit, refused for unapproved or stale units, recorded for `start`
 // and the model hook (docs/design/unit-card.md). Model routing follows docs/design/team.md.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { bundleOf, CLI_DIR, config, QUICK, STANDARD, VERDICT, done, git, gitLines, list, readJson, slug, tryGit, UsageError, relPath } from './config.mjs';
 import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
-import { linksOf, MD_LINK, nameProblem, parseDoc, sectionOf, sizeCap } from './okf.mjs';
+import { nameProblem, parseDoc, sectionOf, sizeCap } from './okf.mjs';
 import { computeLane, overlaps, readPlan, reqId, unitFields } from './grid.mjs';
 import { aidlcDir, approval, baseOf, branchOf, diffHash, hashDoc, readReview, readState, heldDoc, researchOf, roundsOf, runtimeFile, sha256, worktrees, writeJson } from './state.mjs';
 
@@ -44,6 +44,35 @@ function projectRules(names, profile, at) {
   return names.filter((f) => f.endsWith(ext) && !Object.hasOwn(profile.focus ?? {}, f.slice(0, -ext.length))).sort()
     .map((f) => ({ name: `${dir}/${f}`, text: at(`${dir}/${f}`).replace(/\n*$/, '\n') }));
 }
+
+// Vertical or horizontal: the slice line naming the unit, and whether it holds a top-level AC (docs/design/unit-card.md).
+function specOf(unit, plan, profile, top) {
+  const intent = plan.intents.find((i) => i.id === unit.fm.intent);
+  if (!intent) return msg('cardSpecFix', {});
+  const path = relPath(top, intent.file);
+  const lines = sectionOf(intent.doc, config.grid.slices).map(([, t]) => t).filter((t) => /^\s*([-*]|\d+\.)\s/.test(t));
+  const k = lines.findIndex((t) => (t.match(/\bU-\d+\b/g) ?? []).includes(unit.id));
+  if (k < 0) return msg('cardSpecIntent', { intent: intent.id, title: String(intent.fm.title ?? ''), path });
+  const levels = withDefaults(profile).levels;
+  const highest = Object.keys(levels).filter((l) => levels[l]?.run).at(-1);
+  const kind = unit.acs.some((a) => a.level === highest) ? C.vertical : C.supporting;
+  const slice = lines[k].replace(/^\s*([-*]|\d+\.)\s+/, '').split(':')[0].trim();
+  return msg('cardSpecSlice', { kind, intent: intent.id, k: k + 1, slice, path });
+}
+
+// Each intent, unit, requirement or decision the text names, with its path, but those the card lists already.
+function referencesOf(texts, plan, cwd, sha, top, shown) {
+  const docs = new Map([...plan.intents, ...plan.units, ...plan.requirements].map((d) => [d.id, relPath(top, d.file)]));
+  const files = gitLines(cwd, 'ls-tree', '-r', '--name-only', sha);
+  const ids = [...new Set(texts.flatMap((t) => [...t.matchAll(new RegExp(C.refs, 'g'))].map((m) => m[1])))];
+  return ids.map((id) => [id, docs.get(id) ?? (/^0/.test(id) ? files.find((f) => f.split('/').pop().startsWith(id + '-') && f.endsWith('.md')) : undefined)])
+    .filter(([id, path]) => !shown.some((x) => x === id || (path && x.includes(path))))
+    .map(([id, path]) => msg(path ? 'cardRef' : 'cardRefMissing', { id, path })).join('');
+}
+
+// An interface line as written, each link replaced by its text and the path it resolves to.
+const resolveLinks = (line, file, bundle, top) => line.replace(/\[([^\]]*)\]\(([^)\s]+)\)/g, (all, text, href) =>
+  /^[a-z][a-z0-9+.-]*:/i.test(href) ? `${text} (${href})` : `${text} (${relPath(top, href.startsWith('/') ? join(bundle, href) : resolve(dirname(file), href))})`);
 
 // Renders the card for `unitId` from the base commit, or a refusal; `preview` renders the doc on disk, whatever its
 // approval, and returns only the size `card` would count (PLAN-CARD, docs/design/unit-card.md).
@@ -89,8 +118,10 @@ function renderCard(cwd, unitId, { preview = false } = {}) {
     acs: atBase.acs.map((a) => doc.lines[a.line - 1].trim()),
     scope: atBase.scope,
     // Interface links resolved from the unit doc's folder to repo paths, as `git show <base>:<path>` takes them.
-    interfaces: [...new Set([...section(doc, config.grid.interfaces).filter((l) => !l.match(MD_LINK)).map((l) => l.trim().replace(/^[-*]\s+/, '')),
-      ...linksOf({ doc, file: unit.file }, bundle).map((f) => relPath(top, f))])], // plain lines as written
+    // Interface lines as written, each link with the repo path it resolves to (U128).
+    interfaces: section(doc, config.grid.interfaces).map((l) => resolveLinks(l.trim().replace(/^[-*]\s+/, ''), unit.file, bundle, top)),
+    spec: specOf(atBase, plan, profile, top),
+    why: [section(doc, config.grid.why).map((l) => l.trim() + '\n').join('')].filter(Boolean),
     reserves: atBase.reserves,
     requirements: list(doc.fm.requirements).map(reqId).flatMap((id) => plan.requirements.filter((r) => reqId(r.id) === id)
       .map((r) => msg('cardRequirement', { id: r.id, path: relPath(top, r.file) }))), // as the file names it
@@ -117,6 +148,8 @@ function renderCard(cwd, unitId, { preview = false } = {}) {
       .filter(Boolean).map((sections) => msg('cardDesign', { sections, path: relPath(top, unit.file) })),
     rules: projectRules(gitLines(cwd, 'ls-tree', '--name-only', `${baseSha}:${config.rules.dir}`), profile, (p) => git(cwd, 'show', `${baseSha}:${p}`)),
   };
+  const shown = [unitId, ...data.requirements, ...data.interfaces, data.spec];
+  data.references = [referencesOf([data.goal, ...data.why, ...data.acs, ...data.outOfScope], plan, cwd, baseSha, top, shown)].filter(Boolean);
   const file = templateFile(cwd, lane.lane === QUICK ? C.quickTemplate : C.template);
   const template = readFileSync(file, 'utf8');
   // The base is left out, so a base that moved for other units does not make a recorded review stale.
