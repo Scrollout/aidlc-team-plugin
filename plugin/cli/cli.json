@@ -888,6 +888,7 @@
     "approveBlocks": ["PLAN-DECISION", "PLAN-SLICE"],
     "gates": "gates",
     "reviewing": "reviewing",
+    "reviewerLine": "reviewer\n",
     "launches": "launches",
     "cleared": "cleared",
     "badges": {

@@ -107,4 +107,6 @@ test('U15/AC-7 MODEL-MISMATCH names where the expected model comes from; the car
   assert.match(read(dir, '.git/aidlc/cards/U-1.json') + card.out, /./);
   const reviewer = hook('model', { cwd: dir, tool_name: 'Agent', tool_input: { subagent_type: 'team:reviewer', prompt: 'Review U-1.', model: 'sonnet' } });
   assert.match(reviewer.hookSpecificOutput.permissionDecisionReason, /uses sonnet, the profile's models\.review says opus/);
+  for (let k = 0; k < 2; k++) hook('model', { cwd: dir, tool_name: 'Agent', tool_input: { subagent_type: 'team:reviewer', prompt: 'Review U-1.', model: 'opus' } });
+  assert.equal(read(dir, '.git/aidlc/reviewing/U-1'), 'reviewer\nreviewer\n', 'U125/AC-1 one line per reviewer launched');
 });

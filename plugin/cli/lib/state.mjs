@@ -769,7 +769,10 @@ export const commands = {
     const commit = git(cwd, 'rev-parse', branchOf(unit)); // what a kept pass is measured from (U34)
     writeJson(target, { unit, rounds: [...prior, { ...data, focus, verdict, card, diffHash: diffHash(cwd, baseOf(profile), unit), commit, at: new Date().toISOString() }] });
     if (verdict === VERDICT.escalate) bump(cwd, 'escalations', config.retro.reasons.review);
-    rmSync(join(aidlcDir(cwd), S.reviewing, unit), { force: true }); // the review is no longer in flight
+    // This review is no longer in flight; reviewers of other focuses still are (U125).
+    const flight = join(aidlcDir(cwd), S.reviewing, unit);
+    const left = existsSync(flight) ? readFileSync(flight, 'utf8').split(S.reviewerLine).length - 2 : 0;
+    if (left > 0) writeFileSync(flight, S.reviewerLine.repeat(left), { flag: 'w' }); else rmSync(flight, { force: true });
     const why = verdict === VERDICT.escalate ? 'recordedEscalate' : data.verdict === VERDICT.escalate ? 'recordedEscalateFix' : missing.length ? 'recordedUntagged' : confirmed ? 'recordedConfirmed' : verdict === VERDICT.fix ? 'recordedFix' : 'recorded';
     return done(msg(why, { what: verdict, unit, focus, tags: missing.join(', '), round, limit, confirmed })); // the reviewer learns why
   },

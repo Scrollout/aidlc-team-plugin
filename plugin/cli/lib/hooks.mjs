@@ -279,7 +279,8 @@ function model(input, cwd) {
   if (!expected) return deny(cwd, input, 'MODEL-UNIT', 'modelUnit', { agent });
   const source = msg(role === H.agents[0] ? 'modelSourceCard' : 'modelSourceReview', {});
   if (t.model !== expected) return deny(cwd, input, 'MODEL-MISMATCH', 'modelMismatch', { agent, unit, model: t.model ?? 'none', expected, source });
-  touch(join(aidlcDir(cwd), role === H.agents[1] ? S.reviewing : S.heartbeats, unit)); // in flight from launch: next waits for it
+  if (role === H.agents[1]) launchReviewer(cwd, unit);
+  else touch(join(aidlcDir(cwd), S.heartbeats, unit)); // in flight from launch: next waits for it
   if (role === H.agents[0]) touch(join(aidlcDir(cwd), S.launches, unit)); // takes over a stopped builder's unit
   return allow();
 }
@@ -309,6 +310,14 @@ function docs(input, cwd) {
   const errors = checkBundle(bundle, { rules: profile.docs?.rules ?? {}, caps: profile.docs?.caps, base: top }).filter((f) => f.level === 'error' && f.path === relPath(top, file));
   if (errors.length) return JSON.stringify({ decision: 'block', reason: (stamped ?? '') + msg('docsErrors', { errors: errors.map((f) => msg('finding', f).trim()).join('\n') }) });
   return stamped ? context('PostToolUse', stamped) : allow();
+}
+
+// One line per reviewer in flight, so a focus that records first leaves the others waited for (U125).
+function launchReviewer(cwd, unit) {
+  const file = join(aidlcDir(cwd), S.reviewing, unit);
+  if (existsSync(file) && !heartbeatFresh(cwd, unit, Date.now(), S.reviewing)) writeFileSync(file, ''); // the quiet ones are gone
+  touch(file);
+  writeFileSync(file, S.reviewerLine, { flag: 'a' });
 }
 
 function touch(file) {
