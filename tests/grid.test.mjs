@@ -413,19 +413,3 @@ test('U118/AC-3 PLAN-SCOPE asks for depends only between overlapping units of on
   assert.deepEqual(sliced('- I-1.1 Skeleton: U-1', { 1: { level: 'e2e', scope: 'src/**' }, 2: { intent: '', scope: 'src/go.mod' } }), [], 'a fix bolt beside the increment');
   assert.equal(sliced('- I-1.1 Skeleton: U-1\n- I-1.2 Create: U-2', { 1: { level: 'e2e', scope: 'src/**' }, 2: { level: 'e2e', scope: 'src/a/**' } }).length, 1, 'one intent still needs the path');
 });
-
-test('U142/AC-2 PLAN-ARCHDOC: a unit that changes what the diagrams show holds an architecture doc in its scope', () => {
-  const unit = (n, scope) => `---\ntype: Unit\ntitle: A\ndescription: A.\nintent: I-1\nscope: ${JSON.stringify(scope)}\n---\n\n# Acceptance criteria\n\n- AC-1 (unit): x.\n`;
-  const dir = project({
-    'docs/intents/I-1-a.md': '---\ntype: Intent\ntitle: I-1\ndescription: I-1.\n---\n\n# Goal\nx\n',
-    'docs/units/U-1-a.md': unit(1, ['deploy/**']),
-    'docs/units/U-2-b.md': unit(2, ['deploy/dev/**', 'docs/architecture/**']),
-    'docs/units/U-3-c.md': unit(3, ['src/**']),
-    'docs/units/U-4-d.md': unit(4, ['.aidlc/profile.json']),
-    'docs/units/U-5-e.md': unit(5, ['deploy/prod/**']) + '\n# Interfaces\n- [Technical](../architecture/technical.md): the target, updated on the base\n',
-    'docs/architecture/technical.md': '---\ntype: Design\ntitle: T\ndescription: T.\n---\n',
-  });
-  const arch = (profile) => lintAll(join(dir, 'docs'), profile, { base: dir }).filter((f) => f.code === 'PLAN-ARCHDOC').map((f) => f.path);
-  assert.deepEqual(arch({ architecture: { docs: { paths: ['docs/architecture/**'], when: ['deploy/**'] } } }), ['docs/units/U-1-a.md', 'docs/units/U-4-d.md'], 'a deploy change, and a profile change (a module or a layer); U-5 links the doc updated on the base (U143/AC-1)');
-  assert.deepEqual(arch({}), [], 'off without architecture.docs');
-});

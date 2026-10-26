@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M15 B155: the codebase map draws the domains side by side with their layers and the horizontal kinds as bands (`codebase-map-kinds.md`), leaving delivery out; the slices-and-layers page and `PLAN-ARCHDOC` are gone, and constitution rule 11 is checked by `PROFILE-KIND` and the map ([Codebase map](design/codebase-map.md)). Release 0.126.0.
 - **Update** M15 B154: approving an intent pins it to the method it is approved under (`method: 2`); a rule a later method added (`method.since`) leaves an intent approved before alone, and `upgrade` lists the method changes it brings ([Canonical model](design/canonical-model.md)). Release 0.125.0.
 - **Update** M15 B153: work items are bolts: `aidlc new bolt "<title>"` writes `B-<n>` under `bolts/`, numbered on from every unit and bolt; bolts build on `bolt/B-<n>` and tag tests `B-<n>/AC-<k>`; a v2 project's fixes are bolts and a new doc under `units/` is `PLAN-BOLT`, while v1 units keep working ([Increments and bolts](design/increments-and-bolts.md)). Release 0.124.0.
 - **Update** M15 B152: an intent ships `# Increments` (`I-<n>.<k>`, the walking skeleton first) checked by `PLAN-INCREMENT`; a v1 intent's `# Slices` still reads as increments; the card's and board's vertical/horizontal Spec label, `plan.sliceUnits` and the Slices doc are gone ([Increments and bolts](design/increments-and-bolts.md)). Release 0.123.0.

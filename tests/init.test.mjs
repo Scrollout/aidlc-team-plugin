@@ -335,7 +335,7 @@ test('U142/AC-3 init writes the architecture doc template and the constitution r
   rmSync(join(dir, '.aidlc'), { recursive: true, force: true });
   assert.equal(run(dir, ['init', '--name', 'p', '--base', 'main', '--bundle', 'docs']).code, 0);
   assert.match(readFileSync(join(dir, '.aidlc/templates/docs/architecture.md'), 'utf8'), /^# Logical\n[\s\S]*^# Technical\n/m);
-  assert.match(readFileSync(join(dir, 'docs/constitution/principles.md'), 'utf8'), /^11\. \*\*Architecture you can see\.\*\* .*Checked by `PLAN-ARCHDOC` and the codebase map\.$/m);
+  assert.match(readFileSync(join(dir, 'docs/constitution/principles.md'), 'utf8'), /^11\. \*\*Architecture you can see\.\*\* .*Checked by `PROFILE-KIND` and the codebase map\.$/m);
 });
 
 test('B151/AC-2 upgrade proposes a kind for each module without one, from its paths, and changes no file of the project', () => {

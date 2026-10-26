@@ -522,7 +522,6 @@
     "scopeShared": "{{path}} is written by merge",
     "planShared": "{{unit}} scope {{glob}} names a file only merge writes",
     "planSkeleton": "{{unit}}'s first {{level}} AC waits on {{wait}} of its {{units}} product units: end to end comes last",
-    "planArchDoc": "{{unit}} changes what the architecture diagrams show (a module, a process, a store, a deploy) and neither holds nor links under Interfaces any of {{docs}}",
     "planRunbook": "{{unit}} links no runbook, and the profile deploys",
     "planPlatform": "{{unit}} ships, and the profile does not say where the deploy target is defined (deploy.platform)",
     "planIncrementsOff": "{{unit}} is on no increment line of {{intent}}'s # Increments",
@@ -609,7 +608,8 @@
     "mapOwns": "owns {{data}}",
     "mapApi": "public: {{api}}",
     "mapLayers": "layers {{layers}}",
-    "mapSlices": "\n**TL;DR:** The vertical slices, each a module, across the horizontal layers inside them, outer to inner: a diagram, then the matrix of which paths hold each layer.\n\n# Slices and layers\n```mermaid\nflowchart LR\n{{slices}}\n```\n\n{{matrix}}\n{{#each links}}\n{{this}}{{/each}}\n",
+    "mapKind": "{{kind}}",
+    "mapKinds": "\n**TL;DR:** The modules by kind: the domains side by side with the layers inside each, outer to inner, and the horizontal kinds as bands across them; delivery modules are left out. A diagram, then the matrix of which paths hold each layer.\n\n# Domains and layers\n```mermaid\nflowchart TB\n{{bands}}\n```\n\n{{matrix}}\n{{#each links}}\n{{this}}{{/each}}\n",
     "mapRow": "| {{id}} | {{uses}} | {{usedBy}} |\n",
     "mapLink": "- [{{title}}]({{file}})",
     "mapTree": "\n**TL;DR:** The folders that hold a module, with its id, the data it owns and its public paths; folders in no module are marked.\n\n# Tree\n```\n{{tree}}\n```\n{{#each links}}\n{{this}}{{/each}}\n",
@@ -834,10 +834,6 @@
       "PLAN-SKELETON": {
         "level": "warning",
         "fix": "cut a walking skeleton first: an early unit that builds the top-level test harness and the thinnest real path through every stage, with a top-level AC; then each slice adds a top-level AC for what it adds"
-      },
-      "PLAN-ARCHDOC": {
-        "level": "error",
-        "fix": "update the architecture doc on the base first (docs before code) and link it under the unit's # Interfaces, or add it to the unit's scope with an AC that it shows the change (template .aidlc/templates/docs/architecture.md)"
       },
       "PLAN-RUNBOOK": {
         "level": "error",
@@ -1467,8 +1463,10 @@
       { "suffix": "", "body": "mapTree", "title": "Codebase map", "description": "The codebase as a tree of module folders, with the data each module owns and its public paths; written at every merge, never by hand." },
       { "suffix": "-graph", "needs": "pairs", "body": "mapGraph", "title": "Module dependencies", "description": "A diagram of which module depends on which, from the dependency graph; written at every merge, never by hand." },
       { "suffix": "-table", "needs": "pairs", "body": "mapTable", "title": "Module dependency table", "description": "Each module with the modules it uses and the modules that use it; written at every merge, never by hand." },
-      { "suffix": "-layers", "needs": "layers", "body": "mapSlices", "title": "Slices and layers", "description": "The vertical slices across their horizontal layers, as a diagram and a matrix of paths; written at every merge, never by hand." }
+      { "suffix": "-kinds", "needs": "kinds", "body": "mapKinds", "title": "Domains and layers", "description": "The domains side by side with their layers, and the horizontal kinds as bands across them, as a diagram and a matrix of paths; written at every merge, never by hand." }
     ],
+    "bands": ["runtime", "pipeline", "domain", "adapter", "foundation", "extension"],
+    "noKind": "no kind",
     "versionFile": "VERSION",
     "manifest": "../.claude-plugin/plugin.json"
   },
