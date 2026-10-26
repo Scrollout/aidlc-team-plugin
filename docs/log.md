@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-26
 
+- **Fix** M12 U129: with `ci.wait`, the owner's release ships only a pushed base whose CI passed; `next` asks for the push and the wait first ([CI on the base](design/base-ci.md)). Release 0.117.1.
 - **Update** M12 U128: the card names the unit's slice (vertical or horizontal) and intent path, carries its why, keeps each interface line's text with its path, and lists the docs its text names with their paths ([Unit card](design/unit-card.md)). Release 0.117.0.
 - **Fix** M12 U127: the card shows what each name rule finds, and a banned-word rule as its word list instead of `(?!)` ([Naming rules](design/names.md)). Release 0.116.3.
 - **Update** M12 U126: the intent is the vertical spec, with `# Risks` and a why for each rule; horizontal docs are extracted when a second slice reuses a pattern ([Grid](design/grid.md)). Release 0.116.2.

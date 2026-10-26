@@ -139,3 +139,27 @@ test('U71/AC-3 a red base comes first: a fix unit, then only fix units build or 
   merge(ready.dir, 'U-3');
   assert.match(aidlc(ready, 'next').out, /aidlc push/, 'the merged fix ends the red base: push and wait again');
 });
+
+test('U129/AC-1 the owner releases only a pushed base whose CI passed', () => {
+  const ok = 'node -e "1"';
+  const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), 'docs/units/U-1-u.md': unitDoc({ scope: ['a/**'] }) },
+    { github: { repo: 'acme/shop', gh: [process.execPath, STUB] }, ci: { wait: 5, interval: 0 }, deploy: { check: [ok], run: ok } });
+  approve(dir, 'I-1', 'U-1');
+  const remote = tempDir('remote-');
+  git(remote, 'init', '-q', '--bare');
+  git(dir, 'remote', 'add', 'origin', remote);
+  branch(dir, 'U-1', 'a/x.txt');
+  merge(dir, 'U-1');
+  const ctx = { dir, stub: join(tempDir('gh-'), 'state.json') };
+  writeFileSync(ctx.stub, JSON.stringify({ polls: [[run(1, 'success')]] }));
+  assert.equal(aidlc(ctx, 'deploy', 'check', 'I-1').code, 0);
+  assert.match(aidlc(ctx, 'next').out, /^the base has merges its remote lacks: push it/, 'unpushed');
+  assert.match(aidlc(ctx, 'release', 'I-1').err, /I-1 ships only a pushed base whose CI passed \(now: unpushed\)/);
+  git(dir, 'push', '-q', 'origin', 'main');
+  assert.match(aidlc(ctx, 'next').out, /^I-1 ships only a pushed base whose CI passed: aidlc ci wait/);
+  setRecord(ctx, 'red');
+  assert.notEqual(aidlc(ctx, 'release', 'I-1').code, 0, 'red');
+  setRecord(ctx, 'green');
+  assert.match(aidlc(ctx, 'next').out, /^👉 I-1 is ready to release/);
+  assert.equal(aidlc(ctx, 'release', 'I-1').code, 0);
+});

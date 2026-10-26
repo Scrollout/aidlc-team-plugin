@@ -2,7 +2,7 @@
 // recorded with the base commit it ran on; `next` reads the record and never runs a step (docs/design/operations.md).
 import { config, done, git, list, readJson, sh, tryGit, UsageError } from './config.mjs';
 import { msg } from './template.mjs';
-import { bump, readState, runtimeFile, writeJson } from './state.mjs';
+import { bump, ciGreen, readState, runtimeFile, writeJson } from './state.mjs';
 
 // Runs the commands in order until one fails: { ok, command, exit, output }, with the tail of the output.
 function runAll(cwd, commands) {
@@ -50,6 +50,8 @@ export const commands = {
     const commands = [deploy.run, release].filter(Boolean);
     if (!commands.length) throw new UsageError(msg('releaseUsage', {}));
     if (list(deploy.check).length && !(t.intent.deploy.check?.ok && t.intent.deploy.check.base === t.base)) throw new UsageError(msg('releaseNoCheck', { intent: t.intent.id }));
+    const ci = ciGreen(t.st.ci);
+    if (ci !== true) throw new UsageError(msg('releaseCiNotGreen', { intent: t.intent.id, ci }));
     const result = runAll(t.top, commands);
     let out = record(t, 'release', result);
     const smoke = result.ok && deploy.smoke ? runAll(t.top, [deploy.smoke]) : result;

@@ -574,7 +574,20 @@ function releaseStep(st, i) {
   const checked = list(st.profile.deploy?.check).length > 0;
   if (checked && rec.check?.base !== base) return action('act', 'nextDeployCheck', { intent: i.id });
   if (checked && !rec.check.ok) return action('act', 'nextDeployFailed', { intent: i.id, tests, ...rec.check });
+  // With ci.wait the owner releases only a pushed base whose CI passed (U129).
+  const ci = ciGreen(st.ci);
+  if (ci === 'unpushed') return action('act', 'nextCiPush');
+  if (ci === 'red') return action('wait', 'nextReleaseCiRed', { intent: i.id });
+  if (ci !== true) return action('act', 'nextReleaseCiWait', { intent: i.id });
   return action('human', 'nextDeployRelease', { intent: i.id });
+}
+
+// True without ci.wait or on a pushed base whose last CI passed; else what holds it: unpushed, red, pending or unknown.
+export function ciGreen(ci) {
+  if (!ci) return true;
+  if (ci.head !== ci.remote) return 'unpushed';
+  if (ci.red) return 'red';
+  return ci.rec?.sha === ci.head && ['green', 'none'].includes(ci.rec.state) ? true : ci.rec?.sha === ci.head ? ci.rec.state : 'unknown';
 }
 
 // ---- Commands ----
