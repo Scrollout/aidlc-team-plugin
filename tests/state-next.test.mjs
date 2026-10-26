@@ -158,6 +158,20 @@ test('U141/AC-1 a stopped unit holds back no other unit\'s review; its stop come
   assert.match(run(dir, ['next']).out, /^⛔ the builder of U-1 stopped \(the interface must change\)/);
 });
 
+test('U145/AC-1 a fix unit refused for a red base waits for a merge, and the base\'s fix builds past its scope', () => {
+  const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ intent: '', scope: ['src/**'] }), [U(2)]: unitDoc({ intent: '', scope: ['src/b/**'] }), [U(3)]: unitDoc({ scope: ['c/**'] }) });
+  approve(dir, 'I-1', 'U-1', 'U-2', 'U-3');
+  branch(dir, 'U-1', 'src/a.txt');
+  run(dir, ['report', 'U-1'], '{"status": "done"}');
+  review(dir, 'U-1', 'pass');
+  const base = git(dir, 'rev-parse', 'main');
+  write(dir, { '.git/aidlc/gates/U-1.json': JSON.stringify({ base, diffHash: JSON.parse(read(dir, '.git/aidlc/reviews/U-1.json')).rounds.at(-1).diffHash, codes: ['GATE-BASE'] }), '.git/aidlc/base.json': JSON.stringify({ sha: base, unit: 'U-1', level: 'unit' }) });
+  commit(dir, 'a plan commit', { 'docs/notes.md': '---\ntype: Note\ntitle: N\ndescription: N.\n---\n' });
+  const out = run(dir, ['next']).out;
+  assert.doesNotMatch(out, /merge U-1/, 'a plan commit does not fix the base');
+  assert.match(out, /^build U-2 /, 'U-2 overlaps U-1, which only waits; on a red base U-3 waits too');
+});
+
 test('U4/AC-3 delegate writes the owner\'s delegation into the personal profile only', () => {
   const dir = makeRepo({ ...I1 });
   assert.equal(run(dir, ['delegate', 'everything']).code, 64);

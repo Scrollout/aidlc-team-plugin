@@ -310,7 +310,8 @@ export function readState(cwd, { now = Date.now() } = {}) {
         const gate = readJson(runtimeFile(cwd, 'gates', u.id));
         // A builder launched after the gate refused it is a fix round in flight, not a merge to offer again.
         if (gate?.at && heartbeatFresh(cwd, u.id, now) && heartbeatAt(cwd, u.id, S.launches) > Date.parse(gate.at)) state = 'building';
-        else state = gate?.diffHash === hash && gate.base === tryGit(cwd, 'rev-parse', base) ? 'gated' : 'reviewed';
+        // Refused only for a red base, it stays refused until a merge lands: a plan commit does not fix the base (U145).
+        else state = gate?.diffHash === hash && (gate.base === tryGit(cwd, 'rev-parse', base) || (gate.codes.every((c) => c === 'GATE-BASE') && tryGit(cwd, 'rev-list', '--count', '--merges', `${gate.base}..${base}`) === '0')) ? 'gated' : 'reviewed';
       }
       else if (has(VERDICT.pass) || has(S.answered) || (report && report.status !== S.stopped && (!lastAt || report.at > lastAt) && Date.parse(report.at) > approvedAt(u.doc))) {
         state = heartbeatFresh(cwd, u.id, now, S.reviewing) ? 'reviewing' : 'reported';
@@ -467,7 +468,8 @@ function unitWork(st, scope) {
   const lost = live.find((u) => u.state === 'building' && !u.fresh);
   if (lost) return action('act', 'nextRestart', { unit: lost.id, branch: branchOf(lost.id) });
   // A unit waiting on the owner or on its spec holds back no other unit's review, fix or restart (U141).
-  const gated = live.find((u) => u.state === 'gated');
+  const onRed = (u) => u.state === 'gated' && readJson(runtimeFile(st.cwd, 'gates', u.id)).codes.every((c) => c === 'GATE-BASE'); // waits for the base's fix, which it never blocks
+  const gated = live.find((u) => u.state === 'gated' && !onRed(u));
   if (gated) return action('human', 'nextGated', { unit: gated.id, codes: readJson(runtimeFile(st.cwd, 'gates', gated.id)).codes.join(', ') });
   const escalated = live.find((u) => u.state === 'escalated');
   if (escalated) return action('human', 'nextEscalated', { unit: escalated.id });
@@ -482,7 +484,7 @@ function unitWork(st, scope) {
   const max = st.profile.parallel.max;
   const picked = [];
   const ready = live.filter((u) => u.state === 'approved' && fixOnly(u)).sort((a, b) => priorityOf(b) - priorityOf(a) || !a.fm.intent - !b.fm.intent || byId(a, b));
-  const started = [...inFlight, ...st.units.filter((u) => !inFlight.includes(u) && !['draft', 'stale', 'approved', 'blocked', 'merged'].includes(u.state))];
+  const started = [...inFlight, ...st.units.filter((u) => !inFlight.includes(u) && !onRed(u) && !['draft', 'stale', 'approved', 'blocked', 'merged'].includes(u.state))];
   for (const u of ready) {
     if (inFlight.length + picked.length >= max) break;
     const clash = [...started, ...picked].some((o) => u.scope.some((g) => o.scope.some((h) => overlaps(g, h))));
