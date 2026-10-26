@@ -515,7 +515,8 @@
     "planSliceIntent": "{{unit}} has no AC at the top level {{level}}: no unit tests it end to end",
     "planDesign": "{{unit}} is {{lane}} lane and has no # {{section}} section with content",
     "cardDataOwned": "- {{module}} owns {{data}}\n",
-    "cardName": "- {{id}} in {{files}}: {{pattern}} ({{why}})\n",
+    "cardName": "- {{id}} in {{files}}: each name {{find}} takes must fully match {{pattern}} ({{why}})\n",
+    "cardNameBanned": "- {{id}} in {{files}}: nothing may match {{find}} ({{why}})\n",
     "cardNamePath": "- {{id}}, paths under {{files}}: {{pattern}} ({{why}})\n",
     "cardDeps": "Your scope pins dependencies ({{manifests}}). Your training data is out of date: look up each version you add or bump from its registry or official release page, take the newest stable release that fixes every known advisory, pin it exactly, and list it in your report as \"deps\": [{\"name\", \"version\", \"source\"}] (the URL or command that showed it). The merge gate runs: {{checks}}.\n",
     "cardPlatform": "The deploy target is already defined in: {{refs}}\nBuild on its conventions (names, namespaces, registries, access); add nothing it already provides, and stop and report if the unit needs a change there.\n",
@@ -903,6 +904,7 @@
     "board": "board.json"
   },
   "card": {
+    "bannedPattern": "(?!)",
     "template": "card.md",
     "researchTemplate": "research.md",
     "stack": ["go.mod", "package.json", "pyproject.toml", "requirements.txt", "Cargo.toml", "pom.xml", "build.gradle", "Gemfile", "composer.json", "Makefile", "justfile", "Dockerfile"],

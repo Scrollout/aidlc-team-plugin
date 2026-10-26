@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-26
 
+- **Fix** M12 U127: the card shows what each name rule finds, and a banned-word rule as its word list instead of `(?!)` ([Naming rules](design/names.md)). Release 0.116.3.
 - **Update** M12 U126: the intent is the vertical spec, with `# Risks` and a why for each rule; horizontal docs are extracted when a second slice reuses a pattern ([Grid](design/grid.md)). Release 0.116.2.
 - **Fix** M12 U125: the reviewing mark counts the reviewers in flight, so a focus that records first leaves the others waited for ([In flight](design/in-flight.md)). Release 0.116.1.
 - **Update** M12 U124: `report` asks for sourced `deps` only when the diff adds a pin line (`deps.pin`) to a manifest, so files that pin among other content can be manifests ([Current dependencies](design/dependencies.md)). Release 0.116.0.
