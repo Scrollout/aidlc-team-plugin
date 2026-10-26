@@ -19,7 +19,8 @@ export const aidlcDir = (cwd) => join(resolve(cwd, git(cwd, 'rev-parse', '--git-
 export const runtimeFile = (cwd, kind, unit) => join(aidlcDir(cwd), S[kind], `${unit}.json`);
 export const ciFile = (cwd) => join(aidlcDir(cwd), S.ci); // the base's last CI poll (docs/design/base-ci.md)
 export const baseRedFile = (cwd) => join(aidlcDir(cwd), S.baseRed); // a level the gate found red on the base alone
-export const branchOf = (unit) => S.branchPrefix + unit;
+// A bolt builds on bolt/B-<n>, a v1 unit on unit/U-<n> (docs/design/increments-and-bolts.md).
+export const branchOf = (unit) => (unit.startsWith(config.grid.boltPrefix) ? S.boltBranch : S.branchPrefix) + unit;
 export const baseOf = (profile) => profile.base;
 // The paths a unit's branch changes since its merge base with the base branch.
 export const unitPaths = (cwd, base, unit) => gitLines(cwd, 'diff', '--name-only', `${base}...${branchOf(unit)}`);
@@ -260,7 +261,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
   const bundle = bundleOf(cwd, profile);
   const plan = readPlan(bundle);
   const merged = mergedUnits(cwd, base);
-  const branches = new Set(gitLines(cwd, 'for-each-ref', '--format=%(refname:short)', `refs/heads/${S.branchPrefix}`));
+  const branches = new Set(gitLines(cwd, 'for-each-ref', '--format=%(refname:short)', `refs/heads/${S.branchPrefix}`, `refs/heads/${S.boltBranch}`));
   const live = plan.units.filter((u) => u.fm.status !== config.grid.dropped).sort(byId);
 
   const answered = researched(bundle);

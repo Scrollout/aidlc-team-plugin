@@ -64,7 +64,7 @@ const opt = (a, names) => names.some((o) => a === o || (o.startsWith('--') && /^
 // Any path ending in the CLI's name, with `/` or `\\` or none left after the shell's unescaping: a Windows path must not slip past (U81).
 const isCli = (a) => H.cli.some((c) => a.endsWith(c));
 // A ref that names a unit branch: `unit/U-1`, `refs/heads/unit/U-1`, `origin/unit/U-1`, or a range end.
-const unitRef = (r) => r.split(/\.{2,3}/).some((p) => new RegExp(`^(?:refs/(?:heads|remotes/[^/]+)/|heads/|[^/]+/)?${S.branchPrefix}`).test(p));
+const unitRef = (r) => r.split(/\.{2,3}/).some((p) => new RegExp(`^(?:refs/(?:heads|remotes/[^/]+)/|heads/|[^/]+/)?(?:${S.branchPrefix}|${S.boltBranch})`).test(p));
 // The files a commit takes: the index, plus its pathspecs' changes (`-m x a.md`, `--only`, `--include`), plus `--all`'s.
 function committed(cwd, args) {
   const specs = [];
@@ -229,7 +229,7 @@ const approvalPart = (text) => {
   return JSON.stringify([events, fm.verified_hash ?? null]);
 };
 
-const unitOfBranch = (cwd) => { const b = tryGit(cwd, 'rev-parse', '--abbrev-ref', 'HEAD') ?? ''; return b.startsWith(S.branchPrefix) ? b.slice(S.branchPrefix.length) : null; };
+const unitOfBranch = (cwd) => { const b = tryGit(cwd, 'rev-parse', '--abbrev-ref', 'HEAD') ?? ''; const p = [S.branchPrefix, S.boltBranch].find((x) => b.startsWith(x)); return p ? b.slice(p.length) : null; };
 
 const real = (p) => (existsSync(p) ? realpathSync.native(p) : join(real(dirname(p)), basename(p))); // as git's top level: no symlink escape
 function scope(input, cwd) {

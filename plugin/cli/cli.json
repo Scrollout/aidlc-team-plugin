@@ -152,6 +152,11 @@
       "does": "record an owner priority in the plan"
     },
     {
+      "name": "new",
+      "usage": "new bolt \"<title>\"",
+      "does": "write a draft bolt B-<n> under bolts/, the next free number, named from its title"
+    },
+    {
       "name": "fix",
       "usage": "fix \"<title>\"|--from-issue <n> --scope <glob>… [--requirement R-<n>…] [--after <intent>]",
       "does": "create a one-unit plan without an intent",
@@ -525,6 +530,9 @@
     "planIncrementsOrder": "{{unit}} waits on {{dep}}, a bolt of a later increment",
     "planIncrementAhead": "{{unit}} waits on the fix bolt {{dep}}: fix bolts build beside the increments, never ahead",
     "planIncrementIntent": "{{unit}} has no AC at the top level {{level}}: no bolt tests it end to end",
+    "planBoltLegacy": "{{unit}} is new under units/: a v2 project writes its work items as bolts, aidlc new bolt \"<title>\"",
+    "newUsage": "usage: aidlc new bolt \"<title>\"",
+    "newWrote": "wrote {{path}}, a draft {{id}}: fill its intent, increment, scope and ACs, then aidlc check {{path}}\n",
     "planIncrementId": "line {{n}} of {{unit}}'s # Increments starts with {{found}}, not {{expected}}: each increment line opens with its id, I-<n>.<k> in order",
     "planDesign": "{{unit}} is {{lane}} lane and has no # {{section}} section with content",
     "cardDataOwned": "- {{module}} owns {{data}}\n",
@@ -658,6 +666,7 @@
     },
     "sizeCaps": {
       "Unit": 12000,
+      "Bolt": 12000,
       "Plan": 12000,
       "Intent": 12000,
       "Design": 6000,
@@ -742,6 +751,12 @@
   },
   "grid": {
     "units": "units",
+    "bolts": "bolts",
+    "boltPrefix": "B-",
+    "boltTemplate": "templates/docs/bolt.md",
+    "slugWords": 8,
+    "slugMax": 48,
+    "boltFile": "^(B-\\d+)(?:-[^/]*)?\\.md$",
     "intents": "intents",
     "unitFile": "^(U-\\d+)(?:-[^/]*)?\\.md$",
     "intentFile": "^(I-\\d+)(?:-[^/]*)?\\.md$",
@@ -827,6 +842,10 @@
         "level": "error",
         "fix": "link a Runbook doc from the intent (template .aidlc/templates/docs/runbook.md: how to roll back, what to watch, who to call)"
       },
+      "PLAN-BOLT": {
+        "level": "error",
+        "fix": "move the work item to bolts/ as B-<n> (aidlc new bolt \"<title>\"); units/ holds only the units a v1 plan approved (docs: Increments and bolts)"
+      },
       "PLAN-INCREMENT": {
         "level": "error",
         "fix": "list the intent's increments under # Increments, each line opening with I-<n>.<k> and naming its bolts with a top-level AC among them, the walking skeleton first; no bolt waits on a later increment or a fix bolt (move what an increment needs into it); an intent without the section is one increment and runs end to end once with a top-level AC (or endToEnd: \"<why>\" outside every module and one-way door); a bolt crossing modules is tested at integration or higher (docs: Increments and bolts)"
@@ -862,6 +881,7 @@
     "researchHold": "research:",
     "hostDeniedKept": 5,
     "branchPrefix": "unit/",
+    "boltBranch": "bolt/",
     "human": "human:",
     "stable": "stable",
     "hashExclude": [
@@ -882,6 +902,7 @@
     "approvable": [
       "Intent",
       "Unit",
+      "Bolt",
       "Decision",
       "Requirement"
     ],
@@ -1266,7 +1287,7 @@
       ":builder",
       ":reviewer"
     ],
-    "unitPattern": "\\bU-\\d+\\b",
+    "unitPattern": "\\b[UB]-\\d+\\b",
     "researcher": ":researcher",
     "before": "PreToolUse",
     "clearSource": "clear",

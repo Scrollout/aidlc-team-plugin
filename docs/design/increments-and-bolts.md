@@ -27,7 +27,7 @@ An intent ships each increment when its bolts merge, not only at the end. While 
 - `INTENT-SIZE` (M18): at most 5 increments, each with its own success measure.
 
 # Bolts
-- **IDs.** `B-<n>`, allocated by `aidlc new bolt "<title>"` with a generated slug ([Bundle](bundle.md)), never typed.
+- **IDs.** `B-<n>`, allocated by `aidlc new bolt "<title>"`, never typed: the next number over every unit and bolt, the file named from the title (no apostrophes, at most 48 characters, cut at a word). `aidlc fix` writes a fix bolt the same way in a v2 project.
 - **Names.** Branch `bolt/B-<n>`; test tags `B-<n>/AC-<k>`, or `R-<n>/AC-<k>` for a requirement's ACs.
 - **Front matter.** `intent`, `increment`, `binding` (`domain: <code>`, or `module: <id>` plus `neededBy: B-<v>`), `scope`, `acs`, `fix`.
 - **Binding** (M19): one domain, or one horizontal module needed by a domain bolt of the same increment. Several domains only in increment 1.
@@ -44,7 +44,7 @@ B152 removed the section, the `Spec:` line, `plan.sliceUnits` and `slices.md`, k
 
 # Legacy
 - `U-<n>` and `units/` are read as aliases of bolts: cards, gates and history keep working.
-- A new doc under `units/` is refused.
+- In a v2 project (its profile has `system`), a doc under `units/` that no v1 plan approved is `PLAN-BOLT`.
 - Old test tags `U-<n>/AC-<k>` still count for their bolt.
 - The aliases expire one milestone after the last pilot migrates (M21).
 

@@ -3,7 +3,7 @@
 import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
-import { bundleOf, CLI_DIR, config, QUICK, VERDICT, done, git, gitLines, list, readJson, sh, slug, tryGit, UsageError, relPath } from './config.mjs';
+import { bundleOf, CLI_DIR, PLUGIN_DIR, config, QUICK, VERDICT, done, git, gitLines, list, readJson, sh, slug, tryGit, UsageError, relPath } from './config.mjs';
 import { finding as codeFinding, msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, nameProblem, parseDoc, writeIndexes } from './okf.mjs';
@@ -353,9 +353,10 @@ function historyFindings(cwd, range, st, codes) {
   return out;
 }
 
-function nextUnitId(bundle) {
+// The next work item: B-<n> in a v2 project (or by `new bolt`), numbered on from every unit and bolt, else U-<n>.
+function nextUnitId(bundle, bolt) {
   const ids = readPlan(bundle).units.map((u) => Number(u.id.split('-')[1]));
-  return `U-${(ids.length ? Math.max(...ids) : 0) + 1}`;
+  return `${bolt ? config.grid.boltPrefix : 'U-'}${(ids.length ? Math.max(...ids) : 0) + 1}`;
 }
 
 export const commands = {
@@ -428,8 +429,8 @@ export const commands = {
     if (!title || !flags.scope.length) throw new UsageError(msg('fixUsage', {}));
     const lane = computeLane(flags.scope, profile); // a full-lane fix waits for the owner's approval like any other unit
     const bundle = bundleOf(cwd, profile);
-    const id = nextUnitId(bundle);
-    const file = join(bundle, config.grid.units, `${id}-${slug(title).slice(0, 40)}.md`);
+    const id = nextUnitId(bundle, Boolean(profile.system)), dir = profile.system ? config.grid.bolts : config.grid.units;
+    const file = join(bundle, dir, `${id}-${slug(title).slice(0, 40)}.md`);
     const version = existsSync(join(CLI_DIR, config.init.version)) ? readFileSync(join(CLI_DIR, config.init.version), 'utf8').trim() : config.init.devVersion;
     const text = render(readFileSync(join(CLI_DIR, G.fixTemplate), 'utf8'), {
       title: JSON.stringify(title),
@@ -443,12 +444,26 @@ export const commands = {
       at: new Date().toISOString().replace(/\.\d+Z$/, 'Z'),
       level: Object.keys(withDefaults(profile).levels)[0],
     }, G.fixTemplate);
-    mkdirSync(join(bundle, config.grid.units), { recursive: true });
+    mkdirSync(join(bundle, dir), { recursive: true });
     writeFileSync(file, text);
     // The unit as plan lint sees it, so the lead completes what the skeleton cannot know (U58).
     const findings = lintPlan(bundle, profile, { base: cwd, skip: [...mergedUnits(cwd, baseOf(profile)).keys()] }).filter((f) => f.path === relPath(cwd, file));
     const out = msg('fixWrote', { path: relPath(cwd, file), lane: lane.lane, approve: lane.lane === QUICK ? [] : [id] }) + (findings.length ? msg('fixLint', { path: relPath(cwd, file) }) : '');
     return done(out, findings.some((f) => f.level === 'error') ? config.exit.findings : config.exit.ok, findings);
+  },
+
+  // A draft bolt from the bolt template, its id the next free number and its file named from the title (docs/design/increments-and-bolts.md).
+  new(args, { cwd }) {
+    const [kind, title] = args;
+    if (kind !== 'bolt' || !title?.trim()) throw new UsageError(msg('newUsage', {}));
+    const { profile } = loadProfile(cwd);
+    const bundle = bundleOf(cwd, profile), id = nextUnitId(bundle, true);
+    const words = slug(title.replace(/['’]/g, ''), config.grid.slugWords), name = words.length > config.grid.slugMax ? words.slice(0, config.grid.slugMax + 1).replace(/-[^-]*$/, '') : words; // cut at a word, never in one
+    const file = join(bundle, config.grid.bolts, `${id}-${name}.md`);
+    const text = readFileSync(join(PLUGIN_DIR, config.grid.boltTemplate), 'utf8').replace(/^title: .*$/m, `title: ${JSON.stringify(title.trim())}`);
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, text);
+    return done(msg('newWrote', { path: relPath(cwd, file), id }));
   },
 
   // The CI part of `check --ci`: base history since `profile.adopted`, and architecture on the checked-out tree.

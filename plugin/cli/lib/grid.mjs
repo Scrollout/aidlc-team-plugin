@@ -108,7 +108,8 @@ export function readPlan(bundle) {
   // Citations compare by number (R-24 cites R-024.md) and print as the file names the requirement.
   const named = new Map(requirements.map((r) => [reqId(r.id), r.id]));
   const cite = (d) => ({ ...d, requirements: d.requirements.map((r) => named.get(r) ?? r) });
-  const units = readDocs(bundle, GRID.units, GRID.unitFile).map((u) => cite({ ...u, ...unitFields(u.doc) }));
+  // Bolts under bolts/, and a v1 plan's units under units/ read as bolts (docs/design/increments-and-bolts.md).
+  const units = [...readDocs(bundle, GRID.units, GRID.unitFile), ...readDocs(bundle, GRID.bolts, GRID.boltFile)].map((u) => cite({ ...u, ...unitFields(u.doc) }));
   return { intents: readDocs(bundle, GRID.intents, GRID.intentFile).map(cite), units, requirements };
 }
 
@@ -213,6 +214,8 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   const bundleRel = relPath(base, bundle);
 
   for (const u of units) {
+    // A v2 project writes new work as bolts; units/ keeps only what a v1 plan approved (docs/design/increments-and-bolts.md).
+    if (profile.system && !u.id.startsWith(GRID.boltPrefix) && !u.fm.verified_hash) add('PLAN-BOLT', u, 1, 'planBoltLegacy', {});
     for (const dep of u.depends.filter((d) => !known.has(d))) add('PLAN-DAG', u, keyLine(u, 'depends'), 'depUnknown', { dep });
     const seen = new Set();
     for (const ac of u.acs) {

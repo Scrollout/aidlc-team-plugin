@@ -9,7 +9,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 # Commands
 | Command | Does | Run by |
 |---|---|---|
-| `init [--adopt] [--name n] [--base b] [--bundle dir] [--run level=command]… [--overwrite path]…` | takes the answers the skill asked for as flags, writes the profile with each level's run command, renders templates, vendors itself; `--adopt` keeps an existing bundle ([Profile and templates](profile.md)) | owner via the `aidlc` skill |
+| `init [--adopt] [--name n] [--base b] [--bundle dir] [--run level=command]… [--overwrite path]…` | takes the skill's answers as flags, writes the profile with each level's run, renders templates, vendors itself; `--adopt` keeps an existing bundle ([Profile and templates](profile.md)) | owner via the `aidlc` skill |
 | `upgrade [--downgrade] [--dirty]` | re-vendors the CLI from the installed plugin's release and adds templates the project lacks; refuses an older one or a checkout with uncommitted changes unless told; says when nothing changed, which release it copied, and how to fetch a newer one | owner (prompt or `!`) |
 | `index [bundle]` | regenerates every `index.md` in the bundle like the OKF reference implementation | docs hook, merge, anyone |
 | `check [--ci] [path…]` | OKF validation, plan lint, profile lint; `--ci` adds the base history and architecture checks. A directory is checked as a bundle, or within the profile's bundle when it lies below its root; a file reports only its own findings | hooks, CI, anyone |
@@ -27,7 +27,8 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 | `report <unit> [file]` | stores the builder's report (JSON from the file, or stdin) | builder |
 | `hold <doc> [off\|<reason>]` | records an owner instruction in the plan: `hold: true` or the reason; `off` removes it. The lead also holds a doc with a reason while it parks a question for the owner, and holds a merged intent to park its release steps | lead |
 | `priority <unit> <n>` | records `priority: <n>` in the plan, higher first | lead |
-| `fix "<title>"\|--from-issue <n> --scope <glob>… [--requirement R-<n>…] [--after <intent>]` | one-unit plan without an intent; from an issue, titled like it and linked to it; `--after` links the release it fixes; prints the plan lint findings of the unit it wrote ([Everyday paths](paths.md#fixes-without-an-intent)) | lead |
+| `new bolt "<title>"` | a draft `B-<n>`, named from its title | lead |
+| `fix "<title>"\|--from-issue <n> --scope <glob>… [--requirement R-<n>…] [--after <intent>]` | a fix (a bolt in a v2 project) without an intent; from an issue, titled and linked like it; `--after` links the release it fixes; prints its plan lint findings ([Everyday paths](paths.md#fixes-without-an-intent)) | lead |
 | `map` | writes the codebase map in the bundle ([Codebase map](codebase-map.md)) | lead, merge |
 | `sync` | projects intents and units onto GitHub issues and a Project ([Board](board.md)) | lead, merge |
 | `push` | checked base push | lead |
