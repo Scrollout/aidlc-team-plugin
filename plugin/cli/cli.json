@@ -256,6 +256,12 @@
     "archNoData": "the profile has modules but no data ownership (architecture.data): one slice could read another's data unseen",
     "archNoAcyclic": "the profile has modules but architecture.acyclic is off",
     "archNoApi": "modules without an api surface: {{modules}}",
+    "kindMissing": "module {{module}} has no kind: one of {{kinds}}",
+    "kindUnknown": "module {{module}} has kind {{kind}}, not one of {{kinds}}",
+    "surfaceUnknown": "module {{module}} has surface {{surface}}, not one of {{surfaces}}",
+    "systemShape": "system takes core and extensions, each a list of globs; {{key}} is not one",
+    "upgradeKinds": "Module kinds, proposed from paths and names (docs: Architecture model); add each as the module's kind, or the kind it really is:\n{{list}}\n",
+    "upgradeKind": "  {{module}}: {{kind}}",
     "namesNone": "the profile has modules but no names rule",
     "namesRegex": "names rule {{id}}: find or pattern is no valid regex",
     "profileKey": "{{key}} is read by nothing in the plugin",
@@ -637,7 +643,7 @@
   },
   "okf": {
     "profileKeys": {
-      "top": ["name", "base", "docs", "levels", "modules", "lanes", "focus", "security", "shared", "reserve", "parallel", "architecture", "adopted", "deploy", "release", "regen", "review", "research", "models", "board", "ci", "github", "decisions", "generated", "run", "approvals", "names", "deps", "plan", "checks"],
+      "top": ["name", "base", "docs", "levels", "modules", "lanes", "focus", "security", "shared", "reserve", "parallel", "architecture", "adopted", "deploy", "release", "regen", "review", "research", "models", "board", "ci", "github", "decisions", "generated", "run", "approvals", "names", "deps", "plan", "checks", "system"],
       "security": ["secrets", "content", "threatModel", "check"]
     },
     "index": "index.md",
@@ -728,6 +734,10 @@
       "PROFILE-RULE": {
         "level": "error",
         "fix": "set docs.rules entries to a HOUSE-* code and one of error, warning, off"
+      },
+      "PROFILE-KIND": {
+        "level": "error",
+        "fix": "give each module its kind (domain, pipeline, foundation, adapter, runtime, extension or delivery), surfaces from client, server and events, and system as core and extensions globs (docs: Architecture model)"
       },
       "PROFILE-KEY": {
         "level": "warning",
@@ -1507,20 +1517,20 @@
   },
   "vocabulary": {
     "words": [
-      { "word": "core", "scale": "system", "meaning": "the shared platform every extension uses" },
-      { "word": "extension", "scale": "system", "meaning": "a vertical capability owned elsewhere, built only against published contracts" },
-      { "word": "domain", "scale": "domain", "meaning": "a bounded context: its data, language, contract and events", "method": "Unit" },
-      { "word": "kind", "scale": "domain", "meaning": "a module's place in the architecture: domain, pipeline, foundation, adapter, runtime, extension or delivery" },
-      { "word": "slice", "scale": "code", "meaning": "one operation (command or query) of one domain, end to end, in one folder" },
-      { "word": "layer", "scale": "code", "meaning": "a position inside a module: interface, application, model or infrastructure" },
-      { "word": "intent", "scale": "delivery", "meaning": "one business outcome, with its why and success measures", "method": "Intent" },
-      { "word": "increment", "scale": "delivery", "meaning": "a shippable step of an intent; increment 1 is the walking skeleton" },
-      { "word": "bolt", "scale": "delivery", "meaning": "the smallest build cycle: one card, worktree, review and merge", "method": "Bolt" },
-      { "word": "fix bolt", "scale": "delivery", "meaning": "one regression, one AC that fails before the fix" },
-      { "word": "lane", "scale": "plugin", "meaning": "quick, standard or full; decides which grid rows run" },
-      { "word": "card", "scale": "plugin", "meaning": "the generated brief one builder works from and one reviewer checks against" },
-      { "word": "lead", "scale": "plugin", "meaning": "the main session running the loop" },
-      { "word": "owner", "scale": "plugin", "meaning": "the human who approves, releases and rolls back" }
+      { "word": "core", "scale": "System", "meaning": "the shared platform every extension uses", "method": "the system", "declared": "profile `system.core`" },
+      { "word": "extension", "scale": "System", "meaning": "a vertical capability owned elsewhere, built only against published contracts", "method": "another team's Units", "declared": "profile `system.extensions`" },
+      { "word": "domain", "scale": "Domain", "meaning": "a bounded context: its data, language, contract and events", "method": "**Unit**", "declared": "`domains/<code>.md`, module `kind: domain`" },
+      { "word": "kind", "scale": "Domain", "meaning": "`domain`, `pipeline`, `foundation`, `adapter`, `runtime`, `extension` or `delivery`", "method": "-", "declared": "module `kind`" },
+      { "word": "slice", "scale": "Code", "meaning": "one operation (command or query) of one domain, end to end, in one folder", "method": "part of a Unit's stories", "declared": "the domain's `surface`" },
+      { "word": "layer", "scale": "Code", "meaning": "a position inside a module: `interface`, `application`, `model` or `infrastructure`", "method": "logical design", "declared": "the stack pack" },
+      { "word": "intent", "scale": "Delivery", "meaning": "one business outcome, with its why and success measures", "method": "**Intent**", "declared": "`intents/I-<n>-<slug>.md`" },
+      { "word": "increment", "scale": "Delivery", "meaning": "a shippable step of an intent; increment 1 is the walking skeleton", "method": "groups Bolts", "declared": "the intent's `# Increments`, `I-<n>.<k>`" },
+      { "word": "bolt", "scale": "Delivery", "meaning": "the smallest build cycle: one card, worktree, review and merge", "method": "**Bolt**", "declared": "`bolts/B-<n>-<slug>.md`" },
+      { "word": "fix bolt", "scale": "Delivery", "meaning": "one regression, one AC that fails before the fix", "method": "defect-fix pathway", "declared": "a bolt with `fix: true`" },
+      { "word": "lane", "scale": "Plugin", "meaning": "quick, standard or full; decides which grid rows run", "method": "-", "declared": "the profile's `lanes`" },
+      { "word": "card", "scale": "Plugin", "meaning": "the generated brief one builder works from and one reviewer checks against", "method": "-", "declared": "`aidlc card`" },
+      { "word": "lead", "scale": "Plugin", "meaning": "the main session running the loop", "method": "-", "declared": "the skill" },
+      { "word": "owner", "scale": "Plugin", "meaning": "the human who approves, releases and rolls back", "method": "-", "declared": "`human:` stamps" }
     ],
     "retired": [
       { "word": "unit", "sense": "a work item", "use": "bolt (unit stays a test level)" },
@@ -1529,9 +1539,20 @@
       { "word": "component", "sense": "a piece of the architecture", "use": "domain, or runtime for a deployable" },
       { "word": "capability", "sense": "a module", "use": "domain" }
     ],
-    "heading": "| Word | Scale | Meaning | AI-DLC term |\n|---|---|---|---|",
-    "row": "| **{{word}}** | {{scale}} | {{meaning}} | {{method}} |",
-    "retiredLine": "Retired, in these senses: {{list}}.",
+    "kinds": ["domain", "pipeline", "foundation", "adapter", "runtime", "extension", "delivery"],
+    "surfaces": ["client", "server", "events"],
+    "systemKeys": ["core", "extensions"],
+    "kindHints": [
+      { "kind": "delivery", "match": "(^|/)(deploy|build|\\.github|tooling|toolchain|ci|scripts)(/|$)|^(toolchain|deploy|tooling)$" },
+      { "kind": "runtime", "match": "(^|/)cmd(/|$)" },
+      { "kind": "extension", "match": "(^|/)(extensions?|providers?|plugins?)(/|$)|provider$" },
+      { "kind": "adapter", "match": "(^|/)adapters?(/|$)" },
+      { "kind": "pipeline", "match": "(^|/)(pipeline|middleware|gateway|edge|ingress)(/|$)" },
+      { "kind": "foundation", "match": "(^|/)(modules|pkg|lib|foundation|kits?|shared|common)(/|$)" }
+    ],
+    "heading": "| Scale | Word | Meaning | AI-DLC term | Declared in |\n|---|---|---|---|---|",
+    "row": "| {{scale}} | {{word}} | {{meaning}} | {{method}} | {{declared}} |",
+    "retiredLine": "**Retired, in these senses:** {{list}}.",
     "retiredItem": "*{{word}}* ({{sense}}) → {{use}}"
   }
 }

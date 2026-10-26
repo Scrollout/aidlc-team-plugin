@@ -10,12 +10,13 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T21:50:00Z }
 ```json
 {
   "name": "example",
+  "system": { "core": ["internal/**"] },
   "base": "main",
   "docs": { "bundle": "docs" },
   "levels": { "unit": { "paths": ["**/*_test.go"], "run": "make test" }, "integration": { "paths": ["tests/integration/**"], "run": "make it" } },
   "modules": [
-    { "id": "api", "paths": ["internal/**", "cmd/**"], "check": "make test", "data": ["data/orders"] },
-    { "id": "contracts", "paths": ["api-specs/**"], "check": "make contract-check" }
+    { "id": "orders", "kind": "domain", "paths": ["internal/orders/**"], "data": ["data/orders"] },
+    { "id": "contracts", "kind": "foundation", "paths": ["api-specs/**"], "check": "make contract-check" }
   ],
   "lanes": { "quick": ["docs/**", "*.md"], "full": ["migrations/**", "api-specs/**"] },
   "focus": { "security": ["internal/auth/**", "**/rls*"], "data": ["migrations/**"] },

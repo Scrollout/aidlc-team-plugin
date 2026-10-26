@@ -196,3 +196,26 @@ for (const name of ['acme_retail', 'ga4', 'stackoverflow', 'crypto_bitcoin']) {
 test("U2/AC-6 this repo's docs pass with HOUSE-INDEX-STALE as an error", () => {
   assert.deepEqual(errors(checkBundle(join(ROOT, 'docs'), { rules: { 'HOUSE-INDEX-STALE': 'error' } })), []);
 });
+
+test('B151/AC-1 every module has a known kind and surfaces: an error on a v2 profile (it has system), a warning on a v1 one', () => {
+  const dir = tempDir('kind-');
+  spawnSync('git', ['init', '-q'], { cwd: dir });
+  mkdirSync(join(dir, '.aidlc'));
+  mkdirSync(join(dir, 'docs'));
+  const base = { names: [{ id: 'x', files: ['src/**'], pattern: '.+' }], architecture: { data: { prefix: 'data/' }, acyclic: true } };
+  const check = (profile) => { writeFileSync(join(dir, '.aidlc/profile.json'), JSON.stringify({ ...base, ...profile })); return spawnSync(process.execPath, [join(import.meta.dirname, '../plugin/cli/aidlc.mjs'), 'check'], { cwd: dir, encoding: 'utf8' }); };
+  const mod = (extra) => ({ id: 'providers', paths: ['src/**'], api: ['src/client/**'], ...extra });
+  const v1 = check({ modules: [mod()] });
+  assert.equal(v1.status, 0, 'v1: a warning until it migrates');
+  assert.match(v1.stdout, /PROFILE-KIND module providers has no kind: one of domain, pipeline, foundation, adapter, runtime, extension, delivery .* \(warning\)$/m);
+  const system = { core: ['src/**'], extensions: [] };
+  const v2 = check({ system, modules: [mod(), mod({ id: 'kit', kind: 'library' }), mod({ id: 'edge', kind: 'pipeline', surfaces: { client: [], private: [] } })] });
+  assert.equal(v2.status, 1);
+  assert.match(v2.stdout, /PROFILE-KIND module providers has no kind.* \(error\)$/m);
+  assert.match(v2.stdout, /PROFILE-KIND module kit has kind library, not one of domain/);
+  assert.match(v2.stdout, /PROFILE-KIND module edge has surface private, not one of client, server, events/);
+  assert.match(check({ system: { core: 'src/**' }, modules: [mod({ kind: 'domain' })] }).stdout, /PROFILE-KIND system takes core and extensions, each a list of globs; core is not one/);
+  const clean = check({ system, modules: [mod({ kind: 'domain', surfaces: { client: ['src/client/**'], events: ['src/events/**'] } })] });
+  assert.equal(clean.status, 0, clean.stdout);
+  assert.doesNotMatch(clean.stdout, /PROFILE-KIND/);
+});

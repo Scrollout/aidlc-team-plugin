@@ -5,6 +5,7 @@ import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync,
 import { basename, dirname, join, resolve } from 'node:path';
 import { CLI_DIR, PLUGIN_DIR, config, done, git, isMap, readJson, tryGit, UsageError, relPath } from './config.mjs';
 import { msg, render, renderFile } from './template.mjs';
+import { proposeKind } from './vocab.mjs';
 import { DEFAULTS, loadProfile } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
 import { definedOnBase } from './grid.mjs';
@@ -227,6 +228,9 @@ export const commands = {
     const added = addMissing(root, version);
     const fresh = checked().filter((l) => !before.has(key(l)));
     const name = readJson(join(PLUGIN_DIR, I.manifest)).name;
-    return done((same ? msg('upgradeSame', { version, path: I.bin }) : copied) + added + (fresh.length ? msg('upgradeFindings', { version, list: fresh.join('\n') }) : '') + msg('upgradeFrom', { version, path: PLUGIN_DIR, name }));
+    // A v1 profile's modules get a proposed kind each, and nothing changes until the owner writes them (docs/design/architecture-model.md).
+    const kindless = (loadProfile(root).profile.modules ?? []).filter((m) => !m.kind);
+    const kinds = kindless.length ? msg('upgradeKinds', { list: kindless.map((m) => msg('upgradeKind', { module: m.id ?? m.name, kind: proposeKind(m) })).join('\n') }) : '';
+    return done((same ? msg('upgradeSame', { version, path: I.bin }) : copied) + added + (fresh.length ? msg('upgradeFindings', { version, list: fresh.join('\n') }) : '') + kinds + msg('upgradeFrom', { version, path: PLUGIN_DIR, name }));
   },
 };

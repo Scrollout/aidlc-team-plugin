@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M15 B151: the profile takes `system` (core, extensions), a `kind` per module and its `surfaces`; `PROFILE-KIND` reports what is missing or unknown (an error on a v2 profile, a warning on v1), and `upgrade` proposes each module's kind ([Architecture model](design/architecture-model.md)). Release 0.122.0.
 - **Update** M15 B150: the canonical words live in `cli.json` `vocabulary`, and the overview's glossary is a block generated from them that a test keeps in step ([Canonical model](design/canonical-model.md)). Release 0.121.0.
 - **Update** M15 B149: the 39 incident citations audited (31 evidence for general rules, 8 go with the slice rules); the CLI budget rises to 5,000 lines ([0016](decisions/0016-cli-budget-5000.md)).
 - **Creation** Plan M15-M21, a deterministic AI-DLC: decisions [0013](decisions/0013-deterministic-ai-dlc.md), [0014](decisions/0014-cloud-api-and-event-conventions.md), [0015](decisions/0015-one-way-doors-approved-singly.md); draft designs [Canonical model](design/canonical-model.md), [Increments and bolts](design/increments-and-bolts.md), [Architecture model](design/architecture-model.md), [Bundle v2](design/bundle.md).

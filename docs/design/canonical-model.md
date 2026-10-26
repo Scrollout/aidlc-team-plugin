@@ -13,20 +13,28 @@ The method definition whitepaper, the reference AI-DLC workflows (2.11.1) and th
 On `resource-manager` (2026-10-26) "vertical slice" meant a delivery step in `slices.md`, a bounded context in `slice-architecture.md`, and any module with layers in `map.mjs`. The project went through three architecture vocabularies in one day. A word with two meanings can't be checked, so every concept gets one word at one scale ([0013](../decisions/0013-deterministic-ai-dlc.md)).
 
 # Words
+Generated from `cli.json` `vocabulary`; a test keeps it in step.
+
+<!-- generated: glossary -->
 | Scale | Word | Meaning | AI-DLC term | Declared in |
 |---|---|---|---|---|
 | System | core | the shared platform every extension uses | the system | profile `system.core` |
 | System | extension | a vertical capability owned elsewhere, built only against published contracts | another team's Units | profile `system.extensions` |
 | Domain | domain | a bounded context: its data, language, contract and events | **Unit** | `domains/<code>.md`, module `kind: domain` |
-| Domain | kind | `domain`, `pipeline`, `foundation`, `adapter`, `runtime`, `extension`, `delivery` | - | module `kind` |
+| Domain | kind | `domain`, `pipeline`, `foundation`, `adapter`, `runtime`, `extension` or `delivery` | - | module `kind` |
 | Code | slice | one operation (command or query) of one domain, end to end, in one folder | part of a Unit's stories | the domain's `surface` |
-| Code | layer | a position inside a module: `interface`, `application`, `model`, `infrastructure` | logical design | the stack pack |
-| Delivery | intent | one business outcome | **Intent** | `intents/I-<n>-<slug>.md` |
+| Code | layer | a position inside a module: `interface`, `application`, `model` or `infrastructure` | logical design | the stack pack |
+| Delivery | intent | one business outcome, with its why and success measures | **Intent** | `intents/I-<n>-<slug>.md` |
 | Delivery | increment | a shippable step of an intent; increment 1 is the walking skeleton | groups Bolts | the intent's `# Increments`, `I-<n>.<k>` |
 | Delivery | bolt | the smallest build cycle: one card, worktree, review and merge | **Bolt** | `bolts/B-<n>-<slug>.md` |
-| Delivery | fix bolt | one regression, one AC failing before the fix | defect-fix pathway | a bolt with `fix: true` |
+| Delivery | fix bolt | one regression, one AC that fails before the fix | defect-fix pathway | a bolt with `fix: true` |
+| Plugin | lane | quick, standard or full; decides which grid rows run | - | the profile's `lanes` |
+| Plugin | card | the generated brief one builder works from and one reviewer checks against | - | `aidlc card` |
+| Plugin | lead | the main session running the loop | - | the skill |
+| Plugin | owner | the human who approves, releases and rolls back | - | `human:` stamps |
 
-**Retired, in these senses:** unit (a work item), slice (a delivery step), bundle and component (structure), capability (a module). "Unit" stays only as a test level.
+**Retired, in these senses:** *unit* (a work item) → bolt (unit stays a test level); *slice* (a delivery step) → increment; *bundle* (a piece of the architecture, not the docs bundle) → domain; *component* (a piece of the architecture) → domain, or runtime for a deployable; *capability* (a module) → domain.
+<!-- /generated -->
 
 # What is AI-DLC's and what is the plugin's own
 - **From AI-DLC:**

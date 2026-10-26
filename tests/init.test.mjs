@@ -337,3 +337,21 @@ test('U142/AC-3 init writes the architecture doc template and the constitution r
   assert.match(readFileSync(join(dir, '.aidlc/templates/docs/architecture.md'), 'utf8'), /^# Logical\n[\s\S]*^# Technical\n/m);
   assert.match(readFileSync(join(dir, 'docs/constitution/principles.md'), 'utf8'), /^11\. \*\*Architecture you can see\.\*\* .*Checked by `PLAN-ARCHDOC` and the codebase map\.$/m);
 });
+
+test('B151/AC-2 upgrade proposes a kind for each module without one, from its paths, and changes no file of the project', () => {
+  const dir = emptyRepo();
+  run(dir, ['init']);
+  const profile = JSON.parse(readFileSync(join(dir, '.aidlc/profile.json'), 'utf8'));
+  const modules = [
+    { id: 'toolchain', paths: ['go.mod', '.github/**'] }, { id: 'store', paths: ['internal/modules/store/**'] },
+    { id: 'frontdoor', paths: ['cmd/frontdoor/**', 'internal/frontdoor/**'] }, { id: 'registry', paths: ['internal/registry/**'] },
+    { id: 'sampleprovider', paths: ['internal/sampleprovider/**'] }, { id: 'deploy', paths: ['deploy/**'] }, { id: 'billing', kind: 'domain', paths: ['internal/billing/**'] },
+  ];
+  writeFileSync(join(dir, '.aidlc/profile.json'), JSON.stringify({ ...profile, modules }));
+  const before = readFileSync(join(dir, '.aidlc/profile.json'), 'utf8');
+  const r = run(dir, ['upgrade', '--dirty']);
+  assert.equal(r.code, 0, r.err);
+  const proposed = Object.fromEntries([...r.out.matchAll(/^ {2}(\w+): (\w+)$/gm)].map((m) => [m[1], m[2]]));
+  assert.deepEqual(proposed, { toolchain: 'delivery', store: 'foundation', frontdoor: 'runtime', registry: 'domain', sampleprovider: 'extension', deploy: 'delivery' });
+  assert.equal(readFileSync(join(dir, '.aidlc/profile.json'), 'utf8'), before);
+});

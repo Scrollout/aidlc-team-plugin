@@ -53,15 +53,17 @@ test('U72/AC-2 the unit template carries both sections, the card names them and 
   assert.doesNotMatch(run(dir, ['card', 'U-2']).out, /## Design/, 'a waived unit has no design section');
 });
 
-test('B150/AC-2 the glossary in the overview is the block generated from cli.json, so the words cannot drift', async () => {
+test('B150/AC-2 the canonical model words table is the block generated from cli.json, and the overview points to it', async () => {
   const { glossary, withBlock } = await import('../plugin/cli/lib/vocab.mjs');
-  const doc = readFileSync(join(ROOT, 'docs/design/overview.md'), 'utf8');
+  const doc = readFileSync(join(ROOT, 'docs/design/canonical-model.md'), 'utf8');
   assert.equal(withBlock(doc, 'glossary', glossary()), doc);
+  assert.match(readFileSync(join(ROOT, 'docs/design/overview.md'), 'utf8'), /# Glossary\n.*\[Canonical model\]\(canonical-model\.md#words\)/);
 });
 
-test('B150/AC-1 the canonical model gives every vocabulary word its scale and names the AI-DLC terms it maps', async () => {
+test('B150/AC-1 every vocabulary word has one scale, and the AI-DLC terms Intent, Unit and Bolt each map to exactly one word', async () => {
   const { config } = await import('../plugin/cli/lib/config.mjs');
-  const doc = readFileSync(join(ROOT, 'docs/design/canonical-model.md'), 'utf8');
-  for (const w of config.vocabulary.words.filter((x) => x.scale !== 'plugin')) assert.match(doc, new RegExp(`\\| ${w.scale[0].toUpperCase() + w.scale.slice(1)} \\| ${w.word} \\|`), w.word);
-  for (const term of ['Intent', 'Unit', 'Bolt']) assert.match(doc, new RegExp(`\\*\\*${term}\\*\\*`), term);
+  const words = config.vocabulary.words;
+  assert.equal(new Set(words.map((w) => w.word)).size, words.length, 'one row per word');
+  for (const term of ['Intent', 'Unit', 'Bolt']) assert.equal(words.filter((w) => w.method === `**${term}**`).length, 1, term);
+  assert.match(readFileSync(join(ROOT, 'docs/design/method.md'), 'utf8'), /\[Canonical model\]\(canonical-model\.md\)/);
 });

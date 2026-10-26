@@ -9,7 +9,7 @@ export const FAIL_MERGED = 'node -e "process.exit(require(\'fs\').existsSync(\'s
 export const U1 = 'docs/units/U-1-add.md';
 export const PROFILE = {
   levels: { unit: { paths: ['tests/**'], run: 'node --test' } },
-  modules: [{ id: 'core', paths: ['src/**'], check: OK, api: ['src/**'] }],
+  modules: [{ id: 'core', kind: 'domain', paths: ['src/**'], check: OK, api: ['src/**'] }],
   architecture: { data: { prefix: 'data/' }, acyclic: true }, // the slice architecture every project gets (U105)
   lanes: { quick: ['docs/**'], full: ['db/**'] },
   focus: { security: ['auth/**'] },
