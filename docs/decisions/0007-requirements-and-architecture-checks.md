@@ -2,7 +2,8 @@
 type: Decision
 title: 0007 Requirements and architecture as checks
 description: Lasting requirements become cited docs and architecture rules become gate checks, so a project cannot drift from its intended shape unit by unit.
-status: stable
+status: superseded
+superseded_by: "0013"
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T10:40:00Z }
 ---
 
