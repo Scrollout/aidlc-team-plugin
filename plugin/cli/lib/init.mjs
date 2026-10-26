@@ -224,13 +224,17 @@ export const commands = {
     const checked = () => (existsSync(join(root, I.bin, I.cli)) ? spawnSync(process.execPath, [join(root, I.bin, I.cli), 'check'], { cwd: root, encoding: 'utf8' }).stdout ?? '' : '').split('\n').filter(Boolean);
     const key = (l) => l.split(' ').slice(0, 2).join(' ');
     const before = new Set(checked().map(key));
+    // The method this release brings, against the pinned one's, read before the copy: approved intents keep theirs (docs/design/canonical-model.md).
+    const from = Number(readJson(join(root, I.bin, 'cli.json'))?.method?.version ?? 1);
     const copied = vendor(root, version);
     const added = addMissing(root, version);
     const fresh = checked().filter((l) => !before.has(key(l)));
     const name = readJson(join(PLUGIN_DIR, I.manifest)).name;
+    const to = config.method.version;
+    const method = from < to ? msg('upgradeMethod', { from, to, changes: Object.entries(config.method.changes).filter(([v]) => Number(v) > from).map(([, c]) => c).join('; ') }) : '';
     // A v1 profile's modules get a proposed kind each, and nothing changes until the owner writes them (docs/design/architecture-model.md).
     const kindless = (loadProfile(root).profile.modules ?? []).filter((m) => !m.kind);
     const kinds = kindless.length ? msg('upgradeKinds', { list: kindless.map((m) => msg('upgradeKind', { module: m.id ?? m.name, kind: proposeKind(m) })).join('\n') }) : '';
-    return done((same ? msg('upgradeSame', { version, path: I.bin }) : copied) + added + (fresh.length ? msg('upgradeFindings', { version, list: fresh.join('\n') }) : '') + kinds + msg('upgradeFrom', { version, path: PLUGIN_DIR, name }));
+    return done((same ? msg('upgradeSame', { version, path: I.bin }) : copied) + added + (fresh.length ? msg('upgradeFindings', { version, list: fresh.join('\n') }) : '') + method + kinds + msg('upgradeFrom', { version, path: PLUGIN_DIR, name }));
   },
 };

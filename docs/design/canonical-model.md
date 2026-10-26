@@ -57,7 +57,7 @@ Docs and messages say "the method" for the first group and "the plugin" for the 
 # Rules
 - `cli.json` holds the vocabulary: words, retired words with their replacement, and the closed lists. Checks and the generated glossary read it, nothing else.
 - `TERM-SYNONYM` reports a retired word in its old sense, on the project's docs and code (M16) and on this repo (M20).
-- **Pinned method.** Approving an intent writes `method: <version>`, the vendored CLI's method version. Checks on that intent's bolts use the rules of that version, kept in `cli.json` by version. `upgrade` lists the rule changes it brings and applies them to intents approved afterwards.
+- **Pinned method.** Approving an intent writes `method: <version>` (`cli.json` `method.version`), a stamp field outside the doc's hash. An intent is judged by that method; one approved before pinning by method 1, a draft by the current one. A rule a later method added is listed in `method.since` by its message key, and holds only for intents pinned at or after it. `upgrade` lists the changes since the pinned CLI's method (`method.changes`).
 - An approved intent's `method/` pages are frozen at its version ([Bundle](bundle.md)).
 
 Bolts: [M15](../roadmap/m15.md) B150, B154.

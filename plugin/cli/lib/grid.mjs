@@ -144,6 +144,11 @@ function reachable(units) {
 // The top test level: the last level that runs. A bolt with an AC there proves its increment end to end.
 export const topLevel = (profile) => { const l = withDefaults(profile).levels; return Object.keys(l).filter((k) => l[k]?.run).at(-1); };
 
+// The method an intent is judged by: the one it was approved under, method 1 for one approved before pinning, the current one for a draft.
+export const methodOf = (intent) => Number(intent?.fm.method ?? (intent?.fm.verified_hash ? 1 : config.method.version));
+// Whether a rule (by its message key) is in force for an intent: rules a later method added leave its plan alone.
+export const inForce = (intent, key) => methodOf(intent) >= (config.method.since[key] ?? 1);
+
 // An intent's increments section, under # Increments or a v1 intent's # Slices (docs/design/increments-and-bolts.md).
 export const incrementSection = (doc) => GRID.increments.map((h) => sectionOf(doc, h)).find((s) => s.some(([, t]) => /^\s*([-*]|\d+\.)\s/.test(t))) ?? [];
 // Its increment lines: line number, the bolts each names, its id (I-<n>.<k>, none on a v1 line) and its name.
@@ -296,7 +301,7 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   for (const i of intents.filter((x) => x.fm.status !== GRID.dropped && !waived(x))) {
     const own = units.filter((u) => u.fm.intent === i.id);
     // A line under # Increments opens with its id, in order; a v1 intent's # Slices lines carry none (docs/design/increments-and-bolts.md).
-    if (sectionOf(i.doc, GRID.increments[0]).length) incrementLines(i).forEach((l, k) => { const expected = `${i.id}.${k + 1}`; if (l.id !== expected) add('PLAN-INCREMENT', i, l.n, 'planIncrementId', { n: l.n, found: l.id ?? l.name.split(' ')[0], expected }); });
+    if (inForce(i, 'planIncrementId') && sectionOf(i.doc, GRID.increments[0]).length) incrementLines(i).forEach((l, k) => { const expected = `${i.id}.${k + 1}`; if (l.id !== expected) add('PLAN-INCREMENT', i, l.n, 'planIncrementId', { n: l.n, found: l.id ?? l.name.split(' ')[0], expected }); });
     if (top && own.length && !own.some((u) => u.acs.some((a) => a.level === top))) add('PLAN-INCREMENT', i, 1, 'planIncrementIntent', { level: top });
     // A walking skeleton first: the first end-to-end AC waits on at most half the intent's product units (second project).
     const made = new Set(own.filter((u) => u.scope.some((s) => productGlobs(profile).some((g) => overlaps(s, g)))).map((u) => u.id));

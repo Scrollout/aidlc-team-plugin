@@ -204,7 +204,9 @@ function stamp(text, by, at) {
   }
   const all = [...events(doc.fm).filter((e) => e.by !== by), { by, at }]; // one stamp per approver: git keeps the rest
   const body = doc.lines.slice(doc.body).join('\n');
-  const draft = ['---', ...kept, `status: ${S.stable}`, 'verified:', ...all.map((e) => `  - ${flowMap(e)}`), '---', body].join('\n');
+  // An intent is pinned to the method it is approved under: its bolts are judged by that method's rules (docs/design/canonical-model.md).
+  const pin = doc.fm.type === S.intentType ? [`method: ${config.method.version}`] : [];
+  const draft = ['---', ...kept, ...pin, `status: ${S.stable}`, 'verified:', ...all.map((e) => `  - ${flowMap(e)}`), '---', body].join('\n');
   const hash = hashDoc(parseDoc(draft));
   return draft.replace(/\nverified:\n/, `\nverified_hash: ${hash}\nverified:\n`);
 }

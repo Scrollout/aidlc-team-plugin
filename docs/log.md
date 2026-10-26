@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M15 B154: approving an intent pins it to the method it is approved under (`method: 2`); a rule a later method added (`method.since`) leaves an intent approved before alone, and `upgrade` lists the method changes it brings ([Canonical model](design/canonical-model.md)). Release 0.125.0.
 - **Update** M15 B153: work items are bolts: `aidlc new bolt "<title>"` writes `B-<n>` under `bolts/`, numbered on from every unit and bolt; bolts build on `bolt/B-<n>` and tag tests `B-<n>/AC-<k>`; a v2 project's fixes are bolts and a new doc under `units/` is `PLAN-BOLT`, while v1 units keep working ([Increments and bolts](design/increments-and-bolts.md)). Release 0.124.0.
 - **Update** M15 B152: an intent ships `# Increments` (`I-<n>.<k>`, the walking skeleton first) checked by `PLAN-INCREMENT`; a v1 intent's `# Slices` still reads as increments; the card's and board's vertical/horizontal Spec label, `plan.sliceUnits` and the Slices doc are gone ([Increments and bolts](design/increments-and-bolts.md)). Release 0.123.0.
 - **Update** M15 B151: the profile takes `system` (core, extensions), a `kind` per module and its `surfaces`; `PROFILE-KIND` reports what is missing or unknown (an error on a v2 profile, a warning on v1), and `upgrade` proposes each module's kind ([Architecture model](design/architecture-model.md)). Release 0.122.0.

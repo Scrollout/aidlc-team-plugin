@@ -265,6 +265,7 @@
     "kindUnknown": "module {{module}} has kind {{kind}}, not one of {{kinds}}",
     "surfaceUnknown": "module {{module}} has surface {{surface}}, not one of {{surfaces}}",
     "systemShape": "system takes core and extensions, each a list of globs; {{key}} is not one",
+    "upgradeMethod": "Method {{from}} to {{to}}: {{changes}}. An intent approved before keeps method {{from}}'s rules; one approved from now on is judged by method {{to}}.\n",
     "upgradeKinds": "Module kinds, proposed from paths and names (docs: Architecture model); add each as the module's kind, or the kind it really is:\n{{list}}\n",
     "upgradeKind": "  {{module}}: {{kind}}",
     "namesNone": "the profile has modules but no names rule",
@@ -888,12 +889,14 @@
       "verified",
       "verified_hash",
       "status",
+      "method",
       "hold",
       "priority",
       "board"
     ],
     "verdicts": { "pass": "pass", "fix": "fix", "escalate": "escalate" },
-    "stampFields": ["verified", "verified_hash", "status"],
+    "stampFields": ["verified", "verified_hash", "status", "method"],
+    "intentType": "Intent",
     "refusedLine": ": aidlc ([^()]+)$",
     "testsPlaceholder": "<test globs>",
     "confirmed": "CONFIRMED",
@@ -1531,6 +1534,13 @@
     "typedOwner": "Organization",
     "target": "board.target",
     "dueTime": "T00:00:00Z"
+  },
+  "method": {
+    "version": 2,
+    "since": { "planIncrementId": 2 },
+    "changes": {
+      "2": "intents ship # Increments with ids I-<n>.<k>; work items are bolts B-<n> under bolts/; modules take a kind; the profile takes system (docs: Canonical model)"
+    }
   },
   "vocabulary": {
     "words": [
