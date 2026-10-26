@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { commit, git, makeRepo, run, tempDir, write } from './state-repo.mjs';
+import { directAllowed } from '../plugin/cli/lib/gate.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const PLUGIN = JSON.parse(readFileSync(join(ROOT, 'plugin/.claude-plugin/plugin.json'), 'utf8'));
@@ -64,7 +65,7 @@ test('U5/AC-1 init never overwrites without asking', () => {
 
   const again = run(dir, ['init', '--overwrite', 'CLAUDE.md', '--overwrite', 'AGENTS.md', '--overwrite', '.aidlc/profile.json',
     ...['requirement', 'intent', 'unit', 'decision', 'runbook', 'naming'].flatMap((t) => ['--overwrite', `.aidlc/templates/docs/${t}.md`]),
-    '--overwrite', 'docs/index.md', '--overwrite', 'docs/log.md', '--overwrite', 'docs/constitution/principles.md', '--overwrite', '.github/workflows/aidlc.yml']);
+    '--overwrite', 'docs/index.md', '--overwrite', 'docs/log.md', '--overwrite', 'docs/constitution/principles.md', '--overwrite', '.github/workflows/aidlc.yml', '--overwrite', '.github/dependabot.yml']);
   assert.equal(again.code, 0, again.out);
   assert.equal(readFileSync(join(dir, 'CLAUDE.md'), 'utf8'), '@AGENTS.md\n');
   assert.equal(run(dir, ['init', '--name']).code, 64);
@@ -317,4 +318,13 @@ test('U73/AC-1 the generated workflow takes the runner and action pins of the pr
   assert.match(matched, /runs-on: platform-kernel\n/);
   assert.match(matched, /- uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7\.0\.1\n/);
   assert.match(matched, /- uses: actions\/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7\.1\.0\n/);
+});
+
+test('U137/AC-1 init writes the Dependabot config for the workflow actions, and a direct commit may carry it', () => {
+  const dir = makeRepo({});
+  rmSync(join(dir, '.aidlc'), { recursive: true, force: true });
+  assert.equal(run(dir, ['init', '--name', 'p', '--base', 'main', '--bundle', 'docs']).code, 0);
+  assert.match(readFileSync(join(dir, '.github/dependabot.yml'), 'utf8'), /^ {2}- package-ecosystem: github-actions$/m);
+  assert.equal(directAllowed('.github/dependabot.yml', 'docs'), true);
+  assert.equal(directAllowed('.github/other.yml', 'docs'), false);
 });

@@ -990,6 +990,10 @@
       {
         "template": "ci.yml",
         "to": ".github/workflows/aidlc.yml"
+      },
+      {
+        "template": "dependabot.yml",
+        "to": ".github/dependabot.yml"
       }
     ],
     "workflows": ".github/workflows",

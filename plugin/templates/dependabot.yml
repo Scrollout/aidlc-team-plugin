@@ -1,0 +1,7 @@
+# Weekly bump pull requests for the workflow actions, from day one (constitution rule 8, current dependencies).
+# Add the language's ecosystem (gomod, npm, pip, ...) with the language decision.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }

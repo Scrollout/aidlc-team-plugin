@@ -54,6 +54,7 @@ Merge rules:
   - the constitution, `<bundle>/constitution/principles.md`;
   - requirement, intent, unit, decision, runbook and naming templates in `.aidlc/templates/docs/`;
   - `.github/workflows/aidlc.yml`, with the runner and the `actions/checkout` and `actions/setup-node` pins the project's own workflows already use (defaults in `init.workflow`).
+  - `.github/dependabot.yml`, weekly bumps for the workflow actions; the language's ecosystem joins with the language decision ([Current dependencies](dependencies.md)).
 
   It also adds `.aidlc/local/` and `.claude/worktrees/` to `.gitignore` and the worktree folder to every other ignore file (`init.ignoreFiles`), so tools skip it, and sets `worktree.baseRef: "head"` in `.claude/settings.json`.
 - `security.content`: regexes for code that needs a security review wherever it sits (RLS, TLS skips); an added line matching one requires the `security` focus ([Merge mechanics](gate.md)). `security.secrets` is for credentials: the write hook blocks them.
