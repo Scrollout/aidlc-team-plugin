@@ -35,7 +35,7 @@ Fails with one line per problem, each naming the fix, unless all hold:
 4. Profile checks for the touched modules and every level `run` pass on the merged result; with the unit's code reverted, each level of its tagged tests fails (proof-revert). A quick-lane unit runs no level: the commands its ACs name run instead ([Merge mechanics](gate.md#details)).
 5. Outside the quick lane, verdict `pass` for the current diff hash, plus each required specialist (a focus is required when its globs match the diff; `security` also when an added line matches `security.content`, M10 U75).
 6. Bundle passes OKF validation.
-7. Profile `security.check` commands pass when set (e.g. secret scan, SAST, dependency audit such as gitleaks, semgrep, govulncheck); the plugin runs them, it does not ship them.
+7. Profile `security.check` commands pass when set (a secret scan, SAST, a dependency audit); the plugin runs them, it does not ship them.
 8. Architecture: no denied dependency edge and every `architecture.checks` command passes, on every merge ([Architecture](architecture.md)).
 On success: `git merge --no-ff` with five trailers, `Unit: U-<n>`, `Card: <hash>`, `Review: pass` (`none` in the quick lane), `Tested: <level>, …` and `Proof: <level>, …`. How it runs: [Merge mechanics](gate.md).
 

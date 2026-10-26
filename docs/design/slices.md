@@ -24,7 +24,7 @@ Why: on both migrations the plan drifted into chains of layer and hygiene units 
 - **Horizontal:** a layer or standards doc (API conventions, schema, UI kit, platform) in the project's design or architecture docs, linked from a unit's `# Interfaces` rather than copied.
 - Inception writes vertical specs only. A horizontal doc is extracted when a second slice needs the same pattern, by that slice's unit; it is never its own unit ahead of the slices, which `PLAN-SLICE` reports as a layer.
 
-Why: AWS's AI-DLC guidance on spec architecture (2026-05) starts vertical, extracts horizontal specs as reuse appears, and keeps the why beside each rule; the intent template already held the vertical spec, so the plugin adds the risks and the why per rule instead of a second doc per journey.
+Why: the AI-DLC guidance on spec architecture the owner brought (a talk, 2026-05) starts vertical, extracts horizontal specs as reuse appears, and keeps the why beside each rule; the intent template already held the vertical spec, so the plugin adds the risks and the why per rule instead of a second doc per journey.
 
 # The Spec line
 The card's `Spec:` line and `PLAN-SLICE` read one function, `sliceRole`, so the label can never contradict the check (owner, 2026-10-26: a label from no evaluation would). It reads two facts, the slice line naming the unit and the unit's ACs at the top level (the last level with a `run`), and names its evidence:

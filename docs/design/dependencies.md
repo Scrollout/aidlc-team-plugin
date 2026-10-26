@@ -7,13 +7,13 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-25T06:30:00Z }
 ---
 
 # Why
-On the first migration (2026-10-25) the project's Dependabot listed seven open advisories in one lockfile, and the owner made it a permanent rule of the method: use the latest packages and security patches. A model's training data is months old, so a version it remembers is stale or vulnerable; the version has to come from the registry at the time, as a small piece of research.
+On the first migration (2026-10-25) the repository's advisory bot listed seven open advisories in one lockfile, and the owner made it a permanent rule of the method: use the latest packages and security patches. A model's training data is months old, so a version it remembers is stale or vulnerable; the version has to come from the registry at the time, as a small piece of research.
 
 # Shape
 ```json
 "deps": {
   "manifests": ["**/package.json", "**/package-lock.json", "**/go.mod", "**/go.sum", "**/Dockerfile"],
-  "check": ["npm audit --prefix api-specs --audit-level=low", "govulncheck ./..."]
+  "check": ["make audit"]
 }
 ```
 - `manifests`: globs of the files that pin dependencies. `pin` (optional): the pattern of a line that pins a version; by default a semver-like version, a 40-hex commit or an `@sha256:` digest. `check`: the project's scanners, each failing on a known advisory (and, if the project wants it, on an outdated pin). Both are the project's: the plugin names no tool.

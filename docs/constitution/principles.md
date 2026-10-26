@@ -11,7 +11,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 2. **Derive state, don't record it.** Progress is computed from git and the docs bundle. There is no ledger, no event log, no handoff file.
    *Why:* recorded state goes stale and grows; a pilot project carried a 650 KB ledger and a handoff with two "CURRENT" sections.
 3. **One stage model: the grid.** Intent → Units → Domain → Logical → Source → Deployment → Operation. Depth varies by lane; a row is skipped by rule, never by the model's choice.
-   *Why:* a previous tool kept two competing stage models; AWS runs 33 stages.
+   *Why:* a previous tool kept two competing stage models; the reference workflows run 33 stages.
 4. **Spec first, with the why.** Code changes only under an approved unit. Every requirement and decision states its reason.
    *Why:* docs and code stay aligned only if the doc changes first; the reason guides later changes.
 5. **AI proposes, human decides.** The owner approves intents, plans, one-way doors and releases. Nothing else waits on a human.

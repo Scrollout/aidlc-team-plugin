@@ -212,10 +212,10 @@ test('U30/AC-1 U30/AC-2 upgrade says when nothing changed, where it copied from,
 
 test('U52/AC-1 init --run writes each level\'s run command; an unknown level or a value without = is refused', () => {
   const dir = emptyRepo();
-  const r = run(dir, ['init', '--run', 'unit=npm test', '--run', 'e2e=npx playwright test']);
+  const r = run(dir, ['init', '--run', 'unit=npm test', '--run', 'e2e=npm run e2e']);
   assert.equal(r.code, 0, r.err + r.out);
   const profile = JSON.parse(readFileSync(join(dir, '.aidlc/profile.json'), 'utf8'));
-  assert.deepEqual(profile.levels, { unit: { run: 'npm test' }, e2e: { run: 'npx playwright test' } });
+  assert.deepEqual(profile.levels, { unit: { run: 'npm test' }, e2e: { run: 'npm run e2e' } });
   for (const bad of ['smoke=make smoke', 'unit']) {
     const refused = run(emptyRepo(), ['init', '--run', bad]);
     assert.equal(refused.code, 64, bad);

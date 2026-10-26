@@ -23,7 +23,7 @@ The cap counts lines (owner, 2026-10-25: a line is what a reader scans; a char c
 - **Requirements:** the requirement docs the unit cites, named as their files are, which the builder meets and every review checks.
 - **Findings to fix:** in a fix round, the findings of each focus whose last verdict for the current diff is `fix`. After an escalation the owner re-approved, its findings are listed as answered by that re-approval, for the reviewer to report again only if one still holds against the spec as it is now.
 - **Test runs:** every level's `run`; the builder and the reviewer run each in full, and the gate again on the merge result, then once more with the unit's code reverted, when each level holding a tagged test must fail.
-- **Reserves:** tokens no two units in flight may share: a migration number `regional/0005`, or an exclusive runtime resource a unit's tests need, such as `k3s-ci/port-25` ([Parallel builders](parallel.md)).
+- **Reserves:** tokens no two units in flight may share: a migration number `regional/0005`, or an exclusive runtime resource a unit's tests need, such as `ci-cluster/port-25` ([Parallel builders](parallel.md)).
 - **Checks:** the profile commands for the unit's modules, matched by `id`, or `name` when a module has none.
 - **Data:** the data the unit's modules own and the shared data; any other data only through its owner ([Data ownership](data-ownership.md)).
 - **Names:** the naming rules whose files overlap the unit's scope ([Naming rules](names.md)).
