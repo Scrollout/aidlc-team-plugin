@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-26
 
+- **Fix** M12 U133: `review record` is safe to retry, the same verdict for the same diff replacing its round; `deploy.run` must be rerunnable ([Review rounds](design/review-rounds.md), [Operations](design/operations.md)). Release 0.118.2.
 - **Update** M12 U132: the card's Dependencies section says currency and advisories are checked live by `deps.check` only, and a unit's tests prove a check offline on fixed inputs ([Current dependencies](design/dependencies.md)). Release 0.118.1.
 - **Update** M12 U131: the card's Spec line comes from the same function as `PLAN-SLICE` and names its evidence (the proving top-level ACs, or the vertical units that need it); `PLAN-SLICE` reports a unit on a slice that no vertical unit needs ([Unit card](design/unit-card.md)). Release 0.118.0.
 - **Fix** M12 U130: a fix-round builder at work keeps its unit building, so a kept pass of another focus no longer makes `next` ask for a review of a moving head ([In flight](design/in-flight.md)). Release 0.117.2.

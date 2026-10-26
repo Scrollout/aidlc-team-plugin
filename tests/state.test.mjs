@@ -288,7 +288,7 @@ test('U26/AC-1 U26/AC-2 U33/AC-2 a fix recorded as escalate tells the reviewer w
   const dir = twoUnits();
   approve(dir, 'I-1', 'U-1', 'U-2');
   branch(dir, 'U-1');
-  const verdict = (v) => { const f = join(tempDir('verdict-'), 'v.json'); writeFileSync(f, JSON.stringify({ verdict: v, findings: [{ path: 'a/x', line: 1, claim: 'c', scenario: 's', confidence: 'CONFIRMED' }] })); return run(dir, ['review', 'record', 'U-1', f]).out; };
+  const verdict = (v) => { run(dir, ['report', 'U-1'], '{"status": "done"}'); const f = join(tempDir('verdict-'), 'v.json'); writeFileSync(f, JSON.stringify({ verdict: v, findings: [{ path: 'a/x', line: 1, claim: 'c', scenario: 's', confidence: 'CONFIRMED' }] })); return run(dir, ['review', 'record', 'U-1', f]).out; }; // the builder reports before each review (U133)
   for (const k of [1, 2, 3]) assert.match(verdict('fix'), new RegExp(`^recorded fix for U-1: fix round ${k} of 3 in focus general$`, 'm'));
   assert.match(verdict('fix'), /^recorded escalate for U-1: fix round 4 in focus general would pass the limit of 3 since the owner's last approval, so the owner decides$/m);
   approve(dir, 'U-1');

@@ -1,6 +1,6 @@
 // Builds throwaway git repos in a temp dir for the state and card tests.
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -107,6 +107,8 @@ export function merge(dir, unit) {
 }
 
 export function review(dir, unit, verdict, findings = []) {
+  // A fix round ends with the builder's report before the next review; without one the same verdict is a retry (U133).
+  if (existsSync(join(dir, `.git/aidlc/reviews/${unit}.json`))) run(dir, ['report', unit], '{"status": "done"}');
   const file = join(tempDir('verdict-'), 'verdict.json');
   writeFileSync(file, JSON.stringify({ verdict, findings }));
   const r = run(dir, ['review', 'record', unit, file]);

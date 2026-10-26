@@ -339,10 +339,25 @@ test('U38/AC-1 a reviewer escalate within review.fixRounds is recorded as fix an
   const record = (verdict) => run(dir, ['review', 'record', 'U-1', '-'], JSON.stringify({ verdict, findings: [{ path: 'a/x', line: 1, claim: 'the card cannot be met', scenario: 's', confidence: 'CONFIRMED' }] })).out;
   assert.match(record('escalate'), /^recorded fix for U-1: a reviewer escalate is a fix round first \(fix round 1 of 3\); the builder fixes it or stops on its card's stop conditions$/m);
   assert.match(run(dir, ['next']).out, /^fix round for U-1/);
-  record('fix');
-  record('escalate');
-  assert.match(record('escalate'), /^recorded escalate for U-1: fix round 4/m);
+  const again = (verdict) => (run(dir, ['report', 'U-1'], '{"status": "done"}'), record(verdict)); // the builder reported in between
+  again('fix');
+  again('escalate');
+  assert.match(again('escalate'), /^recorded escalate for U-1: fix round 4/m);
   assert.deepEqual(JSON.parse(read(dir, '.git/aidlc/reviews/U-1.json')).rounds.map((r) => r.verdict), ['fix', 'fix', 'fix', 'escalate']);
+});
+
+test('U133/AC-1 the same verdict recorded again for the same diff replaces its round; a new report or payload counts a new one', () => {
+  const dir = twoUnits();
+  approve(dir, 'I-1', 'U-1', 'U-2');
+  branch(dir, 'U-1');
+  const finding = { path: 'a/x', line: 1, claim: 'c', scenario: 's', confidence: 'PLAUSIBLE' };
+  const record = (findings) => run(dir, ['review', 'record', 'U-1', '-'], JSON.stringify({ verdict: 'fix', findings })).out;
+  assert.match(record([finding]), /fix round 1 of 3/);
+  assert.match(record([finding]), /fix round 1 of 3/, 'a retried call');
+  assert.equal(JSON.parse(read(dir, '.git/aidlc/reviews/U-1.json')).rounds.length, 1);
+  assert.match(record([{ ...finding, claim: 'd' }]), /fix round 2 of 3/, 'another payload');
+  run(dir, ['report', 'U-1'], '{"status": "done"}');
+  assert.match(record([{ ...finding, claim: 'd' }]), /fix round 3 of 3/, 'the builder reported in between: the same finding again is a new round');
 });
 
 test('0.46.1 next offers no delegated re-approval for a unit whose acceptance criteria changed: the owner approves it', () => {

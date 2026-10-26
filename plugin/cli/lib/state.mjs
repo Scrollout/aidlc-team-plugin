@@ -756,17 +756,18 @@ export const commands = {
   },
 
   review(args, ctx) {
-    const { cwd } = ctx;
-    const [sub, unit, file] = args;
+    const { cwd } = ctx, [sub, unit, file] = args;
     if (sub !== 'record' || !unit || !file) throw new UsageError(msg('reviewUsage', {}));
     if (file !== S.stdin && !existsSync(resolve(cwd, file))) throw new UsageError(msg('noSuchPath', { name: file }));
     const data = parseObject(file === S.stdin ? readStdin(ctx) : readFileSync(resolve(cwd, file), 'utf8'), file);
     if (!Object.values(VERDICT).includes(data.verdict)) throw new UsageError(msg('badVerdict', { verdicts: Object.values(VERDICT).join(', ') }));
     const { profile } = loadProfile(cwd);
     if (!tryGit(cwd, 'rev-parse', '-q', '--verify', branchOf(unit))) throw new UsageError(msg('noBranch', { branch: branchOf(unit) }));
-    const target = runtimeFile(cwd, 'reviews', unit);
-    const prior = readJson(target)?.rounds ?? [];
-    const focus = data.focus ?? S.focus;
+    const target = runtimeFile(cwd, 'reviews', unit), focus = data.focus ?? S.focus, hash = diffHash(cwd, baseOf(profile), unit);
+    // The same verdict sent again for the same diff is a retry: it replaces its round instead of counting one more (U133).
+    const sent = sha256(JSON.stringify({ verdict: data.verdict, findings: data.findings ?? [] }));
+    const stored = readJson(target)?.rounds ?? [], last = roundsOf({ rounds: stored }, focus).at(-1);
+    const retry = Boolean(last && verdictCurrent(last, hash, readJson(runtimeFile(cwd, 'reports', unit))) && last.sent === sent), prior = stored.filter((r) => !(retry && r === last));
     // A `fix` that would start fix round `review.fixRounds + 1` in its focus since the unit's last approval
     // becomes `escalate`: the owner decides (U33).
     const planUnit = readPlan(bundleOf(cwd, profile)).units.find((u) => u.id === unit);
@@ -780,13 +781,12 @@ export const commands = {
     const confirmed = pass ? (data.findings ?? []).filter((f) => f.confidence === S.confirmed).length : 0;
     const sentBack = missing.map((tag) => ({ path: '', line: '', claim: msg('untaggedClaim', { tag }), scenario: msg('untaggedScenario', {}), confidence: S.confirmed }));
     if (missing.length || confirmed) Object.assign(data, { verdict: VERDICT.fix, findings: [...(data.findings ?? []), ...sentBack] });
-    if (missing.length) bump(cwd, config.retro.sendBacks, { unit, tags: missing.join(', '), at: new Date().toISOString() });
+    if (missing.length && !retry) bump(cwd, config.retro.sendBacks, { unit, tags: missing.join(', '), at: new Date().toISOString() });
     // A reviewer's own escalate is a fix round first, until the limit (U38).
     const verdict = [VERDICT.fix, VERDICT.escalate].includes(data.verdict) ? (round > limit ? VERDICT.escalate : VERDICT.fix) : data.verdict;
-    const card = readJson(runtimeFile(cwd, 'cards', unit))?.hash ?? null;
-    const commit = git(cwd, 'rev-parse', branchOf(unit)); // what a kept pass is measured from (U34)
-    writeJson(target, { unit, rounds: [...prior, { ...data, focus, verdict, card, diffHash: diffHash(cwd, baseOf(profile), unit), commit, at: new Date().toISOString() }] });
-    if (verdict === VERDICT.escalate) bump(cwd, 'escalations', config.retro.reasons.review);
+    const card = readJson(runtimeFile(cwd, 'cards', unit))?.hash ?? null, commit = git(cwd, 'rev-parse', branchOf(unit)); // a kept pass is measured from the commit (U34)
+    writeJson(target, { unit, rounds: [...prior, { ...data, focus, verdict, card, diffHash: hash, commit, sent, at: new Date().toISOString() }] });
+    if (verdict === VERDICT.escalate && !retry) bump(cwd, 'escalations', config.retro.reasons.review);
     // This review is no longer in flight; reviewers of other focuses still are (U125).
     const flight = join(aidlcDir(cwd), S.reviewing, unit);
     const left = existsSync(flight) ? readFileSync(flight, 'utf8').split(S.reviewerLine).length - 2 : 0;
