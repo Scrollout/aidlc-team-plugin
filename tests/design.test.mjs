@@ -52,3 +52,16 @@ test('U72/AC-2 the unit template carries both sections, the card names them and 
   assert.match(card, /^## Design \(build to it; every review checks it\)\nthe # Domain, Logical section\(s\) of docs\/units\/U-1-a\.md at the base$/m);
   assert.doesNotMatch(run(dir, ['card', 'U-2']).out, /## Design/, 'a waived unit has no design section');
 });
+
+test('B150/AC-2 the glossary in the overview is the block generated from cli.json, so the words cannot drift', async () => {
+  const { glossary, withBlock } = await import('../plugin/cli/lib/vocab.mjs');
+  const doc = readFileSync(join(ROOT, 'docs/design/overview.md'), 'utf8');
+  assert.equal(withBlock(doc, 'glossary', glossary()), doc);
+});
+
+test('B150/AC-1 the canonical model gives every vocabulary word its scale and names the AI-DLC terms it maps', async () => {
+  const { config } = await import('../plugin/cli/lib/config.mjs');
+  const doc = readFileSync(join(ROOT, 'docs/design/canonical-model.md'), 'utf8');
+  for (const w of config.vocabulary.words.filter((x) => x.scale !== 'plugin')) assert.match(doc, new RegExp(`\\| ${w.scale[0].toUpperCase() + w.scale.slice(1)} \\| ${w.word} \\|`), w.word);
+  for (const term of ['Intent', 'Unit', 'Bolt']) assert.match(doc, new RegExp(`\\*\\*${term}\\*\\*`), term);
+});

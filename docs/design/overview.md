@@ -89,11 +89,28 @@ sequenceDiagram
 - The vendored CLI's `VERSION` file holds the same version, so a project records which release judges it.
 
 # Glossary
-- **Intent:** a goal with its why and success measures.
-- **Unit:** an independently buildable slice of an intent, with acceptance criteria (ACs) and a write scope.
-- **Lane:** quick, standard or full; decides which grid rows run.
-- **Card:** the generated brief for one unit.
-- **Lead:** the main session running the loop. **Owner:** the human.
+Generated from `cli.json` `vocabulary`; the words and their rules: [Canonical model](canonical-model.md).
+
+<!-- generated: glossary -->
+| Word | Scale | Meaning | AI-DLC term |
+|---|---|---|---|
+| **core** | system | the shared platform every extension uses |  |
+| **extension** | system | a vertical capability owned elsewhere, built only against published contracts |  |
+| **domain** | domain | a bounded context: its data, language, contract and events | Unit |
+| **kind** | domain | a module's place in the architecture: domain, pipeline, foundation, adapter, runtime, extension or delivery |  |
+| **slice** | code | one operation (command or query) of one domain, end to end, in one folder |  |
+| **layer** | code | a position inside a module: interface, application, model or infrastructure |  |
+| **intent** | delivery | one business outcome, with its why and success measures | Intent |
+| **increment** | delivery | a shippable step of an intent; increment 1 is the walking skeleton |  |
+| **bolt** | delivery | the smallest build cycle: one card, worktree, review and merge | Bolt |
+| **fix bolt** | delivery | one regression, one AC that fails before the fix |  |
+| **lane** | plugin | quick, standard or full; decides which grid rows run |  |
+| **card** | plugin | the generated brief one builder works from and one reviewer checks against |  |
+| **lead** | plugin | the main session running the loop |  |
+| **owner** | plugin | the human who approves, releases and rolls back |  |
+
+Retired, in these senses: *unit* (a work item) → bolt (unit stays a test level); *slice* (a delivery step) → increment; *bundle* (a piece of the architecture, not the docs bundle) → domain; *component* (a piece of the architecture) → domain, or runtime for a deployable; *capability* (a module) → domain.
+<!-- /generated -->
 
 [^cc-host]: Host and maintain a marketplace
 [^cc-tag]: Plugin commands reference, plugin tag

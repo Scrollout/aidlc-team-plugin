@@ -6,6 +6,9 @@ status: draft
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T08:00:00Z }
 ---
 
+# Words
+The words the method uses at each scale, and which rules are AI-DLC's and which the plugin's own: [Canonical model](canonical-model.md).
+
 # Why
 The owner asked (2026-10-24) whether an initialised project gets the method: vertical slices, an end-to-end test per intent, tests first. The checks exist, but on a fresh project the ones that run tests stay off: `init` writes no `levels.*.run`, so the gate runs no level, proof-revert has nothing to revert against and `PLAN-SLICE` is silent. No doc in the bundle states the method, and `upgrade` gives an older project none of the templates added since its `init`.
 

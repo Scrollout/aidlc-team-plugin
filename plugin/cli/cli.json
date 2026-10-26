@@ -1504,5 +1504,34 @@
     "typedOwner": "Organization",
     "target": "board.target",
     "dueTime": "T00:00:00Z"
+  },
+  "vocabulary": {
+    "words": [
+      { "word": "core", "scale": "system", "meaning": "the shared platform every extension uses" },
+      { "word": "extension", "scale": "system", "meaning": "a vertical capability owned elsewhere, built only against published contracts" },
+      { "word": "domain", "scale": "domain", "meaning": "a bounded context: its data, language, contract and events", "method": "Unit" },
+      { "word": "kind", "scale": "domain", "meaning": "a module's place in the architecture: domain, pipeline, foundation, adapter, runtime, extension or delivery" },
+      { "word": "slice", "scale": "code", "meaning": "one operation (command or query) of one domain, end to end, in one folder" },
+      { "word": "layer", "scale": "code", "meaning": "a position inside a module: interface, application, model or infrastructure" },
+      { "word": "intent", "scale": "delivery", "meaning": "one business outcome, with its why and success measures", "method": "Intent" },
+      { "word": "increment", "scale": "delivery", "meaning": "a shippable step of an intent; increment 1 is the walking skeleton" },
+      { "word": "bolt", "scale": "delivery", "meaning": "the smallest build cycle: one card, worktree, review and merge", "method": "Bolt" },
+      { "word": "fix bolt", "scale": "delivery", "meaning": "one regression, one AC that fails before the fix" },
+      { "word": "lane", "scale": "plugin", "meaning": "quick, standard or full; decides which grid rows run" },
+      { "word": "card", "scale": "plugin", "meaning": "the generated brief one builder works from and one reviewer checks against" },
+      { "word": "lead", "scale": "plugin", "meaning": "the main session running the loop" },
+      { "word": "owner", "scale": "plugin", "meaning": "the human who approves, releases and rolls back" }
+    ],
+    "retired": [
+      { "word": "unit", "sense": "a work item", "use": "bolt (unit stays a test level)" },
+      { "word": "slice", "sense": "a delivery step", "use": "increment" },
+      { "word": "bundle", "sense": "a piece of the architecture, not the docs bundle", "use": "domain" },
+      { "word": "component", "sense": "a piece of the architecture", "use": "domain, or runtime for a deployable" },
+      { "word": "capability", "sense": "a module", "use": "domain" }
+    ],
+    "heading": "| Word | Scale | Meaning | AI-DLC term |\n|---|---|---|---|",
+    "row": "| **{{word}}** | {{scale}} | {{meaning}} | {{method}} |",
+    "retiredLine": "Retired, in these senses: {{list}}.",
+    "retiredItem": "*{{word}}* ({{sense}}) → {{use}}"
   }
 }
