@@ -48,7 +48,7 @@ Merge rules:
 - A project file `.aidlc/templates/<same path>` overrides the plugin's.
 - Rendered by `init`:
   - `.aidlc/profile.json`;
-  - AGENTS.md, whose first pointer is the bundle's root `index.md`, the OKF entry point, then the folder's index, then one doc;
+  - AGENTS.md, first pointing at the root `index.md`;
   - CLAUDE.md (one line: `@AGENTS.md`);
   - the bundle root (`index.md` with `okf_version`, `log.md`);
   - the constitution, `<bundle>/constitution/principles.md`;

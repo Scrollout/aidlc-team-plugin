@@ -51,9 +51,9 @@ Intents, requirements, units and one-way-door decisions carry the owner's approv
 
 # next
 `aidlc next` prints one line: the next action and the command or agent for it. Badges (`state.badges`): 👉 an owner step, ⛔ a refusal or stop. It exits 2 when the owner acts. Order:
-1. A merge cut off → continue it. A merged intent's failed release or smoke → ⛔ the owner retries or rolls back; after a rollback, a fix unit from the smoke output ([Deployment and operation](operations.md#details)). A red base CI → a fix unit; only fix units build or merge ([CI on the base](base-ci.md)). Any doc held with `research: <question>` unanswered in `research/` → research it (`aidlc research <decision number or doc name>`), or wait for its researcher ([0010](../decisions/0010-research-and-advice.md)); the digest ends that hold.
+1. A merge cut off → continue it. A failed release or smoke → ⛔ the owner retries or rolls back, then a fix unit ([Deployment and operation](operations.md#details)). A red base CI → a fix unit; only fix units build or merge ([CI on the base](base-ci.md)). Any doc held with `research: <question>` unanswered in `research/` → research it (`aidlc research <doc>`), or wait for its researcher ([0010](../decisions/0010-research-and-advice.md)); the digest ends that hold.
 2. Any `stale` approval, decisions included → re-approve, with the drafts the stale docs cite.
-3. A draft intent, requirement or unit with open points (a template `<…>` placeholder outside plan fields, an `Open questions` item) → finish elaborating it with the owner, naming them; no approval or unit work first.
+3. A draft intent, requirement or unit with open points (a template `<…>` placeholder outside plan fields, an `Open questions` item) → finish elaborating it with the owner, naming them; no approval or unit work first. A draft intent that links no decision is also asked to draft the decisions it needs while the owner answers.
 4. No intent yet: elaborate one; in an adopted project with none, the migration intent ([Everyday paths](paths.md#adopting-an-existing-project)). Intent not approved → request approval, with the draft requirements it cites.
 5. Plan not approved → first the draft decisions the intent links: finish those with open points, then request their approval; an architecture choice shapes the cut. Then draft units, request approval with the draft decisions and requirements they cite.
 6. Reviewed units → merge in DAG order, once each AC has a tagged test on the branch (else back to the builder). One the gate refused → ⛔ the owner, until the base or the diff changes.
@@ -65,7 +65,7 @@ Intents, requirements, units and one-way-door decisions carry the owner's approv
 12. Builders running → wait. A slice line naming no unit once the intent's units merged → cut its units ([Slices](slices.md)).
 13. Intent merged, not released → its release steps: a hold, the deploy check, a fix unit, the release ([Deployment and operation](operations.md#details)). 4–12 serve the next intent meanwhile. All released → the owner clears the lead's session first ([Resume](resume.md#between-intents)).
 
-An owner gate in steps 2–5 holds back only the units that wait on its docs: `next` first returns an action of steps 6–11 for the other units, then the gate. A held unit (`hold`, by the owner, or by the lead with a reason while it parks a question) gets no action until the hold is released. An action auto mode refused at this commit goes to the owner: `aidlc approve <docs>` for a delegated approval, else the refused command ([Hook checks](hook-checks.md)).
+An owner gate in steps 2–5 holds back only the units that wait on its docs: `next` first returns an action of steps 6–11 for the other units, then the gate. A held unit (`hold`) gets no action until released. An action auto mode refused at this commit goes to the owner: `aidlc approve <docs>` for a delegated approval, else the refused command ([Hook checks](hook-checks.md)).
 
 `aidlc status` prints it as a table; SessionStart injects it (≤ 1,000 chars).
 

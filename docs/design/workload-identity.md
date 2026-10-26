@@ -10,7 +10,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-25T19:00:00Z }
 The owner made it a permanent rule of the method (2026-10-25), asking whether projects should use "some form of internal managed identity, service principal, federated credentials as a method of authn/authz between components, services, data". A static secret between components is shared by everything that can read it, outlives the component, and lets one slice reach another's data whatever the code says; the first migration's dev database trusted every pod as a superuser.
 
 # Rule
-- Each service or slice has its own workload identity: a Kubernetes ServiceAccount with a projected token, a cloud managed identity, a SPIFFE ID.
+- Each service or slice has its own workload identity: a cluster service account with a projected token, a cloud managed identity, a workload ID from an identity issuer.
 - Calls between components use mTLS or tokens bound to those identities, and each API says which identities may call it.
 - Each slice's data is reachable only by its own identity, with short-lived certificates or tokens, so [data ownership](slice-architecture.md) holds in the database as well as at merge.
 - Anything outside the cluster (cloud APIs, CI deploys) uses federated credentials (OIDC), never a stored client secret.

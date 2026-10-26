@@ -4,21 +4,11 @@ title: OKF
 description: How the plugin writes, indexes and validates OKF v0.2 bundles, following the official spec and its reference implementation.
 status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T09:45:00Z }
-sources:
-  - id: okf-spec
-    resource: https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md
-    title: Open Knowledge Format v0.2 specification
-  - id: okf-ref
-    resource: https://github.com/GoogleCloudPlatform/open-knowledge-format/tree/main/src/reference_agent/bundle
-    title: OKF reference implementation (document.py, index.py)
-  - id: okf-bundles
-    resource: https://github.com/GoogleCloudPlatform/open-knowledge-format/tree/main/bundles
-    title: OKF sample bundles (acme_retail, ga4, stackoverflow, crypto_bitcoin)
 ---
 
 # Official sources
-- The canonical home is `GoogleCloudPlatform/open-knowledge-format`. The copy under `knowledge-catalog/okf` is a frozen snapshot; its `SPEC.md` is identical to the canonical one.[^okf-spec]
-- The reference implementation[^okf-ref] and the sample bundles[^okf-bundles] are the conventions this plugin copies. Where they differ from earlier house rules, they win.
+- The format's canonical repository holds the spec, a reference implementation and sample bundles; a frozen snapshot of it elsewhere has an identical `SPEC.md`.
+- Its reference implementation and sample bundles are the conventions this plugin copies. Where they differ from earlier house rules, they win.
 
 # Concept docs
 - Frontmatter: `type` (required), then `title`, `description` (one sentence), `tags`, `status`, `generated`, `verified`, `stale_after`, `sources`, as in the sample bundles. Producer keys are allowed (we add `verified_hash` and unit fields).
@@ -28,7 +18,7 @@ sources:
 - File names are concept IDs: segments match `[A-Za-z0-9_][A-Za-z0-9_.-]*`.
 
 # Index files (generated, never hand-written)
-`aidlc index` regenerates every `index.md` the way the reference `index.py` does:[^okf-ref]
+`aidlc index` regenerates every `index.md` the way the reference `index.py` does:
 - Every directory that contains docs gets one; empty directories get none.
 - Entries are grouped under `# <type>` headings, headings sorted; entries sorted by title, case-insensitive: `* [Title](file.md) - description`, with the description taken from frontmatter.
 - Every child directory goes under `# Subdirectories` as `* [name](name/index.md) - description`, as in the reference.
@@ -45,6 +35,6 @@ As in the sample bundles: optional frontmatter `type: Log`, `title`; date headin
 # Validation
 What `aidlc check` reports for a bundle, as errors and house-rule warnings: [OKF validation](okf-validation.md).
 
-[^okf-spec]: Open Knowledge Format v0.2 specification
-[^okf-ref]: OKF reference implementation (document.py, index.py)
-[^okf-bundles]: OKF sample bundles (acme_retail, ga4, stackoverflow, crypto_bitcoin)
+: Open Knowledge Format v0.2 specification
+: OKF reference implementation (document.py, index.py)
+: OKF sample bundles (acme_retail, ga4, stackoverflow, crypto_bitcoin)

@@ -301,6 +301,7 @@
     "nextReapprove": "re-approve {{docs}} after their edits: aidlc approve {{docs}} (the owner confirms the prompt or types: approve {{docs}})",
     "nextNoIntent": "elaborate an intent with the owner in {{dir}}/I-1-<slug>.md, then ask for approval",
     "nextOpenDraft": "finish elaborating {{doc}} with the owner: {{points}} still open in {{file}}; then ask for approval",
+    "nextOpenIntent": "finish elaborating {{doc}} with the owner: {{points}} still open in {{file}}; meanwhile draft the decisions it needs from .aidlc/templates/docs/decision.md, linked from it, so the owner sees the how with the what; then ask for approval",
     "nextApproveIntent": "ask the owner to approve {{intent}}: aidlc approve {{intent}} (the owner confirms the prompt or types: approve {{intent}})",
     "nextFinishDecision": "finish {{doc}}, which {{intent}} links, with the owner before its units: {{points}}",
     "nextApproveDecisions": "ask the owner to approve the decisions {{intent}} links before its units: aidlc approve {{docs}} (the owner confirms the prompt or types: approve {{docs}})",

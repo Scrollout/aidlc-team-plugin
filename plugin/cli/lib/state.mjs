@@ -408,7 +408,7 @@ function gateOf(st, intent, scope) {
   }
   const open = [...st.requirements, ...st.intents, ...st.units].filter((d) => d.state === 'draft').map((d) => ({ d, points: openPoints(d.doc) })).find((x) => x.points.length);
   // An open conversation with the owner comes before any unit work: no docs, so nothing counts as independent.
-  if (open) return gate('nextOpenDraft', [], { doc: open.d.id, points: open.points.join(', '), file: relPath(st.cwd, open.d.file) });
+  if (open) return gate(st.intents.includes(open.d) && !decisionsOf(st, [open.d]).length ? 'nextOpenIntent' : 'nextOpenDraft', [], { doc: open.d.id, points: open.points.join(', '), file: relPath(st.cwd, open.d.file) }); // decisions take shape with the intent (U139)
   if (!intent && !st.intents.length && !st.units.length) {
     if (st.profile.adopted) return gate('nextMigrate', [], { dir: rel(config.grid.intents), commit: String(st.profile.adopted).slice(0, 12) });
     return gate('nextNoIntent', [], { dir: rel(config.grid.intents) });
