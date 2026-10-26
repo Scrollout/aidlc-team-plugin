@@ -4,7 +4,7 @@ title: Steering
 description: How the plugin corrects the agent during work, keeps it moving, and improves its rules over time without growing.
 status: draft
 sources:
-  - id: aws-learnings
+  - id: ref-learnings
     resource: https://github.com/awslabs/aidlc-workflows/blob/main/core/aidlc-common/protocols/stage-protocol-learnings.md
     title: Reference AI-DLC learnings protocol
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T22:20:00Z }
@@ -23,11 +23,11 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T22:20:00Z }
 # 3. Across intents: the retro
 - Runtime counters in `.git/aidlc/stats.json`, bounded: one counter per finding code (hook denials, gate refusals), one per escalation reason (`review`, `stopped`, `denials`), and bounded lists (`retro.keep`): the owner commands that ran, those the CLI refused, each stop report (a restart replaces the one on disk), each send-back for an untagged AC, each command auto mode refused, and each failed deploy step. The retro resets them.
 - `aidlc retro I-<n>` at the end of an intent lists the codes that fired 3+ times since the last retro, each escalation of the intent's units (review verdicts on disk, stop reports and send-backs from the counters), every owner approval of the intent's docs and the decisions they cite, from their `human:` stamps (each owner's latest per doc), however it was run, the other owner commands that ran, those the CLI refused, each command auto mode refused, and each failed deploy check, release, smoke and rollback with the fix units started `--after` the intent ([Deployment and operation](operations.md)). It proposes at most three changes, one per most frequent code or escalation reason, from the `retro.proposals` map: a profile glob, a project rule in `.aidlc/rules/`, a template tweak, or a new check.
-- As in the reference workflows' learnings ritual, a deterministic tool surfaces and the person decides: framework files never change, and a kept learning becomes a project rule or a new check.[^aws-learnings] The owner accepts or rejects each. Accepted changes are ordinary commits to the project; the plugin never edits itself or its rules unasked.
+- As in the reference workflows' learnings ritual, a deterministic tool surfaces and the person decides: framework files never change, and a kept learning becomes a project rule or a new check.[^ref-learnings] The owner accepts or rejects each. Accepted changes are ordinary commits to the project; the plugin never edits itself or its rules unasked.
 - Personal preferences the owner states repeatedly go to `.aidlc/local/` (untracked). A preference that conflicts with a `deny` from a higher layer is refused, with the rule it conflicts with.
 - A proposal that belongs in the plugin (not the project) becomes an issue draft for the plugin repo, which the owner files.
 
 # Why
 The AI-DLC video series stresses that skills can be skipped and context drifts, so deterministic hooks and fresh-context checks must catch what guidance misses, and that a harness should learn from repeated corrections. Bounded counters and owner-approved proposals give that learning without a ledger or self-growing prose.
 
-[^aws-learnings]: Reference AI-DLC learnings protocol
+[^ref-learnings]: Reference AI-DLC learnings protocol

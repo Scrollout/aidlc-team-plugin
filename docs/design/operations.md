@@ -4,7 +4,7 @@ title: Deployment and operation
 description: How the grid's Deployment and Operation rows run after an intent merges - deploy check, release, smoke, rollback, runbook and feedback - with the commands from the project profile.
 status: draft
 sources:
-  - id: aws-ops
+  - id: ref-ops
     resource: https://github.com/awslabs/aidlc-workflows/tree/ec48a1c421ef/core/aidlc-common/stages/operation
     title: Reference AI-DLC operation stages
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T08:00:00Z }
@@ -13,15 +13,15 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T08:00:00Z }
 # Why
 Before M6 the loop ended at a merged, tagged intent: the [Grid](grid.md)'s Deployment and Operation rows ran nothing. The owner asked for both rows (2026-10-24).
 
-# What the reference workflows do
-Seven operation stages, every one conditional (`execution: CONDITIONAL`) and skipped when "no deployable target exists": deployment pipeline, environment provisioning, deployment execution, observability, performance validation, incident response, feedback.[^aws-ops] The parts this plugin can take without building pipelines:
+# The reference stages
+Seven operation stages, every one conditional (`execution: CONDITIONAL`) and skipped when "no deployable target exists": deployment pipeline, environment provisioning, deployment execution, observability, performance validation, incident response, feedback.[^ref-ops] What the plugin takes without building pipelines:
 - **Verify:** "Deployment is not done until smoke passes"; deployment execution runs smoke tests and health checks.
 - **Rollback:** a rollback runbook, output by the pipeline stage; "Rollback is not optional".
 - **Gates:** "Bypassing a gate is an incident, not a shortcut"; each stage ends with the human's approve or request-changes.
 - **Feedback:** "Production insights that do not flow back to Ideation are wasted learning"; the last stage can start a new ideation cycle.
 
 # Shape
-Commands come from the profile; the plugin ships no pipeline ([Overview](overview.md) non-goals). All keys are optional: without them the rows are skipped, as the reference workflows skip a stage with no target.
+Commands come from the profile; the plugin ships no pipeline ([Overview](overview.md) non-goals). All keys are optional: without them the rows are skipped, as the reference stages skip one with no target.
 ```json
 "deploy": { "check": ["make image"], "run": "make deploy", "smoke": "make smoke", "rollback": "make rollback", "platform": ["../infra"] },
 "release": "make release"
@@ -51,4 +51,4 @@ The owner's, 2026-10-24:
 
 Units: [M6](../roadmap/m6.md).
 
-[^aws-ops]: Reference AI-DLC operation stages
+[^ref-ops]: Reference AI-DLC operation stages

@@ -44,7 +44,7 @@ Merge rules:
 - `.aidlc/rules/*.md` are not merged; the loader returns their paths for the hooks and agents that read them.
 
 # Templates
-- Files under `plugin/templates/` with `{{path.to.value}}` and `{{#each list}}…{{/each}}`; nothing more. Inside `#each`, `{{this}}` is the item and names resolve on the item first, then outside it. A missing or non-scalar value is an error naming the variable and the file.
+- Files under `plugin/templates/` with `{{path.to.value}}` and `{{#each list}}…{{/each}}`; nothing more. In `#each`, `{{this}}` is the item, names resolve on it first. A missing or non-scalar value is an error naming the variable and file.
 - A project file `.aidlc/templates/<same path>` overrides the plugin's.
 - Rendered by `init`:
   - `.aidlc/profile.json`;
@@ -55,15 +55,15 @@ Merge rules:
   - requirement, intent, unit, decision, runbook and naming templates in `.aidlc/templates/docs/`;
   - `.github/workflows/aidlc.yml`, with the runner and the `actions/checkout` and `actions/setup-node` pins the project's own workflows already use (defaults in `init.workflow`).
 
-  It also adds `.aidlc/local/` and the builders' worktree folder `.claude/worktrees/` to `.gitignore`, adds the worktree folder to every other ignore file the project has (`init.ignoreFiles`: `.dockerignore`, `.prettierignore`, …) so tools and tests skip it, and sets `worktree.baseRef: "head"` in `.claude/settings.json`.
-- `security.content`: regexes for code that needs a security review wherever it sits (RLS settings, TLS skips); an added line matching one requires the `security` focus as `focus.security` globs do ([Merge mechanics](gate.md)). `security.secrets` is for credentials: the write hook blocks them.
+  It also adds `.aidlc/local/` and `.claude/worktrees/` to `.gitignore` and the worktree folder to every other ignore file (`init.ignoreFiles`), so tools skip it, and sets `worktree.baseRef: "head"` in `.claude/settings.json`.
+- `security.content`: regexes for code that needs a security review wherever it sits (RLS, TLS skips); an added line matching one requires the `security` focus ([Merge mechanics](gate.md)). `security.secrets` is for credentials: the write hook blocks them.
 - `check` warns `PROFILE-KEY` for a top-level or `security` key in a layer file that nothing reads, so a guessed key is not taken for a rule (first migration: `security.patterns`, `security.content` before it existed).
-- `levels.<name>.paths`: the test files themselves (`**/*_test.go`), never a folder that also holds helpers: a harness or fixture builder is code, which the proof reverts and a mutation may target (second project, 2026-10-26: `test/e2e/**` left a harness-only fix unit nothing to revert).
+- `levels.<name>.paths`: the test files (`**/*_test.go`), never a folder that also holds helpers: a harness is code, which the proof reverts and a mutation may target (second project, 2026-10-26).
 - `review.fixRounds`: fix rounds per focus before a `fix` escalates (default 3). `decisions.paths` and `generated`: [Plan lint](plan-lint.md#profile-keys-it-reads).
 - `names`: [Naming rules](names.md); `deps`: [Current dependencies](dependencies.md); `deploy.platform`: [Operations](operations.md).
 - `research.sources` lists sources the owner trusts for the researcher, and `research.max` its source budget (default 8); `models.research` its model ([0010](../decisions/0010-research-and-advice.md)).
 - When the project has a lint target (`make lint`, `npm run lint` or `just lint`, from `grid.runners` and `init.lintTargets`), `init` offers it as a module check, for the owner to add to `modules[].check`; it writes nothing for it.
-- `init` takes its answers as flags (`--name`, `--base`, `--bundle`); the skill asks the owner first. It never overwrites: it lists an existing file and exits 2 until the owner reruns with `--overwrite <path>` for it. Adding lines to `.gitignore` or a missing key to `.claude/settings.json` is not an overwrite.
+- `init` takes its answers as flags (`--name`, `--base`, `--bundle`); the skill asks the owner first. It never overwrites: it lists an existing file and exits 2 until the owner reruns with `--overwrite <path>`. Adding lines to `.gitignore` or a key to `.claude/settings.json` is no overwrite.
 - `init --adopt` keeps an existing bundle (the folder whose `index.md` has `okf_version`), records `adopted: <HEAD>` and reports, without changing anything:
   - spec errors and house-rule warnings;
   - leftovers of other tools: unknown top-level dot folders, and commit trailer keys other than the standard and our own.
