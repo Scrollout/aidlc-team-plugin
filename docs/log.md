@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-26
 
+- **Update** M13 U135: a level's `paths` name the test files, never a folder holding helpers, which are code the proof reverts ([Profile](design/profile.md)). Release 0.118.4.
 - **Update** M13 U134: the design docs gain [Pipeline](design/pipeline.md) and [Slices](design/slices.md), the README, grid, overview and intent-state diagrams show slices, the Spec line, reviews per focus and the CI wait before a release, and M12 closes at U122 with [M13](roadmap/m13.md) holding the rest. Release 0.118.3.
 - **Fix** M13 U133: `review record` is safe to retry, the same verdict for the same diff replacing its round; `deploy.run` must be rerunnable ([Review rounds](design/review-rounds.md), [Operations](design/operations.md)). Release 0.118.2.
 - **Update** M13 U132: the card's Dependencies section says currency and advisories are checked live by `deps.check` only, and a unit's tests prove a check offline on fixed inputs ([Current dependencies](design/dependencies.md)). Release 0.118.1.
