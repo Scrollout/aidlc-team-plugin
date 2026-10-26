@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-26
 
+- **Fix** M14 U146: the guard expands `~` in `git -C ~/repo`, so another repository's push is judged as that repository's ([Hooks](design/hooks.md)). Release 0.120.3.
 - **Fix** M14 U145: a unit refused for a red base stays refused until a merge lands, and the base's fix unit builds past its scope ([CI on the base](design/base-ci.md)). Release 0.120.2.
 - **Fix** M14 U144: the guard refuses a commit on the base while `aidlc merge` runs its gate, so the merge's fast-forward is never lost ([Verification](design/verification.md)). Release 0.120.1.
 - **Fix** M14 U143: `PLAN-ARCHDOC` also accepts a unit that links the architecture doc under Interfaces, updated on the base first ([Plan lint](design/plan-lint.md)). Release 0.120.1.

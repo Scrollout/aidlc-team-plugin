@@ -53,7 +53,7 @@ function gitCall(argv) {
   for (; k < argv.length && argv[k].startsWith('-'); k += H.git.globalWithValue.includes(argv[k]) ? 2 : 1) {
     const value = ['-c', '--config-env'].includes(argv[k]) ? argv[k + 1] : argv[k].match(/^(?:-c|--config-env=)(.+)/)?.[1];
     if (value) configs.push(value.replace('=', ' ')); // as `git config --get-regexp` prints it
-    if (argv[k] === '-C' || argv[k].startsWith('-C')) dirs.push(argv[k] === '-C' ? argv[k + 1] : argv[k].slice(2));
+    if (argv[k] === '-C' || argv[k].startsWith('-C')) dirs.push(argv[k] === '-C' ? argv[k + 1]?.replace(/^~(?=\/|$)/, homedir()) : argv[k].slice(2)); // the shell expands a ~ word (U146)
     else if (/^--(git-dir|work-tree)/.test(argv[k])) dirs.push(null); // judged as the project
   }
   return { sub: argv[k], args: argv.slice(k + 1), configs, dirs };

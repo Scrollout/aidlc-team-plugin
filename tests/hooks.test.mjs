@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { commands } from '../plugin/cli/lib/hooks.mjs';
 import { approve, commit, git, hook, intentDoc, pinnedRepo, read, run, tempDir, unitDoc, write } from './state-repo.mjs';
 
@@ -53,6 +53,10 @@ test('U94/AC-1 a git call cd or -C takes into another repository passes the guar
   // U120/AC-1 a pipe or || after the cd keeps its folder; a cd in a background job loses it.
   for (const command of [`cd '${other}' && git push -q origin main 2>&1 | tail -3`, `cd '${other}' && git push origin main || echo failed`]) assert.equal(decision(guardIn(dir, command)), 'allow', command);
   for (const command of [`cd '${other}' & git push origin main`, `echo x | cd '${other}' && git push origin main`]) assert.equal(decision(guardIn(dir, command)), 'deny', command);
+  // U146/AC-1 git -C ~/<repo> is that repository, as the shell expands the ~ before git runs.
+  const [home, profile] = [process.env.HOME, process.env.USERPROFILE];
+  process.env.HOME = process.env.USERPROFILE = dirname(other);
+  try { assert.equal(decision(guardIn(dir, `git -C ~/${basename(other)} push origin main`)), 'allow'); } finally { [process.env.HOME, process.env.USERPROFILE] = [home, profile]; if (profile === undefined) delete process.env.USERPROFILE; }
   git(other, 'remote', 'add', 'mirror', 'ssh://git@github.com/Org/app');
   assert.equal(decision(guardIn(dir, `git -C '${other}' push origin main`)), 'deny', 'shares a remote with the project');
   const clone = tempDir('clone-');
