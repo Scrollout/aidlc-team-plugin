@@ -140,27 +140,16 @@ function reachable(units) {
   return reach;
 }
 
-// The top test level: the last level that runs. A unit with an AC there proves its slice end to end.
+// The top test level: the last level that runs. A bolt with an AC there proves its increment end to end.
 export const topLevel = (profile) => { const l = withDefaults(profile).levels; return Object.keys(l).filter((k) => l[k]?.run).at(-1); };
 
-// An intent's slice lines: line number, the units each names, its name (the text before the colon).
-export const sliceLines = (intent) => sectionOf(intent.doc, GRID.slices).filter(([, t]) => /^\s*([-*]|\d+\.)\s/.test(t))
-  .map(([n, t]) => ({ n, ids: [...new Set(t.match(/\bU-\d+\b/g))], name: t.replace(/^\s*([-*]|\d+\.)\s+/, '').split(':')[0].trim() }));
-
-// One unit's place in the plan, the same for the card's Spec line and PLAN-SLICE (U131): fix (no intent), unsliced (no
-// slice line names it), vertical (an AC at the top level: its proof) or supports (needed by the slice's vertical units).
-export function sliceRole(unit, intents, units, top) {
-  const intent = intents.find((i) => i.id === unit.fm.intent);
-  if (!intent) return { kind: 'fix' };
-  const written = sliceLines(intent); // without slice lines an intent is one slice (docs/design/slices.md)
-  const lines = written.length ? written : [{ ids: units.filter((u) => u.fm.intent === intent.id).map((u) => u.id), name: String(intent.fm.title ?? '') }];
-  const k = lines.findIndex((l) => l.ids.includes(unit.id));
-  if (k < 0) return { kind: 'unsliced', intent };
-  const [base, proof] = [{ intent, k: k + 1, slice: lines[k].name, ids: lines[k].ids }, unit.acs.filter((a) => top && a.level === top).map((a) => a.id)];
-  if (proof.length) return { kind: 'vertical', ...base, proof };
-  const reach = reachable(units), vertical = lines[k].ids.filter((id) => units.find((x) => x.id === id)?.acs.some((a) => a.level === top));
-  return { kind: 'supports', ...base, vertical, neededBy: vertical.filter((id) => reach(id).has(unit.id)) };
-}
+// An intent's increments section, under # Increments or a v1 intent's # Slices (docs/design/increments-and-bolts.md).
+export const incrementSection = (doc) => GRID.increments.map((h) => sectionOf(doc, h)).find((s) => s.some(([, t]) => /^\s*([-*]|\d+\.)\s/.test(t))) ?? [];
+// Its increment lines: line number, the bolts each names, its id (I-<n>.<k>, none on a v1 line) and its name.
+export const incrementLines = (intent) => incrementSection(intent.doc).filter(([, t]) => /^\s*([-*]|\d+\.)\s/.test(t)).map(([n, t]) => {
+  const text = t.replace(/^\s*([-*]|\d+\.)\s+/, '');
+  return { n, ids: [...new Set(text.match(new RegExp(GRID.lineIds, 'g')))], id: text.match(GRID.incrementId)?.[0], name: text.split(':')[0].trim() };
+});
 
 export const spansOf = (line) => [...line.matchAll(SPAN)].map((m) => m[1].trim());
 
@@ -298,38 +287,39 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   // Each intent ends to end once: an AC at the top level that runs; a unit crossing modules is tested above the
   // first level (docs/design/plan-lint.md).
   const top = topLevel(profile);
-  const wide = withDefaults(profile).plan.sliceUnits;
+  const waived = (i) => GRID.endToEnd.some((k) => i.fm[k]);
   const fixes = new Set(units.filter((u) => !u.fm.intent).map((u) => u.id));
-  for (const u of units.filter((x) => x.fm.intent)) for (const dep of u.depends.filter((d) => fixes.has(d))) add('PLAN-SLICE', u, keyLine(u, 'depends'), 'planSliceAhead', { dep });
-  for (const i of intents.filter((x) => x.fm.status !== GRID.dropped && !x.fm[GRID.slice])) {
+  for (const u of units.filter((x) => x.fm.intent)) for (const dep of u.depends.filter((d) => fixes.has(d))) add('PLAN-INCREMENT', u, keyLine(u, 'depends'), 'planIncrementAhead', { dep });
+  for (const i of intents.filter((x) => x.fm.status !== GRID.dropped && !waived(x))) {
     const own = units.filter((u) => u.fm.intent === i.id);
-    if (top && own.length && !own.some((u) => u.acs.some((a) => a.level === top))) add('PLAN-SLICE', i, 1, 'planSliceIntent', { level: top });
+    // A line under # Increments opens with its id, in order; a v1 intent's # Slices lines carry none (docs/design/increments-and-bolts.md).
+    if (sectionOf(i.doc, GRID.increments[0]).length) incrementLines(i).forEach((l, k) => { const expected = `${i.id}.${k + 1}`; if (l.id !== expected) add('PLAN-INCREMENT', i, l.n, 'planIncrementId', { n: l.n, found: l.id ?? l.name.split(' ')[0], expected }); });
+    if (top && own.length && !own.some((u) => u.acs.some((a) => a.level === top))) add('PLAN-INCREMENT', i, 1, 'planIncrementIntent', { level: top });
     // A walking skeleton first: the first end-to-end AC waits on at most half the intent's product units (second project).
     const made = new Set(own.filter((u) => u.scope.some((s) => productGlobs(profile).some((g) => overlaps(s, g)))).map((u) => u.id));
     const wait = Math.min(...own.filter((u) => u.acs.some((a) => a.level === top)).map((u) => [...reachable(own)(u.id)].filter((d) => made.has(d)).length));
     if (top && made.size > 2 && wait > made.size / 2) add('PLAN-SKELETON', i, 1, 'planSkeleton', { level: top, wait, units: made.size });
-    // Slices stay vertical: every unit on a thin slice with its own top-level AC, none waiting on a later one (U118).
+    // Each increment is proven end to end: every bolt on one, a top-level AC among them, none waiting on a later one.
     if (!top || !made.size) continue;
-    const lines = sliceLines(i).map((l) => [l.n, l.ids]);
-    const slot = new Map(lines.flatMap(([, ids], k) => ids.map((id) => [id, k])));
-    if (!lines.length && own.length > wide) add('PLAN-SLICE', i, 1, 'planSlicesNone', { count: own.length, max: wide });
-    for (const u of lines.length ? own.filter((x) => !slot.has(x.id)) : []) add('PLAN-SLICE', u, 1, 'planSlicesOff', { intent: i.id });
-    for (const [n, ids] of lines.filter(([, x]) => x.length)) {
-      if (!ids.some((id) => all.find((x) => x.id === id)?.acs.some((a) => a.level === top))) add('PLAN-SLICE', i, n, 'planSlicesLayer', { slice: ids.join(', '), level: top });
-      if (ids.length > wide) add('PLAN-SLICE', i, n, 'planSlicesWide', { slice: ids.join(', '), count: ids.length, max: wide });
-    }
-    for (const u of own) for (const dep of u.depends.filter((d) => slot.get(d) > slot.get(u.id))) add('PLAN-SLICE', u, keyLine(u, 'depends'), 'planSlicesOrder', { dep });
-    // A unit on a slice without its own top-level AC is there only if a vertical unit of that slice needs it (U131).
-    for (const u of own.filter((x) => slot.has(x.id) || !lines.length).map((x) => [x, sliceRole(x, intents, all, top)])) {
-      if (u[1].kind === 'supports' && u[1].vertical.length && !u[1].neededBy.length) add('PLAN-SLICE', u[0], keyLine(u[0], 'depends'), 'planSliceLoose', { slice: u[1].k, level: top });
+    const written = incrementLines(i), lines = written.length ? written : [{ n: 1, ids: own.map((u) => u.id) }]; // no section: one increment
+    const slot = new Map(lines.flatMap((l, k) => l.ids.map((id) => [id, k])));
+    for (const u of written.length ? own.filter((x) => !slot.has(x.id)) : []) add('PLAN-INCREMENT', u, 1, 'planIncrementsOff', { intent: i.id });
+    const proven = (id) => all.find((x) => x.id === id)?.acs.some((a) => a.level === top);
+    lines.forEach((l, k) => { if (written.length && l.ids.length && !l.ids.some(proven)) add('PLAN-INCREMENT', i, l.n, 'planIncrementsLayer', { increment: l.id ?? k + 1, bolts: l.ids.join(', '), level: top }); });
+    for (const u of own) for (const dep of u.depends.filter((d) => slot.get(d) > slot.get(u.id))) add('PLAN-INCREMENT', u, keyLine(u, 'depends'), 'planIncrementsOrder', { dep });
+    // A bolt with no top-level AC sits on an increment only if a bolt of it with one depends on it (U131).
+    const reach = reachable(all);
+    for (const u of own.filter((x) => slot.has(x.id) && !proven(x.id))) {
+      const l = lines[slot.get(u.id)], ends = l.ids.filter(proven);
+      if (ends.length && !ends.some((id) => reach(id).has(u.id))) add('PLAN-INCREMENT', u, keyLine(u, 'depends'), 'planIncrementLoose', { increment: l.id ?? slot.get(u.id) + 1, level: top });
     }
   }
   // The waiver is for work outside the running product: a new unit reaching a module or a one-way door voids it.
   const product = productGlobs(profile);
-  for (const i of top ? intents.filter((x) => x.fm.status !== GRID.dropped && x.fm[GRID.slice]) : []) {
+  for (const i of top ? intents.filter((x) => x.fm.status !== GRID.dropped && waived(x)) : []) {
     for (const u of units.filter((x) => x.fm.intent === i.id && !x.fm.verified_hash)) {
       const area = product.find((g) => u.scope.some((s) => overlaps(s, g)));
-      if (area) add('PLAN-SLICE', u, keyLine(u, 'scope'), 'planSliceWaiver', { intent: i.id, glob: u.scope.find((s) => overlaps(s, area)), area, level: top });
+      if (area) add('PLAN-INCREMENT', u, keyLine(u, 'scope'), 'planIncrementWaiver', { intent: i.id, glob: u.scope.find((s) => overlaps(s, area)), area, level: top });
     }
   }
   // With a deploy, each live intent links its runbook and the profile says where the target is defined (docs/design/operations.md).
@@ -342,7 +332,7 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   const arch = profile.architecture?.docs, holds = (u, globs) => u.scope.some((x) => list(globs).some((g) => overlaps(x, g)));
   for (const u of arch ? units.filter((x) => holds(x, [...list(arch.when), '/' + config.layers.find((l) => l.from === 'project').path]) && !holds(x, arch.paths) && !linksOf(x, bundle, GRID.interfaces).some((f) => list(arch.paths).some((g) => overlaps('/' + relPath(base, f), g)))) : []) add('PLAN-ARCHDOC', u, keyLine(u, 'scope'), 'planArchDoc', { docs: list(arch.paths).join(', ') });
   for (const u of units.filter((x) => x.modules.length > 1 && x.acs.length && x.acs.every((a) => a.level === levels[0]))) {
-    add('PLAN-SLICE', u, keyLine(u, 'modules'), 'planSliceUnit', { modules: u.modules.join(', '), level: levels[0] });
+    add('PLAN-INCREMENT', u, keyLine(u, 'modules'), 'planIncrementUnit', { modules: u.modules.join(', '), level: levels[0] });
   }
   // A generator links outputs to sources: a scope names both sides or neither. An existing file git does not
   // track is no output a builder can commit (docs/design/plan-lint.md).

@@ -372,15 +372,14 @@ test('U116/AC-1 the card cap leaves out the sections the profile writes; card an
   assert.ok(r.out.length > 6000 && r.out.includes('x'.repeat(5000)), 'the builder still gets the whole section');
 });
 
-test('U128/AC-1 U128/AC-2 the card names its slice, its why and the docs its text names, with their paths', () => {
+test('U128/AC-1 U128/AC-2 the card names its why and the docs its text names, with their paths, and no Spec label (B152)', () => {
   const intent = intentDoc('I-1') + '\n# Slices\n1. Skeleton: U-1, U-2\n';
   const u1 = doc({ depends: ['U-2'], extra: '\n# Why\nBuyers see local prices (decision 0003).\n\n# Interfaces\n\n- [rates](https://rates.example/api): daily rates\n\n# Out of scope\n\n- Refunds: U-2. Taxes: U-9.\n' });
   const dir = makeRepo({ 'docs/intents/I-1-pricing.md': intent, [U1]: u1, 'docs/units/U-2-b.md': unitDoc({ scope: ['b/**'], acs: ['- AC-1 (unit): it works.'] }), 'docs/decisions/0003-money.md': '---\ntype: Decision\ntitle: Money\ndescription: d\n---\n\n# Choice\nx\n' }, { ...PROFILE, levels: { unit: { paths: ['tests/**'] }, integration: { run: 'make it' } } });
   approve(dir, 'I-1', 'U-1', 'U-2');
   const out = run(dir, ['card', 'U-1']).out;
-  assert.match(out, /^Spec: vertical: builds I-1 slice 1 \(Skeleton\), proven end to end by AC-2 \(integration\) \(docs\/intents\/I-1-pricing\.md\)$/m, 'U131/AC-1 the AC at the top level is its proof');
+  assert.doesNotMatch(out, /^Spec:/m, 'B152/AC-2 the vertical and horizontal labels are gone');
   assert.match(out, /^## Why\nBuyers see local prices \(decision 0003\)\.\n/m);
   assert.match(out, /^- rates \(https:\/\/rates\.example\/api\): daily rates$/m);
   assert.match(out, /^## References .*\n- 0003 docs\/decisions\/0003-money\.md\n- U-2 docs\/units\/U-2-b\.md\n- U-9: no such doc at the base\n/m);
-  assert.match(run(dir, ['card', 'U-2']).out, /^Spec: horizontal: supports I-1 slice 1 \(Skeleton\), needed by U-1 /m, 'no AC at the top level: U-1 depends on it');
 });

@@ -481,17 +481,17 @@ test('U109/AC-2 a builder launched after the gate refused the unit is a fix roun
   assert.match(run(dir, ["next"]).out, /^wait for the builders and reviewers of U-1/);
 });
 
-test('U117/AC-1 U117/AC-2 U122/AC-1 an intent with a slice line naming no unit is not done when its units merge; next asks to cut it', () => {
-  const sliced = intentDoc('I-1') + '\n# Slices\n- Prices in EUR: U-1\n- Prices in USD, later\n';
+test('U117/AC-1 U117/AC-2 U122/AC-1 an intent with an increment line naming no bolt is not done when its bolts merge; next asks to cut it', () => {
+  const sliced = intentDoc('I-1') + '\n# Increments\n- I-1.1 Prices in EUR: U-1\n- I-1.2 Prices in USD, later\n';
   const dir = makeRepo({ 'docs/intents/I-1-pricing.md': sliced, [U(1)]: unitDoc({ scope: ['src/**'] }) });
   approve(dir, 'I-1', 'U-1');
   branch(dir, 'U-1');
   merge(dir, 'U-1');
   assert.match(run(dir, ['status']).out, /^I-1 approved/m, 'not merged, not released');
-  assert.match(run(dir, ['next']).out, /^cut the units of I-1's slices that name none yet, then name them on each line, or name the merged units that already built a slice: Prices in USD, later$/m);
+  assert.match(run(dir, ['next']).out, /^cut the bolts of I-1's increments that name none yet, then name them on each line, or name the merged bolts that already built an increment: I-1\.2 Prices in USD, later$/m);
   write(dir, { 'docs/intents/I-1-pricing.md': sliced.replace('USD, later', 'USD: U-2') });
-  assert.doesNotMatch(run(dir, ['status']).out, /^I-1 approved/m, 'every slice names its units');
-  assert.match(readFileSync(join(import.meta.dirname, '../plugin/templates/docs/intent.md'), 'utf8'), /^# Slices\n- <a vertical slice, end to end>: /m);
+  assert.doesNotMatch(run(dir, ['status']).out, /^I-1 approved/m, 'every increment names its bolts');
+  assert.match(readFileSync(join(import.meta.dirname, '../plugin/templates/docs/intent.md'), 'utf8'), /^# Increments\n- I-<n>\.1 <the walking skeleton, end to end on the target>: /m);
   assert.match(readFileSync(join(import.meta.dirname, '../plugin/templates/docs/intent.md'), 'utf8'), /^# Risks\n- <what could sink this, riskiest first/m, 'U126/AC-1');
 });
 

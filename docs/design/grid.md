@@ -77,9 +77,9 @@ Globs: `**` spans folders, `*` and `?` stay inside one, and a pattern without `/
 # Tests
 Tests are the Source row's second output, derived from the ACs written in Units, so they are planned before any code exists.
 - Each AC declares a level, e.g. `AC-2 (integration): …`. `profile.levels` maps each level to `paths` globs and a `run` command; the plugin defaults define `unit`, `integration` and `e2e`. The gate checks that the tagged test lives where its level says.
-- Behaviour that crosses a module or the network needs `integration` or higher; unit tests alone prove only local logic. Each intent has an AC at the top level ([Plan lint](plan-lint.md), `PLAN-SLICE`).
+- Behaviour that crosses a module or the network needs `integration` or higher; unit tests alone prove only local logic. Each intent has an AC at the top level ([Plan lint](plan-lint.md), `PLAN-INCREMENT`).
 - A fix unit always has one AC: a regression test that fails before the fix.
 - Quick lane adds no tests and runs no level: the gate runs only the commands its ACs name ([Merge mechanics](gate.md#details)).
 
 # Slices
-An intent lists its vertical slices under `# Slices`; each is thin, ends to end, and ships to dev as soon as its units merge. The rules, the card's Spec line and the slice release: [Slices](slices.md).
+An intent lists its increments under `# Increments`, the walking skeleton first; each ends to end and ships as soon as its bolts merge. The rules and the increment release: [Increments and bolts](increments-and-bolts.md).

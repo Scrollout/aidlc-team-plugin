@@ -6,7 +6,7 @@ import { bundleOf, CLI_DIR, config, QUICK, STANDARD, VERDICT, done, git, gitLine
 import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { nameProblem, parseDoc, sectionOf, sizeCap } from './okf.mjs';
-import { computeLane, overlaps, readPlan, reqId, sliceRole, topLevel, unitFields } from './grid.mjs';
+import { computeLane, overlaps, readPlan, reqId, topLevel, unitFields } from './grid.mjs';
 import { aidlcDir, approval, baseOf, branchOf, diffHash, hashDoc, readReview, readState, heldDoc, researchOf, roundsOf, runtimeFile, sha256, worktrees, writeJson } from './state.mjs';
 
 const C = config.card;
@@ -43,14 +43,6 @@ function projectRules(names, profile, at) {
   const { dir, ext } = config.rules;
   return names.filter((f) => f.endsWith(ext) && !Object.hasOwn(profile.focus ?? {}, f.slice(0, -ext.length))).sort()
     .map((f) => ({ name: `${dir}/${f}`, text: at(`${dir}/${f}`).replace(/\n*$/, '\n') }));
-}
-
-// The card's Spec line, from the sliceRole PLAN-SLICE checks, so card and lint never disagree (U131).
-// The Spec line and its kind (vertical, horizontal, fix, unsliced), for the card and the board's unit issue (U148).
-export function specOf(unit, plan, profile, top) {
-  const level = topLevel(profile), role = sliceRole(unit, plan.intents, plan.units.map((u) => (u.id === unit.id ? unit : u)), level);
-  const data = role.intent && { intent: role.intent.id, unit: unit.id, path: relPath(top, role.intent.file), k: role.k, slice: role.slice, level, proof: role.proof?.join(', '), neededBy: role.neededBy?.join(', ') || '-' };
-  return { kind: role.kind === 'supports' ? C.horizontal : role.kind, line: msg({ fix: 'cardSpecFix', unsliced: 'cardSpecUnsliced', vertical: 'cardSpecVertical', supports: 'cardSpecSupports' }[role.kind], data ?? {}) };
 }
 
 // Each intent, unit, requirement or decision the text names, with its path, but those the card lists already.
@@ -108,7 +100,6 @@ function renderCard(cwd, unitId, { preview = false } = {}) {
     // Interface links resolved from the unit doc's folder to repo paths, as `git show <base>:<path>` takes them.
     // Interface lines as written, each link with the repo path it resolves to (U128).
     interfaces: section(doc, config.grid.interfaces).map((l) => resolveLinks(l.trim().replace(/^[-*]\s+/, ''), unit.file, bundle, top)),
-    spec: specOf(atBase, plan, profile, top).line,
     why: [section(doc, config.grid.why).map((l) => l.trim() + '\n').join('')].filter(Boolean),
     reserves: atBase.reserves,
     requirements: list(doc.fm.requirements).map(reqId).flatMap((id) => plan.requirements.filter((r) => reqId(r.id) === id)
@@ -136,7 +127,7 @@ function renderCard(cwd, unitId, { preview = false } = {}) {
       .filter(Boolean).map((sections) => msg('cardDesign', { sections, path: relPath(top, unit.file) })),
     rules: projectRules(gitLines(cwd, 'ls-tree', '--name-only', `${baseSha}:${config.rules.dir}`), profile, (p) => git(cwd, 'show', `${baseSha}:${p}`)),
   };
-  const shown = [unitId, ...data.requirements, ...data.interfaces, data.spec];
+  const shown = [unitId, ...data.requirements, ...data.interfaces];
   data.references = [referencesOf([data.goal, ...data.why, ...data.acs, ...data.outOfScope], plan, cwd, baseSha, top, shown)].filter(Boolean);
   const file = templateFile(cwd, lane.lane === QUICK ? C.quickTemplate : C.template);
   const template = readFileSync(file, 'utf8');

@@ -14,7 +14,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T22:00:00Z }
 | Unit in progress | branch `unit/U-<n>` exists |
 | Unit reviewed | `.git/aidlc/reviews/U-<n>.json`, by diff hash: a `pass` in `general` and each focus the gate needs |
 | Unit done | a merge commit on the base branch with trailer `Unit: U-<n>` |
-| Released | every unit merged, every slice line naming units, and a release holding each merge: a tag, a passed `aidlc release` (and smoke), or test-only scopes ([Slices](slices.md)) |
+| Released | every bolt merged, every increment line naming bolts, and a release holding each merge: a tag, a passed `aidlc release` (and smoke), or test-only scopes |
 
 `.git/aidlc/` sits in git's common dir: every worktree sees it; it is never committed.
 
@@ -62,7 +62,7 @@ Intents, requirements, units and one-way-door decisions carry the owner's approv
 9. Reported, not reviewed → review, one reviewer per required focus without a `pass` for the current diff, in parallel ([Skill and agents](prompts.md#review)).
 10. Building with a stale heartbeat ([Agents in flight](in-flight.md)) and no report → restart its builder. A merged unit still in a worktree → stop its builder, remove it.
 11. Approved, unblocked units → build, on one line; up to `parallel.max` in flight, with scopes disjoint from every unit started and not merged, intent units before fix units at the same priority; with `ci.wait`, the base pushed first and `ci wait` run beside them.
-12. Builders running → wait. A slice line naming no unit once the intent's units merged → cut its units ([Slices](slices.md)).
+12. Builders running → wait. An increment line naming no bolt once the intent's bolts merged → cut them ([Increments](increments-and-bolts.md)).
 13. Intent merged, not released → its release steps: a hold, the deploy check, a fix unit, the release ([Deployment and operation](operations.md#details)). 4–12 serve the next intent meanwhile. All released → the owner clears the lead's session first ([Resume](resume.md#between-intents)).
 
 A gated, escalated or stopped unit holds back no other unit's review, fix or restart. An owner gate in steps 2–5 holds back only the units that wait on its docs: `next` first returns an action of steps 6–11 for the other units, then the gate. A held unit gets none until released. An action auto mode refused at this commit goes to the owner: `aidlc approve <docs>` for a delegated approval, else the refused command ([Hook checks](hook-checks.md)).

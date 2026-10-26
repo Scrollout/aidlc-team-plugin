@@ -27,8 +27,8 @@ The checks are spread over the plan lint, the hooks, the gate and the deploy ste
 | 9 | Reviews: one per required focus, three fix rounds then the owner, retry-safe | `review record` | ([Review rounds](review-rounds.md)) |
 | 10 | Merge gate on a trial merge: scope, AC tests, levels, proof by revert or mutation, checks, OKF, security, architecture, data, names, deps, identity, card freshness | `merge` | `GATE-*`, `ARCH-*` ([Merge gate](gate.md)) |
 | 11 | Base CI: push, wait; a red base builds and merges fix units only | `push`, `ci wait`, `check --ci` | `CI-*` ([CI on the base](base-ci.md)) |
-| 12 | Ship, per merged slice: deploy check, the owner's release on a pushed green base, smoke, rollback | `deploy`, `release`, `rollback` | ([Operations](operations.md), [Slices](slices.md)) |
+| 12 | Ship, per merged increment: deploy check, the owner's release on a pushed green base, smoke, rollback | `deploy`, `release`, `rollback` | ([Operations](operations.md), [Increments and bolts](increments-and-bolts.md)) |
 | 13 | Feedback: counters and the retro's proposals | `retro` | ([Steering](steering.md)) |
 
 # Thresholds
-`parallel.max` 3, card 100 lines, doc caps per type, `review.fixRounds` 3, `plan.sliceUnits` 3, `ci.wait` seconds, `heartbeatMs` for a quiet builder. Each sits in `cli.json` with the profile able to override the ones it names ([Profile](profile.md)).
+`parallel.max` 3, card 100 lines, doc caps per type, `review.fixRounds` 3, `ci.wait` seconds, `heartbeatMs` for a quiet builder. Each sits in `cli.json` with the profile able to override the ones it names ([Profile](profile.md)).

@@ -20,7 +20,7 @@ function target(cwd, id, usageKey, states = ['merged']) {
   const st = readState(cwd);
   const intent = st.intents.find((i) => i.id === id);
   if (!intent) throw new UsageError(msg(usageKey, {}));
-  if (!states.includes(intent.state) && !intent.sliceDue) throw new UsageError(msg('deployNotMerged', { intent: intent.id, state: intent.state }));
+  if (!states.includes(intent.state) && !intent.incrementDue) throw new UsageError(msg('deployNotMerged', { intent: intent.id, state: intent.state }));
   const base = tryGit(cwd, 'rev-parse', st.base);
   if (tryGit(cwd, 'rev-parse', 'HEAD') !== base) throw new UsageError(msg('deployNotOnBase', { base: st.base }));
   return { st, intent, base, top: git(cwd, 'rev-parse', '--show-toplevel'), file: runtimeFile(cwd, 'deploys', intent.id) };

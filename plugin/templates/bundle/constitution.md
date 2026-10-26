@@ -7,8 +7,8 @@ generated: { by: {{producer}}, at: {{at}} }
 
 # Rules
 1. **Spec first, with the why.** Code changes only under an approved unit, and every requirement, intent, unit and decision says why. Checked by `GATE-APPROVAL`, `PLAN-REQ` and `SCOPE-OUT`.
-2. **Vertical slices.** An intent is cut into units that each deliver a working slice, with acceptance criteria at a test level and a scope that holds their tests. Checked by `PLAN-AC`, `PLAN-LEVEL`, `PLAN-TEST` and `PLAN-SCOPE`.
-3. **End to end once per intent.** Each intent has an acceptance criterion at the top test level, and a unit that crosses modules is tested above unit level. Checked by `PLAN-SLICE` and `PLAN-RUN`.
+2. **Increments end to end.** An intent ships in increments, the walking skeleton first, each built by bolts with acceptance criteria at a test level and a scope that holds their tests. Checked by `PLAN-AC`, `PLAN-LEVEL`, `PLAN-TEST` and `PLAN-SCOPE`.
+3. **End to end once per intent.** Each increment has an acceptance criterion at the top test level, and a bolt that crosses modules is tested above unit level. Checked by `PLAN-INCREMENT` and `PLAN-RUN`.
 4. **Tests first, and tests that bite.** Every acceptance criterion has a tagged test that runs at its level and fails with the change reverted; a skipped test is no pass. A back-fill, a unit that changes only tests, has no change to revert: it is proved by one mutation per AC that breaks the AC's main behaviour. A quick-lane unit has no tagged tests and gets no proof: only the commands its ACs name run. Checked by `GATE-AC`, `GATE-LEVEL`, `GATE-RUN`, `GATE-PROOF` and `GATE-SKIP`.
 5. **Fresh eyes review.** A reviewer who did not build the unit passes it before the merge; a quick-lane unit gets no review. Checked by `GATE-REVIEW` and `GATE-LANE`.
 6. **The owner decides.** Intents, plans, one-way doors and releases wait for the owner; agents never approve. Checked by `PLAN-DECISION` and `GUARD-OWNER`.

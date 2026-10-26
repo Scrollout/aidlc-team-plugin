@@ -9,7 +9,7 @@ import { finding as codeFinding, msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { linksOf, parseDoc, sectionOf, sizeCap } from './okf.mjs';
 import { boardBehind } from './board.mjs';
-import { acsOf, computeLane, inside, lintPlan, overlaps, readPlan, reqId as reqIdOf, productGlobs, testsOnly, withIntents } from './grid.mjs';
+import { acsOf, computeLane, incrementSection, inside, lintPlan, overlaps, readPlan, reqId as reqIdOf, productGlobs, testsOnly, withIntents } from './grid.mjs';
 
 const S = config.state;
 
@@ -323,8 +323,9 @@ export function readState(cwd, { now = Date.now() } = {}) {
 
   const intents = plan.intents.sort(byId).map((i) => {
     const own = units.filter((u) => u.fm.intent === i.id);
-    // A slice line naming no unit is a slice still to cut: the intent is not done (docs/design/slices.md).
-    const uncut = sectionOf(i.doc, config.grid.slices).map(([, t]) => t.trim()).filter((t) => /^([-*]|\d+\.)\s/.test(t) && !/\bU-\d+\b/.test(t));
+    // An increment line naming no bolt is an increment still to cut: the intent is not done (docs/design/increments-and-bolts.md).
+    const ids = new RegExp(config.grid.lineIds, 'g');
+    const uncut = incrementSection(i.doc).map(([, t]) => t.trim()).filter((t) => /^([-*]|\d+\.)\s/.test(t) && !t.match(ids));
     const complete = own.length > 0 && own.every((u) => u.state === 'merged') && !uncut.length;
     // Released: the owner tagged it, or its recorded release (and smoke) passed (docs/design/operations.md).
     const deploy = readJson(runtimeFile(cwd, 'deploys', i.id)) ?? {};
@@ -332,13 +333,13 @@ export function readState(cwd, { now = Date.now() } = {}) {
     // Ships nothing: all tests, or, with modules, merges that changed no file of the product (docs/design/operations.md).
     const changed = () => own.flatMap((u) => gitLines(cwd, 'diff', '--name-only', `${merged.get(u.id)}^1`, merged.get(u.id)));
     const nothing = complete && (testsOnly(own, profile) || ((profile.modules ?? []).length > 0 && !changed().some((f) => productGlobs(profile).some((g) => inside('/' + f, g)))));
-    // A slice ships when its units merge: due while a merged slice is not in the last passing release (U121).
+    // An increment ships when its bolts merge: due while a merged increment is not in the last passing release (U121).
     const shipped = (ids) => deploy.release?.ok && smoked && ids.every((id) => tryGit(cwd, 'merge-base', '--is-ancestor', merged.get(id), deploy.release.base) !== null);
-    const slices = sectionOf(i.doc, config.grid.slices).filter(([, t]) => /^\s*([-*]|\d+\.)\s/.test(t)).map(([, t]) => (t.match(/\bU-\d+\b/g) ?? []).filter((id) => own.some((u) => u.id === id))).filter((ids) => ids.length && ids.every((id) => merged.has(id))); // another intent's unit cited on a line is not this intent's work (U123)
-    const sliceDue = !complete && Boolean(profile.deploy || profile.release) && slices.length > 0 && !shipped(slices.flat());
+    const increments = incrementSection(i.doc).filter(([, t]) => /^\s*([-*]|\d+\.)\s/.test(t)).map(([, t]) => (t.match(ids) ?? []).filter((id) => own.some((u) => u.id === id))).filter((x) => x.length && x.every((id) => merged.has(id))); // another intent's bolt cited on a line is not this intent's work (U123)
+    const incrementDue = !complete && Boolean(profile.deploy || profile.release) && increments.length > 0 && !shipped(increments.flat());
     const released = complete && (nothing || (profile.deploy || profile.release) && Boolean(shipped(own.map((u) => u.id)))
       || own.every((u) => (tryGit(cwd, 'tag', '--contains', merged.get(u.id)) ?? '') !== ''));
-    return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own, deploy, uncut, sliceDue };
+    return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own, deploy, uncut, incrementDue };
   });
   const requirements = plan.requirements.map((r) => ({ ...r, state: approval(r.doc) }));
   return { cwd, profile, base, bundle, intents, units, requirements, decisions: bundleHeld(bundle), answered, auto: delegated(cwd), mergeUnit: mergeInProgress(cwd, units), ci: ciOf(cwd, profile, base), red: redOf(cwd, base) };
@@ -532,7 +533,7 @@ function researched(bundle) {
 
 function pickAction(st) {
   if (st.mergeUnit) return action('act', 'nextContinueMerge', { unit: st.mergeUnit });
-  const unreleased = st.intents.find((i) => i.state === 'merged' || i.sliceDue); // its release does not hold back the next intent
+  const unreleased = st.intents.find((i) => i.state === 'merged' || i.incrementDue); // its release does not hold back the next intent
   const ops = unreleased && releaseStep(st, unreleased);
   if (S.badges.stops.includes(ops?.key) || ops?.key === 'nextSmokeFix') return ops; // a failed release or smoke comes first
   // A red base comes next: a fix unit, unless one is live (docs/design/base-ci.md).
@@ -556,7 +557,7 @@ function pickAction(st) {
   const work = unitWork(st, scope);
   if (work && !(work.kind === 'wait' && ops)) return work; // a due release step beats waiting (U121)
   if (intent?.state === 'approved' && intent.uncut.length && intent.units.length && intent.units.every((u) => u.state === 'merged')) {
-    return action('act', 'nextCutSlices', { intent: intent.id, slices: intent.uncut.map((t) => t.replace(/^([-*]|\d+\.)\s+/, '')).join('; ') });
+    return action('act', 'nextCutIncrements', { intent: intent.id, increments: intent.uncut.map((t) => t.replace(/^([-*]|\d+\.)\s+/, '')).join('; ') });
   }
   if (ops) return ops;
   // A clear newer than the last merge on the base already gave the lead a fresh session (docs/design/resume.md).
@@ -677,7 +678,7 @@ export const commands = {
     const at = new Date().toISOString(); // to the millisecond: review rounds are compared with it
     const auto = args.includes(S.autoFlag) && delegated(cwd);
     let out = '';
-    // Not approved: a door without its decision, or a slice finding on the doc or its intent (docs/design/plan-lint.md).
+    // Not approved: a door without its decision, or an increment finding on the doc or its intent (docs/design/plan-lint.md).
     const errors = lintPlan(bundle, profile, { base: cwd, skip: [...mergedUnits(cwd, withDefaults(profile).base).keys()] }).filter((f) => S.approveBlocks.includes(f.code));
     for (const name of args.filter((a) => a !== S.autoFlag)) {
       const wanted = new Set([...withIntents(bundle, [findDoc(cwd, bundle, name)])].map((f) => relPath(cwd, f)));

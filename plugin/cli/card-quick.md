@@ -1,7 +1,6 @@
 # {{id}} {{title}}
 
 Goal: {{goal}}
-Spec: {{spec}}
 Lane: {{lane}} ({{laneReason}})
 Model: {{model}} ({{modelReason}})
 Base: {{base}}

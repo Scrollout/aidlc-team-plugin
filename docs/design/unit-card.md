@@ -13,7 +13,6 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:30:00Z }
 # Contents (≤ 100 lines)
 The cap counts lines (owner, 2026-10-25: a line is what a reader scans; a char cap only squeezed wording), without the findings and mutations a review round adds (a unit that fitted must not need a re-approval for its fix round) and without the sections the profile writes (Data, Names, Dependencies, Platform), which grow with the project, not the unit. Plan lint warns `PLAN-CARD` on any unmerged unit whose card would pass the cap, from the doc on disk, before approval and again when a rule or template grows an approved card, so `card` never refuses a unit `next` hands out unwarned (second project: U-2).
 - Unit ID, title, goal, lane, model (see [Team](team.md#model-routing)), base commit, card hash.
-- **Spec:** one line from `sliceRole`, the function `PLAN-SLICE` checks, naming its evidence: the top-level ACs that prove a vertical unit, or the vertical units a supporting one is needed by ([Slices](slices.md#the-spec-line)).
 - **Why:** the unit's `# Why` as written, so the builder knows the business reason behind each rule and limit.
 - **Project rules:** each `.aidlc/rules/*.md` at the base commit, before the ACs, except a rule named after a `profile.focus` key, which only that focus's reviewer reads. Builders run without `CLAUDE.md`, so this is how a project's conventions reach them; the rules count toward the cap.
 - ACs with IDs; each becomes a test tagged `U-<n>/AC-<k>`.
