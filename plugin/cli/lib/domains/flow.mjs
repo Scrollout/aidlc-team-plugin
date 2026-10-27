@@ -314,39 +314,61 @@ function researched(bundle) {
   return new Set((existsSync(dir) ? readdirSync(dir) : []).filter((f) => f.endsWith(config.okf.ext)).map((f) => parseDoc(readFileSync(join(dir, f), 'utf8')).fm?.question));
 }
 
-function pickAction(st) {
-  if (st.mergeUnit) return action(S.kinds.act, 'nextContinueMerge', { unit: st.mergeUnit });
-  const unreleased = st.intents.find((i) => i.state === ST.merged || i.incrementDue); // its release does not hold back the next intent
-  const ops = unreleased && releaseStep(st, unreleased);
-  if (S.badges.stops.includes(ops?.key) || ops?.key === 'nextSmokeFix') return ops; // a failed release or smoke comes first
-  // A red base comes next: a fix unit, unless one is live (docs/design/base-ci.md).
-  const fixLive = st.units.some((u) => !u.fm.intent && u.state !== ST.merged);
-  if (st.ci?.red && !fixLive) {
+// The next action, as data: `next.order` is an ordered list of { when, action }, and the first entry whose guards
+// all hold names the action to serve. The context each guard reads is computed only as far as an entry asks
+// (docs/design/lifecycle.md#the-next-action).
+function nextFacts(st) {
+  const f = lazy({
+    unreleased: () => st.intents.find((i) => i.state === ST.merged || i.incrementDue), // its release does not hold back the next intent
+    ops: () => f.unreleased && releaseStep(st, f.unreleased),
+    fixLive: () => st.units.some((u) => !u.fm.intent && u.state !== ST.merged),
+    asked: () => [...st.requirements, ...st.intents, ...st.units, ...st.decisions].find((d) => researchOf(d) && !st.answered.has(researchOf(d))),
+    intent: () => st.intents.find((i) => ![ST.released, ST.merged].includes(i.state)) ?? f.unreleased,
+    scope: () => st.units.filter((u) => !u.fm.intent || u.fm.intent === f.intent?.id),
+    gate: () => gateOf(st, f.intent, f.scope),
+    work: () => unitWork(st, f.scope),
+  });
+  return f;
+}
+export const NEXT = {
+  mergeInProgress: (st) => Boolean(st.mergeUnit),
+  releaseStopped: (st, f) => S.badges.stops.includes(f.ops?.key) || f.ops?.key === 'nextSmokeFix', // a failed release or smoke comes first
+  ciRed: (st, f) => Boolean(st.ci?.red) && !f.fixLive, // a red base comes next: a fix unit, unless one is live (docs/design/base-ci.md)
+  baseRed: (st, f) => Boolean(st.red) && !f.fixLive,
+  researchAsked: (st, f) => Boolean(f.asked),
+  gateActs: (st, f) => f.gate?.action.kind === S.kinds.act,
+  gatePending: (st, f) => Boolean(f.gate),
+  workReady: (st, f) => Boolean(f.work) && !(f.work.kind === S.kinds.wait && f.ops), // a due release step beats waiting (U121)
+  incrementsUncut: (st, f) => f.intent?.state === ST.approved && f.intent.uncut.length > 0 && f.intent.units.length > 0 && f.intent.units.every((u) => u.state === ST.merged),
+  releaseDue: (st, f) => Boolean(f.ops),
+};
+export const ACTIONS = {
+  continueMerge: (st) => action(S.kinds.act, 'nextContinueMerge', { unit: st.mergeUnit }),
+  releaseStep: (st, f) => f.ops,
+  ciFix: (st) => {
     const red = st.ci.rec.runs.filter((r) => config.ci.red.includes(r.conclusion));
     return action(S.kinds.act, 'nextCiFix', { runs: red.map((r) => r.name).join(', '), logs: red.map((r) => render(config.ci.log, r)).join('; '), tests: firstTests(st.profile) });
-  }
-  if (st.red && !fixLive) return action(S.kinds.act, 'nextBaseFix', { level: st.red.level, unit: st.red.unit, tests: firstTests(st.profile) });
-  const asked = [...st.requirements, ...st.intents, ...st.units, ...st.decisions].find((d) => researchOf(d) && !st.answered.has(researchOf(d)));
-  if (asked) return heartbeatFresh(st.cwd, asked.id, Date.now(), S.researching) ? action(S.kinds.wait, 'nextWaitResearch', { doc: asked.id }) : action(S.kinds.act, 'nextResearch', { doc: asked.id, model: st.profile.models.research });
-  const intent = st.intents.find((i) => ![ST.released, ST.merged].includes(i.state)) ?? unreleased;
-  const scope = st.units.filter((u) => !u.fm.intent || u.fm.intent === intent?.id);
-  const gate = gateOf(st, intent, scope);
-  if (gate?.action.kind === S.kinds.act) return gate.action;
-  if (gate) {
-    // Units that do not wait on the gate's docs go first, so builders run while the owner answers.
-    const waits = (u) => [u.id, u.fm.intent, ...u.requirements, ...u.depends].some((d) => gate.docs.has(d));
-    const work = unitWork(st, gate.docs.size ? scope.filter((u) => !waits(u)) : []);
-    return work?.kind === S.kinds.act ? work : gate.action;
-  }
-  const work = unitWork(st, scope);
-  if (work && !(work.kind === S.kinds.wait && ops)) return work; // a due release step beats waiting (U121)
-  if (intent?.state === ST.approved && intent.uncut.length && intent.units.length && intent.units.every((u) => u.state === ST.merged)) {
-    return action(S.kinds.act, 'nextCutIncrements', { intent: intent.id, increments: intent.uncut.map((t) => t.replace(/^([-*]|\d+\.)\s+/, '')).join('; ') });
-  }
-  if (ops) return ops;
+  },
+  baseFix: (st) => action(S.kinds.act, 'nextBaseFix', { level: st.red.level, unit: st.red.unit, tests: firstTests(st.profile) }),
+  research: (st, f) => (heartbeatFresh(st.cwd, f.asked.id, Date.now(), S.researching) ? action(S.kinds.wait, 'nextWaitResearch', { doc: f.asked.id }) : action(S.kinds.act, 'nextResearch', { doc: f.asked.id, model: st.profile.models.research })),
+  gateAction: (st, f) => f.gate.action,
+  // Units that do not wait on the gate's docs go first, so builders run while the owner answers.
+  gateOrWork: (st, f) => {
+    const waits = (u) => [u.id, u.fm.intent, ...u.requirements, ...u.depends].some((d) => f.gate.docs.has(d));
+    const work = unitWork(st, f.gate.docs.size ? f.scope.filter((u) => !waits(u)) : []);
+    return work?.kind === S.kinds.act ? work : f.gate.action;
+  },
+  unitWork: (st, f) => f.work,
+  cutIncrements: (st, f) => action(S.kinds.act, 'nextCutIncrements', { intent: f.intent.id, increments: f.intent.uncut.map((t) => t.replace(/^([-*]|\d+\.)\s+/, '')).join('; ') }),
   // A clear newer than the last merge on the base already gave the lead a fresh session (docs/design/resume.md).
-  const lastMerge = Number(tryGit(st.cwd, 'log', '-1', '--merges', '--format=%ct', st.base) || 0) * 1000;
-  return action(S.kinds.human, heartbeatAt(st.cwd, S.cleared, '.') > lastMerge ? 'nextIdleCleared' : 'nextIdle');
+  idle: (st) => {
+    const lastMerge = Number(tryGit(st.cwd, 'log', '-1', '--merges', '--format=%ct', st.base) || 0) * 1000;
+    return action(S.kinds.human, heartbeatAt(st.cwd, S.cleared, '.') > lastMerge ? 'nextIdleCleared' : 'nextIdle');
+  },
+};
+function pickAction(st) {
+  const f = nextFacts(st), entry = config.next.order.find((e) => list(e.when).every((g) => NEXT[g](st, f)));
+  return ACTIONS[entry.action](st, f);
 }
 
 const firstTests = (profile) => Object.values(withDefaults(profile).levels).flatMap((l) => list(l?.paths))[0] ?? S.testsPlaceholder;

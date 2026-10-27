@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-28
 
+- **Update** M26 B240, second part: the next action chosen from `next.order` in data ([Lifecycle as data](design/lifecycle.md#the-next-action)). Release 0.189.2.
 - **Update** M26 B240, first part: the bolt and intent lifecycles as data, states derived from ordered rules over named guards ([Lifecycle as data](design/lifecycle.md)). Release 0.189.1.
 - **Update** M28 B249 built: a bolt lists the slices it delivers, held by `PLAN-SLICE` and `SLICE-DELIVER`, and the [Board](design/board.md) labels it `slice:<name>` or `layer:<kind>`. [Vertical slices checked](design/vertical-slices.md) and [M28](roadmap/m28.md) are stable. Release 0.189.0.
 - **Update** M28 B248 built: method 12, each unit of work names the slices that serve its stories, and intake lists a fitting model's slices ([Units of work](design/units-of-work.md), [Vertical slices checked](design/vertical-slices.md#planned-before-built)). Release 0.188.0.

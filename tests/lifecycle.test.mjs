@@ -65,3 +65,14 @@ test('B240/AC-1 facts are computed on first use and kept', () => {
   assert.equal(f.costly + f.costly, 2);
   assert.equal(calls, 1);
 });
+
+test('B240/AC-2 next walks next.order: each entry names guards and an action the code holds, and the last always holds', async () => {
+  const { ACTIONS, NEXT } = await import('../plugin/cli/lib/domains/flow.mjs');
+  const order = config.next.order;
+  assert.deepEqual(order.flatMap((e) => e.when).filter((g) => !NEXT[g]), [], 'every guard is in code');
+  assert.deepEqual(order.map((e) => e.action).filter((a) => !ACTIONS[a]), [], 'every action is in code');
+  assert.deepEqual(Object.keys(NEXT).filter((g) => !order.some((e) => e.when.includes(g))), [], 'every guard in code is ordered by the data');
+  assert.deepEqual(Object.keys(ACTIONS).filter((a) => !order.some((e) => e.action === a)), [], 'every action in code is ordered by the data');
+  assert.deepEqual(order.at(-1).when, [], 'the last entry always holds, so next always serves an action');
+  assert.equal(order[0].action, 'continueMerge', 'a merge in progress comes first');
+});

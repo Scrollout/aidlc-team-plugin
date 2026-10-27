@@ -998,6 +998,21 @@
     "research": "research",
     "requirementFile": "^(R-\\d+)(?:-[^/]*)?\\.md$"
   },
+  "next": {
+    "order": [
+      { "when": ["mergeInProgress"], "action": "continueMerge" },
+      { "when": ["releaseStopped"], "action": "releaseStep" },
+      { "when": ["ciRed"], "action": "ciFix" },
+      { "when": ["baseRed"], "action": "baseFix" },
+      { "when": ["researchAsked"], "action": "research" },
+      { "when": ["gateActs"], "action": "gateAction" },
+      { "when": ["gatePending"], "action": "gateOrWork" },
+      { "when": ["workReady"], "action": "unitWork" },
+      { "when": ["incrementsUncut"], "action": "cutIncrements" },
+      { "when": ["releaseDue"], "action": "releaseStep" },
+      { "when": [], "action": "idle" }
+    ]
+  },
   "state": {
     "kinds": { "act": "act", "human": "human", "wait": "wait" },
     "dir": "aidlc",

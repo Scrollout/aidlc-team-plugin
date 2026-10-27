@@ -16,7 +16,7 @@ The transitions in `cli.json` only draw the diagrams. The states and the next ac
 - `when` names a guard, such as `dependencyPending`, `readyToMerge` or `checkPassed`. A guard is a small predicate in code, with its own test. Data names and orders guards; it never holds an expression.
 
 # The next action
-`next.order` is an ordered list of `{ "when", "action" }`. `next` serves the first entry whose guard holds as `{ "command", "args" }`, and its text from the action's message.
+`next.order` is an ordered list of `{ "when", "action" }`, the last holding always. `next` serves the first entry whose guards all hold: its action builds the line from its message, and serves the `aidlc` command it names as `{ "command", "args" }` ([State](state.md#next)). The context its guards read is computed only as far as an entry asks.
 
 # Pipelines
 The merge gate's checks, the review focuses and the hook chain are ordered stage lists of `{ "id", "check", "level" }`. A project's profile may add a stage, whose check is a profile command, or set a stage's level; it cannot remove a stage the core requires.

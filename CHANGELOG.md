@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.189.2] - 2026-10-28
+### Changed
+- The next action is data (M26 B240, second part). `next.order` lists `{ when, action }` in order; `next` serves the first entry whose named guards hold, the context they read computed only as far as an entry asks. The actions `next` serves are unchanged.
+
 ## [0.189.1] - 2026-10-28
 ### Changed
 - The bolt and intent lifecycles are data (M26 B240, first part). `state.machines` holds each machine's `derive` rules, `{ state, when }` in order, and its transitions as `{ from, to, on, when, why }`; a doc's state is the first rule whose named guards all hold. The guards are predicates over a doc's facts, computed once and only when a guard reads them, each with its own test. The states `status` and `next` derive are unchanged, and the diagrams are drawn from the same machines.
@@ -402,7 +406,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.189.1...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.189.2...HEAD
+[0.189.2]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.189.1...v0.189.2
 [0.189.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.189.0...v0.189.1
 [0.189.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.188.0...v0.189.0
 [0.188.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.187.0...v0.188.0
