@@ -199,3 +199,13 @@ test('B163/AC-1 the domains glossaries generate naming/glossary.md, written by t
   assert.doesNotMatch(page, /placeholder/, 'template placeholders are no terms');
   assert.doesNotMatch(run(dir, ['check']).out, /DOC-GENERATED|DOC-SCHEMA docs\/naming/, 'a generated doc in its folder');
 });
+
+test('B164/AC-1 the card prints the names a bolt will create for each registered domain it names, from the grammar', () => {
+  const naming = { tokens: { system: 'rsm', org: 'acme' }, domains: { providers: {} } };
+  const modules = [{ id: 'providers', kind: 'domain', paths: ['src/providers/**'] }, { id: 'db', kind: 'foundation', paths: ['lib/db/**'] }];
+  const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['src/providers/**'], modules: ['providers', 'db'], acs: ['- AC-1 (integration): it works.'] }) }, { naming: { ...naming, vocabularies: { foundation: ['db'] } }, modules });
+  approve(dir, 'I-1', 'U-1');
+  const card = run(dir, ['card', 'U-1']).out;
+  assert.match(card, /^- names this bolt creates for providers \(aidlc name\): schema providers, database role rsm_providers, path \/providers\/Acme\.Rsm\/providers\/\{providerName\}, write permission Acme\.Rsm\/providers\/write, created event Acme\.Rsm\.ProviderCreated$/m);
+  assert.doesNotMatch(card, /names this bolt creates for db/, 'only domains');
+});

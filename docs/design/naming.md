@@ -34,7 +34,7 @@ Each kind of name is a template over tokens in `cli.json` `naming.grammar`, with
 - **The project's rules** (`GATE-NAME`): a `names` rule has `id`, `files` globs, `pattern` (the full name), an optional `find` regex whose first group is the name on an added line (without one, the rule checks each path the bolt adds or renames), and `why`, the decision that sets it. Only added lines count, so a rule needs no baseline. A rule without `id`, `files` or `pattern`, or with a regex that does not compile, is `PROFILE-NAMES`. A project keeps `names` only for kinds the grammar does not cover.
 - `TERM-SYNONYM` (gate, B163): a domain doc's glossary entry lists its synonyms (`- **term** (not: a, b): meaning`); a synonym on an added line of the bolt's diff outside the domain docs is reported. The entries generate `naming/glossary.md` (type Glossary, written by the CLI with its digest) at every merge and by `aidlc map`.
 - `CONTRACT-NAME`: a published OpenAPI document breaks the API grammar (paths, operation IDs, api-version, property and enum casing, the resource envelope with `systemData`, `value` and `nextLink`, the error envelope).
-- The card's `## Names` lists the names the bolt will create, printed in advance from its modules.
+- The card's `## Names` (B164) lists, beside the rules for its scope, the names the bolt will create for each registered domain module it names (schema, database role, path, write permission, created event), printed in advance from the grammar (`naming.cardKinds`); a kind the registry cannot compose yet is left out.
 
 # Replaces
 `names.md` (B162): its rule format, card section and profile check live on above; the hand-written rules a project needed for every kind become generated ones.

@@ -6,7 +6,7 @@ import { bundleOf, CLI_DIR, config, QUICK, STANDARD, VERDICT, done, git, gitLine
 import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { nameProblem, parseDoc, sectionOf, sizeCap } from './okf.mjs';
-import { generatedRules } from './naming.mjs';
+import { generatedRules, nameOf, registry } from './naming.mjs';
 import { computeLane, overlaps, readPlan, reqId, topLevel, unitFields } from './grid.mjs';
 import { aidlcDir, approval, baseOf, branchOf, diffHash, hashDoc, readReview, readState, heldDoc, researchOf, roundsOf, runtimeFile, sha256, worktrees, writeJson } from './state.mjs';
 
@@ -44,6 +44,17 @@ function projectRules(names, profile, at) {
   const { dir, ext } = config.rules;
   return names.filter((f) => f.endsWith(ext) && !Object.hasOwn(profile.focus ?? {}, f.slice(0, -ext.length))).sort()
     .map((f) => ({ name: `${dir}/${f}`, text: at(`${dir}/${f}`).replace(/\n*$/, '\n') }));
+}
+
+// The names a bolt will create for each registered domain module it names, printed in advance from the grammar;
+// a kind the registry cannot compose yet (a token unset) is left out (docs/design/naming.md#checks).
+function namesCreated(unit, profile, bundle) {
+  if (!profile.naming) return '';
+  const reg = registry(profile, bundle), domains = (profile.modules ?? []).filter((m) => m.kind === 'domain' && unit.modules.includes(String(m.id ?? m.name)) && reg.domains[String(m.id ?? m.name)]);
+  return domains.map((m) => {
+    const names = config.naming.cardKinds.flatMap((k) => { try { return [`${k.label} ${nameOf(k.kind, { domain: String(m.id ?? m.name), ...(k.flags ?? {}) }, reg)}`]; } catch { return []; } });
+    return names.length ? msg('cardNamesOf', { module: String(m.id ?? m.name), names: names.join(', ') }) : '';
+  }).join('');
 }
 
 // Each intent, unit, requirement or decision the text names, with its path, but those the card lists already.
@@ -117,7 +128,7 @@ function renderCard(cwd, unitId, { preview = false } = {}) {
     // The naming rules for the files the unit may write (docs/design/naming.md).
     names: [[...[profile.names ?? []].flat(), ...generatedRules(profile, bundle)].filter((r) => !nameProblem(r) && list(r.files).some((g) => atBase.scope.some((s) => overlaps(s, g))))
       // a rule shows what it finds too: a pattern nothing matches bans each found word (U127)
-      .map((r) => msg(!r.find ? 'cardNamePath' : r.pattern === C.bannedPattern ? 'cardNameBanned' : 'cardName', { id: r.id, files: list(r.files).join(', '), find: r.find, pattern: r.pattern, why: r.why ?? '-' })).join('')].filter(Boolean),
+      .map((r) => msg(!r.find ? 'cardNamePath' : r.pattern === C.bannedPattern ? 'cardNameBanned' : 'cardName', { id: r.id, files: list(r.files).join(', '), find: r.find, pattern: r.pattern, why: r.why ?? '-' })).join('') + namesCreated(atBase, profile, bundle)].filter(Boolean),
     // Versions from the registry, never from memory (docs/design/dependencies.md).
     deps: list(profile.deps?.manifests).some((g) => atBase.scope.some((s) => overlaps(s, g))) ? [msg('cardDeps', { manifests: list(profile.deps.manifests).join(', '), checks: list(profile.deps.check).join('; ') || '-' })] : [],
     // Where the deploy target is already defined, so a unit builds on it (docs/design/operations.md).
