@@ -19,7 +19,20 @@ requirements: [R-<n>]
 <one per kind of user the request names; remove both sections and set onePersona: "<why>" when there is one>
 
 # Stories
-- As a <persona>, I want <capability>, so that <benefit>. R-<n> [Q-<n>.<k>]
+- US1.1 As a <persona>, I want <capability>, so that <benefit>. R-<n> [Q-<n>.<k>]
+<each story a vertical slice: one feature or use case, through every layer it needs>
+
+# Units
+## <name of the unit of work, lower case, as a path segment>
+- Kind: <service, spec, ui, packaging or library>
+- Modules: <the profile's modules it changes>
+- Responsibilities: <what it owns and delivers> [Q-<n>.<k>]
+- Stories: <its story ids, US1.1>
+- Requirements: <the requirements it meets, its non-functional ones among them, R-<n>>
+- Risks: <what could sink it>
+- Measures: <a measurable outcome> [M1]
+- Depends on: <the units of work its code needs, or none>
+<optional: Integration (APIs, shared data, events), Deployment (standalone, shared or embedded), Complexity (S, M, L or XL), Bolts, PRFAQ>
 
 # Increments
 - I-<n>.1 <the walking skeleton, end to end on the target>: <its bolts, once cut>
@@ -30,7 +43,7 @@ requirements: [R-<n>]
 - <what could sink this, riskiest first; the first increments retire it>
 
 # Success measures
-- <measurable outcome>
+- M1 <measurable outcome>
 
 # Questions
 - Q1 <a question for the owner>

@@ -22,10 +22,11 @@ Generated from `cli.json` `vocabulary`; a test keeps it in step.
 | System | horizontal layer | code grouped by one technical concern and shared by every feature: the interface, application, model and infrastructure layers inside a domain, pointing inward, and the platform every request crosses | logical design | the stack pack's layers; module `kind: runtime`, `pipeline`, `foundation` or `adapter` |
 | System | core | the platform layers and the shared domains every domain uses | the system | profile `system.core` |
 | System | extension | a domain another team owns, built only against published contracts | another team's Units | profile `system.extensions` |
-| Domain | domain | a bounded context holding the vertical slices of one business capability, with its data, language, contract and events | **Unit** | `domains/<code>.md`, module `kind: domain` |
+| Domain | domain | a bounded context holding the vertical slices of one business capability, with its data, language, contract and events | a Domain Design component | `domains/<code>.md`, module `kind: domain` |
 | Domain | kind | `domain`, `pipeline`, `foundation`, `adapter`, `runtime`, `extension` or `delivery` | - | module `kind` |
 | Code | vertical slice | the code of one business feature or use case, a command or a query, in its own folder, cutting through every horizontal layer it needs; it names the use case it serves | a user story, cut through all layers | the domain's `surface` |
 | Delivery | intent | one business outcome, with its why and success measures | **Intent** | `intents/I-<n>-<slug>.md` |
+| Delivery | unit of work | a cohesive part of an intent built by one team: its kind, modules, stories, requirements, risks, measures and the units of work it depends on | **Unit** | the intent's `# Units` |
 | Delivery | increment | a shippable step of an intent; increment 1 is the walking skeleton | groups Bolts | the intent's `# Increments`, `I-<n>.<k>` |
 | Delivery | bolt | the smallest build cycle: one card, worktree, review and merge | **Bolt** | `bolts/B-<n>-<slug>.md` |
 | Delivery | fix bolt | one regression, one AC that fails before the fix | defect-fix pathway | a bolt with no `intent` |

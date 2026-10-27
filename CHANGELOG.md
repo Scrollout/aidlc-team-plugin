@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.176.0] - 2026-10-27
+### Added
+- Units of work (method 11): an intent lists its units of work under `# Units`, as the method's Mob Elaboration and Units Generation give them. Each has a kind (`service`, `spec`, `ui`, `packaging` or `library`), the modules it changes, its responsibilities, stories, requirements, risks, measures citing the intent's success measures, and the units of work it depends on; integration, deployment, complexity, bolts and a PRFAQ are optional. Stories carry ids `US<g>.<s>` and success measures `M<k>`.
+- `UNIT-WORK`, which blocks an intent's approval: a missing or malformed unit of work, a story with no id or in no unit of work, a unit of work with no story, a dependency circle, or a bolt whose modules no unit of work lists.
+### Changed
+- The glossary maps the method's Unit to the unit of work, and the domain to a Domain Design component.
+
 ## [0.175.0] - 2026-10-27
 ### Changed
 - Vertical slices and horizontal layers take their standard meaning (decision 0024, superseding 0023). A **vertical slice** is the code of one business feature or use case, a command or a query, cutting through every horizontal layer it needs and naming the use case it serves. A **horizontal layer** groups code by one technical concern shared by every feature: the interface, application, model and infrastructure layers inside a domain, and the platform every request crosses. A **domain** is the bounded context holding a business capability's slices and its data; an **extension** is a domain another team owns. "Operation" and "internal layer" are retired.
@@ -298,7 +305,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.175.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.176.0...HEAD
+[0.176.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.175.0...v0.176.0
 [0.175.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.174.0...v0.175.0
 [0.174.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.173.1...v0.174.0
 [0.173.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.173.0...v0.173.1

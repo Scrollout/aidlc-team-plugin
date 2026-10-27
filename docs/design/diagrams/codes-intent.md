@@ -31,6 +31,7 @@ generated: { by: tests/diagrams.mjs }
 | `ELAB-CORNER` | settle each surface of the corner checklist (aidlc persona product-analyst) on its own line under # Corners: - <Surface>: a requirement or bolt id, a source such as [A<k>], or n/a: and why (docs: Elaboration checks) |
 | `ELAB-PERSONA` | list each kind of user the request names under # Personas, as - **<Name>**: <who they are and what they want> [source], or set onePersona: "<why one kind of user>" (docs: Elaboration checks) |
 | `ELAB-STORY` | give each persona a story under # Stories: - As a <persona>, I want <capability>, so that <benefit>. R-<n> [source], citing a requirement the intent cites (docs: Elaboration checks) |
+| `UNIT-WORK` | list the intent's units of work under # Units, each a ## <name> with Kind, Modules, Responsibilities, Stories, Requirements, Risks, Measures and Depends on lines; give each story an id US<g>.<s> and each success measure an id M<k> (docs: Units of work) |
 | `REQUEST-COVERAGE` | cite each sentence of the request where the intent or a requirement answers it, or under # Out of scope with the reason (docs: Intake) |
 | `MODEL-SOURCE` | give each layer, domain and rule of the model sources: ids of the sources of the research: digests the intent names (docs: Models) |
 | `IDEMPOTENCY-AC` | add an AC that repeating the write leaves its status and state unchanged (docs: Models) |

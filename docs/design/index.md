@@ -54,6 +54,7 @@
 * [State](state.md) - How the CLI derives progress from git and docs, how approvals work, and how next picks the one allowed step.
 * [Steering](steering.md) - How the plugin corrects the agent during work, keeps it moving, and improves its rules over time without growing.
 * [Team](team.md) - The four roles, how parallel worktree workers are run and merged, and where tokens are spent.
+* [Units of work](units-of-work.md) - An intent lists its Units of work as the method's Mob Elaboration and Units Generation give them, each with its kind, modules, responsibilities, stories, requirements, risks, measures and dependencies, every story in a Unit, the dependencies acyclic, and each bolt's modules in a Unit of its intent.
 * [Values as data](values.md) - Draft - nothing hard-coded, in the plugin and in every project it governs - values in data, several values as structured objects and answers served as JSON and JSON-RPC 2.0, code holding only logic, tool protocol and keys, a test for the plugin and a gate check for projects, and the board as a declarative JSON template.
 * [Vendoring](vendoring.md) - How init and upgrade copy the CLI into a project and pin it, and why only a release is copied.
 * [Verification](verification.md) - The inner loop (hooks), the merge gate, the reviewer's output contract and the CI mode.

@@ -22,6 +22,7 @@ flowchart LR
   end
   subgraph Delivery["Delivery"]
     Delivery_intent["intent"]
+    Delivery_unit_of_work["unit of work"]
     Delivery_increment["increment"]
     Delivery_bolt["bolt"]
     Delivery_fix_bolt["fix bolt"]

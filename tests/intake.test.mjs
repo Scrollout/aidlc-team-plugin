@@ -110,7 +110,7 @@ test('B215/AC-1 a method 6 intent names its requests, and its goal, stories and 
 test('B215/AC-2 a request sentence neither the intent nor its requirements cite is REQUEST-COVERAGE, and it blocks the approval', () => {
   const dir = makeRepo({}, V2);
   run(dir, ['intake', PROSE]);
-  commit(dir, 'plan', { 'docs/intents/I-1-cake-orders.md': cakes('request: [Q-1]\n', 'Customers order cakes online [Q-1.1].') });
+  commit(dir, 'plan', { 'docs/intents/I-1-cake-orders.md': cakes('request: [Q-1]\nmethod: 10\n', 'Customers order cakes online [Q-1.1].') });
   assert.deepEqual(claims(dir), ['intents/I-1-cake-orders.md:6 REQUEST-COVERAGE I-1 leaves Q-1.2, Q-1.4, Q-1.5 of Q-1 uncited'], 'the out-of-scope line covers Q-1.3');
   const r = run(dir, ['approve', 'I-1']);
   assert.equal(r.code, 64);
@@ -196,7 +196,7 @@ test('B218/AC-1 a method 9 intent is reviewed before approval: next names review
   const dir = makeRepo({}, V2);
   run(dir, ['intake', PROSE]);
   const goal = 'Customers order cakes online [Q-1.1].\nThey pay by card [Q-1.2, Q1], in one shop [A1].';
-  commit(dir, 'plan', { 'docs/intents/I-1-cake-orders.md': cakes('request: [Q-1]\nrequirements: [R-1]\n', goal), 'docs/requirements/R-1-order-email.md': R1('When a customer orders, the bakery system shall email the baker [Q-1.4, Q-1.5].') });
+  commit(dir, 'plan', { 'docs/intents/I-1-cake-orders.md': cakes('request: [Q-1]\nrequirements: [R-1]\nmethod: 9\n', goal), 'docs/requirements/R-1-order-email.md': R1('When a customer orders, the bakery system shall email the baker [Q-1.4, Q-1.5].') });
   assert.match(run(dir, ['next']).out, /^start a reviewer on the intent before the owner approves it, prompt Review I-1\. \(a hook adds the brief aidlc review I-1 prints\); it records with aidlc review record I-1 -/);
   assert.match(run(dir, ['approve', 'I-1']).err, /APPROVE-REVIEW: I-1 has no intent review of its docs as they are now: start a reviewer on aidlc review I-1/);
   const brief = run(dir, ['review', 'I-1']).out;

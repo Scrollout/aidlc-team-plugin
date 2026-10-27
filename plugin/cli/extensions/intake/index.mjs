@@ -133,12 +133,13 @@ const docsIn = (dir, pattern) => (existsSync(dir) ? readdirSync(dir).filter((f) 
 // A section's lines as written, blank ones and sub-headings left out.
 const linesOf = (doc, heading) => sectionOf(doc, heading).map(([n]) => [n, doc.lines[n - 1]]).filter(([, t]) => t.trim() && !/^#/.test(t));
 
-function lintSources({ bundle, profile, intents, requirements, add, inForce, keyLine }) {
+function lintSources({ bundle, profile, intents, units, requirements, add, inForce, keyLine }) {
   if (!profile.system) return;
   const dir = join(bundle, F.Request), requests = new Map(docsIn(dir, /^Q-\d+-.*\.md$/).map((f) => [f.match(/^Q-\d+/)[0], sentencesOf(parseDoc(readFileSync(join(dir, f), 'utf8')))]));
   const facts = new Set(docsIn(join(bundle, F.Fact), /^F-\d+/).map((f) => f.match(/^F-\d+/)[0]));
   for (const i of intents.filter((x) => x.fm.status !== config.grid.dropped && inForce(x, 'claimSource'))) {
     if (inForce(i, 'elabCorner')) { corners(i, add); readBack(i, add); }
+    if (inForce(i, 'unitsOfWork')) unitsOfWork(i, profile, units.filter((b) => b.fm.intent === i.id && b.fm.status !== config.grid.dropped), add);
     const named = list(i.fm.request);
     if (!named.length) { add('CLAIM-SOURCE', i, 1, 'claimNoRequest', {}); continue; }
     for (const ref of named.filter((r) => !requests.has(r))) add('CLAIM-SOURCE', i, keyLine(i, 'request'), 'claimNoSuchRequest', { ref, dir: relPath(bundle, dir) });
@@ -195,7 +196,7 @@ function personas(i, sentences, cited, add) {
   if (listed.length < 2) return;
   const reqs = new Set(cited.map((r) => r.id)), told = new Set(), names = listed.map(([, p]) => p);
   for (const [n, t] of linesOf(i.doc, K.claims.stories)) {
-    const m = t.match(/^\s*[-*]\s+As (?:an? )?(.+?), I want .+?, so that .+$/i), who = m && names.find((p) => p.toLowerCase() === m[1].trim().toLowerCase());
+    const m = t.match(STORY), who = m && names.find((p) => p.toLowerCase() === m[1].trim().toLowerCase());
     if (!m) add('ELAB-STORY', i, n, 'storyForm', { text: cut(t.trim()) });
     else if (!who) add('ELAB-STORY', i, n, 'storyPersona', { persona: m[1].trim(), personas: names.join(', ') });
     else {
@@ -204,6 +205,65 @@ function personas(i, sentences, cited, add) {
     }
   }
   for (const [n, p] of listed.filter(([, p]) => !told.has(p))) add('ELAB-STORY', i, n, 'storyNone', { persona: p });
+}
+
+// Method 11: the intent's Units of work, as the method's Mob Elaboration and Units Generation give them
+// (docs/design/units-of-work.md). A Unit is a level-two heading under # Units with one `- <Part>: <value>` line per part.
+const U = K.units, STORY = new RegExp(`^\\s*[-*]\\s+(?:${U.story}\\s+)?As (?:an? )?(.+?), I want .+?, so that .+$`, 'i');
+const idsOf = (text, pattern) => [...(text ?? '').matchAll(new RegExp(`\\b${pattern}\\b`, 'g'))].map((m) => m[0]);
+const namesIn = (text) => (text ?? '').split(/\s*,\s*/).filter(Boolean);
+function unitBlocks(doc) {
+  const out = [];
+  let on = false, unit = null;
+  doc.lines.slice(doc.body).forEach((t, k) => {
+    if (/^#\s/.test(t)) { on = new RegExp(`^#\\s+${U.heading}\\s*$`, 'i').test(t); unit = null; return; }
+    const n = doc.body + k + 1, h = on && t.match(/^##\s+(.+?)\s*$/), p = unit && !h && t.match(/^\s*[-*]\s+([^:]+):\s*(.*)$/);
+    if (h) out.push((unit = { name: h[1], n, parts: {} }));
+    else if (p) unit.parts[p[1].trim().toLowerCase()] = p[2].trim();
+  });
+  return out;
+}
+// The first circle in a dependency map, as its names in order, or null.
+function cycleOf(deps) {
+  const state = new Map();
+  const visit = (name, path) => {
+    if (state.get(name) === 'done') return null;
+    if (path.includes(name)) return [...path.slice(path.indexOf(name)), name];
+    for (const d of deps.get(name) ?? []) { const c = visit(d, [...path, name]); if (c) return c; }
+    state.set(name, 'done');
+    return null;
+  };
+  for (const name of deps.keys()) { const c = visit(name, []); if (c) return c; }
+  return null;
+}
+function unitsOfWork(i, profile, bolts, add) {
+  const units = unitBlocks(i.doc), P = U.parts, of = (u, k) => u.parts[P[k].toLowerCase()];
+  if (!units.length) return add('UNIT-WORK', i, 1, 'unitsNone', {});
+  const modules = new Set((profile.modules ?? []).map((m) => String(m.id ?? m.name))), names = units.map((u) => u.name), seen = new Set();
+  const measures = new Set(linesOf(i.doc, U.measures).flatMap(([, t]) => idsOf(t.match(/^\s*[-*]\s+(\S+)/)?.[1], U.measure)));
+  const stories = linesOf(i.doc, K.claims.stories).map(([n, t]) => [n, t, t.match(new RegExp(`^\\s*[-*]\\s+(${U.story})\\s`))?.[1]]);
+  for (const [n, t] of stories.filter(([, , id]) => !id)) add('UNIT-WORK', i, n, 'storyNoId', { text: cut(t.trim()) });
+  for (const u of units) {
+    const { name, n } = u;
+    if (!new RegExp(U.name).test(name)) add('UNIT-WORK', i, n, 'unitName', { name });
+    if (seen.has(name)) add('UNIT-WORK', i, n, 'unitTwice', { name });
+    seen.add(name);
+    for (const k of Object.keys(P).filter((k) => of(u, k) === undefined)) add('UNIT-WORK', i, n, 'unitPart', { name, part: P[k] });
+    if (of(u, 'kind') && !U.kinds.includes(of(u, 'kind'))) add('UNIT-WORK', i, n, 'unitKind', { name, kind: of(u, 'kind'), kinds: U.kinds.join(', ') });
+    for (const module of namesIn(of(u, 'modules')).filter((m) => !modules.has(m))) add('UNIT-WORK', i, n, 'unitModule', { name, module });
+    for (const req of idsOf(of(u, 'requirements'), U.requirement).filter((r) => !i.requirements.includes(r))) add('UNIT-WORK', i, n, 'unitRequirement', { name, req });
+    if (of(u, 'measures') !== undefined && !idsOf(of(u, 'measures'), U.measure).some((m) => measures.has(m))) add('UNIT-WORK', i, n, 'unitMeasure', { name, text: cut(of(u, 'measures')) });
+    const listed = idsOf(of(u, 'stories'), U.story);
+    if (of(u, 'stories') !== undefined && !listed.length) add('UNIT-WORK', i, n, 'unitNoStory', { name });
+    for (const story of listed.filter((s) => !stories.some(([, , id]) => id === s))) add('UNIT-WORK', i, n, 'unitStory', { name, story });
+    for (const other of namesIn(of(u, 'depends')).filter((d) => d !== U.none && !names.includes(d))) add('UNIT-WORK', i, n, 'unitDepends', { name, other });
+  }
+  const inUnits = new Set(units.flatMap((u) => idsOf(of(u, 'stories'), U.story)));
+  for (const [n, , story] of stories.filter(([, , id]) => id && !inUnits.has(id))) add('UNIT-WORK', i, n, 'storyNoUnit', { story });
+  const cycle = cycleOf(new Map(units.map((u) => [u.name, namesIn(of(u, 'depends')).filter((d) => names.includes(d))])));
+  if (cycle) add('UNIT-WORK', i, units[0].n, 'unitCycle', { cycle: cycle.join(config.gate.edge) });
+  const covered = new Set(units.flatMap((u) => namesIn(of(u, 'modules'))));
+  for (const b of bolts) { const out = list(b.fm.modules).filter((m) => !covered.has(m)); if (out.length) add('UNIT-WORK', i, units[0].n, 'boltNoUnit', { bolt: b.id, modules: out.join(', ') }); }
 }
 
 plug('planRules', lintSources);
