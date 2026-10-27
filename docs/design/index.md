@@ -43,6 +43,7 @@
 * [Review rounds](review-rounds.md) - What review record does with a verdict - fix rounds and their limit, send-backs, and which focus passes still count after a fix.
 * [Skill and agents](prompts.md) - What the lead's skill and the builder and reviewer prompts say, how a review is picked and run, and why the prompts restate no enforced rule.
 * [Stack packs](stack-packs.md) - A stack pack per language (Go first, then TypeScript) holds the layout of every module kind, the scaffold templates, a tested reference domain and the dependency-graph extractor the plugin trusts, all as data the CLI reads.
+* [Standard formats](standards.md) - Draft - decisions in MADR 4.0, acceptance criteria as Given/When/Then, requirements in EARS, releases in Keep a Changelog with SemVer, and architecture in arc42 with C4 levels, each checked by the CLI on drafts and on intents approved under method 5.
 * [State](state.md) - How the CLI derives progress from git and docs, how approvals work, and how next picks the one allowed step.
 * [Steering](steering.md) - How the plugin corrects the agent during work, keeps it moving, and improves its rules over time without growing.
 * [Team](team.md) - The four roles, how parallel worktree workers are run and merged, and where tokens are spent.
