@@ -156,7 +156,7 @@ export const commands = {
       if (flags.adopt && f.bundle) continue;
       const to = render(f.to, { bundle });
       const abs = join(root, to);
-      if (existsSync(abs) && !flags.overwrite.includes(to)) {
+      if (existsSync(abs) && !(flags.overwrite ?? []).includes(to)) {
         report.push(msg('initKept', { path: to }));
         kept++;
         continue;

@@ -3,14 +3,14 @@
 import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
-import { bundleOf, CLI_DIR, PLUGIN_DIR, config, QUICK, VERDICT, done, git, gitLines, list, readJson, sh, tryGit, UsageError, relPath } from './config.mjs';
+import { addedLines, bundleOf, CLI_DIR, PLUGIN_DIR, config, QUICK, VERDICT, done, git, gitLines, list, readJson, sh, tryGit, UsageError, relPath } from './config.mjs';
 import { finding as codeFinding, msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, docSlug, nameProblem, parseDoc, writeIndexes } from './okf.mjs';
 import { computeLane, inside, lintPlan, readPlan, runTarget, spansOf } from './grid.mjs';
 import { issueTitle, sync } from './board.mjs';
 import { writeContextMap, writeGlossary, writeMap } from './map.mjs';
-import { generatedRules, glossaryOf } from './naming.mjs';
+import { generatedRules, glossaryOf, parseFlags } from './naming.mjs';
 import { contractFindings } from './contract.mjs';
 import { boundaryFindings, exceptDocs, kindFindings, layerFindings, moduleFindings, reachFindings } from './arch.mjs';
 import { eventFindings } from './packs.mjs';
@@ -168,13 +168,7 @@ function runGate(cwd, st, unit) {
   const names = [...[profile.names ?? []].flat().filter((r) => !nameProblem(r)), ...generatedRules(profile, st.bundle)]; // the project's rules and the registry's (docs/design/naming.md)
   const synonyms = glossaryOf(st.bundle).flatMap((e) => e.synonyms.map((word) => ({ ...e, word, re: new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i') })));
   // Each added line, so a secret written from Bash, which the secrets hook never sees, stops the merge.
-  let file = null;
-  let line = 0;
-  for (const l of gitLines(cwd, 'diff', '-U0', '--no-color', '--no-ext-diff', `${base}...${branchOf(unit.id)}`)) {
-    if (l.startsWith('+++ ')) file = l.slice(6);
-    else if (l.startsWith('@@')) line = Number(l.match(/\+(\d+)/)?.[1]);
-    if (!l.startsWith('+') || l.startsWith('+++ ') || !file) continue;
-    const text = l.slice(1);
+  for (const { file, line, text } of addedLines(cwd, `${base}...${branchOf(unit.id)}`)) {
     if (secretIn(text, profile)) add('GATE-SECRET', 'gateSecret', { path: file, line }, file);
     // A static credential between components, outside the tests: identities, not secrets (docs/design/workload-identity.md).
     else if (codeChanges([file], p.levels, bundleRel).length && config.hooks.identity.some((x) => new RegExp(x, 'i').test(text))) add('GATE-IDENTITY', 'gateIdentity', { path: file, line }, file);
@@ -187,7 +181,6 @@ function runGate(cwd, st, unit) {
     }
     // A synonym a domain's glossary says to avoid, on an added line outside the domain docs (docs/design/naming.md#checks).
     if (!file.startsWith(`${bundleRel}/${config.okf.bundle.folders.Domain}/`)) for (const s of synonyms.filter((x) => x.re.test(text))) add('TERM-SYNONYM', 'gateSynonym', { path: file, line, word: s.word, term: s.term, domain: s.domain }, file);
-    line++;
   }
   // A path rule: each file the unit adds or renames under its files (docs/design/naming.md).
   for (const path of gitLines(cwd, 'diff', '--name-only', '--diff-filter=AR', `${base}...${branchOf(unit.id)}`)) {
@@ -361,20 +354,13 @@ export const commands = {
   },
 
   fix(args, { cwd }) {
-    const flags = Object.fromEntries(config.commands.find((c) => c.name === 'fix').flags.map((f) => [f.slice(2), []]));
-    let title = null;
-    for (let k = 0; k < args.length; k++) {
-      const a = args[k];
-      if (!a.startsWith('--')) title ??= a;
-      else if (!(a.slice(2) in flags)) throw new UsageError(msg('unknownFlag', { name: a }));
-      else if (!args[k + 1]) throw new UsageError(msg('badFlag', { name: a }));
-      else flags[a.slice(2)].push(args[++k]);
-    }
+    const flags = parseFlags(args, 'fix');
+    let title = flags._[0] ?? null;
     const { profile } = loadProfile(cwd);
-    const issue = flags['from-issue'].map(Number);
+    const issue = list(flags['from-issue']).map(Number), scope = list(flags.scope), reqs = list(flags.requirement);
     if (issue.length) title = issueTitle(profile, issue[0]);
-    if (!title || !flags.scope.length) throw new UsageError(msg('fixUsage', {}));
-    const lane = computeLane(flags.scope, profile); // a full-lane fix waits for the owner's approval like any other unit
+    if (!title || !scope.length) throw new UsageError(msg('fixUsage', {}));
+    const lane = computeLane(scope, profile); // a full-lane fix waits for the owner's approval like any other unit
     const bundle = bundleOf(cwd, profile);
     const id = nextUnitId(bundle, Boolean(profile.system)), dir = profile.system ? config.grid.bolts : config.grid.units;
     const file = join(bundle, dir, `${id}-${docSlug(title)}.md`);
@@ -383,10 +369,10 @@ export const commands = {
       title: JSON.stringify(title),
       description: JSON.stringify(title),
       why: title,
-      scope: flags.scope.map((s) => JSON.stringify(s)).join(', '),
-      requirements: flags.requirement.length ? [flags.requirement.join(', ')] : [],
+      scope: scope.map((s) => JSON.stringify(s)).join(', '),
+      requirements: reqs.length ? [reqs.join(', ')] : [],
       issue,
-      after: flags.after.slice(0, 1), // the release it fixes (docs/design/operations.md)
+      after: list(flags.after), // the release it fixes (docs/design/operations.md)
       producer: msg('producer', { version }),
       at: new Date().toISOString().replace(/\.\d+Z$/, 'Z'),
       level: Object.keys(withDefaults(profile).levels)[0],

@@ -87,9 +87,10 @@ export function nameOf(kind, flags, reg) {
   return name;
 }
 
-// A command's flags as cli.json declares them; a usage naming a `<positional>` collects the rest under `_`.
+// A command's flags as cli.json declares them; a usage naming a `<positional>` collects the rest under `_`,
+// and a flag its usage marks `…` collects each value it is given.
 export function parseFlags(args, name, cmd = config.commands.find((c) => c.name === name)) {
-  const out = { _: [], overwrite: [] };
+  const out = { _: [] };
   for (let k = 0; k < args.length; k++) {
     const a = args[k];
     if (!a.startsWith('--') && cmd.usage.includes('<')) { out._.push(a); continue; }
@@ -97,7 +98,7 @@ export function parseFlags(args, name, cmd = config.commands.find((c) => c.name 
     if (cmd.usage.includes(`[${a}]`)) { out[a.slice(2)] = true; continue; }
     const v = args[++k];
     if (v === undefined || v.startsWith('--')) throw new UsageError(msg('badFlag', { name: a }));
-    if (a === '--overwrite' || a === '--run') (out[a.slice(2)] ??= []).push(v);
+    if (new RegExp(`${a} [^\\s\\]]+\\]?…`).test(cmd.usage)) (out[a.slice(2)] ??= []).push(v);
     else out[a.slice(2)] = v;
   }
   return out;

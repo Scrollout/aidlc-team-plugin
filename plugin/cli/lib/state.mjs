@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
-import { bundleOf, config, QUICK, VERDICT, done, git, gitLines, isMap, list, readJson, readStdin, tryGit, UsageError, relPath } from './config.mjs';
+import { addedLines, bundleOf, config, QUICK, VERDICT, done, git, gitLines, isMap, list, readJson, readStdin, tryGit, UsageError, relPath } from './config.mjs';
 import { finding as codeFinding, msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { hashDoc, linksOf, parseDoc, sectionOf, sizeCap } from './okf.mjs';
@@ -67,17 +67,9 @@ export function reviewFocuses(cwd, profile, base, unit) {
 // review wherever it sits (docs/design/profile.md).
 function contentHit(cwd, profile, range) {
   const patterns = list(profile.security?.content);
-  if (!patterns.length) return null;
-  let path = null;
-  let line = 0;
-  for (const l of gitLines(cwd, 'diff', '-U0', '--no-color', '--no-ext-diff', range)) {
-    if (l.startsWith('+++ ')) path = l.slice(6);
-    else if (l.startsWith('@@')) line = Number(l.match(/\+(\d+)/)?.[1]);
-    else if (l.startsWith('+') && path) {
-      const pattern = patterns.find((p) => new RegExp(p, 'i').test(l.slice(1)));
-      if (pattern) return { path, line, pattern };
-      line++;
-    }
+  for (const { file: path, line, text } of patterns.length ? addedLines(cwd, range) : []) {
+    const pattern = patterns.find((p) => new RegExp(p, 'i').test(text));
+    if (pattern) return { path, line, pattern };
   }
   return null;
 }
