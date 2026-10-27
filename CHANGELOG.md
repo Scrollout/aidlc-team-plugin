@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.152.0] - 2026-10-27
+### Added
+- An arc42 page for the plugin's architecture, with a generated C4 component view of the CLI.
+### Changed
+- The system template follows arc42's twelve sections; a draft system doc in a v2 project missing one is `DOC-SCHEMA`. The dependency and kind maps say they are C4 component views.
+
 ## [0.151.0] - 2026-10-27
 ### Added
 - `init` writes a `CHANGELOG.md` in this format, and the plugin keeps its own.
@@ -146,7 +152,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.151.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.152.0...HEAD
+[0.152.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.151.0...v0.152.0
 [0.151.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.150.0...v0.151.0
 [0.150.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.149.0...v0.150.0
 [0.149.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.148.0...v0.149.0

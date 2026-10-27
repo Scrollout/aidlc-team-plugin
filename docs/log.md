@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M20 B212: the system template follows arc42's twelve sections, and a draft system doc in a v2 project missing one is `DOC-SCHEMA`; the generated dependency and kind maps say they are C4 component views; the plugin's own architecture is laid out in [Architecture in arc42](design/arc42.md) with a generated C4 component view of the CLI. Standard formats are built. Release 0.152.0.
 - **Update** M20 B211: the plugin keeps `CHANGELOG.md` per Keep a Changelog 1.1.0 and SemVer, held by a test to `plugin.json`, and `init` writes one for each project ([Standard formats](design/standards.md)). Release 0.151.0.
 - **Update** M20 B209-B210 (method 5): acceptance criteria read Given/When/Then and requirements are stated in an EARS pattern under `# Requirement`; in a v2 project a draft that does not is `PLAN-AC` or `PLAN-REQ`, and the bolt, fix and requirement templates are written that way ([Standard formats](design/standards.md)). Release 0.150.0.
 - **Update** M20 B208: decisions follow MADR 4.0 ([0018](decisions/0018-standard-formats-over-home-made-ones.md)): the template is MADR's, approving stamps `status: accepted` and `date`, a successor sets `superseded by ADR-<NNNN>`, and a draft decision in a v2 project lacking a required section (Confirmation for a one-way door) is `DOC-SCHEMA`. The plugin's own decisions are in MADR form. Release 0.149.0.

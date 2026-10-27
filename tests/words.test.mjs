@@ -8,7 +8,7 @@ import { config } from '../plugin/cli/lib/index.mjs';
 const ROOT = join(import.meta.dirname, '..');
 const files = (dir) => readdirSync(join(ROOT, dir), { recursive: true }).filter((f) => f.endsWith('.md')).map((f) => [`${dir}/${f}`, readFileSync(join(ROOT, dir, f), 'utf8')]);
 // What may stay: template variables, unit as a test level, the v1 aliases (units/, unit/, U-<n>), code and quoted words.
-const KEPT = /\{\{[^}]*\}\}|\bunits?\/|\bunit=|\bunit and e2e\b|\bunit tests?\b|\(unit\)|\bunit\b(?= level)|U-<n>|`[^`]*`|"[^"]*"/g;
+const KEPT = /\{\{[^}]*\}\}|\bunits?\/|\bunit=|\bunit and e2e\b|\bunit tests?\b|\(unit\)|\bunit\b(?= level)|U-<n>|`[^`]*`|"[^"]*"|\bC4 components? (view|level)\b/g;
 const RETIRED = /\b(units?|slices|components?)\b/gi;
 const found = ([where, text]) => [...text.replace(KEPT, '').matchAll(RETIRED)].map((m) => `${where}: ${m[0]}`);
 

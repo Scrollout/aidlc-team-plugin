@@ -334,7 +334,7 @@ test('B159/AC-2 init writes the system, domain, fact and module templates and th
   const dir = makeRepo({});
   rmSync(join(dir, '.aidlc'), { recursive: true, force: true });
   assert.equal(run(dir, ['init', '--name', 'p', '--base', 'main', '--bundle', 'docs']).code, 0);
-  assert.match(readFileSync(join(dir, '.aidlc/templates/docs/system.md'), 'utf8'), /^type: System\n[\s\S]*^# Core\n[\s\S]*^# Extensions\n[\s\S]*The core never depends on an extension\./m);
+  assert.match(readFileSync(join(dir, '.aidlc/templates/docs/system.md'), 'utf8'), /^type: System\n[\s\S]*^# Constraints\n- The core never depends on an extension\.[\s\S]*^# Building Block View\n[\s\S]*^# Glossary\n/m);
   assert.match(readFileSync(join(dir, '.aidlc/templates/docs/domain.md'), 'utf8'), /^type: Domain\n[\s\S]*^code: [\s\S]*^kind: domain\n[\s\S]*^# Glossary\n[\s\S]*^# Owns\n[\s\S]*^# Surface\n[\s\S]*^# Relationships\n/m);
   assert.ok(!existsSync(join(dir, '.aidlc/templates/docs/architecture.md')), 'no hand-drawn architecture template');
   assert.match(readFileSync(join(dir, 'docs/constitution/principles.md'), 'utf8'), /^11\. \*\*Architecture you can see\.\*\* .*Checked by `PROFILE-KIND` and the codebase map\.$/m);

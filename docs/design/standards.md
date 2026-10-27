@@ -1,8 +1,8 @@
 ---
 type: Design
 title: Standard formats
-description: Draft - decisions in MADR 4.0, acceptance criteria as Given/When/Then, requirements in EARS, releases in Keep a Changelog with SemVer, and architecture in arc42 with C4 levels, each checked by the CLI on drafts and on intents approved under method 5.
-status: draft
+description: Decisions in MADR 4.0, acceptance criteria as Given/When/Then, requirements in EARS, releases in Keep a Changelog with SemVer, and architecture in arc42 with C4 levels, each checked by the CLI on drafts and on intents approved under method 5.
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T13:00:00Z }
 ---
 
@@ -32,7 +32,7 @@ A requirement states what must hold in one of EARS's patterns under `# Requireme
 
 # Architecture: arc42 and C4
 - A system doc follows arc42's 12 sections, from 1 Introduction and Goals to 12 Glossary. Generated pages fill some: the building block view is the codebase map by kind, decisions are the decisions index, the glossary is the naming glossary. `DOC-SCHEMA` reports a draft system doc missing one.
-- Diagrams name their C4 level: the context map is a context view, the map by kind a container view, a domain's layers a component view.
-- The plugin's own architecture is laid out the same way in an arc42 page, `arc42.md`, with a generated component view of the CLI.
+- Generated maps name their C4 level where one fits: the module dependency graph and the map by kind are component views. The context map is a domain-driven design context map, not a C4 context view.
+- The plugin's own architecture is laid out the same way in [Architecture in arc42](arc42.md), with a generated component view of the CLI.
 
 Bolts: [M20](../roadmap/m20.md) B208, B209, B210, B211, B212.

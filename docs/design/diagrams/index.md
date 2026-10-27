@@ -2,6 +2,7 @@
 
 * [Bolt states](bolt-states.md) - A bolt's derived states and what moves it between them; drawn from state.transitions in cli.json.
 * [Bundle types](bundle-types.md) - The bundle's doc types, the folder each lives in and the keys its schema requires; drawn from the bundle settings in cli.json.
+* [CLI components](cli-components.md) - A C4 component view of the CLI, with its runtime, extensions, public entry, domains and foundation kits, and which uses which; drawn from the CLI's own imports.
 * [Docs check codes](codes-bundle.md) - Every code the docs check reports, with its fix (a warning is marked); drawn from okf.codes in cli.json and the extensions' data.
 * [Gate codes](codes-gate.md) - Every code the merge gate reports, with its fix (a warning is marked); drawn from gate.codes in cli.json and the extensions' data.
 * [Hook codes](codes-hooks.md) - Every code the hooks reports, with its fix (a warning is marked); drawn from hooks.codes in cli.json and the extensions' data.

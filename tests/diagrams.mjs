@@ -1,7 +1,7 @@
 // The plugin's diagrams, drawn from the data the CLI enforces (docs/design/diagrams/). `node tests/diagrams.mjs` rewrites
 // them; tests/diagrams.test.mjs fails on any difference (DOC-DIAGRAM).
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join, relative } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { config } from '../plugin/cli/lib/index.mjs';
 
@@ -11,6 +11,20 @@ const page = (title, description, body) => `---\ntype: Design\ntitle: ${title}\n
 const mermaid = (lines) => ['```mermaid', ...lines, '```', ''].join('\n');
 const id = (text) => text.replace(/[^A-Za-z0-9]/g, '_');
 const mdTable = (head, rows) => [`| ${head.join(' | ')} |`, `|${head.map(() => '---').join('|')}|`, ...rows.map((r) => `| ${r.join(' | ')} |`), ''].join('\n');
+
+// The CLI's files and each static relative import between them, file to file (the self-check reads the same graph).
+const CLI = 'plugin/cli', ROOT = join(import.meta.dirname, '..');
+export const cliFiles = () => readdirSync(join(ROOT, CLI), { recursive: true }).filter((f) => f.endsWith('.mjs')).map((f) => `${CLI}/${f}`);
+export const cliEdges = () => cliFiles().flatMap((f) => [...readFileSync(join(ROOT, f), 'utf8').matchAll(/^(?:import|export) .* from '(\.[^']+)';$/gm)]
+  .map((m) => [f, relative(ROOT, join(ROOT, dirname(f), m[1])).split('\\').join('/')]));
+// Each file's part in the C4 component view: its layer, and its name (an extension is its folder).
+const partOf = (f) => (f.includes('/extensions/') ? ['extensions', f.split('/')[3]] : f.includes('/lib/foundation/') ? ['foundation', basename(f, '.mjs')]
+  : f.includes('/lib/domains/') ? ['domains', basename(f, '.mjs')] : f.endsWith('/lib/index.mjs') ? ['entry', 'index'] : ['runtime', basename(f, '.mjs')]);
+function components() {
+  const parts = Object.groupBy([...new Set(cliFiles().map((f) => partOf(f).join(':')))].map((x) => x.split(':')), ([layer]) => layer);
+  const links = [...new Set(cliEdges().map(([a, b]) => [partOf(a)[0], partOf(b)[0]]).filter(([a, b]) => a !== b).map((e) => e.join(' --> ')))].sort();
+  return mermaid(['flowchart TB', ...['runtime', 'extensions', 'entry', 'domains', 'foundation'].flatMap((layer) => [`  subgraph ${layer}`, `    ${(parts[layer] ?? []).map(([, n]) => `${layer}_${id(n)}[${n}]`).join('\n    ')}`, '  end']), ...links.map((l) => `  ${l}`)]);
+}
 
 // The code tables, each on its page.
 export const CODES = [['bundle', 'Docs check codes', 'okf', 'the docs check'], ['plan', 'Plan lint codes', 'grid', 'plan lint'], ['gate', 'Gate codes', 'gate', 'the merge gate'], ['hooks', 'Hook codes', 'hooks', 'the hooks']];
@@ -39,6 +53,7 @@ export const pages = () => ({
       '  end', '  subgraph Construction', ...path(S.transitions, 'approved', 'merged').map(([a, b, why]) => `    b_${a}[${a}] -->|${why}| b_${b}[${b}]`), '  end',
       '  subgraph Operations', ...path(S.intentTransitions, 'merged', 'checked').concat(path(S.intentTransitions, 'checked', 'released')).map(([a, b, why]) => `    i_${a}[${a}] -->|${why}| i_${b}[${b}]`), '  end',
       '  approved --> b_approved', '  b_merged --> i_merged'])),
+  'cli-components.md': page('CLI components', "A C4 component view of the CLI, with its runtime, extensions, public entry, domains and foundation kits, and which uses which; drawn from the CLI's own imports.", components()),
   'bolt-states.md': page('Bolt states', "A bolt's derived states and what moves it between them; drawn from state.transitions in cli.json.", states(S.transitions)),
   'intent-states.md': page('Intent states', "An intent's derived states, from approval to release; drawn from state.intentTransitions in cli.json.", states(S.intentTransitions)),
   'kinds.md': page('Kinds and layers', 'What each module kind may depend on, and the layers inside a domain pointing inward; drawn from vocabulary.kindRules and layerRules in cli.json.',

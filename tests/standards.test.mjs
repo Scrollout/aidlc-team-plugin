@@ -45,3 +45,20 @@ test('B209/AC-1 B210/AC-1 in a v2 project a draft AC that is not Given/When/Then
   assert.deepEqual(found('When a customer has 2 open orders, the shop shall refuse a third.').filter((l) => /PLAN-REQ/.test(l)), []);
   assert.deepEqual(found('Orders are limited.', {}), [], 'a v1 project keeps its formats');
 });
+
+test('B212/AC-1 a draft system doc in a v2 project follows arc42\'s twelve sections; the generated maps name their C4 level', async () => {
+  const { config } = await import('../plugin/cli/lib/index.mjs');
+  const sys = (headings) => `---\ntype: System\ntitle: Shop\ndescription: The shop.\ngenerated: { by: x/1, at: 2026-10-27T00:00:00Z }\n---\n\n${headings.map((h) => `# ${h}\nx\n`).join('\n')}`;
+  const all = config.okf.bundle.schemas.System.sections;
+  assert.equal(all.length, 12);
+  assert.deepEqual(schema(makeRepo({ 'docs/system/shop.md': sys(all) }, V2)), []);
+  assert.deepEqual(schema(makeRepo({ 'docs/system/shop.md': sys(all.filter((h) => h !== 'Runtime View')) }, V2)), ['docs/system/shop.md:1 DOC-SCHEMA a draft System lacks its Runtime View section (arc42)']);
+  assert.ok(config.map.pages.filter((p) => /C4 component view/.test(p.description)).length >= 2);
+});
+
+test('B212/AC-2 the plugin\'s architecture page has arc42\'s twelve sections in order, and the CLI a generated C4 component view', async () => {
+  const { config } = await import('../plugin/cli/lib/index.mjs');
+  const text = readFileSync(join(ROOT, 'docs/design/arc42.md'), 'utf8');
+  assert.deepEqual([...text.matchAll(/^# (.*)$/gm)].map((m) => m[1]), config.okf.bundle.schemas.System.sections);
+  assert.match(readFileSync(join(ROOT, 'docs/design/diagrams/cli-components.md'), 'utf8'), /C4 component view[\s\S]*extensions --> entry/);
+});

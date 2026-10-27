@@ -720,6 +720,7 @@
         "Bolt": { "required": ["scope"] },
         "Domain": { "required": ["code", "kind"], "enums": { "kind": "kinds" } },
         "Fact": { "required": ["command", "environment", "digest", "at"] },
+        "System": { "standard": "arc42", "sections": ["Introduction and Goals", "Constraints", "Context and Scope", "Solution Strategy", "Building Block View", "Runtime View", "Deployment View", "Crosscutting Concepts", "Architecture Decisions", "Quality Requirements", "Risks and Technical Debt", "Glossary"] },
         "Decision": { "standard": "MADR 4.0", "sections": ["Context and Problem Statement", "Considered Options", "Decision Outcome"], "sectionsWhen": { "oneWayDoor": ["Confirmation"] } }
       }
     },
@@ -1695,9 +1696,9 @@
     "space": "    ",
     "pages": [
       { "suffix": "", "body": "mapTree", "title": "Codebase map", "description": "The codebase as a tree of module folders, with the data each module owns and its public paths; written at every merge, never by hand." },
-      { "suffix": "-graph", "needs": "pairs", "body": "mapGraph", "title": "Module dependencies", "description": "A diagram of which module depends on which, from the dependency graph; written at every merge, never by hand." },
+      { "suffix": "-graph", "needs": "pairs", "body": "mapGraph", "title": "Module dependencies", "description": "A C4 component view of which module depends on which, from the dependency graph; written at every merge, never by hand." },
       { "suffix": "-table", "needs": "pairs", "body": "mapTable", "title": "Module dependency table", "description": "Each module with the modules it uses and the modules that use it; written at every merge, never by hand." },
-      { "suffix": "-kinds", "needs": "kinds", "body": "mapKinds", "title": "Domains and layers", "description": "The domains side by side with their layers, and the horizontal kinds as bands across them, as a diagram and a matrix of paths; written at every merge, never by hand." }
+      { "suffix": "-kinds", "needs": "kinds", "body": "mapKinds", "title": "Domains and layers", "description": "A C4 component view by kind, with the domains side by side with their layers, and the horizontal kinds as bands across them, as a diagram and a matrix of paths; written at every merge, never by hand." }
     ],
     "bands": ["runtime", "pipeline", "domain", "adapter", "foundation", "extension"],
     "noKind": "no kind",

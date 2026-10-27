@@ -1,16 +1,14 @@
 // M20 B207: the CLI follows the architecture it holds projects to (docs/design/library.md#rules).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync } from 'node:fs';
-import { dirname, join, relative } from 'node:path';
+import { readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { kindFindings, layerFindings, moduleFindings } from '../plugin/cli/lib/index.mjs';
+import { cliEdges, cliFiles } from './diagrams.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const CLI = 'plugin/cli';
-const files = readdirSync(join(ROOT, CLI), { recursive: true }).filter((f) => f.endsWith('.mjs')).map((f) => `${CLI}/${f}`);
-// Each static relative import, file to file.
-const edges = files.flatMap((f) => [...readFileSync(join(ROOT, f), 'utf8').matchAll(/^(?:import|export) .* from '(\.[^']+)';$/gm)]
-  .map((m) => [f, relative(ROOT, join(ROOT, dirname(f), m[1])).split('\\').join('/')]));
+const files = cliFiles(), edges = cliEdges();
 // A module per file: kits are foundation, domains publish their exports, the entry is the core's published contract,
 // the CLI and the hook rules are runtimes, and each extension folder is one extension.
 const kindOf = (f) => (f.includes('/lib/foundation/') ? 'foundation' : f.includes('/lib/domains/') || f.endsWith('/lib/index.mjs') ? 'domain'
