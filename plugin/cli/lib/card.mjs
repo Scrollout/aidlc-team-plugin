@@ -51,10 +51,10 @@ function projectRules(names, profile, at) {
 // a kind the registry cannot compose yet (a token unset) is left out (docs/design/naming.md#checks).
 function namesCreated(unit, profile, bundle) {
   if (!profile.naming) return '';
-  const reg = registry(profile, bundle), domains = (profile.modules ?? []).filter((m) => m.kind === 'domain' && unit.modules.includes(String(m.id ?? m.name)) && reg.domains[String(m.id ?? m.name)]);
-  return domains.map((m) => {
-    const names = config.naming.cardKinds.flatMap((k) => { try { return [`${k.label} ${nameOf(k.kind, { domain: String(m.id ?? m.name), ...(k.flags ?? {}) }, reg)}`]; } catch { return []; } });
-    return names.length ? msg('cardNamesOf', { module: String(m.id ?? m.name), names: names.join(', ') }) : '';
+  const reg = registry(profile, bundle), domains = (profile.modules ?? []).filter((m) => m.kind === 'domain').map((m) => String(m.id ?? m.name));
+  return domains.filter((d) => unit.modules.includes(d) && reg.domains[d]).map((domain) => {
+    const names = config.naming.cardKinds.flatMap((k) => { try { return [`${k.label} ${nameOf(k.kind, { domain, ...(k.flags ?? {}) }, reg)}`]; } catch { return []; } });
+    return names.length ? msg('cardNamesOf', { module: domain, names: names.join(', ') }) : '';
   }).join('');
 }
 
@@ -110,7 +110,6 @@ function renderCard(cwd, unitId, { preview = false } = {}) {
     base: baseSha,
     acs: atBase.acs.map((a) => doc.lines[a.line - 1].trim()),
     scope: atBase.scope,
-    // Interface links resolved from the unit doc's folder to repo paths, as `git show <base>:<path>` takes them.
     // Interface lines as written, each link with the repo path it resolves to (U128).
     interfaces: section(doc, config.grid.interfaces).map((l) => resolveLinks(l.trim().replace(/^[-*]\s+/, ''), unit.file, bundle, top)),
     why: [section(doc, config.grid.why).map((l) => l.trim() + '\n').join('')].filter(Boolean),

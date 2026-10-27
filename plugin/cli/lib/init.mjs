@@ -6,6 +6,7 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { CLI_DIR, PLUGIN_DIR, config, done, git, isMap, readJson, tryGit, UsageError, relPath } from './config.mjs';
 import { msg, render, renderFile } from './template.mjs';
 import { proposeKind } from './vocab.mjs';
+import { parseFlags } from './naming.mjs';
 import { DEFAULTS, loadProfile } from './profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
 import { definedOnBase } from './grid.mjs';
@@ -14,20 +15,6 @@ const I = config.init;
 
 // Two folders are the same one, short names and symlinks aside (Windows `RUNNER~1`, macOS `/var`).
 const sameDir = (a, b) => existsSync(a) && existsSync(b) && realpathSync.native(a) === realpathSync.native(b);
-
-function parseFlags(args, name, cmd = config.commands.find((c) => c.name === name)) {
-  const out = { overwrite: [] };
-  for (let k = 0; k < args.length; k++) {
-    const a = args[k];
-    if (!cmd.flags.includes(a)) throw new UsageError(msg('unknownFlag', { name: a }));
-    if (cmd.usage.includes(`[${a}]`)) { out[a.slice(2)] = true; continue; }
-    const v = args[++k];
-    if (v === undefined || v.startsWith('--')) throw new UsageError(msg('badFlag', { name: a }));
-    if (a === '--overwrite' || a === '--run') (out[a.slice(2)] ??= []).push(v);
-    else out[a.slice(2)] = v;
-  }
-  return out;
-}
 
 function projectRoot(cwd) {
   const top = tryGit(cwd, 'rev-parse', '--show-toplevel');

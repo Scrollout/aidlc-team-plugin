@@ -122,8 +122,8 @@ export const commands = {
     const v = { domain, stage: name, kit: name, system: name, deployable: name };
     if (domain !== undefined) { const f = domainForms(nameOf('domain', { domain }, reg), reg); Object.assign(v, { domain, singular: f.singularCompact, Singular: f.SingularPascal }); }
     if (kind === 'slice') v.operation = nameOf('slice', { domain, verb: name }, reg);
-    if (kind === 'foundation' && !reg.vocabularies.foundation.includes(name)) throw new UsageError(msg('nameUnregistered', { what: 'kit', value: name, where: 'naming.vocabularies.foundation', known: reg.vocabularies.foundation.join(', ') }));
-    if (kind === 'pipeline' && !reg.vocabularies.pipeline.includes(name)) throw new UsageError(msg('nameUnregistered', { what: 'stage', value: name, where: 'naming.vocabularies.pipeline', known: reg.vocabularies.pipeline.join(', ') }));
+    const what = { foundation: 'kit', pipeline: 'stage' }[kind], known = reg.vocabularies[kind]; // registered, never invented
+    if (what && !known.includes(name)) throw new UsageError(msg('nameUnregistered', { what, value: name, where: `naming.vocabularies.${kind}`, known: known.join(', ') }));
     if (kind === 'runtime') { // a deployable is <system>-<domain or stage>-<role>, composed, never invented
       const [part, role] = [name.split('-').slice(1, -1).join('-'), name.split('-').at(-1)];
       const composed = nameOf('deployable', { [reg.domains[part] ? 'domain' : 'stage']: part, role }, reg);

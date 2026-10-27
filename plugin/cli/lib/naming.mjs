@@ -87,22 +87,25 @@ export function nameOf(kind, flags, reg) {
   return name;
 }
 
-const flagsOf = (args, cmd) => {
-  const out = { _: [] };
+// A command's flags as cli.json declares them; a usage naming a `<positional>` collects the rest under `_`.
+export function parseFlags(args, name, cmd = config.commands.find((c) => c.name === name)) {
+  const out = { _: [], overwrite: [] };
   for (let k = 0; k < args.length; k++) {
     const a = args[k];
-    if (!a.startsWith('--')) { out._.push(a); continue; }
+    if (!a.startsWith('--') && cmd.usage.includes('<')) { out._.push(a); continue; }
     if (!cmd.flags.includes(a)) throw new UsageError(msg('unknownFlag', { name: a }));
-    if (cmd.usage.includes(`[${a}]`)) out[a.slice(2)] = true;
-    else if (args[k + 1] === undefined || args[k + 1].startsWith('--')) throw new UsageError(msg('badFlag', { name: a }));
-    else out[a.slice(2)] = args[++k];
+    if (cmd.usage.includes(`[${a}]`)) { out[a.slice(2)] = true; continue; }
+    const v = args[++k];
+    if (v === undefined || v.startsWith('--')) throw new UsageError(msg('badFlag', { name: a }));
+    if (a === '--overwrite' || a === '--run') (out[a.slice(2)] ??= []).push(v);
+    else out[a.slice(2)] = v;
   }
   return out;
-};
+}
 
 export const commands = {
   name(args, { cwd }) {
-    const flags = flagsOf(args, config.commands.find((c) => c.name === 'name'));
+    const flags = parseFlags(args, 'name');
     const { profile } = loadProfile(cwd);
     return done(`${nameOf(flags._[0], flags, registry(profile, bundleOf(cwd, profile)))}\n`);
   },
