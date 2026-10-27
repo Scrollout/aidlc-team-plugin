@@ -155,6 +155,12 @@
       "does": "record an owner priority in the plan"
     },
     {
+      "name": "name",
+      "usage": "name <kind> [--domain d] [--role r] [--env e] [--verb v] [--stage s] [--action a] [--table t] [--object o] [--number n] [--metric m] [--unit u] [--section s] [--key k] [--date d] [--preview] [--tag t]",
+      "does": "print a name from the naming grammar and registry",
+      "flags": ["--domain", "--role", "--env", "--verb", "--stage", "--action", "--table", "--object", "--number", "--metric", "--unit", "--section", "--key", "--date", "--preview", "--tag"]
+    },
+    {
       "name": "new",
       "usage": "new bolt \"<title>\"",
       "does": "write a draft bolt B-<n> under bolts/, the next free number, named from its title"
@@ -270,6 +276,9 @@
     "archNoData": "the profile has modules but no data ownership (architecture.data): one slice could read another's data unseen",
     "archNoAcyclic": "the profile has modules but architecture.acyclic is off",
     "archNoApi": "modules without an api surface: {{modules}}",
+    "nameUsage": "usage: aidlc name <kind>; kinds: {{kinds}}",
+    "nameMissing": "{{kind}} needs {{missing}}: {{flags}}",
+    "nameUnregistered": "{{what}} {{value}} is not in the registry ({{where}}); registered: {{known}}",
     "namingToken": "naming.tokens.{{token}} is {{value}}, not {{rule}}",
     "namingDomain": "naming domain {{code}} is not a lower-case word (the plural noun of its root aggregate)",
     "namingWord": "naming vocabulary {{list}} holds {{word}}, not a lower-case word",
@@ -1601,6 +1610,7 @@
     "tokens": {
       "system": { "pattern": "^[a-z][a-z0-9]{1,5}$", "rule": "2-6 lower-case letters or digits" },
       "org": { "pattern": "^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$", "rule": "a DNS label" },
+      "registry": { "pattern": "^[a-z0-9.-]+(:[0-9]+)?$", "rule": "a registry host" },
       "zone": { "pattern": "^(?=.{1,253}$)[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$", "rule": "a DNS name" }
     },
     "word": "^[a-z][a-z0-9]*$",
@@ -1611,6 +1621,30 @@
       "foundation": ["config", "database", "transport", "contract", "workloadidentity", "events", "telemetry"],
       "verb": ["get", "list", "create", "update", "delete", "register", "unregister", "evaluate", "cancel"]
     },
+    "grammar": {
+      "domain": { "template": "{{domain}}", "needs": ["domain"], "regex": "^[a-z][a-z0-9]*$" },
+      "slice": { "template": "{{verb}}{{singularCompact}}", "needs": ["domain", "verb"], "regex": "^[a-z][a-z0-9]*$" },
+      "operation-id": { "template": "{{TypePascal}}_{{OperationVerb}}", "needs": ["domain", "verb"], "regex": "^[A-Z][A-Za-z0-9]*_[A-Z][A-Za-z0-9]*$" },
+      "namespace-api": { "template": "{{Namespace}}", "needs": ["org", "system"], "regex": "^[A-Z][A-Za-z0-9]*(\\.[A-Z][A-Za-z0-9]*)+$" },
+      "path": { "template": "/providers/{{Namespace}}/{{typeCamel}}/{{{singularCamel}}Name}", "needs": ["org", "system", "domain"], "regex": "^/providers/[A-Z][A-Za-z0-9.]+/[a-z][A-Za-z0-9]*/\\{[a-z][A-Za-z0-9]*Name\\}$" },
+      "permission": { "template": "{{Namespace}}/{{typeCamel}}/{{action}}", "needs": ["org", "system", "domain", "action"], "regex": "^[A-Z][A-Za-z0-9.]+/[a-z][A-Za-z0-9/]*/(read|write|delete|action)$" },
+      "event": { "template": "{{Namespace}}.{{SingularPascal}}{{PastVerb}}", "needs": ["org", "system", "domain", "verb"], "regex": "^[A-Z][A-Za-z0-9]*(\\.[A-Z][A-Za-z0-9]*)+$" },
+      "api-version": { "template": "{{date}}{{previewSuffix}}", "needs": ["date"], "regex": "^(20\\d{2})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])(-preview)?$" },
+      "schema": { "template": "{{domain}}", "needs": ["domain"], "regex": "^[a-z][a-z0-9]*$" },
+      "db-role": { "template": "{{system}}_{{domain}}", "needs": ["system", "domain"], "regex": "^[a-z][a-z0-9]*_[a-z][a-z0-9]*$" },
+      "table": { "template": "{{domain}}.{{tableSnake}}", "needs": ["domain", "table"], "regex": "^[a-z][a-z0-9]*\\.[a-z][a-z0-9_]*$" },
+      "migration": { "template": "migrations/{{domain}}/{{number4}}_{{verb}}_{{objectSnake}}.sql", "needs": ["domain", "number", "verb", "object"], "regex": "^migrations/[a-z][a-z0-9]*/\\d{4}_[a-z]+_[a-z0-9_]+\\.sql$" },
+      "deployable": { "template": "{{system}}-{{part}}-{{role}}", "needs": ["system", "part", "role"], "regex": "^[a-z][a-z0-9]*-[a-z][a-z0-9]*-[a-z]+$" },
+      "image": { "template": "{{registry}}/{{org}}/{{system}}-{{part}}-{{role}}:{{tag}}", "needs": ["registry", "org", "system", "part", "role"], "regex": "^[a-z0-9.:-]+/[a-z0-9-]+/[a-z0-9-]+:[A-Za-z0-9._<>-]+$" },
+      "k8s-namespace": { "template": "{{system}}-{{env}}", "needs": ["system", "env"], "regex": "^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$" },
+      "host": { "template": "{{system}}{{roleSuffix}}.{{env}}.{{zone}}", "needs": ["system", "env", "zone"], "regex": "^[a-z0-9-]+\\.[a-z]+\\.[a-z0-9.-]+$" },
+      "metric": { "template": "{{system}}_{{domain}}_{{metricSnake}}_{{unit}}", "needs": ["system", "domain", "metric", "unit"], "regex": "^[a-z][a-z0-9_]*$" },
+      "config-key": { "template": "{{section}}.{{keyCamel}}", "needs": ["section", "key"], "regex": "^[a-z][A-Za-z0-9]*\\.[a-z][A-Za-z0-9]*$" }
+    },
+    "operationVerbs": { "get": "Get", "list": "List", "create": "CreateOrUpdate", "update": "Update", "delete": "Delete" },
+    "pastTense": { "get": "Read", "list": "Listed", "create": "Created", "update": "Updated", "delete": "Deleted", "register": "Registered", "unregister": "Unregistered", "evaluate": "Evaluated", "cancel": "Canceled" },
+    "actions": ["read", "write", "delete", "action"],
+    "metricUnits": ["total", "seconds", "bytes", "ratio", "count"],
     "banned": ["manager", "service", "frontdoor", "portal", "store", "common", "util", "utils", "helper", "helpers", "misc", "base", "core", "data", "info", "stuff", "thing"]
   },
   "vocabulary": {

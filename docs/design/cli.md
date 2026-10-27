@@ -9,7 +9,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 # Commands
 | Command | Does | Run by |
 |---|---|---|
-| `init [--adopt] [--name n] [--base b] [--bundle dir] [--run level=command]… [--overwrite path]…` | takes the skill's answers as flags, writes the profile with each level's run, renders templates, vendors itself; `--adopt` keeps an existing bundle ([Profile and templates](profile.md)) | owner via the `aidlc` skill |
+| `init [--adopt] [--name n] [--base b] [--bundle dir] [--run level=command]… [--overwrite path]… [--system-code c] [--org o] [--zone z]` | writes the profile from the skill's answers (each level's run, the naming tokens), renders templates, vendors itself; `--adopt` keeps a bundle ([Profile and templates](profile.md)) | owner via the `aidlc` skill |
 | `upgrade [--downgrade] [--dirty]` | re-vendors the CLI from the installed plugin's release and adds templates the project lacks; refuses an older one or a checkout with uncommitted changes unless told; says when nothing changed, which release it copied, and how to fetch a newer one | owner (prompt or `!`) |
 | `index [bundle]` | regenerates every `index.md` in the bundle like the OKF reference implementation | docs hook, merge, anyone |
 | `check [--ci] [path…]` | OKF validation, plan lint, profile lint; `--ci` adds the base history and architecture checks. A directory is checked as a bundle, or within the profile's bundle when it lies below its root; a file reports only its own findings | hooks, CI, anyone |
@@ -27,6 +27,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 | `report <unit> [file]` | stores the builder's report (JSON from the file, or stdin) | builder |
 | `hold <doc> [off\|<reason>]` | records an owner instruction in the plan: `hold: true` or the reason; `off` removes it. The lead also holds a doc with a reason while it parks a question for the owner, and holds a merged intent to park its release steps | lead |
 | `priority <unit> <n>` | records `priority: <n>` in the plan, higher first | lead |
+| `name <kind> [--<flag> <value>]…` | a name from the grammar and registry; the flags each kind needs are in `cli.json` ([Naming](naming.md)) | lead, builder |
 | `new bolt "<title>"` | a draft `B-<n>`, named from its title | lead |
 | `fix "<title>"\|--from-issue <n> --scope <glob>… [--requirement R-<n>…] [--after <intent>]` | a fix (a bolt in a v2 project) without an intent; from an issue, titled and linked like it; `--after` links the release it fixes; prints its plan lint findings ([Everyday paths](paths.md#fixes-without-an-intent)) | lead |
 | `map` | writes the codebase map in the bundle ([Codebase map](codebase-map.md)) | lead, merge |
@@ -39,17 +40,8 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 | `rollback <intent>` | runs `deploy.rollback` and records it; without one it records the owner's rollback by hand | owner (prompt or the words `rollback I-<n>`) |
 | `hook <name>` | entry point for the plugin's hooks; reads the hook JSON on stdin | hooks |
 
-# Output
-- Paths in output, cards and runtime files are relative and use `/` on every platform; the CLI resolves its working folder to its real long path first (Windows short names, symlinks), and reads docs with CRLF line ends as LF.
-- Findings: `path:line CODE message → fix (level)`, one per line, with the level as run (`docs.rules` and adoption change it). Codes are stable.
-- Advice: one line, imperative, naming the command or agent to run.
-- No banners, no colour unless a TTY, no summaries longer than the findings.
-
-# Engine and adapters
-How handlers return data and how the CLI is built: [CLI engine](cli-engine.md).
+# Engine, output and values
+How handlers return data, how output is shaped and where every value lives: [CLI engine](cli-engine.md).
 
 # Exit codes
 `0` ok · `1` findings · `2` blocked by a human gate · `64` bad usage · `70` internal error (hooks treat it as deny).
-
-# Values
-No hand-coded values in code. Commands, exit codes, file paths, layer order and every user-facing message live in `plugin/cli/cli.json`, read by `config`. Messages are templates rendered by the template engine. `cli.json` sits beside the CLI so it is vendored with it. Tests check that its commands and exit codes match this doc.

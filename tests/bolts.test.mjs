@@ -144,3 +144,28 @@ test('B160/AC-2 init takes the system code, org and zone into the profile naming
   assert.equal(r.code, 0, r.err);
   assert.deepEqual(JSON.parse(read(dir, '.aidlc/profile.json')).naming, { tokens: { system: 'rsm', org: 'acme', zone: 'example.internal' } });
 });
+
+test('B161/AC-1 aidlc name prints each kind from the grammar and the registry, and refuses an unregistered token or a missing flag', () => {
+  const naming = { tokens: { system: 'rsm', org: 'acme', zone: 'example.internal', registry: 'ghcr.io' }, domains: { providers: {}, roleassignments: { name: 'Role assignments' } } };
+  const dir = makeRepo(I1, { naming });
+  const name = (...args) => run(dir, ['name', ...args]);
+  const cases = [
+    [['slice', '--domain', 'providers', '--verb', 'register'], 'registerprovider'],
+    [['operation-id', '--domain', 'roleassignments', '--verb', 'create'], 'RoleAssignments_CreateOrUpdate'],
+    [['path', '--domain', 'roleassignments'], '/providers/Acme.Rsm/roleAssignments/{roleAssignmentName}'],
+    [['permission', '--domain', 'providers', '--action', 'write'], 'Acme.Rsm/providers/write'],
+    [['event', '--domain', 'providers', '--verb', 'register'], 'Acme.Rsm.ProviderRegistered'],
+    [['deployable', '--stage', 'ingress', '--role', 'gateway'], 'rsm-ingress-gateway'],
+    [['image', '--domain', 'providers', '--role', 'api', '--tag', '1.4.0'], 'ghcr.io/acme/rsm-providers-api:1.4.0'],
+    [['k8s-namespace', '--env', 'dev'], 'rsm-dev'],
+    [['migration', '--domain', 'providers', '--number', '1', '--verb', 'create', '--object', 'resource types'], 'migrations/providers/0001_create_resource_types.sql'],
+    [['db-role', '--domain', 'providers'], 'rsm_providers'],
+    [['api-version', '--date', '2026-10-27', '--preview'], '2026-10-27-preview'],
+  ];
+  for (const [args, want] of cases) assert.equal(name(...args).out, `${want}\n`, args.join(' '));
+  assert.match(name('domain', '--domain', 'frontdoor').err, /domain frontdoor is not in the registry .*registered: providers, roleassignments/);
+  assert.match(name('deployable', '--domain', 'providers', '--role', 'manager').err, /role manager is not in the registry/);
+  assert.match(name('deployable', '--domain', 'providers').err, /deployable needs role: --role/);
+  assert.match(run(makeRepo(I1, {}), ['name', 'k8s-namespace', '--env', 'dev']).err, /needs system: naming\.tokens\.system/);
+  assert.match(name('nonsense').err, /^name: usage: aidlc name <kind>; kinds: domain, slice/);
+});
