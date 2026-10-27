@@ -2,7 +2,8 @@
 type: Decision
 title: 0016 The CLI budget is 5,000 lines
 description: The CLI source budget rises from 4,000 to 5,000 lines for the v2 checks, because the incident rules turned out to be evidence for general rules, not patches to delete, and v2's own data already lives outside the code.
-status: stable
+status: superseded
+superseded_by: "0017"
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T01:10:00Z }
 ---
 
