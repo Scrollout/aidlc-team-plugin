@@ -1,0 +1,31 @@
+{
+  "routes": {
+    "resource": "/scopes/{scope}/providers/{namespace}/{type}/{name}",
+    "operation": "/operations/{id}",
+    "result": "/operations/{id}/result"
+  },
+  "params": { "scope": "scope", "namespace": "namespace", "type": "type", "id": "id" },
+  "scopePrefix": "/scopes/",
+  "operationsPrefix": "/operations/",
+  "resultSuffix": "/result",
+  "operationID": "op%d",
+  "retryAfter": "1",
+  "errors": {
+    "badContent": "InvalidRequestContent",
+    "badResource": "InvalidResource",
+    "internal": "InternalError",
+    "noOperation": "OperationNotFound",
+    "operationFailed": "OperationFailed",
+    "noProvider": "NoRegisteredProvider"
+  },
+  "stages": { "authenticate": "authenticate", "authorize": "authorize", "policy": "policy", "lock": "lock", "throttle": "throttle" },
+  "statuses": { "running": "Running", "succeeded": "Succeeded", "failed": "Failed", "canceled": "Canceled" },
+  "events": {
+    "created": "Example.Resources.ResourceCreated",
+    "updated": "Example.Resources.ResourceUpdated",
+    "deleted": "Example.Resources.ResourceDeleted"
+  },
+  "messages": { "noID": "a resource needs an id and a type" },
+  "providers": [{ "namespace": "Example.Things", "longRunning": ["widgets"] }],
+  "listen": ":8080"
+}

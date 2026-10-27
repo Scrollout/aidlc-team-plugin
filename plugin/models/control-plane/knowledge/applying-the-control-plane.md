@@ -27,3 +27,8 @@ Read the model horizontally first, then vertically.
 5. Each further provider as its own extension, built in vertical slices, one use case at a time.
 
 On existing code, `aidlc models gaps` lists what the modules miss; each gap is an increment.
+
+## The Go reference
+- It is the walking skeleton and the first increments: the front door, the governance stages, the resources domain's `putresource` and `deleteresource` commands and the operations domain's `getoperation` query. Deployments and activity come next, in the order above.
+- Its values (routes, error codes, statuses, event types, the providers it serves) live in `internal/foundation/values/values.json`; list that folder under the profile's `values.data`.
+- Write each domain's doc with one `# Surface` line per slice, citing the project's own stories, when the reference is adopted.

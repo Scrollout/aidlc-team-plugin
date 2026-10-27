@@ -1,11 +1,13 @@
 // Package events is the resources domain's published events: one for each write and each delete.
 package events
 
+import "example.com/controlplane/internal/foundation/values"
+
 // The event types, in the contract grammar's Org.Service.NounPastTenseVerb form.
-const (
-	ResourceCreatedType = "Example.Resources.ResourceCreated"
-	ResourceUpdatedType = "Example.Resources.ResourceUpdated"
-	ResourceDeletedType = "Example.Resources.ResourceDeleted"
+var (
+	ResourceCreatedType = values.V.Events.Created
+	ResourceUpdatedType = values.V.Events.Updated
+	ResourceDeletedType = values.V.Events.Deleted
 )
 
 // ResourceWritten announces a resource created or changed.

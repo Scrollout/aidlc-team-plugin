@@ -34,5 +34,5 @@
   ],
   "contract": { "segments": ["providers", "operations"], "providers": "providers", "resource": ["id", "name", "type"], "systemData": "systemData", "list": "value", "nextLink": "nextLink" },
   "fit": { "words": ["control plane", "resource provider", "resource providers", "providers", "deployments", "templates", "tenants", "scopes"] },
-  "references": { "go": { "frontdoor": "reference/go/cmd/frontdoor", "stages": "reference/go/internal/pipeline/stages", "resources": "reference/go/internal/domains/resources", "operations": "reference/go/internal/domains/operations", "api": "reference/go/api" } }
+  "references": { "go": { "frontdoor": "reference/go/cmd/frontdoor", "stages": "reference/go/internal/pipeline/stages", "resources": "reference/go/internal/domains/resources", "operations": "reference/go/internal/domains/operations", "values": "reference/go/internal/foundation/values", "api": "reference/go/api" } }
 }

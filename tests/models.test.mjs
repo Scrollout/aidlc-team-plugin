@@ -2,8 +2,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { cpSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { cpSync, existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join, sep } from 'node:path';
 import { config } from '../plugin/cli/lib/index.mjs';
 import { CHILD_ENV, commit, I1, makeRepo, pinnedRepo, read, run, write } from './state-repo.mjs';
 
@@ -214,4 +214,17 @@ test('B234/AC-1 the architect persona reads how to model a reference and apply a
   const knowledge = read(join(import.meta.dirname, '..'), 'plugin/personas/architect/models.md');
   for (const type of config.models.ruleTypes) assert.ok(knowledge.includes(`\`${type}\``), `${type} is explained`);
   for (const step of ['Horizontal first', 'Then vertical', 'MODEL-SOURCE', 'aidlc models apply', 'aidlc models gaps']) assert.ok(knowledge.includes(step), step);
+});
+
+test('the control-plane Go reference keeps its values in data and its code in vertical slices, as every project must', async () => {
+  const { sliceFindings, valueFindings } = await import('../plugin/cli/extensions/stacks/index.mjs');
+  const dir = makeRepo({}, {});
+  cpSync(join(import.meta.dirname, '..', 'plugin/models/control-plane/reference/go'), dir, { recursive: true });
+  const profile = { system: { core: ['internal/**', 'cmd/**'] }, values: { data: ['internal/foundation/values/**'] },
+    modules: [{ id: 'resources', kind: 'domain', paths: ['internal/domains/resources/**'] }, { id: 'operations', kind: 'domain', paths: ['internal/domains/operations/**'] }, { id: 'frontdoor', kind: 'runtime', paths: ['cmd/frontdoor/**'] }] };
+  assert.deepEqual(sliceFindings(dir, profile).map((f) => `${f.code} ${f.path}`), []);
+  const added = readdirSync(dir, { recursive: true }).map(String).filter((f) => f.endsWith('.go')).map((f) => f.split(sep).join('/'))
+    .flatMap((f) => readFileSync(join(dir, f), 'utf8').split('\n').map((text, k) => ({ file: f, line: k + 1, text })));
+  assert.deepEqual(valueFindings(dir, profile, [], added).map((f) => `${f.path}:${f.line} ${f.data.value}`), [], 'every line read as added: no literal value in code');
+  assert.ok(existsSync(join(dir, 'internal/domains/operations/application/getoperation/handler_test.go')), 'the operations query slice, with its test');
 });

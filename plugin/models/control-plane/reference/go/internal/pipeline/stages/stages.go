@@ -2,7 +2,11 @@
 // every request crosses them in one fixed order, failing closed (the control-plane model's stage order).
 package stages
 
-import "context"
+import (
+	"context"
+
+	"example.com/controlplane/internal/foundation/values"
+)
 
 // Request is what the stages judge: the call, who makes it, and the resource as it would become.
 type Request struct {
@@ -26,12 +30,12 @@ type Stage struct {
 }
 
 // The stages, by name.
-const (
-	StageAuthenticate = "authenticate"
-	StageAuthorize    = "authorize"
-	StagePolicy       = "policy"
-	StageLock         = "lock"
-	StageThrottle     = "throttle"
+var (
+	StageAuthenticate = values.V.Stages.Authenticate
+	StageAuthorize    = values.V.Stages.Authorize
+	StagePolicy       = values.V.Stages.Policy
+	StageLock         = values.V.Stages.Lock
+	StageThrottle     = values.V.Stages.Throttle
 )
 
 // Order is the order every request crosses them in.

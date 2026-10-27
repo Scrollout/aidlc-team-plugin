@@ -4,6 +4,8 @@ package model
 import (
 	"errors"
 	"reflect"
+
+	"example.com/controlplane/internal/foundation/values"
 )
 
 // Resource is the metadata the core keeps of a resource: its id, its type, the scope it sits in and the provider
@@ -17,7 +19,7 @@ type Resource struct {
 }
 
 // ErrNoID is the rule a resource keeps: it has an id and a type.
-var ErrNoID = errors.New("a resource needs an id and a type")
+var ErrNoID = errors.New(values.V.Messages.NoID)
 
 // New returns a resource once its rules hold.
 func New(id, typ, scope, provider string, properties map[string]any) (Resource, error) {

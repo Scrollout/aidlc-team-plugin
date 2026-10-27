@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.183.2] - 2026-10-27
+### Changed
+- The control-plane model's Go reference keeps its values (routes, error codes, statuses, event types, the providers it serves) in an embedded `values.json`, and its operations are read through a `getoperation` query slice; it passes `VALUE-LITERAL` and the slice checks, and a test holds it to them. The knowledge guide says what the reference covers and how a project adopts it.
+- The Go and TypeScript packs list the common HTTP header names and the JSON media type as protocol.
+
 ## [0.183.1] - 2026-10-27
 ### Changed
 - The lead's skill works in the role a step names (`aidlc persona <role>`) while elaborating, asks the owner for the naming tokens at setup and passes them to `init`, and says once that a hook adds each agent's card or brief.
@@ -365,7 +370,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.183.1...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.183.2...HEAD
+[0.183.2]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.183.1...v0.183.2
 [0.183.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.183.0...v0.183.1
 [0.183.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.182.1...v0.183.0
 [0.182.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.182.0...v0.182.1

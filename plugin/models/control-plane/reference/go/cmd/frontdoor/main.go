@@ -12,6 +12,7 @@ import (
 	"example.com/controlplane/internal/domains/resources/application/putresource"
 	"example.com/controlplane/internal/domains/resources/events"
 	"example.com/controlplane/internal/domains/resources/infrastructure"
+	"example.com/controlplane/internal/foundation/values"
 	"example.com/controlplane/internal/pipeline/stages"
 )
 
@@ -31,12 +32,20 @@ func (loggedDelete) Publish(_ context.Context, e events.ResourceDeleted) error {
 
 func main() {
 	store := &infrastructure.Memory{}
+	providers := map[string]Provider{}
+	for _, p := range values.V.Providers { // the providers this front door serves, from values.json
+		long := map[string]bool{}
+		for _, t := range p.LongRunning {
+			long[t] = true
+		}
+		providers[p.Namespace] = Provider{Namespace: p.Namespace, LongRunning: long}
+	}
 	door := &FrontDoor{
 		Govern:    governance(stages.Pass(stages.StageAuthorize).Run),
 		Put:       putresource.Handler{Resources: store, Events: logged{}},
 		Delete:    deleteresource.Handler{Resources: store, Events: loggedDelete{}},
 		Ops:       &opinfra.Memory{},
-		Providers: map[string]Provider{"Example.Things": {Namespace: "Example.Things", LongRunning: map[string]bool{"widgets": true}}},
+		Providers: providers,
 	}
-	log.Fatal(http.ListenAndServe(":8080", door.Routes()))
+	log.Fatal(http.ListenAndServe(values.V.Listen, door.Routes()))
 }
