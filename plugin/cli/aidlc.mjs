@@ -14,7 +14,7 @@ import { commands as review } from './lib/domains/review.mjs';
 import { commands as card } from './lib/domains/card.mjs';
 import { commands as init } from './lib/domains/setup.mjs';
 import { commands as gate, planCheck, withSummary } from './lib/domains/gate.mjs';
-import { commands as hooks, ownerRefused } from './lib/adapters/host.mjs';
+import { commands as hooks, ownerRefused } from './lib/domains/host.mjs';
 import { commands as retro } from './lib/domains/retro.mjs';
 import { commands as deploy } from './lib/domains/operations.mjs';
 import { commands as naming } from './lib/domains/naming.mjs';

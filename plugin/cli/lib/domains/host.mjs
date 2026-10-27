@@ -7,13 +7,13 @@ import { bundleOf, config, done, readJson, readStdin, UsageError, relPath } from
 import { git, gitLines, tryGit } from '../foundation/git.mjs';
 import { msg } from '../foundation/text.mjs';
 import { loadProfile, withDefaults } from '../foundation/profile.mjs';
-import { checkBundle, parseDoc, writeIndexes } from '../domains/bundle.mjs';
-import { readPlan } from '../domains/plan.mjs';
+import { checkBundle, parseDoc, writeIndexes } from './bundle.mjs';
+import { readPlan } from './plan.mjs';
 import { inside } from '../foundation/glob.mjs';
-import { nextAction, readState, statusText } from '../domains/flow.mjs';
-import { commands as owner, delegated } from '../domains/approval.mjs';
+import { nextAction, readState, statusText } from './flow.mjs';
+import { commands as owner, delegated } from './approval.mjs';
 import { baseOf, aidlcDir, bump, heartbeatFresh, hostDeniedFile, runtimeFile, writeJson } from '../foundation/store.mjs';
-import { directAllowed, mergeWritten, secretIn } from '../domains/gate.mjs';
+import { directAllowed, mergeWritten, secretIn } from './gate.mjs';
 
 const H = config.hooks;
 const S = config.state;

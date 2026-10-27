@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { realpathSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { commands } from '../plugin/cli/lib/adapters/host.mjs';
+import { commands } from '../plugin/cli/lib/domains/host.mjs';
 import { commit, git, intentDoc, pinnedRepo, run, tempDir, unitDoc, write } from './state-repo.mjs';
 import { codes, merge, setup } from './gate-repo.mjs';
 

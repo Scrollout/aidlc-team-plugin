@@ -1,8 +1,8 @@
 ---
 type: Design
 title: Library and extensions
-description: Draft - the CLI as a layered library (foundation kits, domains, adapters, a runtime) with a public entry, named seams the core declares, and opt-in extensions that plug into them, each layer and extension with its own budget.
-status: draft
+description: The CLI as a layered library (foundation kits, domains, a runtime) with a public entry, named seams the core declares, and opt-in extensions that plug into them, each layer and extension with its own budget.
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T12:00:00Z }
 ---
 
@@ -15,16 +15,16 @@ The plugin holds every project to kinds, layers and one-way dependencies. Its ow
 | Layer | Folder | Modules |
 |---|---|---|
 | foundation | `lib/foundation/` | `data` (cli.json and extension data, values, paths), `git`, `text` (templates, messages, findings), `yaml`, `glob`, `profile`, `store` (`.git/aidlc` files), `seams` |
-| domains | `lib/domains/` | `bundle`, `method`, `plan`, `inception`, `construction`, `approval`, `flow`, `review`, `card`, `gate`, `architecture`, `map`, `naming`, `operations`, `retro`, `setup` |
-| adapters | `lib/adapters/` | `host` (the coding agent's hooks) |
-| runtime | `aidlc.mjs`, `lib/index.mjs` | the command table, the extension loader, the public entry |
+| domains | `lib/domains/` | `bundle`, `method`, `plan`, `inception`, `construction`, `approval`, `flow`, `review`, `card`, `gate`, `architecture`, `map`, `naming`, `operations`, `retro`, `setup`, `host` (the guard rails the coding agent's hooks call) |
+| runtime | `aidlc.mjs`, `lib/index.mjs` | the command table and extension loader; the public entry, the core's published surface |
 | extension | `extensions/<name>/` | `board` (the Project board), `contracts` (the API and event grammar), `stacks` (graph, scaffold and checks of the stack packs) |
 
 # Rules
-- A layer imports only its own layer and those below it: foundation nothing else, domains foundation, adapters domains and foundation.
+- A layer imports only its own layer and those below it: foundation nothing but kits, domains foundation and other domains' exports, the runtime the core.
+- An adapter, in the model's sense, speaks to an outside system and depends only on foundation kits. The CLI's one, the board's GitHub transport, lives in its extension. The host's hook rules call domains, so they are a domain.
 - A domain reaches another domain only through its exported functions. Seams, never imports, carry a call back up a dependency.
 - The core never imports an extension. An extension imports `lib/index.mjs` only.
-- No import cycles. The plugin's own profile declares these as kinds, and `check` runs the same `ARCH-*` checks it runs on projects.
+- No import cycles. A test gives each of the CLI's files a kind and runs `ARCH-KIND`, `ARCH-LAYER` and `ARCH-CYCLE` on its file graph, as `check` does on a project. An extension may use a domain's published surface, here `lib/index.mjs`.
 
 # Seams
 `foundation/seams` keeps a list per seam. A domain or an extension adds a function with `plug(<seam>, fn)` when it loads. A seam's caller gets only those whose extension the profile enables:

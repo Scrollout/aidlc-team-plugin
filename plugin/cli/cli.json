@@ -1775,7 +1775,7 @@
       "foundation": ["foundation"],
       "adapter": ["foundation"],
       "runtime": ["domain", "pipeline", "foundation", "adapter"],
-      "extension": ["foundation"],
+      "extension": ["foundation", "domain:surface"],
       "delivery": ["domain", "pipeline", "foundation", "adapter", "runtime", "extension", "delivery"]
     },
     "layerAliases": { "api": "interface", "app": "application", "domain": "model", "store": "infrastructure" },

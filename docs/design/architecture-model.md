@@ -33,7 +33,7 @@ A module without a kind, an unknown kind or surface, or a malformed `system` is 
 | `foundation` (shared kit) | nothing | lower `foundation` kits, acyclic |
 | `adapter` (anticorruption layer) | nothing | `foundation`; the external SDK |
 | `runtime` (composition root) | nothing | the core modules it hosts |
-| `extension` | its own | published contracts only |
+| `extension` | its own | `foundation`; published contracts only: domains' `client` and `events` |
 | `delivery` (build, deploy, tooling) | nothing | nothing in product code |
 
 **Always:**
