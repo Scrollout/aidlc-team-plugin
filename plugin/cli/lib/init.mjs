@@ -149,12 +149,15 @@ export const commands = {
       if (!(level in DEFAULTS.levels)) throw new UsageError(msg('initRunBad', { value, levels: Object.keys(DEFAULTS.levels).join(', ') }));
       levels[level] = { run };
     }
+    // The naming registry's tokens, as the owner gave them (docs/design/naming.md).
+    const given = Object.entries({ system: flags['system-code'], org: flags.org, zone: flags.zone }).filter(([, v]) => v !== undefined);
+    const tokens = given.length ? Object.fromEntries(given) : null;
     const json = {
       name: JSON.stringify(name),
       base: JSON.stringify(base),
       bundle: JSON.stringify(bundle),
       quick: I.quick.map((q) => JSON.stringify(render(q, { bundle }))).join(', '),
-      extra: [...(adopted ? [{ key: 'adopted', value: JSON.stringify(adopted) }] : []), ...(flags.run ? [{ key: 'levels', value: JSON.stringify(levels) }] : [])],
+      extra: [...(adopted ? [{ key: 'adopted', value: JSON.stringify(adopted) }] : []), ...(flags.run ? [{ key: 'levels', value: JSON.stringify(levels) }] : []), ...(tokens ? [{ key: 'naming', value: JSON.stringify({ tokens }) }] : [])],
     };
 
     let kept = 0;

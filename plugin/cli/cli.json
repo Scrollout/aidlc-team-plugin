@@ -47,7 +47,7 @@
   "commands": [
     {
       "name": "init",
-      "usage": "init [--adopt] [--name n] [--base b] [--bundle dir] [--run level=command]… [--overwrite path]…",
+      "usage": "init [--adopt] [--name n] [--base b] [--bundle dir] [--run level=command]… [--overwrite path]… [--system-code c] [--org o] [--zone z]",
       "does": "ask questions, write the profile, render templates, vendor the CLI",
       "flags": [
         "--adopt",
@@ -55,7 +55,10 @@
         "--base",
         "--bundle",
         "--run",
-        "--overwrite"
+        "--overwrite",
+        "--system-code",
+        "--org",
+        "--zone"
       ]
     },
     {
@@ -267,6 +270,10 @@
     "archNoData": "the profile has modules but no data ownership (architecture.data): one slice could read another's data unseen",
     "archNoAcyclic": "the profile has modules but architecture.acyclic is off",
     "archNoApi": "modules without an api surface: {{modules}}",
+    "namingToken": "naming.tokens.{{token}} is {{value}}, not {{rule}}",
+    "namingDomain": "naming domain {{code}} is not a lower-case word (the plural noun of its root aggregate)",
+    "namingWord": "naming vocabulary {{list}} holds {{word}}, not a lower-case word",
+    "namingBanned": "naming {{where}} {{word}} is a banned word",
     "kindMissing": "module {{module}} has no kind: one of {{kinds}}",
     "kindUnknown": "module {{module}} has kind {{kind}}, not one of {{kinds}}",
     "surfaceUnknown": "module {{module}} has surface {{surface}}, not one of {{surfaces}}",
@@ -653,7 +660,7 @@
   },
   "okf": {
     "profileKeys": {
-      "top": ["name", "base", "docs", "levels", "modules", "lanes", "focus", "security", "shared", "reserve", "parallel", "architecture", "adopted", "deploy", "release", "regen", "review", "research", "models", "board", "ci", "github", "decisions", "generated", "run", "approvals", "names", "deps", "plan", "checks", "system"],
+      "top": ["name", "base", "docs", "levels", "modules", "lanes", "focus", "security", "shared", "reserve", "parallel", "architecture", "adopted", "deploy", "release", "regen", "review", "research", "models", "board", "ci", "github", "decisions", "generated", "run", "approvals", "names", "deps", "plan", "checks", "system", "naming"],
       "security": ["secrets", "content", "threatModel", "check"]
     },
     "index": "index.md",
@@ -771,6 +778,10 @@
       "PROFILE-RULE": {
         "level": "error",
         "fix": "set docs.rules entries to a HOUSE-* code and one of error, warning, off"
+      },
+      "PROFILE-NAMING": {
+        "level": "error",
+        "fix": "set naming.tokens (system: 2-6 lower-case letters or digits; org and zone: DNS labels), domains as lower-case plural nouns, vocabulary words as lower-case words, none of them banned (docs: Naming)"
       },
       "PROFILE-KIND": {
         "level": "error",
@@ -1585,6 +1596,22 @@
     "changes": {
       "2": "intents ship # Increments with ids I-<n>.<k>; work items are bolts B-<n> under bolts/; modules take a kind; the profile takes system (docs: Canonical model)"
     }
+  },
+  "naming": {
+    "tokens": {
+      "system": { "pattern": "^[a-z][a-z0-9]{1,5}$", "rule": "2-6 lower-case letters or digits" },
+      "org": { "pattern": "^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$", "rule": "a DNS label" },
+      "zone": { "pattern": "^(?=.{1,253}$)[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$", "rule": "a DNS name" }
+    },
+    "word": "^[a-z][a-z0-9]*$",
+    "vocabularies": {
+      "role": ["api", "worker", "job", "ui", "cli", "agent", "gateway"],
+      "env": ["dev", "test", "stage", "prod"],
+      "pipeline": ["ingress", "authentication", "authorization", "admission", "ratelimit", "routing"],
+      "foundation": ["config", "database", "transport", "contract", "workloadidentity", "events", "telemetry"],
+      "verb": ["get", "list", "create", "update", "delete", "register", "unregister", "evaluate", "cancel"]
+    },
+    "banned": ["manager", "service", "frontdoor", "portal", "store", "common", "util", "utils", "helper", "helpers", "misc", "base", "core", "data", "info", "stuff", "thing"]
   },
   "vocabulary": {
     "words": [

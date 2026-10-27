@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M16 B160: the naming registry: the profile's `naming` (tokens, domains, closed vocabularies, banned words) over the CLI's defaults, with each domain doc's code registered; `PROFILE-NAMING` checks it, and `init` takes `--system-code`, `--org` and `--zone` ([Naming](design/naming.md)). Release 0.131.0.
 - **Update** M15 B159: the plugin's docs and templates speak the canonical model: [Architecture model](design/architecture-model.md) absorbs the slice-architecture doc, the unit card doc is the [Bolt card](design/bolt-card.md), `init` writes bolt, system, domain, fact and module templates in place of the unit and hand-drawn architecture ones, and constitution rule 9 says domains own their data, quoting the owner. M15 is built. Release 0.130.0.
 - **Update** M15 B158: on the base (`check --ci`, the merge gate) a stale index or a broken link is an error unless the profile sets its level; a test keeps each design doc and roadmap draft exactly while it names a bolt not yet built, and about 25 statuses are corrected ([OKF validation](design/okf-validation.md)). Release 0.129.0.
 - **Update** M15 B157: one slug generator names every doc from its title (no apostrophes or number commas, at most 48 characters, cut at a word), used by `new` and `fix`; a file named by an ID whose slug is not its title's is `DOC-SLUG`; this repo's eight misnamed decisions are renamed, IDs kept ([Bundle v2](design/bundle.md)). Release 0.128.0.

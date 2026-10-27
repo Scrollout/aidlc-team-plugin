@@ -6,6 +6,7 @@ import { bundleOf, config, done, isMap, list, UsageError, relPath } from './conf
 import { finding as codeFinding, msg } from './template.mjs';
 import { loadProfile } from './profile.mjs';
 import { kindProblems } from './vocab.mjs';
+import { namingProblems } from './naming.mjs';
 
 const OKF = config.okf;
 
@@ -630,6 +631,7 @@ export const commands = {
     if (open.length) findings.push(finding('PROFILE-ARCH', 'warning', at, 1, 'archNoApi', { modules: open.join(', ') }));
     // Every module has a kind: an error on a v2 profile (it has system), a warning on a v1 one until it migrates (docs/design/architecture-model.md).
     for (const [key, data] of kindProblems(profile)) findings.push(finding('PROFILE-KIND', profile.system ? 'error' : 'warning', at, 1, key, data));
+    for (const [key, data] of namingProblems(profile)) findings.push(finding('PROFILE-NAMING', 'error', at, 1, key, data)); // the registry names everything (docs/design/naming.md)
     if ((profile.modules ?? []).length && ![profile.names ?? []].flat().length) findings.push(finding('PROFILE-NAMES', 'warning', config.layers.find((l) => l.from === 'project').path, 1, 'namesNone', {}));
     const given = args.filter((a) => !a.startsWith('--'));
     const paths = given.length ? given.map((a) => resolve(cwd, a)) : [bundle];

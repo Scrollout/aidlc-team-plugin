@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { config } from '../plugin/cli/lib/config.mjs';
 import { lintPlan, readPlan } from '../plugin/cli/lib/grid.mjs';
 import { branchOf } from '../plugin/cli/lib/state.mjs';
-import { I1, U, approve, intentDoc, makeRepo, pinnedRepo, read, run, unitDoc } from './state-repo.mjs';
+import { I1, U, approve, git, intentDoc, makeRepo, pinnedRepo, read, run, unitDoc } from './state-repo.mjs';
 
 test('B153/AC-1 new bolt writes B-<n> under bolts/, numbered on from every unit and bolt, named from its title', () => {
   const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['a/**'] }), [U(2)]: unitDoc({ scope: ['b/**'] }) });
@@ -115,4 +115,32 @@ test('B157/AC-1 a doc named by an id carries the slug of its title: lower case, 
     'docs/units/U-5-contract-specs-compiled-from-typespec-wi.md:1 DOC-SLUG U-5-contract-specs-compiled-from-typespec-wi.md is not named from its title: U-5-contract-specs-compiled-from-typespec-with.md (warning)',
   ], 'a v1 bundle: warnings');
   assert.ok(slugs({ system: { core: ['src/**'] } }).every((l) => l.endsWith('(error)')), 'a v2 bundle: errors');
+});
+
+test('B160/AC-1 the profile naming registry is checked: tokens by their rule, domains and vocabulary words as lower-case words, none banned', async () => {
+  const { registry } = await import('../plugin/cli/lib/naming.mjs');
+  const naming = (n) => run(makeRepo(I1, { naming: n }), ['check']).out.split('\n').filter((l) => /PROFILE-NAMING/.test(l)).map((l) => l.replace(/^\S+ PROFILE-NAMING /, '').replace(/ → .*$/, ''));
+  assert.deepEqual(naming({ tokens: { system: 'rsm', org: 'acme', zone: 'example.internal' }, domains: { providers: {} }, vocabularies: { role: ['api'] } }), []);
+  assert.deepEqual(naming({ tokens: { system: 'ResourceManager', org: 'Acme Inc', zone: 'localhost' }, domains: { Providers: {}, store: {} }, vocabularies: { role: ['api-gw', 'manager'] } }), [
+    'naming.tokens.system is ResourceManager, not 2-6 lower-case letters or digits',
+    'naming.tokens.org is Acme Inc, not a DNS label',
+    'naming.tokens.zone is localhost, not a DNS name',
+    'naming domain Providers is not a lower-case word (the plural noun of its root aggregate)',
+    'naming domain store is a banned word',
+    'naming vocabulary role holds api-gw, not a lower-case word',
+    'naming vocabulary role manager is a banned word',
+  ]);
+  const dir = makeRepo({ 'docs/domains/quotas.md': '---\ntype: Domain\ntitle: Quotas\ndescription: Quotas.\ncode: quotas\nkind: domain\n---\n' }, { naming: { domains: { providers: {} } } });
+  const reg = registry({ naming: { domains: { providers: {} }, banned: ['thingy'] } }, join(dir, 'docs'));
+  assert.deepEqual(Object.keys(reg.domains).sort(), ['providers', 'quotas'], 'a domain doc registers its code');
+  assert.ok(reg.banned.includes('manager') && reg.banned.includes('thingy'), 'the project adds to the default list');
+  assert.ok(reg.vocabularies.pipeline.includes('ingress'), 'the defaults fill what the profile leaves out');
+});
+
+test('B160/AC-2 init takes the system code, org and zone into the profile naming tokens', () => {
+  const dir = makeRepo({});
+  git(dir, 'rm', '-q', '.aidlc/profile.json');
+  const r = run(dir, ['init', '--name', 'p', '--base', 'main', '--bundle', 'docs', '--system-code', 'rsm', '--org', 'acme', '--zone', 'example.internal']);
+  assert.equal(r.code, 0, r.err);
+  assert.deepEqual(JSON.parse(read(dir, '.aidlc/profile.json')).naming, { tokens: { system: 'rsm', org: 'acme', zone: 'example.internal' } });
 });
