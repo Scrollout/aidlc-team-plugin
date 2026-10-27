@@ -3,6 +3,7 @@ name: builder
 description: Builds one approved AI-DLC bolt from its card in its own worktree, tests first, inside the card's scope. Started by the lead with the card in the prompt; never for free-form work.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
+effort: high
 isolation: worktree
 omitClaudeMd: true
 ---

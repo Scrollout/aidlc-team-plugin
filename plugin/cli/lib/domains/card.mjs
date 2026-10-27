@@ -104,7 +104,7 @@ function renderCard(cwd, unitId, { preview = false } = {}) {
   // A fix round lists the findings of every focus whose last verdict for the current diff is `fix`; answered ones follow.
   const focuses = [...new Set((review?.rounds ?? []).map((r) => r.focus ?? config.state.focus))];
   const listed = (verdict) => focuses.map((f) => roundsOf(review, f).at(-1)).filter((r) => hashNow !== null && r.diffHash === hashNow && r.verdict === verdict)
-    .flatMap((r) => (r.findings ?? []).map((f) => msg('cardFinding', { path: '', line: '', claim: '', scenario: '', confidence: '', ...f, focus: r.focus ?? config.state.focus })));
+    .flatMap((r) => (r.findings ?? []).map((f) => msg('cardFinding', { id: '-', path: '', line: '', claim: '', scenario: '', confidence: '', ...f, focus: r.focus ?? config.state.focus })));
   const fixes = listed(VERDICT.fix);
   const answered = listed(config.state.answered); // an escalation the owner's re-approval answered
   const modules = new Set(atBase.modules);
@@ -172,7 +172,7 @@ export function cardsOver(cwd, ids) {
 }
 
 // The researcher's brief: the held question and the project's own context, never a plugin source list (decision 0010).
-function researchBrief(cwd, id) {
+export function researchBrief(cwd, id) {
   const st = readState(cwd);
   const doc = id ? heldDoc(st, id) : null;
   const question = doc && researchOf(doc);

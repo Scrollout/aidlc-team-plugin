@@ -121,7 +121,7 @@ function parseObject(text, name) {
 const usage = (key) => { throw new UsageError(msg(key, {})); };
 
 // The intent reviewer's brief: the request, the intent and its requirements, and what to check.
-function intentBrief(cwd, id) {
+export function intentBrief(cwd, id) {
   const { profile } = loadProfile(cwd), bundle = bundleOf(cwd, profile), plan = readPlan(bundle), intent = plan.intents.find((i) => i.id === id);
   if (!intent) throw new UsageError(msg('reviewNoIntent', { intent: id }));
   const dir = join(bundle, config.okf.bundle.folders.Request ?? ''), requests = existsSync(dir) ? readdirSync(dir).filter((f) => list(intent.fm.request).some((q) => f.startsWith(`${q}-`))) : [];
@@ -197,6 +197,12 @@ export const commands = {
     const sent = sha256(JSON.stringify({ verdict: data.verdict, findings: data.findings ?? [] }));
     const stored = readJson(target)?.rounds ?? [], last = roundsOf({ rounds: stored }, focus).at(-1);
     const retry = Boolean(last && verdictCurrent(last, hash, readJson(runtimeFile(cwd, 'reports', unit))) && last.sent === sent), prior = stored.filter((r) => !(retry && r === last));
+    // Findings keep their ids per focus: each one the last fix round left open is answered, listed again with its id or named in `fixed`.
+    const before = roundsOf({ rounds: prior }, focus), open = before.at(-1)?.verdict === VERDICT.fix ? (before.at(-1).findings ?? []).map((f) => f.id).filter(Boolean) : [];
+    const relisted = new Set((data.findings ?? []).map((f) => f.id).filter(Boolean)), unanswered = data.verdict === VERDICT.pass ? [] : open.filter((id) => !list(data.fixed).includes(id) && !relisted.has(id)); // a pass answers them all
+    if (unanswered.length) throw new UsageError(msg('reviewUnanswered', { unit, focus, ids: unanswered.join(', ') }));
+    let numbered = Math.max(0, ...before.flatMap((r) => (r.findings ?? []).map((f) => Number(String(f.id ?? '').slice(2)) || 0)));
+    const keep = (f) => (f.id && open.includes(f.id) ? f : { ...f, id: `F-${++numbered}` });
     // A `fix` that would start fix round `review.fixRounds + 1` in its focus since the unit's last approval
     // becomes `escalate`: the owner decides (U33).
     const planUnit = readPlan(bundleOf(cwd, profile)).units.find((u) => u.id === unit);
@@ -214,7 +220,7 @@ export const commands = {
     // A reviewer's own escalate is a fix round first, until the limit (U38).
     const verdict = [VERDICT.fix, VERDICT.escalate].includes(data.verdict) ? (round > limit ? VERDICT.escalate : VERDICT.fix) : data.verdict;
     const card = readJson(runtimeFile(cwd, 'cards', unit))?.hash ?? null, commit = git(cwd, 'rev-parse', branchOf(unit)); // a kept pass is measured from the commit (U34)
-    writeJson(target, { unit, rounds: [...prior, { ...data, focus, verdict, card, diffHash: hash, commit, sent, at: new Date().toISOString() }] });
+    writeJson(target, { unit, rounds: [...prior, { ...data, findings: (data.findings ?? []).map(keep), focus, verdict, card, diffHash: hash, commit, sent, at: new Date().toISOString() }] });
     if (verdict === VERDICT.escalate && !retry) bump(cwd, 'escalations', config.retro.reasons.review);
     // This review is no longer in flight; reviewers of other focuses still are (U125).
     const flight = join(aidlcDir(cwd), S.reviewing, unit);

@@ -348,7 +348,7 @@
     "nextNoIntent": "keep the owner's request word for word with aidlc intake \"<their words>\", then elaborate an intent with the owner in {{dir}}/I-1-<slug>.md that records its request, pathway and lane, then ask for approval",
     "nextOpenDraft": "finish elaborating {{doc}} with the owner: {{points}} still open in {{file}}; then ask for approval",
     "nextOpenIntent": "finish elaborating {{doc}} with the owner: {{points}} still open in {{file}}; meanwhile draft the decisions it needs from .aidlc/templates/docs/decision.md, linked from it, so the owner sees the how with the what; then ask for approval",
-    "nextReviewIntent": "start a reviewer on the intent before the owner approves it: its brief is aidlc review {{intent}}, and it records with aidlc review record {{intent}} -",
+    "nextReviewIntent": "start a reviewer on the intent before the owner approves it, prompt Review {{intent}}. (a hook adds the brief aidlc review {{intent}} prints); it records with aidlc review record {{intent}} -",
     "nextApproveReviewed": "ask the owner to approve {{intent}}, with the intent review's findings for them to weigh ({{findings}}): aidlc approve {{intent}} (the owner confirms the prompt or types: approve {{intent}})",
     "nextApproveIntent": "ask the owner to approve {{intent}}: aidlc approve {{intent}} (the owner confirms the prompt or types: approve {{intent}})",
     "nextFinishDecision": "finish {{doc}}, which {{intent}} links, with the owner before its bolts: {{points}}",
@@ -429,10 +429,11 @@
     "recordedEscalate": "recorded {{what}} for {{unit}}: fix round {{round}} in focus {{focus}} would pass the limit of {{limit}} since the owner's last approval, so the owner decides\n",
     "reviewUsage": "usage: review I-<n> (an intent reviewer's brief), or review record <bolt|intent> <file|->",
     "reviewNoIntent": "no intent {{intent}} in the plan",
+    "reviewUnanswered": "{{unit}} {{focus}}: the last round's {{ids}} are not answered; list each again with its id while it holds, or name it in \"fixed\"",
     "recordedIntentReview": "recorded the intent review of {{intent}}: {{count}} findings, advice for the owner at the approval\n",
-    "cardFixes": "## Findings to fix\n{{list}}",
+    "cardFixes": "## Findings to fix\nThe next review answers each by its id: listed again with the id while it holds, or named in \"fixed\": [\"F-<k>\"] in its JSON.\n{{list}}",
     "cardAnswered": "## Findings the owner answered by re-approving\nThe owner kept or changed the spec after these escalated; report each again only if it still holds against the spec as it is now.\n{{list}}",
-    "cardFinding": "- {{focus}} {{confidence}} {{path}}:{{line}}: {{claim}} ({{scenario}})\n",
+    "cardFinding": "- {{id}} {{focus}} {{confidence}} {{path}}:{{line}}: {{claim}} ({{scenario}})\n",
     "cardRequirement": "{{id}} {{path}}",
     "reqNone": "{{doc}} cites no requirement",
     "moduleUnknown": "{{unit}} names module {{module}}, which profile.modules lacks (has: {{modules}})",
@@ -617,6 +618,10 @@
     "scopeApproval": "{{path}}: approvals and verified_hash are the owner's",
     "secretFound": "{{path}} contains what looks like a secret",
     "modelUnit": "{{agent}} prompt names no bolt",
+    "modelCard": "{{agent}} for {{unit}} has no brief to read: {{why}}",
+    "guardSubagent": "{{agent}} may not run aidlc {{command}}; its role runs {{allowed}}",
+    "launchBuild": "Build {{unit}}.\n\n",
+    "launchReview": "Review {{unit}}, focus {{focus}}.\n\n",
     "modelMismatch": "{{agent}} for {{unit}} uses {{model}}, {{source}} says {{expected}}",
     "modelSourceCard": "the card's Model: line",
     "modelSourceReview": "the profile's models.review",
@@ -659,7 +664,7 @@
   },
   "okf": {
     "profileKeys": {
-      "top": ["name", "base", "docs", "levels", "modules", "lanes", "focus", "security", "shared", "reserve", "parallel", "architecture", "adopted", "deploy", "release", "regen", "review", "research", "models", "board", "ci", "github", "decisions", "generated", "run", "approvals", "names", "deps", "plan", "checks", "system", "naming"],
+      "top": ["name", "base", "docs", "levels", "modules", "lanes", "focus", "security", "shared", "reserve", "parallel", "architecture", "adopted", "deploy", "release", "regen", "review", "research", "models", "efforts", "board", "ci", "github", "decisions", "generated", "run", "approvals", "names", "deps", "plan", "checks", "system", "naming"],
       "security": ["secrets", "content", "threatModel", "check"]
     },
     "index": "index.md",
@@ -1462,7 +1467,16 @@
     "researcher": ":researcher",
     "before": "PreToolUse",
     "clearSource": "clear",
-    "researchFor": "^# Research for (\\S+)",
+    "researchFor": "^(?:# )?Research (?:for )?([A-Z]-\\d+|\\d{4}|[\\w-]+?)\\.?$",
+    "intentPattern": "\\bI-\\d+\\b",
+    "headMax": 120,
+    "focusPattern": "\\bfocus (\\w+)",
+    "subagentCommands": {
+      "builder": ["card", "start", "report", "check", "lane", "name", "scaffold", "graph", "status"],
+      "reviewer": ["review", "card", "check", "lane", "graph", "status"],
+      "researcher": [],
+      "other": ["status", "check", "lane", "graph"]
+    },
     "denials": "denials.json",
     "escalateAt": 3,
     "git": {
@@ -1596,6 +1610,9 @@
       },
       "MODEL-MISMATCH": {
         "fix": "pass the model the card names (aidlc card)"
+      },
+      "GUARD-SUBAGENT": {
+        "fix": "leave it to the lead: a subagent runs only its role's aidlc commands (hooks.subagentCommands) and returns its result"
       }
     },
     "noPrompt": "bypassPermissions",

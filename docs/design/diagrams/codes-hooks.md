@@ -27,3 +27,4 @@ generated: { by: tests/diagrams.mjs }
 | `SECRET` | keep secrets out of the repo; read them from the environment |
 | `MODEL-UNIT` | name the bolt U-<n> in the prompt and start it from its card |
 | `MODEL-MISMATCH` | pass the model the card names (aidlc card) |
+| `GUARD-SUBAGENT` | leave it to the lead: a subagent runs only its role's aidlc commands (hooks.subagentCommands) and returns its result |

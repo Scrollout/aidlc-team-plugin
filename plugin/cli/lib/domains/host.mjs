@@ -14,6 +14,8 @@ import { nextAction, readState, statusText } from './flow.mjs';
 import { commands as owner, delegated } from './approval.mjs';
 import { baseOf, aidlcDir, bump, heartbeatFresh, hostDeniedFile, runtimeFile, writeJson } from '../foundation/store.mjs';
 import { directAllowed, mergeWritten, secretIn } from './gate.mjs';
+import { commands as cards, researchBrief } from './card.mjs';
+import { intentBrief } from './review.mjs';
 
 const H = config.hooks;
 const S = config.state;
@@ -67,6 +69,8 @@ function gitCall(argv) {
 const opt = (a, names) => names.some((o) => a === o || (o.startsWith('--') && /^--[^=]{2}/.test(a) && o.startsWith(a.split('=')[0])));
 // Any path ending in the CLI's name, with `/` or `\\` or none left after the shell's unescaping: a Windows path must not slip past (U81).
 const isCli = (a) => H.cli.some((c) => a.endsWith(c));
+// The plugin role of the subagent making a call, `other` for another subagent, or null for the lead.
+const subagentRole = (input) => (input.agent_type ? Object.keys(H.subagentCommands).find((r) => String(input.agent_type).endsWith(`:${r}`)) ?? 'other' : null);
 // A ref that names a unit branch: `unit/U-1`, `refs/heads/unit/U-1`, `origin/unit/U-1`, or a range end.
 const unitRef = (r) => r.split(/\.{2,3}/).some((p) => new RegExp(`^(?:refs/(?:heads|remotes/[^/]+)/|heads/|[^/]+/)?(?:${S.branchPrefix}|${S.boltBranch})`).test(p));
 // The files a commit takes: the index, plus its pathspecs' changes (`-m x a.md`, `--only`, `--include`), plus `--all`'s.
@@ -163,6 +167,9 @@ function guard(input, cwd) {
     // A cd's folder is lost in a subshell, or when the cd itself is in a pipeline or a background job (U120).
     const lost = /[()]/.test(command) || ['|', '&'].includes(argv.sep) || all[k - 1]?.sep === '|';
     if (['cd', 'pushd'].includes(argv[0])) { const to = argv[1]?.replace(/^~(?=\/|$)/, homedir()); dir = dir && to && to !== '-' && !lost ? resolve(dir, to) : null; continue; }
+    // A subagent runs only its role's aidlc commands; the lead's stay the lead's (docs/design/intake.md#agents-get-exactly-their-brief).
+    const role = subagentRole(input), cli = argv.findIndex(isCli), run = cli >= 0 ? argv[cli + 1] : null;
+    if (role && run && !H.subagentCommands[role].includes(run)) return deny(cwd, input, 'GUARD-SUBAGENT', 'guardSubagent', { agent: role, command: run, allowed: H.subagentCommands[role].join(', ') || '-' });
     // The owner answers a permission prompt for an owner command; without prompts (bypass) it stays a `!` command (decision 0009).
     const owner = ownerCommand(argv);
     if (owner) {
@@ -265,28 +272,52 @@ function secrets(input, cwd) {
   return allow();
 }
 
+// The subagent reads exactly the brief the CLI renders at launch, at its role's effort (docs/design/intake.md#agents-get-exactly-their-brief).
+function launch(input, prompt, effort) {
+  return JSON.stringify({ hookSpecificOutput: { hookEventName: H.before, permissionDecision: 'allow', updatedInput: { ...input.tool_input, prompt, effort } } });
+}
+// The brief a renderer returns, or the reason it gave none.
+function brief(render) {
+  try { return { text: render() }; } catch (e) { return { why: e.message }; }
+}
+
 function model(input, cwd) {
-  const t = input.tool_input ?? {};
-  const agent = String(t.subagent_type ?? '');
+  const t = input.tool_input ?? {}, prompt = String(t.prompt ?? '');
+  const agent = String(t.subagent_type ?? ''), profile = withDefaults(loadProfile(cwd).profile);
   if (agent.endsWith(H.researcher)) {
-    const expected = withDefaults(loadProfile(cwd).profile).models.research;
-    const doc = String(t.prompt ?? '').match(new RegExp(H.researchFor, 'm'))?.[1];
-    if (t.model === expected && doc) touch(join(aidlcDir(cwd), S.researching, doc)); // in flight from launch, as a builder
-    return t.model === expected ? allow() : deny(cwd, input, 'MODEL-MISMATCH', 'modelMismatch', { agent, unit: msg('researchFor', {}), model: t.model ?? 'none', expected, source: msg('modelSourceResearch', {}) });
+    const expected = profile.models.research;
+    const doc = prompt.match(new RegExp(H.researchFor, 'm'))?.[1];
+    if (t.model !== expected) return deny(cwd, input, 'MODEL-MISMATCH', 'modelMismatch', { agent, unit: msg('researchFor', {}), model: t.model ?? 'none', expected, source: msg('modelSourceResearch', {}) });
+    const b = doc ? brief(() => researchBrief(cwd, doc)) : { why: msg('modelUnit', { agent }) };
+    if (!b.text) return deny(cwd, input, 'MODEL-UNIT', 'modelCard', { agent, unit: doc ?? '-', why: b.why });
+    touch(join(aidlcDir(cwd), S.researching, doc)); // in flight from launch, as a builder
+    return launch(input, b.text, profile.efforts.research);
   }
   const role = H.agents.find((a) => agent.endsWith(a));
   if (!role) return allow();
-  const unit = String(t.prompt ?? '').match(new RegExp(H.unitPattern))?.[0];
+  const unit = prompt.match(new RegExp(H.unitPattern))?.[0];
+  // A reviewer on an intent reads the intent review brief (docs/design/intake.md#review-before-approval).
+  const intent = role === H.agents[1] && !unit ? prompt.match(new RegExp(H.intentPattern))?.[0] : null;
+  if (intent) {
+    if (t.model !== profile.models.review) return deny(cwd, input, 'MODEL-MISMATCH', 'modelMismatch', { agent, unit: intent, model: t.model ?? 'none', expected: profile.models.review, source: msg('modelSourceReview', {}) });
+    const b = brief(() => intentBrief(cwd, intent));
+    return b.text ? launch(input, b.text, profile.efforts.review) : deny(cwd, input, 'MODEL-UNIT', 'modelCard', { agent, unit: intent, why: b.why });
+  }
   if (!unit) return deny(cwd, input, 'MODEL-UNIT', 'modelUnit', { agent });
-  const card = readJson(runtimeFile(cwd, 'cards', unit));
-  const expected = role === H.agents[0] ? card?.model : withDefaults(loadProfile(cwd).profile).models.review;
+  // The card is rendered now, so the model it names and the brief the agent reads are current.
+  const rendered = cards.card([unit], { cwd });
+  if (rendered.code !== config.exit.ok) return deny(cwd, input, 'MODEL-UNIT', 'modelCard', { agent, unit, why: rendered.output.trim() });
+  const expected = role === H.agents[0] ? readJson(runtimeFile(cwd, 'cards', unit))?.model : profile.models.review;
   if (!expected) return deny(cwd, input, 'MODEL-UNIT', 'modelUnit', { agent });
   const source = msg(role === H.agents[0] ? 'modelSourceCard' : 'modelSourceReview', {});
   if (t.model !== expected) return deny(cwd, input, 'MODEL-MISMATCH', 'modelMismatch', { agent, unit, model: t.model ?? 'none', expected, source });
   if (role === H.agents[1]) launchReviewer(cwd, unit);
   else touch(join(aidlcDir(cwd), S.heartbeats, unit)); // in flight from launch: next waits for it
   if (role === H.agents[0]) touch(join(aidlcDir(cwd), S.launches, unit)); // takes over a stopped builder's unit
-  return allow();
+  // The lead's first line stays when it names the bolt (a build, a fix round, a restart, a review and its focus); the card follows it.
+  const first = prompt.split('\n')[0].trim();
+  const head = first.includes(unit) && first.length <= H.headMax ? `${first}\n\n` : role === H.agents[0] ? msg('launchBuild', { unit }) : msg('launchReview', { unit, focus: prompt.match(new RegExp(H.focusPattern))?.[1] ?? S.focus });
+  return launch(input, head + rendered.output, role === H.agents[0] ? profile.efforts.build : profile.efforts.review);
 }
 
 // A `generated.at` the edit wrote far from the current UTC time (a local time marked Z) becomes the current UTC second.

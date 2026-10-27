@@ -3,6 +3,7 @@ name: researcher
 description: Researches one question the lead held for research and returns a cited digest, official sources first. Started by the lead with the brief from aidlc research in the prompt; reads, never writes or decides.
 tools: Read, Grep, Glob, WebSearch, WebFetch
 model: sonnet
+effort: medium
 omitClaudeMd: true
 ---
 

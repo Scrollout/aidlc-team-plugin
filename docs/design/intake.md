@@ -45,11 +45,15 @@ Method 9, for intents in a v2 project:
 - **The findings:** they stay advice. `next` lists them for the owner to weigh at the approval, and they block nothing: soft on the verdict.
 
 # Agents get exactly their brief
-- A hook renders the card or research brief from the CLI as the subagent's prompt, bound to the card's hash.
-- A review round's findings keep their ids: the next round answers each, fixed or still open.
-- A subagent cannot run the lead's commands (approve, merge, next).
-- Each agent carries its effort, the reviewer's measured.
-- Project rules can be scoped to a role.
+- **The brief:** the `Agent` hook renders what the subagent reads and replaces the lead's prompt with it at launch:
+  - a builder's: `Build B-<n>.` and the card;
+  - a reviewer's: `Review B-<n>, focus <focus>.` and the card, or the intent review brief for `I-<n>`;
+  - a researcher's: the research brief.
+
+  The lead's prompt only names the target and the focus.
+- **Effort:** each role's effort is `efforts.<role>` in the profile (build `high`, review `medium`, research `medium` by default), set on every launch; each agent's front matter carries the same as a fallback.
+- **Finding ids:** the CLI numbers a bolt's review findings per focus (`F-<k>`). The next `fix` or `escalate` round answers each one the last round left open: listed again with its id while it holds, or named in `fixed`; one it leaves unanswered refuses the round. A `pass` answers them all.
+- **Lead commands:** a subagent runs only its role's `aidlc` commands (`hooks.subagentCommands`); any other is `GUARD-SUBAGENT`.
 
 # Brownfield
 The brownfield pathway adds two steps: `business` (the transactions the code serves, drawn over the domains) and `baseline` (the suite passing on the base, its debt noted).

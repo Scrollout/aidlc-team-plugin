@@ -109,8 +109,11 @@ export function merge(dir, unit) {
 export function review(dir, unit, verdict, findings = []) {
   // A fix round ends with the builder's report before the next review; without one the same verdict is a retry (U133).
   if (existsSync(join(dir, `.git/aidlc/reviews/${unit}.json`))) run(dir, ['report', unit], '{"status": "done"}');
+  // A later round answers the last round's open findings as fixed unless the test lists them again (B219).
+  const last = JSON.parse(existsSync(join(dir, `.git/aidlc/reviews/${unit}.json`)) ? readFileSync(join(dir, `.git/aidlc/reviews/${unit}.json`), 'utf8') : '{}').rounds?.at(-1);
+  const fixed = (last?.findings ?? []).map((f) => f.id).filter((id) => id && !findings.some((f) => f.id === id));
   const file = join(tempDir('verdict-'), 'verdict.json');
-  writeFileSync(file, JSON.stringify({ verdict, findings }));
+  writeFileSync(file, JSON.stringify({ verdict, findings, fixed }));
   const r = run(dir, ['review', 'record', unit, file]);
   if (r.code !== 0) throw new Error(r.err);
 }

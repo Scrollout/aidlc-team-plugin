@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.163.0] - 2026-10-27
+### Added
+- The `Agent` hook delivers each subagent's brief: it renders the card, the intent review brief or the research brief at launch and makes it the prompt (the lead's first line kept when it names the bolt), at the role's effort from the new profile key `efforts` (build `high`, review and research `medium`); the agents' front matter carries the same as a fallback.
+- Review findings keep their ids per focus (`F-<k>`): a fix or escalate round answers each one the last round left open, listed again with its id or named in `fixed`, else it is refused; a pass answers them all. The card shows the ids.
+- `GUARD-SUBAGENT`: a subagent runs only its role's `aidlc` commands (`hooks.subagentCommands`).
+### Changed
+- The skill starts agents with a one-line prompt (`Build B-<n>.`, `Review B-<n>, focus <f>.`, `Review I-<n>.`, `Research <id>.`); the hook adds the rest.
+
 ## [0.162.0] - 2026-10-27
 ### Added
 - Method 9: an intent is reviewed before the owner approves it. `next` asks for the review, `aidlc review I-<n>` prints the reviewer's brief (the request, the intent and its requirements, and what to check), and `aidlc review record I-<n> -` with focus `intent` keeps the hash of the docs it read. The approval refuses without a review of the docs as they are now (`APPROVE-REVIEW`); the findings are listed for the owner at the approval and block nothing.
@@ -207,7 +215,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.162.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.163.0...HEAD
+[0.163.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.162.0...v0.163.0
 [0.162.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.161.0...v0.162.0
 [0.161.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.160.0...v0.161.0
 [0.160.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.159.0...v0.160.0

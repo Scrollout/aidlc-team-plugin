@@ -362,7 +362,7 @@ test('U38/AC-1 a reviewer escalate within review.fixRounds is recorded as fix an
   const dir = twoUnits();
   approve(dir, 'I-1', 'U-1', 'U-2');
   branch(dir, 'U-1');
-  const record = (verdict) => run(dir, ['review', 'record', 'U-1', '-'], JSON.stringify({ verdict, findings: [{ path: 'a/x', line: 1, claim: 'the card cannot be met', scenario: 's', confidence: 'CONFIRMED' }] })).out;
+  const record = (verdict) => run(dir, ['review', 'record', 'U-1', '-'], JSON.stringify({ verdict, findings: [{ path: 'a/x', line: 1, claim: 'the card cannot be met', scenario: 's', confidence: 'CONFIRMED' }], fixed: ['F-1', 'F-2', 'F-3', 'F-4'] })).out; // each round answers the last's findings (B219)
   assert.match(record('escalate'), /^recorded fix for U-1: a reviewer escalate is a fix round first \(fix round 1 of 3\); the builder fixes it or stops on its card's stop conditions$/m);
   assert.match(run(dir, ['next']).out, /^fix round for U-1/);
   const again = (verdict) => (run(dir, ['report', 'U-1'], '{"status": "done"}'), record(verdict)); // the builder reported in between
@@ -377,7 +377,7 @@ test('U133/AC-1 the same verdict recorded again for the same diff replaces its r
   approve(dir, 'I-1', 'U-1', 'U-2');
   branch(dir, 'U-1');
   const finding = { path: 'a/x', line: 1, claim: 'c', scenario: 's', confidence: 'PLAUSIBLE' };
-  const record = (findings) => run(dir, ['review', 'record', 'U-1', '-'], JSON.stringify({ verdict: 'fix', findings })).out;
+  const record = (findings) => run(dir, ['review', 'record', 'U-1', '-'], JSON.stringify({ verdict: 'fix', findings, fixed: ['F-1', 'F-2', 'F-3', 'F-4'] })).out; // each round answers the last's findings (B219)
   assert.match(record([finding]), /fix round 1 of 3/);
   assert.match(record([finding]), /fix round 1 of 3/, 'a retried call');
   assert.equal(JSON.parse(read(dir, '.git/aidlc/reviews/U-1.json')).rounds.length, 1);

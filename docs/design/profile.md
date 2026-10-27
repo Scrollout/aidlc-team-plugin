@@ -32,7 +32,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T21:50:00Z }
 
 # Rule layers
 Merged in order, later wins, except that a `deny` in an earlier layer cannot be removed (`cli.json` `layers`):
-1. plugin defaults (`plugin/cli/defaults.json`: base, bundle, parallel, research, review, levels, models, board, ci, plan), beside the CLI so a project's pinned copy carries them
+1. plugin defaults (`plugin/cli/defaults.json`: base, bundle, parallel, research, review, levels, models, efforts, board, ci, plan), beside the CLI so a project's pinned copy has it
 2. project: `.aidlc/profile.json`, `.aidlc/rules/*.md`
 3. personal: `.aidlc/local/profile.json` (untracked); only this layer may delegate approvals ([0008](../decisions/0008-delegated-approvals.md))
 
@@ -57,15 +57,15 @@ Merge rules:
   - `.github/workflows/aidlc.yml`, with the runner and the checkout and setup-node pins the project's workflows already use (defaults in `init.workflow`).
   - `.github/dependabot.yml`, weekly bumps for the workflow actions ([Current dependencies](dependencies.md)).
 
-  It also adds `.aidlc/local/` and `.claude/worktrees/` to `.gitignore` and the worktree folder to every other ignore file (`init.ignoreFiles`), so tools skip it, and sets `worktree.baseRef: "head"` in `.claude/settings.json`.
+  It also adds `.aidlc/local/` and `.claude/worktrees/` to `.gitignore`, the worktree folder to every other ignore file (`init.ignoreFiles`), and `worktree.baseRef: "head"` to `.claude/settings.json`.
 - `security.content`: regexes for code that needs a security review wherever it sits (RLS, TLS skips); a line adding one requires the `security` focus ([Merge mechanics](gate.md)). `security.secrets` is for credentials: the write hook blocks them.
 - `check` warns `PROFILE-KEY` for a top-level or `security` key in a layer file that nothing reads, so a guessed key is not taken for a rule.
 - `levels.<name>.paths`: the test files (`**/*_test.go`), never a folder holding helpers, which are code the proof reverts.
-- `checks`: commands run on every merge: lint, format, static analysis. Each must be safe to run several at once, as the gate, builders and reviewers run in parallel.
+- `checks`: commands run on every merge (lint, format, static analysis), each safe to run several at once: the gate, builders and reviewers run in parallel.
 - `review.fixRounds`: fix rounds per focus before a `fix` escalates (default 3). `decisions.paths` and `generated`: [Plan lint](plan-lint.md#profile-keys-it-reads).
 - `names`: [Naming rules](naming.md); `deps`: [Current dependencies](dependencies.md); `deploy.platform`: [Operations](operations.md).
-- `research.sources` lists sources the owner trusts for the researcher, and `research.max` its source budget (default 8); `models.research` its model ([0010](../decisions/0010-research-for-open-questions.md)).
-- When the project has a lint target (`make lint`, `npm run lint` or `just lint`, from `grid.runners` and `init.lintTargets`), `init` offers it as a module check, for the owner to add to `modules[].check`; it writes nothing for it.
+- `research.sources` lists the sources the owner trusts, and `research.max` its source budget (default 8); `models.research` its model ([0010](../decisions/0010-research-for-open-questions.md)). `efforts`: each agent role's effort ([Intake](intake.md#agents-get-exactly-their-brief)).
+- A lint target (`make lint`, `npm run lint`, `just lint`; `grid.runners`, `init.lintTargets`) `init` only offers as a module check, for the owner to add to `modules[].check`.
 - `init` takes its answers as flags (`--name`, `--base`, `--bundle`); the skill asks the owner first. It never overwrites: it lists an existing file and exits 2 until the owner reruns with `--overwrite <path>`.
 - `init --adopt` keeps an existing bundle (the folder whose `index.md` has `okf_version`), records `adopted: <HEAD>` and reports, without changing anything:
   - spec errors and house-rule warnings;

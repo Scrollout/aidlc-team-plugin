@@ -130,7 +130,7 @@ test('U8/AC-6 the card lists cited requirements, next names each required focus,
   const finding = { path: 'src/auth/login.mjs', line: 1, claim: 'no rate limit', scenario: '1000 tries → no lockout', confidence: 'PLAUSIBLE' };
   run(dir, ['review', 'record', 'U-1', '-'], JSON.stringify({ verdict: 'fix', focus: 'security', findings: [finding] }));
   assert.match(run(dir, ['next']).out, /^fix round for U-1/);
-  assert.match(run(dir, ['card', 'U-1']).out, /^## Findings to fix\n- security PLAUSIBLE src\/auth\/login\.mjs:1: no rate limit \(1000 tries → no lockout\)$/m);
+  assert.match(run(dir, ['card', 'U-1']).out, /^- F-1 security PLAUSIBLE src\/auth\/login\.mjs:1: no rate limit \(1000 tries → no lockout\)$/m);
   run(dir, ['review', 'record', 'U-1', '-'], JSON.stringify({ verdict: 'pass', focus: 'security', findings: [] }));
   assert.match(run(dir, ['next']).out, /^merge U-1/);
   assert.doesNotMatch(run(dir, ['card', 'U-1']).out, /Findings to fix/);

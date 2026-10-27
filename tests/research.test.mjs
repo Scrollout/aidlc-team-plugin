@@ -12,9 +12,15 @@ test('U23/AC-1 the researcher has read and web tools only, and the model hook ho
   assert.match(agent, /^tools: Read, Grep, Glob, WebSearch, WebFetch$/m);
   assert.match(agent, /Official sources first/);
   assert.match(agent, /Mark each as secondary; none is the only support/);
-  const dir = makeRepo({}, { models: { research: 'haiku' } });
-  const hook = (model) => hookCall('model', { cwd: dir, session_id: 's', tool_name: 'Agent', tool_input: { subagent_type: 'aidlc-team:researcher', prompt: '# Research for U-1', model } }, { pinned: false }).json;
-  assert.deepEqual(hook('haiku'), {});
+  const dir = makeRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), 'docs/units/U-1-u1.md': unitDoc({ scope: ['sdk/**'] }) }, { models: { research: 'haiku' } });
+  approve(dir, 'I-1', 'U-1');
+  const hook = (model, prompt = 'Research U-1.') => hookCall('model', { cwd: dir, session_id: 's', tool_name: 'Agent', tool_input: { subagent_type: 'aidlc-team:researcher', prompt, model } }, { pinned: false }).json;
+  assert.match(hook('haiku').hookSpecificOutput.permissionDecisionReason, /^MODEL-UNIT aidlc-team:researcher for U-1 has no brief to read/, 'no question held');
+  run(dir, ['hold', 'U-1', 'research:', 'which proxy?']);
+  const launched = hook('haiku').hookSpecificOutput;
+  assert.equal(launched.permissionDecision, 'allow');
+  assert.match(launched.updatedInput.prompt, /^# Research for U-1\n\nQuestion: which proxy\?/, 'B219/AC-1 the hook delivers the brief the CLI renders');
+  assert.equal(launched.updatedInput.effort, 'medium', 'B219/AC-1 at the role\'s effort');
   assert.match(hook('opus').hookSpecificOutput.permissionDecisionReason, /^MODEL-MISMATCH aidlc-team:researcher for a research question uses opus, the profile's models\.research says haiku/);
 });
 

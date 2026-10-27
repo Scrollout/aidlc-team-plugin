@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { computeLane, config, readPlan } from '../plugin/cli/lib/index.mjs';
-import { approve, commit, makeRepo, read, run, write } from './state-repo.mjs';
+import { approve, branch, commit, hook, makeRepo, read, run, twoUnits, write } from './state-repo.mjs';
 
 const PROSE = `I run a small bakery and want customers to order cakes online. They should pay by credit card when they order!
 
@@ -197,7 +197,7 @@ test('B218/AC-1 a method 9 intent is reviewed before approval: next names review
   run(dir, ['intake', PROSE]);
   const goal = 'Customers order cakes online [Q-1.1].\nThey pay by card [Q-1.2, Q1], in one shop [A1].';
   commit(dir, 'plan', { 'docs/intents/I-1-cake-orders.md': cakes('request: [Q-1]\nrequirements: [R-1]\n', goal), 'docs/requirements/R-1-order-email.md': R1('When a customer orders, the bakery system shall email the baker [Q-1.4, Q-1.5].') });
-  assert.match(run(dir, ['next']).out, /^start a reviewer on the intent before the owner approves it: its brief is aidlc review I-1, and it records with aidlc review record I-1 -/);
+  assert.match(run(dir, ['next']).out, /^start a reviewer on the intent before the owner approves it, prompt Review I-1\. \(a hook adds the brief aidlc review I-1 prints\); it records with aidlc review record I-1 -/);
   assert.match(run(dir, ['approve', 'I-1']).err, /APPROVE-REVIEW: I-1 has no intent review of its docs as they are now: start a reviewer on aidlc review I-1/);
   const brief = run(dir, ['review', 'I-1']).out;
   assert.match(brief, /^# Intent review for I-1\n/);
@@ -216,4 +216,57 @@ test('B218/AC-1 a method 9 intent is reviewed before approval: next names review
   run(old, ['intake', PROSE]);
   commit(old, 'plan', { 'docs/intents/I-1-cake-orders.md': cakes('request: [Q-1]\nrequirements: [R-1]\nmethod: 8\n', goal), 'docs/requirements/R-1-order-email.md': R1('When a customer orders, the bakery system shall email the baker [Q-1.4, Q-1.5].') });
   assert.match(run(old, ['next']).out, /ask the owner to approve I-1/, 'a method 8 intent keeps its rules');
+});
+
+const launch = (dir, subagent_type, prompt, model) => hook('model', { cwd: dir, session_id: 's', hook_event_name: 'PreToolUse', tool_name: 'Agent', tool_input: { subagent_type, prompt, model, description: 'd' } }, { pinned: false }).json.hookSpecificOutput;
+
+test('B219/AC-1 the Agent hook replaces the lead\'s prompt with the brief the CLI renders, at the role\'s effort', () => {
+  const dir = twoUnits();
+  approve(dir, 'I-1', 'U-1');
+  run(dir, ['card', 'U-1']);
+  let out = launch(dir, 'aidlc-team:builder', 'Build U-1.', 'sonnet');
+  assert.equal(out.permissionDecision, 'allow');
+  assert.match(out.updatedInput.prompt, /^Build U-1\.\n\n# U-1 Unit\n/, 'the card follows the lead\'s line');
+  assert.equal(out.updatedInput.effort, 'high');
+  assert.equal(out.updatedInput.description, 'd', 'the other fields stay');
+  out = launch(dir, 'aidlc-team:builder', 'Fix round for U-1.\nanything the lead added', 'sonnet');
+  assert.match(out.updatedInput.prompt, /^Fix round for U-1\.\n\n# U-1 Unit\n/);
+  assert.doesNotMatch(out.updatedInput.prompt, /anything the lead added/, 'exactly the brief');
+  out = launch(dir, 'aidlc-team:reviewer', 'Review U-1, focus general.', 'opus');
+  assert.match(out.updatedInput.prompt, /^Review U-1, focus general\.\n\n# U-1 Unit\n/);
+  assert.equal(out.updatedInput.effort, 'medium');
+  assert.match(launch(dir, 'aidlc-team:builder', 'Build U-2.', 'sonnet').permissionDecisionReason, /^MODEL-UNIT aidlc-team:builder for U-2 has no brief to read: /, 'a draft bolt has no card, so no launch');
+  const v2 = makeRepo({}, V2);
+  run(v2, ['intake', PROSE]);
+  commit(v2, 'plan', { 'docs/intents/I-1-cake-orders.md': cakes('request: [Q-1]\n', 'Customers order cakes online [Q-1.1].') });
+  out = launch(v2, 'aidlc-team:reviewer', 'Review I-1.', 'opus');
+  assert.match(out.updatedInput.prompt, /^# Intent review for I-1\n/);
+  assert.equal(out.updatedInput.effort, 'medium');
+});
+
+test('B219/AC-2 review findings keep their ids across rounds: a fix round answers each open one, a pass answers them all', () => {
+  const dir = twoUnits();
+  approve(dir, 'I-1', 'U-1', 'U-2');
+  branch(dir, 'U-1');
+  const f = (claim, extra = {}) => ({ path: 'a/x', line: 1, claim, scenario: 's', confidence: 'PLAUSIBLE', ...extra });
+  const record = (data) => { run(dir, ['report', 'U-1'], '{"status": "done"}'); return run(dir, ['review', 'record', 'U-1', '-'], JSON.stringify({ verdict: 'fix', ...data })); };
+  record({ findings: [f('one'), f('two')] });
+  const ids = () => JSON.parse(read(dir, '.git/aidlc/reviews/U-1.json')).rounds.at(-1).findings.map((x) => `${x.id} ${x.claim}`);
+  assert.deepEqual(ids(), ['F-1 one', 'F-2 two']);
+  assert.match(run(dir, ['card', 'U-1']).out, /^- F-1 general PLAUSIBLE a\/x:1: one \(s\)$/m, 'the card shows the ids');
+  assert.match(record({ findings: [f('three')] }).err, /U-1 general: the last round's F-1, F-2 are not answered/);
+  assert.equal(record({ findings: [f('one', { id: 'F-1' }), f('three')], fixed: ['F-2'] }).code, 0);
+  assert.deepEqual(ids(), ['F-1 one', 'F-3 three'], 'F-1 still holds, F-3 is new');
+  run(dir, ['report', 'U-1'], '{"status": "done"}');
+  assert.equal(run(dir, ['review', 'record', 'U-1', '-'], JSON.stringify({ verdict: 'pass', findings: [] })).code, 0, 'a pass answers them all');
+});
+
+test('B219/AC-3 a subagent runs only its role\'s aidlc commands (GUARD-SUBAGENT)', () => {
+  const dir = twoUnits();
+  const bash = (command, agent_type) => hook('guard', { cwd: dir, session_id: 's', hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: { command }, ...(agent_type ? { agent_type } : {}) }, { pinned: false }).json.hookSpecificOutput?.permissionDecisionReason ?? '';
+  assert.match(bash('node .aidlc/bin/aidlc.mjs merge U-1', 'aidlc-team:builder'), /^GUARD-SUBAGENT builder may not run aidlc merge; its role runs card, start, report, check, lane, name, scaffold, graph, status/);
+  assert.match(bash('node .aidlc/bin/aidlc.mjs next', 'aidlc-team:reviewer'), /^GUARD-SUBAGENT reviewer may not run aidlc next/);
+  assert.match(bash('aidlc approve U-1', 'Explore'), /^GUARD-SUBAGENT other may not run aidlc approve; its role runs status, check, lane, graph/);
+  assert.equal(bash('node .aidlc/bin/aidlc.mjs report U-1', 'aidlc-team:builder'), '', 'its own command');
+  assert.doesNotMatch(bash('node .aidlc/bin/aidlc.mjs merge U-1'), /GUARD-SUBAGENT/, 'the lead runs it');
 });

@@ -14,14 +14,14 @@ A refusal names its fix: apply it. On `escalate`, stop and tell the owner.
 
 # Doing each action
 - **elaborate, draft**: copy the template in `.aidlc/templates/docs/`. Ask the owner one question at a time, 2-3 options and your pick; write each answer in the doc before the next. Open points go under `# Open questions`. Give each doc its why. Run `aidlc check <file>` and commit.
-- **build**: run `aidlc card B-<n>` per bolt, then every builder in one message: Agent, `subagent_type: aidlc-team:builder`, `model` the card's `Model:`, prompt `Build B-<n>.` then the whole card.
+- **build**: run `aidlc card B-<n>` per bolt, then every builder in one message: Agent, `subagent_type: aidlc-team:builder`, `model` the card's `Model:`, prompt `Build B-<n>.` (a hook adds the card).
 - **fix round, restart**: as build, prompt starting `Fix round for B-<n>.` or `Continue B-<n> from its branch's last commit.`
-- **review**: run `aidlc card B-<n>`, then per focus `next` names, all in one message: Agent, `subagent_type: aidlc-team:reviewer`, `model` as `next` names it, prompt `Review B-<n>, focus <focus>.` then the whole card.
+- **review**: per focus `next` names, all in one message: Agent, `subagent_type: aidlc-team:reviewer`, `model` as `next` names it, prompt `Review B-<n>, focus <focus>.` or `Review I-<n>.` (a hook adds the card or brief).
 - **wait**: end the turn; notices wake you.
 - **merge**: run it; apply each finding's fix.
 - **deploy check**: run it; a failure prints an `aidlc fix` line: fill in what failed, run it.
 - **release, rollback**: owner steps (3). If the owner types `release I-<n>` or `rollback I-<n>`, run that command.
-- **research**: `aidlc research <id>` prints the brief; then one Agent, `subagent_type: aidlc-team:researcher`, `model` as `next` names it, the brief as prompt. File the digest as it says, draft the decision, commit.
+- **research**: one Agent, `subagent_type: aidlc-team:researcher`, `model` as `next` names it, prompt `Research <id>.` (a hook adds the brief). File the digest as it says, draft the decision, commit.
 
 Agents record their own results; never relay them.
 
