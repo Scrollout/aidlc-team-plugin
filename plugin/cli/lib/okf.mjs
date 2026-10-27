@@ -2,7 +2,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve, sep } from 'node:path';
-import { bundleOf, config, done, isMap, list, UsageError, relPath } from './config.mjs';
+import { bundleOf, config, done, isMap, list, slug, UsageError, relPath } from './config.mjs';
 import { finding as codeFinding, msg } from './template.mjs';
 import { loadProfile } from './profile.mjs';
 import { kindProblems } from './vocab.mjs';
@@ -11,6 +11,7 @@ import { contractFindings } from './contract.mjs';
 import { eventFindings, selftestFindings } from './packs.mjs';
 
 const OKF = config.okf;
+const PROFILE = config.layers.find((l) => l.from === 'project').path; // findings about the profile point at it
 
 // ---- YAML subset (block and flow collections, plain/quoted/block scalars, comments) ----
 
@@ -286,6 +287,7 @@ export function parseDoc(text) {
 }
 
 const read = (file) => readFileSync(file, 'utf8');
+const readIf = (file) => (existsSync(file) ? read(file) : '');
 const sortNames = (dir) => readdirSync(dir).sort();
 
 function walk(dir, out = []) {
@@ -302,8 +304,7 @@ function walk(dir, out = []) {
 // Entry lines of an existing index: link → description text.
 function existingEntries(indexFile) {
   const out = new Map();
-  if (!existsSync(indexFile)) return out;
-  for (const line of read(indexFile).split('\n')) {
+  for (const line of readIf(indexFile).split('\n')) {
     const m = line.match(/^\* \[[^\]]*\]\(([^)]+)\)(?: - (.*))?$/);
     if (m) out.set(m[1], m[2] ?? '');
   }
@@ -318,17 +319,18 @@ function withHint(desc, old) {
   return at === undefined ? desc : `${desc} ${old.slice(at)}`;
 }
 
+// Only the root index may carry front matter, and only these keys.
+const rootKeys = (fm) => Object.keys(fm).every((k) => OKF.rootIndexKeys.includes(k));
+
 function rootFrontmatter(indexFile) {
-  if (!existsSync(indexFile)) return '';
-  const doc = parseDoc(read(indexFile));
-  return doc.fmLines && Object.keys(doc.fm).every((k) => OKF.rootIndexKeys.includes(k)) ? doc.fmLines.join('\n') + '\n\n' : '';
+  const doc = parseDoc(readIf(indexFile));
+  return doc.fmLines && rootKeys(doc.fm) ? doc.fmLines.join('\n') + '\n\n' : '';
 }
 
 // Prose paragraphs of an existing index, keyed by the heading they sit under ('' before any heading).
 function existingProse(indexFile) {
   const out = new Map();
-  if (!existsSync(indexFile)) return out;
-  const doc = parseDoc(read(indexFile));
+  const doc = parseDoc(readIf(indexFile));
   if (doc.error) return out;
   let heading = '';
   let gap = false;
@@ -348,12 +350,7 @@ function existingProse(indexFile) {
 }
 
 function indexText(entries, prose = new Map()) {
-  const groups = new Map();
-  for (const e of entries) {
-    const type = e.type || OKF.otherType;
-    if (!groups.has(type)) groups.set(type, []);
-    groups.get(type).push(e);
-  }
+  const groups = Map.groupBy(entries, (e) => e.type || OKF.otherType);
   return [...groups.keys()].sort().map((type) => {
     const lines = groups.get(type).sort((a, b) => cmp(a.title.toLowerCase(), b.title.toLowerCase()))
       .map((e) => `* [${e.title}](${e.link})${e.desc ? ` - ${e.desc}` : ''}`);
@@ -473,9 +470,8 @@ function checkLinks(root, file, lines, from, add) {
   }
 }
 
-function checkIndex(file, isRoot, add) {
-  const doc = parseDoc(read(file));
-  if (doc.error || (doc.fm && (!isRoot || !Object.keys(doc.fm).every((k) => OKF.rootIndexKeys.includes(k))))) {
+function checkIndex(file, doc, isRoot, add) {
+  if (doc.error || (doc.fm && (!isRoot || !rootKeys(doc.fm)))) {
     add(file, doc.line ?? 1, 'OKF-INDEX', 'indexFrontmatter', { keys: OKF.rootIndexKeys.join(', ') });
     if (doc.error) return;
   }
@@ -488,8 +484,7 @@ function checkIndex(file, isRoot, add) {
   }
 }
 
-function checkLog(file, add) {
-  const doc = parseDoc(read(file));
+function checkLog(file, doc, add) {
   if (doc.error) return add(file, doc.line, 'OKF-LOG', 'logFrontmatter');
   for (const [n, line] of proseLines(doc.lines, doc.body)) {
     if (!line.startsWith('## ')) continue;
@@ -504,7 +499,7 @@ export const sizeCap = (type, caps = {}) => caps[type] ?? caps.default ?? OKF.si
 // The file name a title gives: lower case words without apostrophes or the commas inside numbers, at most
 // slugMax characters, cut at a word, never in one (docs/design/bundle.md).
 export function docSlug(title) {
-  const words = String(title).toLowerCase().replace(/['’]/g, '').replace(/(\d),(?=\d)/g, '$1').split(/[^a-z0-9]+/).filter(Boolean).slice(0, OKF.bundle.slugWords).join('-');
+  const words = slug(String(title).replace(/['’]/g, '').replace(/(\d),(?=\d)/g, '$1'), OKF.bundle.slugWords);
   return words.length > OKF.bundle.slugMax ? words.slice(0, OKF.bundle.slugMax + 1).replace(/-[^-]*$/, '') : words;
 }
 
@@ -534,9 +529,7 @@ function checkSchema(root, file, doc, type, add, v2) {
   else if (gen.digest && String(gen.digest) !== digestOf(doc.lines.slice(doc.body).join('\n'))) add(file, 1, 'DOC-GENERATED', 'docGeneratedHand', { type });
 }
 
-function checkConcept(file, add, caps, root, v2) {
-  const text = read(file);
-  const doc = parseDoc(text);
+function checkConcept(file, text, doc, add, caps, root, v2) {
   if (doc.error) return add(file, doc.line, 'OKF-FM', doc.error, { error: doc.detail ?? '' });
   if (!doc.fm) return add(file, 1, 'OKF-FM', 'fmMissing');
   const fm = doc.fm;
@@ -553,11 +546,10 @@ function checkConcept(file, add, caps, root, v2) {
   // A file named by an id carries the slug of its title after it, the id dropped from the title (DOC-SLUG).
   const named = basename(file).match(OKF.bundle.idFile), title = String(fm.title ?? '').replace(new RegExp(`^${named?.[1]}\\s+`), '');
   if (named && title && named[2] !== docSlug(title)) add(file, 1, 'DOC-SLUG', 'docSlug', { file: basename(file), expected: `${named[1]}-${docSlug(title)}.md` }, v2 ? 'error' : 'warning');
-  return doc;
 }
 
 // Findings for `profile.docs.rules`, reported against the project profile.
-function lintRules(rules = {}, file = config.layers.find((l) => l.from === 'project').path) {
+function lintRules(rules = {}, file = PROFILE) {
   const out = [];
   for (const [code, level] of Object.entries(rules)) {
     const key = !OKF.codes[code] ? 'ruleUnknown' : !OKF.codes[code].house ? 'ruleFixed' : !OKF.levels.includes(level) ? 'ruleLevel' : null;
@@ -572,7 +564,7 @@ export function nameProblem(r) {
   try { new RegExp(r.find ?? ''); new RegExp(r.pattern); } catch { return 'namesRegex'; }
   return null;
 }
-const lintNames = (names, file = config.layers.find((l) => l.from === 'project').path) => [names ?? []].flat()
+const lintNames = (names, file = PROFILE) => [names ?? []].flat()
   .map((r) => [r, nameProblem(r)]).filter(([, key]) => key).map(([r, key]) => finding('PROFILE-NAMES', 'error', file, 1, key, { id: r?.id ?? '-' }));
 
 // PROFILE-KEY: a top-level or `security` key in a project layer that the plugin reads nowhere (docs/design/profile.md).
@@ -596,13 +588,11 @@ export function checkBundle(root, { rules = {}, caps, base = process.cwd(), v2 =
     if (level !== 'off') findings.push(finding(code, level, relPath(base, file), line, key, data));
   };
   for (const file of walk(root).filter((f) => f.endsWith(OKF.ext))) {
-    const name = file.slice(dirname(file).length + 1);
-    let doc;
-    if (name === OKF.index) checkIndex(file, dirname(file) === root, add);
-    else if (name === OKF.log) checkLog(file, add);
-    else doc = checkConcept(file, add, caps, root, v2);
-    const parsed = doc ?? parseDoc(read(file));
-    if (!parsed.error) checkLinks(root, file, parsed.lines, parsed.body, add);
+    const name = basename(file), text = read(file), doc = parseDoc(text);
+    if (name === OKF.index) checkIndex(file, doc, dirname(file) === root, add);
+    else if (name === OKF.log) checkLog(file, doc, add);
+    else checkConcept(file, text, doc, add, caps, root, v2);
+    if (!doc.error) checkLinks(root, file, doc.lines, doc.body, add);
   }
   for (const [dir, text] of buildIndexes(root)) {
     const file = join(dir, OKF.index);
@@ -613,7 +603,6 @@ export function checkBundle(root, { rules = {}, caps, base = process.cwd(), v2 =
 
 // ---- Commands ----
 
-const hasErrors = (findings) => findings.some((f) => f.level === 'error');
 const inside = (dir, file) => file === dir || file.startsWith(dir + sep);
 
 export const commands = {
@@ -633,7 +622,7 @@ export const commands = {
     const findings = [...lintRules(rules), ...lintNames(profile.names), ...lintKeys(sources)];
     // A codebase in modules grows names from the first unit: without a rule nothing holds them (docs/design/naming.md).
     // Slices own their data: critical, so an error once the project is past adoption (docs/design/architecture-model.md).
-    const arch = profile.architecture ?? {}, mods = profile.modules ?? [], at = config.layers.find((l) => l.from === 'project').path;
+    const arch = profile.architecture ?? {}, mods = profile.modules ?? [], at = PROFILE;
     if (mods.length && !arch.data) findings.push(finding('PROFILE-ARCH', profile.adopted ? 'warning' : 'error', at, 1, 'archNoData', {}));
     if (mods.length && !arch.acyclic) findings.push(finding('PROFILE-ARCH', 'warning', at, 1, 'archNoAcyclic', {}));
     const open = mods.filter((m) => !m.api).map((m) => m.id ?? m.name);
@@ -644,16 +633,16 @@ export const commands = {
     if (profile.system && !profile.naming?.tokens?.system) findings.push(finding('PROFILE-NAMING', 'error', at, 1, 'namingV2', {}));
     for (const [file, key, data] of [...contractFindings(cwd, profile), ...eventFindings(cwd, profile)]) findings.push(finding('CONTRACT-NAME', 'error', file, 1, key, data)); // the published API and events speak the grammar (decision 0014)
     for (const [key, data] of selftestFindings(cwd, profile)) findings.push(finding('GRAPH-SELFTEST', 'error', at, 1, key, data)); // a project's graph sees what the pack sees (docs/design/stack-packs.md)
-    if ((profile.modules ?? []).length && !profile.naming && ![profile.names ?? []].flat().length) findings.push(finding('PROFILE-NAMING', 'warning', at, 1, 'namesNone', {}));
+    if (mods.length && !profile.naming && ![profile.names ?? []].flat().length) findings.push(finding('PROFILE-NAMING', 'warning', at, 1, 'namesNone', {}));
     const given = args.filter((a) => !a.startsWith('--'));
     const paths = given.length ? given.map((a) => resolve(cwd, a)) : [bundle];
+    const opts = { rules, caps: profile.docs?.caps, base: cwd, v2: Boolean(profile.system), strict: args.includes('--ci') };
     for (const p of paths) {
       if (!existsSync(p)) throw new UsageError(msg('noSuchPath', { name: relPath(cwd, p) }));
-      // A folder below the bundle root is checked within the bundle, so bundle-root links resolve from the root.
-      if (statSync(p).isDirectory() && p !== bundle && inside(bundle, p)) findings.push(...checkBundle(bundle, { rules, caps: profile.docs?.caps, base: cwd, v2: Boolean(profile.system), strict: args.includes('--ci') }).filter((f) => inside(p, resolve(cwd, f.path))));
-      else if (statSync(p).isDirectory()) findings.push(...checkBundle(p, { rules, caps: profile.docs?.caps, base: cwd, v2: Boolean(profile.system), strict: args.includes('--ci') }));
-      else if (inside(bundle, p)) findings.push(...checkBundle(bundle, { rules, caps: profile.docs?.caps, base: cwd, v2: Boolean(profile.system), strict: args.includes('--ci') }).filter((f) => f.path === relPath(cwd, p)));
+      // A folder or file inside the bundle is checked within the bundle, so bundle-root links resolve from the root.
+      if (statSync(p).isDirectory() && (p === bundle || !inside(bundle, p))) findings.push(...checkBundle(p, opts));
+      else if (inside(bundle, p)) findings.push(...checkBundle(bundle, opts).filter((f) => inside(p, resolve(cwd, f.path))));
     }
-    return done('', hasErrors(findings) ? config.exit.findings : config.exit.ok, findings);
+    return done('', findings.some((f) => f.level === 'error') ? config.exit.findings : config.exit.ok, findings);
   },
 };
