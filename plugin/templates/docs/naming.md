@@ -16,7 +16,7 @@ Set by the method and checked already: `I-<n>` intents, `B-<n>` bolts, `R-<n>` r
 | <what it is> | <the one word> | <words to avoid> |
 
 # Code
-<folders per operation and internal layer, files, packages, types, functions, tests: pattern and example each>
+<folders per vertical slice and layer, files, packages, types, functions, tests: pattern and example each>
 
 # Data
 <tables, columns, migrations, data nodes>

@@ -1,4 +1,4 @@
-// Package getnote is the query operation that reads one note.
+// Package getnote is the query slice that reads one note.
 package getnote
 
 import (
@@ -11,7 +11,7 @@ import (
 // ErrNotFound is returned for an id no note has.
 var ErrNotFound = errors.New("no such note")
 
-// Repository is what the operation needs from storage.
+// Repository is what the slice needs from storage.
 type Repository interface {
 	Get(ctx context.Context, id string) (model.Note, bool, error)
 }

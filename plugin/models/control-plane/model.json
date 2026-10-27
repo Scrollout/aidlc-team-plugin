@@ -16,17 +16,17 @@
     { "id": "deployments", "kind": "domain", "role": "templates resolved into a graph of idempotent writes, run in parallel where independent, converging by re-applying" },
     { "id": "activity", "kind": "domain", "role": "the activity log and the events of every write, delete and action" }
   ],
-  "slice": { "kind": "extension", "declares": ["namespace", "types", "longRunning"] },
+  "extension": { "kind": "extension", "declares": ["namespace", "types", "longRunning"] },
   "contracts": [
     { "from": "frontdoor", "to": "authenticate", "via": "the request, in process" },
-    { "from": "throttle", "to": "slice", "via": "the provider contract, by namespace" },
-    { "from": "slice", "to": "resources", "via": "the metadata of each write" },
-    { "from": "slice", "to": "activity", "via": "an event per write, delete and action" },
+    { "from": "throttle", "to": "extension", "via": "the provider contract, by namespace" },
+    { "from": "extension", "to": "resources", "via": "the metadata of each write" },
+    { "from": "extension", "to": "activity", "via": "an event per write, delete and action" },
     { "from": "deployments", "to": "frontdoor", "via": "the same API every client uses" }
   ],
   "rules": [
     { "type": "stageOrder", "stages": ["authenticate", "authorize", "policy", "lock", "throttle"] },
-    { "type": "sliceContract", "kind": "extension", "declares": ["namespace", "types", "longRunning"] },
+    { "type": "extensionContract", "kind": "extension", "declares": ["namespace", "types", "longRunning"] },
     { "type": "longRunning", "shapes": [{ "code": 201, "links": ["status"] }, { "code": 202, "links": ["result"] }], "deleteAbsent": 204 },
     { "type": "idempotency", "writes": "\\b(creates?|updates?|replaces?)\\b", "repeat": "\\b(again|repeated|twice)\\b.*\\bunchanged\\b" },
     { "type": "data", "classes": ["regional", "shared", "global"] },
@@ -34,5 +34,5 @@
   ],
   "contract": { "segments": ["providers", "operations"], "providers": "providers", "resource": ["id", "name", "type"], "systemData": "systemData", "list": "value", "nextLink": "nextLink" },
   "fit": { "words": ["control plane", "resource provider", "resource providers", "providers", "deployments", "templates", "tenants", "scopes"] },
-  "slices": { "go": { "frontdoor": "reference/go/cmd/frontdoor", "stages": "reference/go/internal/pipeline/stages", "resources": "reference/go/internal/domains/resources", "operations": "reference/go/internal/domains/operations", "api": "reference/go/api" } }
+  "references": { "go": { "frontdoor": "reference/go/cmd/frontdoor", "stages": "reference/go/internal/pipeline/stages", "resources": "reference/go/internal/domains/resources", "operations": "reference/go/internal/domains/operations", "api": "reference/go/api" } }
 }

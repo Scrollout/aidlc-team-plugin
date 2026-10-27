@@ -7,10 +7,10 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T00:40:00Z }
 ---
 
 # Sources
-The method definition whitepaper, the reference AI-DLC workflows (2.11.1) and the method's launch talk (2025), read on 2026-10-26; the reference architecture's horizontal layers and vertical slices; layering and modular-monolith practice ([0023](../decisions/0023-words-follow-the-method-and-the-reference.md)).
+The method definition whitepaper, the reference AI-DLC workflows (2.11.1) and the method's launch talk (2025), read on 2026-10-26; the standard definitions of vertical slices and horizontal layers, and layering and modular-monolith practice ([0024](../decisions/0024-vertical-slices-are-features-horizontal-layers.md)).
 
 # Why
-A word with two meanings can't be checked, so every concept gets one word at one scale ([0013](../decisions/0013-a-deterministic-ai-dlc.md)). The words are the sources' own: the method's Intent, Unit and Bolt; the reference architecture's horizontal layers, built once for every request, and vertical slices, each owning its data; and internal layers inside a slice, as layering practice places them ([0023](../decisions/0023-words-follow-the-method-and-the-reference.md)).
+A word with two meanings can't be checked, so every concept gets one word at one scale ([0013](../decisions/0013-a-deterministic-ai-dlc.md)). The words are the sources' own: the method's Intent, Unit and Bolt; horizontal layers, code grouped by technical concern and shared by every feature; and vertical slices, code grouped by business feature or use case, cutting through those layers and naming the use case it serves ([0024](../decisions/0024-vertical-slices-are-features-horizontal-layers.md)).
 
 # Words
 Drawn by scale: [Words by scale](diagrams/canonical-model.md).
@@ -19,14 +19,12 @@ Generated from `cli.json` `vocabulary`; a test keeps it in step.
 <!-- generated: glossary -->
 | Scale | Word | Meaning | AI-DLC term | Declared in |
 |---|---|---|---|---|
-| System | vertical slice | a part of the system that owns its data end to end, built by one team and plugged into the horizontal layers through its contract: a domain or an extension | a Unit's column, domain design to deployment | module `kind: domain` or `kind: extension` |
-| System | horizontal layer | a part every request crosses, built once for every vertical slice: the entry, a governance stage, a shared kit or an adapter | - | module `kind: runtime`, `pipeline`, `foundation` or `adapter` |
-| System | core | the horizontal layers and the shared domains every vertical slice uses | the system | profile `system.core` |
-| System | extension | a vertical slice another team owns, built only against published contracts | another team's Units | profile `system.extensions` |
-| Domain | domain | a vertical slice holding one bounded context: its data, language, contract and events | **Unit** | `domains/<code>.md`, module `kind: domain` |
+| System | horizontal layer | code grouped by one technical concern and shared by every feature: the interface, application, model and infrastructure layers inside a domain, pointing inward, and the platform every request crosses | logical design | the stack pack's layers; module `kind: runtime`, `pipeline`, `foundation` or `adapter` |
+| System | core | the platform layers and the shared domains every domain uses | the system | profile `system.core` |
+| System | extension | a domain another team owns, built only against published contracts | another team's Units | profile `system.extensions` |
+| Domain | domain | a bounded context holding the vertical slices of one business capability, with its data, language, contract and events | **Unit** | `domains/<code>.md`, module `kind: domain` |
 | Domain | kind | `domain`, `pipeline`, `foundation`, `adapter`, `runtime`, `extension` or `delivery` | - | module `kind` |
-| Code | operation | one command or query of a vertical slice, end to end, in one folder | part of a Unit's stories | the domain's `surface` |
-| Code | internal layer | a position inside a vertical slice, pointing inward: `interface`, `application`, `model` or `infrastructure` | logical design | the stack pack |
+| Code | vertical slice | the code of one business feature or use case, a command or a query, in its own folder, cutting through every horizontal layer it needs; it names the use case it serves | a user story, cut through all layers | the domain's `surface` |
 | Delivery | intent | one business outcome, with its why and success measures | **Intent** | `intents/I-<n>-<slug>.md` |
 | Delivery | increment | a shippable step of an intent; increment 1 is the walking skeleton | groups Bolts | the intent's `# Increments`, `I-<n>.<k>` |
 | Delivery | bolt | the smallest build cycle: one card, worktree, review and merge | **Bolt** | `bolts/B-<n>-<slug>.md` |
@@ -36,7 +34,7 @@ Generated from `cli.json` `vocabulary`; a test keeps it in step.
 | Plugin | lead | the main session running the loop | - | the skill |
 | Plugin | owner | the human who approves, releases and rolls back | - | `human:` stamps |
 
-**Retired, in these senses:** *unit* (a work item) → bolt (unit stays a test level); *slice* (a delivery step) → increment; *slice* (one command or query) → operation; *bundle* (a piece of the architecture, not the docs bundle) → domain; *component* (a piece of the architecture) → domain, or runtime for a deployable; *capability* (a module) → domain.
+**Retired, in these senses:** *unit* (a work item) → bolt (unit stays a test level); *slice* (a delivery step) → increment; *operation* (one command or query) → vertical slice; *internal layer* (a layer inside a domain) → horizontal layer; *bundle* (a piece of the architecture, not the docs bundle) → domain; *component* (a piece of the architecture) → domain, or runtime for a deployable; *capability* (a module) → domain.
 <!-- /generated -->
 
 # What is AI-DLC's and what is the plugin's own

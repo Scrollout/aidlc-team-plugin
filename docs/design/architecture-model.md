@@ -39,11 +39,11 @@ A module without a kind, an unknown kind or surface, or a malformed `system` is 
 
 **Always:**
 - the core never depends on an extension;
-- an operation never imports another operation;
+- a vertical slice never imports another slice;
 - nothing in product code imports `delivery`.
 
 # Layers
-Inside a vertical slice that declares them, internal layers point inward: `interface → application → model` and `infrastructure → model`. `model` imports only `foundation`. Operations live in `application`. A stack pack maps the four layers to folder names (M17).
+Inside a domain that declares them, its horizontal layers point inward: `interface → application → model` and `infrastructure → model`. `model` imports only `foundation`. Each vertical slice has its folder in `application` and reaches the other layers through the domain's ports. A stack pack maps the four layers to folder names (M17).
 
 # Surfaces and data
 - Another module may import only a module's `client` or `events`. `server` is for the runtime that hosts it.

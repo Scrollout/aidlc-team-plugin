@@ -1,4 +1,4 @@
-// Package putresource is the command operation that writes a resource's metadata: idempotent, so the same write
+// Package putresource is the command slice that writes a resource's metadata: idempotent, so the same write
 // repeated leaves status and state unchanged.
 package putresource
 
@@ -19,7 +19,7 @@ const (
 	Unchanged
 )
 
-// Repository is what the operation needs from storage.
+// Repository is what the slice needs from storage.
 type Repository interface {
 	Get(ctx context.Context, id string) (model.Resource, bool)
 	Save(ctx context.Context, r model.Resource) error

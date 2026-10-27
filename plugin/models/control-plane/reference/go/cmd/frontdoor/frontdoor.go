@@ -14,7 +14,7 @@ import (
 	"example.com/controlplane/internal/pipeline/stages"
 )
 
-// Provider is a vertical slice: the namespace it serves, and its resource types whose writes are long-running.
+// Provider is an extension: the namespace it serves, and its resource types whose writes are long-running.
 type Provider struct {
 	Namespace   string
 	LongRunning map[string]bool

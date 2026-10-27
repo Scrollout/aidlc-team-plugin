@@ -2,7 +2,7 @@
 type: Decision
 title: 0023 Words follow the method and the reference architecture
 description: The plugin's architecture words come from the method and the reference architecture - vertical slices that own their data and horizontal layers built once for every slice, with domains and extensions as the vertical kinds, an operation for one command or query, and internal layers inside a slice.
-status: accepted
+status: superseded by ADR-0024
 date: 2026-10-27
 decision-makers: the owner
 consulted: the lead

@@ -43,7 +43,7 @@ function problems(m, d) {
     if (x?.kind && !kinds.includes(x.kind)) add('modelKind', { id: x.id ?? '-', kind: x.kind, kinds: kinds.join(', ') });
   }
   for (const r of Array.isArray(d.rules) ? d.rules : []) if (!M.ruleTypes.includes(r?.type)) add('modelRule', { type: r?.type ?? '-', types: M.ruleTypes.join(', ') });
-  for (const c of Array.isArray(d.contracts) ? d.contracts : []) for (const end of ['from', 'to']) if (c?.[end] !== undefined && !ids.has(c[end]) && c[end] !== M.sliceId) add('modelContract', { end, id: c[end] });
+  for (const c of Array.isArray(d.contracts) ? d.contracts : []) for (const end of ['from', 'to']) if (c?.[end] !== undefined && !ids.has(c[end]) && c[end] !== M.extensionId) add('modelContract', { end, id: c[end] });
   const dir = join(m.dir, M.decisions);
   for (const f of existsSync(dir) ? readdirSync(dir).filter((x) => x.endsWith('.md')).sort() : []) {
     if (parseDoc(readFileSync(join(dir, f), 'utf8')).fm?.type !== config.grid.decisionType) add('modelDecision', { file: f });
@@ -65,7 +65,7 @@ function modelDoc(cwd, name) {
   const cite = (x) => list(x.sources).map((s) => `[^${s}]`).join('');
   const line = (x) => `- **${x.id}** (${x.kind ?? '-'}): ${x.role ?? ''} ${cite(x)}`.trimEnd();
   const used = [...new Set(items(d).flatMap((x) => list(x.sources)))].filter((s) => sources.has(s));
-  const body = ['', `# ${H.layers}`, ...d.layers.map(line), '', `# ${H.domains}`, ...(d.domains ?? []).map(line), '', `# ${H.slice}`, ...Object.entries(d.slice ?? {}).map(([k, v]) => `- ${k}: ${[v].flat().join(', ')}`),
+  const body = ['', `# ${H.layers}`, ...d.layers.map(line), '', `# ${H.domains}`, ...(d.domains ?? []).map(line), '', `# ${H.extension}`, ...Object.entries(d.extension ?? {}).map(([k, v]) => `- ${k}: ${[v].flat().join(', ')}`),
     '', `# ${H.contracts}`, ...(d.contracts ?? []).map((c) => `- ${c.from} → ${c.to}${c.via ? ` via ${c.via}` : ''}`), '', `# ${H.rules}`, ...(d.rules ?? []).map((r) => `- ${r.id ?? r.type}: ${r.type} ${cite(r)}`.trimEnd()),
     ...(used.length ? ['', `# ${H.sources}`, ...used.map((s) => `[^${s}]: ${sources.get(s).title ?? s}, ${sources.get(s).resource ?? ''}`.trimEnd())] : [])].join('\n') + '\n';
   const dir = join(bundle, F.Model), file = join(dir, `${name}.md`), at = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
@@ -125,10 +125,10 @@ function stageOrder(root, profile, m, r, out) {
   if (placed.some((k, n) => n && k < placed[n - 1])) out.push(['PIPELINE-ORDER', w.file, 'stageOrder', { found: found.join(', '), stages: list(r.stages).join(', ') }]);
 }
 
-function sliceContract(root, profile, m, r, out) {
+function extensionContract(root, profile, m, r, out) {
   for (const mod of (profile.modules ?? []).filter((x) => x.kind === r.kind)) {
-    const missing = list(r.declares).filter((k) => !isMap(mod.slice) || mod.slice[k] === undefined || mod.slice[k] === '');
-    if (missing.length) out.push(['PROVIDER-CONTRACT', PROFILE, 'sliceMissing', { module: mod.id ?? mod.name, kind: r.kind, fields: missing.join(', ') }]);
+    const missing = list(r.declares).filter((k) => !isMap(mod.declares) || mod.declares[k] === undefined || mod.declares[k] === '');
+    if (missing.length) out.push(['PROVIDER-CONTRACT', PROFILE, 'declaresMissing', { module: mod.id ?? mod.name, kind: r.kind, fields: missing.join(', ') }]);
   }
 }
 
@@ -156,7 +156,7 @@ function events(root, profile, m, r, out) {
   }
 }
 
-const CHECKS = { stageOrder, sliceContract, longRunning, events };
+const CHECKS = { stageOrder, extensionContract, longRunning, events };
 // The chosen model's contract, which the contracts check adds to the generic grammar (decision 0021).
 plug('modelContract', (root, profile) => chosen(root, profile)?.data.contract ?? null);
 plug('docChecks', (root, profile) => {
@@ -195,8 +195,8 @@ plug('planRules', ({ bundle, units, merged, add, base, profile }) => {
 plug('modelFit', (root, sentences) => modelsOf(root).filter((m) => m.data && !m.problems.length).map((m) => ({ name: m.name, title: m.data.title,
   ids: sentences.filter((s) => list(m.data.fit?.words).some((w) => new RegExp(`\\b${w.replace(/ /g, '\\s+')}\\b`, 'i').test(s.text))).map((s) => s.id) })).filter((m) => m.ids.length));
 
-// The increments a model suggests: the walking skeleton through every layer, then each shared domain, then a first slice.
-const increments = (d) => [msg('incSkeleton', { layers: d.layers.map((l) => l.id).join(' → ') }), ...(d.domains ?? []).map((x) => msg('incDomain', { id: x.id, role: x.role ?? '' })), msg('incSlice', { declares: list(d.slice?.declares).join(', ') || '-' })]
+// The increments a model suggests: the walking skeleton through every layer, then each shared domain, then a first extension.
+const increments = (d) => [msg('incSkeleton', { layers: d.layers.map((l) => l.id).join(' → ') }), ...(d.domains ?? []).map((x) => msg('incDomain', { id: x.id, role: x.role ?? '' })), msg('incExtension', { declares: list(d.extension?.declares).join(', ') || '-' })]
   .map((text, k) => msg('incLine', { k: k + 1, text })).join('');
 
 function apply(cwd, name) {
@@ -243,7 +243,7 @@ function gaps(cwd) {
     if (!by.length) missing.push(x);
     for (const mod of by) lines.push(msg(mod.kind === x.kind ? 'gapPlayed' : 'gapKind', { item: x.id, module: mod.id ?? mod.name, kind: mod.kind ?? '-', want: x.kind ?? '-' }));
   }
-  if (!mods.some((mod) => mod.kind === (m.data.slice?.kind ?? 'extension'))) missing.push({ id: M.sliceId, kind: m.data.slice?.kind ?? 'extension', role: list(m.data.slice?.declares).join(', ') });
+  if (!mods.some((mod) => mod.kind === (m.data.extension?.kind ?? 'extension'))) missing.push({ id: M.extensionId, kind: m.data.extension?.kind ?? 'extension', role: list(m.data.extension?.declares).join(', ') });
   const plan = missing.map((x, k) => msg('incLine', { k: k + 1, text: msg('incGap', { id: x.id, kind: x.kind ?? '-', role: x.role ?? '' }) })).join('');
   return done(msg('gapsHead', { name: m.name, played: lines.length, total: m.data.layers.length + (m.data.domains ?? []).length }) + lines.join('') + (missing.length ? msg('gapsMissing', {}) + plan : msg('gapsNone', {})));
 }

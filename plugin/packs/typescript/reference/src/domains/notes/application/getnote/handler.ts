@@ -1,4 +1,4 @@
-// The query operation that reads one note.
+// The query slice that reads one note.
 import type { Note } from '../../model/note.ts';
 
 /** Returned for an id no note has. */
@@ -8,7 +8,7 @@ export class NoteNotFoundError extends Error {
   }
 }
 
-/** What the operation needs from storage. */
+/** What the slice needs from storage. */
 export interface Repository {
   get(id: string): Promise<Note | undefined>;
 }

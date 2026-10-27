@@ -9,7 +9,7 @@ generated: { by: tests/diagrams.mjs }
 | Kind | Template | Needs |
 |---|---|---|
 | domain | `{{domain}}` | domain |
-| operation | `{{verb}}{{singularCompact}}` | domain, verb |
+| slice | `{{verb}}{{singularCompact}}` | domain, verb |
 | operation-id | `{{TypePascal}}_{{OperationVerb}}` | domain, verb |
 | namespace-api | `{{Namespace}}` | org, system |
 | path | `/providers/{{Namespace}}/{{typeCamel}}/{{{singularCamel}}Name}` | org, system, domain |

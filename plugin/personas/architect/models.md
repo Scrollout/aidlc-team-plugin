@@ -4,14 +4,14 @@ A model is a proven system's vertical and horizontal shape, kept as data (`aidlc
 
 ## Reading a reference
 - **Horizontal first:** what every request crosses, in order. The entry, the checks, the shared records, the long-running work, the events. Each becomes a layer or a shared domain, with its kind (runtime, pipeline, domain…) and one line on its role.
-- **Then vertical:** what one vertical slice (a provider, a domain) must declare and offer for the horizontal layers to serve it. That is the model's `slice`.
+- **Then vertical:** what one domain another team owns (a provider, an extension) must declare and offer for the horizontal layers to serve it. That is the model's `extension`. Its features are its vertical slices.
 - **Then the contracts:** what passes between them. A contract is a role (a status link, a retry hint), never one system's header or path name.
 - **Every claim from a source:** cite the research digest's source ids on each layer, domain and rule (`MODEL-SOURCE`). Where the sources are silent, say so: an unknown stays the project's decision.
 
 ## Writing the rules as data
 Pick the rule types the shape needs, with parameters, never code:
 - `stageOrder`, the stages in order;
-- `sliceContract`, the fields a vertical slice declares;
+- `extensionContract`, the fields an extension declares;
 - `longRunning`, the answer shapes;
 - `idempotency`, the write and repeat patterns of an AC;
 - `data`, the classes a table may have;

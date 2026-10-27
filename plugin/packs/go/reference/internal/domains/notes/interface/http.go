@@ -9,7 +9,7 @@ import (
 	"example.com/reference/internal/domains/notes/application/getnote"
 )
 
-// Routes wires the operations to their HTTP routes.
+// Routes wires the slices to their HTTP routes.
 func Routes(create createnote.Handler, get getnote.Handler) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("PUT /notes/{noteName}", func(w http.ResponseWriter, r *http.Request) {

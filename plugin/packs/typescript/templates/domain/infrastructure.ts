@@ -1,2 +1,2 @@
-// Implements the {{domain}} operations' ports; depends on the model only.
+// Implements the {{domain}} slices' ports; depends on the model only.
 export {};

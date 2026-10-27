@@ -3,7 +3,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { createNote, type Publisher, type Repository as Writes } from '../application/createnote/handler.ts';
 import { getNote, type Repository as Reads } from '../application/getnote/handler.ts';
 
-/** Routes PUT and GET /notes/{noteName} to the operations. */
+/** Routes PUT and GET /notes/{noteName} to the slices. */
 export function routes(notes: Writes & Reads, events: Publisher) {
   return async (req: IncomingMessage, res: ServerResponse) => {
     const name = decodeURIComponent((req.url ?? '').replace(/^\/notes\//, ''));

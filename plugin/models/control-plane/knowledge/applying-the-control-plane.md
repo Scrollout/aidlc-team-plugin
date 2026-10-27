@@ -8,7 +8,7 @@ Read the model horizontally first, then vertically.
 - **Shared domains:** resources (the metadata of every resource), operations (long-running status and result), deployments (a template's graph of idempotent writes), activity (the log and the events).
 
 ## Vertical: what each provider declares
-- A namespace, its resource types, and for each type whether its writes are long-running. The profile's `modules[].slice` holds them; the slice-contract rule checks them.
+- A namespace, its resource types, and for each type whether its writes are long-running. The profile's `modules[].declares` holds them; the extension-contract rule checks them.
 - Its API under its namespace, in the contract grammar and the model's contract (envelope with `systemData`, lists with `nextLink`).
 - An event for each write, delete and action, success or failure, named in its API.
 
@@ -24,6 +24,6 @@ Read the model horizontally first, then vertically.
 2. Resource metadata, so listing by scope and cascade delete work.
 3. Long-running operations, then deployments that converge by re-applying.
 4. Events and the activity log.
-5. Each further provider as its own slice.
+5. Each further provider as its own extension, built in vertical slices, one use case at a time.
 
 On existing code, `aidlc models gaps` lists what the modules miss; each gap is an increment.

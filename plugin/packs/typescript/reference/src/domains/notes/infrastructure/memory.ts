@@ -1,4 +1,4 @@
-// Implements the operations' ports; depends on the model only.
+// Implements the slices' ports; depends on the model only.
 import type { Note } from '../model/note.ts';
 
 /** Keeps notes in memory; a database adapter has the same two methods. */

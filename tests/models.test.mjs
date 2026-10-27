@@ -10,7 +10,7 @@ import { CHILD_ENV, commit, I1, makeRepo, pinnedRepo, read, run, write } from '.
 const model = (name, extra = {}) => ({
   name, title: `${name} shape`, description: 'A minimal shape.',
   layers: [{ id: 'gate', kind: 'pipeline', role: 'checks each request' }], domains: [{ id: 'records', kind: 'domain', role: 'what exists' }],
-  slice: { declares: ['namespace'] }, contracts: [{ from: 'gate', to: 'slice', via: 'http' }], rules: [{ type: 'stageOrder', stages: ['gate'] }], ...extra,
+  extension: { declares: ['namespace'] }, contracts: [{ from: 'gate', to: 'extension', via: 'http' }], rules: [{ type: 'stageOrder', stages: ['gate'] }], ...extra,
 });
 const decision = '---\ntype: Decision\ntitle: 0001 One gate\ndescription: d.\n---\n\n# Context and Problem Statement\nx\n';
 const formatLines = (dir) => run(dir, ['check', 'docs']).out.split('\n').filter((l) => /MODEL-FORMAT/.test(l)).map((l) => l.replace(/ → .*$/, ''));
@@ -24,11 +24,11 @@ test('B228/AC-1 a model folder loads from the project and the shipped models, th
   assert.equal(run(dir, ['models']).out, 'control-plane (shipped): Control plane\nminimal (project): minimal shape\n');
   assert.deepEqual(formatLines(dir), [], 'a model in the format');
 
-  const broken = model('other', { slice: undefined, layers: [{ id: 'gate', kind: 'hub' }, { id: 'gate', kind: 'pipeline' }], rules: [{ type: 'magic' }], contracts: [{ from: 'gate', to: 'nowhere' }] });
+  const broken = model('other', { extension: undefined, layers: [{ id: 'gate', kind: 'hub' }, { id: 'gate', kind: 'pipeline' }], rules: [{ type: 'magic' }], contracts: [{ from: 'gate', to: 'nowhere' }] });
   write(dir, { '.aidlc/models/broken/model.json': broken, '.aidlc/models/broken/decisions/notes.md': '# notes\n', '.aidlc/models/empty/README.md': 'x' });
   assert.match(run(dir, ['models']).out, /\nbroken \(project\): other shape, 7 format problems: aidlc check\n/);
   const lines = formatLines(dir).join('\n');
-  for (const want of ['model broken lacks slice', 'model broken is named other inside', 'model broken: gate has kind hub', 'model broken: gate is named twice', 'model broken: rule type magic is not one of stageOrder', "model broken: a contract's to is nowhere", 'model broken: decisions/notes.md is not a Decision doc', 'model empty has no model.json']) {
+  for (const want of ['model broken lacks extension', 'model broken is named other inside', 'model broken: gate has kind hub', 'model broken: gate is named twice', 'model broken: rule type magic is not one of stageOrder', "model broken: a contract's to is nowhere", 'model broken: decisions/notes.md is not a Decision doc', 'model empty has no model.json']) {
     assert.ok(lines.includes(want), want);
   }
 
@@ -82,14 +82,14 @@ test('B229/AC-2 each layer, domain and rule of a project model cites a source of
 // A model with each rule type, and a project that chose it, with the names only it knows in its profile.
 const RULES = [
   { type: 'stageOrder', stages: ['authenticate', 'authorize', 'policy'] },
-  { type: 'sliceContract', kind: 'extension', declares: ['namespace', 'types'] },
+  { type: 'extensionContract', kind: 'extension', declares: ['namespace', 'types'] },
   { type: 'longRunning', shapes: [{ code: 201, links: ['status'] }, { code: 202, links: ['result'] }], deleteAbsent: 204 },
   { type: 'idempotency', writes: '\\b(creates?|updates?)\\b', repeat: '\\b(again|repeated)\\b.*\\bunchanged\\b' },
   { type: 'data', classes: ['regional', 'shared', 'global'] },
   { type: 'events', verbs: ['put', 'patch', 'post', 'delete'] },
 ];
-const chosen = (slice) => ({ ...V2, model: { name: 'minimal', wiring: { file: 'src/gate/stages.txt', pattern: 'Stage(\\w+)' }, operations: { status: 'Op-Status', result: 'Op-Result', retry: 'Retry-After' }, events: { files: ['api/events/*.yaml'] } },
-  modules: [{ id: 'gate', kind: 'pipeline', paths: ['src/gate/**'] }, { id: 'things', kind: 'extension', paths: ['src/things/**'], slice }] });
+const chosen = (declares) => ({ ...V2, model: { name: 'minimal', wiring: { file: 'src/gate/stages.txt', pattern: 'Stage(\\w+)' }, operations: { status: 'Op-Status', result: 'Op-Result', retry: 'Retry-After' }, events: { files: ['api/events/*.yaml'] } },
+  modules: [{ id: 'gate', kind: 'pipeline', paths: ['src/gate/**'] }, { id: 'things', kind: 'extension', paths: ['src/things/**'], declares }] });
 const api = (put, del) => `openapi: 3.1.0\ninfo: { title: t, version: 2026-10-01 }\npaths:\n  /things/{thingName}:\n    put:\n${put}\n    delete:\n${del}\n`;
 const ruleLines = (dir) => run(dir, ['check', 'docs']).out.split('\n').filter((l) => /PIPELINE-ORDER|PROVIDER-CONTRACT|LONG-RUNNING|IDEMPOTENCY-AC|DATA-PARTITION|EVENT-COVERAGE/.test(l)).map((l) => l.replace(/ → .*$/, '')).join('\n');
 
@@ -106,7 +106,7 @@ test('B230/AC-1 B230/AC-2 only the chosen model\'s rules run, each reporting wha
   const lines = ruleLines(dir);
   for (const want of [
     'src/gate/stages.txt:1 PIPELINE-ORDER model minimal: the stages come as authenticate, policy, authorize, not in the model\'s order authenticate, authorize, policy',
-    '.aidlc/profile.json:1 PROVIDER-CONTRACT model minimal: module things (extension) declares no types under `slice`',
+    '.aidlc/profile.json:1 PROVIDER-CONTRACT model minimal: module things (extension) declares no types under `declares`',
     'api/things/openapi.yaml:1 LONG-RUNNING model minimal: PUT /things/{thingName} is flagged long-running but answers none of 201 with Op-Status and Retry-After, or 202 with Op-Result and Retry-After',
     'api/things/openapi.yaml:1 LONG-RUNNING model minimal: DELETE /things/{thingName} declares no 204 answer for an absent resource',
     'api/things/openapi.yaml:1 EVENT-COVERAGE model minimal: PUT /things/{thingName} emits things.written, which no events file defines',
@@ -142,7 +142,7 @@ test('B231/AC-1 intake lists the models that fit the request; apply records the 
     'increments along minimal\'s layers, for the intent\'s # Increments:',
     '- I-<n>.1 Walking skeleton: one request through gate, end to end on the target',
     '- I-<n>.2 records: what exists',
-    '- I-<n>.3 A first vertical slice, declaring namespace',
+    '- I-<n>.3 A first extension, declaring namespace',
     '',
   ].join('\n'));
   assert.equal(JSON.parse(read(dir, '.aidlc/profile.json')).model.name, 'minimal');
@@ -154,13 +154,13 @@ test('B231/AC-1 intake lists the models that fit the request; apply records the 
 
 test('B231/AC-2 gaps matches the modules to the chosen model\'s items and kinds, and prints the missing ones as increments', () => {
   const profile = { ...V2, model: { name: 'minimal' }, modules: [{ id: 'gw', kind: 'pipeline', layer: 'gate', paths: ['src/gw/**'] }, { id: 'store', kind: 'foundation', layer: 'records', paths: ['src/store/**'] }] };
-  const dir = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n', '.aidlc/models/minimal/model.json': model('minimal', { slice: { kind: 'extension', declares: ['namespace'] } }) }, profile);
+  const dir = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n', '.aidlc/models/minimal/model.json': model('minimal', { extension: { kind: 'extension', declares: ['namespace'] } }) }, profile);
   assert.equal(run(dir, ['models', 'gaps']).out, [
     'model minimal: 2 of 2 items played by modules (modules[].layer)',
     '  gate: gw (pipeline)',
     '  records: store is foundation, the model\'s records is domain',
     'missing, for the brownfield intent\'s # Increments:',
-    '- I-<n>.1 slice (extension): namespace',
+    '- I-<n>.1 extension (extension): namespace',
     '',
   ].join('\n'));
   assert.match(run(makeRepo({}, V2), ['models', 'gaps']).err, /the profile chooses no model/);
@@ -172,7 +172,7 @@ test('B232/AC-1 the control-plane model ships in generic names (the neutral test
   assert.ok(files.length > 6, 'model, decisions, knowledge'); // tests/neutral.test.mjs holds every file under plugin/ to naming no vendor
   const cp = JSON.parse(read(root, `${dir}/model.json`));
   assert.deepEqual(cp.layers.map((l) => l.id), ['frontdoor', 'authenticate', 'authorize', 'policy', 'lock', 'throttle']);
-  assert.deepEqual(cp.rules.map((r) => r.type), ['stageOrder', 'sliceContract', 'longRunning', 'idempotency', 'data', 'events']);
+  assert.deepEqual(cp.rules.map((r) => r.type), ['stageOrder', 'extensionContract', 'longRunning', 'idempotency', 'data', 'events']);
   const project = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n' }, V2);
   assert.equal(run(project, ['models']).out, 'control-plane (shipped): Control plane\n', 'in the format');
   const applied = run(project, ['models', 'apply', 'control-plane']).out;
@@ -198,12 +198,12 @@ test('B233/AC-1 the control-plane model\'s Go reference meets the model\'s rules
       ...['authenticate', 'authorize', 'policy', 'lock', 'throttle'].map((s) => ({ id: s, kind: 'pipeline', layer: s, paths: [`internal/pipeline/stages/**`] })),
       { id: 'resources', kind: 'domain', layer: 'resources', paths: ['internal/domains/resources/**'] },
       { id: 'operations', kind: 'domain', layer: 'operations', paths: ['internal/domains/operations/**'] },
-      { id: 'things', kind: 'extension', paths: ['api/things/**'], slice: { namespace: 'Example.Things', types: ['things', 'widgets'], longRunning: ['widgets'] } },
+      { id: 'things', kind: 'extension', paths: ['api/things/**'], declares: { namespace: 'Example.Things', types: ['things', 'widgets'], longRunning: ['widgets'] } },
     ],
   };
   write(dir, { '.aidlc/profile.json': profile });
   const lines = run(dir, ['check']).out.split('\n').filter((l) => /PIPELINE-ORDER|PROVIDER-CONTRACT|LONG-RUNNING|EVENT-COVERAGE|CONTRACT-NAME/.test(l));
-  assert.deepEqual(lines, [], 'the reference meets the stage order, slice contract, long-running shapes, events and the model\'s contract');
+  assert.deepEqual(lines, [], 'the reference meets the stage order, extension contract, long-running shapes, events and the model\'s contract');
   assert.match(run(dir, ['models', 'gaps']).out, /^model control-plane: 8 of 10 items played by modules[\s\S]*missing, for the brownfield intent's # Increments:\n- I-<n>\.1 deployments \(domain\)[^\n]*\n- I-<n>\.2 activity \(domain\)/m, 'the walking skeleton: no deployments or activity yet');
 });
 

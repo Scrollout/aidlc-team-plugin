@@ -28,9 +28,9 @@ generated: { by: tests/diagrams.mjs }
 | `PROFILE-NAMING` | set naming.tokens (system: 2-6 lower-case letters or digits; org and zone: DNS labels), domains as lower-case plural nouns, vocabulary words as lower-case words, none of them banned (docs: Naming) |
 | `PROFILE-KIND` | give each module its kind (domain, pipeline, foundation, adapter, runtime, extension or delivery), surfaces from client, server and events, and system as core and extensions globs (docs: Architecture model) |
 | `PROFILE-KEY` (warning) | remove it, or use the key the profile doc names for what you meant |
-| `MODEL-FORMAT` | give the model folder a model.json with `name`, `title`, `description`, `layers` (its horizontal layers) and `slice` (its vertical slice); layers and domains with unique ids and kinds from the vocabulary; rules of known types; contracts between known ids; decisions as Decision docs (docs: Models) |
+| `MODEL-FORMAT` | give the model folder a model.json with `name`, `title`, `description`, `layers` (its horizontal layers) and `extension` (the contract each extension declares); layers and domains with unique ids and kinds from the vocabulary; rules of known types; contracts between known ids; decisions as Decision docs (docs: Models) |
 | `PIPELINE-ORDER` | wire the stages in the model's order, or point model.wiring in the profile at the file and the pattern that name them (docs: Models) |
-| `PROVIDER-CONTRACT` | declare each field the model's vertical slice asks under the module's `slice` in the profile (docs: Models) |
+| `PROVIDER-CONTRACT` | declare each field the model's extension asks under the module's `declares` in the profile (docs: Models) |
 | `LONG-RUNNING` | answer the flagged operation in one of the model's shapes, with its link and retry headers named in model.operations, and give a delete its no-content answer (docs: Models) |
 | `EVENT-COVERAGE` | name the events each write operation emits under model.events.marker, each defined in the model.events.files (docs: Models) |
 | `GRAPH-SELFTEST` | make the project's architecture.graph print every import and data edge, or set it to the plugin's: node .aidlc/bin/aidlc.mjs graph (docs: Stack packs) |

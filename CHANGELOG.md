@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.175.0] - 2026-10-27
+### Changed
+- Vertical slices and horizontal layers take their standard meaning (decision 0024, superseding 0023). A **vertical slice** is the code of one business feature or use case, a command or a query, cutting through every horizontal layer it needs and naming the use case it serves. A **horizontal layer** groups code by one technical concern shared by every feature: the interface, application, model and infrastructure layers inside a domain, and the platform every request crosses. A **domain** is the bounded context holding a business capability's slices and its data; an **extension** is a domain another team owns. "Operation" and "internal layer" are retired.
+- `aidlc name slice` and `aidlc scaffold slice` return, and the stack packs' `slice` templates with them.
+- A model's vertical contract is its `extension` (rule type `extensionContract`), declared under each module's `declares`; a model's reference code is listed under `references`.
+- The project constitution's rule 9: code is grouped into vertical slices across the horizontal layers, one slice never calls another slice's data layer directly, and each domain owns its data.
+- The domain template asks each command and query for the business use case it serves.
+
 ## [0.174.0] - 2026-10-27
 ### Changed
 - One layout for shipped content (decision 0022): the templates the CLI renders (cards, fix, research, intent review) join `plugin/templates/`, the personas move to `plugin/personas/`, the models to `plugin/models/`, and the control-plane model keeps its Go walking skeleton in `plugin/models/control-plane/reference/go/` with its own tests; the board's issue template lives in its extension.
@@ -290,7 +298,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.174.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.175.0...HEAD
+[0.175.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.174.0...v0.175.0
 [0.174.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.173.1...v0.174.0
 [0.173.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.173.0...v0.173.1
 [0.173.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.172.2...v0.173.0

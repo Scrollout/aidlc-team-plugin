@@ -49,7 +49,7 @@ test('B171/AC-1 aidlc scaffold writes each kind at its folder with names from th
   const dir = makeRepo({ ...I1, 'go.mod': 'module example.com/shop\n\ngo 1.22\n' }, { naming: { tokens: { system: 'shop' }, domains: { roleassignments: { name: 'Role assignments' } } } });
   assert.equal(run(dir, ['scaffold', 'domain', 'roleassignments']).code, 0);
   assert.match(read(dir, 'internal/domains/roleassignments/model/roleassignment.go'), /^type RoleAssignment struct \{$/m);
-  assert.match(run(dir, ['scaffold', 'operation', 'create', '--domain', 'roleassignments']).out, /^wrote internal\/domains\/roleassignments\/application\/createroleassignment\/handler\.go$/m);
+  assert.match(run(dir, ['scaffold', 'slice', 'create', '--domain', 'roleassignments']).out, /^wrote internal\/domains\/roleassignments\/application\/createroleassignment\/handler\.go$/m);
   assert.match(read(dir, 'internal/domains/roleassignments/application/createroleassignment/handler_test.go'), /t\.Fatal\("write the acceptance test first"\)/, 'tests first: the scaffolded test fails');
   assert.match(run(dir, ['scaffold', 'runtime', 'shop-ingress-gateway']).out, /^wrote cmd\/shop-ingress-gateway\/main\.go$/m);
   assert.match(run(dir, ['scaffold', 'domain', 'roleassignments']).out, /^kept internal\/domains\/roleassignments\/model\/roleassignment\.go: it exists$/m);
@@ -69,11 +69,11 @@ test('B171/AC-3 an event type in a domain events surface that breaks the grammar
   ]);
 });
 
-test('B171/AC-2 a bolt that names a domain gets the reference operations on its card, and init vendors the packs', () => {
+test('B171/AC-2 a bolt that names a domain gets the reference slices on its card, and init vendors the packs', () => {
   const modules = [{ id: 'notes', kind: 'domain', paths: ['internal/domains/notes/**'] }];
   const dir = makeRepo({ ...I1, 'go.mod': 'module example.com/r\n\ngo 1.22\n', [U(1)]: unitDoc({ scope: ['internal/domains/notes/**'], modules: ['notes'] }) }, { modules });
   approve(dir, 'I-1', 'U-1');
-  assert.match(run(dir, ['card', 'U-1']).out, /^## Reference\nCopy the shape of the stack pack's reference domain \(.*packs\/go\/reference\/internal\/domains\/notes\): the command operation .*createnote and the query operation .*getnote\.$/m);
+  assert.match(run(dir, ['card', 'U-1']).out, /^## Reference\nCopy the shape of the stack pack's reference domain \(.*packs\/go\/reference\/internal\/domains\/notes\): the command slice .*createnote and the query slice .*getnote\.$/m);
   assert.equal(run(dir, ['upgrade', '--dirty']).code, 0);
   assert.ok(existsSync(join(dir, '.aidlc/bin/packs/go/manifest.json')) && existsSync(join(dir, '.aidlc/bin/packs/go/reference/go.mod')), 'pinned with the CLI');
   assert.equal(JSON.parse(readFileSync(join(dir, '.aidlc/bin/packs/go/manifest.json'), 'utf8')).stack, 'go');
@@ -88,7 +88,7 @@ test('B172/AC-1 the TypeScript pack reads relative imports and migrations; its r
   assert.ok(!lines.some((e) => /data\/notes\/(save|get|set)$/.test(e)), 'a call on a variable named like the domain is no table');
   assert.deepEqual([...kindFindings(edges, profile), ...layerFindings(edges, profile), ...reachFindings(edges, profile), ...moduleFindings(edges, profile)].map((f) => f.message), []);
   const dir = makeRepo({ ...I1, 'tsconfig.json': '{}\n' }, { naming: { tokens: { system: 'shop' }, domains: { orders: {} } } });
-  assert.match(run(dir, ['scaffold', 'operation', 'create', '--domain', 'orders']).out, /^wrote src\/domains\/orders\/application\/createorder\/handler\.ts\nwrote src\/domains\/orders\/application\/createorder\/handler\.spec\.ts$/m);
+  assert.match(run(dir, ['scaffold', 'slice', 'create', '--domain', 'orders']).out, /^wrote src\/domains\/orders\/application\/createorder\/handler\.ts\nwrote src\/domains\/orders\/application\/createorder\/handler\.spec\.ts$/m);
   assert.match(run(dir, ['scaffold', 'domain', 'orders']).out, /^wrote src\/domains\/orders\/model\/order\.ts$/m);
   assert.match(read(dir, 'src/domains/orders/model/order.ts'), /^export interface Order \{$/m);
 });
