@@ -54,11 +54,11 @@
 * [State](state.md) - How the CLI derives progress from git and docs, how approvals work, and how next picks the one allowed step.
 * [Steering](steering.md) - How the plugin corrects the agent during work, keeps it moving, and improves its rules over time without growing.
 * [Team](team.md) - The four roles, how parallel worktree workers are run and merged, and where tokens are spent.
-* [Units of work](units-of-work.md) - An intent lists its Units of work as the method's Mob Elaboration and Units Generation give them, each with its kind, modules, responsibilities, stories, requirements, risks, measures and dependencies, every story in a Unit, the dependencies acyclic, and each bolt's modules in a Unit of its intent.
+* [Units of work](units-of-work.md) - Draft - an intent lists its Units of work as the method's Mob Elaboration and Units Generation give them, each with its kind, modules, responsibilities, stories, requirements, risks, measures and dependencies, every story in a Unit, the dependencies acyclic, and each bolt's modules in a Unit of its intent.
 * [Values as data](values.md) - Nothing hard-coded, in the plugin and in every project it governs - values in data, several values as structured objects and answers served as JSON, code holding only logic, tool protocol and keys, a test for the plugin and a gate check for projects, and the board as a declarative JSON template.
 * [Vendoring](vendoring.md) - How init and upgrade copy the CLI into a project and pin it, and why only a release is copied.
 * [Verification](verification.md) - The inner loop (hooks), the merge gate, the reviewer's output contract and the CI mode.
-* [Vertical slices checked](vertical-slices.md) - Deterministic checks that a domain's code is grouped into vertical slices across its horizontal layers - no slice imports another, slices are entered only from the interface layer, every file sits in one layer and one slice, the slice folders match the domain doc's commands and queries, each slice cites the stories it serves and has its own test.
+* [Vertical slices checked](vertical-slices.md) - Draft - deterministic checks that a domain's code is grouped into vertical slices across its horizontal layers - no slice imports another, slices are entered only from the interface layer, every file sits in one layer and one slice, the slice folders match the domain doc's commands and queries, each slice cites the stories it serves and has its own test.
 * [Workload identity](workload-identity.md) - Runtimes, domains and data authenticate by workload identity with short-lived credentials, never by shared or static secrets; a merge check fails the common static forms on added lines.
 
 # Subdirectories

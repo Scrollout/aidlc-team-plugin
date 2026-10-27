@@ -24,6 +24,7 @@ Intake proposes the pathway, stack and lane, and the owner confirms or changes t
 
 - **The pathway comes from the project, not a band:** no code means greenfield, approved intents mean feature, and code with neither means brownfield. The stack is the pack whose detect file the project has.
 - **The lane:** full when risk or verification is high, otherwise standard (`intake.fullWhen`).
+- **Models:** each model whose fit words the request holds, with its sentences and its slices, so stories are written per use case ([planned](vertical-slices.md#planned-before-built)).
 - **Scoring:** the lead scores with `aidlc intake Q-<n> --ambiguity <band>:<ids> --assumptions <band>:<ids> --risk <band>:<ids>`. A medium or high band cites the sentences it rests on, and risk never goes below what the words show. The bands and their sentences sit in the request's front matter, outside the digest.
 - **What the owner hears:** the lead tells them in two or three plain sentences what kind of change this is and how much process that calls for, then the proposal. The bands come only on request.
 - **The intent records the outcome:** `request: Q-<n>`, `pathway`, and `lane`. An intent's `lane` is a floor for its bolts, which never run below it ([Grid](grid.md#lanes)).

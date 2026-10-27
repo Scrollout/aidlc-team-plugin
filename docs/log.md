@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Creation** [M28](roadmap/m28.md) B247 and B248: vertical slices planned before they are built. A model lists its domains' slices and applies them to the domain docs, each Unit of work names the slices that serve its stories, and intake lists a fitting model's slices ([Vertical slices checked](design/vertical-slices.md#planned-before-built), [Units of work](design/units-of-work.md), [Models](design/models.md), [Intake](design/intake.md)).
 - **Creation** [0025 The plugin ships the model format, not models](decisions/0025-the-plugin-ships-the-model-format-not-models.md), superseding 0020: a model lives with the project that uses it; the control-plane model moves to `examples/` ([Models](design/models.md), [Shipped layout](design/layout.md)). Release 0.186.0.
 - **Update** The [Board](design/board.md) labels each issue with the decisions its doc links, as `ADR-<NNNN>`. Release 0.185.0.
 - **Update** Decisions in MADR 4.0, completed: approval names the decision-makers when a decision names none, a draft's status is checked against MADR's, and applied model decisions are dated and carry their consequences ([Standard formats](design/standards.md#decisions-madr-40)). Release 0.184.0.

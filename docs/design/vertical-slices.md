@@ -1,8 +1,8 @@
 ---
 type: Design
 title: Vertical slices checked
-description: Deterministic checks that a domain's code is grouped into vertical slices across its horizontal layers - no slice imports another, slices are entered only from the interface layer, every file sits in one layer and one slice, the slice folders match the domain doc's commands and queries, each slice cites the stories it serves and has its own test.
-status: stable
+description: Draft - deterministic checks that a domain's code is grouped into vertical slices across its horizontal layers - no slice imports another, slices are entered only from the interface layer, every file sits in one layer and one slice, the slice folders match the domain doc's commands and queries, each slice cites the stories it serves and has its own test.
+status: draft
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-28T02:30:00Z }
 ---
 
@@ -28,7 +28,13 @@ With a naming registry, the slice's name and its route:
 - `SLICE-ROUTE`: an operation id used twice in the contracts, one that maps to no slice folder, or a slice of a domain the contracts serve that no operation maps to. An operation id maps to the slice the registry composes from the same domain and verb.
 - `SLICE-DELIVER`: a bolt that adds a slice changes no file of its domain's interface layer or of a runtime, which wire its route, or not the domain doc, which lists it.
 
+# Planned before built
+The chain story → slice → folder → test starts where the story is written, in the same grammar as the checks above.
+- **Units of work** (method 12): each Unit names the slices it delivers under `Slices`, one `<Kind> <slice> [US<g>.<s>]` each, so every story of the Unit has a slice before any bolt is cut. `UNIT-WORK` reports a story no slice serves, a slice citing no story of the Unit, a kind other than Command or Query, and, with a naming registry, a name the registry does not compose from one of its verbs and a domain of the Unit's modules ([Units of work](units-of-work.md)).
+- **Models:** a model's domains and its extension list their slices as `{ kind, verb, useCase }`, the registry composing each name from the verb and the domain's noun. `models apply` writes each domain doc the bundle lacks with its `# Surface`, the stories left for elaboration to cite, and prints the increments slice by slice; `models gaps` lists a domain's model slices its doc does not list ([Models](models.md)).
+- **Intake** lists a fitting model's slices beside it, so stories are written per use case ([Intake](intake.md)).
+
 # Where they run
 At the merge gate, on the merge result. A project's existing code is measured as it changes: a finding counts only where the bolt changed a file, the slice folder or the domain doc it names, so debt from before adoption waits for the bolt that touches it.
 
-Bolts: [M27](../roadmap/m27.md) B245, B246.
+Bolts: [M27](../roadmap/m27.md) B245, B246; [M28](../roadmap/m28.md) B247, B248.

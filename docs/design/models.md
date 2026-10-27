@@ -18,11 +18,10 @@ A project starts from a proven shape, or is measured against one ([0020](../deci
 A folder, `models/<name>/`:
 - `model.json`:
   - `layers`: the horizontal layers, in order, each with its kind and its role;
-  - `domains`: the shared domains the others rely on;
-  - `extension`: what each extension declares and must offer;
+  - `domains`: the shared domains the others rely on, each with its `slices`;
+  - `extension`: what each extension declares and the slices it offers;
   - `contracts`: what passes between layers and domains;
   - `rules`: rule types with their parameters;
-  - `decisions`: the starter decisions;
   - `fit`: the signals intake matches;
   - `references`: the reference code per stack pack.
 - `knowledge/`: what the architect persona reads to apply the model.

@@ -1,8 +1,8 @@
 ---
 type: Design
 title: Units of work
-description: An intent lists its Units of work as the method's Mob Elaboration and Units Generation give them, each with its kind, modules, responsibilities, stories, requirements, risks, measures and dependencies, every story in a Unit, the dependencies acyclic, and each bolt's modules in a Unit of its intent.
-status: stable
+description: Draft - an intent lists its Units of work as the method's Mob Elaboration and Units Generation give them, each with its kind, modules, responsibilities, stories, requirements, risks, measures and dependencies, every story in a Unit, the dependencies acyclic, and each bolt's modules in a Unit of its intent.
+status: draft
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-28T01:30:00Z }
 ---
 
@@ -22,6 +22,7 @@ Method 11 adds `# Units` to an intent, after `# Stories`. Each Unit is a sub-hea
 | Risks | what could sink the Unit | yes |
 | Measures | measurable outcomes, each citing a success measure `M<k>` of the intent | yes |
 | Depends on | the Units whose code its own needs, or `none` | yes |
+| Slices | the vertical slices that serve its stories, `<Kind> <slice> [US<g>.<s>]` each ([planned](vertical-slices.md#planned-before-built)) | from method 12 |
 | Integration | APIs, shared data and events with other Units | no |
 | Deployment | standalone, shared or embedded | no |
 | Complexity | S, M, L or XL | no |
@@ -43,4 +44,4 @@ A story may belong to several Units when it crosses them; the domain-driven defa
 
 The headings, part labels, kinds and id patterns are data in the intake extension ([Values as data](values.md)).
 
-Bolts: [M27](../roadmap/m27.md) B243.
+Bolts: [M27](../roadmap/m27.md) B243; [M28](../roadmap/m28.md) B248.
