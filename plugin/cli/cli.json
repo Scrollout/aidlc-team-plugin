@@ -279,6 +279,8 @@
     "indexStale": "index differs from what aidlc index generates",
     "docSchemaSection": "a draft {{type}} lacks its {{section}} section ({{standard}})",
     "supersededStatus": "superseded by ADR-{{n}}",
+    "acGherkin": "{{unit}} {{ac}} is not Given/When/Then: write it as Given <context>, when <action>, then <outcome>",
+    "reqEars": "{{unit}} states no requirement in an EARS pattern under # Requirement: The <system> shall, When <trigger>, While <state>, If <trigger> then, or Where <feature>, the <system> shall <response>",
     "docSchemaKey": "a {{type}} lacks {{key}}",
     "docSchemaEnum": "a {{type}}'s {{key}} is {{value}}, not one of {{values}}",
     "docFolder": "a {{type}} lives in {{folder}}/, not {{at}}",
@@ -844,6 +846,9 @@
     "units": "units",
     "bolts": "bolts",
     "boltPrefix": "B-",
+    "gherkin": "\\bwhen\\b.*\\bthen\\b",
+    "requirementSection": "Requirement",
+    "ears": ["^the .+ shall .+", "^when .+, the .+ shall .+", "^while .+, (when .+, )?the .+ shall .+", "^if .+, then the .+ shall .+", "^where .+, the .+ shall .+"],
     "boltTemplate": "templates/docs/bolt.md",
     "boltFile": "^(B-\\d+)(?:-[^/]*)?\\.md$",
     "intents": "intents",
@@ -1721,9 +1726,10 @@
     "steps": { "questions": "every question answered by an option", "domains": "a domain doc for each of its domains", "facts": "a platform fact for each decision that affects the platform", "map": "the codebase map written", "kinds": "a kind for every module" }
   },
   "method": {
-    "version": 4,
-    "since": { "planIncrementId": 2, "pathwaySkip": 3, "boltBind": 4 },
+    "version": 5,
+    "since": { "planIncrementId": 2, "pathwaySkip": 3, "boltBind": 4, "acGherkin": 5 },
     "changes": {
+      "5": "acceptance criteria read Given/When/Then, requirements are stated in EARS, and decisions follow MADR 4.0 (docs: Standard formats)",
       "4": "bolts bind one domain outside increment 1, increment 1 holds the delivery module, fix bolts have one AC, and escape hatches may expire (docs: Construction by proof)",
       "3": "intents declare a pathway and its steps (answered questions, domain docs, platform facts), a size, and decisions that cohere (docs: Inception)",
       "2": "intents ship # Increments with ids I-<n>.<k>; work items are bolts B-<n> under bolts/; modules take a kind; the profile takes system (docs: Canonical model)"

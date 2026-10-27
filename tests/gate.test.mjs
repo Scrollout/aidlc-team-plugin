@@ -205,7 +205,7 @@ test('U6/AC-7 U18/AC-5 U58/AC-1 fix writes a one-unit plan with a regression AC;
   assert.equal(r.code, 0, r.err);
   assert.match(r.out, /^wrote docs\/units\/U-1-typo-in-guide\.md, quick lane\n$/);
   const doc = read(dir, 'docs/units/U-1-typo-in-guide.md');
-  assert.match(doc, /^- AC-1 \(unit\): a regression test reproduces the problem and fails before the fix\.$/m);
+  assert.match(doc, /^- AC-1 \(unit\): Given the input that showed the problem, when it runs, then the result is right; its regression test fails before the fix\.$/m);
   assert.doesNotMatch(doc, /^intent:/m);
   assert.equal(run(dir, ['check']).code, 0, run(dir, ['check']).out);
   commit(dir, 'fix unit');

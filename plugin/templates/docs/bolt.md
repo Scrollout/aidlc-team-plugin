@@ -15,7 +15,7 @@ reserves: []
 <the reason for this bolt>
 
 # Acceptance criteria
-- AC-1 (<level>): <behaviour, tested before the code>
+- AC-1 (<level>): Given <context>, when <action>, then <observable outcome>; tested before the code.
 
 # Domain
 <full lane: the entities this bolt adds or changes, the one domain owning each, how domains interact; no technology. Else delete this section>

@@ -34,3 +34,14 @@ test('B208/AC-2 the plugin\'s own decisions and its template are in MADR form', 
   }
   assert.match(readFileSync(join(ROOT, 'plugin/templates/docs/decision.md'), 'utf8'), /^## Context and Problem Statement\n[\s\S]*^## Considered Options\n[\s\S]*^## Decision Outcome\nChosen option: /m);
 });
+
+test('B209/AC-1 B210/AC-1 in a v2 project a draft AC that is not Given/When/Then is PLAN-AC, a draft requirement not in an EARS pattern PLAN-REQ', async () => {
+  const { lintPlan } = await import('../plugin/cli/lib/index.mjs');
+  const req = (statement) => `---\ntype: Requirement\ntitle: Limits\ndescription: Limits.\n---\n\n# Requirement\n${statement}\n\n# Acceptance criteria\n- AC-1 (unit): Given a quota of 2, when a third order comes, then it is refused.\n- AC-2 (unit): it works.\n`;
+  const bolt = '---\ntype: Bolt\ntitle: B\ndescription: B.\ndesign: "test"\nscope: ["src/orders/**"]\nmodules: [orders]\nrequirements: [R-1]\n---\n\n# Acceptance criteria\n- AC-1 (unit): Given an order, when it is placed, then it is stored.\n- AC-2 (unit): orders are stored.\n';
+  const found = (statement, profile = V2) => lintPlan(join(makeRepo({ 'docs/requirements/R-1-limits.md': req(statement), 'docs/bolts/B-1-b.md': bolt }, profile), 'docs'), profile, {})
+    .filter((f) => /Given\/When\/Then|EARS/.test(f.message)).map((f) => `${f.code} ${f.message.split(':')[0]}`);
+  assert.deepEqual(found('Orders are limited.'), ['PLAN-AC B-1 AC-2 is not Given/When/Then', 'PLAN-AC R-1 AC-2 is not Given/When/Then', 'PLAN-REQ R-1 states no requirement in an EARS pattern under # Requirement']);
+  assert.deepEqual(found('When a customer has 2 open orders, the shop shall refuse a third.').filter((l) => /PLAN-REQ/.test(l)), []);
+  assert.deepEqual(found('Orders are limited.', {}), [], 'a v1 project keeps its formats');
+});

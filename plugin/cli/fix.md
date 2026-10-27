@@ -14,4 +14,4 @@ generated: { by: {{producer}}, at: {{at}} }
 A regression: {{why}}
 
 # Acceptance criteria
-- AC-1 ({{level}}): a regression test reproduces the problem and fails before the fix.
+- AC-1 ({{level}}): Given the input that showed the problem, when it runs, then the result is right; its regression test fails before the fix.

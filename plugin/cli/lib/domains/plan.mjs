@@ -203,6 +203,15 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
       if ((inBundle && [config.okf.index, config.okf.log].includes(last)) || list(profile.shared).includes(glob)) add('PLAN-SHARED', u, keyLine(u, 'scope'), 'planShared', { glob });
     }
   }
+  // Standard formats on a v2 project's drafts: ACs as Given/When/Then, requirements in EARS (docs/design/standards.md).
+  const judged = (d) => profile.system && !d.fm.verified_hash && (!d.fm.intent || inForce(intents.find((i) => i.id === d.fm.intent), 'acGherkin'));
+  for (const d of [...units, ...requirements.map((r) => ({ ...r, acs: acsOf(r.doc) }))].filter(judged)) {
+    for (const ac of d.acs.filter((a) => !new RegExp(GRID.gherkin, 'i').test(a.text))) add('PLAN-AC', d, ac.line, 'acGherkin', { ac: ac.id });
+  }
+  for (const r of requirements.filter(judged)) {
+    const stated = sectionOf(r.doc, GRID.requirementSection).some(([, t]) => GRID.ears.some((p) => new RegExp(p, 'i').test(t.trim())));
+    if (!stated) add('PLAN-REQ', r, 1, 'reqEars', {});
+  }
   if (requirements.length) {
     const known = new Set(requirements.map((r) => r.id));
     for (const d of [...liveIntents, ...units]) {
