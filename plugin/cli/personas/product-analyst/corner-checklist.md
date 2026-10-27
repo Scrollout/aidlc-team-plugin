@@ -1,6 +1,6 @@
 # Corner checklist
 
-For each surface the intent touches, settle every line: a requirement or AC, an assumption the owner confirms, or out of scope.
+Give every surface its line under the intent's `# Corners`, settled by a requirement or bolt, a source, or n/a and why: `- Money: R-4, [A2]`, `- Time: n/a: no dates in this intent`. Within a surface, settle each item below that applies.
 
 - **Input:** empty, too long, wrong type or format, duplicates, characters from other languages, files too large.
 - **Identity:** who may do it, who may not, a session that expired, acting on behalf of someone else.

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.160.0] - 2026-10-27
+### Added
+- Method 7: an intent settles each surface of the corner checklist (data in the intake extension) on its own line under `# Corners`, else `ELAB-CORNER`; an answer with a vague word is `ELAB-VAGUE`; the last question is a read-back the owner confirms as *looks correct*, else `ELAB-OPEN`. All block approval.
+### Changed
+- An answer of "not decided" keeps its question open (`ELAB-OPEN`) instead of reading as a bare answer.
+- The intent template carries `# Questions` ending with the read-back, and `# Corners`; the elaboration checks have their own design doc.
+
 ## [0.159.0] - 2026-10-27
 ### Added
 - Method 6: an intent names the owner's requests (`request: [Q-<n>]`); each goal line, story and draft requirement statement cites a source that resolves (a request sentence, an answered question, an assumption under `# Assumptions`, or a platform fact), else `CLAIM-SOURCE`; a request sentence nothing cites is `REQUEST-COVERAGE`. Both block approval.
@@ -190,7 +197,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.159.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.160.0...HEAD
+[0.160.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.159.0...v0.160.0
 [0.159.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.158.0...v0.159.0
 [0.158.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.157.0...v0.158.0
 [0.157.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.156.0...v0.157.0

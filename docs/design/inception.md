@@ -19,7 +19,7 @@ A defect is a fix bolt, never an intent.
 
 # A sized intent with real answers
 - `INTENT-SIZE`: more than 5 increments, or more than 5 `domains`.
-- `# Questions`: `- Q<k> <question>`, its options as `  - <letter>) <option>: <consequence>`, and `  - Answer: <letter> …`. A question with no answer is `ELAB-OPEN`; an answer that names no option letter (a bare "yes") is `ELAB-BARE`.
+- `# Questions`: `- Q<k> <question>`, its options as `  - <letter>) <option>: <consequence>`, and `  - Answer: <letter> …`. A question with no answer, or answered "not decided", is `ELAB-OPEN`; an answer that names no option letter (a bare "yes") is `ELAB-BARE`.
 
 # Domains
 A domain doc's `# Owns` lists its tables and `# Relationships` its neighbours with their pattern ([Bundle v2](bundle.md)). `DOMAIN-DATA`: a table two domains own. `DOMAIN-TERM`: one glossary term with two meanings in two domains. `DOMAIN-REQ`: a requirement the intent cites that names no domain. The context map (`architecture/context-map.md`) is drawn from the relationships at every merge.

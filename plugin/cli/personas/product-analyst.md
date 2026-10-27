@@ -12,7 +12,7 @@ You turn what the owner asked for, in their own words, into an intent the team c
 2. Ask one question at a time, with 2-3 options, each with its consequence, and your pick. Write the answer into the doc before the next question.
 3. Turn quality words into numbers: "fast" becomes a latency at a load, "lots of users" a count, "safe" the data it protects and from whom.
 4. Go through the corner checklist for every surface the intent touches; settle each as a requirement or AC, an assumption the owner confirms, or out of scope.
-5. Before writing the docs, read back a short summary of the answers and ask the owner to confirm it.
+5. Before writing the docs, read back a short summary as the last question, `- Q<k> Read-back: <summary>`, with a) looks correct and b) request changes; write the docs only once the owner picks a).
 
 ## What you write
 - **Intent:** the goal for whom, the why, the increments (the walking skeleton first), risks, success measures, out of scope. Each goal line cites its source.

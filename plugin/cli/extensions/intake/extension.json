@@ -13,10 +13,11 @@
     "grid": {
       "codes": {
         "CLAIM-SOURCE": { "level": "error", "fix": "name the requests the intent comes from (request: [Q-<n>]) and give each goal line, story and requirement statement a source in brackets: a request sentence [Q-<n>.<k>], an answered question [Q<k>], an assumption [A<k>] listed under # Assumptions, or a fact [F-<n>] (docs: Intake)" },
+        "ELAB-CORNER": { "level": "error", "fix": "settle each surface of the corner checklist (aidlc persona product-analyst) on its own line under # Corners: - <Surface>: a requirement or bolt id, a source such as [A<k>], or n/a: and why (docs: Elaboration checks)" },
         "REQUEST-COVERAGE": { "level": "error", "fix": "cite each sentence of the request where the intent or a requirement answers it, or under # Out of scope with the reason (docs: Intake)" }
       }
     },
-    "state": { "approveBlocks": ["CLAIM-SOURCE", "REQUEST-COVERAGE"] },
+    "state": { "approveBlocks": ["CLAIM-SOURCE", "REQUEST-COVERAGE", "ELAB-CORNER"] },
     "commands": [
       {
         "name": "intake",
@@ -55,12 +56,30 @@
       "claimQuestion": "{{unit}} cites {{ref}}, which is no answered question of {{intent}}",
       "claimAssumption": "{{unit}} cites {{ref}}, which {{intent}} does not list under # Assumptions",
       "claimFact": "{{unit}} cites {{ref}}, which is no platform fact",
-      "requestUncovered": "{{unit}} leaves {{ids}} of {{request}} uncited"
+      "requestUncovered": "{{unit}} leaves {{ids}} of {{request}} uncited",
+      "cornerMissing": "{{unit}} # Corners has no line for {{surfaces}}",
+      "cornerUnsettled": "{{unit}} leaves the {{surface}} corner unsettled: name a requirement or bolt, a source, or n/a: and why",
+      "readBackMissing": "{{unit}} ends with no read-back: ask a last question, Q<k> Read-back: <the summary>, with a) looks correct and b) request changes",
+      "readBackChanges": "{{unit}} {{q}}: the owner asked for changes to the read-back; revise, then read back again"
     },
     "intake": {
       "type": "Request",
       "heading": "Request",
-      "claims": { "goal": "Goal", "stories": "Stories", "assumptions": "Assumptions" },
+      "claims": { "goal": "Goal", "stories": "Stories", "assumptions": "Assumptions", "corners": "Corners" },
+      "readBack": { "prefix": "Read-back:", "yes": "looks correct" },
+      "waivers": ["n/a", "out of scope"],
+      "corners": [
+        { "surface": "Input", "asks": "empty, too long, wrong type or format, duplicates, characters from other languages, files too large." },
+        { "surface": "Identity", "asks": "who may do it, who may not, a session that expired, acting on behalf of someone else." },
+        { "surface": "Data", "asks": "what is kept, for how long, who may read it, personal data, deletion on request, the same record changed twice at once." },
+        { "surface": "Errors", "asks": "what the user sees, what is logged, what is retried, what happens halfway through." },
+        { "surface": "Scale", "asks": "how many users, how much data, the busiest hour, what slows down first." },
+        { "surface": "Time", "asks": "time zones, dates at month and year ends, deadlines, things that expire." },
+        { "surface": "Money", "asks": "currency, rounding, refunds, a payment that fails or arrives twice." },
+        { "surface": "Outside systems", "asks": "one is slow, down, or answers something unexpected." },
+        { "surface": "Operations", "asks": "how it is deployed, how a bad release is rolled back, how the owner knows it works." },
+        { "surface": "Change", "asks": "existing users and data when this ships, an older client still in use." }
+      ],
       "textMax": 60,
       "prefix": "Q-",
       "bands": ["low", "medium", "high"],

@@ -22,15 +22,18 @@ const bullets = (doc, heading) => sectionOf(doc, heading).map(([n]) => [n, doc.l
 export function questionsOf(doc) {
   const out = [];
   for (const [n, t] of sectionOf(doc, P.questions)) {
-    const q = t.match(/^[-*]\s+(Q\d+)\b/), opt = t.match(/^\s+[-*]\s+([a-z])\)\s/), ans = t.match(/^\s+[-*]\s+Answer:\s*(.*)$/i);
-    if (q) out.push({ n, id: q[1], options: [], answer: null });
-    else if (opt && out.length) out.at(-1).options.push(opt[1]);
+    const q = t.match(/^[-*]\s+(Q\d+)\b\s*(.*)$/), opt = t.match(/^\s+[-*]\s+([a-z])\)\s+([^:]*)/), ans = t.match(/^\s+[-*]\s+Answer:\s*(.*)$/i);
+    if (q) out.push({ n, id: q[1], text: q[2], options: [], labels: [], answer: null });
+    else if (opt && out.length) { out.at(-1).options.push(opt[1]); out.at(-1).labels.push(opt[2].trim()); }
     else if (ans && out.length) out.at(-1).answer = ans[1].trim();
   }
   return out;
 }
-// An answer names one of its question's option letters.
-const answered = (q) => q.answer && q.options.includes(q.answer.match(/^([a-z])\b/)?.[1]);
+// An answer names one of its question's option letters; "not decided" leaves the question open.
+const undecided = (q) => q.answer && P.undecided.some((w) => q.answer.toLowerCase().includes(w));
+const answered = (q) => q.answer && !undecided(q) && q.options.includes(q.answer.match(/^([a-z])\b/)?.[1]);
+// The words of an answer after its option letter, where a vague term would hide (docs/design/elaboration.md).
+const vagueIn = (q) => P.vague.find((w) => new RegExp(`\\b${w}\\b`, 'i').test(q.answer.replace(/^[a-z]\b[,.]?/, '')));
 
 // The findings, through `add(code, doc, line, key, data)` and `inForce(intent, key)` from plan lint.
 export function lintInception({ bundle, profile, intents, requirements, merged, add, inForce, incrementLines, keyLine }) {
@@ -67,7 +70,9 @@ export function lintInception({ bundle, profile, intents, requirements, merged, 
   for (const i of intents.filter((x) => x.fm.status !== config.grid.dropped)) {
     const qs = questionsOf(i.doc);
     for (const q of qs.filter((x) => !x.answer)) add('ELAB-OPEN', i, q.n, 'elabOpen', { q: q.id });
-    for (const q of qs.filter((x) => x.answer && !answered(x))) add('ELAB-BARE', i, q.n, 'elabBare', { q: q.id, answer: q.answer, options: q.options.join(', ') || '-' });
+    for (const q of qs.filter(undecided)) add('ELAB-OPEN', i, q.n, 'elabUndecided', { q: q.id });
+    for (const q of qs.filter((x) => x.answer && !undecided(x) && !answered(x))) add('ELAB-BARE', i, q.n, 'elabBare', { q: q.id, answer: q.answer, options: q.options.join(', ') || '-' });
+    for (const q of v2 && inForce(i, 'elabVague') ? qs.filter((x) => answered(x) && vagueIn(x)) : []) add('ELAB-VAGUE', i, q.n, 'elabVague', { q: q.id, word: vagueIn(q) });
     if (!v2 || !inForce(i, 'pathwaySkip')) continue; // a v1 project keeps its intents until it migrates (decision 0013)
     const incs = incrementLines(i).length, doms = list(i.fm.domains);
     if (incs > P.maxIncrements || doms.length > P.maxDomains) add('INTENT-SIZE', i, 1, 'intentSize', { increments: incs, domains: doms.length, maxIncrements: P.maxIncrements, maxDomains: P.maxDomains });

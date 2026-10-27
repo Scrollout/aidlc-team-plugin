@@ -134,6 +134,7 @@ function lintSources({ bundle, profile, intents, requirements, add, inForce, key
   const dir = join(bundle, F.Request), requests = new Map(docsIn(dir, /^Q-\d+-.*\.md$/).map((f) => [f.match(/^Q-\d+/)[0], sentencesOf(parseDoc(readFileSync(join(dir, f), 'utf8')))]));
   const facts = new Set(docsIn(join(bundle, F.Fact), /^F-\d+/).map((f) => f.match(/^F-\d+/)[0]));
   for (const i of intents.filter((x) => x.fm.status !== config.grid.dropped && inForce(x, 'claimSource'))) {
+    if (inForce(i, 'elabCorner')) { corners(i, add); readBack(i, add); }
     const named = list(i.fm.request);
     if (!named.length) { add('CLAIM-SOURCE', i, 1, 'claimNoRequest', {}); continue; }
     for (const ref of named.filter((r) => !requests.has(r))) add('CLAIM-SOURCE', i, keyLine(i, 'request'), 'claimNoSuchRequest', { ref, dir: relPath(bundle, dir) });
@@ -142,6 +143,8 @@ function lintSources({ bundle, profile, intents, requirements, add, inForce, key
     const assumed = new Set(linesOf(i.doc, K.claims.assumptions).map(([, t]) => t.match(/^\s*[-*]\s+(A\d+)\b/)?.[1]).filter(Boolean));
     const unresolved = (r) => (r.startsWith('Q-') ? !sentences.has(r) && 'claimSentence' : r.startsWith('Q') ? !answered.has(r) && 'claimQuestion' : r.startsWith('A') ? !assumed.has(r) && 'claimAssumption' : !facts.has(r) && 'claimFact');
     const cited = requirements.filter((r) => i.requirements.includes(r.id));
+    // A corner's source is checked like a claim's, though n/a with a reason needs none.
+    for (const [n, t] of linesOf(i.doc, K.claims.corners)) for (const ref of refsIn(t)) { const key = unresolved(ref); if (key) add('CLAIM-SOURCE', i, n, key, { ref, intent: i.id, requests: named.join(', ') }); }
     const claims = [
       ...[K.claims.goal, K.claims.stories].flatMap((h) => linesOf(i.doc, h).map(([n, t]) => [i, h, n, t])),
       ...cited.filter((r) => approval(r.doc) === 'draft').flatMap((r) => linesOf(r.doc, config.grid.requirementSection).map(([n, t]) => [r, config.grid.requirementSection, n, t])),
@@ -157,6 +160,25 @@ function lintSources({ bundle, profile, intents, requirements, add, inForce, key
       if (open.length) add('REQUEST-COVERAGE', i, keyLine(i, 'request'), 'requestUncovered', { ids: open.join(', '), request: r });
     }
   }
+}
+
+// Method 7: a line under # Corners for each surface of the checklist, each settled (docs/design/elaboration.md#corners-and-answers).
+const WAIVED = new RegExp(`^(?:${K.waivers.join('|')})\\s*[:,]\\s*\\S+\\s+\\S+`, 'i');
+function corners(i, add) {
+  const lines = new Map(linesOf(i.doc, K.claims.corners).map(([n, t]) => [t.match(/^\s*[-*]\s+\**([^:*]+?)\**:\s*(.*)$/), n]).filter(([m]) => m).map(([m, n]) => [m[1].trim().toLowerCase(), { n, rest: m[2].trim() }]));
+  const missing = K.corners.map((c) => c.surface).filter((s) => !lines.has(s.toLowerCase()));
+  if (missing.length) add('ELAB-CORNER', i, sectionOf(i.doc, K.claims.corners)[0]?.[0] - 1 || 1, 'cornerMissing', { surfaces: missing.join(', ') });
+  for (const c of K.corners.filter((x) => lines.has(x.surface.toLowerCase()))) {
+    const { n, rest } = lines.get(c.surface.toLowerCase());
+    if (!refsIn(rest).length && !/\b[RB]-\d+\b/.test(rest) && !WAIVED.test(rest)) add('ELAB-CORNER', i, n, 'cornerUnsettled', { surface: c.surface });
+  }
+}
+// Method 7: the last question reads back the summary, and the owner picked looks correct.
+function readBack(i, add) {
+  const q = questionsOf(i.doc).at(-1);
+  if (!q?.text.startsWith(K.readBack.prefix)) return add('ELAB-OPEN', i, q?.n ?? 1, 'readBackMissing', {});
+  const picked = q.labels[q.options.indexOf(q.answer?.match(/^([a-z])\b/)?.[1])];
+  if (picked !== undefined && picked.toLowerCase() !== K.readBack.yes) add('ELAB-OPEN', i, q.n, 'readBackChanges', { q: q.id });
 }
 
 plug('planRules', lintSources);

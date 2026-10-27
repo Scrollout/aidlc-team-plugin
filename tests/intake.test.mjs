@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { computeLane, readPlan } from '../plugin/cli/lib/index.mjs';
+import { computeLane, config, readPlan } from '../plugin/cli/lib/index.mjs';
 import { approve, commit, makeRepo, read, run, write } from './state-repo.mjs';
 
 const PROSE = `I run a small bakery and want customers to order cakes online. They should pay by credit card when they order!
@@ -71,7 +71,10 @@ test('B214/AC-3 an intent\'s lane is a floor for its bolts, and a lane outside t
 });
 
 const V2 = { system: { core: ['src/**'] }, naming: { tokens: { system: 'bak' } } };
-const cakes = (fm, body) => `---\ntype: Intent\ntitle: Cake orders\ndescription: Online cake orders.\npathway: greenfield\n${fm}---\n\n# Goal\n${body}\n\n# Questions\n- Q1 Which card provider?\n  - a) one provider: simple\n  - Answer: a\n\n# Assumptions\n- A1 One bakery, one shop.\n\n# Out of scope\n- Logins for staff [Q-1.3]: later.\n`;
+// A method 7 intent: its questions end with a confirmed read-back, and every corner is settled.
+const READBACK = '- Q2 Read-back: cakes ordered online, paid by card, one shop.\n  - a) looks correct: write the docs\n  - b) request changes: read back again\n  - Answer: a';
+const CORNERS = '# Corners\n- Input: [Q1]\n- Identity: [A1]\n- Data: n/a: no data beyond orders\n- Errors: R-1\n- Scale: out of scope: one shop, a few orders\n- Time: n/a: no dates in this intent\n- Money: [Q1]\n- Outside systems: [Q1]\n- Operations: n/a: one host, rolled back by hand\n- Change: n/a: nothing exists yet\n';
+const cakes = (fm, body, { questions = READBACK, corners = CORNERS } = {}) => `---\ntype: Intent\ntitle: Cake orders\ndescription: Online cake orders.\npathway: greenfield\n${fm}---\n\n# Goal\n${body}\n\n# Questions\n- Q1 Which card provider?\n  - a) one provider: simple\n  - Answer: a\n${questions}\n\n${corners}\n# Assumptions\n- A1 One bakery, one shop.\n\n# Out of scope\n- Logins for staff [Q-1.3]: later.\n`;
 const R1 = (statement) => `---\ntype: Requirement\ntitle: Order email\ndescription: The baker hears of each order.\n---\n\n# Requirement\n${statement}\n\n# Acceptance criteria\n- AC-1 (unit): Given an order, when it is placed, then the baker gets an email.\n`;
 const claims = (dir) => run(dir, ['check', 'docs']).out.split('\n').filter((l) => /CLAIM-SOURCE|REQUEST-COVERAGE/.test(l)).map((l) => l.replace(/ → .*$/, '').replace(/^docs\//, ''));
 
@@ -112,4 +115,45 @@ test('B215/AC-2 a request sentence neither the intent nor its requirements cite 
   const r = run(dir, ['approve', 'I-1']);
   assert.equal(r.code, 64);
   assert.match(r.err, /REQUEST-COVERAGE I-1 leaves Q-1\.2, Q-1\.4, Q-1\.5 of Q-1 uncited/);
+});
+
+const elab = (dir) => run(dir, ['check', 'docs']).out.split('\n').filter((l) => /ELAB-|CLAIM-SOURCE/.test(l)).map((l) => l.replace(/ → .*$/, '').replace(/^docs\/intents\/I-1-cake-orders\.md/, 'I-1'));
+const sourced = 'Customers order cakes online [Q-1.1].';
+
+test('B216/AC-1 the corner checklist is data, and a surface a method 7 intent leaves out or unsettled is ELAB-CORNER', () => {
+  const knowledge = read(join(import.meta.dirname, '..'), 'plugin/cli/personas/product-analyst/corner-checklist.md');
+  assert.deepEqual(knowledge.split('\n').filter((l) => l.startsWith('- **')), config.intake.corners.map((c) => `- **${c.surface}:** ${c.asks}`), 'the analyst reads the checklist the CLI checks');
+  const dir = makeRepo({}, V2);
+  run(dir, ['intake', PROSE]);
+  write(dir, { 'docs/intents/I-1-cake-orders.md': cakes('request: [Q-1]\n', sourced) });
+  assert.deepEqual(elab(dir), [], 'every surface settled');
+  write(dir, { 'docs/intents/I-1-cake-orders.md': cakes('request: [Q-1]\n', sourced, { corners: CORNERS.replace('- Time: n/a: no dates in this intent\n', '').replace('- Data: n/a: no data beyond orders', '- Data: we will see').replace('- Scale: out of scope: one shop, a few orders', '- Scale: n/a').replace('- Identity: [A1]', '- Identity: [A9]') }) });
+  assert.deepEqual(elab(dir), [
+    'I-1:21 ELAB-CORNER I-1 # Corners has no line for Time',
+    'I-1:24 ELAB-CORNER I-1 leaves the Data corner unsettled: name a requirement or bolt, a source, or n/a: and why',
+    'I-1:26 ELAB-CORNER I-1 leaves the Scale corner unsettled: name a requirement or bolt, a source, or n/a: and why',
+    'I-1:23 CLAIM-SOURCE I-1 cites A9, which I-1 does not list under # Assumptions',
+  ]);
+  commit(dir, 'plan');
+  assert.match(run(dir, ['approve', 'I-1']).err, /ELAB-CORNER/, 'it blocks the approval');
+  write(dir, { 'docs/intents/I-1-cake-orders.md': cakes('request: [Q-1]\nmethod: 6\n', sourced, { corners: '' }) });
+  assert.deepEqual(elab(dir), [], 'a method 6 intent keeps its rules');
+});
+
+test('B216/AC-2 a vague answer is ELAB-VAGUE, "not decided" stays open, and a read-back the owner has not confirmed is ELAB-OPEN', () => {
+  const dir = makeRepo({}, V2);
+  run(dir, ['intake', PROSE]);
+  const intent = (questions, fm = '') => write(dir, { 'docs/intents/I-1-cake-orders.md': cakes(`request: [Q-1]\n${fm}`, sourced, { questions }) });
+  intent(`${READBACK.replace('- Q2', '- Q3')}`.replace(/^/, '- Q2 How fast must checkout be?\n  - a) under a second: one call\n  - Answer: a, fast enough I guess\n'));
+  assert.deepEqual(elab(dir), ['I-1:16 ELAB-VAGUE I-1 Q2: the answer says fast enough; ask a follow-up that turns it into an option or a number']);
+  intent(`${READBACK.replace('- Q2', '- Q3')}`.replace(/^/, '- Q2 Which oven?\n  - a) gas: cheap\n  - Answer: not decided yet\n'));
+  assert.deepEqual(elab(dir), ['I-1:16 ELAB-OPEN I-1 Q2 is not decided yet: it stays open until the owner decides, or it becomes an assumption or out of scope']);
+  intent('');
+  assert.deepEqual(elab(dir), ['I-1:13 ELAB-OPEN I-1 ends with no read-back: ask a last question, Q<k> Read-back: <the summary>, with a) looks correct and b) request changes']);
+  intent(READBACK.replace('Answer: a', 'Answer: b, the shop is two shops'));
+  assert.deepEqual(elab(dir), ['I-1:16 ELAB-OPEN I-1 Q2: the owner asked for changes to the read-back; revise, then read back again']);
+  intent(READBACK.replace('Answer: a', ''));
+  assert.deepEqual(elab(dir), ['I-1:16 ELAB-OPEN I-1 Q2 has no answer'], 'an unanswered read-back is open for its missing answer only');
+  intent(`${READBACK.replace('- Q2', '- Q3')}`.replace(/^/, '- Q2 How fast?\n  - a) under a second: one call\n  - Answer: a, maybe\n'), 'method: 6\n');
+  assert.deepEqual(elab(dir), [], 'a method 6 intent keeps its rules');
 });

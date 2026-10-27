@@ -575,6 +575,8 @@
     "pathwaySkip": "{{unit}} ({{pathway}}) skips its {{step}} step: {{why}}",
     "intentSize": "{{unit}} has {{increments}} increments and {{domains}} domains, more than {{maxIncrements}} and {{maxDomains}}",
     "elabOpen": "{{unit}} {{q}} has no answer",
+    "elabUndecided": "{{unit}} {{q}} is not decided yet: it stays open until the owner decides, or it becomes an assumption or out of scope",
+    "elabVague": "{{unit}} {{q}}: the answer says {{word}}; ask a follow-up that turns it into an option or a number",
     "elabBare": "{{unit}} {{q}}: the answer {{answer}} names none of the options {{options}}",
     "domainData": "table {{table}} has two owners: {{owners}}",
     "domainTerm": "the term {{term}} has two meanings, in {{domains}}",
@@ -895,6 +897,10 @@
         "level": "error",
         "fix": "ask the owner and record the answer under the question: - Answer: <letter> \u2026"
       },
+      "ELAB-VAGUE": {
+        "level": "error",
+        "fix": "ask the owner a follow-up with 2-3 options or a measure, and record their pick (docs: Elaboration checks)"
+      },
       "ELAB-BARE": {
         "level": "error",
         "fix": "record which option the owner chose, by its letter, then any words of theirs"
@@ -1080,7 +1086,7 @@
       ["checked", "released", "release on a pushed green base passes, smoke too or none set"]
     ],
     "stamped": { "Decision": { "status": "accepted", "date": "today" } },
-    "approveBlocks": ["BOLT-BIND", "BOLT-SPAN", "INCR-SKELETON", "FIX-SHAPE", "PLAN-DECISION", "PLAN-INCREMENT", "PATHWAY-SKIP", "INTENT-SIZE", "ELAB-OPEN", "ELAB-BARE", "FACT-MISSING", "DOC-AMEND", "DESIGN-COHERENCE"],
+    "approveBlocks": ["BOLT-BIND", "BOLT-SPAN", "INCR-SKELETON", "FIX-SHAPE", "PLAN-DECISION", "PLAN-INCREMENT", "PATHWAY-SKIP", "INTENT-SIZE", "ELAB-OPEN", "ELAB-BARE", "ELAB-VAGUE", "FACT-MISSING", "DOC-AMEND", "DESIGN-COHERENCE"],
     "gates": "gates",
     "reviewing": "reviewing",
     "reviewerLine": "reviewer\n",
@@ -1651,14 +1657,17 @@
     "outputLines": 40,
     "horizon": 2,
     "maxIncrements": 5,
+    "undecided": ["not decided", "undecided", "to be decided", "tbd", "not sure", "don't know"],
+    "vague": ["maybe", "perhaps", "probably", "possibly", "it depends", "depends", "fast enough", "good enough", "as needed", "if needed", "somehow", "something like", "etc", "reasonable", "soon", "whatever"],
     "maxDomains": 5,
     "pathways": { "greenfield": ["questions", "domains", "facts"], "feature": ["questions", "domains", "facts"], "brownfield": ["map", "kinds", "questions", "domains", "facts"] },
     "steps": { "questions": "every question answered by an option", "domains": "a domain doc for each of its domains", "facts": "a platform fact for each decision that affects the platform", "map": "the codebase map written", "kinds": "a kind for every module" }
   },
   "method": {
-    "version": 6,
-    "since": { "planIncrementId": 2, "pathwaySkip": 3, "boltBind": 4, "acGherkin": 5, "claimSource": 6 },
+    "version": 7,
+    "since": { "planIncrementId": 2, "pathwaySkip": 3, "boltBind": 4, "acGherkin": 5, "claimSource": 6, "elabVague": 7, "elabCorner": 7 },
     "changes": {
+      "7": "intents settle every surface of the corner checklist, follow up vague answers, and end with a read-back the owner confirms (docs: Elaboration checks)",
       "6": "intents name the owner's requests, every goal line, story and requirement statement cites its source, and every request sentence is cited (docs: Intake)",
       "5": "acceptance criteria read Given/When/Then, requirements are stated in EARS, and decisions follow MADR 4.0 (docs: Standard formats)",
       "4": "bolts bind one domain outside increment 1, increment 1 holds the delivery module, fix bolts have one AC, and escape hatches may expire (docs: Construction by proof)",
