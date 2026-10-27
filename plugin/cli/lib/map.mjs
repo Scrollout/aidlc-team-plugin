@@ -7,6 +7,7 @@ import { msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { digestOf, parseDoc } from './okf.mjs';
 import { globRegex, graphOf } from './gate.mjs';
+import { glossaryOf } from './naming.mjs';
 
 const M = config.map;
 const layersOf = (m) => Object.keys(m.layers ?? {}); // a module's layers, outer to inner (U142)
@@ -75,7 +76,21 @@ export function writeMap(cwd, profile) {
 
 export const commands = {
   map(args, { cwd }) {
-    const files = writeMap(cwd, withDefaults(loadProfile(cwd).profile));
+    const profile = withDefaults(loadProfile(cwd).profile), files = [...writeMap(cwd, profile), ...writeGlossary(cwd, profile)];
     return done(msg(files.length ? 'mapWritten' : 'mapSame', { files: files.join(', ') }));
   },
 };
+
+// The glossary page, from the domain docs; written beside the map, only when a domain has a glossary entry.
+export function writeGlossary(cwd, profile) {
+  const entries = glossaryOf(bundleOf(cwd, profile));
+  if (!entries.length) return [];
+  const body = msg('glossaryBody', { rows: entries.map((e) => msg('glossaryRow', { ...e, avoid: e.synonyms.join(', ') || '-' })).join('') });
+  const file = join(bundleOf(cwd, profile), config.naming.glossary.file);
+  const old = existsSync(file) ? parseDoc(readFileSync(file, 'utf8')) : null;
+  if (old?.fm && old.lines.slice(old.body).join('\n') === body) return [];
+  mkdirSync(dirname(file), { recursive: true });
+  const version = existsSync(join(CLI_DIR, M.versionFile)) ? readFileSync(join(CLI_DIR, M.versionFile), 'utf8').trim() : readJson(join(CLI_DIR, M.manifest))?.version;
+  writeFileSync(file, msg('glossaryDoc', { body, digest: digestOf(body), producer: msg('producer', { version }), at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') }));
+  return [file];
+}

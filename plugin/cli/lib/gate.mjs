@@ -9,8 +9,8 @@ import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, docSlug, nameProblem, parseDoc, writeIndexes } from './okf.mjs';
 import { computeLane, inside, lintPlan, readPlan, runTarget, spansOf } from './grid.mjs';
 import { issueTitle, sync } from './board.mjs';
-import { writeMap } from './map.mjs';
-import { generatedRules } from './naming.mjs';
+import { writeGlossary, writeMap } from './map.mjs';
+import { generatedRules, glossaryOf } from './naming.mjs';
 import { aidlcDir, approval, baseOf, baseRedFile, branchOf, bump, codeChanges, diffHash, keptPass, verdictCurrent, mergedUnits, mutationOf, readState, reviewFocuses, roundsOf, runtimeFile, unitPaths, worktrees, writeJson } from './state.mjs';
 
 const G = config.gate;
@@ -227,6 +227,7 @@ function runGate(cwd, st, unit) {
     else if (!unit.scope.some((g) => matches(path, g))) add('SCOPE-OUT', 'gateScope', { path }, path);
   }
   const names = [...[profile.names ?? []].flat().filter((r) => !nameProblem(r)), ...generatedRules(profile, st.bundle)]; // the project's rules and the registry's (docs/design/naming.md)
+  const synonyms = glossaryOf(st.bundle).flatMap((e) => e.synonyms.map((word) => ({ ...e, word, re: new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i') })));
   // Each added line, so a secret written from Bash, which the secrets hook never sees, stops the merge.
   let file = null;
   let line = 0;
@@ -243,6 +244,8 @@ function runGate(cwd, st, unit) {
         if (!new RegExp(`^(?:${r.pattern})$`).test(name)) add('GATE-NAME', 'gateName', { path: file, line, rule: r.id, name, pattern: r.pattern, why: r.why ?? '-' }, file);
       }
     }
+    // A synonym a domain's glossary says to avoid, on an added line outside the domain docs (docs/design/naming.md#checks).
+    if (l.startsWith('+') && !l.startsWith('+++ ') && file && !file.startsWith(`${bundleRel}/${config.okf.bundle.folders.Domain}/`)) for (const s of synonyms.filter((x) => x.re.test(l.slice(1)))) add('TERM-SYNONYM', 'gateSynonym', { path: file, line, word: s.word, term: s.term, domain: s.domain }, file);
     if (l.startsWith('+') && !l.startsWith('+++ ')) line++;
   }
   // A path rule: each file the unit adds or renames under its files (docs/design/naming.md).
@@ -276,6 +279,7 @@ function runGate(cwd, st, unit) {
   // What merge writes comes first and is staged, so each check sees the tree that will be committed (docs/design/gate.md).
   const treeBundle = join(tree, bundleRel);
   writeMap(tree, withDefaults(loadProfile(tree).profile)); // before the indexes, which list it
+  writeGlossary(tree, withDefaults(loadProfile(tree).profile));
   writeIndexes(treeBundle);
   addLogEntry(treeBundle, msg('gateLogEntry', { unit: unit.id, title: String(unit.fm.title ?? '') }));
   for (const command of list(p.regen)) shell(tree, command);

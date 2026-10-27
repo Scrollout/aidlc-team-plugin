@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M16 B163: one term, one meaning: the domain docs' glossaries generate `naming/glossary.md` at every merge and by `aidlc map`, and a synonym a glossary says to avoid, added by a bolt outside the domain docs, is `TERM-SYNONYM` at the gate ([Naming](design/naming.md)). Release 0.134.0.
 - **Update** M16 B162: the registry generates the gate's naming rules (migrations, images, namespaces, and no banned word as a path segment) beside the project's own; module ids must be registered for their kind, and a v2 profile needs a system code (`PROFILE-NAMING`); the names doc folds into [Naming](design/naming.md). Release 0.133.0.
 - **Update** M16 B161: `aidlc name <kind>` prints a name from the grammar (`cli.json` `naming.grammar`: domain, slice, operation ID, API path, permission, event, api-version, schema, database role, table, migration, deployable, image, namespace, host, metric, config key) and the registry, refusing an unregistered token or a missing flag; the CLI doc's output and values sections move to [CLI engine](design/cli-engine.md) ([Naming](design/naming.md)). Release 0.132.0.
 - **Update** M16 B160: the naming registry: the profile's `naming` (tokens, domains, closed vocabularies, banned words) over the CLI's defaults, with each domain doc's code registered; `PROFILE-NAMING` checks it, and `init` takes `--system-code`, `--org` and `--zone` ([Naming](design/naming.md)). Release 0.131.0.

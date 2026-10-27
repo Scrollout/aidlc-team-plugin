@@ -124,3 +124,20 @@ export function moduleProblems(profile, bundle) {
   const reg = registry(profile, bundle), lists = { domain: [Object.keys(reg.domains), 'naming.domains or a domain doc'], pipeline: [reg.vocabularies.pipeline, 'naming.vocabularies.pipeline'], foundation: [reg.vocabularies.foundation, 'naming.vocabularies.foundation'] };
   return (profile.modules ?? []).filter((m) => lists[m.kind] && !lists[m.kind][0].includes(String(m.id ?? m.name))).map((m) => ['namingModule', { module: String(m.id ?? m.name), kind: m.kind, where: lists[m.kind][1] }]);
 }
+
+// ---- The glossary: the domains' terms, their one meaning and the synonyms to avoid (docs/design/naming.md#checks) ----
+
+// Every glossary entry of the domain docs: `- **term** (not: a, b): meaning` under # Glossary.
+export function glossaryOf(bundle) {
+  const dir = bundle && join(bundle, DOMAIN), entry = new RegExp(N.glossary.entry), out = [];
+  for (const f of dir && existsSync(dir) ? readdirSync(dir).filter((x) => x.endsWith('.md')).sort() : []) {
+    const text = readFileSync(join(dir, f), 'utf8'), domain = text.match(/^code:\s*["']?([^"'\s]+)/m)?.[1] ?? f.replace(/\.md$/, '');
+    let on = false;
+    for (const line of text.split('\n')) {
+      if (/^#{1,6}\s/.test(line)) on = new RegExp(`^#{1,6}\\s+${N.glossary.section}\\s*$`).test(line);
+      const m = on && line.match(entry);
+      if (m && !/^</.test(m[1])) out.push({ domain, term: m[1].trim(), synonyms: (m[2] ?? '').split(',').map((s) => s.trim()).filter(Boolean), meaning: m[3].trim() });
+    }
+  }
+  return out;
+}

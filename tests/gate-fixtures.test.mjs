@@ -104,3 +104,10 @@ test('B162/AC-2 with a naming registry the gate refuses a new path with a banned
   assert.doesNotMatch(r.out, /GATE-NAME src\/add\.mjs/, 'a plain name passes');
   assert.ok(!codes(merge(setup({ profile: PROFILE, files: { ...CODE, ...TEST, 'src/utils/x.mjs': 'export const x = 1;\n' } }))).includes('GATE-NAME'), 'no registry, no generated rule');
 });
+
+test('B163/AC-2 a synonym a domain glossary says to avoid, on an added line outside the domain docs, is TERM-SYNONYM', () => {
+  const orders = '---\ntype: Domain\ntitle: Orders\ndescription: Orders.\ncode: orders\nkind: domain\n---\n\n# Glossary\n- **order** (not: purchase, basket): what a buyer asks for\n';
+  const r = merge(setup({ files: { ...CODE, ...TEST, 'src/order.mjs': 'export const purchase = 1;\n' }, beforeReview: (d) => commit(d, 'orders domain', { 'docs/domains/orders.md': orders }) }));
+  assert.match(r.out, /TERM-SYNONYM src\/order\.mjs:1 says purchase, a synonym of order in the orders glossary/);
+  assert.doesNotMatch(r.out, /TERM-SYNONYM src\/add\.mjs/, 'a line without one passes');
+});

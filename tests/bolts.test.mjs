@@ -188,3 +188,14 @@ test('B162/AC-1 the registry generates the gate rules for migrations, images, na
   assert.deepEqual(lines, ['module registry is a domain, and registry is not in naming.domains or a domain doc', 'module store is a foundation, and store is not in naming.vocabularies.foundation']);
   assert.match(run(makeRepo(I1, { system: { core: ['src/**'] } }), ['check']).out, /PROFILE-NAMING a v2 profile \(it has system\) needs naming\.tokens\.system/);
 });
+
+test('B163/AC-1 the domains glossaries generate naming/glossary.md, written by the CLI with its digest', () => {
+  const orders = '---\ntype: Domain\ntitle: Orders\ndescription: Orders.\ncode: orders\nkind: domain\n---\n\n# Glossary\n- **order** (not: purchase, basket): what a buyer asks for\n- **line**: one product and its quantity on an order\n- **<term>**: <placeholder from the template>\n';
+  const dir = makeRepo({ ...I1, 'docs/domains/orders.md': orders });
+  assert.equal(run(dir, ['map']).code, 0);
+  const page = read(dir, 'docs/naming/glossary.md');
+  assert.match(page, /^type: Glossary\n[\s\S]*^generated: \{ by: aidlc\/[^,]+, at: [^,]+, digest: [0-9a-f]{16} \}$/m);
+  assert.match(page, /^\| \*\*order\*\* \| orders \| purchase, basket \| what a buyer asks for \|\n\| \*\*line\*\* \| orders \| - \| one product and its quantity on an order \|$/m);
+  assert.doesNotMatch(page, /placeholder/, 'template placeholders are no terms');
+  assert.doesNotMatch(run(dir, ['check']).out, /DOC-GENERATED|DOC-SCHEMA docs\/naming/, 'a generated doc in its folder');
+});

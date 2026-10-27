@@ -539,6 +539,10 @@
     "gateIdentity": "{{path}}:{{line}} adds a static credential between components (trust auth, a password in a URL or a client secret)",
     "gateSecret": "{{path}}:{{line}} adds what looks like a secret",
     "gateNamePath": "{{path}} does not match the {{rule}} rule {{pattern}} ({{why}})",
+    "gateSynonym": "{{path}}:{{line}} says {{word}}, a synonym of {{term}} in the {{domain}} glossary",
+    "glossaryDoc": "---\ntype: Glossary\ntitle: Glossary\ndescription: Every term the domains use, with its one meaning and the synonyms to avoid; written from the domain docs, never by hand.\ngenerated: { by: {{producer}}, at: {{at}}, digest: {{digest}} }\n---\n{{body}}",
+    "glossaryBody": "\n**TL;DR:** One term, one meaning: each domain's words, the synonyms the gate refuses, and the meaning.\n\n# Terms\n| Term | Domain | Avoid | Meaning |\n|---|---|---|---|\n{{rows}}",
+    "glossaryRow": "| **{{term}}** | {{domain}} | {{avoid}} | {{meaning}} |\n",
     "gateName": "{{path}}:{{line}} names {{name}}, which does not match the {{rule}} rule {{pattern}} ({{why}})",
     "ciUnknownUnit": "merge {{sha}} names {{unit}}, a unit not in the plan",
     "guardRelease": "{{what}} needs the owner",
@@ -681,8 +685,8 @@
       "idFile": "^((?:[A-Z]-\\d+)|\\d{4})-(.+)\\.md$",
       "slugWords": 8,
       "slugMax": 48,
-      "generated": ["Map"],
-      "folders": { "Bolt": "bolts", "Domain": "domains", "Fact": "platform", "System": "system", "Module": "modules", "Map": "architecture" },
+      "generated": ["Map", "Glossary"],
+      "folders": { "Bolt": "bolts", "Domain": "domains", "Fact": "platform", "System": "system", "Module": "modules", "Map": "architecture", "Glossary": "naming" },
       "schemas": {
         "Bolt": { "required": ["scope"] },
         "Domain": { "required": ["code", "kind"], "enums": { "kind": "kinds" } },
@@ -1290,6 +1294,9 @@
       },
       "GATE-NAME": {
         "fix": "rename it to match the rule's pattern; if the rule is wrong, the owner changes its decision and the profile first"
+      },
+      "TERM-SYNONYM": {
+        "fix": "use the glossary's term; if the domain's language changed, change its domain doc's glossary first (docs: Naming)"
       }
     },
     "noReview": "none"
@@ -1622,6 +1629,11 @@
       "pipeline": ["ingress", "authentication", "authorization", "admission", "ratelimit", "routing"],
       "foundation": ["config", "database", "transport", "contract", "workloadidentity", "events", "telemetry"],
       "verb": ["get", "list", "create", "update", "delete", "register", "unregister", "evaluate", "cancel"]
+    },
+    "glossary": {
+      "file": "naming/glossary.md",
+      "section": "Glossary",
+      "entry": "^\\s*[-*]\\s+\\*\\*([^*]+)\\*\\*(?:\\s*\\(not:\\s*([^)]*)\\))?\\s*:\\s*(.+)$"
     },
     "generated": {
       "migration": { "files": ["migrations/**"], "why": "docs/design/naming.md" },
