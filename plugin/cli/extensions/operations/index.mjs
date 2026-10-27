@@ -1,10 +1,8 @@
 // Deploy: the grid's Deployment and Operation rows, run from the profile's commands. Each step's last run is
 // recorded with the base commit it ran on; `next` reads the record and never runs a step (docs/design/operations.md).
-import { config, done, list, readJson, UsageError } from '../foundation/data.mjs';
-import { git, sh, tryGit } from '../foundation/git.mjs';
-import { msg } from '../foundation/text.mjs';
-import { ciGreen, readState } from './flow.mjs';
-import { bump, runtimeFile, writeJson } from '../foundation/store.mjs';
+// Also the retro, which reads what production taught (retro.mjs).
+import { bump, ciGreen, config, done, git, list, msg, readJson, readState, runtimeFile, sh, tryGit, UsageError, writeJson } from '../../lib/index.mjs';
+import { commands as retro } from './retro.mjs';
 
 // Runs the commands in order until one fails: { ok, command, exit, output }, with the tail of the output.
 function runAll(cwd, commands) {
@@ -37,6 +35,8 @@ function record(t, step, result) {
 }
 
 export const commands = {
+  ...retro,
+
   deploy([sub, id], { cwd }) {
     const t = sub === 'check' && id ? target(cwd, id, 'deployUsage') : null;
     const checks = list(t?.st.profile.deploy?.check);

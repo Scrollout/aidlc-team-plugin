@@ -17,7 +17,7 @@ The plugin holds every project to kinds, layers and one-way dependencies. Its ow
 | foundation | `lib/foundation/` | `data` (cli.json and extension data, values, paths), `git`, `text` (templates, messages, findings), `yaml`, `glob`, `profile`, `store` (`.git/aidlc` files), `seams` |
 | domains | `lib/domains/` | `bundle`, `method`, `plan`, `inception`, `construction`, `approval`, `flow`, `review`, `card`, `gate`, `architecture`, `map`, `naming`, `operations`, `retro`, `setup`, `host` (the guard rails the coding agent's hooks call) |
 | runtime | `aidlc.mjs`, `lib/index.mjs` | the command table and extension loader; the public entry, the core's published surface |
-| extension | `extensions/<name>/` | `board` (the Project board), `contracts` (the API and event grammar), `stacks` (graph, scaffold and checks of the stack packs) |
+| extension | `extensions/<name>/` | `board` (the Project board), `contracts` (the API and event grammar), `operations` (deploy check, release, smoke, rollback and the retro), `stacks` (graph, scaffold and checks of the stack packs) |
 
 # Rules
 - A layer imports only its own layer and those below it: foundation nothing but kits, domains foundation and other domains' exports, the runtime the core.
@@ -39,7 +39,7 @@ The plugin holds every project to kinds, layers and one-way dependencies. Its ow
 
 # Extensions
 An extension is `extensions/<name>/extension.json` plus `index.mjs`:
-- `when`: the profile key it serves (`github`, `naming`; none for the stacks, which detect a pack). A plug that acts only with it says so.
+- `when`: the profile key it serves (`github`, `naming`; none for the stacks, which detect a pack, or for operations, whose commands read the profile's `deploy`). A plug that acts only with it says so.
 - `data`: its codes, messages, commands and values, merged into the core's data when the CLI starts, so `cli.json` keeps only the core's.
 - `index.mjs`: plugs its functions into seams and exports its commands.
 `data` merges into the core's data when `foundation/data` loads, and the runtime then imports every extension folder it finds, so a vendored copy carries them all. An extension's checks find nothing to report in a project that lacks what it serves.

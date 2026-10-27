@@ -1,0 +1,171 @@
+{
+  "name": "operations",
+  "description": "Deployment and Operation: the profile's deploy check, release, smoke and rollback on the base, and the retro over an intent (docs/design/operations.md).",
+  "when": null,
+  "data": {
+    "messages": {
+      "retroMeasures": "measures:\n  lead time, approval to passing smoke: {{lead}}\n  increments shipped: {{shipped}} of {{committed}}\n  merge refusals by binding: {{refusals}}\n  owner dwell per approval: {{dwell}}\n  escape hatches: {{hatches}}\n",
+      "releaseUsage": "usage: aidlc release <intent>, for a merged intent with deploy.run or release in the profile",
+      "releaseCiNotGreen": "{{intent}} ships only a pushed base whose CI passed (now: {{ci}}): run aidlc push and aidlc ci wait first",
+      "releaseNoCheck": "{{intent}} has no passing deploy check on this base: run aidlc deploy check {{intent}} first",
+      "rollbackUsage": "usage: aidlc rollback <intent>, for a merged or released intent",
+      "deployUsage": "usage: aidlc deploy check <intent>, for a merged intent with deploy.check in the profile",
+      "deployNotMerged": "{{intent}} is {{state}}: deploy steps run on a merged intent",
+      "deployNotOnBase": "check out {{base}} first: deploy steps run on the base",
+      "deployPassed": "{{intent}} {{step}} passed\n",
+      "deployFailed": "{{intent}} {{step}} failed: {{command}} exited {{exit}}\n{{output}}\n",
+      "retroUsage": "usage: retro I-<n> (an intent in the bundle)",
+      "retroHead": "retro {{intent}}, counters since {{since}}\n",
+      "retroNever": "the first run",
+      "retroCodes": "codes fired 3 or more times:\n",
+      "retroCount": "  {{key}} {{count}}\n",
+      "retroNone": "  none\n",
+      "retroEscalations": "escalations:\n",
+      "retroReview": "  {{unit}} review {{focus}} escalated with {{findings}} findings at {{at}}\n",
+      "retroStopped": "  {{unit}} builder stopped at {{at}}: {{reason}}\n",
+      "retroSentBack": "  {{unit}} sent back at {{at}}: no test tagged {{tags}}\n",
+      "retroDenials": "  {{count}} repeated hook denials escalated to the owner\n",
+      "retroInterventions": "owner approvals and commands:\n",
+      "retroDeploys": "deploy failures:\n",
+      "retroDeploy": "  {{step}} failed at {{at}}: {{command}}\n",
+      "retroDeployFixes": "  fix bolts after {{intent}}: {{units}}\n",
+      "retroApproval": "  {{at}} approve {{doc}} by {{by}}\n",
+      "retroHostDenied": "  {{at}} auto mode refused: {{command}}\n",
+      "retroIntervention": "  {{at}} {{command}}\n",
+      "retroOwnerRefused": "  {{at}} refused by the CLI: {{command}}\n",
+      "retroProposals": "proposals (the owner accepts or rejects each):\n",
+      "retroProposal": "  {{kind}}: {{text}}\n",
+      "retroReset": "counters reset\n",
+      "retroGlob": "{{key}} fired {{count}} times: add the folders where its tests live to profile.levels.<level>.paths",
+      "retroScope": "{{key}} fired {{count}} times: in .aidlc/rules/planning.md, scope each bolt to its tests, fixtures and generated files",
+      "retroBuilder": "{{key}} fired {{count}} times: in .aidlc/rules/builder.md, run the card's checks and test runs before the report",
+      "retroTemplate": "{{key}} fired {{count}} times: in .aidlc/templates/, give the doc template what {{key}} asks for",
+      "retroLead": "{{key}} fired {{count}} times: in .aidlc/rules/lead.md, write down the command the lead should use instead",
+      "retroMerge": "{{key}} fired {{count}} times: in .aidlc/rules/lead.md, run aidlc merge only when aidlc next offers it",
+      "retroStop": "builders stopped {{count}} times: in .aidlc/rules/planning.md, name the interfaces and folders a bolt needs before approval",
+      "retroReviewCheck": "reviews escalated {{count}} times: a profile check (modules[].check or architecture.checks) that catches what the reviewers found",
+      "retroCheck": "{{key}} fired {{count}} times: a profile check (modules[].check or architecture.checks) that catches it before review"
+    },
+    "commands": [
+      {
+        "name": "retro",
+        "usage": "retro <intent>",
+        "does": "list what fired, escalated and needed the owner; propose at most three changes; reset the counters"
+      },
+      {
+        "name": "deploy",
+        "usage": "deploy check <intent>",
+        "does": "run the profile's deploy check on the base and record it"
+      },
+      {
+        "name": "release",
+        "usage": "release <intent>",
+        "does": "run deploy.run and the profile's release on the base, then deploy.smoke, and record them (the owner's)"
+      },
+      {
+        "name": "rollback",
+        "usage": "rollback <intent>",
+        "does": "run deploy.rollback and record it (the owner's)"
+      }
+    ],
+    "deploy": {
+      "outputMax": 2000
+    },
+    "retro": {
+      "min": 3,
+      "max": 3,
+      "proposals": [
+        {
+          "match": "PLAN-TEST",
+          "kind": "profile glob",
+          "text": "retroGlob"
+        },
+        {
+          "match": "GATE-LEVEL",
+          "kind": "profile glob",
+          "text": "retroGlob"
+        },
+        {
+          "match": "SCOPE-",
+          "kind": "project rule",
+          "text": "retroScope"
+        },
+        {
+          "match": "PLAN-SCOPE",
+          "kind": "project rule",
+          "text": "retroScope"
+        },
+        {
+          "match": "stopped",
+          "kind": "project rule",
+          "text": "retroStop"
+        },
+        {
+          "match": "GATE-AC",
+          "kind": "project rule",
+          "text": "retroBuilder"
+        },
+        {
+          "match": "GATE-RUN",
+          "kind": "project rule",
+          "text": "retroBuilder"
+        },
+        {
+          "match": "GATE-CHECK",
+          "kind": "project rule",
+          "text": "retroBuilder"
+        },
+        {
+          "match": "HOUSE-",
+          "kind": "template tweak",
+          "text": "retroTemplate"
+        },
+        {
+          "match": "OKF-",
+          "kind": "template tweak",
+          "text": "retroTemplate"
+        },
+        {
+          "match": "GUARD-",
+          "kind": "project rule",
+          "text": "retroLead"
+        },
+        {
+          "match": "GATE-REVIEW",
+          "kind": "project rule",
+          "text": "retroMerge"
+        },
+        {
+          "match": "GATE-CARD",
+          "kind": "project rule",
+          "text": "retroMerge"
+        },
+        {
+          "match": "GATE-APPROVAL",
+          "kind": "project rule",
+          "text": "retroMerge"
+        },
+        {
+          "match": "GATE-DEPS",
+          "kind": "project rule",
+          "text": "retroMerge"
+        },
+        {
+          "match": "denials",
+          "kind": "project rule",
+          "text": "retroLead"
+        },
+        {
+          "match": "review",
+          "kind": "new check",
+          "text": "retroReviewCheck"
+        },
+        {
+          "match": "",
+          "kind": "new check",
+          "text": "retroCheck"
+        }
+      ]
+    }
+  }
+}

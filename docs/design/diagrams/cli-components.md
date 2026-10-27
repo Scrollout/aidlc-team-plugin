@@ -14,6 +14,7 @@ flowchart TB
   subgraph extensions
     extensions_board[board]
     extensions_contracts[contracts]
+    extensions_operations[operations]
     extensions_stacks[stacks]
   end
   subgraph entry
@@ -32,9 +33,7 @@ flowchart TB
     domains_map[map]
     domains_method[method]
     domains_naming[naming]
-    domains_operations[operations]
     domains_plan[plan]
-    domains_retro[retro]
     domains_review[review]
     domains_setup[setup]
   end

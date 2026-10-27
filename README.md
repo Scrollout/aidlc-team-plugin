@@ -55,7 +55,7 @@ flowchart LR
     skill["Skill aidlc<br/>the lead's loop"]
     agents["Agents<br/>builder, reviewer, researcher"]
     hooks["Hooks<br/>guard, scope, secrets, model, docs,<br/>heartbeat, prompt, steer, status, denied"]
-    cli["CLI engine<br/>foundation: data, git, text, yaml, glob, profile, store, seams<br/>domains: bundle, method, plan, inception, construction, approval, flow, review,<br/>card, gate, architecture, map, naming, operations, retro, setup, host<br/>entry: index · extensions: board, contracts, stacks"]
+    cli["CLI engine<br/>foundation: data, git, text, yaml, glob, profile, store, seams<br/>domains: bundle, method, plan, inception, construction, approval, flow, review,<br/>card, gate, architecture, map, naming, setup, host<br/>entry: index · extensions: board, contracts, operations, stacks"]
     templates["Templates<br/>AGENTS.md, CLAUDE.md, CHANGELOG.md, profile, CI,<br/>bundle with constitution, doc types<br/>with runbook, MADR decision, arc42 system"]
   end
 

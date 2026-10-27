@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** the operations extension: the core passed 4,500 lines, so, as [0017](decisions/0017-the-cli-is-a-library-with-extensions.md) requires, `deploy`, `release`, `rollback` and the retro move to `extensions/operations/` with their messages and values ([Library and extensions](design/library.md), [Deployment and operation](design/operations.md)); the core is at 4,348 of 4,800 lines. Release 0.156.0.
 - **Update** M20 B196: the README is rebuilt around the generated workflow (held to its data by a test) and points at the arc42 page, the standards, the generated diagrams and the changelog; a fresh `init` starts a project on v2 (a `system` and a system code from its name). M20 is built. Release 0.155.0.
 - **Update** M20 B194: the pilot reports become [Pilot lessons](pilot/lessons.md), each lesson naming the rule or check that now holds it, the open ones on the Later list; the reports are deleted (git keeps them) and the Later list holds only open ideas. Release 0.154.0.
 - **Update** M20 B195: no dead code: a test fails on an export nothing outside its file uses (ten became module-private) and on the v1 aliases once the milestone they expire with (`grid.legacyUntil`, M22) is built; unused messages were already caught. Release 0.153.0.
