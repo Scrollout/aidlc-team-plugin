@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.189.1] - 2026-10-28
+### Changed
+- The bolt and intent lifecycles are data (M26 B240, first part). `state.machines` holds each machine's `derive` rules, `{ state, when }` in order, and its transitions as `{ from, to, on, when, why }`; a doc's state is the first rule whose named guards all hold. The guards are predicates over a doc's facts, computed once and only when a guard reads them, each with its own test. The states `status` and `next` derive are unchanged, and the diagrams are drawn from the same machines.
+
 ## [0.189.0] - 2026-10-28
 ### Added
 - Slices and layers on the board (M28 B249). A bolt lists the slices it delivers (`slices`); `PLAN-SLICE` reports a listed slice its bound domain's `# Surface` lacks, or slices on a bolt that binds no one domain, and `SLICE-DELIVER` a listed slice whose folder the bolt does not change. The board labels a bolt `slice:<name>` for each slice it lists, and `layer:<kind>` when it binds a horizontal module.
@@ -398,7 +402,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.189.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.189.1...HEAD
+[0.189.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.189.0...v0.189.1
 [0.189.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.188.0...v0.189.0
 [0.188.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.187.0...v0.188.0
 [0.187.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.186.0...v0.187.0

@@ -19,7 +19,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T22:00:00Z }
 `.git/aidlc/` sits in git's common dir: every worktree sees it; it is never committed.
 
 # Bolt states
-The states and what moves a bolt between them: [Bolt states](diagrams/bolt-states.md), drawn from `state.transitions`.
+The states and what moves a bolt between them: [Bolt states](diagrams/bolt-states.md), drawn from `state.machines.bolt`.
 A quick-lane bolt without an intent starts `approved`; its report makes it `reviewed`, with no review. Intents: [Intent states](intent-states.md).
 
 # Approvals

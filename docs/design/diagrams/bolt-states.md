@@ -1,7 +1,7 @@
 ---
 type: Design
 title: Bolt states
-description: A bolt's derived states and what moves it between them; drawn from state.transitions in cli.json.
+description: A bolt's derived states and what moves it between them; drawn from state.machines.bolt in cli.json.
 status: stable
 generated: { by: tests/diagrams.mjs }
 ---

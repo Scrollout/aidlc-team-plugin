@@ -32,6 +32,7 @@ flowchart TB
     domains_gate[gate]
     domains_host[host]
     domains_inception[inception]
+    domains_lifecycle[lifecycle]
     domains_map[map]
     domains_method[method]
     domains_naming[naming]

@@ -36,6 +36,8 @@ const codeTable = (table, match = /./) => mdTable(['Code', 'Fix'], Object.entrie
 // A state diagram: each transition with its cause, and every state nothing leaves as an end.
 const states = (rows) => mermaid(['stateDiagram-v2', '  direction LR', `  [*] --> ${rows[0][0]}`, ...rows.map(([a, b, why]) => `  ${a} --> ${b}: ${why}`),
   ...[...new Set(rows.map((r) => r[1]))].filter((x) => !rows.some((r) => r[0] === x)).map((x) => `  ${x} --> [*]`)]);
+// A machine's transitions as rows: from, to and why.
+const rows = (machine) => S.machines[machine].transitions.map((x) => [x.from, x.to, x.why]);
 // The shortest run of transitions from one state to another.
 function path(rows, from, to) {
   const seen = new Map([[from, []]]), queue = [from];
@@ -49,8 +51,8 @@ function path(rows, from, to) {
 // The workflow, also drawn in the README.
 export const workflow = () => mermaid(['flowchart LR', '  subgraph Inception',
       ...Object.entries(config.inception.pathways).map(([name, steps]) => `    ${[name, ...steps, 'approved'].map((x) => (x === name ? `${id(name)}([${name}])` : id(x))).join(' --> ')}`),
-      '  end', '  subgraph Construction', ...path(S.transitions, 'approved', 'merged').map(([a, b, why]) => `    b_${a}[${a}] -->|${why}| b_${b}[${b}]`), '  end',
-      '  subgraph Operations', ...path(S.intentTransitions, 'merged', 'checked').concat(path(S.intentTransitions, 'checked', 'released')).map(([a, b, why]) => `    i_${a}[${a}] -->|${why}| i_${b}[${b}]`), '  end',
+      '  end', '  subgraph Construction', ...path(rows('bolt'), 'approved', 'merged').map(([a, b, why]) => `    b_${a}[${a}] -->|${why}| b_${b}[${b}]`), '  end',
+      '  subgraph Operations', ...path(rows('intent'), 'merged', 'checked').concat(path(rows('intent'), 'checked', 'released')).map(([a, b, why]) => `    i_${a}[${a}] -->|${why}| i_${b}[${b}]`), '  end',
       '  approved --> b_approved', '  b_merged --> i_merged']);
 
 export const pages = () => ({
@@ -59,8 +61,8 @@ export const pages = () => ({
   'workflow.md': page('Workflow', 'The pathways into an approved intent with the steps each requires, then a bolt from approval to merge and an intent from merge to release; drawn from the pathways and state transitions in cli.json.',
     workflow()),
   'cli-components.md': page('CLI components', "A C4 component view of the CLI, with its runtime, extensions, public entry, domains and foundation kits, and which uses which; drawn from the CLI's own imports.", components()),
-  'bolt-states.md': page('Bolt states', "A bolt's derived states and what moves it between them; drawn from state.transitions in cli.json.", states(S.transitions)),
-  'intent-states.md': page('Intent states', "An intent's derived states, from approval to release; drawn from state.intentTransitions in cli.json.", states(S.intentTransitions)),
+  'bolt-states.md': page('Bolt states', "A bolt's derived states and what moves it between them; drawn from state.machines.bolt in cli.json.", states(rows('bolt'))),
+  'intent-states.md': page('Intent states', "An intent's derived states, from approval to release; drawn from state.machines.intent in cli.json.", states(rows('intent'))),
   'kinds.md': page('Kinds and layers', 'What each module kind may depend on, and the layers inside a domain pointing inward; drawn from vocabulary.kindRules and layerRules in cli.json.',
     mdTable(['from \\ to', ...V.kinds], V.kinds.map((a) => [a, ...V.kinds.map((b) => (V.kindRules[a].any.includes(b) ? 'yes' : V.kindRules[a].surface.includes(b) ? 'surface' : ''))])) + '\n'
     + mermaid(['flowchart LR', ...Object.entries(V.layerRules).flatMap(([a, bs]) => bs.map((b) => `  ${a} --> ${b}`))])),

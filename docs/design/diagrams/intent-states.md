@@ -1,7 +1,7 @@
 ---
 type: Design
 title: Intent states
-description: An intent's derived states, from approval to release; drawn from state.intentTransitions in cli.json.
+description: An intent's derived states, from approval to release; drawn from state.machines.intent in cli.json.
 status: stable
 generated: { by: tests/diagrams.mjs }
 ---

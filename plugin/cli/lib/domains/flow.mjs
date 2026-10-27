@@ -13,6 +13,7 @@ import { inside, overlaps } from '../foundation/glob.mjs';
 import { baseOf, baseRedFile, branchOf, ciFile, heartbeatAt, heartbeatFresh, hostDeniedFile, mergedUnits, runtimeFile, worktrees } from '../foundation/store.mjs';
 import { acsKept, approval, approvedAt, delegated, findDoc, ownerLines, reviewDue } from './approval.mjs';
 import { diffHash, keptPass, readReview, reviewFocuses, roundsOf, untagged, verdictCurrent } from './review.mjs';
+import { lazy, stateOf } from './lifecycle.mjs';
 
 const ST = config.state.names; // the lifecycle states, by name
 const S = config.state, CI = config.ci.states;
@@ -49,53 +50,51 @@ export function readState(cwd, { now = Date.now() } = {}) {
     const fresh = heartbeatFresh(cwd, u.id, now);
     // A builder launched after `at` and still at work: a new round in flight, not the state `at` recorded.
     const relaunched = (at) => fresh && heartbeatAt(cwd, u.id, S.launches) > at;
-    let state;
-    let focus = null, focuses = [];
-    if (merged.has(u.id)) state = ST.merged;
-    else if (needsApproval && approvalState !== ST.approved) state = approvalState;
-    // A builder that stopped hands the unit back to the lead until the owner re-approves its fixed spec.
-    // A builder launched after the stop report has taken over: the unit reads as building. The launch mark, not the
-    // heartbeat, decides: the stopped builder's own last calls touch the heartbeat after its report.
-    else if (report?.status === S.stopped && Date.parse(report.at) > approvedAt(u.doc)
-      && !(review?.rounds ?? []).some((r) => r.at > report.at)
-      && !(heartbeatAt(cwd, u.id, S.launches) > Date.parse(report.at))) state = ST.stopped;
-    else if (!u.depends.every((d) => merged.has(d))) state = ST.blocked;
-    else if (branches.has(branchOf(u.id))) {
-      // The last verdict of each required focus, counted only while it is for the current diff.
-      // A quick-lane unit gets no review: its report alone makes it ready to merge.
-      const quick = lane === QUICK;
-      const hash = diffHash(cwd, base, u.id);
-      const verdicts = (quick ? [] : [...reviewFocuses(cwd, profile, base, u.id).keys()]).map((f) => {
-        const last = roundsOf(review, f).at(-1);
-        return { focus: f, verdict: verdictCurrent(last, hash, report) || keptPass(cwd, profile, u.id, f, last) ? last.verdict : null };
-      });
-      const has = (v) => verdicts.some((x) => x.verdict === v);
-      const lastAt = review?.rounds?.at(-1)?.at;
-      focus = verdicts.find((x) => x.verdict !== VERDICT.pass)?.focus ?? null;
-      focuses = verdicts.filter((x) => !x.verdict).map((x) => x.focus); // each one a reviewer of its own, in parallel (U115)
-      // A builder launched after the last verdict and the last report is at work on a new diff, whatever verdict a
-      // focus kept: no review of a head it is still moving (U130).
-      const atWork = relaunched(Date.parse(lastAt ?? 0)) && relaunched(Date.parse(report?.at ?? 0));
-      if (has(VERDICT.escalate)) state = ST.escalated;
-      else if (atWork && review?.rounds?.length) state = ST.building;
-      // A fix round is in flight once a builder was launched after the verdict: the builder that reported before
-      // the review keeps its heartbeat fresh for minutes (docs/design/in-flight.md).
-      else if (has(VERDICT.fix)) {
-        const fixAt = Math.max(0, ...(review?.rounds ?? []).filter((r) => r.verdict === VERDICT.fix).map((r) => Date.parse(r.at)));
-        state = relaunched(fixAt) ? ST.building : ST.fix;
-      }
-      else if (!focus && (!quick || report)) {
-        const gate = readJson(runtimeFile(cwd, 'gates', u.id));
-        // A builder launched after the gate refused it is a fix round in flight, not a merge to offer again.
-        if (gate?.at && relaunched(Date.parse(gate.at))) state = ST.building;
-        // Refused only for a red base, it stays refused until a merge lands: a plan commit does not fix the base (U145).
-        else state = gate?.diffHash === hash && (gate.base === tryGit(cwd, 'rev-parse', base) || (gate.codes.every((c) => c === 'GATE-BASE') && noMergeSince(cwd, gate.base, base))) ? ST.gated : ST.reviewed;
-      }
-      else if (has(VERDICT.pass) || has(S.answered) || (report && report.status !== S.stopped && (!lastAt || report.at > lastAt) && Date.parse(report.at) > approvedAt(u.doc))) {
-        state = heartbeatFresh(cwd, u.id, now, S.reviewing) ? ST.reviewing : ST.reported;
-      }
-      else state = ST.building;
-    } else state = fresh ? ST.building : ST.approved;
+    // The facts the bolt machine's guards read, each computed on first use (docs/design/lifecycle.md).
+    const facts = lazy({
+      merged: () => merged.has(u.id),
+      unapproved: () => needsApproval && approvalState !== ST.approved,
+      approval: () => approvalState,
+      // A builder that stopped hands the unit back to the lead until the owner re-approves its fixed spec. A builder
+      // launched after the stop report has taken over: the launch mark, not the heartbeat, decides, since the stopped
+      // builder's own last calls touch the heartbeat after its report.
+      stopped: () => report?.status === S.stopped && Date.parse(report.at) > approvedAt(u.doc)
+        && !(review?.rounds ?? []).some((r) => r.at > report.at) && !(heartbeatAt(cwd, u.id, S.launches) > Date.parse(report.at)),
+      dependencyPending: () => !u.depends.every((d) => merged.has(d)),
+      onBranch: () => branches.has(branchOf(u.id)),
+      report: () => report,
+      fresh: () => fresh,
+      relaunched: () => relaunched,
+      hash: () => diffHash(cwd, base, u.id),
+      // The last verdict of each required focus, counted only while it is for the current diff. A quick-lane unit
+      // gets no review: its report alone makes it ready to merge.
+      verdicts: () => {
+        const quick = lane === QUICK;
+        const verdicts = (quick ? [] : [...reviewFocuses(cwd, profile, base, u.id).keys()]).map((f) => {
+          const last = roundsOf(review, f).at(-1);
+          return { focus: f, verdict: verdictCurrent(last, facts.hash, report) || keptPass(cwd, profile, u.id, f, last) ? last.verdict : null };
+        });
+        const has = (v) => verdicts.some((x) => x.verdict === v), lastAt = review?.rounds?.at(-1)?.at;
+        return {
+          quick, has, focus: verdicts.find((x) => x.verdict !== VERDICT.pass)?.focus ?? null,
+          focuses: verdicts.filter((x) => !x.verdict).map((x) => x.focus), // each one a reviewer of its own, in parallel (U115)
+          // A builder launched after the last verdict and the last report is at work on a new diff, whatever verdict a
+          // focus kept: no review of a head it is still moving (U130).
+          atWork: relaunched(Date.parse(lastAt ?? 0)) && relaunched(Date.parse(report?.at ?? 0)) && Boolean(review?.rounds?.length),
+          // A fix round is in flight once a builder was launched after the verdict: the builder that reported before
+          // the review keeps its heartbeat fresh for minutes (docs/design/in-flight.md).
+          fixAt: Math.max(0, ...(review?.rounds ?? []).filter((r) => r.verdict === VERDICT.fix).map((r) => Date.parse(r.at))),
+          reported: has(VERDICT.pass) || has(S.answered) || Boolean(report && report.status !== S.stopped && (!lastAt || report.at > lastAt) && Date.parse(report.at) > approvedAt(u.doc)),
+        };
+      },
+      // A builder launched after the gate refused it is a fix round in flight, not a merge to offer again.
+      gate: () => readJson(runtimeFile(cwd, 'gates', u.id)),
+      // Refused only for a red base, it stays refused until a merge lands: a plan commit does not fix the base (U145).
+      gateCurrent: () => facts.gate?.diffHash === facts.hash && (facts.gate.base === tryGit(cwd, 'rev-parse', base) || (facts.gate.codes.every((c) => c === 'GATE-BASE') && noMergeSince(cwd, facts.gate.base, base))),
+      reviewerFresh: () => heartbeatFresh(cwd, u.id, now, S.reviewing),
+    });
+    const state = stateOf('bolt', facts), onBranch = facts.onBranch && !facts.merged && !facts.unapproved && !facts.stopped && !facts.dependencyPending;
+    const focus = onBranch ? facts.verdicts.focus : null, focuses = onBranch ? facts.verdicts.focuses : [];
     return { ...u, lane, state, focus, focuses, fresh, report, review, held: Boolean(u.fm.hold) && !answered.has(researchOf(u)) }; // an answered research hold no longer holds
   });
 
@@ -118,7 +117,10 @@ export function readState(cwd, { now = Date.now() } = {}) {
     const incrementDue = !complete && Boolean(profile.deploy || profile.release) && increments.length > 0 && !shipped(increments.flat());
     const released = complete && (nothing || (profile.deploy || profile.release) && Boolean(shipped(own.map((u) => u.id)))
       || own.every((u) => (tryGit(cwd, 'tag', '--contains', merged.get(u.id)) ?? '') !== ''));
-    return { ...i, state: released ? ST.released : complete ? ST.merged : approval(i.doc), units: own, deploy, uncut, incrementDue, shipped };
+    // The facts the intent machine's guards read: its approval and merges, and its release steps on the base.
+    const facts = lazy({ released: () => released, complete: () => complete, approval: () => approval(i.doc), incrementDue: () => incrementDue, deploy: () => deploy,
+      hold: () => i.fm.hold, base: () => tryGit(cwd, 'rev-parse', base), checkSet: () => list(profile.deploy?.check).length > 0 });
+    return { ...i, state: stateOf('intent', facts), units: own, deploy, uncut, incrementDue, shipped };
   });
   const requirements = plan.requirements.map((r) => ({ ...r, state: approval(r.doc) }));
   return { cwd, profile, base, bundle, intents, units, requirements, decisions: bundleHeld(bundle), answered, auto: delegated(cwd), mergeUnit: mergeInProgress(cwd, units), ci: ciOf(cwd, profile, base), red: redOf(cwd, base) };
