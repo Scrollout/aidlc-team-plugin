@@ -8,7 +8,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T00:40:00Z }
 
 # Why
 On `resource-manager` the profile could say only "module with layers":
-- The map drew `toolchain` and `deploy` as vertical slices.
+- The map drew `toolchain` and `deploy` as vertical modules beside the domains.
 - Nothing kept the layers pointing inward.
 - The front door linked the registry's internals through a package that held both its client and server, and every check passed.
 

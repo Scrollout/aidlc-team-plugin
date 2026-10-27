@@ -20,4 +20,4 @@ The owner asked (2026-10-24) whether an initialised project gets the method: ver
 # Choices
 The owner's, 2026-10-24: the lead asks and offers detected commands, nothing guessed into the profile; upgrade adds the constitution only when none exists.
 
-Units: [M7](../roadmap/m7.md).
+Bolts: [M7](../roadmap/m7.md).

@@ -14,8 +14,8 @@ sources:
 | Role | Who | Does | Never |
 |---|---|---|---|
 | Owner | the human | approves intent, plan, one-way doors, release; answers clarifying questions | reviews every line |
-| Lead | main session + `aidlc` skill | runs `next`, writes intent/unit/design docs, starts builders and reviewers, merges | writes production code on the base branch |
-| Builder | subagent, Sonnet, `isolation: worktree` | builds one unit from its card, test first; reports | edits outside scope, changes interfaces, approves |
+| Lead | main session + `aidlc` skill | runs `next`, writes intent/bolt/design docs, starts builders and reviewers, merges | writes production code on the base branch |
+| Builder | subagent, Sonnet, `isolation: worktree` | builds one bolt from its card, test first; reports | edits outside scope, changes interfaces, approves |
 | Reviewer | subagent, Opus, fresh context | checks the diff against the card and linked specs; returns findings | edits files |
 | Researcher | subagent, Sonnet, fresh context, on a held question | a cited digest, official sources first | decides, writes files |
 
@@ -34,16 +34,16 @@ The CLI picks the model; the lead passes it as the Agent call's per-invocation `
 | Work | Default | Escalates to Opus when |
 |---|---|---|
 | Source, quick lane | Sonnet | - |
-| Source, standard lane | Sonnet | unit spans 2+ modules, has 6+ ACs, or matches a `complex` glob (concurrency, migrations, contracts) |
+| Source, standard lane | Sonnet | bolt spans 2+ modules, has 6+ ACs, or matches a `complex` glob (concurrency, migrations, contracts) |
 | Source, full lane | Opus | - |
-| Fix round after a reviewer `fix` | as the unit | the last `general` fix has a CONFIRMED finding: the round runs on Opus |
+| Fix round after a reviewer `fix` | as the bolt | the last `general` fix has a CONFIRMED finding: the round runs on Opus |
 | Review, specialists | Opus | - |
 
 Thresholds and the table live in `profile.models`, so a project can shift the balance. The lead runs on the model the owner chose; Opus suits it, since the lead writes the design rows with the owner.
 
 # Cost
 - Builders default to Sonnet; Opus where the table above says so.
-- Quick lane: no reviewer; the report makes the unit ready to merge, and the merge trailer says `Review: none`. Standard: one review. Full: one review plus specialists.
+- Quick lane: no reviewer; the report makes the bolt ready to merge, and the merge trailer says `Review: none`. Standard: one review. Full: one review plus specialists.
 - Reviews are cached by diff hash; an unchanged diff is never reviewed twice.
 - Each subagent loads only its card and linked docs; it never inherits the lead's conversation.
 - Parallelism multiplies spend; `parallel.max` is a cost dial, not a speed setting.

@@ -18,7 +18,7 @@ reserves: []
 - AC-1 (<level>): <behaviour, tested before the code>
 
 # Domain
-<full lane: the entities this bolt adds or changes, the one component owning each, how components interact; no technology. Else delete this section>
+<full lane: the entities this bolt adds or changes, the one domain owning each, how domains interact; no technology. Else delete this section>
 
 # Logical
 <the services, interfaces and data shapes this bolt adds or changes, and why; or delete both sections and set design: "<why none>">

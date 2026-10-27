@@ -22,15 +22,15 @@ flowchart TB
 
   subgraph inception["Inception: owner and lead"]
     req["Requirements R-n<br/>lasting, approved"]
-    intent["Intent I-n<br/>goal, why, slices, risks"]
-    plan["Plan: units U-n<br/>ACs with test levels, scope,<br/>depends, reservations"]
+    intent["Intent I-n<br/>goal, why, increments, risks"]
+    plan["Plan: bolts B-n<br/>ACs with test levels, scope,<br/>depends, reservations"]
     researcher["Researcher<br/>cited digest for a held question,<br/>official sources first"]
     decision["Decisions"]
     req --> intent --> plan
     researcher --> decision
   end
 
-  subgraph construction["Construction: per unit, in parallel worktrees"]
+  subgraph construction["Construction: per bolt, in parallel worktrees"]
     card["Card<br/>from the base commit: spec line,<br/>why, ACs, scope, references"]
     builder["Builder<br/>tests first, only inside scope"]
     reviewer["Reviewer<br/>one per focus, fresh context,<br/>JSON verdict"]
@@ -43,11 +43,11 @@ flowchart TB
   subgraph operations["Deployment and Operation: when the profile deploys"]
     base["Base branch<br/>merges carry Unit, Card, Review,<br/>Tested, Proof trailers"]
     ci["Push and CI<br/>aidlc push, aidlc ci wait"]
-    check["Deploy check<br/>aidlc deploy check I-n, per merged slice"]
+    check["Deploy check<br/>aidlc deploy check I-n, per merged increment"]
     release["Release, owner step<br/>aidlc release I-n"]
     smoke["Smoke<br/>runs after the release"]
     rollback["Rollback, owner step<br/>aidlc rollback I-n"]
-    fixunit["Fix unit<br/>aidlc fix --after I-n"]
+    fixunit["Fix bolt<br/>aidlc fix --after I-n"]
     released(["Released"])
     base --> ci -- green --> check -- pass --> release --> smoke -- pass --> released
     check -- fail --> fixunit
@@ -87,7 +87,7 @@ flowchart LR
   subgraph project["Your project, name neutral"]
     profile[".aidlc/profile.json<br/>modules, lanes, levels,<br/>rules, architecture, deploy"]
     bin[".aidlc/bin<br/>pinned copy of the CLI"]
-    docs["docs/ OKF bundle<br/>constitution, requirements, intents,<br/>units, runbooks, design, decisions"]
+    docs["docs/ OKF bundle<br/>constitution, requirements, intents,<br/>bolts, runbooks, design, decisions"]
     runtime[".git/aidlc<br/>cards, reports, reviews, heartbeats,<br/>reviewing, launches, ci, deploys,<br/>goes, prompts, stats, denials, never committed"]
     ci["CI<br/>aidlc check --ci"]
   end
@@ -112,7 +112,7 @@ The CLI keeps working with the plugin uninstalled: the project's pinned copy, it
 - [Overview](docs/design/overview.md): goals, budgets, releases, repo layout.
 - [Grid](docs/design/grid.md), [State](docs/design/state.md), [Verification](docs/design/verification.md), [Requirements and architecture checks](docs/design/architecture.md).
 - [Deployment and operation](docs/design/operations.md): deploy check, release, smoke and rollback; the owner types `release I-<n>` or `rollback I-<n>` as the go.
-- [CI on the base](docs/design/base-ci.md): with `ci.wait`, builders start only on a pushed base whose CI passed; a red base gets a fix unit first.
+- [CI on the base](docs/design/base-ci.md): with `ci.wait`, builders start only on a pushed base whose CI passed; a red base gets a fix bolt first.
 - [Roadmap](docs/roadmap/index.md): the milestone plans; the newest one is the current plan.
 
 ## License

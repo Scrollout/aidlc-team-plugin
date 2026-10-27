@@ -11,7 +11,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T09:45:00Z }
 - Its reference implementation and sample bundles are the conventions this plugin copies. Where they differ from earlier house rules, they win.
 
 # Concept docs
-- Frontmatter: `type` (required), then `title`, `description` (one sentence), `tags`, `status`, `generated`, `verified`, `stale_after`, `sources`, as in the sample bundles. Producer keys are allowed (we add `verified_hash` and unit fields).
+- Frontmatter: `type` (required), then `title`, `description` (one sentence), `tags`, `status`, `generated`, `verified`, `stale_after`, `sources`, as in the sample bundles. Producer keys are allowed (we add `verified_hash` and bolt fields).
 - `generated: { by: <producer>/<version>, at: <ISO 8601 with offset> }` on every doc an agent writes; `verified` with a `human:<id>` actor for owner approvals ([State](state.md)).
 - Body: structural markdown with top-level `#` sections (`# Definition`, `# Rows`, …), no required sections. Citations are `[^id]` footnotes keyed to `sources`.
 - Links: bundle-relative `/dir/doc.md` (recommended) or relative.

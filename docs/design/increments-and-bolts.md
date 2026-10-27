@@ -27,7 +27,7 @@ An intent ships each increment when its bolts merge, not only at the end. While 
 - `INTENT-SIZE` (M18): at most 5 increments, each with its own success measure.
 
 # Bolts
-- **IDs.** `B-<n>`, allocated by `aidlc new bolt "<title>"`, never typed: the next number over every unit and bolt, the file named from the title (no apostrophes, at most 48 characters, cut at a word). `aidlc fix` writes a fix bolt the same way in a v2 project.
+- **IDs.** `B-<n>`, allocated by `aidlc new bolt "<title>"`, never typed: the next number over every bolt, legacy units included, the file named from the title (no apostrophes, at most 48 characters, cut at a word). `aidlc fix` writes a fix bolt the same way in a v2 project.
 - **Names.** Branch `bolt/B-<n>`; test tags `B-<n>/AC-<k>`, or `R-<n>/AC-<k>` for a requirement's ACs.
 - **Front matter.** `intent`, `increment`, `modules` (its binding), `neededBy`, `scope`, `acs`.
 - **Binding** (M19): one domain, or one horizontal module needed by a domain bolt of the same increment. Several domains only in increment 1 ([Construction by proof](construction.md)).

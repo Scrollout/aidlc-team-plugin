@@ -1,18 +1,18 @@
 ---
 type: Design
 title: Workload identity
-description: Components, services and data authenticate by workload identity with short-lived credentials, never by shared or static secrets; a merge check fails the common static forms on added lines.
+description: Runtimes, domains and data authenticate by workload identity with short-lived credentials, never by shared or static secrets; a merge check fails the common static forms on added lines.
 status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-25T19:00:00Z }
 ---
 
 # Why
-The owner made it a permanent rule of the method (2026-10-25), asking whether projects should use "some form of internal managed identity, service principal, federated credentials as a method of authn/authz between components, services, data". A static secret between components is shared by everything that can read it, outlives the component, and lets one slice reach another's data whatever the code says; the first migration's dev database trusted every pod as a superuser.
+The owner made it a permanent rule of the method (2026-10-25), asking whether projects should use "some form of internal managed identity, service principal, federated credentials as a method of authn/authz between components, services, data". A static secret between components is shared by everything that can read it, outlives the runtime that holds it, and lets one domain reach another's data whatever the code says; the first migration's dev database trusted every pod as a superuser.
 
 # Rule
-- Each service or slice has its own workload identity: a cluster service account with a projected token, a cloud managed identity, a workload ID from an identity issuer.
-- Calls between components use mTLS or tokens bound to those identities, and each API says which identities may call it.
-- Each slice's data is reachable only by its own identity, with short-lived certificates or tokens, so [data ownership](architecture-model.md) holds in the database as well as at merge.
+- Each runtime and domain has its own workload identity: a cluster service account with a projected token, a cloud managed identity, a workload ID from an identity issuer.
+- Calls between them use mTLS or tokens bound to those identities, and each API says which identities may call it.
+- Each domain's data is reachable only by its own identity, with short-lived certificates or tokens, so [data ownership](architecture-model.md) holds in the database as well as at merge.
 - Anything outside the cluster (cloud APIs, CI deploys) uses federated credentials (OIDC), never a stored client secret.
 - Local development and tests use the same mechanism where they can; a test fixture may hold a throwaway password inside the levels' test paths.
 
@@ -24,7 +24,7 @@ The mechanism is a project decision, from official sources ([research](../decisi
 - a URL holding a password (`scheme://user:password@host`);
 - a client secret setting (`client_secret`, `AZURE_CLIENT_SECRET`, `clientSecret`) given a value.
 
-Only added lines count, so an adopted project needs no baseline; old forms fail once a unit touches them. The [secrets hook](hook-checks.md) still blocks real keys anywhere.
+Only added lines count, so an adopted project needs no baseline; old forms fail once a bolt touches them. The [secrets hook](hook-checks.md) still blocks real keys anywhere.
 
 # Constitution
 `init` writes rule 10 with these points and its check.

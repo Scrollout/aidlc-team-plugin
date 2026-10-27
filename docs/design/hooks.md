@@ -27,7 +27,7 @@ Per the hooks reference:[^cc-hooks]
 
 # Host facts
 From the hooks reference:[^cc-hooks]
-- Hooks fire for subagents' tool calls too; the input carries `agent_id`, `agent_type` and `cwd` (which follows the worktree), so the scope hook knows which builder and which unit it is judging.
+- Hooks fire for subagents' tool calls too; the input carries `agent_id`, `agent_type` and `cwd` (which follows the worktree), so the scope hook knows which builder and which bolt it is judging.
 - The subagent tool is matched as `Agent`; its `tool_input` has `subagent_type` and `model`, which the model hook compares with the card.
 - SessionStart `source` is `startup`, `resume`, `clear`, `compact` or `fork`; context is returned as `additionalContext`.
 - PreToolUse runs only for Claude's tool calls, so an owner's `!` command is not subject to the guard.

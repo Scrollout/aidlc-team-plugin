@@ -1,5 +1,5 @@
 ---
-type: Unit
+type: Bolt
 title: {{title}}
 description: {{description}}
 scope: [{{scope}}]

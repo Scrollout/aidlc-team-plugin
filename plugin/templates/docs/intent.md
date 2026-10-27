@@ -17,7 +17,7 @@ requirements: [R-<n>]
 <each rule or limit an increment sets says why, as in "quantity 1-10: bulk buyers go through sales">
 
 # Risks
-- <what could sink this, riskiest first; the first slices retire it>
+- <what could sink this, riskiest first; the first increments retire it>
 
 # Success measures
 - <measurable outcome>

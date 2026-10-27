@@ -8,7 +8,7 @@ description: How things are named in this codebase, from the plan to the running
 Names chosen one at a time drift: two words for one concept, a short name in one file and a long one in another. One decision for every stage, with a profile `names` rule per pattern, keeps them the same.
 
 # Plan
-Set by the method and checked already: `I-<n>` intents, `U-<n>` units, `R-<n>` requirements, `U-<n>/AC-<k>` test tags, `unit/U-<n>` branches, `NNNN-<slug>` decisions.
+Set by the method and checked already: `I-<n>` intents, `B-<n>` bolts, `R-<n>` requirements, `B-<n>/AC-<k>` test tags, `bolt/B-<n>` branches, `NNNN-<slug>` decisions.
 
 # Vocabulary
 | Concept | Word | Not |

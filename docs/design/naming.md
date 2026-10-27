@@ -7,7 +7,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T03:00:00Z }
 ---
 
 # Why
-On `resource-manager` (2026-10-26) names were invented on the spot: "front door", "portal", "store", "endpoint". Each project wrote its own regexes, and the convention lived in a doc a builder met only when a check failed. An enterprise convention is a grammar over registered tokens: the components and their order, the casing and separator, the uniqueness scope, a regex and a worked example per kind ([0014](../decisions/0014-the-reference-clouds-api-and-event-conventions.md)).
+On `resource-manager` (2026-10-26) names were invented on the spot: "front door", "portal", "store", "endpoint". Each project wrote its own regexes, and the convention lived in a doc a builder met only when a check failed. An enterprise convention is a grammar over registered tokens: the parts and their order, the casing and separator, the uniqueness scope, a regex and a worked example per kind ([0014](../decisions/0014-the-reference-clouds-api-and-event-conventions.md)).
 
 # Registry
 The profile's `naming` is the one source. The CLI adds its defaults (`cli.json` `naming`) under what the project sets.
