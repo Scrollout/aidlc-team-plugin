@@ -1,8 +1,8 @@
 ---
 type: Design
 title: Models
-description: Draft - architecture models as data - a proven system's vertical and horizontal shape distilled from research, shipped or kept by a project, applied to new and existing projects by the AI-DLC method, and held by generic rule types.
-status: draft
+description: architecture models as data - a proven system's vertical and horizontal shape distilled from research, shipped or kept by a project, applied to new and existing projects by the AI-DLC method, and held by generic rule types.
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T20:00:00Z }
 ---
 

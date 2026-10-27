@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { cpSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { config } from '../plugin/cli/lib/index.mjs';
 import { CHILD_ENV, commit, I1, makeRepo, pinnedRepo, read, run, write } from './state-repo.mjs';
 
 const model = (name, extra = {}) => ({
@@ -204,4 +205,13 @@ test('B233/AC-1 the Go pack\'s control-plane reference meets the model\'s rules 
   const lines = run(dir, ['check']).out.split('\n').filter((l) => /PIPELINE-ORDER|PROVIDER-CONTRACT|LONG-RUNNING|EVENT-COVERAGE|CONTRACT-NAME/.test(l));
   assert.deepEqual(lines, [], 'the reference meets the stage order, slice contract, long-running shapes, events and the model\'s contract');
   assert.match(run(dir, ['models', 'gaps']).out, /^model control-plane: 8 of 10 items played by modules[\s\S]*missing, for the brownfield intent's # Increments:\n- I-<n>\.1 deployments \(domain\)[^\n]*\n- I-<n>\.2 activity \(domain\)/m, 'the walking skeleton: no deployments or activity yet');
+});
+
+test('B234/AC-1 the architect persona reads how to model a reference and apply a model, naming every rule type the CLI knows', () => {
+  const dir = makeRepo();
+  const out = run(dir, ['persona', 'architect']).out;
+  assert.match(out, /architect\/models\.md/, 'its knowledge lists the models file');
+  const knowledge = read(join(import.meta.dirname, '..'), 'plugin/cli/personas/architect/models.md');
+  for (const type of config.models.ruleTypes) assert.ok(knowledge.includes(`\`${type}\``), `${type} is explained`);
+  for (const step of ['Horizontal first', 'Then vertical', 'MODEL-SOURCE', 'aidlc models apply', 'aidlc models gaps']) assert.ok(knowledge.includes(step), step);
 });

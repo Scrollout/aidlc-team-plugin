@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.172.0] - 2026-10-27
+### Added
+- The architect persona's knowledge of models: reading a reference horizontally then vertically, every claim from a source, writing its rules as data with each rule type the CLI knows, and applying a model to a new or an existing project. M24 Models is built.
+
 ## [0.171.0] - 2026-10-27
 ### Added
 - The Go pack's reference holds the control-plane model's walking skeleton: a front door wiring the five governance stages in the model's order and routing by namespace, the resources domain (idempotent writes, a delete of an absent resource), the operations domain (status and terminal states), long-running writes answering with a result link and a retry hint, its OpenAPI document and events, each with Go tests; the model's `slices` name them. CI runs `go vet` and `go test ./...` on the reference on every OS, and a test holds the reference to the model's own rules and contract.
@@ -258,7 +262,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.171.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.172.0...HEAD
+[0.172.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.171.0...v0.172.0
 [0.171.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.170.0...v0.171.0
 [0.170.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.169.0...v0.170.0
 [0.169.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.168.0...v0.169.0
