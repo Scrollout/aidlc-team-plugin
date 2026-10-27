@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.167.0] - 2026-10-27
+### Added
+- Model rule types: a project chooses its model in the profile (`model.name`), and only the rules that model lists run, with the model's parameters and the profile's project names: stage order (`PIPELINE-ORDER`, the stages a pattern finds in the wiring file), slice contract (`PROVIDER-CONTRACT`), long-running operations (`LONG-RUNNING`, an OpenAPI operation's answer shapes and headers, and a delete's no-content answer), idempotency (`IDEMPOTENCY-AC`), data (`DATA-PARTITION`, each owned table's partition and class) and events (`EVENT-COVERAGE`).
+
 ## [0.166.0] - 2026-10-27
 ### Added
 - The `model` pathway: an intent that names its `model:` and `research:` digests needs the digests filed and a current Model doc; `aidlc models doc <name>` writes the Model doc (`models/<name>.md`, generated, with the model's digest) for the owner to approve. Each layer, domain and rule of a project model cites a source of that research (`MODEL-SOURCE`).
@@ -230,7 +234,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.166.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.167.0...HEAD
+[0.167.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.166.0...v0.167.0
 [0.166.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.165.0...v0.166.0
 [0.165.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.164.0...v0.165.0
 [0.164.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.163.0...v0.164.0

@@ -49,13 +49,18 @@ Shipped models carry no sources: a plugin release vouches for them.
 - **Brownfield:** the codebase map's modules are matched to the model's layers and kinds; the gaps become the intent's increments.
 
 # Rule types
-Each is generic, takes its parameters from the model, and is on only where the chosen model sets it:
-- **stage order** (`PIPELINE-ORDER`): the front door calls its stages in the model's order;
-- **slice contract** (`PROVIDER-CONTRACT`): each slice declares what the model's `slice` asks;
-- **long-running operations:** each declared async write answers in one of the model's shapes, with a status link, a result link, a retry hint and terminal states;
-- **idempotency:** every write bolt has an AC that a repeated write leaves status and state unchanged;
-- **data** (`DATA-PARTITION`): each table declares its partition key and data class;
-- **events** (`EVENT-COVERAGE`): every write, delete and action emits an event, on failure as well as success.
+A project chooses its model in the profile: `model: { "name": "<model>", … }`. Only the rules that model lists run. Each rule type takes its parameters from the model, and the names only the project knows from the profile's `model`, so no vendor's names live in the plugin.
+
+| Type | Model parameters | Project's `model` | Checks | Code |
+|---|---|---|---|---|
+| `stageOrder` | `stages` | `wiring: { file, pattern }` | the stage names the pattern finds in the file come in the model's order, none missing | `PIPELINE-ORDER` |
+| `sliceContract` | `kind`, `declares` | each module's `slice` | every module of that kind declares each field | `PROVIDER-CONTRACT` |
+| `longRunning` | `shapes` (`code`, `links`), `deleteAbsent` | `operations: { marker, status, result, retry }` | an OpenAPI operation the marker flags answers in a shape with its link and retry headers; a delete answers `deleteAbsent` | `LONG-RUNNING` |
+| `idempotency` | `writes`, `repeat` | - | a bolt with an AC matching `writes` has one matching `repeat` | `IDEMPOTENCY-AC` |
+| `data` | `classes` | - | each table under a domain's `# Owns` declares `(partition: <key>, class: <class>)` | `DATA-PARTITION` |
+| `events` | `verbs` | `events: { marker, files }` | each OpenAPI operation of those verbs names events by the marker, each found in the events files | `EVENT-COVERAGE` |
+
+The OpenAPI files are the contracts' (`naming.contracts`, else the grammar's defaults).
 
 # The first model: control plane
 - **Layers:** a front door; governance (authenticate, authorize, policy, lock, throttle); resource metadata; operations; deployments; events and an activity log.

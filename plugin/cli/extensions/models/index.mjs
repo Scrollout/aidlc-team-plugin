@@ -3,7 +3,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { bundleOf, CLI_DIR, config, done, list, loadProfile, msg, parseDoc, plug, readJson, relPath, UsageError } from '../../lib/index.mjs';
+import { bundleOf, CLI_DIR, config, done, gitLines, globRegex, isMap, list, loadProfile, msg, parseDoc, parseYaml, plug, readJson, relPath, sectionOf, UsageError } from '../../lib/index.mjs';
 
 const M = config.models, F = config.okf.bundle.folders;
 const sha16 = (text) => createHash('sha256').update(text).digest('hex').slice(0, 16);
@@ -98,6 +98,94 @@ plug('planRules', ({ bundle, intents, add, keyLine, base }) => {
 });
 
 plug('docChecks', (root) => modelsOf(root).flatMap((m) => m.problems.map(([key, data]) => ({ code: 'MODEL-FORMAT', path: relPath(root, join(m.dir, M.file)), key, data }))));
+
+// ---- Rule types: only the chosen model's rules run, with its parameters and the profile's project names ----
+
+const PROFILE = config.layers.find((l) => l.from === 'project').path;
+const chosen = (root, profile) => (profile.model?.name ? modelsOf(root).find((m) => m.name === profile.model.name && m.data) ?? null : null);
+const rulesOf = (m, type) => (m?.data.rules ?? []).filter((r) => r.type === type);
+const has = (map, name) => Boolean(name) && Object.keys(isMap(map) ? map : {}).some((k) => k.toLowerCase() === String(name).toLowerCase());
+// Every operation of the project's published OpenAPI documents (the contracts' files), with where it sits.
+function operations(root, profile) {
+  const globs = (profile.naming?.contracts ?? config.naming.contract.files).map((g) => globRegex(`/${g}`));
+  return gitLines(root, 'ls-files', '--cached', '--others', '--exclude-standard').filter((f) => globs.some((g) => g.test(f))).flatMap((file) => {
+    let doc; try { const text = readFileSync(join(root, file), 'utf8'); doc = file.endsWith('.json') ? JSON.parse(text) : parseYaml(text); } catch { return []; }
+    return Object.entries(isMap(doc?.paths) ? doc.paths : {}).flatMap(([path, item]) => Object.entries(isMap(item) ? item : {}).filter(([k]) => M.methods.includes(k)).map(([method, op]) => ({ file, path, method, op: isMap(op) ? op : {} })));
+  });
+}
+
+function stageOrder(root, profile, m, r, out) {
+  const w = profile.model.wiring ?? {}, file = w.file && join(root, w.file);
+  if (!w.file || !w.pattern) return out.push(['PIPELINE-ORDER', PROFILE, 'stageNoWiring', {}]);
+  if (!existsSync(file)) return out.push(['PIPELINE-ORDER', PROFILE, 'stageNoFile', { file: w.file }]);
+  const found = [...readFileSync(file, 'utf8').matchAll(new RegExp(w.pattern, 'g'))].map((x) => String(x[1] ?? x[0]).toLowerCase());
+  const at = list(r.stages).map((s) => [s, found.indexOf(s.toLowerCase())]);
+  for (const [stage] of at.filter(([, k]) => k < 0)) out.push(['PIPELINE-ORDER', w.file, 'stageMissing', { stage }]);
+  const placed = at.filter(([, k]) => k >= 0).map(([, k]) => k);
+  if (placed.some((k, n) => n && k < placed[n - 1])) out.push(['PIPELINE-ORDER', w.file, 'stageOrder', { found: found.join(', '), stages: list(r.stages).join(', ') }]);
+}
+
+function sliceContract(root, profile, m, r, out) {
+  for (const mod of (profile.modules ?? []).filter((x) => x.kind === r.kind)) {
+    const missing = list(r.declares).filter((k) => !isMap(mod.slice) || mod.slice[k] === undefined || mod.slice[k] === '');
+    if (missing.length) out.push(['PROVIDER-CONTRACT', PROFILE, 'sliceMissing', { module: mod.id ?? mod.name, kind: r.kind, fields: missing.join(', ') }]);
+  }
+}
+
+function longRunning(root, profile, m, r, out) {
+  const o = { ...M.defaults.operations, ...profile.model.operations }, roles = ['status', 'result', 'retry'].filter((k) => !o[k]);
+  if (roles.length) return out.push(['LONG-RUNNING', PROFILE, 'lroNoNames', { roles: roles.join(', ') }]);
+  const shapes = list(r.shapes).length ? r.shapes : [];
+  const fits = (responses, s) => isMap(responses[String(s.code)]) && [...list(s.links), 'retry'].every((l) => has(responses[String(s.code)].headers, o[l]));
+  for (const { file, path, method, op } of operations(root, profile)) {
+    const responses = isMap(op.responses) ? op.responses : {};
+    if (op[o.marker] === true && !shapes.some((s) => fits(responses, s))) out.push(['LONG-RUNNING', file, 'lroShape', { method: method.toUpperCase(), path, shapes: shapes.map((s) => `${s.code} with ${[...list(s.links).map((l) => o[l]), o.retry].join(' and ')}`).join(', or ') }]);
+    if (r.deleteAbsent && method === 'delete' && !(String(r.deleteAbsent) in responses)) out.push(['LONG-RUNNING', file, 'lroDelete', { path, code: r.deleteAbsent }]);
+  }
+}
+
+function events(root, profile, m, r, out) {
+  const e = { ...M.defaults.events, ...profile.model.events };
+  if (!list(e.files).length) return out.push(['EVENT-COVERAGE', PROFILE, 'eventsNoFiles', {}]);
+  const globs = list(e.files).map((g) => globRegex(`/${g}`));
+  const catalog = gitLines(root, 'ls-files', '--cached', '--others', '--exclude-standard').filter((f) => globs.some((g) => g.test(f))).map((f) => readFileSync(join(root, f), 'utf8')).join('\n');
+  for (const { file, path, method, op } of operations(root, profile).filter((x) => list(r.verbs).includes(x.method))) {
+    const names = list(op[e.marker]);
+    if (!names.length) out.push(['EVENT-COVERAGE', file, 'eventsNone', { method: method.toUpperCase(), path, marker: e.marker }]);
+    for (const event of names.filter((n) => !new RegExp(`(^|[^\\w.-])${n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^\\w.-]|$)`).test(catalog))) out.push(['EVENT-COVERAGE', file, 'eventsUnknown', { method: method.toUpperCase(), path, event }]);
+  }
+}
+
+const CHECKS = { stageOrder, sliceContract, longRunning, events };
+plug('docChecks', (root, profile) => {
+  const m = chosen(root, profile), out = [];
+  for (const [type, check] of Object.entries(CHECKS)) for (const r of rulesOf(m, type)) check(root, profile, m, r, out);
+  return out.map(([code, path, key, data]) => ({ code, path, key, data: { model: m.name, ...data } }));
+});
+
+// The plan's rules: a write bolt has its repeat AC, and each owned table declares its partition and class.
+plug('planRules', ({ bundle, units, merged, add, base, profile }) => {
+  const m = chosen(base, profile);
+  for (const r of rulesOf(m, 'idempotency')) {
+    const writes = new RegExp(r.writes, 'i'), repeat = new RegExp(r.repeat, 'i');
+    for (const u of units.filter((x) => !merged.has(x.id) && x.fm.status !== config.grid.dropped)) {
+      const write = u.acs.find((ac) => writes.test(ac.text));
+      if (write && !u.acs.some((ac) => repeat.test(ac.text))) add('IDEMPOTENCY-AC', u, write.line, 'idempotentMissing', {});
+    }
+  }
+  for (const r of rulesOf(m, 'data')) {
+    const dir = join(bundle, F.Domain);
+    for (const f of existsSync(dir) ? readdirSync(dir).filter((x) => x.endsWith('.md') && x !== config.okf.index).sort() : []) {
+      const doc = parseDoc(readFileSync(join(dir, f), 'utf8')), d = { file: join(dir, f), id: String(doc.fm?.code ?? f.replace(/\.md$/, '')), doc };
+      for (const [n] of sectionOf(doc, config.inception.owns)) {
+        const line = doc.lines[n - 1], table = line.match(/`([^`]+)`/)?.[1], decl = line.match(/\(partition:\s*[^,)]+,\s*class:\s*([\w-]+)\)/);
+        if (!table) continue;
+        if (!decl) add('DATA-PARTITION', d, n, 'dataUndeclared', { table });
+        else if (!list(r.classes).includes(decl[1])) add('DATA-PARTITION', d, n, 'dataClass', { table, class: decl[1], classes: list(r.classes).join(', ') });
+      }
+    }
+  }
+});
 
 export const commands = {
   models(args, { cwd }) {

@@ -76,3 +76,53 @@ test('B229/AC-2 each layer, domain and rule of a project model cites a source of
     'MODEL-SOURCE I-1 model minimal: stageOrder cites s9, no source of reference',
   ]);
 });
+
+// A model with each rule type, and a project that chose it, with the names only it knows in its profile.
+const RULES = [
+  { type: 'stageOrder', stages: ['authenticate', 'authorize', 'policy'] },
+  { type: 'sliceContract', kind: 'extension', declares: ['namespace', 'types'] },
+  { type: 'longRunning', shapes: [{ code: 201, links: ['status'] }, { code: 202, links: ['result'] }], deleteAbsent: 204 },
+  { type: 'idempotency', writes: '\\b(creates?|updates?)\\b', repeat: '\\b(again|repeated)\\b.*\\bunchanged\\b' },
+  { type: 'data', classes: ['regional', 'shared', 'global'] },
+  { type: 'events', verbs: ['put', 'patch', 'post', 'delete'] },
+];
+const chosen = (slice) => ({ ...V2, model: { name: 'minimal', wiring: { file: 'src/gate/stages.txt', pattern: 'Stage(\\w+)' }, operations: { status: 'Op-Status', result: 'Op-Result', retry: 'Retry-After' }, events: { files: ['api/events/*.yaml'] } },
+  modules: [{ id: 'gate', kind: 'pipeline', paths: ['src/gate/**'] }, { id: 'things', kind: 'extension', paths: ['src/things/**'], slice }] });
+const api = (put, del) => `openapi: 3.1.0\ninfo: { title: t, version: 2026-10-01 }\npaths:\n  /things/{thingName}:\n    put:\n${put}\n    delete:\n${del}\n`;
+const ruleLines = (dir) => run(dir, ['check', 'docs']).out.split('\n').filter((l) => /PIPELINE-ORDER|PROVIDER-CONTRACT|LONG-RUNNING|IDEMPOTENCY-AC|DATA-PARTITION|EVENT-COVERAGE/.test(l)).map((l) => l.replace(/ → .*$/, '')).join('\n');
+
+test('B230/AC-1 B230/AC-2 only the chosen model\'s rules run, each reporting what breaks it, with the project\'s own names', () => {
+  const broken = {
+    '.aidlc/models/minimal/model.json': model('minimal', { rules: RULES }),
+    'src/gate/stages.txt': 'StageAuthenticate\nStagePolicy\nStageAuthorize\n',
+    'api/things/openapi.yaml': api('      x-long-running: true\n      x-events: [things.written]\n      responses:\n        "201":\n          headers:\n            Op-Status: { schema: { type: string } }', '      responses:\n        "202": { description: accepted }'),
+    'api/events/things.yaml': 'events:\n  - things.deleted\n',
+    'docs/domains/things.md': '---\ntype: Domain\ntitle: things\ndescription: things.\ncode: things\nkind: domain\n---\n\n# Owns\n- `things.rows`: the things\n- `things.log` (partition: thingName, class: secret): changes\n',
+    'docs/bolts/B-1-put-a-thing.md': '---\ntype: Bolt\ntitle: Put a thing\ndescription: Put a thing.\nscope: ["src/things/**"]\n---\n\n- AC-1 (unit): Given no thing, when a client creates one, then it is stored.\n',
+  };
+  const dir = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n', ...broken }, chosen({ namespace: 'Acme.Things' }));
+  const lines = ruleLines(dir);
+  for (const want of [
+    'src/gate/stages.txt:1 PIPELINE-ORDER model minimal: the stages come as authenticate, policy, authorize, not in the model\'s order authenticate, authorize, policy',
+    '.aidlc/profile.json:1 PROVIDER-CONTRACT model minimal: module things (extension) declares no types under slice',
+    'api/things/openapi.yaml:1 LONG-RUNNING model minimal: PUT /things/{thingName} is flagged long-running but answers none of 201 with Op-Status and Retry-After, or 202 with Op-Result and Retry-After',
+    'api/things/openapi.yaml:1 LONG-RUNNING model minimal: DELETE /things/{thingName} declares no 204 answer for an absent resource',
+    'api/things/openapi.yaml:1 EVENT-COVERAGE model minimal: PUT /things/{thingName} emits things.written, which no events file defines',
+    'api/things/openapi.yaml:1 EVENT-COVERAGE model minimal: DELETE /things/{thingName} names no events under x-events',
+    "docs/bolts/B-1-put-a-thing.md:8 IDEMPOTENCY-AC B-1 has a write AC but none that repeats it and finds status and state unchanged",
+    'docs/domains/things.md:10 DATA-PARTITION things owns things.rows with no (partition: <key>, class: <class>)',
+    'docs/domains/things.md:11 DATA-PARTITION things gives things.log class secret, not one of regional, shared, global',
+  ]) assert.ok(lines.includes(want), `${want}\n--- got:\n${lines}`);
+
+  write(dir, {
+    'src/gate/stages.txt': 'StageAuthenticate\nStageAuthorize\nStagePolicy\n',
+    'api/things/openapi.yaml': api('      x-long-running: true\n      x-events: [things.written]\n      responses:\n        "201":\n          headers:\n            Op-Status: { schema: { type: string } }\n            Retry-After: { schema: { type: integer } }', '      x-events: [things.deleted]\n      responses:\n        "202": { description: accepted }\n        "204": { description: absent }'),
+    'api/events/things.yaml': 'events:\n  - things.written\n  - things.deleted\n',
+    'docs/domains/things.md': broken['docs/domains/things.md'].replace('- `things.rows`: the things', '- `things.rows` (partition: thingName, class: regional): the things').replace('class: secret', 'class: shared'),
+    'docs/bolts/B-1-put-a-thing.md': broken['docs/bolts/B-1-put-a-thing.md'] + '- AC-2 (unit): Given a stored thing, when the same put is repeated, then its status and state are unchanged.\n',
+    '.aidlc/profile.json': chosen({ namespace: 'Acme.Things', types: ['widgets'] }),
+  });
+  assert.equal(ruleLines(dir), '', 'every rule met');
+  write(dir, { ...broken, '.aidlc/profile.json': { ...chosen({}), model: undefined } });
+  assert.equal(ruleLines(dir), '', 'no chosen model, no rule runs');
+});

@@ -33,3 +33,5 @@ generated: { by: tests/diagrams.mjs }
 | `ELAB-STORY` | give each persona a story under # Stories: - As a <persona>, I want <capability>, so that <benefit>. R-<n> [source], citing a requirement the intent cites (docs: Elaboration checks) |
 | `REQUEST-COVERAGE` | cite each sentence of the request where the intent or a requirement answers it, or under # Out of scope with the reason (docs: Intake) |
 | `MODEL-SOURCE` | give each layer, domain and rule of the model sources: ids of the sources of the research: digests the intent names (docs: Models) |
+| `IDEMPOTENCY-AC` | add an AC that repeating the write leaves its status and state unchanged (docs: Models) |
+| `DATA-PARTITION` | write each owned table as `table` (partition: <key>, class: <class>), with a class the model lists (docs: Models) |
