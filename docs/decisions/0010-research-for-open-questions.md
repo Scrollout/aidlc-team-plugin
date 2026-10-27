@@ -9,7 +9,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T08:30:00Z }
 # Research for open questions
 
 ## Context and Problem Statement
-In the M1 build the owner answered every design question of one unit with "research how others do it"; in the [M2 pilot](../pilot/m2-report.md) elaboration ran on "take the recommended option and log it". The hard part of those questions was the knowledge, not the choice. Researching inside the lead's session is costly: the lead was 85 % of the pilot's tokens, and every page it reads is re-read on each later turn. An agent cannot approve for the owner: auto mode refused the lead's own delegated approvals as self-approval.
+In the M1 build the owner answered every design question of one unit with "research how others do it"; in the [M2 pilot](../pilot/lessons.md) elaboration ran on "take the recommended option and log it". The hard part of those questions was the knowledge, not the choice. Researching inside the lead's session is costly: the lead was 85 % of the pilot's tokens, and every page it reads is re-read on each later turn. An agent cannot approve for the owner: auto mode refused the lead's own delegated approvals as self-approval.
 
 ## Considered Options
 1. Keep it with the lead: it researches in its own context and recommends.

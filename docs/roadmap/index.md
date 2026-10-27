@@ -1,6 +1,6 @@
 # Plan
 
-* [Later](later.md) - Ideas kept for after the first real migration, none planned - org rule packs, domain row templates, a CI evaluator agent, other agent hosts, staged checks, reserve and clean.
+* [Later](later.md) - Ideas kept for after the first real migration, none planned - org rule packs, a CI evaluator agent, other agent hosts, staged checks, reserve and clean, and the pilots' open lessons.
 * [M1 Core loop](m1.md) - The first usable plugin - CLI, grid state, cards, merge gate, six hooks, builder and reviewer - piloted on a copy of a real project.
 * [M10 A fully vertical build](m10.md) - A fully vertical build - the Domain and Logical rows checked before code, from the first migration.
 * [M11 Slices that own their data](m11.md) - Slices that own their data, code surface and place in a codebase map, from the first migration.
