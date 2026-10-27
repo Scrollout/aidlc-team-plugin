@@ -164,7 +164,7 @@ test('U4/AC-8 a draft with open points sends the lead back to the owner before a
   report(dir, 'U-1');
   commit(dir, 'draft I-2', { 'docs/intents/I-2-export.md': draft });
   let r = run(dir, ['next']);
-  assert.equal(r.out.trimEnd(), '👉 finish elaborating I-2 with the owner: description, Why, Open questions still open in docs/intents/I-2-export.md; meanwhile draft the decisions it needs from .aidlc/templates/docs/decision.md, linked from it, so the owner sees the how with the what; then ask for approval', 'U139/AC-1 an intent with no decision drafts them while the owner answers');
+  assert.equal(r.out.trimEnd(), '👉 finish elaborating I-2 with the owner: description, Why, Open questions still open in docs/intents/I-2-export.md; meanwhile draft the decisions it needs from .aidlc/templates/docs/decision.md, linked from it, so the owner sees the how with the what; then ask for approval (as the product-analyst: aidlc persona product-analyst)', 'U139/AC-1 an intent with no decision drafts them while the owner answers');
   assert.equal(r.code, 2);
   write(dir, { 'docs/intents/I-2-export.md': draft.replace('<one sentence>', 'Weekly export.').replace('<the reason>', 'Sales asks.').replace('\n## Open questions\n- Which day?\n', '') });
   r = run(dir, ['next']);

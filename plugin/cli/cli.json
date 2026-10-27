@@ -150,6 +150,11 @@
       "does": "record an owner priority in the plan"
     },
     {
+      "name": "persona",
+      "usage": "persona <role>",
+      "does": "print a role persona and its knowledge, for the lead to work in"
+    },
+    {
       "name": "name",
       "usage": "name <kind> [--domain d] [--role r] [--env e] [--verb v] [--stage s] [--action a] [--table t] [--object o] [--number n] [--metric m] [--bolt u] [--section s] [--key k] [--date d] [--preview] [--tag t]",
       "does": "print a name from the naming grammar and registry",
@@ -260,6 +265,9 @@
     "supersededStatus": "superseded by ADR-{{n}}",
     "acGherkin": "{{unit}} {{ac}} is not Given/When/Then: write it as Given <context>, when <action>, then <outcome>",
     "reqEars": "{{unit}} states no requirement in an EARS pattern under # Requirement: The <system> shall, When <trigger>, While <state>, If <trigger> then, or Where <feature>, the <system> shall <response>",
+    "personaLine": " (as the {{role}}: aidlc persona {{role}})",
+    "personaUsage": "usage: aidlc persona <role>, one of {{roles}}",
+    "personaKnowledge": "\nKnowledge, read what the step needs:\n{{files}}\n",
     "docSchemaKey": "a {{type}} lacks {{key}}",
     "docSchemaEnum": "a {{type}}'s {{key}} is {{value}}, not one of {{values}}",
     "docFolder": "a {{type}} lives in {{folder}}/, not {{at}}",
@@ -1716,6 +1724,10 @@
     ],
     "metricUnits": ["total", "seconds", "bytes", "ratio", "count"],
     "banned": ["manager", "service", "frontdoor", "portal", "store", "common", "util", "utils", "helper", "helpers", "misc", "base", "core", "data", "info", "stuff", "thing"]
+  },
+  "personas": {
+    "dir": "personas",
+    "steps": { "nextNoIntent": "product-analyst", "nextOpenIntent": "product-analyst", "nextOpenDraft": "product-analyst", "nextFinishDecision": "architect", "nextDraftUnits": "architect" }
   },
   "vocabulary": {
     "words": [

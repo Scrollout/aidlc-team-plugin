@@ -18,6 +18,7 @@ import { commands as hooks, ownerRefused } from './lib/domains/host.mjs';
 import { commands as naming } from './lib/domains/naming.mjs';
 import { commands as inception } from './lib/domains/inception.mjs';
 import { commands as map } from './lib/domains/map.mjs';
+import { commands as method } from './lib/domains/method.mjs';
 
 const EXIT = config.exit;
 // Every extension the vendored copy carries: each plugs into the core's seams and may add commands (docs/design/library.md#extensions).
@@ -35,7 +36,7 @@ const combine = (...handlers) => async (args, ctx) => {
 };
 
 // Each unit that builds a command adds its handler here, keyed by the command name in cli.json.
-export const HANDLERS = { ...okf, ...state, ...approval, ...review, ...card, ...init, ...gate, ...hooks, ...map, ...naming, ...inception, ...Object.assign({}, ...extensions.map((x) => x.commands ?? {})), lane: grid.lane, check: withSummary(combine(okf.check, planCheck, gate.check)) };
+export const HANDLERS = { ...okf, ...state, ...approval, ...review, ...card, ...init, ...gate, ...hooks, ...map, ...naming, ...inception, ...method, ...Object.assign({}, ...extensions.map((x) => x.commands ?? {})), lane: grid.lane, check: withSummary(combine(okf.check, planCheck, gate.check)) };
 
 function help() {
   const width = Math.max(...config.commands.map((c) => c.usage.length));

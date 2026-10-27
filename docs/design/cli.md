@@ -9,7 +9,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 # Commands
 | Command | Does | Run by |
 |---|---|---|
-| `init [--adopt] [--name n] [--base b] [--bundle dir] [--run level=command]… [--overwrite path]… [--system-code c] [--org o] [--zone z]` | writes the profile from the skill's answers (each level's run, the naming tokens), renders templates, vendors itself; `--adopt` keeps a bundle ([Profile and templates](profile.md)) | owner via the `aidlc` skill |
+| `init [--adopt] [--name n] [--base b] [--bundle dir] [--run level=command]… [--overwrite path]… [--system-code c] [--org o] [--zone z]` | writes a v2 profile, templates and the pinned CLI; `--adopt` keeps a bundle ([Profile and templates](profile.md)) | owner via the skill |
 | `upgrade [--downgrade] [--dirty]` | re-vendors the CLI from the installed plugin's release and adds templates the project lacks; refuses an older one or a checkout with uncommitted changes unless told; says when nothing changed, which release it copied, and how to fetch a newer one | owner (prompt or `!`) |
 | `index [bundle]` | regenerates every `index.md` in the bundle like the OKF reference implementation | docs hook, merge, anyone |
 | `check [--ci] [path…]` | OKF validation, plan lint, profile lint; `--ci` adds the base history and architecture checks. A directory is checked as a bundle, or within the profile's bundle when it lies below its root; a file reports only its own findings | hooks, CI, anyone |
@@ -28,6 +28,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 | `hold <doc> [off\|<reason>]` | records an owner instruction in the plan: `hold: true` or the reason; `off` removes it. The lead also holds a doc with a reason while it parks a question for the owner, and holds a merged intent to park its release steps | lead |
 | `priority <bolt> <n>` | records `priority: <n>` in the plan, higher first | lead |
 | `name <kind> [--<flag> <value>]…` | a name from the grammar and registry; the flags each kind needs are in `cli.json` ([Naming](naming.md)) | lead, builder |
+| `persona <role>` | prints a role persona and its knowledge ([Intake](intake.md)) | lead |
 | `new bolt "<title>"` | a draft `B-<n>`, named from its title | lead |
 | `fact "<title>" --env <environment> -- <command>` | runs a read-only probe on the target and records its output as a platform fact ([Inception](inception.md)) | lead |
 | `dispose <I-n\|B-n> F-<k> fixed\|accepted "<reason>" [--until <date>]` | records the owner's disposition of a review finding | owner (prompt) |

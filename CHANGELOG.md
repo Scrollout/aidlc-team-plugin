@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.157.0] - 2026-10-27
+### Added
+- Role personas the lead works in while it elaborates: a product analyst and an architect, with their knowledge; `aidlc persona <role>`; `next` names the role on each elaborate step.
+
 ## [0.156.0] - 2026-10-27
 ### Changed
 - `deploy`, `release`, `rollback` and `retro` move out of the core into the `operations` extension, with their messages and values; the core drops from 4,502 to 4,348 lines.
@@ -173,7 +177,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.156.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.157.0...HEAD
+[0.157.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.156.0...v0.157.0
 [0.156.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.155.0...v0.156.0
 [0.155.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.154.0...v0.155.0
 [0.154.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.153.0...v0.154.0

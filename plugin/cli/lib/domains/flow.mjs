@@ -144,7 +144,9 @@ const noMergeSince = (cwd, sha, head) => tryGit(cwd, 'rev-list', '--count', '--m
 const ids = (docs) => docs.map((u) => u.id).join(' ');
 // An owner step starts with the owner badge, a refusal or stop with the stop badge; the lead's own steps carry none.
 const badgeOf = (kind, key) => (S.badges.stops.includes(key) ? S.badges.stop : kind === 'human' ? S.badges.owner : '');
-const action = (kind, key, data = {}) => ({ kind, key, line: badgeOf(kind, key) + msg(key, data) });
+// An elaborate step names the role the lead works in (decision 0019).
+const roleOf = (key) => config.personas.steps[key];
+const action = (kind, key, data = {}) => ({ kind, key, line: badgeOf(kind, key) + msg(key, data) + (roleOf(key) ? msg('personaLine', { role: roleOf(key) }) : '') });
 const priorityOf = (u) => Number(u.fm.priority ?? 0);
 
 // Open points of a draft: frontmatter fields and sections still holding a template placeholder, or items under

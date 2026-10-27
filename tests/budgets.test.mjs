@@ -53,7 +53,7 @@ const CHECKS = {
   },
   'Skill body / agent prompt': {
     check: (items, limit) => sizes(items, limit * 1024, 'bytes', (t) => Buffer.byteLength(t)),
-    real: () => files('plugin/skills', /^SKILL\.md$/).concat(files('plugin/agents', /\.md$/)).map((f) => ({ name: f, text: read(f) })),
+    real: () => files('plugin/skills', /^SKILL\.md$/).concat(files('plugin/agents', /\.md$/), readdirSync(join(ROOT, 'plugin/cli/personas')).filter((f) => f.endsWith('.md')).map((f) => `plugin/cli/personas/${f}`)).map((f) => ({ name: f, text: read(f) })), // and the role personas (decision 0019)
   },
   'Skill and agent descriptions': {
     check: (items, limit) => sizes(items.map((i) => ({ ...i, text: description(i.text) })), limit, 'chars', (t) => t.length),
