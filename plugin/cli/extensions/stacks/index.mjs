@@ -17,6 +17,7 @@ function packFor(root) {
   }
   return null;
 }
+plug('stack', (root) => packFor(root)?.stack ?? null); // for the intake proposal
 
 // The project's source files a pack reads: its extensions, outside the skipped folders and the tests.
 function sources(root, manifest) {

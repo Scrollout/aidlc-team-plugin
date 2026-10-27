@@ -63,8 +63,9 @@ export function readPlan(bundle) {
   const named = new Map(requirements.map((r) => [reqId(r.id), r.id]));
   const cite = (d) => ({ ...d, requirements: d.requirements.map((r) => named.get(r) ?? r) });
   // Bolts under bolts/, and a v1 plan's units under units/ read as bolts (docs/design/increments-and-bolts.md).
-  const units = [...readDocs(bundle, GRID.units, GRID.unitFile), ...readDocs(bundle, GRID.bolts, GRID.boltFile)].map((u) => cite({ ...u, ...unitFields(u.doc) }));
-  return { intents: readDocs(bundle, GRID.intents, GRID.intentFile).map(cite), units, requirements };
+  const intents = readDocs(bundle, GRID.intents, GRID.intentFile).map(cite), floor = (u) => intents.find((i) => i.id === u.fm.intent)?.fm.lane;
+  const units = [...readDocs(bundle, GRID.units, GRID.unitFile), ...readDocs(bundle, GRID.bolts, GRID.boltFile)].map((u) => cite({ ...u, ...unitFields(u.doc) })).map((u) => ({ ...u, floor: floor(u) }));
+  return { intents, units, requirements };
 }
 
 // The given docs plus the intents of the units among them: a plan-wide finding lands on the intent (docs/design/plan-lint.md).
@@ -184,7 +185,7 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
     }
     for (const m of u.modules.filter((x) => !modules.has(x))) add('PLAN-MODULE', u, keyLine(u, 'modules'), 'moduleUnknown', { module: m, modules: [...modules].join(', ') || '-' });
     if (!u.scope.length) add('PLAN-SCOPE', u, 1, 'scopeMissing', {});
-    const lane = computeLane(u.scope, profile).lane;
+    const lane = computeLane(u.scope, profile, { floor: u.floor }).lane;
     // Each AC's test must have a place in the scope, unless the quick lane adds no tests.
     for (const ac of u.scope.length && lane !== QUICK ? u.acs.filter((a) => levels.includes(a.level)) : []) {
       const paths = list(levelDefs[ac.level].paths);
@@ -348,7 +349,12 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
 
 // The lane for a unit's scope globs or a diff's paths, with the glob or path that decided it.
 // `paths` marks items as repo paths (from a diff), anchored at the root.
-export function computeLane(items, profile = {}, { paths = false } = {}) {
+// An intent's `lane` is a floor its bolts never run below (docs/design/grid.md#lanes).
+export function computeLane(items, profile = {}, { paths = false, floor } = {}) {
+  const found = laneOf(items, profile, paths), G = config.gate.lanes;
+  return G.indexOf(floor) > G.indexOf(found.lane) ? { lane: floor, reason: msg('laneFloor', { lane: floor, was: found.lane }) } : found;
+}
+function laneOf(items, profile, paths) {
   const anchor = (item) => (paths ? '/' + item : item);
   const full = [
     ...list(profile.lanes?.full).map((glob) => ({ source: 'lanes.full', glob })),
@@ -381,6 +387,6 @@ export const commands = {
     const bundle = bundleOf(cwd, profile);
     const unit = readPlan(bundle).units.find((u) => u.id === args[0]);
     if (!unit) throw new UsageError(msg('unknownUnit', { name: args[0], dir: relPath(cwd, join(bundle, GRID.units)) }));
-    return done(msg('laneLine', computeLane(unit.scope, profile)));
+    return done(msg('laneLine', computeLane(unit.scope, profile, { floor: unit.floor })));
   },
 };

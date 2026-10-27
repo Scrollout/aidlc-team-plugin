@@ -14,6 +14,7 @@ flowchart TB
   subgraph extensions
     extensions_board[board]
     extensions_contracts[contracts]
+    extensions_intake[intake]
     extensions_operations[operations]
     extensions_stacks[stacks]
   end

@@ -1,0 +1,65 @@
+{
+  "name": "intake",
+  "description": "Intake: the owner's request kept word for word with sentence ids, and the pathway, stack and lane it proposes from bands (docs/design/intake.md).",
+  "when": null,
+  "data": {
+    "okf": {
+      "bundle": {
+        "folders": { "Request": "requests" },
+        "generated": ["Request"],
+        "schemas": { "Intent": { "enums": { "lane": "gate.lanes" } } }
+      }
+    },
+    "commands": [
+      {
+        "name": "intake",
+        "usage": "intake \"<prose>\" | --file <path> | Q-<n> [--ambiguity|--risk|--assumptions <band>:<ids>]…",
+        "does": "keep the owner's request word for word as requests/Q-<n>, and propose its pathway, stack and lane"
+      }
+    ],
+    "messages": {
+      "intakeUsage": "usage: aidlc intake \"<the owner's words>\" or --file <path>; then aidlc intake Q-<n> --ambiguity|--risk|--assumptions <band>:<sentence ids>",
+      "intakeEmpty": "the request holds no sentence: pass the owner's words as they wrote them",
+      "intakeUnknown": "no request {{id}} in {{dir}}",
+      "intakeBand": "{{factor}} {{value}}: write <band>:<ids>, a band of {{bands}} and the request's sentence ids",
+      "intakeNoIds": "{{factor}} {{band}} cites no sentence: a medium or high band names the sentences it rests on",
+      "intakeBadId": "{{factor}} cites {{ref}}, not a sentence of {{id}}",
+      "intakeRiskFloor": "risk {{band}} is below what the request's words show ({{floor}}): risk is raised, never lowered",
+      "intakeDoc": "---\ntype: Request\ntitle: {{title}}\ndescription: \"The owner's request, word for word, with its sentence ids.\"\nbands: {{bands}}\ncites: {{cites}}\nproposal: {{proposal}}\ngenerated: { by: {{producer}}, at: {{at}}, digest: {{digest}} }\n---\n{{body}}",
+      "intakeWrote": "wrote {{path}}: {{count}} sentences, {{first}} to {{last}}\n",
+      "intakeScored": "scored {{path}}\n",
+      "intakeProposal": "proposal: pathway {{pathway}} ({{pathwayWhy}}), stack {{stack}}, lane {{lane}}\n",
+      "intakeLine": "  {{factor}} {{band}}: {{why}}\n",
+      "intakeUnscored": "  {{factors}} not scored: aidlc intake {{id}} --<factor> <band>:<sentence ids>\n",
+      "intakeTell": "tell the owner in two or three plain sentences what kind of change this is and how much process it needs, then this proposal; they confirm or change it, and the intent records request: {{id}}, pathway and lane\n",
+      "intakeVerification": "a test level that runs: {{tests}}; CI: {{ci}}",
+      "intakeWord": "{{risk}} in {{ids}}",
+      "intakeNoWords": "no risk words",
+      "intakeLead": "the lead, citing {{ids}}",
+      "intakeYes": "yes",
+      "intakeNo": "no",
+      "intakeGreenfield": "no code outside the docs",
+      "intakeFeature": "approved intents",
+      "intakeBrownfield": "code, and no approved intent"
+    },
+    "intake": {
+      "type": "Request",
+      "heading": "Request",
+      "prefix": "Q-",
+      "bands": ["low", "medium", "high"],
+      "scored": ["ambiguity", "risk", "assumptions"],
+      "measured": ["verification"],
+      "fullWhen": ["risk", "verification"],
+      "titleWords": 10,
+      "notCode": [".aidlc/**", ".claude/**", ".github/**", "*.md", "LICENSE*", ".gitignore", ".gitattributes", ".editorconfig"],
+      "ci": [".github/workflows", ".gitlab-ci.yml", ".circleci", "Jenkinsfile", ".buildkite"],
+      "riskWords": [
+        { "risk": "money", "band": "high", "words": ["pay", "pays", "paid", "payment", "payments", "invoice", "invoices", "billing", "price", "prices", "refund", "refunds", "checkout", "money", "salary", "credit card", "bank", "paying", "invoiced", "charge", "charged"] },
+        { "risk": "personal data", "band": "high", "words": ["personal data", "email address", "phone number", "home address", "date of birth", "health", "medical", "passport", "gdpr"] },
+        { "risk": "security", "band": "high", "words": ["password", "passwords", "login", "log in", "sign in", "permission", "permissions", "admin", "secret", "secrets", "encrypt", "encryption"] },
+        { "risk": "deletion", "band": "medium", "words": ["delete", "deletes", "deleted", "deleting", "erase", "erased", "remove all", "migrate", "migrated", "migration", "overwrite", "overwritten"] }
+      ],
+      "noStack": "none"
+    }
+  }
+}

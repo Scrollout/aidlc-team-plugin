@@ -52,7 +52,7 @@ test('U5/AC-1 U50/AC-1 init on an empty repo writes a valid profile, a short AGE
   const check = run(dir, ['check']);
   assert.equal(check.code, 0, check.out);
   assert.equal(check.out, '', 'the new bundle passes with no warnings');
-  assert.match(run(dir, ['next']).out, /^👉 elaborate an intent/);
+  assert.match(run(dir, ['next']).out, /^👉 keep the owner's request word for word with aidlc intake/);
 });
 
 test('U5/AC-1 init never overwrites without asking', () => {

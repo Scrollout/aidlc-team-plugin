@@ -334,6 +334,7 @@
     "laneQuick": "every path is inside lanes.quick",
     "laneStandard": "{{item}} is outside lanes.quick and overlaps no full or focus glob",
     "laneEmpty": "nothing to match",
+    "laneFloor": "its intent's lane is {{lane}}, a floor over {{was}}",
     "laneUsage": "usage: lane <bolt>|--diff <range>",
     "unknownUnit": "no bolt {{name}} in {{dir}}",
     "noEmail": "git config user.email is not set",
@@ -344,7 +345,7 @@
     "noDoc": "no doc {{name}}",
     "nextContinueMerge": "finish the merge of {{unit}}: aidlc merge {{unit}}, or git merge --abort",
     "nextReapprove": "re-approve {{docs}} after their edits: aidlc approve {{docs}} (the owner confirms the prompt or types: approve {{docs}})",
-    "nextNoIntent": "elaborate an intent with the owner in {{dir}}/I-1-<slug>.md, then ask for approval",
+    "nextNoIntent": "keep the owner's request word for word with aidlc intake \"<their words>\", then elaborate an intent with the owner in {{dir}}/I-1-<slug>.md that records its request, pathway and lane, then ask for approval",
     "nextOpenDraft": "finish elaborating {{doc}} with the owner: {{points}} still open in {{file}}; then ask for approval",
     "nextOpenIntent": "finish elaborating {{doc}} with the owner: {{points}} still open in {{file}}; meanwhile draft the decisions it needs from .aidlc/templates/docs/decision.md, linked from it, so the owner sees the how with the what; then ask for approval",
     "nextApproveIntent": "ask the owner to approve {{intent}}: aidlc approve {{intent}} (the owner confirms the prompt or types: approve {{intent}})",
@@ -753,7 +754,7 @@
       },
       "DOC-GENERATED": {
         "level": "error",
-        "fix": "never edit a generated doc: change what it is drawn from and let the CLI write it again (aidlc map, aidlc index, or the next merge)"
+        "fix": "never edit a generated doc: change what it is drawn from and let the CLI write it again (aidlc map, aidlc index, or the next merge); a request is never rewritten: restore it, and keep a changed request with a new aidlc intake"
       },
       "HOUSE-SIZE": {
         "level": "warning",

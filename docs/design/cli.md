@@ -10,7 +10,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 | Command | Does | Run by |
 |---|---|---|
 | `init [--adopt] [--name n] [--base b] [--bundle dir] [--run level=command]… [--overwrite path]… [--system-code c] [--org o] [--zone z]` | writes a v2 profile, templates and the pinned CLI; `--adopt` keeps a bundle ([Profile and templates](profile.md)) | owner via the skill |
-| `upgrade [--downgrade] [--dirty]` | re-vendors the CLI from the installed plugin's release and adds templates the project lacks; refuses an older one or a checkout with uncommitted changes unless told; says when nothing changed, which release it copied, and how to fetch a newer one | owner (prompt or `!`) |
+| `upgrade [--downgrade] [--dirty]` | re-vendors the CLI from the installed plugin's release and adds missing templates; refuses an older release or uncommitted changes unless told; says which release it copied | owner (prompt or `!`) |
 | `index [bundle]` | regenerates every `index.md` in the bundle like the OKF reference implementation | docs hook, merge, anyone |
 | `check [--ci] [path…]` | OKF validation, plan lint, profile lint; `--ci` adds the base history and architecture checks. A directory is checked as a bundle, or within the profile's bundle when it lies below its root; a file reports only its own findings | hooks, CI, anyone |
 | `status` | the state table | SessionStart hook, anyone |
@@ -21,14 +21,15 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 | `approve [--auto] <doc>…` | stamps approval; a doc is a path, an ID (`B-3`, `I-1`, `R-12`) or a decision's number (`0010` or `10`) | owner (typed words, prompt or `!`); `--auto` the lead, for what the owner delegated ([0008](../decisions/0008-delegated-approvals.md)) |
 | `delegate <class>…\|off [--until <date>]` | lets the lead approve re-approvals and quick-lane bolts, or run `upgrade` ([0008](../decisions/0008-delegated-approvals.md)) | owner (prompt or `!`) |
 | `mode attended\|unattended [--stop <action>] [--report <to>]\|off` | records the owner's run mode in the personal profile: unattended or not, the `next` action to stop at (`build`, `review`, `fix`, `merge`, `release`), where to report | owner (prompt or `!`) |
-| `research <doc>` | prints the researcher's brief for the doc's held question: the question, the project's docs, stack files and `research.sources`, the budget, and where the digest goes ([0010](../decisions/0010-research-for-open-questions.md)) | lead |
+| `research <doc>` | prints the researcher's brief for the doc's held question ([0010](../decisions/0010-research-for-open-questions.md)) | lead |
 | `retro <intent>` | lists the codes that fired 3+ times, the intent's escalations, the owner's interventions and failed deploy steps, proposes at most three changes, and resets the counters ([Steering](steering.md#3-across-intents-the-retro)) | lead, owner |
 | `review record <bolt> <file\|->` | stores a reviewer verdict keyed by diff hash; `-` reads it from stdin | reviewer |
 | `report <bolt> [file]` | stores the builder's report (JSON from the file, or stdin) | builder |
-| `hold <doc> [off\|<reason>]` | records an owner instruction in the plan: `hold: true` or the reason; `off` removes it. The lead also holds a doc with a reason while it parks a question for the owner, and holds a merged intent to park its release steps | lead |
+| `hold <doc> [off\|<reason>]` | records an owner hold in the plan: `hold: true` or a reason; `off` removes it. The lead also holds a doc while it parks a question, and a merged intent to park its release | lead |
 | `priority <bolt> <n>` | records `priority: <n>` in the plan, higher first | lead |
 | `name <kind> [--<flag> <value>]…` | a name from the grammar and registry; the flags each kind needs are in `cli.json` ([Naming](naming.md)) | lead, builder |
 | `persona <role>` | prints a role persona and its knowledge ([Intake](intake.md)) | lead |
+| `intake "<prose>"\|--file <path>\|Q-<n> [--<factor> <band>:<ids>]…` | keeps the owner's request word for word as `requests/Q-<n>` and proposes pathway, stack and lane; with `Q-<n>`, records the lead's bands ([Intake](intake.md)) | lead |
 | `new bolt "<title>"` | a draft `B-<n>`, named from its title | lead |
 | `fact "<title>" --env <environment> -- <command>` | runs a read-only probe on the target and records its output as a platform fact ([Inception](inception.md)) | lead |
 | `dispose <I-n\|B-n> F-<k> fixed\|accepted "<reason>" [--until <date>]` | records the owner's disposition of a review finding | owner (prompt) |

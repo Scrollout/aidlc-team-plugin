@@ -2,7 +2,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve, sep } from 'node:path';
-import { bundleOf, config, done, isMap, list, slug, UsageError, relPath } from '../foundation/data.mjs';
+import { at as dataAt, bundleOf, config, done, isMap, list, slug, UsageError, relPath } from '../foundation/data.mjs';
 import { finding as codeFinding, msg } from '../foundation/text.mjs';
 import { loadProfile } from '../foundation/profile.mjs';
 import { parseYaml, YamlError } from '../foundation/yaml.mjs';
@@ -268,7 +268,7 @@ function checkSchema(root, file, doc, type, add, v2) {
   const B = OKF.bundle, schema = B.schemas[type] ?? {};
   for (const key of schema.required ?? []) if (!truthy(doc.fm[key])) add(file, 1, 'DOC-SCHEMA', 'docSchemaKey', { type, key });
   for (const [key, from] of Object.entries(schema.enums ?? {})) {
-    const values = config.vocabulary[from], value = doc.fm[key];
+    const values = config.vocabulary[from] ?? dataAt(config, from), value = doc.fm[key]; // a vocabulary list, or a path in the data
     if (truthy(value) && !values.includes(String(value))) add(file, 1, 'DOC-SCHEMA', 'docSchemaEnum', { type, key, value: String(value), values: values.join(', ') });
   }
   // A draft keeps the sections its standard requires; an approved doc is never edited (docs/design/standards.md).

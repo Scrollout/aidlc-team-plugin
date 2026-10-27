@@ -18,3 +18,4 @@ generated: { by: tests/diagrams.mjs }
 | Module | `modules/` | - |
 | Map | `architecture/` | - |
 | Glossary | `naming/` | - |
+| Request | `requests/` | - |

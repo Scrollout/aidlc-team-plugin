@@ -19,7 +19,7 @@ generated: { by: tests/diagrams.mjs }
 | `HOUSE-LINK` (warning) | point the link at an existing file or remove it |
 | `DOC-SCHEMA` | add the keys the type requires (okf.bundle.schemas), use a value its list allows, and keep the doc in its type's folder (docs: Bundle v2) |
 | `DOC-SLUG` | rename the file to its id and the slug of its title (lower case, hyphens, no apostrophes, at most 48 characters, cut at a word), keeping the id; aidlc new names new docs this way |
-| `DOC-GENERATED` | never edit a generated doc: change what it is drawn from and let the CLI write it again (aidlc map, aidlc index, or the next merge) |
+| `DOC-GENERATED` | never edit a generated doc: change what it is drawn from and let the CLI write it again (aidlc map, aidlc index, or the next merge); a request is never rewritten: restore it, and keep a changed request with a new aidlc intake |
 | `HOUSE-SIZE` (warning) | split the doc or move detail into linked docs |
 | `PROFILE-ARCH` | give each module its data globs and set architecture.graph (printing data edges) and architecture.data; add architecture.acyclic and each module's api (docs: Architecture model) |
 | `PROFILE-NAMES` | write the naming decision from .aidlc/templates/docs/naming.md; give each pattern a names rule: id, files globs, pattern, and a find regex whose first group is the name (none for a rule on paths) |

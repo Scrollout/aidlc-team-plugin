@@ -39,7 +39,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
 
   const answered = researched(bundle);
   const units = live.map((u) => {
-    const lane = computeLane(u.scope, profile).lane;
+    const lane = computeLane(u.scope, profile, { floor: u.floor }).lane;
     const needsApproval = Boolean(u.fm.intent) || lane !== QUICK;
     const approvalState = approval(u.doc);
     const report = readJson(runtimeFile(cwd, 'reports', u.id));

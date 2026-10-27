@@ -51,7 +51,7 @@ The owner's checkpoint is the plan of an approval row, where a correction is che
 | standard | Bolts, Logical (section), Source | default |
 | full | all rows, plus specialist review | any path matches `lanes.full` or a specialist's globs (auth, migrations, contracts) |
 
-The CLI computes the lane from the bolt's `scope` before work and from the diff at merge; the higher wins. The model may raise a lane, never lower it.
+The CLI computes the lane from the bolt's `scope` before work and from the diff at merge; the higher wins. The model may raise a lane, never lower it. An intent's `lane` is a floor: its bolts run at least in that lane ([Intake](intake.md#the-proposal)).
 
 Globs: `**` spans folders, `*` and `?` stay inside one, and a pattern without `/` matches the file name at any depth unless it starts with `/`, as in `.gitignore`. Diff paths are anchored at the root. A scope or path is quick when it lies inside a `lanes.quick` glob, and full when it overlaps a `lanes.full` or `focus` glob (scope `internal/**` overlaps `internal/auth/**`). `lane` prints the lane and the glob or path that decided it.
 

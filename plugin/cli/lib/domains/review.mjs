@@ -75,7 +75,7 @@ export const mutationOf = (mutations, tag) => (Array.isArray(mutations) ? mutati
 // some, which may then edit its own diff (docs/design/backfill.md).
 function mutationProblems(cwd, profile, unit, mutations) {
   const u = readPlan(bundleOf(cwd, profile)).units.find((x) => x.id === unit);
-  if (!u || computeLane(u.scope, profile).lane === QUICK) return [];
+  if (!u || computeLane(u.scope, profile, { floor: u.floor }).lane === QUICK) return [];
   const levels = withDefaults(profile).levels;
   const paths = unitPaths(cwd, baseOf(profile), unit);
   const code = codeChanges(paths, levels, relPath(git(cwd, 'rev-parse', '--show-toplevel'), bundleOf(cwd, profile))).length > 0;

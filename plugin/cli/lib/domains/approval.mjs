@@ -156,7 +156,8 @@ export const commands = {
     for (const { name, file, text, doc } of named) {
       if (writes.has(file)) continue;
       if (!S.approvable.includes(String(doc.fm?.type))) throw new UsageError(msg('notApprovable', { name }));
-      const quick = doc.fm.type === S.unitType && approval(doc) === 'draft' && computeLane(list(doc.fm.scope), profile).lane === QUICK;
+      const floor = readPlan(bundle).units.find((u) => u.file === file)?.floor;
+      const quick = doc.fm.type === S.unitType && approval(doc) === 'draft' && computeLane(list(doc.fm.scope), profile, { floor }).lane === QUICK;
       const cls = approval(doc) === 'stale' ? S.auto[0] : quick ? S.auto[1] : null;
       if (auto && !auto.includes(cls)) throw new UsageError(msg('notDelegated', { name }));
       if (auto && cls === S.auto[0] && doc.fm.type === S.unitType && !acsKept(cwd, file, doc)) throw new UsageError(msg('notDelegatedAcs', { name }));

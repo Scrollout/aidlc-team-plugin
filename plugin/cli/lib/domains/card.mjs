@@ -93,7 +93,7 @@ function renderCard(cwd, unitId, { preview = false } = {}) {
   const docText = preview ? readFileSync(unit.file, 'utf8') : tryGit(cwd, 'show', `${baseSha}:${relPath(top, unit.file)}`);
   const doc = docText === null ? null : parseDoc(docText + '\n');
   const atBase = doc && !doc.error && doc.fm ? { ...unit, ...unitFields(doc) } : null; // as written at the base commit
-  const lane = atBase ? computeLane(atBase.scope, profile) : null;
+  const lane = atBase ? computeLane(atBase.scope, profile, { floor: atBase.floor }) : null;
   const state = !atBase ? 'draft' : atBase.fm.intent || lane.lane !== QUICK ? approval(doc) : 'approved';
   if (state !== 'approved' && !preview) return done(msg('cardRefused', { unit: unitId, state }), config.exit.blocked);
 

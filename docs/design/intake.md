@@ -10,7 +10,23 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T15:00:00Z }
 A request often arrives in plain prose from someone who is not an engineer. Nothing kept their words, nothing checked that the plan covers them, and elaboration depended on the lead's skill ([0019](../decisions/0019-the-lead-works-in-role-personas.md)).
 
 # The request
-`aidlc intake "<prose>"` (or a file) writes `requests/Q-<n>-<slug>.md` with the prose word for word. Each sentence gets an id `Q-<n>.<k>`. The text is hash-locked: editing it is `REQUEST-AMEND`. Intake detects the pathway (no code: greenfield; code and no plan: brownfield; an approved plan: feature) and the stack (the packs' detection), and scores the request's risk from plain signals (tests and CI present, modules touched, words such as money, personal data, security). From these it proposes the pathway and lane; the owner confirms.
+`aidlc intake "<prose>"` (or `--file <path>`) writes `requests/Q-<n>-<slug>.md`, a doc only the CLI writes. Under `# Request`, each sentence of the prose, word for word, is a line `- Q-<n>.<k> <sentence>`, with a blank line between paragraphs. Its body digest locks it, so a hand edit is `DOC-GENERATED` ([Bundle v2](bundle.md)).
+
+# The proposal
+Intake proposes the pathway, stack and lane, and the owner confirms or changes them. The proposal keys off a band per factor, never off one summed score, whose weights no one could calibrate.
+
+| Factor | Band from | Scored by |
+|---|---|---|
+| verification | a test level that runs, and CI: both low, one medium, none high | the CLI |
+| risk | the request's risk words (money, personal data, security, deletion), each with its sentence | the CLI, raised by the lead |
+| ambiguity | vague goals, missing acceptance, several readings | the lead |
+| assumptions | decisions the request leaves unsaid | the lead |
+
+- **The pathway comes from the project, not a band:** no code means greenfield, approved intents mean feature, and code with neither means brownfield. The stack is the pack whose detect file the project has.
+- **The lane:** full when risk or verification is high, otherwise standard (`intake.fullWhen`).
+- **Scoring:** the lead scores with `aidlc intake Q-<n> --ambiguity <band>:<ids> --assumptions <band>:<ids> --risk <band>:<ids>`. A medium or high band cites the sentences it rests on, and risk never goes below what the words show. The bands and their sentences sit in the request's front matter, outside the digest.
+- **What the owner hears:** the lead tells them in two or three plain sentences what kind of change this is and how much process that calls for, then the proposal. The bands come only on request.
+- **The intent records the outcome:** `request: Q-<n>`, `pathway`, and `lane`. An intent's `lane` is a floor for its bolts, which never run below it ([Grid](grid.md#lanes)).
 
 # Roles
 The lead elaborates as a role, with the role's knowledge (`plugin/personas/`, each persona within 3 KB, its knowledge files beside it):
