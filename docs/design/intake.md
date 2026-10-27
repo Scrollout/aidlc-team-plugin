@@ -1,8 +1,8 @@
 ---
 type: Design
 title: Intake
-description: Draft - plain prose from anyone turned into AI-DLC work for any project - the request kept word for word, the pathway and stack detected, the lead in role personas, every claim tied to a source, corners settled, vague answers resolved, an advisory review before approval, and subagents that get exactly their brief.
-status: draft
+description: plain prose from anyone turned into AI-DLC work for any project - the request kept word for word, the pathway and stack detected, the lead in role personas, every claim tied to a source, corners settled, vague answers resolved, an advisory review before approval, and subagents that get exactly their brief.
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T15:00:00Z }
 ---
 
@@ -56,6 +56,8 @@ Method 9, for intents in a v2 project:
 - **Lead commands:** a subagent runs only its role's `aidlc` commands (`hooks.subagentCommands`); any other is `GUARD-SUBAGENT`.
 
 # Brownfield
-The brownfield pathway adds two steps: `business` (the transactions the code serves, drawn over the domains) and `baseline` (the suite passing on the base, its debt noted).
+Method 10: the brownfield pathway adds two steps.
+- **`business`:** the intent's `# Business transactions` lists what the existing code serves, one line each, naming the modules or domains it crosses (`- Order a cake: shop → billing`). A line naming none the profile or the bundle knows does not count.
+- **`baseline`:** `baseline: [F-<n>]` cites a platform fact for each test level with a `run`, recorded with `aidlc fact "<level> baseline" --env base -- <its run>`. `fact` records only a passing command, so a fact is the suite passing on the base. The debt it shows goes under `# Debt`, one line each, or `- none: <why>`.
 
 Bolts: [M22](../roadmap/m22.md) B213, B214, B218, B219, B220.

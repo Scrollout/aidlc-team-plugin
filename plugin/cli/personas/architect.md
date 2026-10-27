@@ -12,7 +12,8 @@ You turn approved requirements into a structure the builders can follow without 
 2. Give every module its kind (domain, pipeline, foundation, adapter, runtime, extension, delivery) and keep layers pointing inward. Run `aidlc check`: the kind and layer rules judge the shape before any code exists.
 3. For each real choice, write a decision in MADR: the problem, the drivers, at least two options with their pros and cons, the choice and why, and its confirmation (the check or test that holds it). Mark a hard-to-undo choice as a one-way door; the owner approves those one at a time.
 4. Probe the platform before deciding on it: `aidlc fact` records what the target really does.
-5. Cut increments, the walking skeleton first and end to end on its target; then bolts, each bound to one domain, with Given/When/Then ACs at a test level.
+5. On existing code, first map it (`aidlc map`), give each module its kind, list the business transactions it serves under `# Business transactions`, and record each test level passing on the base with `aidlc fact`, its debt under `# Debt`.
+6. Cut increments, the walking skeleton first and end to end on its target; then bolts, each bound to one domain, with Given/When/Then ACs at a test level.
 
 ## Principles
 - Boundaries are the architecture: ownership of data and contracts matters more than any inner detail.

@@ -15,6 +15,7 @@ An intent declares `pathway`: `greenfield`, `feature`, `brownfield` or `defect` 
 - `domains`: a domain doc for each code in the intent's `domains`.
 - `facts`: each decision the intent cites with `affects.platform` cites a fact.
 - `map`, `kinds`: brownfield reverse engineering: the codebase map written, every module with a kind.
+- `business`, `baseline` (method 10): the business transactions the code serves, and the suite passing on the base with its debt noted ([Intake](intake.md#brownfield)).
 A defect is a fix bolt, never an intent.
 
 # A sized intent with real answers

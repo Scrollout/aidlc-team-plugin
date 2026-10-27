@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { bundleOf, CLI_DIR, config, done, isMap, list, readJson, relPath, UsageError } from '../foundation/data.mjs';
 import { sh } from '../foundation/git.mjs';
 import { msg } from '../foundation/text.mjs';
-import { loadProfile } from '../foundation/profile.mjs';
+import { loadProfile, withDefaults } from '../foundation/profile.mjs';
 import { docSlug, hashDoc, parseDoc, sectionOf } from './bundle.mjs';
 import { glossaryOf } from './naming.mjs';
 import { plug } from '../foundation/seams.mjs';
@@ -66,6 +66,9 @@ export function lintInception({ bundle, profile, intents, requirements, merged, 
   }
   if (v2) coherence(decisions.filter((d) => !superseded(d)), domains, profile, add, keyLine);
 
+  // The names a business transaction may cross, and the test runs a baseline proves.
+  const known = [...(profile.modules ?? []).map((m) => String(m.id ?? m.name)), ...domains.map((d) => d.code)].filter(Boolean).map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const runs = Object.values(withDefaults(profile).levels).map((l) => l?.run).filter(Boolean).map(String);
   // Intents: size, questions, pathway steps, requirements without a domain.
   for (const i of intents.filter((x) => x.fm.status !== config.grid.dropped)) {
     const qs = questionsOf(i.doc);
@@ -86,8 +89,12 @@ export function lintInception({ bundle, profile, intents, requirements, merged, 
       facts: () => cited.every((d) => !factProblems(d).length),
       map: () => [config.map.file, config.map.fileV2].some((f) => existsSync(join(bundle, f))),
       kinds: () => (profile.modules ?? []).every((m) => m.kind),
+      // Method 10 (docs/design/intake.md#brownfield): what the code serves, and the suite passing on the base with its debt.
+      business: () => bullets(i.doc, P.business).some(([, t]) => known.some((k) => new RegExp(`(^|[^\\w-])${k}([^\\w-]|$)`, 'i').test(t.replace(/^[^:]*:/, '')))),
+      baseline: () => runs.every((run) => list(i.fm.baseline).some((f) => String(facts.get(f)?.doc.fm.command ?? '') === run)) && bullets(i.doc, P.debt).length > 0,
     };
-    for (const step of P.pathways[pathway].filter((s) => !steps[s]())) add('PATHWAY-SKIP', i, keyLine(i, 'pathway'), 'pathwaySkip', { pathway, step, why: P.steps[step] });
+    const due = (s) => !P.stepsSince[s] || inForce(i, P.stepsSince[s]);
+    for (const step of P.pathways[pathway].filter((s) => due(s) && !steps[s]())) add('PATHWAY-SKIP', i, keyLine(i, 'pathway'), 'pathwaySkip', { pathway, step, why: P.steps[step] });
   }
 }
 

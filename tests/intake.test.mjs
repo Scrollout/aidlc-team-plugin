@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { computeLane, config, readPlan } from '../plugin/cli/lib/index.mjs';
+import { computeLane, config, lintPlan, readPlan } from '../plugin/cli/lib/index.mjs';
 import { approve, branch, commit, hook, makeRepo, read, run, twoUnits, write } from './state-repo.mjs';
 
 const PROSE = `I run a small bakery and want customers to order cakes online. They should pay by credit card when they order!
@@ -269,4 +269,28 @@ test('B219/AC-3 a subagent runs only its role\'s aidlc commands (GUARD-SUBAGENT)
   assert.match(bash('aidlc approve U-1', 'Explore'), /^GUARD-SUBAGENT other may not run aidlc approve; its role runs status, check, lane, graph/);
   assert.equal(bash('node .aidlc/bin/aidlc.mjs report U-1', 'aidlc-team:builder'), '', 'its own command');
   assert.doesNotMatch(bash('node .aidlc/bin/aidlc.mjs merge U-1'), /GUARD-SUBAGENT/, 'the lead runs it');
+});
+
+test('B220/AC-1 a method 10 brownfield intent lists the business transactions and cites a passing baseline per test level, with its debt', () => {
+  const profile = { ...V2, modules: [{ id: 'shop', kind: 'domain', paths: ['src/shop/**'] }, { id: 'billing', kind: 'domain', paths: ['src/billing/**'] }],
+    levels: { unit: { run: 'node --test', paths: ['test/**'] }, e2e: { run: 'node e2e.mjs', paths: ['e2e/**'] } } };
+  const brown = (fm, body) => `---\ntype: Intent\ntitle: Backbone\ndescription: The backbone.\npathway: brownfield\n${fm}---\n\n# Goal\nx\n${body}`;
+  const dir = makeRepo({ 'docs/architecture/codebase-map.md': '---\ntype: Map\ntitle: Map\ndescription: m.\n---\n' }, profile);
+  const steps = () => lintPlan(join(dir, 'docs'), profile, { base: dir }).filter((f) => f.code === 'PATHWAY-SKIP').map((f) => f.message.replace(/^I-1 \(brownfield\) skips its /, ''));
+  write(dir, { 'docs/intents/I-1-backbone.md': brown('', '') });
+  assert.deepEqual(steps(), [
+    'business step: the business transactions the code serves under # Business transactions, each naming a module or domain',
+    "baseline step: baseline: a passing platform fact for each test level's run, and # Debt",
+  ]);
+  write(dir, { 'test/a.test.mjs': "import { test } from 'node:test';\ntest('a', () => { throw new Error('red'); });\n", 'e2e.mjs': '' });
+  assert.equal(run(dir, ['fact', 'unit baseline', '--env', 'base', '--', 'node --test']).code, 64, 'fact records only a passing command');
+  write(dir, { 'test/a.test.mjs': "import { test } from 'node:test';\ntest('a', () => {});\n" });
+  assert.equal(run(dir, ['fact', 'unit baseline', '--env', 'base', '--', 'node --test']).code, 0);
+  assert.equal(run(dir, ['fact', 'e2e baseline', '--env', 'base', '--', 'node e2e.mjs']).code, 0);
+  write(dir, { 'docs/intents/I-1-backbone.md': brown('baseline: [F-1]\n', '\n# Business transactions\n- Order a cake: storefront\n') });
+  assert.deepEqual(steps(), ['business step: the business transactions the code serves under # Business transactions, each naming a module or domain', "baseline step: baseline: a passing platform fact for each test level's run, and # Debt"], 'a line naming no known module, one level and no debt');
+  write(dir, { 'docs/intents/I-1-backbone.md': brown('baseline: [F-1, F-2]\n', '\n# Business transactions\n- Order a cake: shop → billing\n\n# Debt\n- none: the suite is green and covers both domains\n') });
+  assert.deepEqual(steps(), []);
+  write(dir, { 'docs/intents/I-1-backbone.md': brown('method: 9\n', '') });
+  assert.deepEqual(steps(), [], 'a method 9 intent keeps its rules');
 });

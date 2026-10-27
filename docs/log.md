@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M22 B220: method 10, the brownfield baseline ([Intake](design/intake.md#brownfield)): a brownfield intent lists the business transactions the code serves and cites a passing baseline of each test level, with its debt. M22 Intake is built. Release 0.164.0.
 - **Update** M22 B219: agents get exactly their brief ([Intake](design/intake.md#agents-get-exactly-their-brief)): the `Agent` hook renders the card or brief and sets the role's effort (`efforts`), review findings keep their ids across rounds, and a subagent runs only its role's commands (`GUARD-SUBAGENT`). Release 0.163.0.
 - **Update** M22 B218: method 9, an advisory review before approval ([Intake](design/intake.md#review-before-approval)): `next` asks for it, `aidlc review I-<n>` prints the brief, the record keeps the reviewed docs' hash, and the approval refuses a change since (`APPROVE-REVIEW`); findings are advice for the owner. Release 0.162.0.
 - **Update** M22 B217: method 8, personas and stories ([Elaboration checks](design/elaboration.md#personas-and-stories)): the request's role words name the kinds of user, each gets a persona unless the intent says why one (`ELAB-PERSONA`), and each persona a story citing a requirement (`ELAB-STORY`). Release 0.161.0.

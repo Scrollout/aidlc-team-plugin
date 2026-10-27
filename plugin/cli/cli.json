@@ -1685,13 +1685,17 @@
     "undecided": ["not decided", "undecided", "to be decided", "tbd", "not sure", "don't know"],
     "vague": ["maybe", "perhaps", "probably", "possibly", "it depends", "depends", "fast enough", "good enough", "as needed", "if needed", "somehow", "something like", "etc", "reasonable", "soon", "whatever"],
     "maxDomains": 5,
-    "pathways": { "greenfield": ["questions", "domains", "facts"], "feature": ["questions", "domains", "facts"], "brownfield": ["map", "kinds", "questions", "domains", "facts"] },
-    "steps": { "questions": "every question answered by an option", "domains": "a domain doc for each of its domains", "facts": "a platform fact for each decision that affects the platform", "map": "the codebase map written", "kinds": "a kind for every module" }
+    "pathways": { "greenfield": ["questions", "domains", "facts"], "feature": ["questions", "domains", "facts"], "brownfield": ["map", "kinds", "business", "baseline", "questions", "domains", "facts"] },
+    "stepsSince": { "business": "brownfieldBaseline", "baseline": "brownfieldBaseline" },
+    "business": "Business transactions",
+    "debt": "Debt",
+    "steps": { "questions": "every question answered by an option", "domains": "a domain doc for each of its domains", "facts": "a platform fact for each decision that affects the platform", "map": "the codebase map written", "kinds": "a kind for every module", "business": "the business transactions the code serves under # Business transactions, each naming a module or domain", "baseline": "baseline: a passing platform fact for each test level's run, and # Debt" }
   },
   "method": {
-    "version": 9,
-    "since": { "planIncrementId": 2, "pathwaySkip": 3, "boltBind": 4, "acGherkin": 5, "claimSource": 6, "elabVague": 7, "elabCorner": 7, "elabPersona": 8, "approveReview": 9 },
+    "version": 10,
+    "since": { "planIncrementId": 2, "pathwaySkip": 3, "boltBind": 4, "acGherkin": 5, "claimSource": 6, "elabVague": 7, "elabCorner": 7, "elabPersona": 8, "approveReview": 9, "brownfieldBaseline": 10 },
     "changes": {
+      "10": "a brownfield intent lists the business transactions the code serves and cites a passing baseline of each test level, with its debt (docs: Intake)",
       "9": "an intent is reviewed before the owner approves it, and the approval refuses one whose docs changed since the review (docs: Intake)",
       "8": "a request naming two or more kinds of user gets a persona for each, and each persona a story citing the intent's requirements (docs: Elaboration checks)",
       "7": "intents settle every surface of the corner checklist, follow up vague answers, and end with a read-back the owner confirms (docs: Elaboration checks)",

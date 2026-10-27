@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.164.0] - 2026-10-27
+### Added
+- Method 10: the brownfield pathway requires `business` (`# Business transactions`, each line naming a module or domain the profile or bundle knows) and `baseline` (`baseline: [F-<n>]` citing a passing platform fact for each test level's `run`, and `# Debt`); else `PATHWAY-SKIP`. M22 Intake is built.
+### Changed
+- The architect persona maps existing code, its business transactions and its baseline before cutting increments.
+
 ## [0.163.0] - 2026-10-27
 ### Added
 - The `Agent` hook delivers each subagent's brief: it renders the card, the intent review brief or the research brief at launch and makes it the prompt (the lead's first line kept when it names the bolt), at the role's effort from the new profile key `efforts` (build `high`, review and research `medium`); the agents' front matter carries the same as a fallback.
@@ -215,7 +221,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.163.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.164.0...HEAD
+[0.164.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.163.0...v0.164.0
 [0.163.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.162.0...v0.163.0
 [0.162.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.161.0...v0.162.0
 [0.161.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.160.0...v0.161.0
