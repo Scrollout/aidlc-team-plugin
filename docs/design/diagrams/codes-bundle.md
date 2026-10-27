@@ -24,7 +24,7 @@ generated: { by: tests/diagrams.mjs }
 | `PROFILE-ARCH` | give each module its data globs and set architecture.graph (printing data edges) and architecture.data; add architecture.acyclic and each module's api (docs: Architecture model) |
 | `PROFILE-NAMES` | write the naming decision from .aidlc/templates/docs/naming.md; give each pattern a names rule: id, files globs, pattern, and a find regex whose first group is the name (none for a rule on paths) |
 | `PROFILE-RULE` | set docs.rules entries to a HOUSE-* code and one of error, warning, off |
-| `CONTRACT-NAME` | follow the API grammar of decision 0014: full lowerCamel names, Noun_Verb operation ids, a dated api-version, camelCase segments and properties, PascalCase enums, systemData on resources, nextLink on lists (aidlc name path\|operation-id\|api-version) (docs: Naming) |
+| `CONTRACT-NAME` | follow the API grammar: full lowerCamel names, Noun_Verb operation ids, a dated api-version, camelCase segments and properties, PascalCase enums, and what the chosen model's contract adds (aidlc name path\|operation-id\|api-version) (docs: Naming) |
 | `PROFILE-NAMING` | set naming.tokens (system: 2-6 lower-case letters or digits; org and zone: DNS labels), domains as lower-case plural nouns, vocabulary words as lower-case words, none of them banned (docs: Naming) |
 | `PROFILE-KIND` | give each module its kind (domain, pipeline, foundation, adapter, runtime, extension or delivery), surfaces from client, server and events, and system as core and extensions globs (docs: Architecture model) |
 | `PROFILE-KEY` (warning) | remove it, or use the key the profile doc names for what you meant |

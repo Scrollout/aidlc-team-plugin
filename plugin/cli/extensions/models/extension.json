@@ -41,7 +41,7 @@
       "modelDecision": "model {{model}}: decisions/{{file}} is not a Decision doc",
       "modelLine": "{{name}} ({{source}}): {{title}}{{problems}}\n",
       "modelProblems": ", {{count}} format problems: aidlc check",
-      "modelNone": "no models: the plugin ships none yet, and the project keeps its own in {{dir}}/<name>/\n",
+      "modelNone": "no models: none ships with this CLI, and the project keeps its own in {{dir}}/<name>/\n",
       "modelsUsage": "usage: aidlc models, or aidlc models doc <name>, apply <name> or gaps",
       "modelUnknown": "no project model {{name}} in {{dir}}: aidlc models lists them",
       "modelDocWrote": "wrote {{path}} from {{file}}: ask the owner to approve it (aidlc approve {{path}})\n",
@@ -107,11 +107,11 @@
     },
     "inception": {
       "pathways": {
-        "model": ["questions", "research", "model"]
+        "model": ["questions", "research", "modelDoc"]
       },
       "steps": {
         "research": "a Research digest under research/ for each name in research:",
-        "model": "a current Model doc for model: (aidlc models doc <name>), its model in the format"
+        "modelDoc": "a current Model doc for model: (aidlc models doc <name>), its model in the format"
       }
     },
     "state": {

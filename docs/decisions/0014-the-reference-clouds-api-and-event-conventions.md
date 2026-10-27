@@ -2,7 +2,7 @@
 type: Decision
 title: 0014 The reference cloud's API and event conventions
 description: The naming registry ships, as the default grammar for every project's contracts and events, the control-plane API rules of the public cloud the owner chose as reference, and its system-event naming sent as CloudEvents 1.0.
-status: accepted
+status: superseded by ADR-0021
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T00:20:00Z }
 ---
 

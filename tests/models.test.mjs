@@ -2,8 +2,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { CHILD_ENV, commit, makeRepo, pinnedRepo, read, run, write } from './state-repo.mjs';
+import { CHILD_ENV, commit, I1, makeRepo, pinnedRepo, read, run, write } from './state-repo.mjs';
 
 const model = (name, extra = {}) => ({
   name, title: `${name} shape`, description: 'A minimal shape.',
@@ -17,14 +18,14 @@ const pinnedRun = (dir, args) => spawnSync(process.execPath, [join(dir, '.aidlc/
 
 test('B228/AC-1 a model folder loads from the project and the shipped models, the project\'s winning, and check reports one that breaks the format', () => {
   const dir = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n' });
-  assert.match(run(dir, ['models']).out, /^no models: the plugin ships none yet, and the project keeps its own in \.aidlc\/models\/<name>\//);
+  assert.equal(run(dir, ['models']).out, 'control-plane (shipped): Control plane\n');
   write(dir, { '.aidlc/models/minimal/model.json': model('minimal'), '.aidlc/models/minimal/decisions/0001-one-gate.md': decision });
-  assert.equal(run(dir, ['models']).out, 'minimal (project): minimal shape\n');
+  assert.equal(run(dir, ['models']).out, 'control-plane (shipped): Control plane\nminimal (project): minimal shape\n');
   assert.deepEqual(formatLines(dir), [], 'a model in the format');
 
   const broken = model('other', { slice: undefined, layers: [{ id: 'gate', kind: 'hub' }, { id: 'gate', kind: 'pipeline' }], rules: [{ type: 'magic' }], contracts: [{ from: 'gate', to: 'nowhere' }] });
   write(dir, { '.aidlc/models/broken/model.json': broken, '.aidlc/models/broken/decisions/notes.md': '# notes\n', '.aidlc/models/empty/README.md': 'x' });
-  assert.match(run(dir, ['models']).out, /^broken \(project\): other shape, 7 format problems: aidlc check\n/);
+  assert.match(run(dir, ['models']).out, /\nbroken \(project\): other shape, 7 format problems: aidlc check\n/);
   const lines = formatLines(dir).join('\n');
   for (const want of ['model broken lacks slice', 'model broken is named other inside', 'model broken: gate has kind hub', 'model broken: gate is named twice', 'model broken: rule type magic is not one of stageOrder', "model broken: a contract's to is nowhere", 'model broken: decisions/notes.md is not a Decision doc', 'model empty has no model.json']) {
     assert.ok(lines.includes(want), want);
@@ -32,9 +33,9 @@ test('B228/AC-1 a model folder loads from the project and the shipped models, th
 
   const pinned = pinnedRepo();
   write(pinned, { '.aidlc/bin/models/minimal/model.json': model('minimal', { title: 'shipped shape' }), '.aidlc/bin/models/second/model.json': model('second') });
-  assert.equal(pinnedRun(pinned, ['models']), 'minimal (shipped): shipped shape\nsecond (shipped): second shape\n');
+  assert.equal(pinnedRun(pinned, ['models']), 'control-plane (shipped): Control plane\nminimal (shipped): shipped shape\nsecond (shipped): second shape\n', 'the pinned copy carries the shipped models');
   write(pinned, { '.aidlc/models/minimal/model.json': model('minimal', { title: 'project shape' }) });
-  assert.equal(pinnedRun(pinned, ['models']), 'minimal (project): project shape\nsecond (shipped): second shape\n', 'the project\'s own wins');
+  assert.equal(pinnedRun(pinned, ['models']), 'control-plane (shipped): Control plane\nminimal (project): project shape\nsecond (shipped): second shape\n', 'the project\'s own wins');
 });
 
 const V2 = { system: { core: ['src/**'] }, naming: { tokens: { system: 'bak' } } };
@@ -47,7 +48,7 @@ test('B229/AC-1 a model pathway intent needs its research digests and a current 
   write(dir, { 'docs/intents/I-1-model-the-reference.md': intent('research: [reference]\n') });
   assert.deepEqual(findings(dir, 'PATHWAY-SKIP'), [
     'PATHWAY-SKIP I-1 (model) skips its research step: a Research digest under research/ for each name in research:',
-    'PATHWAY-SKIP I-1 (model) skips its model step: a current Model doc for model: (aidlc models doc <name>), its model in the format',
+    'PATHWAY-SKIP I-1 (model) skips its modelDoc step: a current Model doc for model: (aidlc models doc <name>), its model in the format',
   ]);
   const sourced = model('minimal', { research: ['reference'], layers: [{ id: 'gate', kind: 'pipeline', role: 'checks each request', sources: ['s1'] }], domains: [{ id: 'records', kind: 'domain', role: 'what exists', sources: ['s2'] }], rules: [{ type: 'stageOrder', stages: ['gate'], sources: ['s1'] }] });
   write(dir, { 'docs/research/reference.md': research, '.aidlc/models/minimal/model.json': sourced });
@@ -59,7 +60,7 @@ test('B229/AC-1 a model pathway intent needs its research digests and a current 
   assert.deepEqual(findings(dir, 'PATHWAY-SKIP'), [], 'research filed, the Model doc current');
   assert.deepEqual(findings(dir, 'DOC-'), [], 'the CLI wrote it');
   write(dir, { '.aidlc/models/minimal/model.json': { ...sourced, title: 'changed shape' } });
-  assert.match(findings(dir, 'PATHWAY-SKIP').join('\n'), /skips its model step/, 'a model changed since its doc');
+  assert.match(findings(dir, 'PATHWAY-SKIP').join('\n'), /skips its modelDoc step/, 'a model changed since its doc');
   run(dir, ['models', 'doc', 'minimal']);
   commit(dir, 'model');
   assert.equal(run(dir, ['approve', 'docs/models/minimal.md']).code, 0, 'the owner approves the Model doc');
@@ -162,4 +163,25 @@ test('B231/AC-2 gaps matches the modules to the chosen model\'s items and kinds,
     '',
   ].join('\n'));
   assert.match(run(makeRepo({}, V2), ['models', 'gaps']).err, /the profile chooses no model/);
+});
+
+test('B232/AC-1 the control-plane model ships in generic names (the neutral test scans it): in the format, its decisions valid MADR proposals once applied', () => {
+  const root = join(import.meta.dirname, '..'), dir = 'plugin/cli/models/control-plane';
+  const files = ['model.json', ...readdirSync(join(root, dir, 'decisions')).map((f) => `decisions/${f}`), ...readdirSync(join(root, dir, 'knowledge')).map((f) => `knowledge/${f}`)];
+  assert.ok(files.length > 6, 'model, decisions, knowledge'); // tests/neutral.test.mjs holds every file under plugin/ to naming no vendor
+  const cp = JSON.parse(read(root, `${dir}/model.json`));
+  assert.deepEqual(cp.layers.map((l) => l.id), ['frontdoor', 'authenticate', 'authorize', 'policy', 'lock', 'throttle']);
+  assert.deepEqual(cp.rules.map((r) => r.type), ['stageOrder', 'sliceContract', 'longRunning', 'idempotency', 'data', 'events']);
+  const project = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n' }, V2);
+  assert.equal(run(project, ['models']).out, 'control-plane (shipped): Control plane\n', 'in the format');
+  const applied = run(project, ['models', 'apply', 'control-plane']).out;
+  assert.equal((applied.match(/a proposal for the owner to approve/g) ?? []).length, 5);
+  assert.deepEqual(run(project, ['check', 'docs']).out.split('\n').filter((l) => /DOC-SCHEMA|OKF-FM|MODEL-FORMAT/.test(l)), [], 'the decisions are MADR');
+});
+
+test('B232/AC-2 the model\'s contract applies only where a project chose it (decision 0021)', () => {
+  const spec = 'openapi: 3.1.0\ninfo: { title: x, version: 2026-10-01 }\npaths: {}\ncomponents:\n  schemas:\n    Thing:\n      properties: { id: {}, name: {}, type: {} }\n';
+  const found = (profile) => run(makeRepo({ ...I1, 'api/things/openapi.yaml': spec }, profile), ['check']).out.split('\n').filter((l) => /CONTRACT-NAME/.test(l)).map((l) => l.replace(/ → .*$/, ''));
+  assert.deepEqual(found(V2), [], 'the generic grammar asks no systemData');
+  assert.deepEqual(found({ ...V2, model: { name: 'control-plane' } }), ["api/things/openapi.yaml:1 CONTRACT-NAME components.schemas.Thing: a resource without systemData, which its model's contract asks"]);
 });

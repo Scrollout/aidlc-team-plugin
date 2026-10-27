@@ -210,7 +210,9 @@ test('B164/AC-1 the card prints the names a bolt will create for each registered
 
 test('B165/AC-1 CONTRACT-NAME checks a published OpenAPI document against the API grammar', async () => {
   const { contractProblems } = await import('../plugin/cli/extensions/contracts/index.mjs');
-  const keys = (doc) => contractProblems(doc).map(([k, d]) => `${k} ${Object.values(d).join(' ')}`);
+  // The control-plane model's contract on top of the generic grammar, as a project that chose it gets (decision 0021).
+  const plane = { ...config.naming.contract, ...JSON.parse(read(join(import.meta.dirname, '..'), 'plugin/cli/models/control-plane/model.json')).contract };
+  const keys = (doc, C = plane) => contractProblems(doc, C).map(([k, d]) => `${k} ${Object.values(d).join(' ')}`);
   const good = {
     info: { version: '2026-10-27' },
     paths: { '/providers/Acme.Rsm/roleAssignments/{roleAssignmentName}': { put: { operationId: 'RoleAssignments_CreateOrUpdate' }, get: { operationId: 'RoleAssignments_Get' } } },
@@ -235,10 +237,11 @@ test('B165/AC-1 CONTRACT-NAME checks a published OpenAPI document against the AP
     'contractOperationId /providers/acme/role_assignments/{name}/x put roleAssignments_get',
     'contractProperty components.schemas.R Display_Name',
     'contractBoolean components.schemas.R isEnabled',
-    'contractSystemData components.schemas.R',
-    'contractNextLink components.schemas.L',
+    'contractSystemData components.schemas.R systemData',
+    'contractNextLink components.schemas.L nextLink',
     'contractEnum components.schemas.S succeeded',
   ]);
+  assert.deepEqual(keys(bad, config.naming.contract).filter((k) => /dotted namespace|SystemData|NextLink/.test(k)), [], 'B232/AC-2 without the model, none of its contract applies');
 });
 
 test('B165/AC-1 check reports CONTRACT-NAME on the documents under api/ once the profile has a naming registry', () => {

@@ -7,7 +7,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T20:00:00Z }
 ---
 
 # Why
-A new project should start from a proven shape, not a blank page, and an existing one should be measured against it ([0020](../decisions/0020-architecture-models-are-data.md)).
+A new project starts from a proven shape, and an existing one is measured against it ([0020](../decisions/0020-architecture-models-are-data.md)).
 
 # The pipeline
 1. **Reverse-engineer a reference:** research a proven system, and observe it where the sources are silent. The evidence stays with the owner.
@@ -39,7 +39,7 @@ A model's rules name roles and shapes, never one vendor's names; the project's o
 The `model` pathway, for an intent that names its `model:` and its `research:` digests:
 1. **`research`:** the researcher's cited digests of the reference, filed under `research/`.
 2. **The draft:** the architect persona writes `.aidlc/models/<name>/model.json`. Each layer, domain and rule carries `sources`: ids of the digests' sources. One with none, or with an id no digest has, is `MODEL-SOURCE`.
-3. **`model`:** `aidlc models doc <name>` writes the Model doc, `models/<name>.md`, from it: the layers, domains, slice, contracts and rules, each with its sources as footnotes, and `digest`, the hash of `model.json`. Only the CLI writes it, so a stale or hand-edited doc fails the step.
+3. **`modelDoc`:** `aidlc models doc <name>` writes the Model doc, `models/<name>.md`, from it: the layers, domains, slice, contracts and rules, each with its sources as footnotes, and `digest`, the hash of `model.json`. Only the CLI writes it, so a stale or hand-edited doc fails the step.
 4. **The approval:** the owner approves the Model doc like any doc, and re-approves it after the model changes. The model's one-way doors are approved one at a time when it is applied.
 
 Shipped models carry no sources: a plugin release vouches for them.
@@ -52,10 +52,10 @@ Shipped models carry no sources: a plugin release vouches for them.
   - prints the increments along its layers, the walking skeleton through every layer first.
 
   Applying again copies nothing twice.
-- **Brownfield:** each module names the model item it plays (`modules[].layer`, set in the `kinds` step). `aidlc models gaps` lists the items played, those missing and those played by a module of another kind; the missing ones are printed as the intent's increments.
+- **Brownfield:** each module names the item it plays (`modules[].layer`, in the `kinds` step). `aidlc models gaps` lists the items played, those missing and those played by a module of another kind; the missing ones are printed as the intent's increments.
 
 # Rule types
-A project chooses its model in the profile: `model: { "name": "<model>", … }`. Only the rules that model lists run. Each rule type takes its parameters from the model, and the names only the project knows from the profile's `model`, so no vendor's names live in the plugin.
+A project chooses its model in the profile (`model.name`), and only that model's rules run, with its parameters and the project's own names from the profile's `model`, so no vendor's names live in the plugin.
 
 | Type | Model parameters | Project's `model` | Checks | Code |
 |---|---|---|---|---|
@@ -66,12 +66,13 @@ A project chooses its model in the profile: `model: { "name": "<model>", … }`.
 | `data` | `classes` | - | each table under a domain's `# Owns` declares `(partition: <key>, class: <class>)` | `DATA-PARTITION` |
 | `events` | `verbs` | `events: { marker, files }` | each OpenAPI operation of those verbs names events by the marker, each found in the events files | `EVENT-COVERAGE` |
 
-The OpenAPI files are the contracts' (`naming.contracts`, else the grammar's defaults).
+The OpenAPI files are the contracts'.
 
 # The first model: control plane
 - **Layers:** a front door; governance (authenticate, authorize, policy, lock, throttle); resource metadata; operations; deployments; events and an activity log.
 - **Slice:** a provider per namespace, its resource types, and whether each type's writes are long-running.
 - **Rules:** the stage order; long-running operations; idempotent writes; deployments that converge by re-applying, without compensation unless a project decides otherwise.
+- **Contract:** the resource hierarchy the contract grammar adds for it: the `providers` segment and its namespace, `systemData` on a resource, `nextLink` on a list ([0021](../decisions/0021-the-control-planes-api-conventions-belong-to-its.md)).
 - **First applied** to an existing control-plane project (the M21 pilot).
 
 Bolts: [M24](../roadmap/m24.md) B228, B229, B230, B231, B232, B233, B234.

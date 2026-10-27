@@ -1,0 +1,38 @@
+{
+  "name": "control-plane",
+  "title": "Control plane",
+  "description": "A horizontally scaling control plane: a stateless front door with a fixed governance pipeline, the metadata of every resource, long-running operations, deployments that converge, and events; providers plug in per namespace.",
+  "layers": [
+    { "id": "frontdoor", "kind": "runtime", "role": "the stateless front door: one entry for every request, routed by namespace" },
+    { "id": "authenticate", "kind": "pipeline", "role": "who is calling" },
+    { "id": "authorize", "kind": "pipeline", "role": "whether the caller may do this on this scope" },
+    { "id": "policy", "kind": "pipeline", "role": "whether the result obeys the rules set on its scope, a partial update judged as merged" },
+    { "id": "lock", "kind": "pipeline", "role": "whether the scope is locked against change" },
+    { "id": "throttle", "kind": "pipeline", "role": "how much budget the caller has left, reported on every answer" }
+  ],
+  "domains": [
+    { "id": "resources", "kind": "domain", "role": "the metadata of every resource: its id, kind, scope and provider, reconciled with the provider" },
+    { "id": "operations", "kind": "domain", "role": "long-running operations: their status and their result" },
+    { "id": "deployments", "kind": "domain", "role": "templates resolved into a graph of idempotent writes, run in parallel where independent, converging by re-applying" },
+    { "id": "activity", "kind": "domain", "role": "the activity log and the events of every write, delete and action" }
+  ],
+  "slice": { "kind": "extension", "declares": ["namespace", "types", "longRunning"] },
+  "contracts": [
+    { "from": "frontdoor", "to": "authenticate", "via": "the request, in process" },
+    { "from": "throttle", "to": "slice", "via": "the provider contract, by namespace" },
+    { "from": "slice", "to": "resources", "via": "the metadata of each write" },
+    { "from": "slice", "to": "activity", "via": "an event per write, delete and action" },
+    { "from": "deployments", "to": "frontdoor", "via": "the same API every client uses" }
+  ],
+  "rules": [
+    { "type": "stageOrder", "stages": ["authenticate", "authorize", "policy", "lock", "throttle"] },
+    { "type": "sliceContract", "kind": "extension", "declares": ["namespace", "types", "longRunning"] },
+    { "type": "longRunning", "shapes": [{ "code": 201, "links": ["status"] }, { "code": 202, "links": ["result"] }], "deleteAbsent": 204 },
+    { "type": "idempotency", "writes": "\\b(creates?|updates?|replaces?)\\b", "repeat": "\\b(again|repeated|twice)\\b.*\\bunchanged\\b" },
+    { "type": "data", "classes": ["regional", "shared", "global"] },
+    { "type": "events", "verbs": ["put", "patch", "post", "delete"] }
+  ],
+  "contract": { "segments": ["providers", "operations"], "providers": "providers", "resource": ["id", "name", "type"], "systemData": "systemData", "list": "value", "nextLink": "nextLink" },
+  "fit": { "words": ["control plane", "resource provider", "resource providers", "resource manager", "providers", "deployments", "templates", "tenants", "scopes"] },
+  "slices": {}
+}

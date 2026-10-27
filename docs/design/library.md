@@ -39,6 +39,7 @@ The plugin holds every project to kinds, layers and one-way dependencies. Its ow
 - `stack`: the stack pack a project's files match (stacks), for the intake proposal.
 - `pathwaySteps`: an intent's pathway steps an extension adds (models).
 - `modelFit`: the models whose fit words a request holds (models), for the intake proposal.
+- `modelContract`: the chosen model's contract (models), for the contract grammar.
 
 # Extensions
 An extension is `extensions/<name>/extension.json` plus `index.mjs`:

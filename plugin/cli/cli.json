@@ -787,7 +787,7 @@
       },
       "CONTRACT-NAME": {
         "level": "error",
-        "fix": "follow the API grammar of decision 0014: full lowerCamel names, Noun_Verb operation ids, a dated api-version, camelCase segments and properties, PascalCase enums, systemData on resources, nextLink on lists (aidlc name path|operation-id|api-version) (docs: Naming)"
+        "fix": "follow the API grammar: full lowerCamel names, Noun_Verb operation ids, a dated api-version, camelCase segments and properties, PascalCase enums, and what the chosen model's contract adds (aidlc name path|operation-id|api-version) (docs: Naming)"
       },
       "PROFILE-NAMING": {
         "level": "error",
@@ -1417,7 +1417,7 @@
         "fix": "rename it to match the rule's pattern; if the rule is wrong, the owner changes its decision and the profile first"
       },
       "CONTRACT-NAME": {
-        "fix": "follow the API grammar of decision 0014 (aidlc name path|operation-id|api-version), or change the naming decision first"
+        "fix": "follow the API grammar and the chosen model's contract (decisions 0014, 0021; aidlc name path|operation-id|api-version), or change the naming decision first"
       },
       "TERM-SYNONYM": {
         "fix": "use the glossary's term; if the domain's language changed, change its domain doc's glossary first (docs: Naming)"

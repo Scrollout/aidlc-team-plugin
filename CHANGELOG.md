@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.169.0] - 2026-10-27
+### Added
+- The control-plane model ships under `plugin/cli/models/control-plane/`, in generic names: a stateless front door and five governance stages in order (authenticate, authorize, policy, lock, throttle), four shared domains (resources, operations, deployments, activity), the provider slice per namespace, the six rules, its contract, five starter decisions in MADR, and the architect's knowledge for applying it.
+### Changed
+- Decision 0021 supersedes 0014: the contract grammar's resource hierarchy (the `providers` segment and its namespace, `systemData` on a resource, `nextLink` on a list) moves from the plugin's defaults into the control-plane model's contract, applied only where a project chose that model (the `modelContract` seam). A project without a model gets the generic grammar only.
+### Fixed
+- The namespace rule no longer reads the first path segment as following `providers` when no `providers` segment is set.
+- The README's generated workflow, left uncommitted since 0.164.0, draws the brownfield and model pathways' steps again.
+
 ## [0.168.0] - 2026-10-27
 ### Added
 - Applying a model: intake lists the models whose fit words the request holds; `aidlc models apply <name>` records the choice in the profile, writes the system doc from the template with the model's building blocks when there is none, copies the model's decisions into the bundle as proposals once, and prints increments along its layers; `aidlc models gaps` matches the modules (`modules[].layer`) to the chosen model's items and kinds and prints the missing ones as increments.
@@ -239,7 +248,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.168.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.169.0...HEAD
+[0.169.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.168.0...v0.169.0
 [0.168.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.167.0...v0.168.0
 [0.167.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.166.0...v0.167.0
 [0.166.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.165.0...v0.166.0

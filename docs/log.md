@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M24 B232: the control-plane model ships ([Models](design/models.md#the-first-model-control-plane)), and decision [0021](decisions/0021-the-control-planes-api-conventions-belong-to-its.md) supersedes 0014: the contract grammar's resource hierarchy becomes the model's contract, applied only where a project chose it. Release 0.169.0.
 - **Update** M24 B231: applying a model ([Models](design/models.md#applying-a-model)): intake lists the models that fit, `aidlc models apply` takes one on (profile, system doc, proposed decisions, increments) and `aidlc models gaps` lists what a brownfield project's modules miss of it. Release 0.168.0.
 - **Update** M24 B230: rule types ([Models](design/models.md#rule-types)): a project's chosen model runs only its listed rules (stage order, slice contract, long-running operations, idempotency, data, events), with the model's parameters and the profile's project names. Release 0.167.0.
 - **Update** M24 B229: the modelling pathway ([Models](design/models.md#modelling-a-reference)): a `model` pathway intent files its research digests and a current Model doc (`aidlc models doc`), which the owner approves, and every layer, domain and rule of the model cites a source of that research (`MODEL-SOURCE`). Release 0.166.0.

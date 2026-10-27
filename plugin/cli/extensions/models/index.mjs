@@ -78,7 +78,7 @@ function modelDoc(cwd, name) {
 // The model pathway's steps: its research digests filed, and a current Model doc of a model in the format.
 plug('pathwaySteps', (i, { bundle, base }) => ({
   research: () => list(i.fm.research).length > 0 && list(i.fm.research).every((n) => existsSync(join(bundle, M.research, `${n}.md`))),
-  model: () => {
+  modelDoc: () => {
     const name = String(i.fm.model ?? ''), m = name && project(base, name), file = join(bundle, F.Model, `${name}.md`);
     return Boolean(m?.data && !m.problems.length && existsSync(file) && parseDoc(readFileSync(file, 'utf8')).fm?.digest === sha16(readFileSync(join(m.dir, M.file), 'utf8')));
   },
@@ -157,6 +157,8 @@ function events(root, profile, m, r, out) {
 }
 
 const CHECKS = { stageOrder, sliceContract, longRunning, events };
+// The chosen model's contract, which the contracts check adds to the generic grammar (decision 0021).
+plug('modelContract', (root, profile) => chosen(root, profile)?.data.contract ?? null);
 plug('docChecks', (root, profile) => {
   const m = chosen(root, profile), out = [];
   for (const [type, check] of Object.entries(CHECKS)) for (const r of rulesOf(m, type)) check(root, profile, m, r, out);
