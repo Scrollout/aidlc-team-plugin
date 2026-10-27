@@ -49,3 +49,7 @@
 * [Vendoring](vendoring.md) - How init and upgrade copy the CLI into a project and pin it, and why only a release is copied.
 * [Verification](verification.md) - The inner loop (hooks), the merge gate, the reviewer's output contract and the CI mode.
 * [Workload identity](workload-identity.md) - Components, services and data authenticate by workload identity with short-lived credentials, never by shared or static secrets; a merge check fails the common static forms on added lines.
+
+# Subdirectories
+
+* [diagrams](diagrams/index.md)

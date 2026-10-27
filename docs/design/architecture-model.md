@@ -24,6 +24,7 @@ The core-versus-provider shape was the reason the project exists, yet it had now
 ```
 
 # Kinds
+The matrix and the layers, generated: [Kinds and layers](diagrams/kinds.md).
 A module without a kind, an unknown kind or surface, or a malformed `system` is `PROFILE-KIND`: an error once the profile has `system` (v2), a warning on a v1 profile until it migrates. `upgrade` proposes a kind per module from its id and paths (`vocabulary.kindHints`) and changes nothing.
 
 | Kind | Owns data | May depend on |

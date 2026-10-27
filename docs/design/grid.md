@@ -7,27 +7,8 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T06:40:00Z }
 ---
 
 # Rows
-```mermaid
-flowchart LR
-  owner([Owner])
-  subgraph Inception
-    I[Intent: slices, risks] --> U[Units]
-  end
-  subgraph Construction
-    D[Domain] --> L[Logical] --> S[Source]
-  end
-  subgraph Operations
-    P[Deployment: deploy check, per merged slice] --> O[Operation: release, smoke]
-  end
-  U --> D
-  S --> P
-  P -. check fails: fix unit .-> U
-  O -. smoke fails: rollback, fix unit .-> U
-  owner -. types approve I-n .-> I
-  owner -. types approve U-1 U-2 .-> U
-  owner -. approves one-way doors .-> L
-  owner -. types release I-n or rollback I-n .-> O
-```
+The workflow, drawn from the pathways and state transitions: [Workflow](diagrams/workflow.md).
+
 | Row | Output | Deterministic check | Owner approves |
 |---|---|---|---|
 | Intent | `intents/I-<n>-<slug>.md`: goal, why, slices, risks, success measures, out of scope | required sections | yes |

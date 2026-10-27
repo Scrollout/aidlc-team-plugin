@@ -9,31 +9,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T14:00:00Z }
 # States
 `readState` gives an intent one of five states: `draft`, `approved` and `stale` from its approval ([Approvals](approvals.md)), `merged` once every unit of it merged, and `released`. While it is `merged`, `next` reads its release steps from the deploy record `.git/aidlc/deploys/I-<n>.json` and the base commit ([Deployment and operation](operations.md)); the diagram draws those steps as states of their own.
 
-```mermaid
-stateDiagram-v2
-  direction LR
-  [*] --> draft
-  draft --> approved: owner approves
-  approved --> stale: doc edited
-  approved --> approved: a merged slice ships, check, release, smoke
-  stale --> approved: owner re-approves
-  approved --> merged: every unit merged
-  merged --> released: units only in test paths
-  merged --> released: owner tags a release
-  merged --> held: hold I-n
-  held --> merged: hold I-n off
-  merged --> checkFailed: deploy check fails
-  checkFailed --> merged: fix unit after I-n merged
-  merged --> checked: deploy check passes or none set
-  checked --> releaseFailed: release I-n fails
-  releaseFailed --> checked: owner retries
-  releaseFailed --> merged: fix unit merged
-  checked --> smokeFailed: smoke fails
-  smokeFailed --> rolledBack: rollback I-n
-  rolledBack --> merged: fix unit after I-n merged
-  checked --> released: release on a pushed green base passes, smoke too or none set
-  released --> [*]
-```
+The diagram, drawn from `state.intentTransitions`: [Intent states](diagrams/intent-states.md).
 
 # Details
 - **Back-fill shortcut:** an intent whose units' scopes all lie in the levels' test paths is released at merge; it has no release steps and needs no runbook ([Proof for back-fill tests](backfill.md)).
