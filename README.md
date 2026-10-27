@@ -6,7 +6,7 @@
 [![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](plugin/cli)
 [![License](https://img.shields.io/github/license/Scrollout/aidlc-team-plugin)](LICENSE)
 
-A Claude Code plugin that runs the AI-DLC lifecycle (Inception, Construction, Operations) in any project. It uses an OKF docs bundle and a small team of agents, and every rule that matters is enforced by a CLI or a hook, not by prose.
+A Claude Code plugin that runs the AI-DLC lifecycle (Inception, Construction, Operations) in any project. It takes a request in plain prose from anyone, keeps it word for word and turns it into an intent; it can bring a proven architecture model to a new or existing project; it uses an OKF docs bundle and a small team of agents, and every rule that matters is enforced by a CLI or a hook, not by prose.
 
 ```
 /plugin marketplace add Scrollout/aidlc-team-plugin
@@ -55,16 +55,19 @@ flowchart LR
   subgraph plugin["Plugin, installed in Claude Code"]
     skill["Skill aidlc<br/>the lead's loop"]
     agents["Agents<br/>builder, reviewer, researcher"]
+    personas["Role personas<br/>product analyst, architect"]
+    models["Architecture models<br/>control-plane"]
+    packs["Stack packs<br/>Go, TypeScript, their references"]
     hooks["Hooks<br/>guard, scope, secrets, model, docs,<br/>heartbeat, prompt, steer, status, denied"]
-    cli["CLI engine<br/>foundation: data, git, text, yaml, glob, profile, store, seams<br/>domains: bundle, method, plan, inception, construction, approval, flow, review,<br/>card, gate, architecture, map, naming, setup, host<br/>entry: index · extensions: board, contracts, operations, stacks"]
+    cli["CLI engine<br/>foundation: data, git, text, yaml, glob, profile, store, seams<br/>domains: bundle, method, plan, inception, construction, approval, flow, review,<br/>card, gate, architecture, map, naming, setup, host<br/>entry: index · extensions: board, contracts, intake, models, operations, stacks"]
     templates["Templates<br/>AGENTS.md, CLAUDE.md, CHANGELOG.md, profile, CI,<br/>bundle with constitution, doc types<br/>with runbook, MADR decision, arc42 system"]
   end
 
   subgraph project["Your project, name neutral"]
-    profile[".aidlc/profile.json<br/>modules, lanes, levels,<br/>rules, architecture, deploy"]
+    profile[".aidlc/profile.json<br/>modules, lanes, levels, rules,<br/>architecture, deploy, its model"]
     bin[".aidlc/bin<br/>pinned copy of the CLI"]
-    docs["docs/ OKF bundle<br/>constitution, requirements, intents,<br/>bolts, runbooks, design, decisions"]
-    runtime[".git/aidlc<br/>cards, reports, reviews, heartbeats,<br/>reviewing, launches, ci, deploys,<br/>goes, prompts, stats, denials, never committed"]
+    docs["docs/ OKF bundle<br/>constitution, requests, requirements, intents,<br/>bolts, runbooks, design, decisions, models"]
+    runtime[".git/aidlc<br/>cards, reports, reviews, intent reviews, heartbeats,<br/>reviewing, launches, ci, deploys,<br/>goes, prompts, stats, denials, never committed"]
     ci["CI<br/>aidlc check --ci"]
   end
 
@@ -72,6 +75,9 @@ flowchart LR
   templates -- "init; upgrade adds missing ones" --> docs
   cli -- "init, upgrade" --> bin
   skill -- "runs" --> bin
+  personas -- "aidlc persona" --> skill
+  models -- "aidlc models apply" --> docs
+  packs -- "init, upgrade" --> bin
   hooks -- "call" --> bin
   agents -- "start, report, review record" --> bin
   ci -- "runs" --> bin

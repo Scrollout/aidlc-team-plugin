@@ -19,6 +19,8 @@ sources:
 - Cheap and fast: small always-on context, Sonnet builders, Opus only for review, lanes sized to risk.
 - Autonomous: the owner approves intent, plan, one-way doors and release; agents do the rest.
 - Extensible: rule layers (plugin, project, personal) and overridable templates.
+- From plain prose: anyone's request, kept word for word, becomes an intent whose every line cites it ([Intake](intake.md)).
+- Proven shapes: an architecture model brings a reference system's layers and rules to a new or existing project ([Models](models.md)).
 
 # Diagrams
 The whole lifecycle and the plugin's parts are drawn in the [README](../../README.md); one bolt's path to release is below.
@@ -72,8 +74,9 @@ sequenceDiagram
 | Blocking hook run time | 500 ms beyond a bare `node` start timed beside it, median of 5 calls on a small project |
 
 # Repo layout
-- `plugin/.claude-plugin/plugin.json`: `name` is `aidlc-team` (kebab-case, no reserved prefix, and never `aidlc`, which projects use for the CLI and `.aidlc/`), the only `version`; users stay on a version until it is bumped.
+- `plugin/.claude-plugin/plugin.json`: `name` `aidlc-team` (never `aidlc`, which projects use for the CLI and `.aidlc/`), the only `version`.
 - `plugin/cli/aidlc.mjs`, `plugin/cli/lib/` (foundation, domains, the entry) and `plugin/cli/extensions/`: the CLI ([Library and extensions](library.md)).
+- `plugin/cli/models/`: the shipped architecture models; `plugin/packs/`: the stack packs, their references included ([Stack packs](stack-packs.md)).
 - `plugin/hooks/`: thin wrappers that call the CLI.
 - Who does the work, each where it must live:
 
@@ -83,7 +86,7 @@ sequenceDiagram
 | `plugin/agents/` | builder, reviewer, researcher | subagents, each with its own context |
 | `plugin/cli/personas/` | product analyst, architect, each with its knowledge folder | roles the main session reads with `aidlc persona` while it elaborates with the owner ([0019](../decisions/0019-the-lead-works-in-role-personas.md)); under `cli/` so a project's pinned copy carries them |
 - `plugin/templates/`: everything `init` renders.
-- `.claude-plugin/marketplace.json`: marketplace `scrollout.net`, one entry `aidlc-team` with `source: "./plugin"`, so tests and docs never ship. Install id: `aidlc-team@scrollout.net`.
+- `.claude-plugin/marketplace.json`: marketplace `scrollout.net`, one entry `aidlc-team`, `source: "./plugin"`, so tests and docs never ship.
 
 # Releases
 - `version` lives only in `plugin/.claude-plugin/plugin.json`, never in the marketplace entry. Users stay on a version until it changes.[^cc-host]

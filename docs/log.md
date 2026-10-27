@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** Docs aligned with M22 and M24: the overview's goals (plain prose in, proven shapes) and layout (shipped models, stack packs), the arc42 page (context, strategy, concepts, every code page), the README (what the plugin is now, its parts and what it writes into a project) and Later (the method-pin gap, role-scoped rules).
 - **Update** the Agent hook spawns git twice instead of nine times (the common dir once per folder, branch refs read from the repository's files), for the Windows hook budget. Release 0.172.1.
 - **Update** M24 B234: the architect persona knows how to model a reference and apply a model (`architect/models.md`, held to the rule types the CLI knows). M24 Models is built: its design and roadmap are stable. Release 0.172.0.
 - **Update** M24 B233: the control-plane model's walking skeleton in the Go pack ([Stack packs](design/stack-packs.md)), tested by `go test` in CI and held to the model's own rules. Release 0.171.0.

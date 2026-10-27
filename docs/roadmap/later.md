@@ -22,3 +22,5 @@ Carried since [M2](m2.md) through [M7](m7.md); each comes back as a unit only wh
 | Test logs named per bolt and focus | two reviewers' logs overwrite each other again ([Pilot lessons](../pilot/lessons.md)) |
 | A faster merge gate (levels run once for the merge and the proof) | merges keep taking minutes on a real project |
 | `PLAN-GENERATED` requires every output of a generator | a bolt ships one output of a generator that writes two |
+| A draft intent cannot declare a method older than the current one (today it is judged by the older rules until approved) | a draft ducks a newer method's checks that way |
+| Project rules scoped to an agent role (dropped from M22 B219) | a rule meant for builders keeps reaching reviewers |
