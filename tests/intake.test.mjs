@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { computeLane, readPlan } from '../plugin/cli/lib/index.mjs';
-import { approve, commit, makeRepo, read, run } from './state-repo.mjs';
+import { approve, commit, makeRepo, read, run, write } from './state-repo.mjs';
 
 const PROSE = `I run a small bakery and want customers to order cakes online. They should pay by credit card when they order!
 
@@ -68,4 +68,48 @@ test('B214/AC-3 an intent\'s lane is a floor for its bolts, and a lane outside t
   assert.match(run(dir, ['lane', 'B-1']).out, /^full its intent's lane is full/);
   writeFileSync(join(dir, 'docs/intents/I-1-sales.md'), read(dir, 'docs/intents/I-1-sales.md').replace('lane: full', 'lane: huge'));
   assert.match(run(dir, ['check', 'docs']).out, /DOC-SCHEMA a Intent's lane is huge, not one of quick, standard, full/);
+});
+
+const V2 = { system: { core: ['src/**'] }, naming: { tokens: { system: 'bak' } } };
+const cakes = (fm, body) => `---\ntype: Intent\ntitle: Cake orders\ndescription: Online cake orders.\npathway: greenfield\n${fm}---\n\n# Goal\n${body}\n\n# Questions\n- Q1 Which card provider?\n  - a) one provider: simple\n  - Answer: a\n\n# Assumptions\n- A1 One bakery, one shop.\n\n# Out of scope\n- Logins for staff [Q-1.3]: later.\n`;
+const R1 = (statement) => `---\ntype: Requirement\ntitle: Order email\ndescription: The baker hears of each order.\n---\n\n# Requirement\n${statement}\n\n# Acceptance criteria\n- AC-1 (unit): Given an order, when it is placed, then the baker gets an email.\n`;
+const claims = (dir) => run(dir, ['check', 'docs']).out.split('\n').filter((l) => /CLAIM-SOURCE|REQUEST-COVERAGE/.test(l)).map((l) => l.replace(/ → .*$/, '').replace(/^docs\//, ''));
+
+test('B215/AC-1 a method 6 intent names its requests, and its goal, stories and draft requirements cite sources that resolve (CLAIM-SOURCE)', () => {
+  const dir = makeRepo({}, V2);
+  run(dir, ['intake', PROSE]);
+  const goal = 'Customers order cakes online [Q-1.1].\nThey pay by card [Q-1.2, Q1], in one shop [A1].';
+  write(dir, { 'docs/intents/I-1-cake-orders.md': cakes('request: [Q-1]\nrequirements: [R-1]\n', goal), 'docs/requirements/R-1-order-email.md': R1('When a customer orders, the bakery system shall email the baker [Q-1.4, Q-1.5].') });
+  assert.deepEqual(claims(dir), [], 'every claim sourced, every sentence cited');
+  write(dir, { 'docs/intents/I-1-cake-orders.md': cakes('request: [Q-1]\nrequirements: [R-1]\n', `${goal}\nFast checkout.\nCakes [Q-1.9], cards [Q7], shops [A2], ovens [F-3].`) });
+  assert.deepEqual(claims(dir), [
+    'intents/I-1-cake-orders.md:13 CLAIM-SOURCE I-1 Goal line has no source: Fast checkout.',
+    'intents/I-1-cake-orders.md:14 CLAIM-SOURCE I-1 cites Q-1.9, which is no sentence of its requests (Q-1)',
+    'intents/I-1-cake-orders.md:14 CLAIM-SOURCE I-1 cites Q7, which is no answered question of I-1',
+    'intents/I-1-cake-orders.md:14 CLAIM-SOURCE I-1 cites A2, which I-1 does not list under # Assumptions',
+    'intents/I-1-cake-orders.md:14 CLAIM-SOURCE I-1 cites F-3, which is no platform fact',
+  ]);
+  write(dir, { 'docs/intents/I-1-cake-orders.md': cakes('request: [Q-1]\nrequirements: [R-1]\n', goal), 'docs/requirements/R-1-order-email.md': R1('When a customer orders, the bakery system shall email the baker.') });
+  assert.deepEqual(claims(dir), [
+    'requirements/R-1-order-email.md:8 CLAIM-SOURCE R-1 Requirement line has no source: When a customer orders, the bakery system shall email the…',
+    'intents/I-1-cake-orders.md:6 REQUEST-COVERAGE I-1 leaves Q-1.4, Q-1.5 of Q-1 uncited',
+  ]);
+  commit(dir, 'plan');
+  assert.match(run(dir, ['approve', 'R-1']).err, /CLAIM-SOURCE R-1 Requirement line has no source/, 'it blocks the approval');
+  write(dir, { 'docs/intents/I-1-cake-orders.md': cakes('', goal) });
+  assert.deepEqual(claims(dir), ["intents/I-1-cake-orders.md:1 CLAIM-SOURCE I-1 names no request: keep the owner's words with aidlc intake and record request: [Q-<n>]"]);
+  write(dir, { 'docs/intents/I-1-cake-orders.md': cakes('request: [Q-9]\n', goal) });
+  assert.match(claims(dir).join('\n'), /CLAIM-SOURCE I-1 names Q-9, which is no request in requests/);
+  write(dir, { 'docs/intents/I-1-cake-orders.md': cakes('method: 5\n', 'Anything.') });
+  assert.deepEqual(claims(dir), [], 'an intent of an earlier method keeps its rules');
+});
+
+test('B215/AC-2 a request sentence neither the intent nor its requirements cite is REQUEST-COVERAGE, and it blocks the approval', () => {
+  const dir = makeRepo({}, V2);
+  run(dir, ['intake', PROSE]);
+  commit(dir, 'plan', { 'docs/intents/I-1-cake-orders.md': cakes('request: [Q-1]\n', 'Customers order cakes online [Q-1.1].') });
+  assert.deepEqual(claims(dir), ['intents/I-1-cake-orders.md:6 REQUEST-COVERAGE I-1 leaves Q-1.2, Q-1.4, Q-1.5 of Q-1 uncited'], 'the out-of-scope line covers Q-1.3');
+  const r = run(dir, ['approve', 'I-1']);
+  assert.equal(r.code, 64);
+  assert.match(r.err, /REQUEST-COVERAGE I-1 leaves Q-1\.2, Q-1\.4, Q-1\.5 of Q-1 uncited/);
 });

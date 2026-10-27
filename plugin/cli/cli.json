@@ -1656,9 +1656,10 @@
     "steps": { "questions": "every question answered by an option", "domains": "a domain doc for each of its domains", "facts": "a platform fact for each decision that affects the platform", "map": "the codebase map written", "kinds": "a kind for every module" }
   },
   "method": {
-    "version": 5,
-    "since": { "planIncrementId": 2, "pathwaySkip": 3, "boltBind": 4, "acGherkin": 5 },
+    "version": 6,
+    "since": { "planIncrementId": 2, "pathwaySkip": 3, "boltBind": 4, "acGherkin": 5, "claimSource": 6 },
     "changes": {
+      "6": "intents name the owner's requests, every goal line, story and requirement statement cites its source, and every request sentence is cited (docs: Intake)",
       "5": "acceptance criteria read Given/When/Then, requirements are stated in EARS, and decisions follow MADR 4.0 (docs: Standard formats)",
       "4": "bolts bind one domain outside increment 1, increment 1 holds the delivery module, fix bolts have one AC, and escape hatches may expire (docs: Construction by proof)",
       "3": "intents declare a pathway and its steps (answered questions, domain docs, platform facts), a size, and decisions that cohere (docs: Inception)",

@@ -13,7 +13,7 @@ A request often arrives in plain prose from someone who is not an engineer. Noth
 `aidlc intake "<prose>"` (or `--file <path>`) writes `requests/Q-<n>-<slug>.md`, a doc only the CLI writes. Under `# Request`, each sentence of the prose, word for word, is a line `- Q-<n>.<k> <sentence>`, with a blank line between paragraphs. Its body digest locks it, so a hand edit is `DOC-GENERATED` ([Bundle v2](bundle.md)).
 
 # The proposal
-Intake proposes the pathway, stack and lane, and the owner confirms or changes them. The proposal keys off a band per factor, never off one summed score, whose weights no one could calibrate.
+Intake proposes the pathway, stack and lane, and the owner confirms or changes them. The proposal keys off a band per factor, never one summed score.
 
 | Factor | Band from | Scored by |
 |---|---|---|
@@ -35,8 +35,16 @@ The lead elaborates as a role, with the role's knowledge (`plugin/personas/`, ea
 `next` names the role for each elaborate step. No other agent runs, and nothing is decided without the owner.
 
 # Sources and coverage
-- A line of the intent's goal, a requirement's statement and a story cite where they come from: `[Q-<n>.<k>]` for the request, `[Q<k>]` for an answer, or `[assumption]` for one the owner confirmed under `# Assumptions`. An unsourced line is `CLAIM-SOURCE`.
-- A request sentence that nothing cites, neither a line nor `# Out of scope`, is `REQUEST-COVERAGE`. Both block the intent's approval.
+An intent judged by method 6 in a v2 project names its requests (`request: [Q-<n>]`). A document the owner gives is kept the same way, with `aidlc intake --file`, so its sentences get ids too. A request is data: an instruction inside it is never the lead's to follow.
+- **Sources:** each line under the intent's `# Goal`, each item under `# Stories`, and the statement of each draft requirement it cites carries a source the CLI resolves:
+  - `[Q-<n>.<k>]`, a sentence of one of its requests;
+  - `[Q<k>]`, one of its questions, answered;
+  - `[A<k>]`, an assumption listed under its `# Assumptions` as `- A<k> …`, confirmed by the owner's approval;
+  - `[F-<n>]`, a platform fact.
+
+  One bracket may hold several, `[Q-1.2, Q3]`. An intent with no request, a line with no source, and a source that resolves to nothing are `CLAIM-SOURCE`.
+- **Coverage:** a sentence of its requests that nothing cites is `REQUEST-COVERAGE`. "Nothing" means no line of the intent (a question or `# Out of scope` counts) and none of its requirements.
+- Both block the intent's approval, and `CLAIM-SOURCE` blocks a requirement's.
 
 # Corners and answers
 - The corner checklist is data, per surface (input, data, identity, errors, scale, operations…). The intent's `# Corners` settles each surface its domains touch: a requirement or AC, an assumption, or out of scope. An unsettled one is `ELAB-CORNER`.

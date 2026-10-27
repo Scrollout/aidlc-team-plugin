@@ -29,7 +29,7 @@ test('B153/AC-1 a bolt builds on bolt/B-<n> and is named in hooks and tags as B-
 });
 
 test('B153/AC-2 a v2 project refuses a new doc under units/; an approved v1 unit stays, and a v1 project is untouched', () => {
-  const docs = { 'docs/intents/I-1-pricing.md': intentDoc('I-1').replace('type: Intent\n', 'type: Intent\npathway: feature\n'), [U(1)]: unitDoc({ scope: ['a/**'] }), [U(2)]: unitDoc({ scope: ['b/**'] }) };
+  const docs = { 'docs/intents/I-1-pricing.md': intentDoc('I-1').replace('type: Intent\n', 'type: Intent\npathway: feature\nmethod: 5\n'), [U(1)]: unitDoc({ scope: ['a/**'] }), [U(2)]: unitDoc({ scope: ['b/**'] }) };
   const dir = makeRepo(docs, { system: { core: ['src/**'] } });
   approve(dir, 'I-1', 'U-1');
   const legacy = (profile) => lintPlan(join(dir, 'docs'), profile, { base: dir }).filter((f) => f.code === 'PLAN-BOLT').map((f) => [f.path, f.message]);

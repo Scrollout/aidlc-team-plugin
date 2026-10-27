@@ -6,6 +6,7 @@
 * [Docs check codes](codes-bundle.md) - Every code the docs check reports, with its fix (a warning is marked); drawn from okf.codes in cli.json and the extensions' data.
 * [Gate codes](codes-gate.md) - Every code the merge gate reports, with its fix (a warning is marked); drawn from gate.codes in cli.json and the extensions' data.
 * [Hook codes](codes-hooks.md) - Every code the hooks reports, with its fix (a warning is marked); drawn from hooks.codes in cli.json and the extensions' data.
+* [Intent and bolt codes](codes-intent.md) - Every code plan lint on intents, decisions and bolts reports, with its fix (a warning is marked); drawn from grid.codes in cli.json and the extensions' data.
 * [Intent states](intent-states.md) - An intent's derived states, from approval to release; drawn from state.intentTransitions in cli.json.
 * [Kinds and layers](kinds.md) - What each module kind may depend on, and the layers inside a domain pointing inward; drawn from vocabulary.kindRules and layerRules in cli.json.
 * [Naming grammar](naming-grammar.md) - Each kind of name, the template it is composed from and the tokens it needs; drawn from naming.grammar in cli.json.

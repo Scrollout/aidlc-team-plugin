@@ -27,10 +27,12 @@ function components() {
 }
 
 // The code tables, each on its page.
-export const CODES = [['bundle', 'Docs check codes', 'okf', 'the docs check'], ['plan', 'Plan lint codes', 'grid', 'plan lint'], ['gate', 'Gate codes', 'gate', 'the merge gate'], ['hooks', 'Hook codes', 'hooks', 'the hooks']];
+// Plan lint's table spans two pages, its own PLAN- codes and those on intents, decisions and bolts, each under the doc cap.
+export const CODES = [['bundle', 'Docs check codes', 'okf', 'the docs check'], ['plan', 'Plan lint codes', 'grid', 'plan lint', /^PLAN-/], ['intent', 'Intent and bolt codes', 'grid', 'plan lint on intents, decisions and bolts', /^(?!PLAN-)/],
+  ['gate', 'Gate codes', 'gate', 'the merge gate'], ['hooks', 'Hook codes', 'hooks', 'the hooks']];
 // A code two checks share is documented where it first appears.
 const firstPage = (code, table) => CODES.find(([, , t]) => code in config[t].codes)[2] === table;
-const codeTable = (table) => mdTable(['Code', 'Fix'], Object.entries(config[table].codes).filter(([code]) => firstPage(code, table)).map(([code, c]) => [`\`${code}\`${c.level && c.level !== 'error' ? ` (${c.level})` : ''}`, c.fix.replace(/\|/g, '\\|')]));
+const codeTable = (table, match = /./) => mdTable(['Code', 'Fix'], Object.entries(config[table].codes).filter(([code]) => firstPage(code, table) && match.test(code)).map(([code, c]) => [`\`${code}\`${c.level && c.level !== 'error' ? ` (${c.level})` : ''}`, c.fix.replace(/\|/g, '\\|')]));
 // A state diagram: each transition with its cause, and every state nothing leaves as an end.
 const states = (rows) => mermaid(['stateDiagram-v2', '  direction LR', `  [*] --> ${rows[0][0]}`, ...rows.map(([a, b, why]) => `  ${a} --> ${b}: ${why}`),
   ...[...new Set(rows.map((r) => r[1]))].filter((x) => !rows.some((r) => r[0] === x)).map((x) => `  ${x} --> [*]`)]);
@@ -68,8 +70,8 @@ export const pages = () => ({
   'naming-grammar.md': page('Naming grammar', 'Each kind of name, the template it is composed from and the tokens it needs; drawn from naming.grammar in cli.json.',
     mdTable(['Kind', 'Template', 'Needs'], Object.entries(config.naming.grammar).map(([k, g]) => [k, `\`${g.template}\``, g.needs.join(', ')]))),
   // Every check code, each on exactly one page, with its level and fix (DOC-CODE).
-  ...Object.fromEntries(CODES.map(([name, title, table, who]) => [`codes-${name}.md`, page(title, `Every code ${who} reports, with its fix (a warning is marked); drawn from ${table}.codes in cli.json and the extensions' data.`,
-    codeTable(table))])),
+  ...Object.fromEntries(CODES.map(([name, title, table, who, match]) => [`codes-${name}.md`, page(title, `Every code ${who} reports, with its fix (a warning is marked); drawn from ${table}.codes in cli.json and the extensions' data.`,
+    codeTable(table, match))])),
 });
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {

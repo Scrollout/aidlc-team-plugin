@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.159.0] - 2026-10-27
+### Added
+- Method 6: an intent names the owner's requests (`request: [Q-<n>]`); each goal line, story and draft requirement statement cites a source that resolves (a request sentence, an answered question, an assumption under `# Assumptions`, or a platform fact), else `CLAIM-SOURCE`; a request sentence nothing cites is `REQUEST-COVERAGE`. Both block approval.
+### Changed
+- The intent template carries `request`, `pathway`, `lane` and `# Assumptions`, and the requirement template a source; the product analyst keeps the request with `aidlc intake` and reads it as data.
+
 ## [0.158.0] - 2026-10-27
 ### Added
 - `aidlc intake` keeps the owner's request word for word as `requests/Q-<n>`, each sentence with its id, and proposes the pathway, stack and lane from a band per factor (verification and risk words it measures, ambiguity, risk and assumptions the lead scores, each citing sentences), in the new `intake` extension.
@@ -184,7 +190,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.158.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.159.0...HEAD
+[0.159.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.158.0...v0.159.0
 [0.158.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.157.0...v0.158.0
 [0.157.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.156.0...v0.157.0
 [0.156.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.155.0...v0.156.0

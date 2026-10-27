@@ -13,7 +13,7 @@ const V2 = { system: { core: ['src/**'] }, levels: { unit: { paths: ['tests/**']
   { id: 'quotas', kind: 'domain', paths: ['src/quotas/**'] }, { id: 'deployments', kind: 'domain', paths: ['src/deployments/**'] },
   { id: 'database', kind: 'foundation', paths: ['src/database/**'] }, { id: 'release', kind: 'delivery', paths: ['deploy/**'] },
 ] };
-const intent = (lines) => `---\ntype: Intent\ntitle: Backbone\ndescription: The backbone.\npathway: feature\n---\n\n# Goal\nx\n\n# Increments\n${lines.map((l, k) => `- I-1.${k + 1} Step ${k + 1}: ${l}`).join('\n')}\n`;
+const intent = (lines) => `---\ntype: Intent\ntitle: Backbone\ndescription: The backbone.\npathway: feature\nmethod: 5\n---\n\n# Goal\nx\n\n# Increments\n${lines.map((l, k) => `- I-1.${k + 1} Step ${k + 1}: ${l}`).join('\n')}\n`;
 const bolt = (n, opts) => [`docs/bolts/B-${n}-b${n}.md`, unitDoc({ title: `B${n}`, ...opts }).replace('type: Unit', 'type: Bolt')];
 const found = (dir, profile, re) => lintPlan(join(dir, 'docs'), profile, { base: dir }).filter((f) => re.test(f.code)).map((f) => `${f.code} ${f.message}`);
 

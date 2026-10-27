@@ -3,7 +3,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { approval, bundleOf, CLI_DIR, config, docSlug, done, git, gitLines, globRegex, list, loadProfile, msg, parseDoc, readJson, readPlan, relPath, seam, UsageError, withDefaults } from '../../lib/index.mjs';
+import { approval, bundleOf, CLI_DIR, config, docSlug, done, git, gitLines, globRegex, list, loadProfile, msg, parseDoc, plug, questionsOf, readJson, readPlan, relPath, seam, sectionOf, UsageError, withDefaults } from '../../lib/index.mjs';
 
 const K = config.intake, F = config.okf.bundle.folders;
 const WHY = { greenfield: 'intakeGreenfield', feature: 'intakeFeature', brownfield: 'intakeBrownfield' }; // why the project has its pathway
@@ -119,3 +119,44 @@ export const commands = {
     return done(msg('intakeWrote', { path: relPath(cwd, file), count: sentences.length, first: sentences[0].id, last: sentences.at(-1).id }) + report(id, m, p, {}));
   },
 };
+
+// Sources and coverage over the intents judged by method 6 in a v2 project: each goal line, story and draft
+// requirement statement cites a source that resolves, and each sentence of its requests is cited (docs/design/intake.md).
+const REF = /^(?:Q-\d+\.\d+|Q\d+|A\d+|F-\d+)$/;
+const refsIn = (line) => [...line.matchAll(/\[([^\]]+)\]/g)].flatMap((m) => m[1].split(/\s*,\s*/)).filter((r) => REF.test(r));
+const cut = (text) => (text.length > K.textMax ? `${text.slice(0, K.textMax).replace(/\s+\S*$/, '')}…` : text);
+const docsIn = (dir, pattern) => (existsSync(dir) ? readdirSync(dir).filter((f) => pattern.test(f)) : []);
+// A section's lines as written, blank ones and sub-headings left out.
+const linesOf = (doc, heading) => sectionOf(doc, heading).map(([n]) => [n, doc.lines[n - 1]]).filter(([, t]) => t.trim() && !/^#/.test(t));
+
+function lintSources({ bundle, profile, intents, requirements, add, inForce, keyLine }) {
+  if (!profile.system) return;
+  const dir = join(bundle, F.Request), requests = new Map(docsIn(dir, /^Q-\d+-.*\.md$/).map((f) => [f.match(/^Q-\d+/)[0], sentencesOf(parseDoc(readFileSync(join(dir, f), 'utf8')))]));
+  const facts = new Set(docsIn(join(bundle, F.Fact), /^F-\d+/).map((f) => f.match(/^F-\d+/)[0]));
+  for (const i of intents.filter((x) => x.fm.status !== config.grid.dropped && inForce(x, 'claimSource'))) {
+    const named = list(i.fm.request);
+    if (!named.length) { add('CLAIM-SOURCE', i, 1, 'claimNoRequest', {}); continue; }
+    for (const ref of named.filter((r) => !requests.has(r))) add('CLAIM-SOURCE', i, keyLine(i, 'request'), 'claimNoSuchRequest', { ref, dir: relPath(bundle, dir) });
+    const sentences = new Set(named.flatMap((r) => requests.get(r) ?? []).map((s) => s.id));
+    const answered = new Set(questionsOf(i.doc).filter((q) => q.answer).map((q) => q.id));
+    const assumed = new Set(linesOf(i.doc, K.claims.assumptions).map(([, t]) => t.match(/^\s*[-*]\s+(A\d+)\b/)?.[1]).filter(Boolean));
+    const unresolved = (r) => (r.startsWith('Q-') ? !sentences.has(r) && 'claimSentence' : r.startsWith('Q') ? !answered.has(r) && 'claimQuestion' : r.startsWith('A') ? !assumed.has(r) && 'claimAssumption' : !facts.has(r) && 'claimFact');
+    const cited = requirements.filter((r) => i.requirements.includes(r.id));
+    const claims = [
+      ...[K.claims.goal, K.claims.stories].flatMap((h) => linesOf(i.doc, h).map(([n, t]) => [i, h, n, t])),
+      ...cited.filter((r) => approval(r.doc) === 'draft').flatMap((r) => linesOf(r.doc, config.grid.requirementSection).map(([n, t]) => [r, config.grid.requirementSection, n, t])),
+    ];
+    for (const [doc, section, n, text] of claims) {
+      const refs = refsIn(text);
+      if (!refs.length) add('CLAIM-SOURCE', doc, n, 'claimUnsourced', { section, text: cut(text.trim()) });
+      for (const ref of refs) { const key = unresolved(ref); if (key) add('CLAIM-SOURCE', doc, n, key, { ref, intent: i.id, requests: named.join(', ') }); }
+    }
+    const covered = new Set([i, ...cited].flatMap((d) => d.doc.lines.flatMap(refsIn)));
+    for (const r of named.filter((x) => requests.has(x))) {
+      const open = requests.get(r).map((s) => s.id).filter((id) => !covered.has(id));
+      if (open.length) add('REQUEST-COVERAGE', i, keyLine(i, 'request'), 'requestUncovered', { ids: open.join(', '), request: r });
+    }
+  }
+}
+
+plug('planRules', lintSources);

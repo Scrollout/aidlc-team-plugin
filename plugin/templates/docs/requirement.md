@@ -5,7 +5,7 @@ description: <one sentence>
 ---
 
 # Requirement
-<one sentence in an EARS pattern: The <system> shall <response>. Or When <trigger>, / While <state>, / If <trigger>, then / Where <feature>, the <system> shall <response>.>
+<one sentence in an EARS pattern: The <system> shall <response>. Or When <trigger>, / While <state>, / If <trigger>, then / Where <feature>, the <system> shall <response>. End it with its source: [Q-<n>.<k>], [Q<k>] or [A<k>] of the intent citing it.>
 
 # Why
 <the reason; it guides every later change>

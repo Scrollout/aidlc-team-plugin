@@ -10,7 +10,8 @@ const V2 = { system: { core: ['src/**'] }, naming: { tokens: { system: 'rsm' } }
   { id: 'quotas', kind: 'domain', paths: ['src/quotas/**'] }, { id: 'deployments', kind: 'domain', paths: ['src/deployments/**'] },
   { id: 'orchestration', kind: 'pipeline', paths: ['src/orchestration/**'] }, { id: 'database', kind: 'foundation', paths: ['src/database/**'] },
 ] };
-const intent = (fm, body = '') => `---\ntype: Intent\ntitle: Backbone\ndescription: The backbone.\n${fm}---\n\n# Goal\nx\n${body}`;
+// Method 5: these intents predate the request and its sources (method 6, tests/intake.test.mjs).
+const intent = (fm, body = '') => `---\ntype: Intent\ntitle: Backbone\ndescription: The backbone.\nmethod: 5\n${fm}---\n\n# Goal\nx\n${body}`;
 const domain = (code, extra = '') => `---\ntype: Domain\ntitle: ${code}\ndescription: ${code}.\ncode: ${code}\nkind: domain\n---\n\n# Glossary\n- **operation**: ${code === 'quotas' ? 'a counted use of a limit' : 'one deployment step'}\n\n# Owns\n- \`${code}.ledger\`: rows\n${extra}`;
 const decision = (n, fm, title = `Decision ${n}`) => [`docs/decisions/${String(n).padStart(4, '0')}-decision-${n}.md`, `---\ntype: Decision\ntitle: ${String(n).padStart(4, '0')} ${title}\ndescription: d.\n${fm}---\n\n# Decision\nx\n`];
 const codes = (dir, profile = V2) => lintPlan(join(dir, 'docs'), profile, { base: dir }).filter((f) => !/^PLAN-/.test(f.code)).map((f) => `${f.code} ${f.message}`);

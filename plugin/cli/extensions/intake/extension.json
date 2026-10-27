@@ -10,6 +10,13 @@
         "schemas": { "Intent": { "enums": { "lane": "gate.lanes" } } }
       }
     },
+    "grid": {
+      "codes": {
+        "CLAIM-SOURCE": { "level": "error", "fix": "name the requests the intent comes from (request: [Q-<n>]) and give each goal line, story and requirement statement a source in brackets: a request sentence [Q-<n>.<k>], an answered question [Q<k>], an assumption [A<k>] listed under # Assumptions, or a fact [F-<n>] (docs: Intake)" },
+        "REQUEST-COVERAGE": { "level": "error", "fix": "cite each sentence of the request where the intent or a requirement answers it, or under # Out of scope with the reason (docs: Intake)" }
+      }
+    },
+    "state": { "approveBlocks": ["CLAIM-SOURCE", "REQUEST-COVERAGE"] },
     "commands": [
       {
         "name": "intake",
@@ -40,11 +47,21 @@
       "intakeNo": "no",
       "intakeGreenfield": "no code outside the docs",
       "intakeFeature": "approved intents",
-      "intakeBrownfield": "code, and no approved intent"
+      "intakeBrownfield": "code, and no approved intent",
+      "claimNoRequest": "{{unit}} names no request: keep the owner's words with aidlc intake and record request: [Q-<n>]",
+      "claimNoSuchRequest": "{{unit}} names {{ref}}, which is no request in {{dir}}",
+      "claimUnsourced": "{{unit}} {{section}} line has no source: {{text}}",
+      "claimSentence": "{{unit}} cites {{ref}}, which is no sentence of its requests ({{requests}})",
+      "claimQuestion": "{{unit}} cites {{ref}}, which is no answered question of {{intent}}",
+      "claimAssumption": "{{unit}} cites {{ref}}, which {{intent}} does not list under # Assumptions",
+      "claimFact": "{{unit}} cites {{ref}}, which is no platform fact",
+      "requestUncovered": "{{unit}} leaves {{ids}} of {{request}} uncited"
     },
     "intake": {
       "type": "Request",
       "heading": "Request",
+      "claims": { "goal": "Goal", "stories": "Stories", "assumptions": "Assumptions" },
+      "textMax": 60,
       "prefix": "Q-",
       "bands": ["low", "medium", "high"],
       "scored": ["ambiguity", "risk", "assumptions"],
