@@ -1,26 +1,24 @@
 // State: derives unit and intent states from git and the bundle, stamps approvals, picks the next action
 // and records builder reports and reviewer verdicts (docs/design/state.md). Nothing here is a ledger.
 import { execFileSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
-import { addedLines, bundleOf, config, QUICK, VERDICT, done, git, gitLines, isMap, lapsed, list, readJson, readStdin, tryGit, UsageError, relPath } from './config.mjs';
-import { finding as codeFinding, msg, render } from './template.mjs';
-import { loadProfile, withDefaults } from './profile.mjs';
-import { hashDoc, linksOf, parseDoc, sectionOf, sizeCap } from './okf.mjs';
-import { boardBehind } from './board.mjs';
+import { bundleOf, config, QUICK, VERDICT, done, isMap, lapsed, list, readJson, readStdin, UsageError, relPath } from '../foundation/data.mjs';
+import { addedLines, git, gitLines, tryGit } from '../foundation/git.mjs';
+import { finding as codeFinding, msg, render } from '../foundation/text.mjs';
+import { loadProfile, withDefaults } from '../foundation/profile.mjs';
+import { hashDoc, linksOf, parseDoc, sectionOf, sizeCap } from './bundle.mjs';
+import { boardBehind } from '../../extensions/board/index.mjs';
 import { hatchesOf, hatchLine, traceOf } from './construction.mjs';
-import { acsOf, computeLane, incrementLines, incrementSection, inside, lintPlan, overlaps, readPlan, reqId as reqIdOf, productGlobs, testsOnly, withIntents } from './grid.mjs';
+import { acsOf, computeLane, incrementLines, incrementSection, lintPlan, readPlan, reqId as reqIdOf, productGlobs, testsOnly, withIntents } from './plan.mjs';
+import { inside, overlaps } from '../foundation/glob.mjs';
+import { aidlcDir, baseRedFile, bump, ciFile, heartbeatAt, heartbeatFresh, hostDeniedFile, runtimeFile, sha256, statsFile, writeJson } from '../foundation/store.mjs';
 
 const S = config.state;
 const DATE = /^\d{4}-\d{2}-\d{2}$/; // an escape hatch's until
 
 // ---- git ----
 
-export const aidlcDir = (cwd) => join(resolve(cwd, git(cwd, 'rev-parse', '--git-common-dir')), S.dir);
-export const runtimeFile = (cwd, kind, unit) => join(aidlcDir(cwd), S[kind], `${unit}.json`);
-export const ciFile = (cwd) => join(aidlcDir(cwd), S.ci); // the base's last CI poll (docs/design/base-ci.md)
-export const baseRedFile = (cwd) => join(aidlcDir(cwd), S.baseRed); // a level the gate found red on the base alone
 // A bolt builds on bolt/B-<n>, a v1 unit on unit/U-<n> (docs/design/increments-and-bolts.md).
 export const branchOf = (unit) => (unit.startsWith(config.grid.boltPrefix) ? S.boltBranch : S.branchPrefix) + unit;
 export const baseOf = (profile) => profile.base;
@@ -29,21 +27,6 @@ export const unitPaths = (cwd, base, unit) => gitLines(cwd, 'diff', '--name-only
 // The worktree holding each branch: branch → path.
 export const worktrees = (cwd) => new Map(git(cwd, 'worktree', 'list', '--porcelain').split('\n\n')
   .flatMap((w) => [w.match(/^branch refs\/heads\/(.+)$/m)?.[1]].filter(Boolean).map((b) => [b, w.split('\n')[0].replace(/^worktree /, '')])));
-
-export function writeJson(file, data) {
-  mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, JSON.stringify(data, null, 2) + '\n');
-}
-// Bounded runtime counters the retro reads and resets (docs/design/steering.md#3-across-intents-the-retro).
-export const statsFile = (cwd) => join(aidlcDir(cwd), config.retro.stats);
-export function bump(cwd, kind, key) {
-  const st = readJson(statsFile(cwd)) ?? {}; // `since` is the last retro's reset
-  if (config.retro.lists.includes(kind)) st[kind] = [...(st[kind] ?? []), key].slice(-config.retro.keep);
-  else st[kind] = { ...st[kind], [key]: (st[kind]?.[key] ?? 0) + 1 };
-  writeJson(statsFile(cwd), st);
-}
-
-export const sha256 = (text) => createHash('sha256').update(text).digest('hex');
 
 // Review rounds of one focus; a verdict without `focus` is the general review.
 export const roundsOf = (review, focus = S.focus) => (review?.rounds ?? []).filter((r) => (r.focus ?? S.focus) === focus);
@@ -124,7 +107,7 @@ function mutationProblems(cwd, profile, unit, mutations) {
 
 // ---- Approvals ----
 
-export { hashDoc } from './okf.mjs';
+export { hashDoc } from './bundle.mjs';
 export const events = (fm) => (isMap(fm.verified) ? [fm.verified] : Array.isArray(fm.verified) ? fm.verified.filter(isMap) : []);
 
 // approved: a human `verified` event and a matching hash; stale: approved once, changed since.
@@ -232,8 +215,7 @@ export function mergedUnits(cwd, base) {
   return out;
 }
 
-const heartbeatAt = (cwd, unit, kind = S.heartbeats) => statSync(join(aidlcDir(cwd), kind, unit), { throwIfNoEntry: false })?.mtimeMs ?? 0;
-export const heartbeatFresh = (cwd, unit, now = Date.now(), kind = S.heartbeats) => now - heartbeatAt(cwd, unit, kind) < S.heartbeatMs;
+
 
 function mergeInProgress(cwd, units) {
   const head = tryGit(cwd, 'rev-parse', '-q', '--verify', 'MERGE_HEAD');
@@ -499,7 +481,6 @@ function unitWork(st, scope) {
 }
 
 // An action auto mode refused at this commit goes to the owner, not demanded again (docs/design/state.md#next).
-export const hostDeniedFile = (cwd) => join(aidlcDir(cwd), S.hostDenied);
 export function nextAction(st) {
   const next = pickAction(st);
   const refused = next.kind === 'act' && new RegExp(S.refusedLine).exec(next.line)?.[1];

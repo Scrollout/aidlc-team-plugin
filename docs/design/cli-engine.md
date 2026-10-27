@@ -12,7 +12,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T10:28:02Z }
 
 # Implementation limits
 - Node 22+, ESM, no dependencies; git through `execFileSync`, never a shell. Project commands from the profile run through the shell.
-- `plugin/cli/lib/` one module per concern: `config`, `profile`, `template`, `okf`, `grid`, `state`, `card`, `gate`, `hooks`, `init`, `board`, `retro`, `deploy`.
+- `plugin/cli/lib/` is a layered library, `foundation/`, `domains/` and `adapters/`, and `plugin/cli/extensions/` holds the opt-in extensions ([Library and extensions](library.md)).
 - Values and messages live in `cli.json` ([CLI](cli.md#values)).
 - Every module is tested with `node:test` against fixture repos created in a temp dir.
 

@@ -1,6 +1,6 @@
 // The canonical words, and the generated blocks drawn from them (docs/design/canonical-model.md).
-import { config } from './config.mjs';
-import { render } from './template.mjs';
+import { config } from '../foundation/data.mjs';
+import { render } from '../foundation/text.mjs';
 
 const V = config.vocabulary;
 const BLOCK = (name) => new RegExp(`(<!-- generated: ${name} -->\\n)[\\s\\S]*?(<!-- /generated -->)`);

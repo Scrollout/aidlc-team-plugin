@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { approve, commit, git, intentDoc, makeRepo, read, review, run, tempDir, unitDoc, write } from './state-repo.mjs';
-import { routeModel } from '../plugin/cli/lib/card.mjs';
+import { routeModel } from '../plugin/cli/lib/domains/card.mjs';
 const ROOT = join(import.meta.dirname, '..');
 
 const U1 = 'docs/units/U-1-pricing.md';

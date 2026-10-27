@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
-import { commands } from '../plugin/cli/lib/hooks.mjs';
+import { commands } from '../plugin/cli/lib/adapters/host.mjs';
 import { approve, commit, git, hook, intentDoc, pinnedRepo, read, run, tempDir, unitDoc, write } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');

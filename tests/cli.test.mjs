@@ -41,7 +41,7 @@ test('U1/AC-1 cli.json matches the CLI design: commands and exit codes', () => {
 test('every message the CLI uses is defined in cli.json, and none is unused', () => {
   const { messages, retro, map } = readJson('plugin/cli/cli.json');
   const named = new Set([...retro.proposals.map((p) => p.text), ...map.pages.map((p) => p.body)]); // the retro's proposals and the map's pages name theirs in cli.json
-  const files = ['plugin/cli/aidlc.mjs', ...readdirSync(join(ROOT, 'plugin/cli/lib')).map((f) => `plugin/cli/lib/${f}`)];
+  const files = readdirSync(join(ROOT, 'plugin/cli'), { recursive: true }).filter((f) => f.endsWith('.mjs')).map((f) => `plugin/cli/${f}`); // the core and its extensions
   const code = files.map((f) => readFileSync(join(ROOT, f), 'utf8')).join('\n');
   const used = [...code.matchAll(/(?:msg|fail|yerr)\('(\w+)'|add\([^;]*?'[A-Z]+-[A-Z-]+', '(\w+)'/g)].map((m) => m[1] ?? m[2]);
   for (const key of used) assert.ok(key in messages, `${key} is used but not defined`);
@@ -57,7 +57,7 @@ test('U1/AC-1 unknown command exits 64', () => {
 
 test('U1/AC-1 every documented command is built', async () => {
   const { HANDLERS } = await import('../plugin/cli/aidlc.mjs');
-  const { config } = await import('../plugin/cli/lib/config.mjs');
+  const { config } = await import('../plugin/cli/lib/foundation/data.mjs');
   assert.deepEqual(config.commands.map((c) => c.name).filter((n) => !HANDLERS[n]), []);
 });
 

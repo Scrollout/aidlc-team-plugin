@@ -3,22 +3,25 @@
 import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
-import { addedLines, bundleOf, CLI_DIR, PLUGIN_DIR, config, QUICK, VERDICT, done, git, gitLines, lapsed, list, readJson, sh, tryGit, UsageError, relPath } from './config.mjs';
-import { finding as codeFinding, msg, render } from './template.mjs';
-import { loadProfile, withDefaults } from './profile.mjs';
-import { checkBundle, docSlug, nameProblem, parseDoc, writeIndexes } from './okf.mjs';
-import { computeLane, incrementLines, inside, lintPlan, readPlan, runTarget, spansOf } from './grid.mjs';
+import { bundleOf, CLI_DIR, PLUGIN_DIR, config, QUICK, VERDICT, done, lapsed, list, readJson, UsageError, relPath } from '../foundation/data.mjs';
+import { addedLines, git, gitLines, sh, tryGit } from '../foundation/git.mjs';
+import { finding as codeFinding, msg, render } from '../foundation/text.mjs';
+import { loadProfile, withDefaults } from '../foundation/profile.mjs';
+import { checkBundle, docSlug, nameProblem, parseDoc, writeIndexes } from './bundle.mjs';
+import { computeLane, incrementLines, lintPlan, readPlan, runTarget, spansOf } from './plan.mjs';
+import { inside } from '../foundation/glob.mjs';
 import { bindingName, writeTrace } from './construction.mjs';
-import { issueTitle, sync } from './board.mjs';
+import { issueTitle, sync } from '../../extensions/board/index.mjs';
 import { writeContextMap, writeGlossary, writeMap } from './map.mjs';
 import { generatedRules, glossaryOf, parseFlags } from './naming.mjs';
-import { contractFindings } from './contract.mjs';
-import { boundaryFindings, exceptDocs, kindFindings, layerFindings, moduleFindings, reachFindings } from './arch.mjs';
-import { eventFindings, packFor } from './packs.mjs';
-import { aidlcDir, approval, baseOf, baseRedFile, branchOf, bump, codeChanges, diffHash, keptPass, verdictCurrent, mergedUnits, mutationOf, readState, reviewFocuses, roundsOf, runtimeFile, unitPaths, worktrees, writeJson } from './state.mjs';
+import { contractFindings } from '../../extensions/contracts/index.mjs';
+import { boundaryFindings, exceptDocs, kindFindings, layerFindings, moduleFindings, reachFindings } from './architecture.mjs';
+import { eventFindings, packFor } from '../../extensions/stacks/index.mjs';
+import { approval, baseOf, branchOf, codeChanges, diffHash, keptPass, verdictCurrent, mergedUnits, mutationOf, readState, reviewFocuses, roundsOf, unitPaths, worktrees } from './flow.mjs';
+import { aidlcDir, baseRedFile, bump, runtimeFile, writeJson } from '../foundation/store.mjs';
 
 const G = config.gate;
-export { boundaryFindings, globRegex, moduleFindings } from './arch.mjs'; // the gate's graph checks live in arch.mjs
+export { boundaryFindings, moduleFindings } from './architecture.mjs'; // the gate's graph checks live in architecture.mjs
 const matches = (path, glob) => inside('/' + path, glob);
 const finding = (code, path, line, key, data) => codeFinding(G.codes, code, path, line, key, data);
 // Text that matches a built-in secret pattern or one in profile.security.secrets (the secrets hook and the gate).

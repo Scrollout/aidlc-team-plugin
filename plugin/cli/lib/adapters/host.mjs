@@ -3,13 +3,16 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync, utimesSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join, resolve, sep } from 'node:path';
-import { bundleOf, config, done, git, gitLines, readJson, readStdin, tryGit, UsageError, relPath } from './config.mjs';
-import { msg } from './template.mjs';
-import { loadProfile, withDefaults } from './profile.mjs';
-import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
-import { inside, readPlan } from './grid.mjs';
-import { aidlcDir, baseOf, bump, commands as owner, delegated, heartbeatFresh, hostDeniedFile, nextAction, readState, runtimeFile, statusText, writeJson } from './state.mjs';
-import { directAllowed, mergeWritten, secretIn } from './gate.mjs';
+import { bundleOf, config, done, readJson, readStdin, UsageError, relPath } from '../foundation/data.mjs';
+import { git, gitLines, tryGit } from '../foundation/git.mjs';
+import { msg } from '../foundation/text.mjs';
+import { loadProfile, withDefaults } from '../foundation/profile.mjs';
+import { checkBundle, parseDoc, writeIndexes } from '../domains/bundle.mjs';
+import { readPlan } from '../domains/plan.mjs';
+import { inside } from '../foundation/glob.mjs';
+import { baseOf, commands as owner, delegated, nextAction, readState, statusText } from '../domains/flow.mjs';
+import { aidlcDir, bump, heartbeatFresh, hostDeniedFile, runtimeFile, writeJson } from '../foundation/store.mjs';
+import { directAllowed, mergeWritten, secretIn } from '../domains/gate.mjs';
 
 const H = config.hooks;
 const S = config.state;

@@ -80,7 +80,7 @@ flowchart LR
     skill["Skill aidlc<br/>the lead's loop"]
     agents["Agents<br/>builder, reviewer, researcher"]
     hooks["Hooks<br/>guard, scope, secrets, model, docs,<br/>heartbeat, prompt, steer, status, denied"]
-    cli["CLI engine<br/>config, profile, template, okf, grid,<br/>state, card, gate, deploy, hooks,<br/>board, retro, map, init, vocab, naming, contract, arch, packs, inception,<br/>construction"]
+    cli["CLI engine<br/>foundation: data, git, text, yaml, glob, profile, store<br/>domains: bundle, method, plan, inception, construction, flow,<br/>card, gate, architecture, map, naming, operations, retro, setup<br/>adapters: host · extensions: board, contracts, stacks"]
     templates["Templates<br/>AGENTS.md, CLAUDE.md, profile, CI,<br/>bundle with constitution, doc types<br/>with runbook"]
   end
 

@@ -2,11 +2,13 @@
 // and the dependency graph so it never drifts (docs/design/codebase-map.md).
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { bundleOf, CLI_DIR, config, done, gitLines, list, readJson } from './config.mjs';
-import { msg } from './template.mjs';
-import { loadProfile, withDefaults } from './profile.mjs';
-import { digestOf, parseDoc, sectionOf } from './okf.mjs';
-import { globRegex, graphOf } from './gate.mjs';
+import { bundleOf, CLI_DIR, config, done, list, readJson } from '../foundation/data.mjs';
+import { gitLines } from '../foundation/git.mjs';
+import { msg } from '../foundation/text.mjs';
+import { loadProfile, withDefaults } from '../foundation/profile.mjs';
+import { digestOf, parseDoc, sectionOf } from './bundle.mjs';
+import { graphOf } from './gate.mjs';
+import { globRegex } from '../foundation/glob.mjs';
 import { glossaryOf } from './naming.mjs';
 
 const M = config.map;

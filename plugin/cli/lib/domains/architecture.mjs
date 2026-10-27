@@ -1,7 +1,8 @@
 // The architecture checks over the dependency graph: boundaries, data owners, surfaces and cycles (docs/design/data-ownership.md,
 // docs/design/module-surface.md), and the architecture model's kinds, layers and a runtime's reach (docs/design/architecture-model.md).
-import { config, list } from './config.mjs';
-import { finding as codeFinding, msg } from './template.mjs';
+import { config, list } from '../foundation/data.mjs';
+import { finding as codeFinding, msg } from '../foundation/text.mjs';
+import { globRegex } from '../foundation/glob.mjs';
 
 const V = config.vocabulary;
 const finding = (code, path, key, data) => codeFinding(config.gate.codes, code, path, 1, key, data);
@@ -13,13 +14,6 @@ const surfaceOf = (m) => (m.surfaces ? [...list(m.surfaces.client), ...list(m.su
 const inSurface = (m, path) => hit(surfaceOf(m), path);
 const layerOf = (m, path) => { const l = Object.entries(m.layers ?? {}).find(([, globs]) => hit(globs, path))?.[0]; return l && (V.layerAliases[l] ?? l); };
 
-// A glob as a regex whose single `*` segments are captured, for `same: false` boundaries.
-export function globRegex(glob) {
-  let g = glob.replace(/^\.?\//, '');
-  if (!glob.startsWith('/') && !g.includes('/')) g = '**/' + g;
-  const body = g.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*\*\/?|\*|\?/g, (t) => (t.startsWith('**') ? (t.endsWith('/') ? '(?:.*/)?' : '.*') : t === '*' ? '([^/]*)' : '[^/]'));
-  return new RegExp(`^${body}$`);
-}
 
 export const exceptDocs = (arch) => [...(arch.boundaries ?? []).flatMap((b) => list(b.except)), ...[arch.data, arch.api, arch.acyclic].flatMap((r) => list(r?.except))];
 

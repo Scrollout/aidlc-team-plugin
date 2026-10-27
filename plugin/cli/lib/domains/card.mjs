@@ -2,14 +2,17 @@
 // and the model hook (docs/design/bolt-card.md). Model routing follows docs/design/team.md.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { bundleOf, CLI_DIR, config, QUICK, STANDARD, VERDICT, done, git, gitLines, list, readJson, slug, tryGit, UsageError, relPath } from './config.mjs';
-import { msg, render } from './template.mjs';
-import { loadProfile, withDefaults } from './profile.mjs';
-import { nameProblem, parseDoc, sectionOf, sizeCap } from './okf.mjs';
+import { bundleOf, CLI_DIR, config, QUICK, STANDARD, VERDICT, done, list, readJson, slug, UsageError, relPath } from '../foundation/data.mjs';
+import { git, gitLines, tryGit } from '../foundation/git.mjs';
+import { msg, render } from '../foundation/text.mjs';
+import { loadProfile, withDefaults } from '../foundation/profile.mjs';
+import { nameProblem, parseDoc, sectionOf, sizeCap } from './bundle.mjs';
 import { generatedRules, nameOf, registry } from './naming.mjs';
-import { referenceOf } from './packs.mjs';
-import { computeLane, overlaps, readPlan, reqId, topLevel, unitFields } from './grid.mjs';
-import { aidlcDir, approval, baseOf, branchOf, diffHash, hashDoc, readReview, readState, heldDoc, researchOf, roundsOf, runtimeFile, sha256, worktrees, writeJson } from './state.mjs';
+import { referenceOf } from '../../extensions/stacks/index.mjs';
+import { computeLane, readPlan, reqId, topLevel, unitFields } from './plan.mjs';
+import { overlaps } from '../foundation/glob.mjs';
+import { approval, baseOf, branchOf, diffHash, hashDoc, readReview, readState, heldDoc, researchOf, roundsOf, worktrees } from './flow.mjs';
+import { aidlcDir, runtimeFile, sha256, writeJson } from '../foundation/store.mjs';
 
 const C = config.card;
 

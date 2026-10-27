@@ -1,10 +1,12 @@
 // The retro: what fired, escalated and needed the owner during an intent, and at most three changes to propose
 // (docs/design/steering.md#3-across-intents-the-retro). Proposals and messages come from cli.json.
-import { config, VERDICT, done, readJson, tryGit, UsageError } from './config.mjs';
-import { msg } from './template.mjs';
+import { config, VERDICT, done, readJson, UsageError } from '../foundation/data.mjs';
+import { tryGit } from '../foundation/git.mjs';
+import { msg } from '../foundation/text.mjs';
 import { basename } from 'node:path';
-import { decisionsOf, events, readState, runtimeFile, statsFile, writeJson } from './state.mjs';
-import { incrementLines } from './grid.mjs';
+import { decisionsOf, events, readState } from './flow.mjs';
+import { runtimeFile, statsFile, writeJson } from '../foundation/store.mjs';
+import { incrementLines } from './plan.mjs';
 import { hatchesOf, hatchLine } from './construction.mjs';
 
 const R = config.retro;

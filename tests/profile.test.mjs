@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { loadProfile, mergeLayers, ProfileError } from '../plugin/cli/lib/profile.mjs';
+import { loadProfile, mergeLayers, ProfileError } from '../plugin/cli/lib/foundation/profile.mjs';
 import { tempDir } from './state-repo.mjs';
 
 function fixture(files) {

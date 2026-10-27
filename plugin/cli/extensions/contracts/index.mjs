@@ -1,9 +1,10 @@
 // CONTRACT-NAME: each published OpenAPI document against the API grammar of decision 0014 (docs/design/naming.md#checks).
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { config, gitLines, isMap } from './config.mjs';
-import { parseYaml } from './okf.mjs';
-import { globRegex } from './arch.mjs';
+import { config, isMap } from '../../lib/foundation/data.mjs';
+import { gitLines } from '../../lib/foundation/git.mjs';
+import { parseYaml } from '../../lib/foundation/yaml.mjs';
+import { globRegex } from '../../lib/foundation/glob.mjs';
 
 const C = config.naming.contract;
 const re = (k) => new RegExp(C.patterns[k]);

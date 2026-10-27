@@ -4,10 +4,12 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve, sep } from 'node:path';
 import { lintInception } from './inception.mjs';
 import { lintConstruction } from './construction.mjs';
-import { at, bundleOf, config, FULL, QUICK, STANDARD, done, fieldPaths, git, isMap, readJson, tryGit, list, UsageError, relPath } from './config.mjs';
-import { finding as codeFinding, msg } from './template.mjs';
-import { loadProfile, withDefaults } from './profile.mjs';
-import { linksOf, parseDoc, proseLines, sectionOf } from './okf.mjs';
+import { at, bundleOf, config, FULL, QUICK, STANDARD, done, fieldPaths, isMap, readJson, list, UsageError, relPath } from '../foundation/data.mjs';
+import { git, tryGit } from '../foundation/git.mjs';
+import { finding as codeFinding, msg } from '../foundation/text.mjs';
+import { inside, overlaps } from '../foundation/glob.mjs';
+import { loadProfile, withDefaults } from '../foundation/profile.mjs';
+import { linksOf, parseDoc, proseLines, sectionOf } from './bundle.mjs';
 
 const GRID = config.grid;
 const AC = /^\s*[-*]\s+(AC-\d+)\b\s*(?:\(([^)]*)\))?\s*:/;
@@ -18,56 +20,6 @@ const ITEM = /^\s*([-*]|\d+\.)\s+/; // a list line: a bullet or a number
 // Requirement IDs compare by number: R-018 and R-18 are the same.
 export const reqId = (id) => id.replace(/^(R-)0*(\d)/, '$1$2');
 
-// ---- Globs: `**` spans folders, `*` and `?` stay in one, no `/` means any depth unless anchored by a leading `/` ----
-
-function segments(glob) {
-  const anchored = /^\.?\//.test(glob);
-  let g = glob.replace(/^\.?\//, '');
-  if (g.endsWith('/')) g += '**';
-  if (!anchored && !g.includes('/')) g = '**/' + g;
-  return g.split('/');
-}
-
-const tokens = (seg) => [...seg];
-
-// Memoised walk over two token lists; `step(i, j, go)` decides each state.
-function walk(a, b, step) {
-  const memo = new Map();
-  const go = (i, j) => {
-    const key = i * (b.length + 1) + j;
-    if (!memo.has(key)) {
-      memo.set(key, false);
-      memo.set(key, i === a.length && j === b.length ? true : step(i, j, go));
-    }
-    return memo.get(key);
-  };
-  return go(0, 0);
-}
-
-// Some string matches both patterns. `star` is the any-run token, `one` matches one token of the other side.
-function intersects(a, b, star, one) {
-  return walk(a, b, (i, j, go) => {
-    if (a[i] === star) return go(i + 1, j) || (j < b.length && go(i, j + 1));
-    if (b[j] === star) return go(i, j + 1) || (i < a.length && go(i + 1, j));
-    return i < a.length && j < b.length && one(a[i], b[j]) && go(i + 1, j + 1);
-  });
-}
-
-// Every string matching `a` matches `b` (sufficient check: `b` must cover each token of `a`).
-function within(a, b, star, one) {
-  return walk(a, b, (i, j, go) => {
-    if (b[j] === star) return go(i, j + 1) || (i < a.length && go(i + 1, j));
-    return i < a.length && j < b.length && a[i] !== star && one(a[i], b[j]) && go(i + 1, j + 1);
-  });
-}
-
-const charOverlap = (x, y) => x === '?' || y === '?' || x === y;
-const charWithin = (x, y) => y === '?' ? x !== '*' : x === y;
-const segOverlap = (x, y) => intersects(tokens(x), tokens(y), '*', charOverlap);
-const segWithin = (x, y) => within(tokens(x), tokens(y), '*', charWithin);
-
-export const overlaps = (a, b) => intersects(segments(a), segments(b), '**', segOverlap);
-export const inside = (a, b) => within(segments(a), segments(b), '**', segWithin);
 // A back-fill: units whose scopes all lie inside the levels' test paths, so they ship no code (docs/design/backfill.md).
 export const testsOnly = (units, profile) => units.length > 0 && units.every((u) => u.scope.length
   && u.scope.every((g) => Object.values(withDefaults(profile).levels).some((l) => list(l?.paths).some((p) => inside(g, p)))));
@@ -450,7 +402,7 @@ export const commands = {
   async check(args, { cwd }) {
     const { profile } = loadProfile(cwd);
     const bundle = bundleOf(cwd, profile);
-    const state = await import('./state.mjs');
+    const state = await import('./flow.mjs');
     const skip = [...state.mergedUnits(cwd, profile.base).keys()]; // merged units are history
     const paths = args.filter((a) => !a.startsWith('--')).map((a) => resolve(cwd, a));
     const findings = [];

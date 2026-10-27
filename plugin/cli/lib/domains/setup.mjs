@@ -3,13 +3,14 @@
 import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
-import { CLI_DIR, PLUGIN_DIR, config, done, git, isMap, readJson, tryGit, UsageError, relPath } from './config.mjs';
-import { msg, render, renderFile } from './template.mjs';
-import { proposeKind } from './vocab.mjs';
+import { CLI_DIR, PLUGIN_DIR, config, done, isMap, readJson, UsageError, relPath } from '../foundation/data.mjs';
+import { git, tryGit } from '../foundation/git.mjs';
+import { msg, render, renderFile } from '../foundation/text.mjs';
+import { proposeKind } from './method.mjs';
 import { parseFlags } from './naming.mjs';
-import { DEFAULTS, loadProfile } from './profile.mjs';
-import { checkBundle, parseDoc, writeIndexes } from './okf.mjs';
-import { definedOnBase } from './grid.mjs';
+import { DEFAULTS, loadProfile } from '../foundation/profile.mjs';
+import { checkBundle, parseDoc, writeIndexes } from './bundle.mjs';
+import { definedOnBase } from './plan.mjs';
 
 const I = config.init;
 

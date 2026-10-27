@@ -1,10 +1,9 @@
 // Loads cli.json, the one place for commands, exit codes, paths and messages (docs/design/cli.md).
-import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const CLI_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+export const CLI_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const config = JSON.parse(readFileSync(join(CLI_DIR, 'cli.json'), 'utf8'));
 export const PLUGIN_DIR = resolve(CLI_DIR, config.pluginRoot);
 export const VERDICT = config.state.verdicts; // a reviewer's verdicts, by name
@@ -27,24 +26,6 @@ export const bundleOf = (cwd, profile) => resolve(cwd, profile.docs.bundle);
 // An escape hatch's `until` date that has passed (docs/design/construction.md#escape-hatches).
 export const lapsed = (until) => until !== undefined && until !== null && String(until).slice(0, 10) < new Date().toISOString().slice(0, 10);
 export const slug = (text, words) => text.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).slice(0, words).join('-');
-export const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-export const tryGit = (cwd, ...args) => { try { return git(cwd, ...args); } catch { return null; } };
-// The lines git prints, none when it fails.
-export const gitLines = (cwd, ...args) => (tryGit(cwd, ...args) ?? '').split('\n').filter(Boolean);
-// Each line a diff range adds, with its file and line number (the merge gate, the security focus).
-export function addedLines(cwd, range) {
-  const out = [];
-  let file = null;
-  let line = 0;
-  for (const l of gitLines(cwd, 'diff', '-U0', '--no-color', '--no-ext-diff', range)) {
-    if (l.startsWith('+++ ')) file = l.slice(6);
-    else if (l.startsWith('@@')) line = Number(l.match(/\+(\d+)/)?.[1]);
-    else if (l.startsWith('+') && file) out.push({ file, line: line++, text: l.slice(1) });
-  }
-  return out;
-}
-// A project command, as the shell runs it: { status, stdout, stderr }.
-export const sh = (cwd, command, env) => spawnSync(command, { cwd, shell: true, encoding: 'utf8', env: env && { ...process.env, ...env } });
 // A command's stdin: the test's, or the process's.
 export const readStdin = (ctx) => (ctx.stdin ? ctx.stdin() : readFileSync(0, 'utf8'));
 export const done = (output, code = config.exit.ok, findings = []) => ({ code, findings, output });

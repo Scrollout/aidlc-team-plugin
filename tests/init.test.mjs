@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { commit, git, makeRepo, run, tempDir, write } from './state-repo.mjs';
-import { directAllowed } from '../plugin/cli/lib/gate.mjs';
+import { directAllowed } from '../plugin/cli/lib/domains/gate.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const PLUGIN = JSON.parse(readFileSync(join(ROOT, 'plugin/.claude-plugin/plugin.json'), 'utf8'));

@@ -1,8 +1,8 @@
 // Profile loader: reads the rule layers named in cli.json and merges them (docs/design/profile.md).
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { CLI_DIR, config, isMap, posix, readJson } from './config.mjs';
-import { msg } from './template.mjs';
+import { CLI_DIR, config, isMap, posix, readJson } from './data.mjs';
+import { msg } from './text.mjs';
 
 export class ProfileError extends Error {}
 

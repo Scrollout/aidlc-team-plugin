@@ -2,22 +2,22 @@
 // Entry point: dispatches subcommands, renders their data, maps errors to exit codes; handlers return { code, findings, output } (decision 0006).
 import { realpathSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { config, UsageError } from './lib/config.mjs';
-import { msg } from './lib/template.mjs';
-import { commands as okf } from './lib/okf.mjs';
-import { commands as grid } from './lib/grid.mjs';
-import { commands as state } from './lib/state.mjs';
-import { commands as card } from './lib/card.mjs';
-import { commands as init } from './lib/init.mjs';
-import { commands as gate, withSummary } from './lib/gate.mjs';
-import { commands as hooks, ownerRefused } from './lib/hooks.mjs';
-import { commands as board } from './lib/board.mjs';
-import { commands as retro } from './lib/retro.mjs';
-import { commands as deploy } from './lib/deploy.mjs';
-import { commands as naming } from './lib/naming.mjs';
-import { commands as packs } from './lib/packs.mjs';
-import { commands as inception } from './lib/inception.mjs';
-import { commands as map } from './lib/map.mjs';
+import { config, UsageError } from './lib/foundation/data.mjs';
+import { msg } from './lib/foundation/text.mjs';
+import { commands as okf } from './lib/domains/bundle.mjs';
+import { commands as grid } from './lib/domains/plan.mjs';
+import { commands as state } from './lib/domains/flow.mjs';
+import { commands as card } from './lib/domains/card.mjs';
+import { commands as init } from './lib/domains/setup.mjs';
+import { commands as gate, withSummary } from './lib/domains/gate.mjs';
+import { commands as hooks, ownerRefused } from './lib/adapters/host.mjs';
+import { commands as board } from './extensions/board/index.mjs';
+import { commands as retro } from './lib/domains/retro.mjs';
+import { commands as deploy } from './lib/domains/operations.mjs';
+import { commands as naming } from './lib/domains/naming.mjs';
+import { commands as packs } from './extensions/stacks/index.mjs';
+import { commands as inception } from './lib/domains/inception.mjs';
+import { commands as map } from './lib/domains/map.mjs';
 
 const EXIT = config.exit;
 

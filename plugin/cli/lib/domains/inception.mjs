@@ -3,10 +3,11 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { bundleOf, CLI_DIR, config, done, isMap, list, readJson, relPath, sh, UsageError } from './config.mjs';
-import { msg } from './template.mjs';
-import { loadProfile } from './profile.mjs';
-import { docSlug, hashDoc, parseDoc, sectionOf } from './okf.mjs';
+import { bundleOf, CLI_DIR, config, done, isMap, list, readJson, relPath, UsageError } from '../foundation/data.mjs';
+import { sh } from '../foundation/git.mjs';
+import { msg } from '../foundation/text.mjs';
+import { loadProfile } from '../foundation/profile.mjs';
+import { docSlug, hashDoc, parseDoc, sectionOf } from './bundle.mjs';
 import { glossaryOf } from './naming.mjs';
 
 const P = config.inception, F = config.okf.bundle.folders;

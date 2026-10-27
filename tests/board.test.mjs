@@ -194,7 +194,7 @@ test('U11/AC-1 with a board, plan lint requires the values the board maps, excep
 });
 
 test('U11/AC-2 sync uses no model: it calls only gh, and runs against the recorded stub', () => {
-  const src = readFileSync(join(ROOT, 'plugin/cli/lib/board.mjs'), 'utf8');
+  const src = readFileSync(join(ROOT, 'plugin/cli/extensions/board/index.mjs'), 'utf8');
   assert.equal([...src.matchAll(/execFileSync\(/g)].length, 1);
   assert.match(src, /execFileSync\(ghCommand\[0\], \[\.\.\.ghCommand\.slice\(1\), 'api'/);
   assert.doesNotMatch(src, /fetch\(|node:https?|claude|anthropic/i);

@@ -2,13 +2,16 @@
 // traceability page that says which requirements are delivered (docs/design/construction.md).
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { bundleOf, config, git, lapsed, list, readJson, tryGit } from './config.mjs';
-import { msg } from './template.mjs';
-import { parseDoc } from './okf.mjs';
-import { exceptDocs } from './arch.mjs';
-import { inForce, incrementLines, overlaps, readPlan, topLevel } from './grid.mjs';
+import { bundleOf, config, lapsed, list, readJson } from '../foundation/data.mjs';
+import { git, tryGit } from '../foundation/git.mjs';
+import { msg } from '../foundation/text.mjs';
+import { parseDoc } from './bundle.mjs';
+import { exceptDocs } from './architecture.mjs';
+import { inForce, incrementLines, readPlan, topLevel } from './plan.mjs';
+import { overlaps } from '../foundation/glob.mjs';
 import { writePage } from './map.mjs';
-import { delegation, mergedUnits, runtimeFile } from './state.mjs';
+import { delegation, mergedUnits } from './flow.mjs';
+import { runtimeFile } from '../foundation/store.mjs';
 
 const C = config.construction, GRID = config.grid;
 const idOf = (m) => String(m.id ?? m.name);

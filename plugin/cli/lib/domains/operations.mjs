@@ -1,8 +1,10 @@
 // Deploy: the grid's Deployment and Operation rows, run from the profile's commands. Each step's last run is
 // recorded with the base commit it ran on; `next` reads the record and never runs a step (docs/design/operations.md).
-import { config, done, git, list, readJson, sh, tryGit, UsageError } from './config.mjs';
-import { msg } from './template.mjs';
-import { bump, ciGreen, readState, runtimeFile, writeJson } from './state.mjs';
+import { config, done, list, readJson, UsageError } from '../foundation/data.mjs';
+import { git, sh, tryGit } from '../foundation/git.mjs';
+import { msg } from '../foundation/text.mjs';
+import { ciGreen, readState } from './flow.mjs';
+import { bump, runtimeFile, writeJson } from '../foundation/store.mjs';
 
 // Runs the commands in order until one fails: { ok, command, exit, output }, with the tail of the output.
 function runAll(cwd, commands) {

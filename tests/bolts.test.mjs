@@ -3,9 +3,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { config } from '../plugin/cli/lib/config.mjs';
-import { lintPlan, readPlan } from '../plugin/cli/lib/grid.mjs';
-import { branchOf } from '../plugin/cli/lib/state.mjs';
+import { config } from '../plugin/cli/lib/foundation/data.mjs';
+import { lintPlan, readPlan } from '../plugin/cli/lib/domains/plan.mjs';
+import { branchOf } from '../plugin/cli/lib/domains/flow.mjs';
 import { I1, U, approve, git, intentDoc, makeRepo, pinnedRepo, read, run, unitDoc } from './state-repo.mjs';
 
 test('B153/AC-1 new bolt writes B-<n> under bolts/, numbered on from every unit and bolt, named from its title', () => {
@@ -40,7 +40,7 @@ test('B153/AC-2 a v2 project refuses a new doc under units/; an approved v1 unit
 });
 
 test('B154/AC-1 approving an intent pins it to the method it is approved under; a rule a later method added leaves an older intent alone', async () => {
-  const { inForce, methodOf } = await import('../plugin/cli/lib/grid.mjs');
+  const { inForce, methodOf } = await import('../plugin/cli/lib/domains/plan.mjs');
   const profile = { modules: [{ id: 'app', paths: ['src/**'] }], levels: { unit: { run: 'u' }, e2e: { run: 'e' } } };
   const unit = unitDoc({ scope: ['src/**'], acs: ['- AC-1 (e2e): it works.'] });
   const dir = makeRepo({ 'docs/intents/I-1-pricing.md': intentDoc('I-1') + '\n# Increments\n- I-1.1 Skeleton: U-1\n', [U(1)]: unit }, profile);
@@ -103,7 +103,7 @@ test('B156/AC-3 a generated doc carries its body digest: a hand edit, or one wri
 });
 
 test('B157/AC-1 a doc named by an id carries the slug of its title: lower case, no apostrophes, at most 48 characters, cut at a word', async () => {
-  const { docSlug } = await import('../plugin/cli/lib/okf.mjs');
+  const { docSlug } = await import('../plugin/cli/lib/domains/bundle.mjs');
   assert.equal(docSlug("Dependabot's docker update fails on main"), 'dependabots-docker-update-fails-on-main');
   assert.equal(docSlug('The CLI budget is 5,000 lines'), 'the-cli-budget-is-5000-lines');
   assert.equal(docSlug('Contract specs compiled from TypeSpec with generated Go'), 'contract-specs-compiled-from-typespec-with');
@@ -118,7 +118,7 @@ test('B157/AC-1 a doc named by an id carries the slug of its title: lower case, 
 });
 
 test('B160/AC-1 the profile naming registry is checked: tokens by their rule, domains and vocabulary words as lower-case words, none banned', async () => {
-  const { registry } = await import('../plugin/cli/lib/naming.mjs');
+  const { registry } = await import('../plugin/cli/lib/domains/naming.mjs');
   const naming = (n) => run(makeRepo(I1, { naming: n }), ['check']).out.split('\n').filter((l) => /PROFILE-NAMING/.test(l)).map((l) => l.replace(/^\S+ PROFILE-NAMING /, '').replace(/ → .*$/, ''));
   assert.deepEqual(naming({ tokens: { system: 'rsm', org: 'acme', zone: 'example.internal' }, domains: { providers: {} }, vocabularies: { role: ['api'] } }), []);
   assert.deepEqual(naming({ tokens: { system: 'ResourceManager', org: 'Acme Inc', zone: 'localhost' }, domains: { Providers: {}, store: {} }, vocabularies: { role: ['api-gw', 'manager'] } }), [
@@ -171,7 +171,7 @@ test('B161/AC-1 aidlc name prints each kind from the grammar and the registry, a
 });
 
 test('B162/AC-1 the registry generates the gate rules for migrations, images, namespaces and banned segments, and holds each module id', async () => {
-  const { generatedRules } = await import('../plugin/cli/lib/naming.mjs');
+  const { generatedRules } = await import('../plugin/cli/lib/domains/naming.mjs');
   const naming = { tokens: { system: 'rsm', org: 'acme', registry: 'ghcr.io' }, domains: { providers: {} } };
   const rules = Object.fromEntries(generatedRules({ naming }).map((r) => [r.id, r]));
   const full = (id, s) => new RegExp(`^(?:${rules[id].pattern})$`).test(s);
@@ -211,7 +211,7 @@ test('B164/AC-1 the card prints the names a bolt will create for each registered
 });
 
 test('B165/AC-1 CONTRACT-NAME checks a published OpenAPI document against the API grammar', async () => {
-  const { contractProblems } = await import('../plugin/cli/lib/contract.mjs');
+  const { contractProblems } = await import('../plugin/cli/extensions/contracts/index.mjs');
   const keys = (doc) => contractProblems(doc).map(([k, d]) => `${k} ${Object.values(d).join(' ')}`);
   const good = {
     info: { version: '2026-10-27' },

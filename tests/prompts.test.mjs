@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { approve, branch, commit, git, intentDoc, makeRepo, review, run, tempDir, unitDoc } from './state-repo.mjs';
 import { DEFECTS, score, setup } from './evals/run.mjs';
 
@@ -194,7 +194,7 @@ test('U64/AC-2 the README shows every hook, module, agent, template, trailer, th
   const hooksNode = blocks[1].match(/hooks\["Hooks<br\/>(.*?)"\]/)[1];
   for (const h of CLI.hooks.names) assert.match(hooksNode, new RegExp(`\\b${h}\\b`), h);
   const cliNode = blocks[1].match(/cli\["CLI engine<br\/>(.*?)"\]/)[1];
-  for (const f of readdirSync(join(ROOT, 'plugin/cli/lib')).filter((f) => f.endsWith('.mjs'))) assert.match(cliNode, new RegExp(`\\b${f.replace('.mjs', '')}\\b`), f);
+  for (const f of readdirSync(join(ROOT, 'plugin/cli/lib'), { recursive: true }).filter((f) => f.endsWith('.mjs'))) assert.match(cliNode, new RegExp(`\\b${basename(f, '.mjs')}\\b`), f); // every module of every layer
   for (const a of readdirSync(join(ROOT, 'plugin/agents'))) assert.match(blocks[1], new RegExp(`\\b${a.replace('.md', '')}\\b`), a);
   for (const t of ['AGENTS.md', 'CLAUDE.md', 'constitution', 'runbook', 'profile', 'CI']) assert.ok(blocks[1].includes(t), t);
   for (const r of ['deploys', 'goes', 'prompts']) assert.match(blocks[1], new RegExp(`\\.git/aidlc<br/>.*\\b${r}\\b`), r);

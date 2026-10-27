@@ -1,7 +1,7 @@
 // Template engine: `{{a.b}}` and `{{#each list}}…{{/each}}`, nothing more (docs/design/profile.md).
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { config, PLUGIN_DIR } from './config.mjs';
+import { config, PLUGIN_DIR } from './data.mjs';
 
 export class TemplateError extends Error {}
 

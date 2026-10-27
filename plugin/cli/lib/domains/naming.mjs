@@ -2,9 +2,9 @@
 // profile's own, and the domain docs' codes (docs/design/naming.md).
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { bundleOf, config, done, isMap, UsageError } from './config.mjs';
-import { msg, render } from './template.mjs';
-import { loadProfile } from './profile.mjs';
+import { bundleOf, config, done, isMap, UsageError } from '../foundation/data.mjs';
+import { msg, render } from '../foundation/text.mjs';
+import { loadProfile } from '../foundation/profile.mjs';
 
 const N = config.naming;
 const DOMAIN = config.okf.bundle.folders.Domain;

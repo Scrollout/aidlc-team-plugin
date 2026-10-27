@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { render, renderFile, TemplateError } from '../plugin/cli/lib/template.mjs';
+import { render, renderFile, TemplateError } from '../plugin/cli/lib/foundation/text.mjs';
 import { tempDir } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');

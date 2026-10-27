@@ -5,11 +5,13 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { at, config, done, git, list, readJson, relPath, tryGit, UsageError } from './config.mjs';
-import { msg, render } from './template.mjs';
-import { templateFile } from './card.mjs';
-import { aidlcDir, ciFile, readState, writeJson } from './state.mjs';
-import { bindingName } from './construction.mjs';
+import { at, config, done, list, readJson, relPath, UsageError } from '../../lib/foundation/data.mjs';
+import { git, tryGit } from '../../lib/foundation/git.mjs';
+import { msg, render } from '../../lib/foundation/text.mjs';
+import { templateFile } from '../../lib/domains/card.mjs';
+import { readState } from '../../lib/domains/flow.mjs';
+import { aidlcDir, ciFile, writeJson } from '../../lib/foundation/store.mjs';
+import { bindingName } from '../../lib/domains/construction.mjs';
 
 const B = config.board;
 let ghCommand = [B.gh]; // `github.gh` overrides it (docs/design/board.md)

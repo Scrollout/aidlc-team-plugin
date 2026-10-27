@@ -2,11 +2,11 @@
 // reads from source, with no toolchain run (docs/design/stack-packs.md).
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
-import { bundleOf, PLUGIN_DIR, config, done, list, posix, UsageError } from './config.mjs';
-import { msg, render } from './template.mjs';
-import { loadProfile } from './profile.mjs';
-import { domainForms, nameOf, registry } from './naming.mjs';
-import { graphOf } from './gate.mjs';
+import { bundleOf, PLUGIN_DIR, config, done, list, posix, UsageError } from '../../lib/foundation/data.mjs';
+import { msg, render } from '../../lib/foundation/text.mjs';
+import { loadProfile } from '../../lib/foundation/profile.mjs';
+import { domainForms, nameOf, registry } from '../../lib/domains/naming.mjs';
+import { graphOf } from '../../lib/domains/gate.mjs';
 
 const K = config.packs;
 const packsDir = () => join(PLUGIN_DIR, K.dir);
