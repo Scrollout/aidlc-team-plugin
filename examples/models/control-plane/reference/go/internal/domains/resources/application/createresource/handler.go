@@ -1,6 +1,6 @@
-// Package putresource is the command slice that writes a resource's metadata: idempotent, so the same write
+// Package createresource is the command slice that writes a resource's metadata: idempotent, so the same write
 // repeated leaves status and state unchanged.
-package putresource
+package createresource
 
 import (
 	"context"

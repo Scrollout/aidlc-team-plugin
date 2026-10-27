@@ -8,8 +8,8 @@ import (
 	"net/http"
 
 	opinfra "example.com/controlplane/internal/domains/operations/infrastructure"
+	"example.com/controlplane/internal/domains/resources/application/createresource"
 	"example.com/controlplane/internal/domains/resources/application/deleteresource"
-	"example.com/controlplane/internal/domains/resources/application/putresource"
 	"example.com/controlplane/internal/domains/resources/events"
 	"example.com/controlplane/internal/domains/resources/infrastructure"
 	"example.com/controlplane/internal/foundation/values"
@@ -42,7 +42,7 @@ func main() {
 	}
 	door := &FrontDoor{
 		Govern:    governance(stages.Pass(stages.StageAuthorize).Run),
-		Put:       putresource.Handler{Resources: store, Events: logged{}},
+		Put:       createresource.Handler{Resources: store, Events: logged{}},
 		Delete:    deleteresource.Handler{Resources: store, Events: loggedDelete{}},
 		Ops:       &opinfra.Memory{},
 		Providers: providers,

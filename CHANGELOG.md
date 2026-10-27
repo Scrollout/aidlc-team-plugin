@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.187.0] - 2026-10-28
+### Added
+- Vertical slices in models (M28 B247). A model's domains and its extension list their slices as `{ kind, verb, useCase }`, and `MODEL-FORMAT` checks each kind, verb, use case and pair. `models apply` writes each model domain's doc the bundle lacks, its `# Surface` one line per slice with the name the naming registry composes, and prints the increments slice by slice, the walking skeleton serving the first slice. `models gaps` lists the slices a played domain's doc does not list.
+- The example control-plane model lists its slices, and its reference's command is `createresource`, the registry's name.
+
 ## [0.186.0] - 2026-10-27
 ### Removed
 - The plugin ships no architecture model (decision 0025, superseding 0020). `aidlc models` lists a project's own models in `.aidlc/models/<name>/`; `init` and `upgrade` pin none. The control-plane model moves to `examples/models/control-plane/`, outside the package, with its Go reference still tested in CI; a project that fits it copies it into its models folder.
@@ -383,7 +388,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.186.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.187.0...HEAD
+[0.187.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.186.0...v0.187.0
 [0.186.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.185.0...v0.186.0
 [0.185.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.184.0...v0.185.0
 [0.184.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.183.2...v0.184.0

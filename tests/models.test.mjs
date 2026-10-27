@@ -137,6 +137,7 @@ test('B231/AC-1 intake lists the models that fit the request; apply records the 
     'chose minimal in .aidlc/profile.json',
     'wrote docs/system/bak.md: its building blocks are the model\'s; fill the other sections with the owner',
     'wrote docs/decisions/0004-one-gate.md, a proposal for the owner to approve (one-way doors one at a time)',
+    'wrote docs/domains/records.md: its # Surface lists the model\'s 0 slices; cite each one\'s stories as elaboration writes them',
     'increments along minimal\'s layers, for the intent\'s # Increments:',
     '- I-<n>.1 Walking skeleton: one request through gate, end to end on the target',
     '- I-<n>.2 records: what exists',
@@ -236,4 +237,57 @@ test('the control-plane Go reference keeps its values in data and its code in ve
     .flatMap((f) => readFileSync(join(dir, f), 'utf8').split('\n').map((text, k) => ({ file: f, line: k + 1, text })));
   assert.deepEqual(valueFindings(dir, profile, [], added).map((f) => `${f.path}:${f.line} ${f.data.value}`), [], 'every line read as added: no literal value in code');
   assert.ok(existsSync(join(dir, 'internal/domains/operations/application/getoperation/handler_test.go')), 'the operations query slice, with its test');
+});
+
+// M28 B247: slices in models (docs/design/vertical-slices.md#planned-before-built).
+const SLICED = { domains: [{ id: 'records', kind: 'domain', role: 'what exists', slices: [
+  { kind: 'Command', verb: 'create', useCase: 'a client records what exists' }, { kind: 'Query', verb: 'get', useCase: 'a client reads one record' }, { kind: 'Query', verb: 'list', useCase: 'a client lists the records' }] }],
+  extension: { declares: ['namespace'], slices: [{ kind: 'Command', verb: 'delete', useCase: 'a client removes one' }] } };
+
+test('B247/AC-1 a model\'s slices take a kind the slice checks know, a registry verb and a use case, a kind and verb once per domain', () => {
+  const dir = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n' }, V2);
+  write(dir, { '.aidlc/models/sliced/model.json': model('sliced', SLICED) });
+  assert.deepEqual(formatLines(dir), [], 'a model with slices in the format');
+  const bad = { domains: [{ id: 'records', kind: 'domain', slices: [{ kind: 'Event', verb: 'create', useCase: 'x' }, { kind: 'Query', verb: 'fetch', useCase: 'y' }, { kind: 'Query', verb: 'get' }, { kind: 'Query', verb: 'get', useCase: 'z' }] }], extension: { declares: ['namespace'], slices: 'all' } };
+  write(dir, { '.aidlc/models/sliced/model.json': model('sliced', bad) });
+  const lines = formatLines(dir).join('\n');
+  for (const want of ['a slice of records has kind Event, not one of Command, Query', 'a slice of records has verb fetch, which the naming registry lacks', 'the get slice of records names no use case', 'records lists the Query get slice twice', 'extension.slices is a list']) assert.ok(lines.includes(want), `${want}\n${lines}`);
+  write(dir, { '.aidlc/profile.json': { ...V2, naming: { ...V2.naming, vocabularies: { verb: ['fetch'] } } } });
+  assert.doesNotMatch(formatLines(dir).join('\n'), /verb fetch/, 'the project\'s own registry verbs count');
+});
+
+test('B247/AC-2 apply writes each model domain\'s doc with its # Surface, names composed by the registry, and prints the increments slice by slice', () => {
+  const dir = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n' }, V2);
+  write(dir, { '.aidlc/models/sliced/model.json': model('sliced', SLICED) });
+  const out = run(dir, ['models', 'apply', 'sliced']).out;
+  assert.match(out, /^wrote docs\/domains\/records\.md: its # Surface lists the model's 3 slices/m);
+  assert.match(out, /- I-<n>\.1 Walking skeleton: one request through gate, end to end on the target, serving Command createrecord\n- I-<n>\.2 records: Query getrecord, a client reads one record\n- I-<n>\.3 records: Query listrecord, a client lists the records\n- I-<n>\.4 A first extension, declaring namespace; Command delete: a client removes one\n/);
+  const doc = read(dir, 'docs/domains/records.md');
+  assert.match(doc, /^code: records$/m);
+  assert.match(doc, /^# Surface\n- Command createrecord: a client records what exists\n- Query getrecord: a client reads one record\n- Query listrecord: a client lists the records\n/m);
+  assert.doesNotMatch(doc, /^- (Command|Query) <slice>/m, 'the template\'s slice lines are replaced');
+  assert.match(doc, /^- Events: /m, 'the rest of the section stays');
+  assert.match(run(dir, ['name', 'slice', '--domain', 'records', '--verb', 'get']).out, /^getrecord$/m, 'the same name aidlc name slice composes');
+});
+
+test('B247/AC-3 gaps lists the model slices a played domain\'s doc does not list, as increments', () => {
+  const dir = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n', 'docs/domains/records.md': '---\ntype: Domain\ntitle: Records\ndescription: d.\ncode: records\nkind: domain\n---\n\n# Surface\n- Command createrecord: a client records what exists [I-1:US1.1]\n' },
+    { ...V2, model: { name: 'sliced' }, modules: [{ id: 'gate', kind: 'pipeline', layer: 'gate', paths: ['src/gate/**'] }, { id: 'records', kind: 'domain', layer: 'records', paths: ['src/records/**'] }, { id: 'ext', kind: 'extension', paths: ['src/ext/**'] }] });
+  write(dir, { '.aidlc/models/sliced/model.json': model('sliced', SLICED) });
+  const out = run(dir, ['models', 'gaps']).out;
+  assert.match(out, /missing, for the brownfield intent's # Increments:\n- I-<n>\.1 records: Query getrecord, a client reads one record\n- I-<n>\.2 records: Query listrecord, a client lists the records\n$/, out);
+});
+
+test('B247/AC-4 the example model lists its slices, and its Go reference names them as the registry composes them', async () => {
+  const { sliceFindings } = await import('../plugin/cli/extensions/stacks/index.mjs');
+  const dir = makeRepo({}, {});
+  adopt(dir);
+  assert.deepEqual(formatLines(dir), [], 'the example with its slices is in the format');
+  cpSync(join(EXAMPLE, 'reference/go'), dir, { recursive: true });
+  const profile = { system: { core: ['internal/**', 'cmd/**'] }, naming: { tokens: { system: 'cp' }, domains: { resources: {}, operations: {} } },
+    modules: [{ id: 'resources', kind: 'domain', paths: ['internal/domains/resources/**'] }, { id: 'operations', kind: 'domain', paths: ['internal/domains/operations/**'] }, { id: 'frontdoor', kind: 'runtime', paths: ['cmd/frontdoor/**'] }] };
+  assert.deepEqual(sliceFindings(dir, profile).filter((f) => f.code === 'SLICE-NAME').map((f) => f.path), [], 'createresource, deleteresource and getoperation are registry names');
+  const cp = JSON.parse(readFileSync(join(EXAMPLE, 'model.json'), 'utf8'));
+  for (const d of cp.domains) assert.ok(d.slices?.length, `${d.id} lists its slices`);
+  assert.ok(cp.extension.slices?.length, 'the extension lists the slices a provider offers');
 });

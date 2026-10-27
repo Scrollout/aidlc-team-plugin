@@ -1,27 +1,35 @@
-// Architecture models: a proven system's vertical and horizontal shape as data, shipped with the CLI or kept by a
-// project, the project's own winning (docs/design/models.md, decision 0020).
+// Architecture models: a proven system's vertical and horizontal shape as data, kept by the project that uses it
+// (docs/design/models.md, decisions 0020 and 0025).
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
-import { bundleOf, CLI_DIR, config, docSlug, done, gitLines, globRegex, isMap, list, loadProfile, msg, parseDoc, parseYaml, plug, readJson, relPath, sectionOf, templateFile, UsageError, writeJson } from '../../lib/index.mjs';
+import { bundleOf, CLI_DIR, config, docSlug, done, gitLines, globRegex, isMap, list, loadProfile, msg, nameOf, parseDoc, parseYaml, plug, readJson, registry, relPath, render, sectionOf, templateFile, UsageError, writeJson } from '../../lib/index.mjs';
 
-const M = config.models, F = config.okf.bundle.folders;
+const M = config.models, F = config.okf.bundle.folders, SL = config.slices;
 const sha16 = (text) => createHash('sha256').update(text).digest('hex').slice(0, config.text.digest);
 const folders = (dir) => (existsSync(dir) ? readdirSync(dir).filter((n) => statSync(join(dir, n)).isDirectory()).sort() : []);
 
 // Every model the project can see, by name: the plugin ships none, so they are the project's or its organisation's,
 // kept in its models folder (decision 0025).
 function modelsOf(root) {
-  const dir = join(root, config.packages.models.override);
-  return folders(dir).map((name) => ({ name, source: 'project', dir: join(dir, name) })).map((m) => ({ ...m, ...read(m) }));
+  const dir = join(root, config.packages.models.override), verbs = verbsOf(root);
+  return folders(dir).map((name) => ({ name, source: 'project', dir: join(dir, name) })).map((m) => ({ ...m, ...read(m, verbs) }));
 }
+// The verbs a slice may take: the naming registry's, with the project's own (docs/design/naming.md).
+const verbsOf = (root) => { try { return registry(loadProfile(root).profile).vocabularies.verb; } catch { return config.naming.vocabularies.verb; } };
 
-function read(m) {
+// A model domain's slices, each with the name the registry composes from its verb and the domain's noun; the model's
+// domains count as registered, since `models apply` writes their docs (docs/design/vertical-slices.md#planned-before-built).
+const slicesOf = (x) => (Array.isArray(x?.slices) ? x.slices : []);
+const named = (reg, ids) => ({ ...reg, domains: { ...Object.fromEntries(ids.map((id) => [id, {}])), ...reg.domains } });
+const sliceNames = (x, reg) => slicesOf(x).map((s) => ({ ...s, domain: x.id, name: nameOf(M.sliceKind, { domain: x.id, verb: s.verb }, reg) }));
+
+function read(m, verbs) {
   const file = join(m.dir, M.file);
   if (!existsSync(file)) return { problems: [['modelNoFile', { model: m.name, file: M.file }]] };
   try {
     const data = JSON.parse(readFileSync(file, 'utf8'));
-    return { data, problems: problems(m, data) };
+    return { data, problems: problems(m, data, verbs) };
   } catch (e) {
     return { problems: [['modelUnreadable', { model: m.name, error: e.message }]] };
   }
@@ -29,7 +37,7 @@ function read(m) {
 
 // What breaks the format: missing keys, lists that are not, ids missing or twice, unknown kinds, rule types and
 // contract ends, and decisions that are not Decision docs.
-function problems(m, d) {
+function problems(m, d, verbs) {
   const out = [], add = (key, data = {}) => out.push([key, { model: m.name, ...data }]);
   for (const key of M.required.filter((k) => d[k] === undefined || d[k] === '')) add('modelKey', { key });
   if (d.name !== undefined && d.name !== m.name) add('modelName', { name: d.name });
@@ -41,6 +49,19 @@ function problems(m, d) {
     else if (ids.has(x.id)) add('modelItemTwice', { id: x.id });
     else ids.add(x.id);
     if (x?.kind && !kinds.includes(x.kind)) add('modelKind', { id: x.id ?? '-', kind: x.kind, kinds: kinds.join(', ') });
+  }
+  // Each domain's and the extension's slices: a kind the slice checks know, a verb of the registry, a use case, and a
+  // kind and verb once per domain.
+  for (const x of [...(Array.isArray(d.domains) ? d.domains : []), { ...(d.extension ?? {}), id: M.extensionId }]) {
+    if (x.slices !== undefined && !Array.isArray(x.slices)) add('modelList', { key: `${x.id}.${M.slicesKey}` });
+    const seen = new Set();
+    for (const s of slicesOf(x)) {
+      if (!SL.kinds.includes(s?.kind)) add('modelSliceKind', { id: x.id, kind: s?.kind ?? '-', kinds: SL.kinds.join(', ') });
+      if (!list(verbs).includes(s?.verb)) add('modelSliceVerb', { id: x.id, verb: s?.verb ?? '-', verbs: list(verbs).join(', ') });
+      if (!String(s?.useCase ?? '').trim()) add('modelSliceUseCase', { id: x.id, verb: s?.verb ?? '-' });
+      if (seen.has(`${s?.kind} ${s?.verb}`)) add('modelSliceTwice', { id: x.id, kind: s?.kind ?? '-', verb: s?.verb ?? '-' });
+      seen.add(`${s?.kind} ${s?.verb}`);
+    }
   }
   for (const r of Array.isArray(d.rules) ? d.rules : []) if (!M.ruleTypes.includes(r?.type)) add('modelRule', { type: r?.type ?? '-', types: M.ruleTypes.join(', ') });
   for (const c of Array.isArray(d.contracts) ? d.contracts : []) for (const end of ['from', 'to']) if (c?.[end] !== undefined && !ids.has(c[end]) && c[end] !== M.extensionId) add('modelContract', { end, id: c[end] });
@@ -197,9 +218,31 @@ plug('planRules', (ctx) => {
 plug('modelFit', (root, sentences) => modelsOf(root).filter((m) => m.data && !m.problems.length).map((m) => ({ name: m.name, title: m.data.title,
   ids: sentences.filter((s) => list(m.data.fit?.words).some((w) => new RegExp(`\\b${w.replace(/ /g, '\\s+')}\\b`, 'i').test(s.text))).map((s) => s.id) })).filter((m) => m.ids.length));
 
-// The increments a model suggests: the walking skeleton through every layer, then each shared domain, then a first extension.
-const increments = (d) => [msg('incSkeleton', { layers: d.layers.map((l) => l.id).join(' → ') }), ...(d.domains ?? []).map((x) => msg('incDomain', { id: x.id, role: x.role ?? '' })), msg('incExtension', { declares: list(d.extension?.declares).join(', ') || '-' })]
-  .map((text, k) => msg('incLine', { k: k + 1, text })).join('');
+// The increments a model suggests, slice by slice: the walking skeleton through every layer serving the first slice,
+// then each further slice of each shared domain (a domain with none as one increment), then a first extension.
+function increments(d, reg) {
+  const shared = (d.domains ?? []).map((x) => ({ x, slices: sliceNames(x, reg) })), first = shared.flatMap((s) => s.slices)[0];
+  return [msg('incSkeleton', { layers: d.layers.map((l) => l.id).join(' → '), first: first ? [first] : [] }),
+    ...shared.flatMap(({ x, slices }) => (slices.length ? slices.filter((s) => s !== first).map((s) => msg('incSlice', s)) : [msg('incDomain', { id: x.id, role: x.role ?? '' })])),
+    msg('incExtension', { declares: list(d.extension?.declares).join(', ') || '-', slices: slicesOf(d.extension) })]
+    .map((text, k) => msg('incLine', { k: k + 1, text })).join('');
+}
+
+// A model domain's doc, when the bundle has none: the template, its # Surface one line per slice with its use case,
+// the stories left for elaboration to cite.
+function domainDocs(cwd, bundle, d, reg, out) {
+  const dir = join(bundle, F.Domain), tpl = readFileSync(templateFile(cwd, M.domainTemplate), 'utf8');
+  const surface = new RegExp(render(M.surfaceSection, { heading: SL.surface }), 'm'), slice = new RegExp(render(M.surfaceSlice, { kinds: SL.kinds.join('|') }));
+  for (const x of (d.domains ?? []).filter((y) => !Object.keys(registry({}, bundle).domains).includes(y.id))) {
+    const lines = sliceNames(x, reg).map((s) => msg('modelSurfaceLine', s)).join('');
+    const text = tpl.replace(new RegExp(M.fm.title, 'm'), msg('modelDomainTitle', x)).replace(new RegExp(M.fm.description, 'm'), msg('modelDomainDescription', { role: JSON.stringify(x.role ?? x.id) }))
+      .replace(new RegExp(M.fm.code, 'm'), msg('modelDomainCode', x)).replace(surface, (all, head, body) => `${head}${lines}${body.split('\n').filter((l) => l && !slice.test(l)).map((l) => `${l}\n`).join('')}\n`);
+    const at = join(dir, `${x.id}${config.okf.ext}`);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(at, text);
+    out.push(msg('applyDomain', { path: relPath(cwd, at), count: slicesOf(x).length }));
+  }
+}
 
 function apply(cwd, name) {
   const { profile } = loadProfile(cwd), bundle = bundleOf(cwd, profile), m = name && modelsOf(cwd).find((x) => x.name === name);
@@ -232,7 +275,9 @@ function apply(cwd, name) {
     writeFileSync(at, text.replace(/^title: .*$/m, `title: ${num} ${title}\nmodel: ${name}\ndate: ${new Date().toISOString().split('T')[0]}`)); // MADR's date: when it was last changed
     out.push(msg('applyDecision', { path: relPath(cwd, at) }));
   }
-  return done(out.join('') + msg('applyIncrements', { name }) + increments(m.data));
+  const reg = named(registry(profile, bundle), (m.data.domains ?? []).map((x) => x.id));
+  domainDocs(cwd, bundle, m.data, reg, out);
+  return done(out.join('') + msg('applyIncrements', { name }) + increments(m.data, reg));
 }
 
 // What a project's modules miss of its chosen model: each item played (modules[].layer), missing, or of another kind.
@@ -245,9 +290,13 @@ function gaps(cwd) {
     if (!by.length) missing.push(x);
     for (const mod of by) lines.push(msg(mod.kind === x.kind ? 'gapPlayed' : 'gapKind', { item: x.id, module: mod.id ?? mod.name, kind: mod.kind ?? '-', want: x.kind ?? '-' }));
   }
+  // A played domain's slices its doc does not list (docs/design/vertical-slices.md#planned-before-built).
+  const bundle = bundleOf(cwd, profile), reg = registry(profile, bundle), line = new RegExp(render(M.surfaceLine, { kinds: SL.kinds.join('|'), name: SL.name }));
+  const listed = (code) => { const file = join(bundle, F.Domain, `${code}${config.okf.ext}`), doc = existsSync(file) && parseDoc(readFileSync(file, 'utf8')); return new Set(doc ? sectionOf(doc, SL.surface).map(([n]) => doc.lines[n - 1].match(line)?.[1]).filter(Boolean) : []); };
+  const slices = (m.data.domains ?? []).flatMap((x) => mods.filter((mod) => mod.layer === x.id).flatMap((mod) => { const code = String(mod.id ?? mod.name), have = listed(code); return sliceNames({ ...x, id: code }, named(reg, [code])).filter((s) => !have.has(s.name)); }));
   if (!mods.some((mod) => mod.kind === (m.data.extension?.kind ?? 'extension'))) missing.push({ id: M.extensionId, kind: m.data.extension?.kind ?? 'extension', role: list(m.data.extension?.declares).join(', ') });
-  const plan = missing.map((x, k) => msg('incLine', { k: k + 1, text: msg('incGap', { id: x.id, kind: x.kind ?? '-', role: x.role ?? '' }) })).join('');
-  return done(msg('gapsHead', { name: m.name, played: lines.length, total: m.data.layers.length + (m.data.domains ?? []).length }) + lines.join('') + (missing.length ? msg('gapsMissing', {}) + plan : msg('gapsNone', {})));
+  const plan = [...missing.map((x) => msg('incGap', { id: x.id, kind: x.kind ?? '-', role: x.role ?? '' })), ...slices.map((s) => msg('incSlice', s))].map((text, k) => msg('incLine', { k: k + 1, text })).join('');
+  return done(msg('gapsHead', { name: m.name, played: lines.length, total: m.data.layers.length + (m.data.domains ?? []).length }) + lines.join('') + (missing.length || slices.length ? msg('gapsMissing', {}) + plan : msg('gapsNone', {})));
 }
 
 export const commands = {

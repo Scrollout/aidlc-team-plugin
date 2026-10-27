@@ -11,12 +11,12 @@
     { "id": "throttle", "kind": "pipeline", "role": "how much budget the caller has left, reported on every answer" }
   ],
   "domains": [
-    { "id": "resources", "kind": "domain", "role": "the metadata of every resource: its id, kind, scope and provider, reconciled with the provider" },
-    { "id": "operations", "kind": "domain", "role": "long-running operations: their status and their result" },
-    { "id": "deployments", "kind": "domain", "role": "templates resolved into a graph of idempotent writes, run in parallel where independent, converging by re-applying" },
-    { "id": "activity", "kind": "domain", "role": "the activity log and the events of every write, delete and action" }
+    { "id": "resources", "kind": "domain", "role": "the metadata of every resource: its id, kind, scope and provider, reconciled with the provider", "slices": [{ "kind": "Command", "verb": "create", "useCase": "a client creates or replaces a resource in its scope, its metadata recorded" }, { "kind": "Command", "verb": "delete", "useCase": "a client removes a resource, absent ones included" }, { "kind": "Query", "verb": "get", "useCase": "a client reads one resource" }, { "kind": "Query", "verb": "list", "useCase": "a client lists the resources of a scope" }] },
+    { "id": "operations", "kind": "domain", "role": "long-running operations: their status and their result", "slices": [{ "kind": "Query", "verb": "get", "useCase": "a client follows a long-running write to its status and result" }] },
+    { "id": "deployments", "kind": "domain", "role": "templates resolved into a graph of idempotent writes, run in parallel where independent, converging by re-applying", "slices": [{ "kind": "Command", "verb": "create", "useCase": "a client deploys a template, its writes converging by re-applying" }, { "kind": "Query", "verb": "get", "useCase": "a client reads where a deployment stands" }] },
+    { "id": "activity", "kind": "domain", "role": "the activity log and the events of every write, delete and action", "slices": [{ "kind": "Query", "verb": "list", "useCase": "a client reads the activity log of a scope" }] }
   ],
-  "extension": { "kind": "extension", "declares": ["namespace", "types", "longRunning"] },
+  "extension": { "kind": "extension", "declares": ["namespace", "types", "longRunning"], "slices": [{ "kind": "Command", "verb": "create", "useCase": "a client creates or replaces a resource of the provider's type" }, { "kind": "Command", "verb": "delete", "useCase": "a client removes one" }, { "kind": "Query", "verb": "get", "useCase": "a client reads one" }] },
   "contracts": [
     { "from": "frontdoor", "to": "authenticate", "via": "the request, in process" },
     { "from": "throttle", "to": "extension", "via": "the provider contract, by namespace" },

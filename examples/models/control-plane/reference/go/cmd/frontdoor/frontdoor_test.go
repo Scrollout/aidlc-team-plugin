@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	opinfra "example.com/controlplane/internal/domains/operations/infrastructure"
+	"example.com/controlplane/internal/domains/resources/application/createresource"
 	"example.com/controlplane/internal/domains/resources/application/deleteresource"
-	"example.com/controlplane/internal/domains/resources/application/putresource"
 	"example.com/controlplane/internal/domains/resources/events"
 	"example.com/controlplane/internal/domains/resources/infrastructure"
 	"example.com/controlplane/internal/pipeline/stages"
@@ -36,7 +36,7 @@ func door(t *testing.T) *httptest.Server {
 	}
 	fd := &FrontDoor{
 		Govern:    governance(authorize),
-		Put:       putresource.Handler{Resources: store, Events: quiet{}},
+		Put:       createresource.Handler{Resources: store, Events: quiet{}},
 		Delete:    deleteresource.Handler{Resources: store, Events: quietDelete{}},
 		Ops:       &opinfra.Memory{},
 		Providers: map[string]Provider{"Example.Things": {Namespace: "Example.Things", LongRunning: map[string]bool{"widgets": true}}},

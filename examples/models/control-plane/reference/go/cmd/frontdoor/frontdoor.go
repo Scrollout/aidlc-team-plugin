@@ -9,8 +9,8 @@ import (
 
 	"example.com/controlplane/internal/domains/operations/application/getoperation"
 	opmodel "example.com/controlplane/internal/domains/operations/model"
+	"example.com/controlplane/internal/domains/resources/application/createresource"
 	"example.com/controlplane/internal/domains/resources/application/deleteresource"
-	"example.com/controlplane/internal/domains/resources/application/putresource"
 	"example.com/controlplane/internal/domains/resources/model"
 	"example.com/controlplane/internal/foundation/values"
 	"example.com/controlplane/internal/pipeline/stages"
@@ -35,7 +35,7 @@ type Operations interface {
 // owns its namespace.
 type FrontDoor struct {
 	Govern    func(ctx context.Context, r *stages.Request) *stages.Refusal
-	Put       putresource.Handler
+	Put       createresource.Handler
 	Delete    deleteresource.Handler
 	Ops       Operations
 	Providers map[string]Provider
@@ -109,7 +109,7 @@ func (f *FrontDoor) Routes() *http.ServeMux {
 			fail(w, http.StatusBadRequest, v.Errors.BadResource)
 			return
 		}
-		if outcome == putresource.Created {
+		if outcome == createresource.Created {
 			w.WriteHeader(http.StatusCreated)
 		}
 		_ = json.NewEncoder(w).Encode(res)

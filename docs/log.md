@@ -5,6 +5,10 @@ title: aidlc-team-plugin docs history
 
 # Bundle history
 
+## 2026-10-28
+
+- **Update** M28 B247 built: vertical slices in models, applied to the domain docs and reported as gaps ([Vertical slices checked](design/vertical-slices.md#planned-before-built)). Release 0.187.0.
+
 ## 2026-10-27
 
 - **Creation** [M28](roadmap/m28.md) B247 and B248: vertical slices planned before they are built. A model lists its domains' slices and applies them to the domain docs, each Unit of work names the slices that serve its stories, and intake lists a fitting model's slices ([Vertical slices checked](design/vertical-slices.md#planned-before-built), [Units of work](design/units-of-work.md), [Models](design/models.md), [Intake](design/intake.md)).

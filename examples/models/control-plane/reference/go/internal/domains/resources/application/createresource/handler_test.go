@@ -1,4 +1,4 @@
-package putresource
+package createresource
 
 import (
 	"context"
