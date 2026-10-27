@@ -46,3 +46,9 @@ generated: { by: tests/diagrams.mjs }
 | `PROOF-AC` | make the reverted tree compile (keep the interfaces, revert the behaviour), or report a mutation per AC (docs: Construction by proof) |
 | `REVIEW-SECURITY` | the owner disposes of each finding: aidlc dispose <B-n> F-<k> fixed\|accepted "<reason>" [--until <date>] (docs: Construction by proof) |
 | `INCR-DONE` | release increment 1 and pass its smoke on the target first (docs: Construction by proof) |
+| `SLICE-IMPORT` | move what both slices need into the domain's model, an event or a shared domain service; a slice never imports another (docs: Vertical slices checked) |
+| `SLICE-ENTRY` | enter the slice from its domain's interface layer or from the runtime that hosts it, and only from there (docs: Vertical slices checked) |
+| `SLICE-PLACE` | put each file of a domain in one of its layers, each file of its application layer in one slice folder, and leave no folder empty (docs: Vertical slices checked) |
+| `SLICE-SURFACE` | list each slice folder under the domain doc's # Surface as - Command <slice>: <the use case it serves> [I-<n>:US<g>.<s>], or - Query, and no other (docs: Vertical slices checked) |
+| `SLICE-STORY` | cite on each slice's surface line the stories it serves, as [I-<n>:US<g>.<s>], so every story of a unit of work that changes the domain has a slice (docs: Vertical slices checked) |
+| `SLICE-TEST` | give the slice a test in its folder, or a test that imports it (docs: Vertical slices checked) |

@@ -16,8 +16,9 @@ kind: domain
 - `<table>`: <what it holds>
 
 # Surface
-- Commands: <slice>: <the business use case it serves>, one folder each
-- Queries: <slice>: <the business use case it serves>, one folder each
+- Command <slice>: <the business use case it serves> [I-<n>:US<g>.<s>]
+- Query <slice>: <the business use case it serves> [I-<n>:US<g>.<s>]
+<one line per slice, each a folder of the application layer>
 - Events: <Noun><PastTenseVerb>
 
 # Relationships

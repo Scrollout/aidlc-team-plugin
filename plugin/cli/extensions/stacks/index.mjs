@@ -2,7 +2,7 @@
 // reads from source, with no toolchain run (docs/design/stack-packs.md).
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
-import { bundleOf, config, domainForms, done, graphOf, list, loadProfile, msg, nameOf, plug, posix, registry, render, shippedDir, UsageError } from '../../lib/index.mjs';
+import { approval, bundleOf, config, domainForms, done, graphOf, list, loadProfile, methodOf, msg, nameOf, parseDoc, plug, posix, readPlan, registry, render, sectionOf, seam, shippedDir, UsageError, withDefaults } from '../../lib/index.mjs';
 
 const K = config.packs;
 const packsDir = () => shippedDir('packs');
@@ -19,15 +19,15 @@ function packFor(root) {
 }
 plug('stack', (root) => packFor(root)?.stack ?? null); // for the intake proposal
 
-// The project's source files a pack reads: its extensions, outside the skipped folders and the tests.
-function sources(root, manifest) {
+// The project's source files a pack reads: its extensions, outside the skipped folders, and the tests only when asked.
+function sources(root, manifest, tests = false) {
   const out = [], src = new RegExp(manifest.sources), test = new RegExp(K.tests);
   const walk = (dir) => {
     for (const name of readdirSync(join(root, dir))) {
       const rel = dir ? `${dir}/${name}` : name;
       if (K.skip.includes(name) || name.startsWith('.')) continue;
       if (statSync(join(root, rel)).isDirectory()) walk(rel);
-      else if (src.test(name) && !test.test(name)) out.push(rel);
+      else if (src.test(name) && test.test(name) === tests) out.push(rel);
     }
   };
   walk('');
@@ -151,6 +151,69 @@ function selftestFindings(root, profile) {
 
 // Event types speak the grammar; a project's graph sees what its pack sees (docs/design/stack-packs.md).
 const events = (root, profile) => eventFindings(root, profile).map(([path, key, data]) => ({ code: 'CONTRACT-NAME', path, key, data }));
+// Vertical slices across a domain's layers: each slice is a folder of the application layer, met by no other slice,
+// entered from its domain's interface layer or a runtime, listed with its use case and stories in the domain doc, and
+// tested (docs/design/vertical-slices.md). Returns [{ code, path, key, data }].
+const V = config.slices;
+export function sliceFindings(root, profile) {
+  const pack = packFor(root);
+  if (!pack) return [];
+  const m = pack.manifest, L = m.layers, out = [], add = (code, path, key, data) => out.push({ code, path, key, data });
+  const files = sources(root, m), tests = sources(root, m, true), edges = importEdges(root, m, files), testEdges = importEdges(root, m, tests);
+  const entryLayers = V.entryLayers.map((l) => L[l]), hosts = V.entryKinds.map((k) => m.folders[k].split('{{')[0]);
+  const placed = [...Object.values(L), ...Object.values(m.surfaces)];
+  // Each intent's stories and the modules of their units of work, from the elaboration checks' seam.
+  const bundle = bundleOf(root, withDefaults(profile)), plan = readPlan(bundle), held = new Set(), owed = new Map();
+  for (const i of plan.intents) {
+    const due = approval(i.doc) !== 'draft' && methodOf(i) >= config.method.since.unitsOfWork;
+    for (const s of seam('intentStories', profile).flatMap((f) => f(i))) {
+      held.add(`${i.id}:${s.story}`);
+      if (due) for (const mod of s.modules) owed.set(`${mod} ${i.id}:${s.story}`, i.id);
+    }
+  }
+  const slices = [];
+  for (const d of (profile.modules ?? []).filter((x) => x.kind === 'domain').map((x) => String(x.id ?? x.name))) {
+    const dir = render(m.folders.domain, { domain: d }), app = `${dir}/${L.application}`;
+    if (!existsSync(join(root, dir))) continue;
+    const mine = [...files, ...tests].filter((f) => f.startsWith(`${dir}/`));
+    for (const f of mine.filter((f) => !placed.includes(f.slice(dir.length + 1).split('/')[0]))) add('SLICE-PLACE', f, 'slicePlace', { file: f, domain: d, layers: placed.join(', ') });
+    for (const f of mine.filter((f) => dirname(f) === app)) add('SLICE-PLACE', f, 'sliceLoose', { file: f, application: app });
+    const folders = existsSync(join(root, app)) ? readdirSync(join(root, app)).filter((n) => statSync(join(root, app, n)).isDirectory()) : [];
+    for (const name of folders) slices.push({ domain: d, name, dir: `${app}/${name}`, root: dir });
+    for (const folder of [...folders.map((n) => `${app}/${n}`), ...Object.values(L).map((l) => `${dir}/${l}`).filter((p) => existsSync(join(root, p)))]) if (!files.some((f) => f.startsWith(`${folder}/`))) add('SLICE-PLACE', folder, 'sliceEmpty', { folder });
+    const doc = join(bundle, config.okf.bundle.folders.Domain, `${d}${config.okf.ext}`);
+    if (!existsSync(doc)) continue;
+    const line = new RegExp(`^\\s*[-*]\\s+(?:${V.kinds.join('|')})\\s+(${V.name}):\\s*(.*)$`), rel = posix(relative(root, doc));
+    const listed = sectionOf(parseDoc(readFileSync(doc, 'utf8')), V.surface).map(([, t]) => t.match(line)).filter(Boolean);
+    for (const name of folders.filter((n) => !listed.some((l) => l[1] === n))) add('SLICE-SURFACE', rel, 'sliceSurface', { domain: d, slice: name, where: msg('sliceSurfaceFolder', {}) });
+    for (const [, name, text] of listed) {
+      const cited = [...text.matchAll(new RegExp(V.story, 'g'))].map((x) => x[0]), useCase = text.replace(/\[[^\]]*\]/g, '').trim();
+      if (!folders.includes(name)) add('SLICE-SURFACE', rel, 'sliceSurface', { domain: d, slice: name, where: msg('sliceSurfaceDoc', {}) });
+      if (!useCase) add('SLICE-SURFACE', rel, 'sliceUseCase', { domain: d, slice: name, text });
+      if (!cited.length) add('SLICE-STORY', rel, 'sliceNoStory', { domain: d, slice: name });
+      for (const story of cited.filter((s) => !held.has(s))) add('SLICE-STORY', rel, 'sliceBadStory', { domain: d, slice: name, story });
+    }
+    const covered = new Set(listed.flatMap(([, , t]) => [...t.matchAll(new RegExp(V.story, 'g'))].map((x) => x[0])));
+    for (const [key, intent] of owed) { const [mod, story] = key.split(' '); if (mod === d && !covered.has(story)) add('SLICE-STORY', rel, 'sliceUncovered', { domain: d, story, intent }); }
+  }
+  const sliceOf = (p) => slices.find((s) => p === s.dir || p.startsWith(`${s.dir}/`));
+  const entry = (from, s) => entryLayers.some((l) => from === `${s.root}/${l}` || from.startsWith(`${s.root}/${l}/`)) || hosts.some((h) => from.startsWith(h));
+  for (const [from, to] of edges) {
+    const a = sliceOf(from), b = sliceOf(to);
+    if (!b || a === b) continue;
+    if (a) add('SLICE-IMPORT', from, 'sliceImport', { from: `${a.domain}/${a.name}`, to: `${b.domain}/${b.name}` });
+    else if (!entry(from, b)) add('SLICE-ENTRY', from, 'sliceEntry', { from, slice: `${b.domain}/${b.name}`, layers: V.entryLayers.join(', '), kinds: V.entryKinds.join(', ') });
+  }
+  for (const s of slices) {
+    if (!edges.some(([from, to]) => sliceOf(to) === s && entry(from, s))) add('SLICE-ENTRY', s.dir, 'sliceUnreached', { slice: `${s.domain}/${s.name}`, layers: V.entryLayers.join(', '), kinds: V.entryKinds.join(', ') });
+    if (!tests.some((t) => t.startsWith(`${s.dir}/`)) && !testEdges.some(([, to]) => sliceOf(to) === s)) add('SLICE-TEST', s.dir, 'sliceTest', { slice: `${s.domain}/${s.name}` });
+  }
+  return out;
+}
+// At the gate, a project's existing code is measured as it changes: only findings where the bolt changed a file count.
+const touched = (paths) => (f) => paths.some((p) => p === f.path || p.startsWith(`${f.path}/`));
+plug('gateChecks', (tree, profile, paths = []) => sliceFindings(tree, profile).filter(touched(paths)));
+
 plug('docChecks', (root, profile) => [...events(root, profile), ...selftestFindings(root, profile).map(([key, data]) => ({ code: 'GRAPH-SELFTEST', key, data }))]);
 plug('gateChecks', events);
 plug('proofPatterns', (root) => packFor(root)?.manifest.compileError);

@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M27 B245 built: [Vertical slices checked](design/vertical-slices.md), B245's part built; six `SLICE-*` checks run at the merge gate on what a bolt changes. Release 0.177.0.
 - **Creation** [Vertical slices checked](design/vertical-slices.md), draft, and [M27](roadmap/m27.md) B245 and B246: deterministic checks that code is grouped into vertical slices across horizontal layers, from the import graph, the folders, the domain doc's surface, the stories and the tests.
 - **Creation** [Units of work](design/units-of-work.md): method 11 gives each intent its units of work as the method's Mob Elaboration and Units Generation do, checked by `UNIT-WORK`; B243 built, [M27](roadmap/m27.md) done. Release 0.176.0.
 - **Creation** [0024 Vertical slices are features, horizontal layers are technical concerns](decisions/0024-vertical-slices-are-features-horizontal-layers.md), superseding 0023: a vertical slice is one business feature or use case cutting through the horizontal layers, a horizontal layer one technical concern shared by every feature; B244 built in [M27](roadmap/m27.md), whose B243 now gives each intent its Units as the method's Mob Elaboration does ([Canonical model](design/canonical-model.md), [Architecture model](design/architecture-model.md), [Models](design/models.md), [Stack packs](design/stack-packs.md)). Release 0.175.0.

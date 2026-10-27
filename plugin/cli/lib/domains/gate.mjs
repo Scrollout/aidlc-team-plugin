@@ -274,7 +274,7 @@ function runGate(cwd, st, unit) {
     out.push(finding('GATE-OKF', f.path, f.line, 'gateOkf', f));
   }
   // The published API on the merged tree speaks the grammar of decision 0014 (docs/design/naming.md#checks).
-  for (const f of seam('gateChecks', p).flatMap((check) => check(tree, p))) out.push(finding(f.code, f.path, 1, f.key, f.data)); // the extensions' checks on the merge result
+  for (const f of seam('gateChecks', p).flatMap((check) => check(tree, p, paths))) out.push(finding(f.code, f.path, 1, f.key, f.data)); // the extensions' checks on the merge result
   return { findings: out, tree, tested: tested.map(([level]) => level), proof, card };
 }
 

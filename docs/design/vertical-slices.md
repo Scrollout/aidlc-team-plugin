@@ -11,21 +11,21 @@ A vertical slice is the code of one business feature or use case ([0024](../deci
 
 # What a slice is, as data
 - The stack pack's `layers` name the folders of a domain's horizontal layers, and its `scaffold.slice` the slice folder: `<domain>/<application>/<slice>/`.
-- The domain doc's `# Surface` lists each slice: `- Commands: <slice>: <the use case it serves> [I-<n>:US<g>.<s>]`. The story citation names the intent, since story ids are an intent's own.
+- The domain doc's `# Surface` lists each slice on its own line: `- Command <slice>: <the use case it serves> [I-<n>:US<g>.<s>]`, or `- Query`. The story citation names the intent, since story ids are an intent's own.
 - The patterns, the folder names and the allowed shared folders are data in the pack and the extension; nothing is spelled in code ([Values as data](values.md)).
 
 # Checks
-Each is static, reads the graph the pack already builds, and fails on an empty match.
+Each is static and reads the graph the pack already builds; which layers may enter a slice is data in the extension.
 - `SLICE-IMPORT`: a file of one slice imports a file of another slice of any domain.
-- `SLICE-ENTRY`: a slice is imported from outside its domain's `interface` layer or a declared event consumer, or from nowhere.
+- `SLICE-ENTRY`: a slice is imported from outside its domain's `interface` layer or a runtime that hosts it, or from nowhere.
 - `SLICE-PLACE`: a file of a layered domain sits in no declared layer, a file under `application` in no slice, or a declared layer or slice folder is empty.
 - `SLICE-SURFACE`: the slice folders and the domain doc's commands and queries are not the same set, or a surface line names no use case.
 - `SLICE-STORY`: a surface line cites no story, or one no intent holds; a story of an approved intent's unit of work that changes the domain is cited by no slice.
-- `SLICE-TEST`: no test file imports the slice's entry.
+- `SLICE-TEST`: no test sits in the slice's folder and none imports it.
 
 Later, in their own bolt: a slice name that is not a verb and a noun from the naming registry; every route mapped to exactly one slice through a unique operation id equal to its name; a bolt that adds a slice also adding its route, its test and its surface line.
 
-# Adoption
-A project's existing violations are frozen when it adopts the checks, as architecture boundaries are, so only new ones are reported ([Architecture model](architecture-model.md)).
+# Where they run
+At the merge gate, on the merge result. A project's existing code is measured as it changes: a finding counts only where the bolt changed a file, the slice folder or the domain doc it names, so debt from before adoption waits for the bolt that touches it.
 
 Bolts: [M27](../roadmap/m27.md) B245, B246.

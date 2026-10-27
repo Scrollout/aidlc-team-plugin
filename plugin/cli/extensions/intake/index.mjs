@@ -266,4 +266,11 @@ function unitsOfWork(i, profile, bolts, add) {
   for (const b of bolts) { const out = list(b.fm.modules).filter((m) => !covered.has(m)); if (out.length) add('UNIT-WORK', i, units[0].n, 'boltNoUnit', { bolt: b.id, modules: out.join(', ') }); }
 }
 
+// An intent's stories with the modules of the units of work that hold them, for the slice checks.
+plug('intentStories', (i) => {
+  const units = unitBlocks(i.doc), of = (u) => u.parts[U.parts.modules.toLowerCase()];
+  return linesOf(i.doc, K.claims.stories).map(([, t]) => t.match(new RegExp(`^\\s*[-*]\\s+(${U.story})\\s`))?.[1]).filter(Boolean)
+    .map((story) => ({ story, modules: units.filter((u) => idsOf(u.parts[U.parts.stories.toLowerCase()], U.story).includes(story)).flatMap((u) => namesIn(of(u))) }));
+});
+
 plug('planRules', lintSources);
