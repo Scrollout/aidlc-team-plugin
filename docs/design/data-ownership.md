@@ -7,7 +7,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T21:00:00Z }
 ---
 
 # Why
-Import boundaries ([Requirements and architecture checks](architecture.md)) stop one module from importing another's code, but two modules can still query the same table without importing each other. Then a schema change in one breaks the other, and the slices are no longer independent. The owner's rule from the first migration (2026-10-24): one slice never calls another slice's database layer directly; slices talk through well-defined interfaces, events or shared domain services.
+Import boundaries ([Requirements and architecture checks](architecture.md)) stop one module from importing another's code, but two modules can still query the same table without importing each other. Then a schema change in one breaks the other, and the slices are no longer independent. The rule: one slice never calls another slice's database layer directly; slices talk through well-defined interfaces, events or shared domain services.
 
 # Shape
 ```json

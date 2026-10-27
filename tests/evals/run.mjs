@@ -124,7 +124,7 @@ export function score(dir) {
 
 // Found or missed for the back-fill units: the reviewer sends U-3 back over its edge-only mutation; U-4's builder
 // lists one mutation per AC with `breaks` and the merge carries `Proof: mutation`. `mutations` lists U-4's
-// reported mutations word for word, for the pilot report to judge.
+// reported mutations word for word, for the trial report to judge.
 export function scoreBackfill(dir) {
   const read = reader(dir);
   const u3 = firstGeneral(read, BACKFILL_DEFECT.unit);

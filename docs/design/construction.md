@@ -7,7 +7,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T10:30:00Z }
 ---
 
 # Why
-On `resource-manager` a requirement counted as delivered with no image built, the skeleton counted as done before it ran on dev, fix bolts carried a feature and a design change, and a provider-takeover finding merged as "plausible". Every figure the plugin shows must be a proof, and every escape hatch visible ([Increments and bolts](increments-and-bolts.md)).
+A figure the plugin shows can lie: a requirement counted as delivered with no image built, a skeleton counted as done before it ran on dev, a fix bolt carrying a feature and a design change, a security finding merged as "plausible". Every figure the plugin shows must be a proof, and every escape hatch visible ([Increments and bolts](increments-and-bolts.md)).
 
 These rules hold in a v2 project (its profile has `system`). The plan rules judge an intent approved under method 4 (`method.since`), and a bolt or fix bolt not yet approved, so earlier work keeps its rules.
 

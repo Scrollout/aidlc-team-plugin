@@ -7,7 +7,7 @@ generated: { by: claude-code/claude-fable-5-1, at: 2026-10-26T11:30:00Z }
 ---
 
 # Why one page
-The checks are spread over the plan lint, the hooks, the gate and the deploy steps, each in its own doc. This page lists them in the order a bolt meets them, so a lead reading a refusal, or an owner asking what stops bad work, sees the whole line. Every stage is deterministic: it reads docs, git and the profile, never the prose's meaning (owner, 2026-10-26).
+The checks are spread over the plan lint, the hooks, the gate and the deploy steps, each in its own doc. This page lists them in the order a bolt meets them, so a lead reading a refusal, or an owner asking what stops bad work, sees the whole line. Every stage is deterministic: it reads docs, git and the profile, never the prose's meaning.
 
 # Before work reaches a builder
 | # | Stage | Enforced by | Codes |

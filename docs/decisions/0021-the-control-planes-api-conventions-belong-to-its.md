@@ -17,7 +17,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T22:00:00Z }
 Decision 0014 shipped one control plane's API conventions as the default grammar of every project that opts into naming. The plugin must work for any project, and a proven shape now lives in an architecture model ([0020](0020-architecture-models-are-data.md)). Which part of the grammar is the plugin's, and which is the control plane's?
 
 ## Decision Drivers
-* The plugin works for any project: no one system's shape in its defaults (the owner, 2026-10-27).
+* The plugin works for any project: no one system's shape in its defaults.
 * A project that chose the control-plane model keeps every rule it had.
 
 ## Considered Options
@@ -25,7 +25,7 @@ Decision 0014 shipped one control plane's API conventions as the default grammar
 * Leave decision 0014's defaults as they are.
 
 ## Decision Outcome
-Chosen option: "Split", the owner's choice on 2026-10-27.
+Chosen option: "Split", because the generic rules then serve every project and the control plane's shape applies only where its model is chosen.
 * **The plugin's grammar:** a dated `info.version`, camelCase path segments, full parameter names ending in `Name` or `Id`, an even segment count on a PUT path, `Noun_Verb` operation ids, lowerCamel properties, no `is` booleans, PascalCase enums.
 * **The control-plane model's `contract`:** the scope segments, the `providers` segment and its dotted PascalCase namespace, the resource envelope that carries `systemData`, and lists of `value` with `nextLink`. The contracts check reads them from the chosen model.
 

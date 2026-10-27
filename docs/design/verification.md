@@ -50,7 +50,7 @@ How a review runs, and why there is no separate architecture focus: [Skill and a
 # Prompt evals
 Prompts are code coupled to a model version. `tests/evals/` holds a fixture project with seeded defects (an AC without a real test, an out-of-scope edit, an injection, a missing authz check, a back-fill mutation that breaks only an edge of its AC). The reviewer must find each one; the builder must stop on the interface-change fixture, and on a back-fill bolt list one mutation per AC with `breaks` and merge with `Proof: mutation`. Run before every release and on every model change; a miss blocks the release.
 
-`node tests/evals/run.mjs setup <dir>` creates the fixture; after the reviewer and builder have run on it, `node tests/evals/run.mjs score <dir>` lists each seeded defect as found or missed. Results go to the pilot report.
+`node tests/evals/run.mjs setup <dir>` creates the fixture; after the reviewer and builder have run on it, `node tests/evals/run.mjs score <dir>` lists each seeded defect as found or missed. Results go to the [Lessons](../lessons/lessons.md).
 
 # Later
 - Later: an optional CI evaluator agent on pushes.

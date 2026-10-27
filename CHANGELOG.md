@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.172.2] - 2026-10-27
+### Changed
+- The project constitution's rule 9 states in plain terms that a domain never reaches into another domain's database and that domains communicate through their published interfaces, events or shared domain services.
+- Code comments state each rule's reason in general terms.
+- The control-plane model no longer lists a product name among its fit words.
+
 ## [0.172.1] - 2026-10-27
 ### Fixed
 - Windows: the Agent hook still took 520-600 ms, over its 500 ms budget. It spawned git nine times; it now spawns it twice. The git common dir is asked once per folder in a process, and the card's freshness key reads the base and the bolt's branch from the repository's own files (`branchSha`).
@@ -110,9 +116,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [0.154.0] - 2026-10-27
 ### Changed
-- The pilot reports are condensed into one lessons page, each lesson naming the rule that holds it.
+- The run reports are condensed into one lessons page, each lesson naming the rule that holds it.
 ### Removed
-- The sixteen pilot reports and intervention logs.
+- The sixteen run reports and intervention logs.
 
 ## [0.153.0] - 2026-10-27
 ### Removed
@@ -266,7 +272,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.172.1...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.172.2...HEAD
+[0.172.2]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.172.1...v0.172.2
 [0.172.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.172.0...v0.172.1
 [0.172.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.171.0...v0.172.0
 [0.171.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.170.0...v0.171.0

@@ -54,7 +54,7 @@ test('B171/AC-1 aidlc scaffold writes each kind at its folder with names from th
   assert.match(run(dir, ['scaffold', 'runtime', 'shop-ingress-gateway']).out, /^wrote cmd\/shop-ingress-gateway\/main\.go$/m);
   assert.match(run(dir, ['scaffold', 'domain', 'roleassignments']).out, /^kept internal\/domains\/roleassignments\/model\/roleassignment\.go: it exists$/m);
   assert.match(run(dir, ['scaffold', 'foundation', 'store']).err, /kit store is not in the registry/);
-  assert.match(run(dir, ['scaffold', 'runtime', 'resource-manager-frontdoor']).err, /is not in the registry/);
+  assert.match(run(dir, ['scaffold', 'runtime', 'storefront-frontdoor']).err, /is not in the registry/);
   assert.match(run(makeRepo(I1, {}), ['scaffold', 'domain', 'x']).err, /no stack pack fits this project/);
 });
 

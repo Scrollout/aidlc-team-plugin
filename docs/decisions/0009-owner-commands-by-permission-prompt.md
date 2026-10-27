@@ -3,6 +3,8 @@ type: Decision
 title: 0009 Owner commands by permission prompt
 description: The owner runs owner commands (approve, upgrade, delegate, mode, release, rollback) by answering a yes/no permission prompt that the guard raises when the lead runs them, so they work from the mobile app and the web, where ! commands do not run.
 status: accepted
+decision-makers: the owner
+date: 2026-10-22
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T13:01:46Z }
 sources:
   - id: cc-rc
@@ -24,7 +26,7 @@ Owner commands (`approve`, `upgrade`, writing the delegation setting) were `!` c
 3. **The guard answers `ask` for the owner commands**: Claude Code shows the owner a permission prompt for that exact command, and only the owner can allow it.
 
 ## Decision Outcome
-Option 3, asked for by the owner on 2026-10-22.
+Option 3.
 - The owner commands are those in `cli.json` `hooks.owner`:
   - `approve` (without `--auto`) stamps docs as the owner's;
   - `upgrade` replaces the vendored CLI;
@@ -36,7 +38,7 @@ Option 3, asked for by the owner on 2026-10-22.
 - A hook's `ask` forces a prompt even in auto mode; the classifier can deny but never approve silently.[^cc-hooks] Remote Control keeps permission prompts open until they are answered, and can push a notification for them.[^cc-rc]
 - In `bypassPermissions` mode no prompt is guaranteed, so the guard still denies there; the owner uses `!` in a terminal.
 - The stamp stays `human:<git user.email>`: the owner's answer is the approval. `!` keeps working.
-- Auto mode's classifier may still refuse a command it reads as self-modification, as it did once for `upgrade`; then the owner uses `!` in a terminal.
+- Auto mode's classifier may still refuse a command it reads as self-modification, such as `upgrade`; then the owner uses `!` in a terminal.
 
 Principle 5 needs the decision to be the owner's, not a particular keyboard. A permission prompt is answered only by a person and works on every surface; a chat answer the lead relays is not enforced.
 

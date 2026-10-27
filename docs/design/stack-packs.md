@@ -7,7 +7,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T05:00:00Z }
 ---
 
 # Why
-On `resource-manager` the dependency graph was a command the AI wrote in the first unit: it read error-message prose as table names, and the reviewer's finding was never fixed. The layout was the builder's choice, and the method's launch talk warns that AI does domain-driven design badly in Go, advising to point it at reference code instead of describing it ([Architecture model](architecture-model.md)).
+A dependency graph the AI writes in the first unit can read error-message prose as table names, and a reviewer's finding against it can go unfixed. Left to the builder, the layout is improvised, and the method's launch talk warns that AI does domain-driven design badly in Go, advising to point it at reference code instead of describing it ([Architecture model](architecture-model.md)).
 
 # A pack
 `plugin/packs/<stack>/` holds data, not code:

@@ -128,7 +128,7 @@ test('U84/AC-3 a unit waiting on a dependency is Todo, not On hold', () => {
 });
 
 test('U11/AC-1 board.issue links an existing issue; a held unit is On hold; board fields never stale an approval', () => {
-  const old = { number: 7, id: 1007, node_id: 'I_7', title: 'K2: currency', body: 'from another tool', state: 'open', labels: ['task'], parent: null };
+  const old = { number: 7, id: 1007, node_id: 'I_7', title: 'K2: currency', body: 'written by hand', state: 'open', labels: ['task'], parent: null };
   const ctx = setup({ issues: [old], u2: 'board: { issue: 7 }\nhold: true' });
   approve(ctx.dir, 'U-2');
   write(ctx.dir, { [U(2)]: read(ctx.dir, U(2)).replace('board: { issue: 7 }', 'board: { issue: 7, effort: L }') });

@@ -11,7 +11,7 @@ Nothing that matters lives only in the conversation; all below is on disk before
 | Could be lost | Where it lives instead |
 |---|---|
 | Owner's answers during elaboration | the draft intent/bolt doc: the lead writes each answer before asking the next question; open ones stay under `## Open questions` |
-| Owner instructions about the plan ("hold B-4", "B-2 first") | plan fields set by `aidlc hold`, `aidlc priority` |
+| Owner instructions about the plan (hold B-4, B-2 first) | plan fields set by `aidlc hold`, `aidlc priority` |
 | Owner run mode (unattended, a stopping point, where to report) | `run` in the personal profile, set by the owner command `aidlc mode`; `status` shows it |
 | Builder's work | WIP commits on `bolt/B-<n>` after each passing test |
 | Builder's report | `.git/aidlc/reports/B-<n>.json`, written by the builder's `aidlc report B-<n>` |
@@ -28,4 +28,4 @@ On resume (SessionStart `startup`, `resume`, `clear`, `compact`, `fork`; the hoo
 Result: after a clear, `next` returns the same action it would have returned before, with no duplicate builder and no lost work.
 
 # Between intents
-When every intent is released and nothing is in flight, `next` and `status` ask the owner to clear the lead's session (`/clear`) before the next intent. A finished intent's conversation costs tokens on every later turn: the lead's session was 94 % of a re-pilot's tokens in M2, and the owner cleared the pilot lead at 40 % after the third M4 pilot. The status hook brings back what the next intent needs, and `/clear` resumes passed in every pilot. The hook also records the clear (SessionStart `source: clear`) in `.git/aidlc/cleared`; once one is newer than the last merge on the base, `next` asks to elaborate the next intent instead of asking for the clear again (M5 pilot 1).
+When every intent is released and nothing is in flight, `next` and `status` ask the owner to clear the lead's session (`/clear`) before the next intent. A finished intent's conversation costs tokens on every later turn, and the lead's session is most of a run's tokens. The status hook brings back what the next intent needs, so a `/clear` loses nothing. The hook also records the clear (SessionStart `source: clear`) in `.git/aidlc/cleared`; once one is newer than the last merge on the base, `next` asks to elaborate the next intent instead of asking for the clear again.

@@ -342,7 +342,7 @@ test('U89/AC-1 check on a unit file shows a slice finding on its intent, and app
   const { approve, commit, intentDoc, makeRepo, read, run, unitDoc, write } = await import('./state-repo.mjs');
   const U = 'docs/units/U-1-a.md';
   const dir = makeRepo({ 'docs/intents/I-1-a.md': intentDoc('I-1') }, { levels: { unit: { run: 'u' }, e2e: { run: 'e' } } });
-  approve(dir, 'I-1'); // approved before its units, as in the first migration
+  approve(dir, 'I-1'); // approved before its units, as a migration does
   commit(dir, 'plan U-1', { [U]: unitDoc({ scope: ['src/**'], acs: ['- AC-1 (unit): adds.'] }) });
   const r = run(dir, ['check', U]);
   assert.equal(r.code, 1, r.out);

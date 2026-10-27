@@ -16,7 +16,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T15:00:00Z }
 A request often comes from someone who is not an engineer, in plain prose. Turning that into requirements, stories, domains and decisions takes a product analyst's and an architect's craft. The skill alone does not carry it, and the overview listed "PM/tech-lead/architect personas" among the non-goals. Should the lead take on such roles while it elaborates?
 
 ## Decision Drivers
-* Plain prose from anyone must become good requirements (the owner, 2026-10-27).
+* Plain prose from anyone must become good requirements.
 * The owner stays in the loop: elaboration is a conversation, not a hand-off.
 * Small prompts and the CLI's checks stay the guarantee (decision 0013).
 

@@ -7,7 +7,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-25T19:00:00Z }
 ---
 
 # Why
-The owner made it a permanent rule of the method (2026-10-25), asking whether projects should use "some form of internal managed identity, service principal, federated credentials as a method of authn/authz between components, services, data". A static secret between components is shared by everything that can read it, outlives the runtime that holds it, and lets one domain reach another's data whatever the code says; the first migration's dev database trusted every pod as a superuser.
+Components, services and data authenticate to each other by a managed workload identity or federated credentials, a permanent rule of the method. A static secret between components is shared by everything that can read it, outlives the runtime that holds it, and lets one domain reach another's data whatever the code says; a database that trusts every pod as a superuser is the result.
 
 # Rule
 - Each runtime and domain has its own workload identity: a cluster service account with a projected token, a cloud managed identity, a workload ID from an identity issuer.

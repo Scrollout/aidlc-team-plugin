@@ -7,7 +7,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T21:40:00Z }
 ---
 
 # Why
-A domain owns its data ([Data ownership](data-ownership.md)) and also its code: another module calls it through a public interface, never its internals, and two modules that depend on each other in a circle are no longer separate. Both are the rest of the hybrid of domains with layers inside each that the owner asked for on the first migration (2026-10-24). Layers inside a domain need no new rule: once a domain keeps its layers in their own folders (e.g. `api/`, `app/`, `domain/`, `store/`), [boundaries](architecture.md#architecture-rules) with a `*` per domain deny the wrong direction, e.g. `{ "from": "internal/*/domain/**", "deny": ["internal/*/store/**", "internal/*/api/**"] }`.
+A domain owns its data ([Data ownership](data-ownership.md)) and also its code: another module calls it through a public interface, never its internals, and two modules that depend on each other in a circle are no longer separate. Both complete the hybrid of domains with layers inside each. Layers inside a domain need no new rule: once a domain keeps its layers in their own folders (e.g. `api/`, `app/`, `domain/`, `store/`), [boundaries](architecture.md#architecture-rules) with a `*` per domain deny the wrong direction, e.g. `{ "from": "internal/*/domain/**", "deny": ["internal/*/store/**", "internal/*/api/**"] }`.
 
 # Public surface
 ```json

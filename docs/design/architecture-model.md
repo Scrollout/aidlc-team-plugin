@@ -7,12 +7,12 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T00:40:00Z }
 ---
 
 # Why
-On `resource-manager` the profile could say only "module with layers":
-- The map drew `toolchain` and `deploy` as vertical modules beside the domains.
-- Nothing kept the layers pointing inward.
-- The front door linked the registry's internals through a package that held both its client and server, and every check passed.
+A profile that can say only "module with layers" lets the shape go wrong while every check passes:
+- The map draws tooling and deployment as vertical modules beside the domains.
+- Nothing keeps the layers pointing inward.
+- One module reaches another's internals through a package that holds both its client and server.
 
-The core-versus-provider shape was the reason the project exists, yet it had nowhere to be declared ([0013](../decisions/0013-a-deterministic-ai-dlc.md)).
+A core-versus-provider shape, often the reason a system exists, has nowhere to be declared ([0013](../decisions/0013-a-deterministic-ai-dlc.md)).
 
 # Profile
 ```json

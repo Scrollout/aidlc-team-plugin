@@ -46,6 +46,6 @@ B152 removed the section, the `Spec:` line, `plan.sliceUnits` and `slices.md`, k
 - `U-<n>` and `units/` are read as aliases of bolts: cards, gates and history keep working.
 - In a v2 project (its profile has `system`), a doc under `units/` that no v1 plan approved is `PLAN-BOLT`.
 - Old test tags `U-<n>/AC-<k>` still count for their bolt.
-- The aliases expire one milestone after the last pilot migrates (M21): the pilots run last, so `grid.legacyUntil` names M25, and a test fails once it is built with the aliases still there.
+- The aliases expire one milestone after the last existing project migrates (M21): the migrations run last, so `grid.legacyUntil` names M25, and a test fails once it is built with the aliases still there.
 
 Bolts: [M15](../roadmap/m15.md) B152, B153; [M19](../roadmap/m19.md) B182 (binding), B186 (`INCR-SKELETON`, `INCR-DONE`), B188 (`FIX-SHAPE`).

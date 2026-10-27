@@ -287,7 +287,7 @@ export function nextAction(st) {
 
 // A question the lead held for research (decision 0010) and the questions the bundle's research docs answer.
 export const researchOf = (doc) => (typeof doc.fm.hold === 'string' && doc.fm.hold.startsWith(S.researchHold) ? doc.fm.hold.slice(S.researchHold.length).trim() : null);
-// The other docs a research question can be held on: decisions by number, any other doc by its name (second project).
+// The other docs a research question can be held on: decisions by number, any other doc by its name.
 const bundleHeld = (bundle) => (existsSync(bundle) ? readdirSync(bundle, { recursive: true }).map(String) : [])
   .filter((f) => f.endsWith(config.okf.ext) && ![config.okf.index, config.okf.log].includes(basename(f)))
   .map((f) => ({ f, fm: parseDoc(readFileSync(join(bundle, f), 'utf8')).fm ?? {} }))

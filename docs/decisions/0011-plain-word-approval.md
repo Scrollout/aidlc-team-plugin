@@ -3,6 +3,8 @@ type: Decision
 title: 0011 Plain-word approval
 description: The owner approves by typing exactly approve <doc>… as a prompt; a UserPromptSubmit hook stamps the docs before the lead sees the prompt, so approving needs no ! command, no path and no prompt the lead must raise.
 status: superseded by ADR-0015
+decision-makers: the owner
+date: 2026-10-23
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T11:20:00Z }
 sources:
   - id: cc-hooks
@@ -13,7 +15,7 @@ sources:
 # Plain-word approval
 
 ## Context and Problem Statement
-In the [M2 re-pilot](../pilot/lessons.md) an escalation reached the owner with no command named, and the lead offered `! node .aidlc/bin/aidlc.mjs approve U-22`. The owner drives the pilot from the mobile app, where `!` does not run; the permission prompt of [0009](0009-owner-commands-by-permission-prompt.md) works there, but only once the lead runs the command, and the owner has to read a script path to approve.
+An escalation can reach the owner with no command named, or with `! node .aidlc/bin/aidlc.mjs approve U-22` to type ([Lessons](../lessons/lessons.md)). An owner on the mobile app cannot run `!`; the permission prompt of [0009](0009-owner-commands-by-permission-prompt.md) works there, but only once the lead runs the command, and the owner has to read a script path to approve.
 
 ## Considered Options
 1. Keep 0009 only, and make every message name the prompt path.
@@ -21,7 +23,7 @@ In the [M2 re-pilot](../pilot/lessons.md) an escalation reached the owner with n
 3. A plugin slash command (`/approve U-22`): its shell step goes through the permission system and the guard, so it is the lead's tool call again.
 
 ## Decision Outcome
-Option 2, chosen by the owner on 2026-10-23. 0009 stays for the other owner commands and as a second path.
+Option 2. 0009 stays for the other owner commands and as a second path.
 - The hook reads the `prompt` field and acts only when the whole prompt, trimmed, is `approve` followed by doc ids or paths. Pasted text arrives wrapped in its own lines and a message from another session arrives wrapped too, so neither matches.[^cc-hooks]
 - It runs `approve` as the owner, `human:<git user.email>`, and passes the prompt on with `additionalContext` naming what it stamped, or the error. The lead commits the stamps and continues with `next`; it never runs `approve` for that prompt.[^cc-hooks]
 - UserPromptSubmit also fires for a session-scoped scheduled task or loop.[^cc-hooks] The guard therefore denies a `CronCreate` or `ScheduleWakeup` whose prompt matches, so the lead cannot schedule its own approval.

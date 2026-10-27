@@ -7,12 +7,12 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T00:40:00Z }
 ---
 
 # Why
-On `resource-manager` (2026-10-26) the bundle drifted in five ways:
-- Hand-drawn architecture pages disagreed with the generated map.
-- Three decisions were amended in place to match the code.
-- Indexes were stale on main.
-- Slugs were cut mid-word.
-- Relations lived only in prose links.
+A bundle drifts in five ways:
+- Hand-drawn architecture pages disagree with the generated map.
+- Decisions are amended in place to match the code.
+- Indexes go stale on main.
+- Slugs are cut mid-word.
+- Relations live only in prose links.
 
 Every agent reads the bundle before it acts, so it must be true. OKF v0.2 conformance stays as it is ([OKF](okf.md)). v2 adds producer keys and house rules only.
 

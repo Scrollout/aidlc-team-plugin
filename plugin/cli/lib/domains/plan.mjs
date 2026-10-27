@@ -228,7 +228,7 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
     if (links.some((f) => parseDoc(existsSync(f) ? readFileSync(f, 'utf8') : '').fm?.type === GRID.decisionType)) continue;
     const owner = (door) => u.scope.find((s) => overlaps(s, door) || overlaps('/' + door, s));
     const door = doorGlobs.find(owner) ?? linksOf(u, bundle, GRID.interfaces).map((f) => relPath(base, f)).find((f) => u.scope.some((g) => overlaps('/' + f, g)));
-    // A bare name such as `Makefile` matches at any depth, so it reaches into a door folder (first migration).
+    // A bare name such as `Makefile` matches at any depth, so it reaches into a door folder.
     const glob = door && owner(door);
     if (door) add('PLAN-DECISION', u, keyLine(u, 'scope'), 'planDecision', { door, glob, bare: /^[^/*]+$/.test(glob) ? msg('planDecisionBare', { glob }) : '' });
   }
@@ -244,7 +244,7 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
     // A line under # Increments opens with its id, in order; a v1 intent's # Slices lines carry none (docs/design/increments-and-bolts.md).
     if (inForce(i, 'planIncrementId') && sectionOf(i.doc, GRID.increments[0]).length) incrementLines(i).forEach((l, k) => { const expected = `${i.id}.${k + 1}`; if (l.id !== expected) add('PLAN-INCREMENT', i, l.n, 'planIncrementId', { n: l.n, found: l.id ?? l.name.split(' ')[0], expected }); });
     if (top && own.length && !own.some(ends)) add('PLAN-INCREMENT', i, 1, 'planIncrementIntent', { level: top });
-    // A walking skeleton first: the first end-to-end AC waits on at most half the intent's product units (second project).
+    // A walking skeleton first: the first end-to-end AC waits on at most half the intent's product units.
     const made = new Set(own.filter((u) => u.scope.some((s) => productGlobs(profile).some((g) => overlaps(s, g)))).map((u) => u.id));
     const wait = Math.min(...own.filter(ends).map((u) => [...reachable(own)(u.id)].filter((d) => made.has(d)).length));
     if (top && made.size > 2 && wait > made.size / 2) add('PLAN-SKELETON', i, 1, 'planSkeleton', { level: top, wait, units: made.size });

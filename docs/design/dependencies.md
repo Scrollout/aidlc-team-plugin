@@ -7,7 +7,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-25T06:30:00Z }
 ---
 
 # Why
-On the first migration (2026-10-25) the repository's advisory bot listed seven open advisories in one lockfile, and the owner made it a permanent rule of the method: use the latest packages and security patches. A model's training data is months old, so a version it remembers is stale or vulnerable; the version has to come from the registry at the time, as a small piece of research.
+A lockfile can carry open advisories from the day it is written, so the method's rule is: use the latest packages and security patches. A model's training data is months old, so a version it remembers is stale or vulnerable; the version has to come from the registry at the time, as a small piece of research.
 
 # Shape
 ```json
@@ -20,9 +20,9 @@ On the first migration (2026-10-25) the repository's advisory bot listed seven o
 
 # Rules
 - **Card:** a bolt whose scope overlaps `manifests` gets `## Dependencies`: look up each version you add or bump from its registry or official release page (your training data is out of date), take the newest stable release that fixes every known advisory, pin it exactly, and report it.
-- **Report:** `aidlc report` refuses a `done` report of a bolt whose diff adds a pin line to a manifest without `deps`: `[{ "name", "version", "source" }]`, where `source` is the registry URL or the command that showed the version. The reviewer checks the versions against those sources. Only an added line matching `pin` counts, so a Makefile, workflow or deployment edited for another reason can be a manifest without asking for sources (first migration, 2026-10-26).
-- **Init:** writes `.github/dependabot.yml` with the workflow-actions ecosystem, so bumps start on day one and a direct commit of it is init's, not code outside a bolt (third project, 2026-10-26: added by hand, it was flagged `CI-COMMIT`). The language's ecosystem joins with the language decision, through a bolt.
+- **Report:** `aidlc report` refuses a `done` report of a bolt whose diff adds a pin line to a manifest without `deps`: `[{ "name", "version", "source" }]`, where `source` is the registry URL or the command that showed the version. The reviewer checks the versions against those sources. Only an added line matching `pin` counts, so a Makefile, workflow or deployment edited for another reason can be a manifest without asking for sources.
+- **Init:** writes `.github/dependabot.yml` with the workflow-actions ecosystem, so bumps start on day one and a direct commit of it is init's, not code outside a bolt: added by hand, it would be flagged `CI-COMMIT`. The language's ecosystem joins with the language decision, through a bolt.
 - **Gate:** each `deps.check` command runs on the trial merge (`GATE-DEPENDENCY`).
-- **Tests stay offline:** whether a pin is current is `deps.check`'s job, live, on the gate, CI and the daily run. A bolt's tests never query a registry: a level that does needs the network and turns every branch red when upstream ships, whatever it touches (first migration, 2026-10-26: `go list -m -u` and a newest-pnpm test in the unit level). A test of a check script runs it on fixed inputs: an old pin in a fixture and the registry's answer stubbed.
+- **Tests stay offline:** whether a pin is current is `deps.check`'s job, live, on the gate, CI and the daily run. A bolt's tests never query a registry: a level that does needs the network and turns every branch red when upstream ships, whatever it touches, as `go list -m -u` or a newest-version test in the unit level does. A test of a check script runs it on fixed inputs: an old pin in a fixture and the registry's answer stubbed.
 - **CI:** `check --ci` runs them too (`CI-DEPENDENCY`), and the workflow `init` writes also runs daily, so an advisory published after a merge turns the base red; on a red base only fix bolts build or merge ([Base CI](base-ci.md)).
 - **Constitution:** rule 8, current dependencies, in the template `init` writes.

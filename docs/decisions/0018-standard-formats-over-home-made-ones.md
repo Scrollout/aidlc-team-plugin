@@ -13,7 +13,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T13:00:00Z }
 # Standard formats over home-made ones
 
 ## Context and Problem Statement
-The plugin's decisions, criteria, requirements, history and architecture docs each had a format of the plugin's own. They were close to published standards, but a reader, tool or new team member familiar with those standards had to learn the plugin's variant. The owner asked (2026-10-27) to use standardized methods, such as ADRs. Which standards, and how far do they reach?
+The plugin's decisions, criteria, requirements, history and architecture docs each had a format of the plugin's own. They were close to published standards, but a reader, tool or new team member familiar with those standards had to learn the plugin's variant. Which published standards should replace them, and how far do they reach?
 
 ## Decision Drivers
 * A format people and tools already know.
@@ -26,7 +26,7 @@ The plugin's decisions, criteria, requirements, history and architecture docs ea
 * Keep the plugin's own formats and document that they are ADR-like.
 
 ## Decision Outcome
-Chosen option: "MADR 4.0, Given/When/Then, EARS, Keep a Changelog with SemVer, arc42 with C4", because the owner chose it and each one maps onto a doc type the plugin already checks ([Standard formats](../design/standards.md)).
+Chosen option: "MADR 4.0, Given/When/Then, EARS, Keep a Changelog with SemVer, arc42 with C4", because each one is a published standard and maps onto a doc type the plugin already checks ([Standard formats](../design/standards.md)).
 
 ### Consequences
 * Good, because a decision, a criterion or a requirement reads the same as anywhere else these standards are used.
@@ -48,7 +48,7 @@ Chosen option: "MADR 4.0, Given/When/Then, EARS, Keep a Changelog with SemVer, a
 
 ### Keep the plugin's own formats
 * Good, because nothing changes.
-* Bad, because the owner asked for the standards.
+* Bad, because every reader and tool must still learn the plugin's variants.
 
 ## More Information
 MADR 4.0 (adr.github.io/madr). Keep a Changelog 1.1.0. arc42 (arc42.org). C4 model (c4model.com). EARS: Mavin et al., RE'09.

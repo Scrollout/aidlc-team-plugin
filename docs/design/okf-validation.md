@@ -25,7 +25,7 @@ Warnings (house rules; `profile.docs.rules` sets each to `error`, `warning` or `
 - `HOUSE-DESC` missing `title` or `description`.
 - `HOUSE-GENERATED` a doc without `generated` (authorship is not detectable, so owner-written bundles set it `off`).
 - `HOUSE-LINK` a link that does not resolve (the spec says consumers must tolerate these).
-- `HOUSE-SIZE` a doc over its type's cap, counted in code points over the whole file: Bolt, Plan, Intent 12,000; Design, Decision, Research, Principles 6,000 (the research brief states the project's cap) (a digest carries its question and sources before any finding; second project); others 4,000. A project whose own docs check caps lower sets `docs.caps` by type, with `default` for every type it does not name (`{ "default": 4000 }`), so `check` and the gate count with its numbers (first migration).
+- `HOUSE-SIZE` a doc over its type's cap, counted in code points over the whole file: Bolt, Plan, Intent 12,000; Design, Decision, Research, Principles 6,000 (the research brief states the project's cap) (a digest carries its question and sources before any finding); others 4,000. A project whose own docs check caps lower sets `docs.caps` by type, with `default` for every type it does not name (`{ "default": 4000 }`), so `check` and the gate count with its numbers.
 
 On the base (`check --ci` and the merge gate), `HOUSE-INDEX-STALE` and `HOUSE-LINK` are errors unless `docs.rules` sets their level (`okf.bundle.baseErrors`).
 

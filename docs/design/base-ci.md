@@ -11,7 +11,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T12:05:37Z }
 ---
 
 # Why
-`aidlc merge` runs the profile's levels locally, but the project's own CI can still go red on the pushed base (a job the levels skip, another platform, a flaky gate). Nothing read it, so builders started on a red base and the next merges piled onto it. Carried in [Later](../roadmap/later.md) since M7; the owner asked for it before the first real migration (2026-10-24).
+`aidlc merge` runs the profile's levels locally, but the project's own CI can still go red on the pushed base (a job the levels skip, another platform, a flaky gate). Unread, it lets builders start on a red base and the next merges pile onto it.
 
 # Shape
 ```json
@@ -29,11 +29,11 @@ Refused unless the base is pushed (its head is `origin/<base>`). It polls the ru
 - **none:** no run for the commit when the wait ended (a workflow that skips the paths); counts as green.
 
 # In next
-With `ci.wait` set (the owner's choices, 2026-10-24):
-- **Before new builders** (step 11 of [next](state.md#next)): a base with merges the remote lacks → `aidlc push`; no record for the base head, or a pending one → the builders start and `aidlc ci wait` runs in the background beside them (owner, 2026-10-25: more speed; a red result then holds their merges, as below). Merges, reviews and fix rounds still go first, so the push carries them.
-- **Red base** (a red record, and no merge on the base since; a plan commit such as the fix bolt's doc keeps it red) comes first, after a cut-off merge and a failed release or smoke: without a live fix bolt (a bolt without an intent, not merged), `next` asks for `aidlc fix` from the failing runs, or, for a failure outside the repo (runner, registry, network), a rerun of the failed jobs and `aidlc ci wait` again, which reads the rerun on the same commit (from the first migration, where a registry cache broke a pull). While red only fix bolts build or merge; builders already running carry on, and other bolts' reviews and fix rounds go on. The merged fix moves the base, so the push and the wait come again.
-- **Before a release:** the owner's `release` ships only a pushed base whose CI passed (green, or no run); `next` asks for `aidlc push`, then `aidlc ci wait`, before the release prompt, waits while the base is red, and `release` refuses otherwise (second project, 2026-10-26: the release was offered on an unpushed base whose CI had failed every run, so no image existed to deploy).
-- **Red at the gate**, with or without `ci.wait`: a merge whose level fails on the base alone too records the base red (`GATE-BASE`, in `.git/aidlc/base.json`), held the same way until a merge; `next` asks for a fix bolt from the failing level instead of the merge again (first migration: a quick bolt broke the unit level and the next merge was offered over and over). A bolt refused only for that stays refused until a merge lands, a plan commit not counting, and holds back no fix bolt whose scope overlaps it (second project, 2026-10-26: the refused merge was offered again after every plan commit, a 25-minute gate each time, while the fix never built).
+With `ci.wait` set:
+- **Before new builders** (step 11 of [next](state.md#next)): a base with merges the remote lacks → `aidlc push`; no record for the base head, or a pending one → the builders start and `aidlc ci wait` runs in the background beside them, for speed: a red result then holds their merges, as below. Merges, reviews and fix rounds still go first, so the push carries them.
+- **Red base** (a red record, and no merge on the base since; a plan commit such as the fix bolt's doc keeps it red) comes first, after a cut-off merge and a failed release or smoke: without a live fix bolt (a bolt without an intent, not merged), `next` asks for `aidlc fix` from the failing runs, or, for a failure outside the repo (runner, registry, network), a rerun of the failed jobs and `aidlc ci wait` again, which reads the rerun on the same commit: a broken registry cache, say, is no code defect. While red only fix bolts build or merge; builders already running carry on, and other bolts' reviews and fix rounds go on. The merged fix moves the base, so the push and the wait come again.
+- **Before a release:** the owner's `release` ships only a pushed base whose CI passed (green, or no run); `next` asks for `aidlc push`, then `aidlc ci wait`, before the release prompt, waits while the base is red, and `release` refuses otherwise: an unpushed base, or one whose CI failed, may have no image to deploy.
+- **Red at the gate**, with or without `ci.wait`: a merge whose level fails on the base alone too records the base red (`GATE-BASE`, in `.git/aidlc/base.json`), held the same way until a merge; `next` asks for a fix bolt from the failing level instead of offering the same merge over and over. A bolt refused only for that stays refused until a merge lands, a plan commit not counting, and holds back no fix bolt whose scope overlaps it. Otherwise the refused merge is offered again after every plan commit, a full gate run each time, while the fix never builds.
 
 Bolts: [M9](../roadmap/m9.md).
 

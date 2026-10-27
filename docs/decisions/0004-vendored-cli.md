@@ -9,7 +9,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 # Vendored CLI
 
 ## Context and Problem Statement
-A pilot project had to pin a previous tool's SHAs in CI and was at one point blocked on its release.
+A project that runs its rules from a tool it does not hold must pin its commits in CI, and is blocked whenever its release is.
 
 ## Considered Options
 1. Run the CLI from the installed plugin. Versions differ per developer; CI needs the plugin.

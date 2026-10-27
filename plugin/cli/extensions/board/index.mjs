@@ -175,8 +175,8 @@ function projectReader(gh) {
   };
 }
 
-// Every planned value must be an option the Project has, checked before any write: a missing one stopped the
-// first migration's sync halfway. The options are kept for plan lint (PLAN-BOARD).
+// Every planned value must be an option the Project has, checked before any write, so a missing one never
+// stops a sync halfway. The options are kept for plan lint (PLAN-BOARD).
 function checkOptions(proj, docs) {
   const options = Object.fromEntries(proj.fields.nodes.filter((f) => f.name && f.options).map((f) => [f.name, f.options.map((o) => o.name)]));
   const missing = [...new Set(docs.flatMap((d) => Object.entries(d.fields)

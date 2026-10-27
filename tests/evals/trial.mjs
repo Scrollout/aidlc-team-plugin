@@ -1,16 +1,16 @@
-// Scripted pilot (docs/pilot/m4-4-report.md): a small project whose plan a test owner approves, with two units
+// A scripted trial run: a small project whose plan a test owner approves, with two units
 // built as a builder left them and one for a real builder, so a headless lead meets the cases a planned intent
 // rarely reaches. The owner's steps are this script's, never an agent's. Run manually:
-//   node tests/evals/pilot.mjs setup <dir>          builds the project, approves the plan as owner@example.com
-//   node tests/evals/pilot.mjs approve <dir> <doc>… an owner step the lead asks for, as the test owner
-//   node tests/evals/pilot.mjs score <dir>          lists each case as seen or not seen
+//   node tests/evals/trial.mjs setup <dir>          builds the project, approves the plan as owner@example.com
+//   node tests/evals/trial.mjs approve <dir> <doc>… an owner step the lead asks for, as the test owner
+//   node tests/evals/trial.mjs score <dir>          lists each case as seen or not seen
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const CLI = join(import.meta.dirname, '..', '..', 'plugin/cli/aidlc.mjs');
 
-const fm = (fields) => `---\n${Object.entries({ ...fields, generated: '{ by: evals/pilot, at: 2026-10-23T00:00:00Z }' }).map(([k, v]) => `${k}: ${v}`).join('\n')}\n---\n`;
+const fm = (fields) => `---\n${Object.entries({ ...fields, generated: '{ by: evals/trial, at: 2026-10-23T00:00:00Z }' }).map(([k, v]) => `${k}: ${v}`).join('\n')}\n---\n`;
 
 const PROFILE = {
   modules: [{ id: 'app', paths: ['src/**', 'auth/**', 'db/**', 'api/**', 'tests/**'], check: 'node --test' }],
@@ -24,7 +24,7 @@ const BASE = {
   'auth/roles.mjs': "export function isAdmin(user) {\n  return user?.roles?.includes('admin') === true;\n}\n",
   'db/schema.sql': 'CREATE TABLE users (\n  id INTEGER PRIMARY KEY, -- the user\n  email TEXT NOT NULL -- the login\n);\n',
   'src/rows.mjs': "export const ROWS = [{ id: 1 }, { id: 2 }, { id: 3 }];\n",
-  'api/openapi.yaml': 'openapi: 3.1.0\ninfo: { title: Pilot, version: 1.0.0 }\npaths:\n  /stats:\n    get:\n      responses:\n        "200": { description: "{ total }: the number of rows" }\n',
+  'api/openapi.yaml': 'openapi: 3.1.0\ninfo: { title: Trial, version: 1.0.0 }\npaths:\n  /stats:\n    get:\n      responses:\n        "200": { description: "{ total }: the number of rows" }\n',
   'tests/base.test.mjs': "import { test } from 'node:test';\nimport assert from 'node:assert/strict';\nimport { isAdmin } from '../auth/roles.mjs';\n\ntest('admins are admins', () => assert.equal(isAdmin({ roles: ['admin'] }), true));\n",
   'docs/architecture/stats-api.md': fm({ type: 'Design', title: 'Stats API', description: 'The response of GET /stats.' })
     + '\n# Response\n`GET /stats` returns `{ total }`, the number of rows. Renaming the field is a one-way door: clients read it.\n',
@@ -78,11 +78,11 @@ export function setup(dir) {
   git(dir, 'config', 'user.email', 'owner@example.com');
   git(dir, 'config', 'user.name', 'Test Owner');
   git(dir, 'config', 'commit.gpgsign', 'false');
-  must(dir, ['init', '--name', 'pilot']);
+  must(dir, ['init', '--name', 'trial']);
   const profile = JSON.parse(readFileSync(join(dir, '.aidlc/profile.json'), 'utf8'));
   write(dir, { ...BASE, '.aidlc/profile.json': JSON.stringify({ ...profile, ...PROFILE }, null, 2) + '\n' });
   must(dir, ['index']);
-  commit(dir, 'Pilot project');
+  commit(dir, 'Trial project');
   const seen = [];
   // U37: the door is refused until the unit links its decision, here from the bundle root (0.46.1).
   if (/PLAN-DECISION U-3/.test(aidlc(dir, ['check']).stdout + aidlc(dir, ['check']).stderr)) seen.push('check reports PLAN-DECISION for U-3');
@@ -99,7 +99,7 @@ export function setup(dir) {
     git(dir, 'switch', '-q', 'main');
     must(dir, ['report', unit], JSON.stringify({ status: 'done', summary: `${unit} built`, tests: Object.keys(files).filter((f) => f.startsWith('tests/')).map((f) => `${f}: ${unit}/AC-1`) }));
   }
-  writeFileSync(join(dir, '.git', 'pilot-setup.json'), JSON.stringify({ seen }, null, 2));
+  writeFileSync(join(dir, '.git', 'trial-setup.json'), JSON.stringify({ seen }, null, 2));
   return seen;
 }
 
@@ -107,7 +107,7 @@ export function setup(dir) {
 export function score(dir, transcript = '') {
   const common = resolve(dir, git(dir, 'rev-parse', '--git-common-dir'), 'aidlc');
   const read = (rel) => (existsSync(join(common, rel)) ? JSON.parse(readFileSync(join(common, rel), 'utf8')) : null);
-  const setupSeen = JSON.parse(readFileSync(join(dir, '.git', 'pilot-setup.json'), 'utf8')).seen;
+  const setupSeen = JSON.parse(readFileSync(join(dir, '.git', 'trial-setup.json'), 'utf8')).seen;
   const r1 = read('reviews/U-1.json')?.rounds ?? [];
   const sec = r1.filter((r) => r.focus === 'security');
   const fixAfterSec = sec.length && r1.some((r) => r.verdict === 'fix' && r.at > sec[0].at);
@@ -124,7 +124,7 @@ export function score(dir, transcript = '') {
 if (import.meta.url === `file://${process.argv[1]}`) {
   const [cmd, dir, ...rest] = process.argv.slice(2);
   if (!dir || !['setup', 'approve', 'score'].includes(cmd)) {
-    console.error('usage: node tests/evals/pilot.mjs setup|approve|score <dir> [doc…|transcript]');
+    console.error('usage: node tests/evals/trial.mjs setup|approve|score <dir> [doc…|transcript]');
     process.exit(64);
   }
   if (cmd === 'setup') console.log(`ready: ${resolve(dir)}; seen in setup: ${setup(resolve(dir)).join('; ') || 'none'}`);

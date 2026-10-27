@@ -3,6 +3,8 @@ type: Decision
 title: 0012 Typed go for release and rollback
 description: The owner releases or rolls back by typing exactly release I-<n> or rollback I-<n>; the prompt hook records a go for that command at the current commit, and the guard lets the lead's one matching call through and uses the go up, since a deploy outlasts the hook's time limit.
 status: proposed
+decision-makers: the owner
+date: 2026-10-24
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T14:00:00Z }
 sources:
   - id: cc-hooks
@@ -21,7 +23,7 @@ sources:
 3. **The hook runs the command in the background**, past its own timeout: no lead call, but no exit or output reaches the session, and a failed smoke would be found late.
 
 ## Decision Outcome
-Option 1, chosen by the owner on 2026-10-24 (U48). The permission prompt of option 2 stays the path when no go is recorded.
+Option 1 (U48). The permission prompt of option 2 stays the path when no go is recorded.
 - The prompt hook matches the whole prompt, trimmed, against `cli.json` `hooks.goWords`; a trailing `.` or `!` is allowed, as an owner ends a sentence. It writes `{ command, head, at }` to `.git/aidlc/goes.json` (the last five) and passes the prompt on with context naming the command for the lead to run.
 - The guard allows `aidlc release I-<n>` or `aidlc rollback I-<n>` only when a go for that exact command was recorded at the current `HEAD`, removes it, and counts it in the retro's interventions. A second call, or one after a new commit, gets the permission prompt again. The host's own permission check still applies.
 - UserPromptSubmit also fires for a scheduled task or loop,[^cc-hooks] so the guard denies a `CronCreate` or `ScheduleWakeup` whose prompt is a go, as it does an approval (U62): the lead cannot schedule its own release.

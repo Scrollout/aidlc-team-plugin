@@ -10,7 +10,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T00:40:00Z }
 The method definition whitepaper, the reference AI-DLC workflows (2.11.1) and the method's launch talk (2025), read on 2026-10-26.
 
 # Why
-On `resource-manager` (2026-10-26) "vertical slice" meant a delivery step in `slices.md`, a bounded context in `architecture-model.md`, and any module with layers in `map.mjs`. The project went through three architecture vocabularies in one day. A word with two meanings can't be checked, so every concept gets one word at one scale ([0013](../decisions/0013-a-deterministic-ai-dlc.md)).
+"Vertical slice" meant a delivery step in `slices.md`, a bounded context in `architecture-model.md`, and any module with layers in `map.mjs`, so a project could change architecture vocabulary three times in a day. A word with two meanings can't be checked, so every concept gets one word at one scale ([0013](../decisions/0013-a-deterministic-ai-dlc.md)).
 
 # Words
 Drawn by scale: [Words by scale](diagrams/canonical-model.md).

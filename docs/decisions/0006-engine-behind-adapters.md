@@ -3,6 +3,8 @@ type: Decision
 title: 0006 Engine behind adapters
 description: Commands and hook rules are pure functions returning data; the CLI and hooks are adapters now, and MCP, HTTP hooks and A2A can be added later without changing the engine.
 status: accepted
+decision-makers: the owner
+date: 2026-10-22
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T09:38:26Z }
 sources:
   - id: cc-hooks
@@ -13,7 +15,7 @@ sources:
 # Engine behind adapters
 
 ## Context and Problem Statement
-The owner may later run the agent in a sandbox and the plugin as a remote toolbox behind MCP or A2A. The rules must then still hold at the action ([Principles](../constitution/principles.md) 1 and 5), not depend on the agent obeying its instructions.
+A project may later run the agent in a sandbox and the plugin as a remote toolbox behind MCP or A2A. The rules must then still hold at the action ([Principles](../constitution/principles.md) 1 and 5), not depend on the agent obeying its instructions.
 
 ## Considered Options
 1. CLI only, printing text. Simple now; a remote host would have to parse text back into data, and every command would need rework.
@@ -21,7 +23,7 @@ The owner may later run the agent in a sandbox and the plugin as a remote toolbo
 3. Build the servers now. Code against the budgets for a setup nobody runs yet.
 
 ## Decision Outcome
-Option 2, chosen by the owner on 2026-10-22. The servers are M3 work.
+Option 2. The servers are M3 work.
 
 - Claude Code hooks can be `command`, `http` (POST the event JSON to a URL, same JSON decision back) or `mcp_tool`, and they fire on MCP tool calls too.[^cc-hooks] The same decision functions can therefore judge a local hook, a remote hook or a toolbox call.
 - Returning data keeps one implementation for every caller; the CLI's text output becomes one rendering of it.

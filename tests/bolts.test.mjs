@@ -118,7 +118,7 @@ test('B157/AC-1 a doc named by an id carries the slug of its title: lower case, 
 test('B160/AC-1 the profile naming registry is checked: tokens by their rule, domains and vocabulary words as lower-case words, none banned', async () => {
   const { registry } = await import('../plugin/cli/lib/index.mjs');
   const naming = (n) => run(makeRepo(I1, { naming: n }), ['check']).out.split('\n').filter((l) => /PROFILE-NAMING/.test(l)).map((l) => l.replace(/^\S+ PROFILE-NAMING /, '').replace(/ → .*$/, ''));
-  assert.deepEqual(naming({ tokens: { system: 'rsm', org: 'acme', zone: 'example.internal' }, domains: { providers: {} }, vocabularies: { role: ['api'] } }), []);
+  assert.deepEqual(naming({ tokens: { system: 'shop', org: 'acme', zone: 'example.internal' }, domains: { providers: {} }, vocabularies: { role: ['api'] } }), []);
   assert.deepEqual(naming({ tokens: { system: 'ResourceManager', org: 'Acme Inc', zone: 'localhost' }, domains: { Providers: {}, store: {} }, vocabularies: { role: ['api-gw', 'manager'] } }), [
     'naming.tokens.system is ResourceManager, not 2-6 lower-case letters or digits',
     'naming.tokens.org is Acme Inc, not a DNS label',
@@ -138,26 +138,26 @@ test('B160/AC-1 the profile naming registry is checked: tokens by their rule, do
 test('B160/AC-2 init takes the system code, org and zone into the profile naming tokens', () => {
   const dir = makeRepo({});
   git(dir, 'rm', '-q', '.aidlc/profile.json');
-  const r = run(dir, ['init', '--name', 'p', '--base', 'main', '--bundle', 'docs', '--system-code', 'rsm', '--org', 'acme', '--zone', 'example.internal']);
+  const r = run(dir, ['init', '--name', 'p', '--base', 'main', '--bundle', 'docs', '--system-code', 'shop', '--org', 'acme', '--zone', 'example.internal']);
   assert.equal(r.code, 0, r.err);
-  assert.deepEqual(JSON.parse(read(dir, '.aidlc/profile.json')).naming, { tokens: { system: 'rsm', org: 'acme', zone: 'example.internal' } });
+  assert.deepEqual(JSON.parse(read(dir, '.aidlc/profile.json')).naming, { tokens: { system: 'shop', org: 'acme', zone: 'example.internal' } });
 });
 
 test('B161/AC-1 aidlc name prints each kind from the grammar and the registry, and refuses an unregistered token or a missing flag', () => {
-  const naming = { tokens: { system: 'rsm', org: 'acme', zone: 'example.internal', registry: 'ghcr.io' }, domains: { providers: {}, roleassignments: { name: 'Role assignments' } } };
+  const naming = { tokens: { system: 'shop', org: 'acme', zone: 'example.internal', registry: 'ghcr.io' }, domains: { providers: {}, roleassignments: { name: 'Role assignments' } } };
   const dir = makeRepo(I1, { naming });
   const name = (...args) => run(dir, ['name', ...args]);
   const cases = [
     [['slice', '--domain', 'providers', '--verb', 'register'], 'registerprovider'],
     [['operation-id', '--domain', 'roleassignments', '--verb', 'create'], 'RoleAssignments_CreateOrUpdate'],
-    [['path', '--domain', 'roleassignments'], '/providers/Acme.Rsm/roleAssignments/{roleAssignmentName}'],
-    [['permission', '--domain', 'providers', '--action', 'write'], 'Acme.Rsm/providers/write'],
-    [['event', '--domain', 'providers', '--verb', 'register'], 'Acme.Rsm.ProviderRegistered'],
-    [['deployable', '--stage', 'ingress', '--role', 'gateway'], 'rsm-ingress-gateway'],
-    [['image', '--domain', 'providers', '--role', 'api', '--tag', '1.4.0'], 'ghcr.io/acme/rsm-providers-api:1.4.0'],
-    [['k8s-namespace', '--env', 'dev'], 'rsm-dev'],
+    [['path', '--domain', 'roleassignments'], '/providers/Acme.Shop/roleAssignments/{roleAssignmentName}'],
+    [['permission', '--domain', 'providers', '--action', 'write'], 'Acme.Shop/providers/write'],
+    [['event', '--domain', 'providers', '--verb', 'register'], 'Acme.Shop.ProviderRegistered'],
+    [['deployable', '--stage', 'ingress', '--role', 'gateway'], 'shop-ingress-gateway'],
+    [['image', '--domain', 'providers', '--role', 'api', '--tag', '1.4.0'], 'ghcr.io/acme/shop-providers-api:1.4.0'],
+    [['k8s-namespace', '--env', 'dev'], 'shop-dev'],
     [['migration', '--domain', 'providers', '--number', '1', '--verb', 'create', '--object', 'resource types'], 'migrations/providers/0001_create_resource_types.sql'],
-    [['db-role', '--domain', 'providers'], 'rsm_providers'],
+    [['db-role', '--domain', 'providers'], 'shop_providers'],
     [['api-version', '--date', '2026-10-27', '--preview'], '2026-10-27-preview'],
   ];
   for (const [args, want] of cases) assert.equal(name(...args).out, `${want}\n`, args.join(' '));
@@ -170,14 +170,14 @@ test('B161/AC-1 aidlc name prints each kind from the grammar and the registry, a
 
 test('B162/AC-1 the registry generates the gate rules for migrations, images, namespaces and banned segments, and holds each module id', async () => {
   const { generatedRules } = await import('../plugin/cli/lib/index.mjs');
-  const naming = { tokens: { system: 'rsm', org: 'acme', registry: 'ghcr.io' }, domains: { providers: {} } };
+  const naming = { tokens: { system: 'shop', org: 'acme', registry: 'ghcr.io' }, domains: { providers: {} } };
   const rules = Object.fromEntries(generatedRules({ naming }).map((r) => [r.id, r]));
   const full = (id, s) => new RegExp(`^(?:${rules[id].pattern})$`).test(s);
   assert.ok(full('migration', 'migrations/providers/0001_create_resource_types.sql'));
   assert.ok(!full('migration', 'migrations/registry/0001_init.sql'), 'an unregistered domain');
-  assert.ok(full('image', 'ghcr.io/acme/rsm-providers-api:1.4.0') && full('image', 'ghcr.io/acme/rsm-ingress-gateway:sha-abc'));
-  assert.ok(!full('image', 'ghcr.io/acme/resource-manager-frontdoor:sha-abc'), 'an invented name');
-  assert.ok(full('namespace', 'rsm-dev') && !full('namespace', 'resource-manager-dev'));
+  assert.ok(full('image', 'ghcr.io/acme/shop-providers-api:1.4.0') && full('image', 'ghcr.io/acme/shop-ingress-gateway:sha-abc'));
+  assert.ok(!full('image', 'ghcr.io/acme/storefront-frontdoor:sha-abc'), 'an invented name');
+  assert.ok(full('namespace', 'shop-dev') && !full('namespace', 'storefront-dev'));
   assert.ok(full('banned', 'internal/domains/providers/model/provider.go'));
   for (const bad of ['internal/store/x.go', 'pkg/utils.go', 'internal/frontdoor/app/a.go']) assert.ok(!full('banned', bad), bad);
   assert.deepEqual(generatedRules({}), [], 'no registry, no generated rule');
@@ -199,12 +199,12 @@ test('B163/AC-1 the domains glossaries generate naming/glossary.md, written by t
 });
 
 test('B164/AC-1 the card prints the names a bolt will create for each registered domain it names, from the grammar', () => {
-  const naming = { tokens: { system: 'rsm', org: 'acme' }, domains: { providers: {} } };
+  const naming = { tokens: { system: 'shop', org: 'acme' }, domains: { providers: {} } };
   const modules = [{ id: 'providers', kind: 'domain', paths: ['src/providers/**'] }, { id: 'db', kind: 'foundation', paths: ['lib/db/**'] }];
   const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['src/providers/**'], modules: ['providers', 'db'], acs: ['- AC-1 (integration): it works.'] }) }, { naming: { ...naming, vocabularies: { foundation: ['db'] } }, modules });
   approve(dir, 'I-1', 'U-1');
   const card = run(dir, ['card', 'U-1']).out;
-  assert.match(card, /^- names this bolt creates for providers \(aidlc name\): schema providers, database role rsm_providers, path \/providers\/Acme\.Rsm\/providers\/\{providerName\}, write permission Acme\.Rsm\/providers\/write, created event Acme\.Rsm\.ProviderCreated$/m);
+  assert.match(card, /^- names this bolt creates for providers \(aidlc name\): schema providers, database role shop_providers, path \/providers\/Acme\.Shop\/providers\/\{providerName\}, write permission Acme\.Shop\/providers\/write, created event Acme\.Shop\.ProviderCreated$/m);
   assert.doesNotMatch(card, /names this bolt creates for db/, 'only domains');
 });
 
@@ -215,7 +215,7 @@ test('B165/AC-1 CONTRACT-NAME checks a published OpenAPI document against the AP
   const keys = (doc, C = plane) => contractProblems(doc, C).map(([k, d]) => `${k} ${Object.values(d).join(' ')}`);
   const good = {
     info: { version: '2026-10-27' },
-    paths: { '/providers/Acme.Rsm/roleAssignments/{roleAssignmentName}': { put: { operationId: 'RoleAssignments_CreateOrUpdate' }, get: { operationId: 'RoleAssignments_Get' } } },
+    paths: { '/providers/Acme.Shop/roleAssignments/{roleAssignmentName}': { put: { operationId: 'RoleAssignments_CreateOrUpdate' }, get: { operationId: 'RoleAssignments_Get' } } },
     components: { schemas: {
       RoleAssignment: { properties: { id: { type: 'string' }, name: {}, type: {}, systemData: {}, properties: {}, enabled: { type: 'boolean' } } },
       RoleAssignmentList: { properties: { value: { type: 'array' }, nextLink: { type: 'string' } } },
@@ -248,7 +248,7 @@ test('B165/AC-1 check reports CONTRACT-NAME on the documents under api/ once the
   const spec = 'openapi: 3.1.0\ninfo:\n  title: x\n  version: v1\npaths:\n  /providers/{namespace}:\n    get:\n      operationId: Providers_get\n';
   const found = (profile) => run(makeRepo({ ...I1, 'api/frontdoor/openapi.yaml': spec }, profile), ['check']).out.split('\n').filter((l) => /CONTRACT-NAME/.test(l)).map((l) => l.replace(/ → .*$/, ''));
   assert.deepEqual(found({}), [], 'no registry, no contract check');
-  assert.deepEqual(found({ naming: { tokens: { system: 'rsm' } } }), [
+  assert.deepEqual(found({ naming: { tokens: { system: 'shop' } } }), [
     'api/frontdoor/openapi.yaml:1 CONTRACT-NAME info.version v1 is no api-version (YYYY-MM-DD or YYYY-MM-DD-preview)',
     'api/frontdoor/openapi.yaml:1 CONTRACT-NAME /providers/{namespace}: parameter namespace is not a full lowerCamel name ending in Name or Id',
     'api/frontdoor/openapi.yaml:1 CONTRACT-NAME /providers/{namespace} get: operationId Providers_get is not Noun_Verb',

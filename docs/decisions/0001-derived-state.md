@@ -9,11 +9,11 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 # Derived state
 
 ## Context and Problem Statement
-A previous tool relied on the model calling a ledger script; skipped calls went unaudited and the ledger reached 650 KB in a pilot project. Its handoff file grew into an append-only pile. The reference AI-DLC workflows keep `aidlc-state.md` and `audit.md` updated by the model.
+State the model must remember to record drifts: a call it skips goes unaudited, a ledger grows without bound, and a handoff file turns into an append-only pile. The reference AI-DLC workflows keep `aidlc-state.md` and `audit.md` updated by the model.
 
 ## Considered Options
 1. Model-maintained state file (the reference workflows). Simple, but drifts whenever the model forgets.
-2. Event ledger audited later (a previous tool). Detects drift only after the fact; grows without bound.
+2. Event ledger audited later. Detects drift only after the fact; grows without bound.
 3. **Derive from git and docs.** Approvals in frontmatter, progress from branches and merge trailers.
 
 ## Decision Outcome

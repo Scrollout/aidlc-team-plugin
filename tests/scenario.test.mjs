@@ -1,4 +1,4 @@
-// A unit's life as the pilot ran it, through the real hooks: a builder in flight from launch, a clear, a lost
+// A unit's life as a trial run takes it, through the real hooks: a builder in flight from launch, a clear, a lost
 // builder restarted on a clean worktree, a fix round in flight, and a fix round reported with no new commit.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

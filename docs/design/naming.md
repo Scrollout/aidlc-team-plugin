@@ -7,13 +7,13 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T03:00:00Z }
 ---
 
 # Why
-On `resource-manager` (2026-10-26) names were invented on the spot: "front door", "portal", "store", "endpoint". Each project wrote its own regexes, and the convention lived in a doc a builder met only when a check failed. An enterprise convention is a grammar over registered tokens: the parts and their order, the casing and separator, the uniqueness scope, a regex and a worked example per kind ([0014](../decisions/0014-the-reference-clouds-api-and-event-conventions.md)).
+Without a registry, names are invented on the spot ("front door", "portal", "store", "endpoint"), each project writes its own regexes, and the convention lives in a doc a builder meets only when a check fails. An enterprise convention is a grammar over registered tokens: the parts and their order, the casing and separator, the uniqueness scope, a regex and a worked example per kind ([0014](../decisions/0014-the-reference-clouds-api-and-event-conventions.md)).
 
 # Registry
 The profile's `naming` is the one source. The CLI adds its defaults (`cli.json` `naming`) under what the project sets.
 ```json
 "naming": {
-  "tokens": { "org": "acme", "system": "rsm", "zone": "example.internal" },
+  "tokens": { "org": "acme", "system": "shop", "zone": "example.internal" },
   "domains": { "providers": { "name": "Provider registration", "abbr": "prv" } },
   "vocabularies": { "role": ["api", "worker", "job", "ui", "cli", "agent", "gateway"] },
   "banned": ["manager", "service"]

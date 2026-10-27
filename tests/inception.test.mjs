@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { lintPlan } from '../plugin/cli/lib/index.mjs';
 import { approve, commit, makeRepo, read, run } from './state-repo.mjs';
 
-const V2 = { system: { core: ['src/**'] }, naming: { tokens: { system: 'rsm' } }, modules: [
+const V2 = { system: { core: ['src/**'] }, naming: { tokens: { system: 'shop' } }, modules: [
   { id: 'quotas', kind: 'domain', paths: ['src/quotas/**'] }, { id: 'deployments', kind: 'domain', paths: ['src/deployments/**'] },
   { id: 'orchestration', kind: 'pipeline', paths: ['src/orchestration/**'] }, { id: 'database', kind: 'foundation', paths: ['src/database/**'] },
 ] };
@@ -27,7 +27,7 @@ test('B173/AC-1 a v2 intent declares its pathway, and a step the pathway require
 
 test('B174/AC-1 an intent of more than 5 increments is INTENT-SIZE; a question with no answer is ELAB-OPEN, one answered with no option ELAB-BARE', () => {
   const incs = '\n# Increments\n' + [1, 2, 3, 4, 5, 6].map((k) => `- I-1.${k} Step ${k}: later`).join('\n') + '\n';
-  const qs = '\n# Questions\n- Q1 Which identity issuer?\n  - a) our own: the manager keeps the keys\n  - b) an engine: one more system to run\n  - Answer: a, the owner (2026-10-27)\n- Q2 Which key vault?\n  - a) none yet: keys in config\n  - Answer: yes\n- Q3 Which observability stack?\n  - a) metrics only: cheap\n';
+  const qs = '\n# Questions\n- Q1 Which identity issuer?\n  - a) our own: the manager keeps the keys\n  - b) an engine: one more system to run\n  - Answer: a, the owner\n- Q2 Which key vault?\n  - a) none yet: keys in config\n  - Answer: yes\n- Q3 Which observability stack?\n  - a) metrics only: cheap\n';
   assert.deepEqual(codes(makeRepo({ 'docs/intents/I-1-backbone.md': intent('pathway: feature\n', incs + qs) }, V2)).sort(), [
     'ELAB-BARE I-1 Q2: the answer yes names none of the options a',
     'ELAB-OPEN I-1 Q3 has no answer',
@@ -56,12 +56,12 @@ test('B175/AC-2 a table two domains own, a term with two meanings and a cited re
 test('B176/AC-1 aidlc fact records a read-only probe as a platform fact; a platform decision without one is FACT-MISSING, an old one FACT-STALE', () => {
   const dir = makeRepo({ 'docs/intents/I-1-backbone.md': intent('pathway: feature\n'), ...Object.fromEntries([decision(8, 'affects: { platform: true }\n')]) }, V2);
   assert.deepEqual(codes(dir), ['FACT-MISSING 0008 affects the platform and cites no fact']);
-  const r = run(dir, ['fact', 'Workload identity form', '--env', 'dev', '--', 'echo', 'spiffe://k3s/ns/rsm-dev/sa/rsm-providers-api']);
+  const r = run(dir, ['fact', 'Workload identity form', '--env', 'dev', '--', 'echo', 'spiffe://k3s/ns/shop-dev/sa/shop-providers-api']);
   assert.equal(r.code, 0, r.err);
   assert.match(r.out, /^wrote docs\/platform\/F-1-workload-identity-form\.md: cite it as F-1/);
   const fact = read(dir, 'docs/platform/F-1-workload-identity-form.md');
-  assert.match(fact, /^type: Fact\n[\s\S]*^command: "echo spiffe:\/\/k3s\/ns\/rsm-dev\/sa\/rsm-providers-api"\nenvironment: "dev"\ndigest: [0-9a-f]{16}\nat: \S+Z$/m);
-  assert.match(fact, /^spiffe:\/\/k3s\/ns\/rsm-dev\/sa\/rsm-providers-api$/m);
+  assert.match(fact, /^type: Fact\n[\s\S]*^command: "echo spiffe:\/\/k3s\/ns\/shop-dev\/sa\/shop-providers-api"\nenvironment: "dev"\ndigest: [0-9a-f]{16}\nat: \S+Z$/m);
+  assert.match(fact, /^spiffe:\/\/k3s\/ns\/shop-dev\/sa\/shop-providers-api$/m);
   writeFileSync(join(dir, 'docs/decisions/0008-decision-8.md'), read(dir, 'docs/decisions/0008-decision-8.md').replace('affects:', 'facts: [F-1]\naffects:'));
   assert.deepEqual(codes(dir), []);
   writeFileSync(join(dir, 'docs/platform/F-1-workload-identity-form.md'), fact.replace(/^at: .*$/m, 'at: 2026-01-01T00:00:00Z'));
@@ -87,7 +87,7 @@ test('B177/AC-1 an approved decision edited is DOC-AMEND; approving one that sup
   assert.ok(!codes(dir).some((l) => /DOC-AMEND 0003/.test(l)), 'superseding is no amendment');
 });
 
-test('B178/AC-2 the resource-manager contradictions are DESIGN-COHERENCE: a quota transaction across domains, operations data given to a horizontal module', () => {
+test('B178/AC-2 contradicting designs are DESIGN-COHERENCE: a quota transaction across domains, operations data given to a horizontal module', () => {
   const docs = {
     'docs/intents/I-1-backbone.md': intent('pathway: feature\n'),
     'docs/domains/quotas.md': domain('quotas'),

@@ -1,0 +1,69 @@
+{
+  "about": "Session history a tracked file must not carry: other tools, trial projects, a person's words, dated accounts (docs/design/standards.md#rationale). A pattern with `in` applies to those paths only: the product's own messages speak of the owner of the session in progress. `private`, a file outside the repo, adds names a public file must not carry; CI has none, and tests/neutral.test.mjs covers vendors.",
+  "private": "reports/private-terms.json",
+  "skip": [
+    "tests/fixtures/okf/",
+    "tests/fixtures/history.json",
+    "docs/design/diagrams/"
+  ],
+  "extensions": [
+    ".md",
+    ".mjs",
+    ".json",
+    ".yml",
+    ".go"
+  ],
+  "patterns": [
+    {
+      "match": "(?i)\\b(previous|earlier|prior|another) (tool|plugin)\\b"
+    },
+    {
+      "match": "(?i)\\bpilots?\\b"
+    },
+    {
+      "match": "(?i)\\b(first|second|third) (migration|project)\\b"
+    },
+    {
+      "match": "(?i)\\bthe owner (asked|said|wrote|answered|wanted|noticed|pointed|complained|raised|reported|preferred)\\b",
+      "in": [
+        "docs/",
+        "CHANGELOG.md",
+        "README.md",
+        "AGENTS.md"
+      ]
+    },
+    {
+      "match": "(?i)\\bowner\\b[^.\\n]{0,60}[:,] *[\"“][^\"”\\n]*\\s[^\"”\\n]*[\"”]",
+      "in": [
+        "docs/",
+        "CHANGELOG.md",
+        "README.md",
+        "AGENTS.md"
+      ]
+    },
+    {
+      "match": "[\"“][^\"”\\n]{10,}[\"”] \\((the )?owner",
+      "in": [
+        "docs/",
+        "CHANGELOG.md",
+        "README.md",
+        "AGENTS.md"
+      ]
+    },
+    {
+      "match": "(?i)\\bowner\\b[^.\\n]{0,30}\\b20\\d\\d-\\d\\d-\\d\\d\\b",
+      "in": [
+        "docs/",
+        "CHANGELOG.md",
+        "README.md",
+        "AGENTS.md"
+      ]
+    },
+    {
+      "match": "\\(20\\d\\d-\\d\\d-\\d\\d\\)"
+    },
+    {
+      "match": "(?i)\\b(seen|found|observed) (in|on) (a|the) (project|run)\\b"
+    }
+  ]
+}

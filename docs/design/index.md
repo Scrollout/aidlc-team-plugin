@@ -23,7 +23,7 @@
 * [Everyday paths](paths.md) - Fixes without an intent, changes mid-flight, shared files, pushing and base health, cleanup, adopting an existing project, and removing the plugin.
 * [Extension commands](cli-extensions.md) - The aidlc commands the CLI's extensions add - the stack packs' graph and scaffold, the board's sync, operations' deploy, release, rollback and retro, intake and models - with what each does and who runs it.
 * [Grid](grid.md) - The AI-DLC rows, the plan-execute-validate loop in each cell, lanes and the doc types each row produces.
-* [Guard limits](guard-limits.md) - What the hooks do not stop, by the owner's choice of 2026-10-24 - deliberate evasion such as shell wrappers, Bash writes to state files and raw API calls - and what catches each instead.
+* [Guard limits](guard-limits.md) - What the hooks do not stop, by design - deliberate evasion such as shell wrappers, Bash writes to state files and raw API calls - and what catches each instead.
 * [Hook checks](hook-checks.md) - What each hook checks or records - guard, scope, secrets, model, docs, heartbeat, steer, prompt, status and denied.
 * [Hook mechanics](hooks.md) - How the plugin's hooks reach the pinned CLI, how they fail, the host facts they rely on, and how repeated denials escalate.
 * [Inception](inception.md) - A deterministic Inception - a pathway per intent with the steps it requires, a sized intent whose questions are answered by option, domain docs and a generated context map, platform facts probed on the target, structured decisions within a horizon and superseded never amended, a coherence check over them, a recorded design review, and one-way doors approved one at a time.

@@ -73,6 +73,6 @@ The OpenAPI files are the contracts'.
 - **Slice:** a provider per namespace, its resource types, and whether each type's writes are long-running.
 - **Rules:** the stage order; long-running operations; idempotent writes; deployments that converge by re-applying, without compensation unless a project decides otherwise.
 - **Contract:** the resource hierarchy the contract grammar adds for it: the `providers` segment and its namespace, `systemData` on a resource, `nextLink` on a list ([0021](../decisions/0021-the-control-planes-api-conventions-belong-to-its.md)).
-- **First applied** to an existing control-plane project (the M21 pilot).
+- **First applied** to an existing control-plane project (M21).
 
 Bolts: [M24](../roadmap/m24.md) B228, B229, B230, B231, B232, B233, B234.

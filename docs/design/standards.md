@@ -7,7 +7,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T13:00:00Z }
 ---
 
 # Why
-The owner asked for standardized methods ([0018](../decisions/0018-standard-formats-over-home-made-ones.md)). Each format below maps onto a doc type the plugin already has. Approved docs keep their form: an approved doc is never edited.
+A standard format is one a reader already knows and a tool can check ([0018](../decisions/0018-standard-formats-over-home-made-ones.md)). Each format below maps onto a doc type the plugin already has. Approved docs keep their form: an approved doc is never edited.
 
 # Decisions: MADR 4.0
 - The template is MADR's: `# <title>`, then `## Context and Problem Statement`, `## Decision Drivers`, `## Considered Options`, `## Decision Outcome` with `Chosen option: "<option>", because <why>`, `### Consequences` and `### Confirmation`, `## Pros and Cons of the Options` and `## More Information`. The bundle's keys (`type`, `title`, `description`) and the plugin's (`affects`, `oneWayDoor`, `supersedes`, `facts`, `serves`) sit beside MADR's front matter (`status`, `date`, `decision-makers`, `consulted`, `informed`).
@@ -34,5 +34,12 @@ A requirement states what must hold in one of EARS's patterns under `# Requireme
 - A system doc follows arc42's 12 sections, from 1 Introduction and Goals to 12 Glossary. Generated pages fill some: the building block view is the codebase map by kind, decisions are the decisions index, the glossary is the naming glossary. `DOC-SCHEMA` reports a draft system doc missing one.
 - Generated maps name their C4 level where one fits: the module dependency graph and the map by kind are component views. The context map is a domain-driven design context map, not a C4 context view.
 - The plugin's own architecture is laid out the same way in [Architecture in arc42](arc42.md), with a generated component view of the CLI.
+
+# Rationale
+Every doc states its rules and their reasons in general terms, so they hold for any project and any reader:
+- **A why is cause and effect:** what goes wrong without the rule, or what it gains.
+- **The problem as it stands:** a principle's `*Why:*`, a design doc's `# Why`, a decision's Context and Problem Statement, a plan's goal, and a log or changelog entry each name the behaviour, the risk or the gap. They never recount how it came up.
+- **No session history:** no other tools, no named projects, no person's words, no dated accounts. Who decided and when sit in the front matter (`decision-makers`, `date`); the change itself is in git.
+- `tests/history.test.mjs` fails on a tracked file that breaks this, with the patterns in `tests/fixtures/history.json`.
 
 Bolts: [M20](../roadmap/m20.md) B208, B209, B210, B211, B212.

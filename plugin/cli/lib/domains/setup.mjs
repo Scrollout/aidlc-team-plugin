@@ -88,7 +88,7 @@ function leftovers(root) {
   return out;
 }
 
-// The runner and action pins the project's own workflows use, so the generated one matches them (first migration).
+// The runner and action pins the project's own workflows use, so the generated one matches them.
 function workflowVars(root) {
   const dir = join(root, I.workflows);
   const texts = existsSync(dir) ? readdirSync(dir).filter((f) => /\.ya?ml$/.test(f)).map((f) => readFileSync(join(dir, f), 'utf8')) : [];
