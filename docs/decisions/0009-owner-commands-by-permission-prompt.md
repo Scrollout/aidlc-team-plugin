@@ -2,7 +2,7 @@
 type: Decision
 title: 0009 Owner commands by permission prompt
 description: The owner runs owner commands (approve, upgrade, delegate, mode, release, rollback) by answering a yes/no permission prompt that the guard raises when the lead runs them, so they work from the mobile app and the web, where ! commands do not run.
-status: stable
+status: accepted
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T13:01:46Z }
 sources:
   - id: cc-rc
@@ -13,15 +13,17 @@ sources:
     title: Claude Code hooks reference
 ---
 
-# Context
+# Owner commands by permission prompt
+
+## Context and Problem Statement
 Owner commands (`approve`, `upgrade`, writing the delegation setting) were `!` commands, which run outside the agent. From the Claude mobile app or the web, a line starting with `!` goes to Claude as a message and does not run in shell mode,[^cc-rc] so an owner on a phone could do none of them.
 
-# Options
+## Considered Options
 1. Keep `!` only: no approvals away from the terminal.
 2. An `AskUserQuestion` popup, after which the lead runs `approve`: the lead could run it without asking, so nothing enforces the owner's answer.
 3. **The guard answers `ask` for the owner commands**: Claude Code shows the owner a permission prompt for that exact command, and only the owner can allow it.
 
-# Decision
+## Decision Outcome
 Option 3, asked for by the owner on 2026-10-22.
 - The owner commands are those in `cli.json` `hooks.owner`:
   - `approve` (without `--auto`) stamps docs as the owner's;
@@ -36,7 +38,6 @@ Option 3, asked for by the owner on 2026-10-22.
 - The stamp stays `human:<git user.email>`: the owner's answer is the approval. `!` keeps working.
 - Auto mode's classifier may still refuse a command it reads as self-modification, as it did once for `upgrade`; then the owner uses `!` in a terminal.
 
-# Why
 Principle 5 needs the decision to be the owner's, not a particular keyboard. A permission prompt is answered only by a person and works on every surface; a chat answer the lead relays is not enforced.
 
 [^cc-rc]: Remote Control

@@ -82,7 +82,7 @@ test('B177/AC-1 an approved decision edited is DOC-AMEND; approving one that sup
   const r = run(dir, ['approve', '0006']);
   assert.equal(r.code, 0, r.err);
   assert.match(r.out, /docs\/decisions\/0003-decision-3\.md is superseded by docs\/decisions\/0006-decision-6\.md/);
-  assert.match(read(dir, 'docs/decisions/0003-decision-3.md'), /^status: superseded\nsuperseded_by: "0006"$/m);
+  assert.match(read(dir, 'docs/decisions/0003-decision-3.md'), /^status: superseded by ADR-0006$/m); // as MADR writes it
   assert.ok(!codes(dir).some((l) => /DOC-AMEND 0003/.test(l)), 'superseding is no amendment');
 });
 

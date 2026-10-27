@@ -66,7 +66,7 @@ function stamp(text, by, at) {
   let skipping = false;
   for (const line of doc.fmLines.slice(1, -1)) {
     const key = line.match(/^([A-Za-z_][\w-]*):/)?.[1];
-    if (key) skipping = S.stampFields.includes(key);
+    if (key) skipping = [...S.stampFields, ...Object.keys(S.stamped[doc.fm.type] ?? {})].includes(key);
     else if (!/^(\s|-)/.test(line) && line.trim()) skipping = false;
     if (!skipping) kept.push(line);
   }
@@ -74,7 +74,9 @@ function stamp(text, by, at) {
   const body = doc.lines.slice(doc.body).join('\n');
   // An intent is pinned to the method it is approved under: its bolts are judged by that method's rules (docs/design/canonical-model.md).
   const pin = doc.fm.type === S.intentType ? [`method: ${config.method.version}`] : [];
-  const draft = ['---', ...kept, ...pin, `status: ${S.stable}`, 'verified:', ...all.map((e) => `  - ${flowMap(e)}`), '---', body].join('\n');
+  // A decision is stamped as MADR has it: accepted, with the date (docs/design/standards.md).
+  const madr = Object.entries(S.stamped[doc.fm.type] ?? {}).map(([k, v]) => `${k}: ${v === 'today' ? at.slice(0, 10) : v}`);
+  const draft = ['---', ...kept, ...pin, ...(madr.length ? madr : [`status: ${S.stable}`]), 'verified:', ...all.map((e) => `  - ${flowMap(e)}`), '---', body].join('\n');
   const hash = hashDoc(parseDoc(draft));
   return draft.replace(/\nverified:\n/, `\nverified_hash: ${hash}\nverified:\n`);
 }
@@ -170,8 +172,8 @@ export const commands = {
       // Approving a decision that supersedes another marks the older one superseded, never edits its content (decision 0013).
       const sup = parseDoc(stamped).fm?.supersedes, old = sup !== undefined && readdirSync(dirname(file)).find((f) => f.startsWith(`${String(sup).padStart(4, '0')}-`));
       if (old) {
-        const path = join(dirname(file), old), text = readFileSync(path, 'utf8').replace(/^status: .*$/m, `status: ${config.inception.superseded}`);
-        writeFileSync(path, /^superseded_by:/m.test(text) ? text : text.replace(/^status: .*$/m, (s) => `${s}\nsuperseded_by: "${basename(file).slice(0, 4)}"`));
+        const path = join(dirname(file), old);
+        writeFileSync(path, readFileSync(path, 'utf8').replace(/^status: .*$/m, `status: ${msg('supersededStatus', { n: basename(file).slice(0, 4) })}`));
         out += msg('supersededBy', { old: relPath(cwd, path), doc: relPath(cwd, file) });
       }
     }

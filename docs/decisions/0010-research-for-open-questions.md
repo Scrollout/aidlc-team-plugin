@@ -2,20 +2,22 @@
 type: Decision
 title: 0010 Research for open questions
 description: A question the owner cannot answer, or one with no clearly best option, goes to a researcher subagent on a cheap model that writes a cited digest from the project's own sources, official ones first; the lead drafts the decision and the owner still approves.
-status: stable
+status: accepted
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T08:30:00Z }
 ---
 
-# Context
+# Research for open questions
+
+## Context and Problem Statement
 In the M1 build the owner answered every design question of one unit with "research how others do it"; in the [M2 pilot](../pilot/m2-report.md) elaboration ran on "take the recommended option and log it". The hard part of those questions was the knowledge, not the choice. Researching inside the lead's session is costly: the lead was 85 % of the pilot's tokens, and every page it reads is re-read on each later turn. An agent cannot approve for the owner: auto mode refused the lead's own delegated approvals as self-approval.
 
-# Options
+## Considered Options
 1. Keep it with the lead: it researches in its own context and recommends.
 2. **A researcher subagent**, cheap model, fresh context, bounded; the lead drafts the decision from its digest.
 3. Option 2 plus **an advisor subagent** on a strong model that reads only the question, the digest and the card, and drafts the decision.
 4. An agent that steers and approves in the owner's place.
 
-# Decision
+## Decision Outcome
 Option 2, chosen by the owner on 2026-10-23 as an M2 unit; option 3 later, if the lead's recommendations prove weak. Option 4 breaks principle 5 and the host refuses it.
 - Trigger, never by default: the owner says "research", or the lead marks a question as having no clearly best option (a `hold` with a research reason).
 - Sources come from the project, never from the plugin: the question, the project's docs bundle and stack, and an optional `research.sources` list in the profile. The plugin ships no source list; how this repo researches its own design is this repo's business (principle 10).
@@ -24,5 +26,4 @@ Option 2, chosen by the owner on 2026-10-23 as an M2 unit; option 3 later, if th
 - The model is a profile setting (`models.research`, default Sonnet), since not every account has every model.
 - The result is a draft decision with a recommendation. Two-way doors may be applied by the lead under the owner's run mode; one-way doors and first approvals stay with the owner ([0008](0008-delegated-approvals.md)).
 
-# Why
 The knowledge, not the choice, is what the owner lacked; a cheap model with a fresh context gathers it without growing the lead's context, and the owner keeps the decision.

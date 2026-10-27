@@ -277,6 +277,8 @@
     "logFrontmatter": "log.md frontmatter is not a valid YAML mapping",
     "logHeading": "date heading is not YYYY-MM-DD",
     "indexStale": "index differs from what aidlc index generates",
+    "docSchemaSection": "a draft {{type}} lacks its {{section}} section ({{standard}})",
+    "supersededStatus": "superseded by ADR-{{n}}",
     "docSchemaKey": "a {{type}} lacks {{key}}",
     "docSchemaEnum": "a {{type}}'s {{key}} is {{value}}, not one of {{values}}",
     "docFolder": "a {{type}} lives in {{folder}}/, not {{at}}",
@@ -715,7 +717,8 @@
       "schemas": {
         "Bolt": { "required": ["scope"] },
         "Domain": { "required": ["code", "kind"], "enums": { "kind": "kinds" } },
-        "Fact": { "required": ["command", "environment", "digest", "at"] }
+        "Fact": { "required": ["command", "environment", "digest", "at"] },
+        "Decision": { "standard": "MADR 4.0", "sections": ["Context and Problem Statement", "Considered Options", "Decision Outcome"], "sectionsWhen": { "oneWayDoor": ["Confirmation"] } }
       }
     },
     "log": "log.md",
@@ -1121,6 +1124,7 @@
       ["rolledBack", "merged", "fix bolt merged"],
       ["checked", "released", "release on a pushed green base passes, smoke too or none set"]
     ],
+    "stamped": { "Decision": { "status": "accepted", "date": "today" } },
     "approveBlocks": ["BOLT-BIND", "BOLT-SPAN", "INCR-SKELETON", "FIX-SHAPE", "PLAN-DECISION", "PLAN-INCREMENT", "PATHWAY-SKIP", "INTENT-SIZE", "ELAB-OPEN", "ELAB-BARE", "FACT-MISSING", "DOC-AMEND", "DESIGN-COHERENCE"],
     "gates": "gates",
     "reviewing": "reviewing",

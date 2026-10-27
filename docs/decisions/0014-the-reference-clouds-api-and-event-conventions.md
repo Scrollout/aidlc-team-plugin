@@ -2,11 +2,13 @@
 type: Decision
 title: 0014 The reference cloud's API and event conventions
 description: The naming registry ships, as the default grammar for every project's contracts and events, the control-plane API rules of the public cloud the owner chose as reference, and its system-event naming sent as CloudEvents 1.0.
-status: stable
+status: accepted
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T00:20:00Z }
 ---
 
-# Sources
+# The reference cloud's API and event conventions
+
+## More Information
 The reference cloud's published sources, read on 2026-10-26:
 - its API review rules and API linter rule docs (2026-10);
 - its REST API guidelines (2026-08);
@@ -15,15 +17,15 @@ The reference cloud's published sources, read on 2026-10-26:
 
 The open points were then checked live on 2026-10-27, with read-only calls plus one probe resource group, created and deleted with the owner's yes.
 
-# Context
+## Context and Problem Statement
 The owner asked (2026-10-26) to use what the reference cloud uses for API casing (plan decision D3) and event types (D4). The cloud has two rulebooks: its resource manager's for the control plane, and general guidelines for data planes. The data-plane guidelines prefer kebab-case paths and an `Operation-Location` header. The projects this plugin serves are control planes and the services behind them.
 
-# Options
+## Considered Options
 1. **The resource manager's control-plane rules, and its system-event naming.**
 2. The data-plane guidelines. Their paths and long-running operations differ from what a resource-manager-style front door serves.
 3. A house style. It would not be what the owner asked for.
 
-# Decision
+## Decision Outcome
 Option 1. The naming registry (M16) ships these as the default grammar; a project overrides one only by its own naming decision.
 - **Paths:** `[/<scope>]/providers/<Namespace>/<type>/{<typeName>}…[/<action>]`.
   - The namespace is PascalCase `<Org>.<Service>`. Types are camelCase and plural.
@@ -53,8 +55,7 @@ Option 1. The naming registry (M16) ships these as the default grammar; a projec
   - `Cancelled`;
   - one service's `.V2` event suffix.
 
-# Why
 A resource-manager-style control plane has one widely used public reference, and following it removes a whole class of naming choices. The rules come from the cloud's own review rules and linter, and the live API confirmed the open points.
 
-# Revisit when
+### Revisit when
 The cloud republishes its resource provider contract (its public repository was archived on 2026-07-28), or a project's API is a data plane.

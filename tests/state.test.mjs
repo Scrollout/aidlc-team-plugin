@@ -325,7 +325,7 @@ test('U80/AC-2 approve finds a decision by its number, as the owner types it', (
   for (const name of ['0010', '10']) {
     const r = run(dir, ['approve', name]);
     assert.equal(r.code, 0, r.err);
-    assert.equal(parseDoc(read(dir, 'docs/decisions/0010-baseline.md')).fm.status, 'stable', name);
+    assert.equal(parseDoc(read(dir, 'docs/decisions/0010-baseline.md')).fm.status, 'accepted', name); // MADR's status
   }
   assert.match(run(dir, ['approve', '0011']).err, /0011/, 'an unknown number names it');
 });

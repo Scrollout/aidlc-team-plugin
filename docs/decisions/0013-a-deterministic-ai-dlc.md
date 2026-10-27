@@ -2,12 +2,14 @@
 type: Decision
 title: 0013 A deterministic AI-DLC
 description: One word per concept at each scale (core and extensions, domains of a fixed kind, slices and layers, intents, increments and bolts), every structural fact declared once and the rest generated, rules pinned per intent, and leftovers removed with their replacements.
-status: stable
+status: accepted
 supersedes: "0007"
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T00:20:00Z }
 ---
 
-# Context
+# A deterministic AI-DLC
+
+## Context and Problem Statement
 The third project, `resource-manager` (2026-10-26), built a sound control-plane shape, but the plugin let its architecture drift:
 - "Vertical slice" meant three things in the plugin: a delivery step (`slices.md`), a bounded context (`architecture-model.md`), and any module with `layers` (`map.mjs`). The project went through three architecture vocabularies in one day.
 - The profile had one axis, modules with layers. It could not tell a domain from a shared kit, or the core from an extension.
@@ -18,12 +20,12 @@ The third project, `resource-manager` (2026-10-26), built a sound control-plane 
 
 [0007](0007-requirements-and-architecture-as-checks.md) made requirements docs and architecture rules gate checks. That still holds, but its boundaries were written by hand per project, over a model that could not express the shape.
 
-# Options
+## Considered Options
 1. Patch each finding as it comes. That is how 39 incident rules accumulated, and the drift came from their interaction.
 2. **A canonical model mapped to AI-DLC, with every structural fact declared once and the rest generated, rules pinned per intent, and replacements that delete what they replace.**
 3. Copy the reference AI-DLC workflows' rules as they are. They leave a unit's boundary to judgement, and the method's launch talk gives no rule for it either.
 
-# Decision
+## Decision Outcome
 Option 2, the owner's answers of 2026-10-26 (plan decisions D1, D2 and D5-D10):
 - **Words.** Each concept has one word at one scale:
   - **System:** core, extension.
@@ -43,8 +45,8 @@ Option 2, the owner's answers of 2026-10-26 (plan decisions D1, D2 and D5-D10):
 
 Milestones: [M15](../roadmap/m15.md) to [M21](../roadmap/m21.md).
 
-# Why
 Principle 1: a rule that matters is a check. A word that means two things can't be checked, and a picture drawn by hand can't be trusted. Declaring each fact once and generating the rest makes drift a failing check instead of a review comment.
 
-# Revisit when
+## More Information
+Revisit when:
 A pilot shows a scale the model cannot express, or the generated artefacts cost more context than the hand-written ones they replace.

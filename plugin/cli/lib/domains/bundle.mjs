@@ -271,6 +271,11 @@ function checkSchema(root, file, doc, type, add, v2) {
     const values = config.vocabulary[from], value = doc.fm[key];
     if (truthy(value) && !values.includes(String(value))) add(file, 1, 'DOC-SCHEMA', 'docSchemaEnum', { type, key, value: String(value), values: values.join(', ') });
   }
+  // A draft keeps the sections its standard requires; an approved doc is never edited (docs/design/standards.md).
+  const sections = [...list(schema.sections), ...Object.entries(schema.sectionsWhen ?? {}).flatMap(([key, more]) => (doc.fm[key] === true ? more : []))];
+  for (const section of doc.fm.verified_hash || !v2 ? [] : sections) {
+    if (!doc.lines.some((l) => new RegExp(`^#{1,6}\\s+${section}\\s*$`, 'i').test(l))) add(file, 1, 'DOC-SCHEMA', 'docSchemaSection', { type, section, standard: schema.standard });
+  }
   const folder = B.folders[type], at = relative(root, dirname(file)).split(sep)[0] || '.';
   if (v2 && folder && at !== folder) add(file, 1, 'DOC-SCHEMA', 'docFolder', { type, folder, at: `${at}/` });
   if (!B.generated.includes(type)) return;

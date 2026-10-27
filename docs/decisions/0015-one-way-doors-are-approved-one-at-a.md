@@ -2,20 +2,22 @@
 type: Decision
 title: 0015 One-way doors are approved one at a time
 description: A typed approve may still name several docs, but never more than one one-way-door decision, and never a doc with an unresolved confirmed review finding; each one-way door is shown with its options, findings and facts before it is stamped.
-status: stable
+status: accepted
 supersedes: "0011"
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T00:20:00Z }
 ---
 
-# Context
+# One-way doors are approved one at a time
+
+## Context and Problem Statement
 [0011](0011-plain-word-approval.md) lets the owner approve by typing `approve <doc>…`, and a hook stamps the docs before the lead acts. On `resource-manager` (2026-10-26) a single typed approval stamped 21 decisions 20 seconds after they were shown. They included the identity engine, key vault, database, portal and observability stack, mostly for increments not yet planned. Several contradicted each other, and none had been checked against the target platform. AI-DLC's safeguard is human validation of what the AI proposes. A bulk stamp keeps the form and loses the substance.
 
-# Options
+## Considered Options
 1. Keep 0011 as is, and rely on the owner's care.
 2. **Keep the typed approval, but refuse several one-way doors in one command, and anything with an open confirmed finding.**
 3. Require a written rationale per approval. That costs the owner on every doc, including the many that are not one-way doors.
 
-# Decision
+## Decision Outcome
 Option 2, from plan decisions D1 and D7 and the owner's acceptance of the v2 plan (2026-10-26). Everything in 0011 stays except:
 - `approve` with two or more docs marked `oneWayDoor: true` is refused (`APPROVE-BULK`), naming them. Other docs, such as requirements, plans and bolts, may still be approved together.
 - A doc with an unresolved CONFIRMED finding from the design review or a reviewer is refused (`APPROVE-OPEN`). The owner disposes of each finding first.
@@ -24,8 +26,8 @@ Option 2, from plan decisions D1 and D7 and the owner's acceptance of the v2 pla
 
 Built in [M18](../roadmap/m18.md).
 
-# Why
 Principle 5 needs the approval to be the owner's informed act. One decision per command, with its consequences in view, is the smallest change that makes the validation real without slowing the approvals that are not one-way doors.
 
-# Revisit when
+## More Information
+Revisit when:
 A pilot shows owners approving one-way doors singly but just as quickly. Then the measure is the review's findings, not the command.

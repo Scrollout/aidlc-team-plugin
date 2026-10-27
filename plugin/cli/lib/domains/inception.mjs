@@ -12,6 +12,7 @@ import { glossaryOf } from './naming.mjs';
 import { plug } from '../foundation/seams.mjs';
 
 const P = config.inception, F = config.okf.bundle.folders;
+const superseded = (d) => String(d.fm.status ?? '').startsWith(P.superseded); // MADR's superseded by ADR-<NNNN>, or v1's superseded
 const docsIn = (bundle, dir) => (existsSync(join(bundle, dir)) ? readdirSync(join(bundle, dir)).filter((f) => f.endsWith('.md') && f !== 'index.md').sort() : [])
   .map((f) => ({ file: join(bundle, dir, f), name: f, doc: parseDoc(readFileSync(join(bundle, dir, f), 'utf8')) })).filter((d) => d.doc.fm);
 // A section's bullet lines as written: the prose view drops inline code, where table names sit.
@@ -53,14 +54,14 @@ export function lintInception({ bundle, profile, intents, requirements, merged, 
     if (!v2) continue;
     if (factProblems(d).length) add('FACT-MISSING', d, keyLine(d, 'affects'), 'factMissing', {});
     for (const ref of list(d.fm.facts).filter((r) => facts.has(r) && stale(facts.get(r)))) add('FACT-STALE', d, keyLine(d, 'facts'), 'factStale', { fact: ref, days: profile.facts?.maxAgeDays ?? P.maxAgeDays });
-    if (d.fm.verified_hash && d.fm.status !== P.superseded && d.stale) add('DOC-AMEND', d, 1, 'docAmend', {});
+    if (d.fm.verified_hash && !superseded(d) && d.stale) add('DOC-AMEND', d, 1, 'docAmend', {});
     const serves = list(d.fm.serves).map((s) => s.match(/^(I-\d+)\.(\d+)$/)).filter(Boolean);
     if (!d.fm.verified_hash && serves.length) {
       const intent = intents.find((i) => i.id === serves[0][1]), done = intent ? incrementLines(intent).filter((l) => l.ids.length && l.ids.every((id) => merged.has(id))).length : 0;
       if (serves.every((m) => Number(m[2]) > done + P.horizon)) add('DECISION-HORIZON', d, keyLine(d, 'serves'), 'decisionHorizon', { serves: list(d.fm.serves).join(', '), horizon: P.horizon, next: done + 1 });
     }
   }
-  if (v2) coherence(decisions.filter((d) => d.fm.status !== P.superseded), domains, profile, add, keyLine);
+  if (v2) coherence(decisions.filter((d) => !superseded(d)), domains, profile, add, keyLine);
 
   // Intents: size, questions, pathway steps, requirements without a domain.
   for (const i of intents.filter((x) => x.fm.status !== config.grid.dropped)) {
