@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { config } from '../plugin/cli/lib/index.mjs';
-import { CODES, DIR, pages } from './diagrams.mjs';
+import { CODES, DIR, pages, workflow } from './diagrams.mjs';
 
 test('B191/AC-1 each generated diagram page matches the data it is drawn from (rewrite them with node tests/diagrams.mjs)', () => {
   const want = pages();
@@ -34,4 +34,9 @@ test('B192/AC-1 every check code is documented on exactly one page, and every co
   const named = readdirSync(design, { recursive: true }).filter((f) => f.endsWith('.md')).flatMap((f) => [...readFileSync(join(design, f), 'utf8').matchAll(/`([A-Z]{2,}(?:-[A-Z][A-Z0-9]*)+)`/g)].map((m) => [f, m[1]]));
   const format = (c) => c.split('-').every((seg) => new Set(seg).size === 1); // a placeholder such as YYYY-MM-DD
   assert.deepEqual(named.filter(([, c]) => !known.has(c) && !format(c)).map(([f, c]) => `${f}: ${c}`), []);
+});
+
+test('B196/AC-1 the README draws the generated workflow', () => {
+  const readme = readFileSync(join(import.meta.dirname, '../README.md'), 'utf8');
+  assert.equal(readme.split('<!-- generated: workflow -->\n')[1].split('<!-- /generated -->')[0], workflow(), 'DOC-DIAGRAM README.md: rewrite its block with node tests/diagrams.mjs');
 });

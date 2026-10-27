@@ -44,15 +44,18 @@ function path(rows, from, to) {
   return seen.get(to) ?? [];
 }
 
+// The workflow, also drawn in the README.
+export const workflow = () => mermaid(['flowchart LR', '  subgraph Inception',
+      ...Object.entries(config.inception.pathways).map(([name, steps]) => `    ${[name, ...steps, 'approved'].map((x) => (x === name ? `${id(name)}([${name}])` : id(x))).join(' --> ')}`),
+      '  end', '  subgraph Construction', ...path(S.transitions, 'approved', 'merged').map(([a, b, why]) => `    b_${a}[${a}] -->|${why}| b_${b}[${b}]`), '  end',
+      '  subgraph Operations', ...path(S.intentTransitions, 'merged', 'checked').concat(path(S.intentTransitions, 'checked', 'released')).map(([a, b, why]) => `    i_${a}[${a}] -->|${why}| i_${b}[${b}]`), '  end',
+      '  approved --> b_approved', '  b_merged --> i_merged']);
+
 export const pages = () => ({
   'canonical-model.md': page('Words by scale', 'The canonical words, one per concept, grouped by the scale they name; drawn from the vocabulary in cli.json.',
     mermaid(['flowchart LR', ...Object.entries(Object.groupBy(V.words, (w) => w.scale)).flatMap(([scale, words]) => [`  subgraph ${id(scale)}["${scale}"]`, ...words.map((w) => `    ${id(`${scale}_${w.word}`)}["${w.word}"]`), '  end'])])),
   'workflow.md': page('Workflow', 'The pathways into an approved intent with the steps each requires, then a bolt from approval to merge and an intent from merge to release; drawn from the pathways and state transitions in cli.json.',
-    mermaid(['flowchart LR', '  subgraph Inception',
-      ...Object.entries(config.inception.pathways).map(([name, steps]) => `    ${[name, ...steps, 'approved'].map((x) => (x === name ? `${id(name)}([${name}])` : id(x))).join(' --> ')}`),
-      '  end', '  subgraph Construction', ...path(S.transitions, 'approved', 'merged').map(([a, b, why]) => `    b_${a}[${a}] -->|${why}| b_${b}[${b}]`), '  end',
-      '  subgraph Operations', ...path(S.intentTransitions, 'merged', 'checked').concat(path(S.intentTransitions, 'checked', 'released')).map(([a, b, why]) => `    i_${a}[${a}] -->|${why}| i_${b}[${b}]`), '  end',
-      '  approved --> b_approved', '  b_merged --> i_merged'])),
+    workflow()),
   'cli-components.md': page('CLI components', "A C4 component view of the CLI, with its runtime, extensions, public entry, domains and foundation kits, and which uses which; drawn from the CLI's own imports.", components()),
   'bolt-states.md': page('Bolt states', "A bolt's derived states and what moves it between them; drawn from state.transitions in cli.json.", states(S.transitions)),
   'intent-states.md': page('Intent states', "An intent's derived states, from approval to release; drawn from state.intentTransitions in cli.json.", states(S.intentTransitions)),
@@ -72,4 +75,6 @@ export const pages = () => ({
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   mkdirSync(DIR, { recursive: true });
   for (const [name, text] of Object.entries(pages())) writeFileSync(join(DIR, name), text);
+  const readme = join(ROOT, 'README.md'), [head, rest] = readFileSync(readme, 'utf8').split('<!-- generated: workflow -->\n');
+  writeFileSync(readme, `${head}<!-- generated: workflow -->\n${workflow()}<!-- /generated -->${rest.split('<!-- /generated -->')[1]}`);
 }

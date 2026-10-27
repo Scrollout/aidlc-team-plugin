@@ -39,7 +39,9 @@ test('U5/AC-1 U50/AC-1 init on an empty repo writes a valid profile, a short AGE
   const r = run(dir, ['init', '--name', 'demo']);
   assert.equal(r.code, 0, r.err + r.out);
   const profile = JSON.parse(readFileSync(join(dir, '.aidlc/profile.json'), 'utf8'));
-  assert.deepEqual(profile, { name: 'demo', base: 'main', docs: { bundle: 'docs' }, modules: [], lanes: { quick: ['docs/**', '*.md'], full: [] }, focus: {} });
+  // B196/AC-2 a new project starts on v2: a system, and a system code from its name.
+  assert.deepEqual(profile, { name: 'demo', base: 'main', docs: { bundle: 'docs' }, modules: [], lanes: { quick: ['docs/**', '*.md'], full: [] }, focus: {}, system: { core: [], extensions: [] }, naming: { tokens: { system: 'demo' } } });
+  assert.ok(!existsSync(join(dir, 'docs/units')) && !existsSync(join(dir, '.aidlc/templates/docs/unit.md')), 'no v1 folder or template');
   assert.ok(readFileSync(join(dir, 'AGENTS.md'), 'utf8').split('\n').length <= 60);
   assert.match(readFileSync(join(dir, 'AGENTS.md'), 'utf8'), /^- `docs\/index\.md` is the root of the docs bundle \(OKF\): read it first/m, 'U138/AC-1 the root index is the entry point');
   assert.equal(readFileSync(join(dir, 'CLAUDE.md'), 'utf8'), '@AGENTS.md\n');
@@ -90,7 +92,7 @@ test('U97/AC-1 upgrade lists the findings the new release reports and the pinned
   writeFileSync(join(dir, '.aidlc/profile.json'), JSON.stringify({ ...profile, modules: [{ id: 'core', paths: ['src/**'] }] }));
   const r = run(dir, ['upgrade', '--dirty']);
   assert.equal(r.code, 0, r.err);
-  assert.match(r.out, new RegExp(`${PLUGIN.version.replace(/\./g, '\\.')} reports findings the pinned release did not; plan a fix before the next merge:\n[\\s\\S]*\\.aidlc/profile\\.json:1 PROFILE-NAMING `));
+  assert.match(r.out, new RegExp(`${PLUGIN.version.replace(/\./g, '\\.')} reports findings the pinned release did not; plan a fix before the next merge:\n[\\s\\S]*\\.aidlc/profile\\.json:1 PROFILE-KIND `)); // a module without a kind, in a v2 project
   assert.doesNotMatch(run(dir, ['upgrade', '--dirty']).out, /reports findings the pinned release did not/, 'none new the second time');
 });
 

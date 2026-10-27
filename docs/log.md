@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M20 B196: the README is rebuilt around the generated workflow (held to its data by a test) and points at the arc42 page, the standards, the generated diagrams and the changelog; a fresh `init` starts a project on v2 (a `system` and a system code from its name). M20 is built. Release 0.155.0.
 - **Update** M20 B194: the pilot reports become [Pilot lessons](pilot/lessons.md), each lesson naming the rule or check that now holds it, the open ones on the Later list; the reports are deleted (git keeps them) and the Later list holds only open ideas. Release 0.154.0.
 - **Update** M20 B195: no dead code: a test fails on an export nothing outside its file uses (ten became module-private) and on the v1 aliases once the milestone they expire with (`grid.legacyUntil`, M22) is built; unused messages were already caught. Release 0.153.0.
 - **Update** M20 B212: the system template follows arc42's twelve sections, and a draft system doc in a v2 project missing one is `DOC-SCHEMA`; the generated dependency and kind maps say they are C4 component views; the plugin's own architecture is laid out in [Architecture in arc42](design/arc42.md) with a generated C4 component view of the CLI. Standard formats are built. Release 0.152.0.

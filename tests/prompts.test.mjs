@@ -199,10 +199,11 @@ test('U64/AC-2 the README shows every hook, module, agent, template, trailer, th
   for (const t of ['AGENTS.md', 'CLAUDE.md', 'constitution', 'runbook', 'profile', 'CI']) assert.ok(blocks[1].includes(t), t);
   for (const r of ['deploys', 'goes', 'prompts']) assert.match(blocks[1], new RegExp(`\\.git/aidlc<br/>.*\\b${r}\\b`), r);
   assert.match(blocks[1], /upgrade adds missing/);
-  assert.match(blocks[0], /Unit, Card, Review,<br\/>Tested, Proof trailers/);
-  for (const step of ['Deploy check', 'Release, owner step', 'Smoke', 'Rollback, owner step', 'types release I-n', 'types rollback I-n', 'Researcher']) assert.ok(blocks[0].includes(step), step);
+  // B196/AC-1 the first diagram is the generated workflow (held to its data in diagrams.test.mjs); the steps are in the text.
+  assert.match(readme, /Unit, Card, Review, Tested and Proof trailers/);
+  for (const step of ['deploy check', 'type `release I-<n>`', 'smoke', '`rollback I-<n>` is yours', 'researcher']) assert.ok(readme.includes(step), step);
   const rounds = JSON.parse(read('plugin/cli/defaults.json')).review.fixRounds;
-  assert.ok(blocks[0].includes(`at most ${rounds} rounds`));
+  assert.ok(readme.includes(`at most ${rounds} fix rounds`));
   assert.match(readme, /\]\(docs\/roadmap\/index\.md\)/);
   assert.doesNotMatch(readme, /roadmap\/m1\.md/);
 });

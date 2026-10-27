@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.155.0] - 2026-10-27
+### Changed
+- A fresh `init` starts the project on v2: the profile gets a `system` and a system code from the project's name.
+- The README is rebuilt around the generated workflow.
+
 ## [0.154.0] - 2026-10-27
 ### Changed
 - The pilot reports are condensed into one lessons page, each lesson naming the rule that holds it.
@@ -164,7 +169,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.154.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.155.0...HEAD
+[0.155.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.154.0...v0.155.0
 [0.154.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.153.0...v0.154.0
 [0.153.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.152.0...v0.153.0
 [0.152.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.151.0...v0.152.0

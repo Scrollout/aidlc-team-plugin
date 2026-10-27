@@ -85,7 +85,7 @@ export function setup(dir) {
   git(dir, 'config', 'user.name', 'Owner');
   git(dir, 'config', 'commit.gpgsign', 'false');
   aidlc(dir, ['init', '--name', 'evals']);
-  const profile = JSON.parse(readFileSync(join(dir, '.aidlc/profile.json'), 'utf8'));
+  const { system, naming, ...profile } = JSON.parse(readFileSync(join(dir, '.aidlc/profile.json'), 'utf8')); // the fixture's plan is a v1 one: units under units/
   const levels = { unit: { paths: ['tests/**'], run: 'node --test' } }; // a level that runs: proof and mutations need it
   write(dir, { ...BASE, '.aidlc/profile.json': JSON.stringify({ ...profile, modules: [{ id: 'api', paths: ['src/**', 'tests/**'], check: 'node --test', api: ['src/**'] }], architecture: { data: { prefix: 'data/' }, acyclic: true }, levels }, null, 2) + '\n' });
   aidlc(dir, ['index']);

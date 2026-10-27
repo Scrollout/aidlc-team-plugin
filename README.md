@@ -15,62 +15,37 @@ A Claude Code plugin that runs the AI-DLC lifecycle (Inception, Construction, Op
 
 ## How AI-DLC runs with the plugin
 
+You describe what you want; the lead turns it into the method, and `aidlc next` names one action at a time, derived from git and the docs.
+
+- **Inception:** an intent with a pathway (greenfield, feature or brownfield) and the steps it requires: questions answered by option, domain docs, platform facts. Requirements are stated in EARS, decisions in MADR 4.0, and you approve each one-way door on its own. A researcher writes a cited digest for a question nobody can answer yet.
+- **Construction:** the intent ships in increments, increment 1 the walking skeleton on its target. Each bolt binds one domain and has acceptance criteria as Given/When/Then. A builder writes the tests first inside the bolt's scope, a reviewer with fresh context checks each focus (at most 3 fix rounds before you decide), and the merge gate proves each level with the code reverted. Merges carry Unit, Card, Review, Tested and Proof trailers.
+- **Operations:** deploy check, then your go (type `release I-<n>`), then smoke; `rollback I-<n>` is yours too. A requirement counts as delivered only when its tests are in a release, and changes land in `CHANGELOG.md` per Keep a Changelog.
+
+The workflow, generated from the rules the CLI enforces (pathways and state transitions in `cli.json`):
+
+<!-- generated: workflow -->
 ```mermaid
-flowchart TB
-  owner(["Owner"])
-  next{{"aidlc next<br/>one action, derived from git + docs"}}
-
-  subgraph inception["Inception: owner and lead"]
-    req["Requirements R-n<br/>lasting, approved"]
-    intent["Intent I-n<br/>goal, why, increments, risks"]
-    plan["Plan: bolts B-n<br/>ACs with test levels, scope,<br/>depends, reservations"]
-    researcher["Researcher<br/>cited digest for a held question,<br/>official sources first"]
-    decision["Decisions"]
-    req --> intent --> plan
-    researcher --> decision
+flowchart LR
+  subgraph Inception
+    greenfield([greenfield]) --> questions --> domains --> facts --> approved
+    feature([feature]) --> questions --> domains --> facts --> approved
+    brownfield([brownfield]) --> map --> kinds --> questions --> domains --> facts --> approved
   end
-
-  subgraph construction["Construction: per bolt, in parallel worktrees"]
-    card["Card<br/>from the base commit: spec line,<br/>why, ACs, scope, references"]
-    builder["Builder<br/>tests first, only inside scope"]
-    reviewer["Reviewer<br/>one per focus, fresh context,<br/>JSON verdict"]
-    gate{"Merge gate<br/>scope, AC tests, checks, review,<br/>proof: code reverted or mutations,<br/>OKF, security, architecture"}
-    card --> builder --> reviewer
-    reviewer -- "fix, at most 3 rounds" --> builder
-    reviewer -- pass --> gate
+  subgraph Construction
+    b_approved[approved] -->|builder starts| b_building[building]
+    b_building[building] -->|aidlc report| b_reported[reported]
+    b_reported[reported] -->|reviewer starts| b_reviewing[reviewing]
+    b_reviewing[reviewing] -->|pass in every focus| b_reviewed[reviewed]
+    b_reviewed[reviewed] -->|aidlc merge| b_merged[merged]
   end
-
-  subgraph operations["Deployment and Operation: when the profile deploys"]
-    base["Base branch<br/>merges carry Unit, Card, Review,<br/>Tested, Proof trailers"]
-    ci["Push and CI<br/>aidlc push, aidlc ci wait"]
-    check["Deploy check<br/>aidlc deploy check I-n, per merged increment"]
-    release["Release, owner step<br/>aidlc release I-n"]
-    smoke["Smoke<br/>runs after the release"]
-    rollback["Rollback, owner step<br/>aidlc rollback I-n"]
-    fixunit["Fix bolt<br/>aidlc fix --after I-n"]
-    released(["Released"])
-    base --> ci -- green --> check -- pass --> release --> smoke -- pass --> released
-    check -- fail --> fixunit
-    smoke -- fail --> rollback --> fixunit
+  subgraph Operations
+    i_merged[merged] -->|deploy check passes or none set| i_checked[checked]
+    i_checked[checked] -->|release on a pushed green base passes, smoke too or none set| i_released[released]
   end
-
-  plan --> card
-  gate -- "merge --no-ff" --> base
-  fixunit -- "plan work" --> card
-
-  owner -. approves .-> req
-  owner -. approves .-> intent
-  owner -. "approves the plan once" .-> plan
-  owner -. "approves one-way doors" .-> decision
-  owner -. "decides on escalation" .-> reviewer
-  owner -. "confirms, or types release I-n" .-> release
-  owner -. "confirms, or types rollback I-n" .-> rollback
-
-  next -. drives .-> plan
-  next -. drives .-> card
-  next -. drives .-> gate
-  next -. drives .-> check
+  approved --> b_approved
+  b_merged --> i_merged
 ```
+<!-- /generated -->
 
 ## What the plugin installs and what it writes into a project
 
@@ -81,7 +56,7 @@ flowchart LR
     agents["Agents<br/>builder, reviewer, researcher"]
     hooks["Hooks<br/>guard, scope, secrets, model, docs,<br/>heartbeat, prompt, steer, status, denied"]
     cli["CLI engine<br/>foundation: data, git, text, yaml, glob, profile, store, seams<br/>domains: bundle, method, plan, inception, construction, approval, flow, review,<br/>card, gate, architecture, map, naming, operations, retro, setup, host<br/>entry: index · extensions: board, contracts, stacks"]
-    templates["Templates<br/>AGENTS.md, CLAUDE.md, profile, CI,<br/>bundle with constitution, doc types<br/>with runbook"]
+    templates["Templates<br/>AGENTS.md, CLAUDE.md, CHANGELOG.md, profile, CI,<br/>bundle with constitution, doc types<br/>with runbook, MADR decision, arc42 system"]
   end
 
   subgraph project["Your project, name neutral"]
@@ -108,12 +83,12 @@ The CLI keeps working with the plugin uninstalled: the project's pinned copy, it
 
 ## Read more
 
-- [Principles](docs/constitution/principles.md): the ten rules every change is checked against.
-- [Overview](docs/design/overview.md): goals, budgets, releases, repo layout.
-- [Grid](docs/design/grid.md), [State](docs/design/state.md), [Verification](docs/design/verification.md), [Requirements and architecture checks](docs/design/architecture.md).
-- [Deployment and operation](docs/design/operations.md): deploy check, release, smoke and rollback; the owner types `release I-<n>` or `rollback I-<n>` as the go.
-- [CI on the base](docs/design/base-ci.md): with `ci.wait`, builders start only on a pushed base whose CI passed; a red base gets a fix bolt first.
-- [Roadmap](docs/roadmap/index.md): the milestone plans; the newest one is the current plan.
+- [Principles](docs/constitution/principles.md): the rules every change is checked against.
+- [Architecture in arc42](docs/design/arc42.md): the plugin's own architecture, section by section, with a C4 component view of the CLI.
+- [Overview](docs/design/overview.md): goals, budgets, releases, repo layout; [Library and extensions](docs/design/library.md): how the CLI is laid out.
+- [Standard formats](docs/design/standards.md): MADR, Given/When/Then, EARS, Keep a Changelog, arc42 and C4.
+- [Generated diagrams](docs/design/diagrams/index.md): words, workflow, states, kinds, bundle types, naming grammar and every check code.
+- [Decisions](docs/decisions/index.md), [Changelog](CHANGELOG.md), [Roadmap](docs/roadmap/index.md): the milestone plans; the newest one is the current plan.
 
 ## License
 

@@ -142,14 +142,17 @@ export const commands = {
       levels[level] = { run };
     }
     // The naming registry's tokens, as the owner gave them (docs/design/naming.md).
-    const given = Object.entries({ system: flags['system-code'], org: flags.org, zone: flags.zone }).filter(([, v]) => v !== undefined);
+    // A new project starts on v2: its profile has a system, and a system code from its name unless the owner gave one
+    // (initials of a name of several words, else its first letters); an adopted one stays as it was until it migrates.
+    const words = name.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean), code = (words.length > 1 ? words.map((w) => w[0]).join('') : words[0] ?? '').slice(0, 6);
+    const given = Object.entries({ system: flags['system-code'] ?? (adopted || code.length < 2 ? undefined : code), org: flags.org, zone: flags.zone }).filter(([, v]) => v !== undefined);
     const tokens = given.length ? Object.fromEntries(given) : null;
     const json = {
       name: JSON.stringify(name),
       base: JSON.stringify(base),
       bundle: JSON.stringify(bundle),
       quick: I.quick.map((q) => JSON.stringify(render(q, { bundle }))).join(', '),
-      extra: [...(adopted ? [{ key: 'adopted', value: JSON.stringify(adopted) }] : []), ...(flags.run ? [{ key: 'levels', value: JSON.stringify(levels) }] : []), ...(tokens ? [{ key: 'naming', value: JSON.stringify({ tokens }) }] : [])],
+      extra: [...(adopted ? [{ key: 'adopted', value: JSON.stringify(adopted) }] : [{ key: 'system', value: JSON.stringify(I.system) }]), ...(flags.run ? [{ key: 'levels', value: JSON.stringify(levels) }] : []), ...(tokens ? [{ key: 'naming', value: JSON.stringify({ tokens }) }] : [])],
     };
 
     let kept = 0;

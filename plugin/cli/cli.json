@@ -1165,6 +1165,7 @@
     "levels"
   ],
   "init": {
+    "system": { "core": [], "extensions": [] },
     "files": [
       {
         "template": "profile.json",
