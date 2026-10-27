@@ -32,6 +32,9 @@
       "sliceNoRoute": "slice {{slice}} has no operation in the contracts, though its domain {{domain}} is served there",
       "sliceDeliverRoute": "the bolt adds slice {{slice}} but changes nothing in {{layers}} or a runtime that wires its route",
       "valueLiteral": "{{path}}:{{line}} adds the literal {{value}} to code: values live in the project's data",
+      "sliceDeliverListed": "{{unit}} lists slice {{slice}} but changes nothing in its folder",
+      "planSliceBind": "{{unit}} lists slices but binds no one domain: a horizontal bolt delivers no slice",
+      "planSliceSurface": "{{unit}} lists slice {{slice}}, which the {{domain}} domain doc's # Surface does not list",
       "sliceDeliverDoc": "the bolt adds slice {{slice}} but does not change {{doc}}, which lists it"
     },
     "okf": {
@@ -81,6 +84,14 @@
         "does": "write a kind's templates from the stack pack, named from the registry; never overwrites"
       }
     ],
+    "grid": {
+      "codes": {
+        "PLAN-SLICE": {
+          "level": "error",
+          "fix": "list under slices only the vertical slices the bolt delivers, each a Command or Query line of its bound domain's # Surface; a bolt that binds a horizontal module lists none (docs: Vertical slices checked)"
+        }
+      }
+    },
     "gate": {
       "codes": {
         "VALUE-LITERAL": {

@@ -2,7 +2,7 @@
 // reads from source, with no toolchain run (docs/design/stack-packs.md).
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
-import { approval, bundleOf, config, domainForms, done, gitLines, globRegex, graphOf, isMap, list, loadProfile, methodOf, msg, nameOf, parseDoc, parseYaml, plug, posix, readPlan, registry, render, sectionOf, seam, shippedDir, tryGit, UsageError, withDefaults } from '../../lib/index.mjs';
+import { approval, bindingOf, bundleOf, config, domainForms, done, gitLines, globRegex, graphOf, isMap, list, loadProfile, methodOf, msg, nameOf, parseDoc, parseYaml, plug, posix, readPlan, registry, render, sectionOf, seam, shippedDir, tryGit, UsageError, withDefaults } from '../../lib/index.mjs';
 
 const ST = config.state.names; // the lifecycle states, by name
 
@@ -244,8 +244,25 @@ function routeFindings(root, profile, slices, add) {
   }
   for (const s of slices.filter((x) => served.has(x.domain) && !reached.has(x))) add('SLICE-ROUTE', s.dir, 'sliceNoRoute', { slice: `${s.domain}/${s.name}`, domain: s.domain });
 }
-// A bolt that adds a slice delivers it whole: its route wired and its surface line written in the same bolt.
-function deliverFindings(tree, profile, paths) {
+// The slices a domain doc's # Surface lists, by name, or null when the domain has no doc.
+function surfaceOf(bundle, d) {
+  const doc = join(bundle, config.okf.bundle.folders.Domain, `${d}${config.okf.ext}`), line = new RegExp(`^\\s*[-*]\\s+(?:${V.kinds.join('|')})\\s+(${V.name}):`);
+  return existsSync(doc) ? sectionOf(parseDoc(readFileSync(doc, 'utf8')), V.surface).map(([, t]) => t.match(line)?.[1]).filter(Boolean) : null;
+}
+
+// PLAN-SLICE: the slices a bolt lists are on its bound domain's # Surface; a bolt that binds no one domain lists none.
+plug('planRules', ({ bundle, units, merged, add, profile }) => {
+  for (const u of units.filter((x) => !merged.has(x.id) && x.fm.status !== config.grid.dropped && list(x.fm.slices).length)) {
+    const { domains, horizontal } = bindingOf(u, profile);
+    if (domains.length !== 1 || horizontal.length) { add('PLAN-SLICE', u, 1, 'planSliceBind', { unit: u.id }); continue; }
+    const listed = surfaceOf(bundle, domains[0]) ?? [];
+    for (const slice of list(u.fm.slices).filter((s) => !listed.includes(s))) add('PLAN-SLICE', u, 1, 'planSliceSurface', { unit: u.id, slice, domain: domains[0] });
+  }
+});
+
+// A bolt that adds a slice delivers it whole: its route wired and its surface line written in the same bolt; and each
+// slice it lists, its folder changed.
+function deliverFindings(tree, profile, paths, unit) {
   const pack = packFor(tree);
   if (!pack) return [];
   const m = pack.manifest, L = m.layers, out = [], hosts = V.entryKinds.map((k) => m.folders[k].split('{{')[0]);
@@ -258,11 +275,16 @@ function deliverFindings(tree, profile, paths) {
       if (!paths.includes(doc)) out.push({ code: 'SLICE-DELIVER', path: s, key: 'sliceDeliverDoc', data: { slice, doc } });
     }
   }
+  const { domains, horizontal } = unit ? bindingOf(unit, profile) : { domains: [], horizontal: [] };
+  for (const s of domains.length === 1 && !horizontal.length ? list(unit.fm.slices) : []) {
+    const folder = `${render(m.folders.domain, { domain: domains[0] })}/${L.application}/${s}`;
+    if (!paths.some((p) => p.startsWith(`${folder}/`))) out.push({ code: 'SLICE-DELIVER', path: folder, key: 'sliceDeliverListed', data: { slice: `${domains[0]}/${s}`, unit: unit.id } });
+  }
   return out;
 }
 // At the gate, a project's existing code is measured as it changes: only findings where the bolt changed a file count.
 const touched = (paths) => (f) => paths.some((p) => p === f.path || p.startsWith(`${f.path}/`));
-plug('gateChecks', (tree, profile, paths = []) => [...sliceFindings(tree, profile).filter(touched(paths)), ...deliverFindings(tree, profile, paths)]);
+plug('gateChecks', (tree, profile, paths = [], added, unit) => [...sliceFindings(tree, profile).filter(touched(paths)), ...deliverFindings(tree, profile, paths, unit)]);
 
 // VALUE-LITERAL: a string literal a bolt adds to a source file, outside its tests and the project's data, is a value
 // that belongs in data; the pack names how its language writes one and what is protocol (docs/design/values.md#in-projects).

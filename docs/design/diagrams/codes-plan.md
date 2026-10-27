@@ -29,3 +29,4 @@ generated: { by: tests/diagrams.mjs }
 | `PLAN-GENERATED` | add the missing globs to the scope (the profile's generated entry pairs outputs with sources), or scope the tracked file instead of the untracked one |
 | `PLAN-DECISION` | link a Decision doc from the bolt (template .aidlc/templates/docs/decision.md: options, choice, why), for the owner to approve with it, or set twoWay: "<why it is easy to undo>" in its frontmatter |
 | `PLAN-BOARD` | add the planned value to the bolt's frontmatter, as the example shows |
+| `PLAN-SLICE` | list under slices only the vertical slices the bolt delivers, each a Command or Query line of its bound domain's # Surface; a bolt that binds a horizontal module lists none (docs: Vertical slices checked) |

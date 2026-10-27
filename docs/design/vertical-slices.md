@@ -1,8 +1,8 @@
 ---
 type: Design
 title: Vertical slices checked
-description: Draft - deterministic checks that a domain's code is grouped into vertical slices across its horizontal layers - no slice imports another, slices are entered only from the interface layer, every file sits in one layer and one slice, the slice folders match the domain doc's commands and queries, each slice cites the stories it serves and has its own test.
-status: draft
+description: Deterministic checks that a domain's code is grouped into vertical slices across its horizontal layers - no slice imports another, slices are entered only from the interface layer, every file sits in one layer and one slice, the slice folders match the domain doc's commands and queries, each slice cites the stories it serves and has its own test.
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-28T02:30:00Z }
 ---
 

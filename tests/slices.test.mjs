@@ -109,3 +109,19 @@ test('B246/AC-2 a bolt that adds a slice also wires its route and lists it in th
   assert.deepEqual(gate([...Object.keys(slice), `${D}/interface/http.go`, 'docs/domains/orders.md']), [], 'delivered whole');
   assert.deepEqual(gate([`${D}/application/createorder/handler.go`]), [], 'a slice the base holds is no new slice');
 });
+
+// M28 B249: the slices a bolt delivers, held to its domain doc and to its diff.
+test('B249/AC-1 a bolt\'s slices are on its bound domain\'s surface, a horizontal bolt lists none, and each listed slice\'s folder changes', async () => {
+  const { run } = await import('./state-repo.mjs');
+  const doc = '---\ntype: Domain\ntitle: Orders\ndescription: Orders.\ncode: orders\nkind: domain\n---\n\n# Surface\n- Command createorder: a customer orders a cake [I-1:US1.1]\n';
+  const boltDoc = (modules, slices) => `---\ntype: Bolt\ntitle: Take orders\ndescription: Take orders.\nintent: I-1\nmodules: [${modules}]\nslices: [${slices}]\nscope: ["${D}/**"]\n---\n\n# Why\nOrders.\n`;
+  const plan = (bolt) => run(makeRepo({ 'docs/intents/I-1-orders.md': intent, 'docs/domains/orders.md': doc, 'docs/bolts/B-1-take.md': bolt }, ORDERS), ['check']).out.split('\n').filter((l) => /PLAN-SLICE/.test(l)).map((l) => l.replace(/ → .*$/, '').replace(/^\S+:\d+ /, ''));
+  assert.deepEqual(plan(boltDoc('orders', 'createorder')), []);
+  assert.deepEqual(plan(boltDoc('orders', 'createorder, cancelorder')), ['PLAN-SLICE B-1 lists slice cancelorder, which the orders domain doc\'s # Surface does not list']);
+  assert.deepEqual(plan(boltDoc('shop-api', 'createorder')), ['PLAN-SLICE B-1 lists slices but binds no one domain: a horizontal bolt delivers no slice']);
+  const dir = makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', [`${D}/model/order.go`]: go('model') }, ORDERS);
+  const unit = { id: 'B-1', modules: ['orders'], fm: { intent: 'I-1', slices: ['createorder'] } };
+  const gate = (paths) => seam('gateChecks', ORDERS).flatMap((check) => check(dir, ORDERS, paths, [], unit)).filter((f) => f.key === 'sliceDeliverListed').map((f) => f.path);
+  assert.deepEqual(gate([`${D}/model/order.go`]), [`${D}/application/createorder`], 'a listed slice the bolt does not touch');
+  assert.deepEqual(gate([`${D}/application/createorder/handler.go`]), []);
+});

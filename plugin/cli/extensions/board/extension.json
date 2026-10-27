@@ -50,6 +50,8 @@
       "itemExists": "Content already exists in this project",
       "file": "board.json",
       "decisionLabel": "ADR-{{n}}",
+      "sliceLabel": "slice:{{name}}",
+      "layerLabel": "layer:{{kind}}",
       "fix": "fix",
       "select": "SINGLE_SELECT",
       "iteration": "ITERATION",

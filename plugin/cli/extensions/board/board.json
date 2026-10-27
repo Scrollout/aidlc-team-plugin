@@ -11,7 +11,7 @@
     "unit": {
       "title": "{{id}} {{title}}",
       "body": "issue.md",
-      "labels": ["requirements", "decisions", "lane", "modules"],
+      "labels": ["requirements", "decisions", "slices", "layer", "lane", "modules"],
       "assignees": "board.assignees",
       "type": "Task",
       "milestone": "parent",
@@ -21,7 +21,7 @@
     "fix": {
       "title": "{{id}} {{title}}",
       "body": "issue.md",
-      "labels": ["requirements", "decisions", "lane", "modules"],
+      "labels": ["requirements", "decisions", "slices", "layer", "lane", "modules"],
       "assignees": "board.assignees",
       "type": "Bug",
       "blockedBy": "depends"

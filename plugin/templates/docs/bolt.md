@@ -6,6 +6,7 @@ intent: I-<n>
 increment: I-<n>.<k>
 requirements: [R-<n>]
 depends: []
+slices: []
 modules: [<module id>]
 scope: ["<glob the builder may write>"]
 reserves: []

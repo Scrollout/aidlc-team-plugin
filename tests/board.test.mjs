@@ -407,3 +407,19 @@ test('the decisions a doc links label its issue as ADR-<NNNN>; a link removed ta
   assert.equal(aidlc(ctx, 'sync').code, 0);
   assert.ok(!byTitle(ctx, 'U-2').labels.includes('ADR-0007'), 'the plugin removes the label it set');
 });
+
+test('B249/AC-2 a bolt is labelled slice:<name> for each slice it lists, or layer:<kind> when it binds a horizontal module; a label that no longer applies goes', () => {
+  const ctx = setup({ u2: 'slices: [exportcurrency]' });
+  write(ctx.dir, { '.aidlc/profile.json': { ...JSON.parse(read(ctx.dir, '.aidlc/profile.json')), modules: [{ id: 'api', kind: 'runtime', paths: ['src/a/**'] }, { id: 'currency', kind: 'domain', paths: ['src/b/**'] }] },
+    [U(2)]: withFm(unitDoc({ title: 'Currency', scope: ['src/b/**'], modules: ['currency'] }), 'slices: [exportcurrency]') });
+  commit(ctx.dir, 'U-1 binds the api runtime, U-2 the currency domain and lists a slice');
+  assert.equal(aidlc(ctx, 'sync').code, 0);
+  assert.ok(byTitle(ctx, 'U-1').labels.includes('layer:runtime'), byTitle(ctx, 'U-1').labels.join(' '));
+  assert.ok(!byTitle(ctx, 'U-1').labels.some((l) => l.startsWith('slice:')), 'a horizontal bolt delivers no slice');
+  assert.ok(byTitle(ctx, 'U-2').labels.includes('slice:exportcurrency'), byTitle(ctx, 'U-2').labels.join(' '));
+  assert.ok(!byTitle(ctx, 'U-2').labels.some((l) => l.startsWith('layer:')), 'a domain bolt is vertical');
+  write(ctx.dir, { [U(2)]: withFm(unitDoc({ title: 'Currency', scope: ['src/b/**'], modules: ['currency'] }), 'slices: [listcurrency]') });
+  commit(ctx.dir, 'U-2 delivers another slice');
+  assert.equal(aidlc(ctx, 'sync').code, 0);
+  assert.deepEqual(byTitle(ctx, 'U-2').labels.filter((l) => l.startsWith('slice:')), ['slice:listcurrency']);
+});
