@@ -29,7 +29,7 @@ The rule holds in every project the plugin governs, not only in the plugin.
 - **`VALUE-LITERAL`** at the merge gate: a string literal on a line the bolt adds to a source file is a finding, unless the file is a test, lies under the profile's `values.data` globs (where the project keeps its values), or the literal matches the stack pack's protocol list or the profile's `values.allow`. Each stack pack names how its language writes a string literal. Only added lines count, so existing code is measured as it changes.
 
 # The board as a template
-`board.json`, the board extension's default, and a project's `.aidlc/board.json` over it, describe the whole board:
+`board.json`, the board extension's default, and a project's `.aidlc/templates/board.json` over it, describe the whole board:
 - **Per item kind** (intent, bolt, fix):
   - its title and body templates;
   - its labels, from front-matter paths, and the labels the plugin set that no longer apply are removed;

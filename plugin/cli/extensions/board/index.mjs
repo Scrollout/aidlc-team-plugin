@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { aidlcDir, at, bindingName, ciFile, config, done, fieldPaths, git, list, msg, plug, readJson, readState, relPath, render, templateFile, tryGit, UsageError, writeJson } from '../../lib/index.mjs';
+import { aidlcDir, at, bindingName, ciFile, config, done, fieldPaths, git, isMap, list, msg, plug, readJson, readState, relPath, render, templateFile, tryGit, UsageError, writeJson } from '../../lib/index.mjs';
 
 const B = config.board;
 let ghCommand = [B.gh]; // `github.gh` overrides it (docs/design/board.md)
@@ -40,13 +40,23 @@ const github = (profile) => {
   return profile.github;
 };
 
-// The issue each intent and unit should have: title, body, labels, open or closed, Project fields, parent.
+// The board template: the shipped one, a project's merged over it, and the profile's github maps over both
+// (docs/design/board.md#shape). A map merges key by key; any other value replaces.
+const over = (a, b) => (isMap(a) && isMap(b) ? Object.fromEntries([...new Set([...Object.keys(a), ...Object.keys(b)])].map((k) => [k, k in b ? over(a[k], b[k]) : a[k]])) : b);
+function templateOf(cwd, gh) {
+  const own = readJson(join(cwd, config.packages.templates.override, B.file)) ?? {};
+  const legacy = { kinds: Object.fromEntries(Object.entries(gh.types ?? {}).map(([k, type]) => [k, { type }])),
+    fields: { [B.statusField]: { map: gh.status ?? {} }, ...Object.fromEntries(Object.entries(gh.fields ?? {}).map(([n, s]) => [n, typeof s === 'string' ? { from: s } : s])) } };
+  const t = over(over(readJson(join(import.meta.dirname, B.file)), own), legacy);
+  if (gh.statusField) { t.fields[gh.statusField] = over(t.fields[B.statusField], t.fields[gh.statusField] ?? {}); delete t.fields[B.statusField]; }
+  return t;
+}
+
+// The issue each intent and unit should have, rendered from the template: title, body, labels, assignees, type,
+// milestone, parent, blockers, open or closed, and Project fields.
 function wanted(cwd, st, gh) {
-  const top = git(cwd, 'rev-parse', '--show-toplevel');
-  const status = { ...B.status, ...(gh.status ?? {}) };
-  const file = templateFile(cwd, B.template, import.meta.dirname);
-  const template = readFileSync(file, 'utf8');
-  const types = { ...B.types, ...(gh.types ?? {}) };
+  const top = git(cwd, 'rev-parse', '--show-toplevel'), T = templateOf(cwd, gh), bodies = new Map();
+  const body = (name) => { const file = templateFile(cwd, name, import.meta.dirname); if (!bodies.has(file)) bodies.set(file, readFileSync(file, 'utf8')); return [bodies.get(file), file]; };
   const waves = new Map();
   const wave = (u) => { // 1 + the highest wave among its dependencies in its intent
     if (waves.has(u.id)) return waves.get(u.id);
@@ -55,30 +65,32 @@ function wanted(cwd, st, gh) {
     waves.set(u.id, 1 + Math.max(0, ...deps.map(wave)));
     return waves.get(u.id);
   };
-  const one = (d, kind, state, parent) => {
+  const one = (d, kind, state) => {
+    const K = T.kinds[kind === 'unit' && !d.fm.intent ? B.fix : kind];
     const derived = { [B.wave]: () => wave(d), [B.binding]: () => bindingName(d, st.profile) }; // a value in the doc wins
-    const value = (path) => at(d.fm, path) ?? (kind === 'unit' && derived[path] ? derived[path]() : undefined);
+    const own = { id: d.id, title: d.fm.title ?? '', requirements: d.requirements, lane: d.lane, modules: d.modules, depends: d.depends, status: state };
+    const value = (path) => path && (at(own, path) ?? at(d.fm, path) ?? (kind === 'unit' && derived[path] ? derived[path]() : undefined));
     const done = B.done.includes(state);
     const acs = (d.acs ?? []).map((a) => ({ box: done ? B.box.done : B.box.open, text: d.doc.lines[a.line - 1].replace(/^\s*[-*]\s+/, '') }));
     const marker = msg('boardMarker', { kind, id: d.id });
     const data = { description: String(d.fm.description ?? ''), link: msg('boardLink', { repo: gh.repo, base: st.base, path: relPath(top, d.file) }), marker };
-    let body;
-    do body = render(template, { ...data, acs }, file); while (body.length > B.maxBody && acs.pop());
-    const fields = Object.fromEntries(Object.entries(gh.fields ?? {}).map(([name, spec]) => {
-      const raw = value(typeof spec === 'string' ? spec : spec.from);
+    const [template, file] = body(K.body);
+    let text;
+    do text = render(template, { ...data, acs }, file); while (text.length > B.maxBody && acs.pop());
+    const fields = Object.fromEntries(Object.entries(T.fields).map(([name, spec]) => {
+      const raw = value(spec.from);
       return [name, raw === undefined || raw === null ? undefined : spec.map ? spec.map[String(raw)] : raw];
     }));
-    const labels = [...d.requirements, ...(kind === 'unit' ? [d.lane, ...d.modules] : [])].map(String);
-    const title = `${d.id} ${d.fm.title ?? ''}`.trim();
-    return { key: `${kind}:${d.id}`, marker, title, body, labels, open: !done, type: types[kind === 'unit' && !d.fm.intent ? 'fix' : kind],
-      fields: { [gh.statusField ?? B.statusField]: status[state], ...fields }, parent, issue: at(d.fm, B.issue),
-      group: kind === 'intent' ? `${kind}:${d.id}` : parent, milestone: kind === 'intent' ? { title, due: at(d.fm, B.target) } : null };
+    const title = render(K.title, { ...d.fm, ...own }).trim(), parent = K.parent && value(K.parent.from) ? `${K.parent.kind}:${value(K.parent.from)}` : null;
+    return { key: `${kind}:${d.id}`, id: d.id, marker, title, body: text, labels: [...new Set(list(K.labels).flatMap((p) => list(value(p))))].filter(Boolean), assignees: list(value(K.assignees)),
+      open: !done, type: K.type, fields, parent, issue: at(d.fm, B.issue), blockedBy: K.blockedBy ? list(value(K.blockedBy)) : null,
+      group: isMap(K.milestone) ? `${kind}:${d.id}` : parent, milestone: isMap(K.milestone) ? { title: render(K.milestone.title, { ...d.fm, ...own }).trim(), due: value(K.milestone.due) } : null };
   };
-  return [
+  return { T, docs: [
     // An approved intent is under way once one of its units is past approval (docs/design/board.md).
-    ...st.intents.map((i) => one(i, 'intent', i.state === 'approved' && st.units.some((u) => u.fm.intent === i.id && !B.unstarted.includes(u.state)) ? B.started : i.state, null)),
-    ...st.units.map((u) => one(u, 'unit', u.held && B.holdable.includes(u.state) ? B.held : u.state, u.fm.intent ? `intent:${u.fm.intent}` : null)),
-  ];
+    ...st.intents.map((i) => one(i, 'intent', i.state === 'approved' && st.units.some((u) => u.fm.intent === i.id && !B.unstarted.includes(u.state)) ? B.started : i.state)),
+    ...st.units.map((u) => one(u, 'unit', u.held && B.holdable.includes(u.state) ? B.held : u.state)),
+  ] };
 }
 
 // One milestone per intent, due on its target; returns intent key → milestone number.
@@ -98,7 +110,7 @@ function milestones(repo, docs, out) {
   }));
 }
 
-function issues(gh, docs, out, backoff) {
+function issues(gh, docs, out, backoff, last) {
   const repo = `repos/${gh.repo}`;
   const assignees = gh.assignees ?? [rest('GET', 'user').login];
   const typed = rest('GET', repo).owner?.type === B.typedOwner; // issue types exist on organisation repositories only
@@ -125,7 +137,7 @@ function issues(gh, docs, out, backoff) {
     const find = () => all.find((i) => d.issue !== undefined && i.number === Number(d.issue)) ?? all.find((i) => (i.body ?? '').includes(d.marker));
     let issue = find() ?? (relisted ? undefined : ((relisted = true), (all = list()), find())); // a lagging list must not duplicate
     if (!issue) {
-      const extra = { assignees, milestone: stones.get(d.group), ...(typed && d.type ? { type: d.type } : {}) };
+      const extra = { assignees: d.assignees.length ? d.assignees : assignees, milestone: stones.get(d.group), ...(typed && d.type ? { type: d.type } : {}) };
       issue = rest('POST', `${repo}/issues`, { title: d.title, body: d.body, labels: d.labels, ...extra });
       if (!d.open) issue = rest('PATCH', `${repo}/issues/${issue.number}`, { state });
       out.push(msg('boardCreated', { number: issue.number, title: d.title }));
@@ -135,9 +147,12 @@ function issues(gh, docs, out, backoff) {
       if (issue.title !== d.title) change.title = d.title;
       if ((issue.body ?? '') !== d.body) change.body = d.body;
       if (issue.state !== state) change.state = state;
-      if (d.labels.some((l) => !names.includes(l))) change.labels = [...new Set([...names, ...d.labels])];
-      const people = (issue.assignees ?? []).map((a) => a.login);
-      if (assignees.some((a) => !people.includes(a))) change.assignees = [...new Set([...people, ...assignees])];
+      // What the plugin set and the plan no longer gives goes; what people added stays.
+      const keep = (now, part, want) => [...new Set([...now.filter((x) => want.includes(x) || !(last[d.key]?.[part] ?? []).includes(x)), ...want])];
+      const differs = (a, b) => a.length !== b.length || a.some((x) => !b.includes(x));
+      const labels = keep(names, 'labels', d.labels), people = (issue.assignees ?? []).map((a) => a.login), wantPeople = keep(people, 'assignees', d.assignees.length ? d.assignees : assignees);
+      if (differs(labels, names)) change.labels = labels;
+      if (differs(wantPeople, people)) change.assignees = wantPeople;
       if (stones.get(d.group) && issue.milestone?.number !== stones.get(d.group)) change.milestone = stones.get(d.group);
       if (typed && d.type && issue.type?.name !== d.type) change.type = d.type;
       if (Object.keys(change).length) {
@@ -154,6 +169,15 @@ function issues(gh, docs, out, backoff) {
       out.push(msg('boardLinked', { child: child.found.number, parent: parent.found.number }));
     }
   }
+  // Blocked-by links match the plan's dependencies; a link to an issue off the board stays.
+  const onBoard = new Set(docs.map((d) => d.found.id));
+  for (const d of docs.filter((x) => x.blockedBy)) {
+    const path = `${repo}/issues/${d.found.number}/dependencies/blocked_by`, have = pages(path);
+    const want = d.blockedBy.map((id) => docs.find((x) => x.id === id)?.found).filter(Boolean);
+    for (const b of want.filter((w) => !have.some((h) => h.id === w.id))) { rest('POST', path, { issue_id: b.id }); out.push(msg('boardBlocked', { number: d.found.number, by: b.number })); }
+    for (const h of have.filter((x) => onBoard.has(x.id) && !want.some((w) => w.id === x.id))) { rest('DELETE', `${path}/${h.id}`); out.push(msg('boardUnblocked', { number: d.found.number, by: h.number })); }
+  }
+  return Object.fromEntries(docs.map((d) => [d.key, { labels: d.labels, assignees: d.assignees.length ? d.assignees : assignees }]));
 }
 
 // Reads the Project with all its items; called again when GitHub's own workflows race an add.
@@ -175,14 +199,41 @@ function projectReader(gh) {
   };
 }
 
-// Every planned value must be an option the Project has, checked before any write, so a missing one never
-// stops a sync halfway. The options are kept for plan lint (PLAN-BOARD).
-function checkOptions(proj, docs) {
-  const options = Object.fromEntries(proj.fields.nodes.filter((f) => f.name && f.options).map((f) => [f.name, f.options.map((o) => o.name)]));
-  const missing = [...new Set(docs.flatMap((d) => Object.entries(d.fields)
-    .filter(([name, value]) => value !== undefined && options[name] && !options[name].includes(String(value)))
-    .map(([name, value]) => msg('boardMissingOption', { name, value, options: options[name].join(', ') }))))];
-  return { options, missing };
+// An iteration field's iterations, current and completed; a value names one by its title or start date.
+const iterations = (f) => [...(f?.configuration?.iterations ?? []), ...(f?.configuration?.completedIterations ?? [])];
+const choices = (f) => (f?.options ? f.options.map((o) => o.name) : f?.configuration ? iterations(f).flatMap((i) => [i.title, i.startDate]) : null);
+
+// Checked before any write, so a sync never stops halfway: each field the template names has its type, a missing
+// one can be created, and every planned value is a choice the Project has or the template declares. The choices
+// are kept for plan lint (PLAN-BOARD); returns the fields and options to create.
+function checkProject(proj, T, docs) {
+  const fields = new Map(proj.fields.nodes.filter((f) => f.name).map((f) => [f.name, f]));
+  const problems = [], missing = [], options = {}, create = [];
+  for (const [name, spec] of Object.entries(T.fields)) {
+    const f = fields.get(name), used = [...new Set(docs.map((d) => d.fields[name]).filter((v) => v !== undefined).map(String))];
+    if (f && spec.type && f.dataType !== spec.type) { problems.push(msg('boardFieldType', { name, type: f.dataType, want: spec.type })); continue; }
+    if (!f && !used.length) continue;
+    if (!f && !spec.type) { problems.push(msg('boardNoField', { name })); continue; }
+    if (!f && spec.type === B.iteration && !(spec.start && spec.duration)) { problems.push(msg('boardNoIterations', { name })); continue; }
+    const have = choices(f) ?? (B.choiceTypes.includes(spec.type) ? [] : null);
+    if (!have) continue;
+    const add = list(spec.options).filter((o) => !have.includes(o)), known = [...have, ...add];
+    options[name] = known;
+    missing.push(...used.filter((v) => !known.includes(v)).map((value) => msg('boardMissingOption', { name, value, options: known.join(', ') })));
+    if (!f || add.length) create.push({ name, spec, f, add });
+  }
+  return { options, missing, problems, create };
+}
+
+// Creates the missing fields and declared options; GitHub keeps an existing option when its id is sent back.
+function createFields(proj, create, out) {
+  const option = (name) => ({ name, color: B.optionColor, description: '' });
+  for (const { name, spec, f, add } of create) {
+    if (f) graphql(B.queries.updateField, { field: f.id, options: [...f.options.map(({ id, name: n, color, description }) => ({ id, name: n, color, description })), ...add.map(option)] });
+    else graphql(B.queries.createField, { project: proj.id, type: spec.type, name, options: spec.type === B.select ? add.map(option) : null,
+      iterations: spec.type === B.iteration ? { startDate: String(spec.start), duration: Number(spec.duration), iterations: [] } : null });
+    out.push(msg(f ? 'boardOptionsAdded' : 'boardFieldCreated', { name, options: add.join(', ') }));
+  }
 }
 
 function project(gh, docs, out, backoff, read) {
@@ -206,14 +257,11 @@ function project(gh, docs, out, backoff, read) {
         }
       }
     }
-    const current = Object.fromEntries(item.fieldValues.nodes.filter((v) => v.field).map((v) => [v.field.name, String(v.name ?? v.number ?? v.date ?? v.text)]));
+    const current = Object.fromEntries(item.fieldValues.nodes.filter((v) => v.field).map((v) => [v.field.name, list([v.name, v.number, v.date, v.text, v.title, v.startDate].filter((x) => x !== undefined && x !== null))]));
     for (const [name, value] of Object.entries(d.fields)) {
-      if (value === undefined || current[name] === String(value)) continue;
-      const f = fields.get(name);
-      if (!f) throw new UsageError(msg('boardNoField', { name }));
-      const option = f.options?.find((o) => o.name === String(value));
-      if (f.options && !option) throw new UsageError(msg('boardNoOption', { name, value }));
-      const v = option ? { singleSelectOptionId: option.id } : f.dataType === 'NUMBER' ? { number: Number(value) } : f.dataType === 'DATE' ? { date: String(value) } : { text: String(value) };
+      if (value === undefined || current[name]?.includes(String(value))) continue;
+      const f = fields.get(name), option = f.options?.find((o) => o.name === String(value)), step = iterations(f).find((i) => i.title === String(value) || i.startDate === String(value));
+      const v = option ? { singleSelectOptionId: option.id } : step ? { iterationId: step.id } : f.dataType === 'NUMBER' ? { number: Number(value) } : f.dataType === 'DATE' ? { date: String(value) } : { text: String(value) };
       graphql(B.queries.setField, { project: proj.id, item: item.id, field: f.id, value: v });
       out.push(msg('boardSet', { field: name, number: d.found.number, value }));
     }
@@ -224,26 +272,28 @@ function project(gh, docs, out, backoff, read) {
 const boardFile = (cwd) => join(aidlcDir(cwd), config.state.board);
 const hashOf = (docs) => createHash('sha256').update(JSON.stringify(docs)).digest('hex');
 function boardBehind(st) { // a board that cannot be planned offline is sync's error to report, not next's
-  try { return st.profile.github?.repo && readJson(boardFile(st.cwd))?.hash !== hashOf(wanted(st.cwd, st, st.profile.github)) ? msg('boardBehind', {}) : ''; } catch { return ''; }
+  try { return st.profile.github?.repo && readJson(boardFile(st.cwd))?.hash !== hashOf(wanted(st.cwd, st, st.profile.github).docs) ? msg('boardBehind', {}) : ''; } catch { return ''; }
 }
 
 // Syncs every intent and live unit; returns the writes it made, one line each.
 export function sync(cwd) {
   const st = readState(cwd);
   const gh = github(st.profile);
-  const docs = wanted(cwd, st, gh);
+  const { T, docs } = wanted(cwd, st, gh);
   const hash = hashOf(docs);
   const out = [];
   const read = gh.project && projectReader(gh);
-  const { options, missing } = read ? checkOptions(read().proj, docs) : { options: {}, missing: [] };
+  const proj = read && read().proj;
+  const { options, missing, problems, create } = proj ? checkProject(proj, T, docs) : { options: {}, missing: [], problems: [], create: [] };
   const last = readJson(boardFile(cwd)) ?? {};
-  if (missing.length) {
+  if (missing.length || problems.length) {
     writeJson(boardFile(cwd), { ...last, options });
-    throw new UsageError(msg('boardNoOptions', { missing }));
+    throw new UsageError(missing.length ? msg('boardNoOptions', { missing }) : msg('boardRefused', { problems }));
   }
-  issues(gh, docs, out, st.profile.board.backoff);
+  if (create.length) createFields(proj, create, out);
+  const set = issues(gh, docs, out, st.profile.board.backoff, last.set ?? {});
   if (read) project(gh, docs, out, st.profile.board.backoff, read);
-  writeJson(boardFile(cwd), { hash, options, at: new Date().toISOString() });
+  writeJson(boardFile(cwd), { hash, options, set, at: new Date().toISOString() });
   return out.join('') || msg('boardInSync', {});
 }
 

@@ -31,6 +31,7 @@ if (args[1] === 'graphql') {
     const value = (f, x) => {
       const field = { name: f.name };
       if (f.options) return { name: x, field };
+      if (f.configuration) { const it = f.configuration.iterations.find((i) => i.id === x); return { title: it.title, startDate: it.startDate, field }; }
       return f.dataType === 'NUMBER' ? { number: x, field } : f.dataType === 'DATE' ? { date: x, field } : { text: x, field };
     };
     const nodes = page.map((i) => ({ id: i.id, content: { number: i.number, repository: { nameWithOwner: i.repo } },
@@ -48,9 +49,21 @@ if (args[1] === 'graphql') {
   } else if (q.includes('updateProjectV2ItemFieldValue')) {
     const f = p.fields.find((x) => x.id === v.field);
     const x = v.value;
-    p.items.find((i) => i.id === v.item).values[f.name] = x.singleSelectOptionId ? f.options.find((o) => o.id === x.singleSelectOptionId).name : x.number ?? x.date ?? x.text;
+    p.items.find((i) => i.id === v.item).values[f.name] = x.singleSelectOptionId ? f.options.find((o) => o.id === x.singleSelectOptionId).name : x.iterationId ?? x.number ?? x.date ?? x.text;
     s.calls.push({ op: 'setField', field: f.name, write: true });
     reply({ data: { updateProjectV2ItemFieldValue: { projectV2Item: { id: v.item } } } });
+  } else if (q.includes('createProjectV2Field')) {
+    const f = { id: `F_${p.fields.length}`, name: v.name, dataType: v.type, ...(v.options ? { options: v.options.map((o, k) => ({ id: `N${k}`, name: o.name })) } : {}),
+      ...(v.iterations ? { configuration: { iterations: [], completedIterations: [] } } : {}) };
+    p.fields.push(f);
+    s.calls.push({ op: 'createField', name: v.name, write: true });
+    reply({ data: { createProjectV2Field: { projectV2Field: { id: f.id } } } });
+  } else if (q.includes('updateProjectV2Field(')) {
+    const f = p.fields.find((x) => x.id === v.field);
+    if (v.options.some((o) => !o.id && f.options.some((x) => x.name === o.name))) process.exit(1);
+    f.options = v.options.map((o, k) => ({ id: o.id ?? `${f.id}_${k}`, name: o.name }));
+    s.calls.push({ op: 'updateField', name: f.name, write: true });
+    reply({ data: { updateProjectV2Field: { projectV2Field: { id: f.id } } } });
   } else process.exit(1);
 } else {
   const method = args[args.indexOf('-X') + 1];
@@ -83,6 +96,12 @@ if (args[1] === 'graphql') {
     const i = issue(parts[1]);
     if (method === 'PATCH') Object.assign(i, body);
     reply(shown(i));
+  } else if (parts[2] === 'dependencies') { // blocked_by: GitHub's issue dependencies, by issue id
+    const i = issue(parts[1]);
+    i.blockedBy ??= [];
+    if (method === 'POST') { i.blockedBy.push(body.issue_id); reply(i); }
+    else if (method === 'DELETE') { i.blockedBy = i.blockedBy.filter((x) => x !== Number(parts[4])); reply(i); }
+    else reply(slice(i.blockedBy.map((id) => s.issues.find((x) => x.id === id))));
   } else if (parts[2] === 'sub_issues') {
     if (method === 'POST') { s.issues.find((i) => i.id === body.sub_issue_id).parent = Number(parts[1]); reply({}); }
     else reply(slice(s.issues.filter((i) => i.parent === Number(parts[1]))));

@@ -13,6 +13,7 @@ const allowed = new Set(Object.values(PROTOCOL).filter(Array.isArray).flat());
 const keys = new Set();
 const walk = (v) => { if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) { keys.add(k); walk(x); } };
 walk(config);
+walk(JSON.parse(readFileSync(join(ROOT, 'plugin/cli/extensions/board', config.board.file), 'utf8'))); // the board template is the board extension's data too
 // The profile's keys and the docs' front matter keys the data declares are keys too.
 const fields = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === 'string') : v && typeof v === 'object' ? Object.values(v).flatMap(fields) : []);
 // The variables the data's templates name, {{part}}, are keys too.

@@ -297,7 +297,7 @@ test('U82/AC-1 a stopped unit is On hold; reviewing and a refused merge read as 
   spawnSync(process.execPath, [CLI, 'report', 'U-1'], { cwd: ctx.dir, input: '{"status": "stopped", "stop": "an interface must change"}' });
   aidlc(ctx, 'sync');
   assert.equal(item(ctx, byTitle(ctx, 'U-1').number).values.Status, 'On hold');
-  const status = JSON.parse(readFileSync(join(ROOT, 'plugin/cli/extensions/board/extension.json'), 'utf8')).data.board.status;
+  const status = JSON.parse(readFileSync(join(ROOT, 'plugin/cli/extensions/board/board.json'), 'utf8')).fields.Status.map;
   assert.deepEqual([status.reviewing, status.gated, status.started], ['In review', 'In review', 'In Progress']);
 });
 
@@ -314,4 +314,82 @@ test('B152/AC-2 a unit issue carries no Spec line: the vertical and horizontal l
   assert.equal(aidlc(ctx, 'sync').code, 0);
   assert.doesNotMatch(byTitle(ctx, 'U-1 Export').body, /^Spec:/m);
   assert.doesNotMatch(byTitle(ctx, 'I-1 Shop').body, /^Spec:/m);
+});
+
+test('B237/AC-1 the board template renders each kind; a project template merges over the shipped one', () => {
+  const ctx = setup({ u2: 'board: { track: core }' });
+  approve(ctx.dir, 'U-2');
+  write(ctx.dir, { '.aidlc/templates/board.json': { kinds: { unit: { title: '[{{id}}] {{title}}', labels: ['requirements', 'board.track'] } } } });
+  commit(ctx.dir, 'own board template');
+  assert.equal(aidlc(ctx, 'sync').code, 0);
+  const u2 = byTitle(ctx, '[U-2]');
+  assert.equal(u2.title, '[U-2] Currency');
+  assert.deepEqual(u2.labels, ['core'], 'labels from the project template paths');
+  assert.equal(byTitle(ctx, 'I-1').title, 'I-1 Shop', 'the shipped intent kind stays');
+  assert.equal(item(ctx, u2.number).values.Status, 'Todo', 'the shipped Status field stays');
+});
+
+test('B237/AC-2 depends syncs as blocked-by links, added and removed to match the plan; links off the board stay', () => {
+  const ctx = setup({ u2: 'depends: [U-1]', issues: [{ number: 1, id: 1001, node_id: 'I_1', title: 'Outside', body: '', state: 'open', labels: [], parent: null }] });
+  assert.equal(aidlc(ctx, 'sync').code, 0);
+  const [u1, u2] = ['U-1', 'U-2'].map((t) => byTitle(ctx, t));
+  assert.deepEqual(byTitle(ctx, 'U-2').blockedBy, [u1.id]);
+  const s = stub(ctx);
+  s.issues.find((i) => i.number === u2.number).blockedBy.push(1001); // a person's link to an issue off the board
+  writeFileSync(ctx.state, JSON.stringify(s));
+  assert.equal(aidlc(ctx, 'sync').out, 'the board is in sync\n');
+  write(ctx.dir, { [U(2)]: unitDoc({ title: 'Currency', scope: ['src/b/**'] }) });
+  commit(ctx.dir, 'U-2 no longer waits on U-1');
+  assert.match(aidlc(ctx, 'sync').out, new RegExp(`#${u2.number} is no longer blocked by #${u1.number}`));
+  assert.deepEqual(byTitle(ctx, 'U-2').blockedBy, [1001]);
+});
+
+test('B237/AC-2 per-bolt assignees apply, and labels and assignees the plugin set that no longer apply are removed', () => {
+  const ctx = setup();
+  write(ctx.dir, { [U(1)]: read(ctx.dir, U(1)).replace('board: { effort: M,', 'board: { assignees: [alice], track: core, effort: M,'),
+    '.aidlc/templates/board.json': { kinds: { unit: { labels: ['requirements', 'board.track'] } } } });
+  commit(ctx.dir, 'U-1 assigned');
+  writeFileSync(ctx.state, JSON.stringify({ ...stub(ctx), login: 'marius' }));
+  assert.equal(aidlc(ctx, 'sync').code, 0);
+  assert.deepEqual(byTitle(ctx, 'U-1').assignees, ['alice']);
+  assert.deepEqual(byTitle(ctx, 'U-2').assignees, ['marius'], 'the gh user by default');
+  const s = stub(ctx), u1 = s.issues.find((i) => i.title.startsWith('U-1'));
+  u1.labels.push('urgent');
+  u1.assignees.push('bob');
+  writeFileSync(ctx.state, JSON.stringify(s));
+  write(ctx.dir, { [U(1)]: read(ctx.dir, U(1)).replace('assignees: [alice], track: core', 'assignees: [carol], track: edge') });
+  commit(ctx.dir, 'U-1 moves');
+  assert.equal(aidlc(ctx, 'sync').code, 0);
+  assert.deepEqual(byTitle(ctx, 'U-1').labels.sort(), ['edge', 'urgent']);
+  assert.deepEqual(byTitle(ctx, 'U-1').assignees.sort(), ['bob', 'carol']);
+});
+
+test('B237/AC-2 iteration fields are written by title or start date; a missing field or declared option is created', () => {
+  const ctx = setup({ u2: 'board: { sprint: Sprint 2 }' });
+  approve(ctx.dir, 'U-2');
+  const s = stub(ctx);
+  s.project.fields = [...s.project.fields.map((f) => (f.name === 'Status' ? { ...f, options: f.options.filter((o) => o.name !== 'On hold') } : f)),
+    { id: 'F_sprint', name: 'Sprint', dataType: 'ITERATION', configuration: { iterations: [{ id: 'IT1', title: 'Sprint 1', startDate: '2026-11-02' }, { id: 'IT2', title: 'Sprint 2', startDate: '2026-11-16' }], completedIterations: [] } }];
+  writeFileSync(ctx.state, JSON.stringify(s));
+  write(ctx.dir, { [U(1)]: read(ctx.dir, U(1)).replace('board: { effort: M,', 'board: { sprint: 2026-11-02, track: core, effort: M,'),
+    '.aidlc/templates/board.json': { fields: { Sprint: { type: 'ITERATION', from: 'board.sprint' }, Track: { type: 'SINGLE_SELECT', from: 'board.track', options: ['core', 'edge'] } } } });
+  commit(ctx.dir, 'sprints and tracks');
+  const r = aidlc(ctx, 'sync');
+  assert.equal(r.code, 0, r.err + r.out);
+  assert.match(r.out, /created field Track on the Project/);
+  assert.match(r.out, /added On hold to field Status/);
+  assert.equal(item(ctx, byTitle(ctx, 'U-1').number).values.Sprint, 'IT1', 'by start date');
+  assert.equal(item(ctx, byTitle(ctx, 'U-2').number).values.Sprint, 'IT2', 'by title');
+  assert.equal(item(ctx, byTitle(ctx, 'U-1').number).values.Track, 'core');
+  assert.equal(aidlc(ctx, 'sync').out, 'the board is in sync\n');
+});
+
+test('B237/AC-2 a Project field of the wrong type is refused before any write', () => {
+  const ctx = setup();
+  write(ctx.dir, { '.aidlc/templates/board.json': { fields: { Effort: { type: 'NUMBER' } } } });
+  commit(ctx.dir, 'effort as a number');
+  const r = aidlc(ctx, 'sync');
+  assert.notEqual(r.code, 0);
+  assert.match(r.err + r.out, /sync wrote nothing: field Effort is SINGLE_SELECT on the Project, not the template's NUMBER/);
+  assert.equal(writes(ctx).length, 0);
 });

@@ -1,0 +1,55 @@
+{
+  "kinds": {
+    "intent": {
+      "title": "{{id}} {{title}}",
+      "body": "issue.md",
+      "labels": ["requirements"],
+      "assignees": "board.assignees",
+      "type": "Feature",
+      "milestone": { "title": "{{id}} {{title}}", "due": "board.target" }
+    },
+    "unit": {
+      "title": "{{id}} {{title}}",
+      "body": "issue.md",
+      "labels": ["requirements", "lane", "modules"],
+      "assignees": "board.assignees",
+      "type": "Task",
+      "milestone": "parent",
+      "parent": { "kind": "intent", "from": "intent" },
+      "blockedBy": "depends"
+    },
+    "fix": {
+      "title": "{{id}} {{title}}",
+      "body": "issue.md",
+      "labels": ["requirements", "lane", "modules"],
+      "assignees": "board.assignees",
+      "type": "Bug",
+      "blockedBy": "depends"
+    }
+  },
+  "fields": {
+    "Status": {
+      "type": "SINGLE_SELECT",
+      "from": "status",
+      "options": ["Todo", "In Progress", "In review", "On hold", "Done"],
+      "map": {
+        "draft": "Todo",
+        "approved": "Todo",
+        "stale": "Todo",
+        "blocked": "Todo",
+        "building": "In Progress",
+        "fix": "In Progress",
+        "started": "In Progress",
+        "reported": "In review",
+        "reviewing": "In review",
+        "reviewed": "In review",
+        "gated": "In review",
+        "stopped": "On hold",
+        "escalated": "On hold",
+        "held": "On hold",
+        "merged": "Done",
+        "released": "Done"
+      }
+    }
+  }
+}

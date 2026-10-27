@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.181.0] - 2026-10-27
+### Added
+- The board is a declarative template (M26 B237). `plugin/cli/extensions/board/board.json`, with a project's `.aidlc/templates/board.json` merged over it, gives each item kind's title, body, labels, assignees, type, milestone, parent and blocked-by path, and each Project field's type, source path, value map and options; the profile's `github` maps still apply over it.
+- A bolt's `depends` sync as blocked-by links, added and removed to match the plan; links to issues off the board stay.
+- Iteration fields are written by an iteration's title or start date; a missing field or declared option is created.
+- Per-bolt assignees from `board.assignees`.
+
+### Changed
+- Labels and assignees the plugin set that the plan no longer gives are removed; ones people add stay.
+- `sync` refuses, before any write, a Project field of the wrong type and a missing field the template gives no type.
+
 ## [0.180.0] - 2026-10-27
 ### Changed
 - The extensions hold no hard-coded value (M26 B236). The intake's id patterns, the models' heading and partition patterns, long-running roles and joiners, the stacks' migration grammar, event-type rules and scaffold words, the deploy steps and the retro's hours live in each `extension.json`; each stack pack's manifest names how its language's imports are read and how it writes a string literal. `tests/values.test.mjs` now reads `plugin/cli/extensions/` too, with the board's API paths and the contract checks' OpenAPI words listed as protocol.
@@ -331,7 +342,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.180.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.181.0...HEAD
+[0.181.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.180.0...v0.181.0
 [0.180.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.179.0...v0.180.0
 [0.179.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.178.1...v0.179.0
 [0.178.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.178.0...v0.178.1

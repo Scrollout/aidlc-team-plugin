@@ -348,7 +348,8 @@
     "&page=",
     "closed",
     "NUMBER",
-    "DATE"
+    "DATE",
+    "/dependencies/blocked_by"
   ],
   "openapi": [
     "put",
