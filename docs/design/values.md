@@ -1,7 +1,7 @@
 ---
 type: Design
 title: Values as data
-description: Draft - nothing hard-coded - every value and doc grammar in the CLI's data, templates or the profile, code holding only logic, tool protocol and keys, a test that fails on any other literal, and the board as a declarative JSON template.
+description: Draft - nothing hard-coded, in the plugin and in every project it governs - values in data, code holding only logic, tool protocol and keys, a test for the plugin and a gate check for projects, and the board as a declarative JSON template.
 status: draft
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T23:00:00Z }
 ---
@@ -16,6 +16,12 @@ The board's issue shape, pathway names, factor names, file names and message fra
 # The guard
 A test scans every module of the CLI for string and regex literals. One passes only when it is a key into the data, a message key or a check code, or is listed as tool protocol in `tests/fixtures/protocol.json`. Anything else fails, naming the file, the line and the literal.
 
+# In projects
+The rule holds in every project the plugin governs (the owner, 2026-10-27: "Never use hard-coded data, not in AIDLC plugin nor in any project using AIDLC plugin").
+- **The constitution** a project gets from `init` and `upgrade` holds the rule and names its check.
+- **The builder** keeps every value in the project's data files; **the reviewer** reports a literal value as a finding.
+- **`VALUE-LITERAL`** at the merge gate: a string literal on a line the bolt adds to a source file is a finding, unless the file is a test, lies under the profile's `values.data` globs (where the project keeps its values), or the literal matches the stack pack's protocol list or the profile's `values.allow`. Each stack pack names how its language writes a string literal. Only added lines count, so existing code is measured as it changes.
+
 # The board as a template
 `board.json`, the board extension's default, and a project's `.aidlc/board.json` over it, describe the whole board:
 - **Per item kind** (intent, bolt, fix):
@@ -29,4 +35,4 @@ A test scans every module of the CLI for string and regex literals. One passes o
 
 `sync` renders the template; the code that wrote the issue shape is gone.
 
-Bolts: [M26](../roadmap/m26.md) B235, B236, B237.
+Bolts: [M26](../roadmap/m26.md) B235, B236, B237, B238.

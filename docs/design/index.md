@@ -52,7 +52,7 @@
 * [State](state.md) - How the CLI derives progress from git and docs, how approvals work, and how next picks the one allowed step.
 * [Steering](steering.md) - How the plugin corrects the agent during work, keeps it moving, and improves its rules over time without growing.
 * [Team](team.md) - The four roles, how parallel worktree workers are run and merged, and where tokens are spent.
-* [Values as data](values.md) - Draft - nothing hard-coded - every value and doc grammar in the CLI's data, templates or the profile, code holding only logic, tool protocol and keys, a test that fails on any other literal, and the board as a declarative JSON template.
+* [Values as data](values.md) - Draft - nothing hard-coded, in the plugin and in every project it governs - values in data, code holding only logic, tool protocol and keys, a test for the plugin and a gate check for projects, and the board as a declarative JSON template.
 * [Vendoring](vendoring.md) - How init and upgrade copy the CLI into a project and pin it, and why only a release is copied.
 * [Verification](verification.md) - The inner loop (hooks), the merge gate, the reviewer's output contract and the CI mode.
 * [Workload identity](workload-identity.md) - Runtimes, domains and data authenticate by workload identity with short-lived credentials, never by shared or static secrets; a merge check fails the common static forms on added lines.
