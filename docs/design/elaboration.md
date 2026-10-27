@@ -1,8 +1,8 @@
 ---
 type: Design
 title: Elaboration checks
-description: Draft - what the CLI checks while the lead elaborates an intent with the owner - every claim sourced, every request sentence covered, the corner checklist settled, vague answers followed up, and the owner's read-back confirmed.
-status: draft
+description: What the CLI checks while the lead elaborates an intent with the owner - every claim sourced, every request sentence covered, the corner checklist settled, vague answers followed up, and the owner's read-back confirmed.
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T18:00:00Z }
 ---
 
@@ -29,6 +29,10 @@ Method 7, for intents in a v2 project:
 - **Read-back:** the last question is `- Q<k> Read-back: <the summary>`, with options *looks correct* and *request changes*. Until the owner picks *looks correct*, it is `ELAB-OPEN`. It is separate from the review and the approval.
 
 # Personas and stories
-When the request names two or more kinds of user, the intent lists `# Personas` and `# Stories` ("As a <persona>, I want…, so that…"), each story citing requirements.
+Method 8, for intents in a v2 project:
+- **Kinds of user:** the CLI finds them in the request from a list of role words (`intake.roles`: customer, admin, staff…), each with its sentence. Two or more, and fewer than two personas under `# Personas` (`- **<Name>**: <who they are and what they want> [source]`), is `ELAB-PERSONA`. The intent waives it with `onePersona: "<why one kind of user>"`.
+- **Stories:** with two or more personas, each persona has a story under `# Stories`, written `- As a <persona>, I want <capability>, so that <benefit>. R-<n> [source]`. A story that names no listed persona, breaks that form, or cites none of the intent's requirements is `ELAB-STORY`.
+- Persona lines need a source, like goal lines and stories (`CLAIM-SOURCE`).
+- Both block approval.
 
 Bolts: [M22](../roadmap/m22.md) B215, B216, B217.

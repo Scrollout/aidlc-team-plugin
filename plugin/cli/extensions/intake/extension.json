@@ -14,10 +14,12 @@
       "codes": {
         "CLAIM-SOURCE": { "level": "error", "fix": "name the requests the intent comes from (request: [Q-<n>]) and give each goal line, story and requirement statement a source in brackets: a request sentence [Q-<n>.<k>], an answered question [Q<k>], an assumption [A<k>] listed under # Assumptions, or a fact [F-<n>] (docs: Intake)" },
         "ELAB-CORNER": { "level": "error", "fix": "settle each surface of the corner checklist (aidlc persona product-analyst) on its own line under # Corners: - <Surface>: a requirement or bolt id, a source such as [A<k>], or n/a: and why (docs: Elaboration checks)" },
+        "ELAB-PERSONA": { "level": "error", "fix": "list each kind of user the request names under # Personas, as - **<Name>**: <who they are and what they want> [source], or set onePersona: \"<why one kind of user>\" (docs: Elaboration checks)" },
+        "ELAB-STORY": { "level": "error", "fix": "give each persona a story under # Stories: - As a <persona>, I want <capability>, so that <benefit>. R-<n> [source], citing a requirement the intent cites (docs: Elaboration checks)" },
         "REQUEST-COVERAGE": { "level": "error", "fix": "cite each sentence of the request where the intent or a requirement answers it, or under # Out of scope with the reason (docs: Intake)" }
       }
     },
-    "state": { "approveBlocks": ["CLAIM-SOURCE", "REQUEST-COVERAGE", "ELAB-CORNER"] },
+    "state": { "approveBlocks": ["CLAIM-SOURCE", "REQUEST-COVERAGE", "ELAB-CORNER", "ELAB-PERSONA", "ELAB-STORY"] },
     "commands": [
       {
         "name": "intake",
@@ -60,12 +62,18 @@
       "cornerMissing": "{{unit}} # Corners has no line for {{surfaces}}",
       "cornerUnsettled": "{{unit}} leaves the {{surface}} corner unsettled: name a requirement or bolt, a source, or n/a: and why",
       "readBackMissing": "{{unit}} ends with no read-back: ask a last question, Q<k> Read-back: <the summary>, with a) looks correct and b) request changes",
+      "personaMissing": "{{unit}} serves {{roles}} ({{ids}}) but lists {{count}} under # Personas",
+      "storyForm": "{{unit}} story does not read As a <persona>, I want <capability>, so that <benefit>: {{text}}",
+      "storyPersona": "{{unit}} story is for {{persona}}, who is not under # Personas ({{personas}})",
+      "storyNoRequirement": "{{unit}} story for {{persona}} cites none of the intent's requirements ({{reqs}})",
+      "storyNone": "{{unit}} {{persona}} has no story",
       "readBackChanges": "{{unit}} {{q}}: the owner asked for changes to the read-back; revise, then read back again"
     },
     "intake": {
       "type": "Request",
       "heading": "Request",
-      "claims": { "goal": "Goal", "stories": "Stories", "assumptions": "Assumptions", "corners": "Corners" },
+      "claims": { "goal": "Goal", "stories": "Stories", "assumptions": "Assumptions", "corners": "Corners", "personas": "Personas" },
+      "roles": ["customer", "client", "user", "visitor", "guest", "member", "subscriber", "admin", "administrator", "staff", "employee", "manager", "operator", "support agent", "seller", "buyer", "supplier", "vendor", "partner", "driver", "courier", "student", "teacher", "patient", "doctor", "nurse", "developer", "auditor"],
       "readBack": { "prefix": "Read-back:", "yes": "looks correct" },
       "waivers": ["n/a", "out of scope"],
       "corners": [

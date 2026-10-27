@@ -29,4 +29,6 @@ generated: { by: tests/diagrams.mjs }
 | `HATCH-EXPIRED` | close the escape hatch (merge or drop the fix bolt, end the waiver, supersede the exception), or the owner sets a later until (docs: Construction by proof) |
 | `CLAIM-SOURCE` | name the requests the intent comes from (request: [Q-<n>]) and give each goal line, story and requirement statement a source in brackets: a request sentence [Q-<n>.<k>], an answered question [Q<k>], an assumption [A<k>] listed under # Assumptions, or a fact [F-<n>] (docs: Intake) |
 | `ELAB-CORNER` | settle each surface of the corner checklist (aidlc persona product-analyst) on its own line under # Corners: - <Surface>: a requirement or bolt id, a source such as [A<k>], or n/a: and why (docs: Elaboration checks) |
+| `ELAB-PERSONA` | list each kind of user the request names under # Personas, as - **<Name>**: <who they are and what they want> [source], or set onePersona: "<why one kind of user>" (docs: Elaboration checks) |
+| `ELAB-STORY` | give each persona a story under # Stories: - As a <persona>, I want <capability>, so that <benefit>. R-<n> [source], citing a requirement the intent cites (docs: Elaboration checks) |
 | `REQUEST-COVERAGE` | cite each sentence of the request where the intent or a requirement answers it, or under # Out of scope with the reason (docs: Intake) |

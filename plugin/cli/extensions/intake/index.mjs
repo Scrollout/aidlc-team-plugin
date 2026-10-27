@@ -145,8 +145,9 @@ function lintSources({ bundle, profile, intents, requirements, add, inForce, key
     const cited = requirements.filter((r) => i.requirements.includes(r.id));
     // A corner's source is checked like a claim's, though n/a with a reason needs none.
     for (const [n, t] of linesOf(i.doc, K.claims.corners)) for (const ref of refsIn(t)) { const key = unresolved(ref); if (key) add('CLAIM-SOURCE', i, n, key, { ref, intent: i.id, requests: named.join(', ') }); }
+    if (inForce(i, 'elabPersona')) personas(i, named.flatMap((r) => requests.get(r) ?? []), cited, add);
     const claims = [
-      ...[K.claims.goal, K.claims.stories].flatMap((h) => linesOf(i.doc, h).map(([n, t]) => [i, h, n, t])),
+      ...[K.claims.goal, K.claims.stories, ...(inForce(i, 'elabPersona') ? [K.claims.personas] : [])].flatMap((h) => linesOf(i.doc, h).map(([n, t]) => [i, h, n, t])),
       ...cited.filter((r) => approval(r.doc) === 'draft').flatMap((r) => linesOf(r.doc, config.grid.requirementSection).map(([n, t]) => [r, config.grid.requirementSection, n, t])),
     ];
     for (const [doc, section, n, text] of claims) {
@@ -179,6 +180,26 @@ function readBack(i, add) {
   if (!q?.text.startsWith(K.readBack.prefix)) return add('ELAB-OPEN', i, q?.n ?? 1, 'readBackMissing', {});
   const picked = q.labels[q.options.indexOf(q.answer?.match(/^([a-z])\b/)?.[1])];
   if (picked !== undefined && picked.toLowerCase() !== K.readBack.yes) add('ELAB-OPEN', i, q.n, 'readBackChanges', { q: q.id });
+}
+
+// Method 8: two or more kinds of user in the request get a persona each, and each persona a story citing a requirement
+// (docs/design/elaboration.md#personas-and-stories).
+function personas(i, sentences, cited, add) {
+  const roles = K.roles.map((r) => [r, sentences.filter((s) => new RegExp(`\\b${r}s?\\b`, 'i').test(s.text)).map((s) => s.id)]).filter(([, ids]) => ids.length);
+  const listed = linesOf(i.doc, K.claims.personas).map(([n, t]) => [n, t.match(/^\s*[-*]\s+\**([^:*]+?)\**\s*:/)?.[1].trim()]).filter(([, p]) => p);
+  if (roles.length > 1 && listed.length < 2 && !i.fm.onePersona) add('ELAB-PERSONA', i, 1, 'personaMissing', { roles: roles.map(([r]) => r).join(', '), ids: [...new Set(roles.flatMap(([, ids]) => ids))].join(', '), count: listed.length });
+  if (listed.length < 2) return;
+  const reqs = new Set(cited.map((r) => r.id)), told = new Set(), names = listed.map(([, p]) => p);
+  for (const [n, t] of linesOf(i.doc, K.claims.stories)) {
+    const m = t.match(/^\s*[-*]\s+As (?:an? )?(.+?), I want .+?, so that .+$/i), who = m && names.find((p) => p.toLowerCase() === m[1].trim().toLowerCase());
+    if (!m) add('ELAB-STORY', i, n, 'storyForm', { text: cut(t.trim()) });
+    else if (!who) add('ELAB-STORY', i, n, 'storyPersona', { persona: m[1].trim(), personas: names.join(', ') });
+    else {
+      told.add(who);
+      if (![...t.matchAll(/\bR-\d+\b/g)].some((r) => reqs.has(r[0]))) add('ELAB-STORY', i, n, 'storyNoRequirement', { persona: who, reqs: [...reqs].join(', ') || '-' });
+    }
+  }
+  for (const [n, p] of listed.filter(([, p]) => !told.has(p))) add('ELAB-STORY', i, n, 'storyNone', { persona: p });
 }
 
 plug('planRules', lintSources);

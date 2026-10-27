@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M22 B217: method 8, personas and stories ([Elaboration checks](design/elaboration.md#personas-and-stories)): the request's role words name the kinds of user, each gets a persona unless the intent says why one (`ELAB-PERSONA`), and each persona a story citing a requirement (`ELAB-STORY`). Release 0.161.0.
 - **Update** M22 B216: method 7, corners and answers ([Elaboration checks](design/elaboration.md#corners-and-answers), split from Intake): every surface of the corner checklist settled (`ELAB-CORNER`), vague answers followed up (`ELAB-VAGUE`), "not decided" kept open, and a read-back the owner confirms as the last question (`ELAB-OPEN`). Release 0.160.0.
 - **Update** the [Overview](design/overview.md#repo-layout) says who does the work and where each lives: the lead's one skill, the three subagents, and the role personas under `plugin/cli/personas/` (the path M22 and Intake had wrong).
 - **Update** M22 B215: method 6, sources and coverage ([Elaboration checks](design/elaboration.md#sources-and-coverage)): an intent names its requests, every goal line, story and draft requirement statement cites a source the CLI resolves (`CLAIM-SOURCE`), and every request sentence is cited (`REQUEST-COVERAGE`); both block approval. An owner's document is kept as a request with `aidlc intake --file`. The plan lint code page splits in two, [Intent and bolt codes](design/diagrams/codes-intent.md) beside it, to stay under the cap. Release 0.159.0.

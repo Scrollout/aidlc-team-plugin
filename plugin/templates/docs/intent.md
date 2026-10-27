@@ -14,6 +14,13 @@ requirements: [R-<n>]
 # Why
 <the reason>
 
+# Personas
+- **<Name>**: <who they are and what they want> [Q-<n>.<k>]
+<one per kind of user the request names; remove both sections and set onePersona: "<why>" when there is one>
+
+# Stories
+- As a <persona>, I want <capability>, so that <benefit>. R-<n> [Q-<n>.<k>]
+
 # Increments
 - I-<n>.1 <the walking skeleton, end to end on the target>: <its bolts, once cut>
 - I-<n>.2 <the next increment, end to end>: <its bolts, once cut>

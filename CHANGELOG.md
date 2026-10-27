@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.161.0] - 2026-10-27
+### Added
+- Method 8: a request whose role words name two or more kinds of user needs a persona each under `# Personas`, unless the intent says `onePersona: "<why>"` (`ELAB-PERSONA`); each persona has a story `As a <persona>, I want…, so that…` citing one of the intent's requirements (`ELAB-STORY`); persona lines need a source. Both block approval.
+### Changed
+- The intent template carries `# Personas` and `# Stories`.
+
 ## [0.160.0] - 2026-10-27
 ### Added
 - Method 7: an intent settles each surface of the corner checklist (data in the intake extension) on its own line under `# Corners`, else `ELAB-CORNER`; an answer with a vague word is `ELAB-VAGUE`; the last question is a read-back the owner confirms as *looks correct*, else `ELAB-OPEN`. All block approval.
@@ -197,7 +203,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.160.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.161.0...HEAD
+[0.161.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.160.0...v0.161.0
 [0.160.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.159.0...v0.160.0
 [0.159.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.158.0...v0.159.0
 [0.158.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.157.0...v0.158.0

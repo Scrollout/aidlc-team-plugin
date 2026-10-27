@@ -1664,9 +1664,10 @@
     "steps": { "questions": "every question answered by an option", "domains": "a domain doc for each of its domains", "facts": "a platform fact for each decision that affects the platform", "map": "the codebase map written", "kinds": "a kind for every module" }
   },
   "method": {
-    "version": 7,
-    "since": { "planIncrementId": 2, "pathwaySkip": 3, "boltBind": 4, "acGherkin": 5, "claimSource": 6, "elabVague": 7, "elabCorner": 7 },
+    "version": 8,
+    "since": { "planIncrementId": 2, "pathwaySkip": 3, "boltBind": 4, "acGherkin": 5, "claimSource": 6, "elabVague": 7, "elabCorner": 7, "elabPersona": 8 },
     "changes": {
+      "8": "a request naming two or more kinds of user gets a persona for each, and each persona a story citing the intent's requirements (docs: Elaboration checks)",
       "7": "intents settle every surface of the corner checklist, follow up vague answers, and end with a read-back the owner confirms (docs: Elaboration checks)",
       "6": "intents name the owner's requests, every goal line, story and requirement statement cites its source, and every request sentence is cited (docs: Intake)",
       "5": "acceptance criteria read Given/When/Then, requirements are stated in EARS, and decisions follow MADR 4.0 (docs: Standard formats)",

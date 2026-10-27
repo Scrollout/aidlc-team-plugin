@@ -157,3 +157,37 @@ test('B216/AC-2 a vague answer is ELAB-VAGUE, "not decided" stays open, and a re
   intent(`${READBACK.replace('- Q2', '- Q3')}`.replace(/^/, '- Q2 How fast?\n  - a) under a second: one call\n  - Answer: a, maybe\n'), 'method: 6\n');
   assert.deepEqual(elab(dir), [], 'a method 6 intent keeps its rules');
 });
+
+test('B217/AC-1 a request naming two or more kinds of user needs a persona each, unless the intent says onePersona (ELAB-PERSONA)', () => {
+  const dir = makeRepo({}, V2);
+  run(dir, ['intake', 'Customers order cakes online. Staff mark each order as baked.']);
+  const goal = 'Customers order cakes [Q-1.1], staff mark them baked [Q-1.2].';
+  write(dir, { 'docs/intents/I-1-cake-orders.md': cakes('request: [Q-1]\n', goal) });
+  assert.deepEqual(elab(dir), ['I-1:1 ELAB-PERSONA I-1 serves customer, staff (Q-1.1, Q-1.2) but lists 0 under # Personas']);
+  write(dir, { 'docs/intents/I-1-cake-orders.md': cakes('request: [Q-1]\nonePersona: "the staff are the shop owner, ordering for walk-in customers"\n', goal) });
+  assert.deepEqual(elab(dir), [], 'the owner says why one kind of user');
+  write(dir, { 'docs/intents/I-1-cake-orders.md': cakes('request: [Q-1]\nmethod: 7\n', goal) });
+  assert.deepEqual(elab(dir), [], 'a method 7 intent keeps its rules');
+});
+
+test('B217/AC-2 each persona has a story As a <persona>, I want…, so that…, citing one of the intent\'s requirements (ELAB-STORY)', () => {
+  const dir = makeRepo({}, V2);
+  run(dir, ['intake', 'Customers order cakes online. Staff mark each order as baked.']);
+  const personas = '\n\n# Personas\n- **Customer**: orders a cake for a party [Q-1.1]\n- **Staff**: bakes and marks orders [Q-1.2]\n';
+  const intent = (stories) => write(dir, {
+    'docs/intents/I-1-cake-orders.md': cakes('request: [Q-1]\nrequirements: [R-1]\n', `Customers order cakes online [Q-1.1].${personas}\n# Stories\n${stories}`),
+    'docs/requirements/R-1-order-email.md': R1('When a customer orders, the bakery system shall tell the staff [Q-1.1, Q-1.2].'),
+  });
+  intent('- As a customer, I want to order online, so that I need not call. R-1 [Q-1.1]\n- As a staff member, I want orders listed, so that none is missed. R-1 [Q-1.2]\n- As a customer, I want a cake, so that I eat it. [Q-1.1]\n- A customer orders [Q-1.1]');
+  assert.deepEqual(elab(dir), [
+    'I-1:19 ELAB-STORY I-1 story is for staff member, who is not under # Personas (Customer, Staff)',
+    "I-1:20 ELAB-STORY I-1 story for Customer cites none of the intent's requirements (R-1)",
+    'I-1:21 ELAB-STORY I-1 story does not read As a <persona>, I want <capability>, so that <benefit>: - A customer orders [Q-1.1]',
+    'I-1:15 ELAB-STORY I-1 Staff has no story',
+  ]);
+  intent('- As a customer, I want to order online, so that I need not call. R-1 [Q-1.1]\n- As staff, I want orders listed, so that none is missed. R-1 [Q-1.2]');
+  assert.deepEqual(elab(dir), [], 'a story for each persona, each citing R-1');
+  intent('- As a customer, I want to order online, so that I need not call. R-1 [Q-1.1]\n- As staff, I want orders listed, so that none is missed. R-1 [Q-1.2]'.replace('[Q-1.2]\n', ''));
+  write(dir, { 'docs/intents/I-1-cake-orders.md': read(dir, 'docs/intents/I-1-cake-orders.md').replace('- **Staff**: bakes and marks orders [Q-1.2]', '- **Staff**: bakes and marks orders') });
+  assert.deepEqual(elab(dir), ['I-1:15 CLAIM-SOURCE I-1 Personas line has no source: - **Staff**: bakes and marks orders'], 'a persona line needs a source');
+});
