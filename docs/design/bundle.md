@@ -71,7 +71,7 @@ Each type's required keys and allowed values live in `cli.json` (`okf.bundle.sch
 
 # On the base
 - `HOUSE-INDEX-STALE`, `HOUSE-LINK` and `DOC-*` are errors in `check --ci` and at the gate.
-- `DOC-STATUS` reports a design doc that is still draft though all its bolts are built.
+- In this repo, a test fails on a design doc still draft though all its bolts are built (B158).
 - Every merge regenerates the generated folders in the trial merge.
 
 # Reading budget

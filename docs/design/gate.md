@@ -15,7 +15,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T11:46:55Z }
 Nothing touches the base until every check passes, so a failed gate leaves no half merge.
 
 # Codes
-Every code the gate can refuse with, and its fix: [Gate checks](diagrams/gate-checks.md), generated from `cli.json`. Level runs add `gate.fresh` (no test cache). A builder launched after a refusal is a fix round.
+Every code the gate can refuse with, and its fix: [Gate codes](diagrams/codes-gate.md), generated from `cli.json`. Level runs add `gate.fresh` (no test cache). A builder launched after a refusal is a fix round.
 
 # Details
 - **Scope:** every path in the unit's diff matches its scope. A builder's diff touching an `index.md`, a `log.md` or a `profile.shared` glob is `GATE-SHARED`: merge writes those.

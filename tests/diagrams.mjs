@@ -10,8 +10,13 @@ const V = config.vocabulary, S = config.state;
 const page = (title, description, body) => `---\ntype: Design\ntitle: ${title}\ndescription: ${description}\nstatus: stable\ngenerated: { by: tests/diagrams.mjs }\n---\n\n${body}`;
 const mermaid = (lines) => ['```mermaid', ...lines, '```', ''].join('\n');
 const id = (text) => text.replace(/[^A-Za-z0-9]/g, '_');
-const table = (head, rows) => [`| ${head.join(' | ')} |`, `|${head.map(() => '---').join('|')}|`, ...rows.map((r) => `| ${r.join(' | ')} |`), ''].join('\n');
+const mdTable = (head, rows) => [`| ${head.join(' | ')} |`, `|${head.map(() => '---').join('|')}|`, ...rows.map((r) => `| ${r.join(' | ')} |`), ''].join('\n');
 
+// The code tables, each on its page.
+export const CODES = [['bundle', 'Docs check codes', 'okf', 'the docs check'], ['plan', 'Plan lint codes', 'grid', 'plan lint'], ['gate', 'Gate codes', 'gate', 'the merge gate'], ['hooks', 'Hook codes', 'hooks', 'the hooks']];
+// A code two checks share is documented where it first appears.
+const firstPage = (code, table) => CODES.find(([, , t]) => code in config[t].codes)[2] === table;
+const codeTable = (table) => mdTable(['Code', 'Fix'], Object.entries(config[table].codes).filter(([code]) => firstPage(code, table)).map(([code, c]) => [`\`${code}\`${c.level && c.level !== 'error' ? ` (${c.level})` : ''}`, c.fix.replace(/\|/g, '\\|')]));
 // A state diagram: each transition with its cause, and every state nothing leaves as an end.
 const states = (rows) => mermaid(['stateDiagram-v2', '  direction LR', `  [*] --> ${rows[0][0]}`, ...rows.map(([a, b, why]) => `  ${a} --> ${b}: ${why}`),
   ...[...new Set(rows.map((r) => r[1]))].filter((x) => !rows.some((r) => r[0] === x)).map((x) => `  ${x} --> [*]`)]);
@@ -37,15 +42,16 @@ export const pages = () => ({
   'bolt-states.md': page('Bolt states', "A bolt's derived states and what moves it between them; drawn from state.transitions in cli.json.", states(S.transitions)),
   'intent-states.md': page('Intent states', "An intent's derived states, from approval to release; drawn from state.intentTransitions in cli.json.", states(S.intentTransitions)),
   'kinds.md': page('Kinds and layers', 'What each module kind may depend on, and the layers inside a domain pointing inward; drawn from vocabulary.kindRules and layerRules in cli.json.',
-    table(['from \\ to', ...V.kinds], V.kinds.map((a) => [a, ...V.kinds.map((b) => (V.kindRules[a].includes(b) ? 'yes' : V.kindRules[a].includes(`${b}:surface`) ? 'surface' : ''))])) + '\n'
+    mdTable(['from \\ to', ...V.kinds], V.kinds.map((a) => [a, ...V.kinds.map((b) => (V.kindRules[a].includes(b) ? 'yes' : V.kindRules[a].includes(`${b}:surface`) ? 'surface' : ''))])) + '\n'
     + mermaid(['flowchart LR', ...Object.entries(V.layerRules).flatMap(([a, bs]) => bs.map((b) => `  ${a} --> ${b}`))])),
   'bundle-types.md': page('Bundle types', "The bundle's doc types, the folder each lives in and the keys its schema requires; drawn from the bundle settings in cli.json.",
-    table(['Type', 'Folder', 'Required keys'], [['Intent', config.grid.intents], ['Requirement', config.grid.requirements], ['Decision', config.grid.decisions], ...Object.entries(config.okf.bundle.folders)]
+    mdTable(['Type', 'Folder', 'Required keys'], [['Intent', config.grid.intents], ['Requirement', config.grid.requirements], ['Decision', config.grid.decisions], ...Object.entries(config.okf.bundle.folders)]
       .map(([type, folder]) => [type, `\`${folder}/\``, (config.okf.bundle.schemas[type]?.required ?? []).map((k) => `\`${k}\``).join(', ') || '-']))),
   'naming-grammar.md': page('Naming grammar', 'Each kind of name, the template it is composed from and the tokens it needs; drawn from naming.grammar in cli.json.',
-    table(['Kind', 'Template', 'Needs'], Object.entries(config.naming.grammar).map(([k, g]) => [k, `\`${g.template}\``, g.needs.join(', ')]))),
-  'gate-checks.md': page('Gate checks', 'The codes the merge gate can refuse with, as cli.json declares them, each with its fix.',
-    table(['Code', 'Fix'], Object.entries(config.gate.codes).map(([code, c]) => [`\`${code}\``, c.fix.replace(/\|/g, '\\|')]))),
+    mdTable(['Kind', 'Template', 'Needs'], Object.entries(config.naming.grammar).map(([k, g]) => [k, `\`${g.template}\``, g.needs.join(', ')]))),
+  // Every check code, each on exactly one page, with its level and fix (DOC-CODE).
+  ...Object.fromEntries(CODES.map(([name, title, table, who]) => [`codes-${name}.md`, page(title, `Every code ${who} reports, with its fix (a warning is marked); drawn from ${table}.codes in cli.json and the extensions' data.`,
+    codeTable(table))])),
 });
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {

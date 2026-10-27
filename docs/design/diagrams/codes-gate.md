@@ -1,7 +1,7 @@
 ---
 type: Design
-title: Gate checks
-description: The codes the merge gate can refuse with, as cli.json declares them, each with its fix.
+title: Gate codes
+description: Every code the merge gate reports, with its fix (a warning is marked); drawn from gate.codes in cli.json and the extensions' data.
 status: stable
 generated: { by: tests/diagrams.mjs }
 ---
@@ -42,7 +42,6 @@ generated: { by: tests/diagrams.mjs }
 | `GATE-SECRET` | remove the secret from the unit branch; read it from the environment |
 | `GATE-IDENTITY` | use the component's workload identity: mTLS or a token bound to it, a database role reached with short-lived certificates or tokens, federated credentials outside the cluster; a throwaway password belongs in a test path |
 | `GATE-NAME` | rename it to match the rule's pattern; if the rule is wrong, the owner changes its decision and the profile first |
-| `CONTRACT-NAME` | follow the API grammar of decision 0014 (aidlc name path\|operation-id\|api-version), or change the naming decision first |
 | `TERM-SYNONYM` | use the glossary's term; if the domain's language changed, change its domain doc's glossary first (docs: Naming) |
 | `PROOF-AC` | make the reverted tree compile (keep the interfaces, revert the behaviour), or report a mutation per AC (docs: Construction by proof) |
 | `REVIEW-SECURITY` | the owner disposes of each finding: aidlc dispose <B-n> F-<k> fixed\|accepted "<reason>" [--until <date>] (docs: Construction by proof) |

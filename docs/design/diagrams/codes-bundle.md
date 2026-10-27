@@ -1,0 +1,31 @@
+---
+type: Design
+title: Docs check codes
+description: Every code the docs check reports, with its fix (a warning is marked); drawn from okf.codes in cli.json and the extensions' data.
+status: stable
+generated: { by: tests/diagrams.mjs }
+---
+
+| Code | Fix |
+|---|---|
+| `OKF-FM` | give the file a terminated --- block of YAML key: value pairs |
+| `OKF-TYPE` | add a non-empty type: to the frontmatter |
+| `OKF-INDEX` | run aidlc index |
+| `OKF-LOG` | use ## YYYY-MM-DD date headings |
+| `OKF-RUNTIME` | add runtime: (e.g. bigquery, python) |
+| `HOUSE-INDEX-STALE` (warning) | run aidlc index |
+| `HOUSE-DESC` (warning) | add title: and a one-sentence description: |
+| `HOUSE-GENERATED` (warning) | add generated: { by: <producer>/<version>, at: <ISO 8601> } |
+| `HOUSE-LINK` (warning) | point the link at an existing file or remove it |
+| `DOC-SCHEMA` | add the keys the type requires (okf.bundle.schemas), use a value its list allows, and keep the doc in its type's folder (docs: Bundle v2) |
+| `DOC-SLUG` | rename the file to its id and the slug of its title (lower case, hyphens, no apostrophes, at most 48 characters, cut at a word), keeping the id; aidlc new names new docs this way |
+| `DOC-GENERATED` | never edit a generated doc: change what it is drawn from and let the CLI write it again (aidlc map, aidlc index, or the next merge) |
+| `HOUSE-SIZE` (warning) | split the doc or move detail into linked docs |
+| `PROFILE-ARCH` | give each module its data globs and set architecture.graph (printing data edges) and architecture.data; add architecture.acyclic and each module's api (docs: Slice architecture) |
+| `PROFILE-NAMES` | write the naming decision from .aidlc/templates/docs/naming.md; give each pattern a names rule: id, files globs, pattern, and a find regex whose first group is the name (none for a rule on paths) |
+| `PROFILE-RULE` | set docs.rules entries to a HOUSE-* code and one of error, warning, off |
+| `CONTRACT-NAME` | follow the API grammar of decision 0014: full lowerCamel names, Noun_Verb operation ids, a dated api-version, camelCase segments and properties, PascalCase enums, systemData on resources, nextLink on lists (aidlc name path\|operation-id\|api-version) (docs: Naming) |
+| `PROFILE-NAMING` | set naming.tokens (system: 2-6 lower-case letters or digits; org and zone: DNS labels), domains as lower-case plural nouns, vocabulary words as lower-case words, none of them banned (docs: Naming) |
+| `PROFILE-KIND` | give each module its kind (domain, pipeline, foundation, adapter, runtime, extension or delivery), surfaces from client, server and events, and system as core and extensions globs (docs: Architecture model) |
+| `PROFILE-KEY` (warning) | remove it, or use the key the profile doc names for what you meant |
+| `GRAPH-SELFTEST` | make the project's architecture.graph print every import and data edge, or set it to the plugin's: node .aidlc/bin/aidlc.mjs graph (docs: Stack packs) |
