@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** Decisions in MADR 4.0, completed: approval names the decision-makers when a decision names none, a draft's status is checked against MADR's, and applied model decisions are dated and carry their consequences ([Standard formats](design/standards.md#decisions-madr-40)). Release 0.184.0.
 - **Update** The control-plane model's Go reference keeps its values in data and reads operations through a query slice, held to the checks every project meets ([Models](design/models.md#the-first-model-control-plane)). Release 0.183.2.
 - **Update** The lead's skill works in the role a step names and asks for the naming tokens at setup ([Prompts](design/prompts.md#skill-aidlc)). Release 0.183.1.
 - **Update** M26 B239 built: structured answers and `--json` ([CLI engine](design/cli-engine.md)); `next` serves its action as `{ command, args }` ([State](design/state.md#next)). [Values as data](design/values.md) is stable. Release 0.183.0.

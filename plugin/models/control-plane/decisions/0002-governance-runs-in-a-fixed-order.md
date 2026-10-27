@@ -19,5 +19,9 @@ A request can be refused for several reasons. When the order is an implementatio
 ## Decision Outcome
 Chosen option: "authenticate, authorize, policy, lock, throttle", because a caller learns who they are before what they may do, policy judges the result before a lock or a budget is spent, and every refusal is the same everywhere. Quota, if the project has it, is the project's own choice of stage or of the provider's.
 
+### Consequences
+* Good, because a request is refused the same way everywhere, and the cheap checks run before the costly ones.
+* Bad, because a provider cannot reorder the stages; a project that needs another stage, such as quota, decides where it goes.
+
 ### Confirmation
 The stage-order rule reads the wiring the profile names and fails on any other order.

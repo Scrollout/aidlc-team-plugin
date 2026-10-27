@@ -18,3 +18,7 @@ Some writes take minutes. Holding the connection open fails at proxies and waste
 
 ## Decision Outcome
 Chosen option: "A status or result link", because clients poll at the pace the retry hint sets, the front door stays stateless, and the shapes are the ones the long-running rule checks.
+
+### Consequences
+* Good, because the front door stays stateless and a client polls at the pace the retry hint sets.
+* Bad, because a client polls instead of waiting, and every long-running operation keeps its status until it ends.

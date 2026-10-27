@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.184.0] - 2026-10-27
+### Added
+- Decisions in MADR 4.0, completed: approving a decision sets `decision-makers` to the approver when the decision names no one, and `DOC-SCHEMA` reports a draft decision whose status MADR does not name (proposed, rejected, accepted, deprecated, superseded by ADR-<NNNN>).
+- `models apply` dates each decision it copies, and the control-plane model's decisions carry their Consequences.
+
 ## [0.183.2] - 2026-10-27
 ### Changed
 - The control-plane model's Go reference keeps its values (routes, error codes, statuses, event types, the providers it serves) in an embedded `values.json`, and its operations are read through a `getoperation` query slice; it passes `VALUE-LITERAL` and the slice checks, and a test holds it to them. The knowledge guide says what the reference covers and how a project adopts it.
@@ -370,7 +375,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.183.2...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.184.0...HEAD
+[0.184.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.183.2...v0.184.0
 [0.183.2]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.183.1...v0.183.2
 [0.183.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.183.0...v0.183.1
 [0.183.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.182.1...v0.183.0

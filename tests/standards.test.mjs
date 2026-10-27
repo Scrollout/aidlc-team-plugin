@@ -62,3 +62,14 @@ test('B212/AC-2 the plugin\'s architecture page has arc42\'s twelve sections in 
   assert.deepEqual([...text.matchAll(/^# (.*)$/gm)].map((m) => m[1]), config.okf.bundle.schemas.System.sections);
   assert.match(readFileSync(join(ROOT, 'docs/design/diagrams/cli-components.md'), 'utf8'), /C4 component view[\s\S]*extensions --> entry/);
 });
+
+test('a draft decision\'s status is one MADR names; approving fills decision-makers with the approver only when none is named', () => {
+  assert.deepEqual(schema(makeRepo({ 'docs/decisions/0001-store-orders.md': decision(MADR).replace('status: proposed', 'status: approved') }, V2)),
+    ['docs/decisions/0001-store-orders.md:1 DOC-SCHEMA a draft Decision\'s status is approved, which MADR 4.0 does not name: proposed, rejected, accepted, deprecated or superseded by ADR-<NNNN>']);
+  const dir = makeRepo({ 'docs/decisions/0001-store-orders.md': decision(MADR), 'docs/decisions/0002-keep-orders.md': decision(MADR, 'decision-makers: the architecture board\n').replace('0001 Store orders', '0002 Keep orders') }, V2);
+  assert.equal(run(dir, ['approve', '0001', '0002']).code, 0);
+  assert.match(read(dir, 'docs/decisions/0001-store-orders.md'), /^decision-makers: owner@example\.com$/m, 'the approver, without the human: prefix');
+  const kept = read(dir, 'docs/decisions/0002-keep-orders.md');
+  assert.match(kept, /^decision-makers: the architecture board$/m);
+  assert.equal(kept.match(/^decision-makers:/gm).length, 1, 'a named one stays, never doubled');
+});

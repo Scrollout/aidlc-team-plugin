@@ -178,6 +178,11 @@ test('B232/AC-1 the control-plane model ships in generic names (the neutral test
   const applied = run(project, ['models', 'apply', 'control-plane']).out;
   assert.equal((applied.match(/a proposal for the owner to approve/g) ?? []).length, 5);
   assert.deepEqual(run(project, ['check', 'docs']).out.split('\n').filter((l) => /DOC-SCHEMA|OKF-FM|MODEL-FORMAT/.test(l)), [], 'the decisions are MADR');
+  const copied = readdirSync(join(project, 'docs/decisions')).filter((f) => /^\d{4}-/.test(f)).map((f) => readFileSync(join(project, 'docs/decisions', f), 'utf8'));
+  for (const text of copied) {
+    assert.match(text, /^date: \d{4}-\d{2}-\d{2}$/m, 'MADR\'s date, when it was copied');
+    assert.match(text, /^### Consequences$/m, 'MADR\'s consequences, good and bad');
+  }
 });
 
 test('B232/AC-2 the model\'s contract applies only where a project chose it (decision 0021)', () => {

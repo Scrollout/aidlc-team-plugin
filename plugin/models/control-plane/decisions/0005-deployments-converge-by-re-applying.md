@@ -18,3 +18,7 @@ A deployment touches many providers, and any write can fail halfway. Undoing wha
 
 ## Decision Outcome
 Chosen option: "Converge by re-applying", because writes are idempotent anyway (the idempotency rule holds every write bolt to it), a what-if shows the change before it is made, and a project adds compensation only by a decision of its own.
+
+### Consequences
+* Good, because a failed deployment recovers by re-applying it, with no undo to get right per provider.
+* Bad, because every write must be idempotent, and a half-applied deployment stays half-applied until it is re-applied.

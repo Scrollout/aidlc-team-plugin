@@ -19,5 +19,9 @@ Listing by scope, cascade delete, an index, events and policy compliance all nee
 ## Decision Outcome
 Chosen option: "A core resources domain", because the cross-cutting features read one place, and the provider stays the owner of its own state.
 
+### Consequences
+* Good, because listing by scope, cascade delete, events and policy read one place.
+* Bad, because the core and each provider must stay reconciled: a write the provider makes must reach the core.
+
 ### Confirmation
 An integration test creates a resource through a provider and finds it listed by its scope, then deletes the scope and finds it gone.

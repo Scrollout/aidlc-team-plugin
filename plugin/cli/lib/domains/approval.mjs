@@ -88,6 +88,9 @@ function stamp(text, by, at) {
   const pin = doc.fm.type === S.intentType ? [`method: ${config.method.version}`] : [];
   // A decision is stamped as MADR has it: accepted, with the date (docs/design/standards.md).
   const madr = Object.entries(S.stamped[doc.fm.type] ?? {}).map(([k, v]) => `${k}: ${v === S.today ? isoDay(at) : v}`);
+  // And who decided, when the doc names no one: the approver, as their approval names them.
+  const who = S.approvers.reduce((name, p) => (name.startsWith(p) ? name.slice(p.length) : name), by);
+  madr.push(...Object.entries(S.filled[doc.fm.type] ?? {}).filter(([k]) => doc.fm[k] === undefined || doc.fm[k] === null || doc.fm[k] === '').map(([k, v]) => `${k}: ${v === S.approver ? who : v}`));
   const draft = ['---', ...kept, ...pin, ...(madr.length ? madr : [`status: ${S.stable}`]), 'verified:', ...all.map((e) => `  - ${flowMap(e)}`), '---', body].join('\n');
   const hash = hashDoc(parseDoc(draft));
   return draft.replace(/\nverified:\n/, `\nverified_hash: ${hash}\nverified:\n`);

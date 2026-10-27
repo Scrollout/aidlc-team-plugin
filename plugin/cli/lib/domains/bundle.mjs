@@ -273,6 +273,10 @@ function checkSchema(root, file, doc, type, add, v2) {
   }
   // A draft keeps the sections its standard requires; an approved doc is never edited (docs/design/standards.md).
   const sections = [...list(schema.sections), ...Object.entries(schema.sectionsWhen ?? {}).flatMap(([key, more]) => (doc.fm[key] === true ? more : []))];
+  // A draft's values in its standard's form, such as a decision's MADR status.
+  for (const [key, p] of doc.fm.verified_hash || !v2 ? [] : Object.entries(schema.patterns ?? {})) {
+    if (truthy(doc.fm[key]) && !new RegExp(p.pattern).test(String(doc.fm[key]))) add(file, 1, 'DOC-SCHEMA', 'docSchemaPattern', { type, key, value: String(doc.fm[key]), says: p.says, standard: schema.standard });
+  }
   for (const section of doc.fm.verified_hash || !v2 ? [] : sections) {
     if (!doc.lines.some((l) => new RegExp(`^#{1,6}\\s+${section}\\s*$`, 'i').test(l))) add(file, 1, 'DOC-SCHEMA', 'docSchemaSection', { type, section, standard: schema.standard });
   }

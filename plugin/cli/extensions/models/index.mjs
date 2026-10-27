@@ -229,7 +229,7 @@ function apply(cwd, name) {
     if (taken.has(title)) continue;
     const num = String(++n).padStart(config.ids.decisionDigits, '0'), at = join(decDir, `${num}-${docSlug(title)}${config.okf.ext}`);
     mkdirSync(decDir, { recursive: true });
-    writeFileSync(at, text.replace(/^title: .*$/m, `title: ${num} ${title}\nmodel: ${name}`));
+    writeFileSync(at, text.replace(/^title: .*$/m, `title: ${num} ${title}\nmodel: ${name}\ndate: ${new Date().toISOString().split('T')[0]}`)); // MADR's date: when it was last changed
     out.push(msg('applyDecision', { path: relPath(cwd, at) }));
   }
   return done(out.join('') + msg('applyIncrements', { name }) + increments(m.data));

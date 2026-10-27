@@ -19,5 +19,9 @@ Many providers serve resources behind one API. Without a single entry, each prov
 ## Decision Outcome
 Chosen option: "One stateless front door", because every rule is enforced once, the same way, and the door scales out because it keeps no state.
 
+### Consequences
+* Good, because every rule is enforced once, in one place, and a provider ships only its own resources.
+* Bad, because the front door is on every request path, so it must scale out and stay up; a namespace without a registered provider is refused there.
+
 ### Confirmation
 A test sends a request for an unknown namespace and gets a not-found from the door, never from a provider; the stage-order rule holds the governance wiring.
