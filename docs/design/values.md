@@ -23,7 +23,7 @@ Where it is feasible, several values travel as one structured object, so neither
 A test scans every module of the CLI for string and regex literals. One passes only when it is a key into the data, a message key or a check code, or is listed as tool protocol in `tests/fixtures/protocol.json`. Anything else fails, naming the file, the line and the literal.
 
 # In projects
-The rule holds in every project the plugin governs (the owner, 2026-10-27: "Never use hard-coded data, not in AIDLC plugin nor in any project using AIDLC plugin").
+The rule holds in every project the plugin governs, not only in the plugin (the owner, 2026-10-27).
 - **The constitution** a project gets from `init` and `upgrade` holds the rule and names its check.
 - **The builder** keeps every value in the project's data files; **the reviewer** reports a literal value as a finding.
 - **`VALUE-LITERAL`** at the merge gate: a string literal on a line the bolt adds to a source file is a finding, unless the file is a test, lies under the profile's `values.data` globs (where the project keeps its values), or the literal matches the stack pack's protocol list or the profile's `values.allow`. Each stack pack names how its language writes a string literal. Only added lines count, so existing code is measured as it changes.
