@@ -18,7 +18,7 @@ import { cachedCard, commands as cards, researchBrief } from './card.mjs';
 import { intentBrief } from './review.mjs';
 
 const H = config.hooks;
-const S = config.state;
+const S = config.state, TREE = 'worktree '; // git worktree list --porcelain
 
 // ---- Shell parsing: argv per segment, enough for a deny list, not a shell model ----
 
@@ -145,7 +145,7 @@ const urlId = (dir, url) => (!isAbsolute(url) && /^[\w.+-]+:\/\/|^[^/\\]{2,}:/.t
   : commonDir(resolve(dir, url.replace(/^file:\/\//, ''))) ?? resolve(dir, url));
 function foreign(cwd, dir, remote) {
   const there = dir && existsSync(dir) && commonDir(dir);
-  if (!there || there === commonDir(cwd) || existsSync(join(git(dir, 'rev-parse', '--show-toplevel'), '.aidlc', 'profile.json'))) return false;
+  if (!there || there === commonDir(cwd) || existsSync(join(git(dir, 'rev-parse', '--show-toplevel'), config.layers.find((l) => l.name === config.layer.project).path))) return false;
   const ids = (d) => [commonDir(d), ...gitLines(d, 'config', '--get-regexp', '^remote\\..*url$').map((l) => urlId(d, l.split(' ').slice(1).join(' ')))];
   const ours = new Set(ids(cwd));
   return ![...ids(dir), ...(remote ? [urlId(dir, remote)] : [])].some((x) => ours.has(x));
@@ -231,7 +231,7 @@ function resulting(input, current) {
   return edits.reduce((text, e) => (typeof e.old_string === 'string' ? (e.replace_all ? text.split(e.old_string).join(e.new_string ?? '') : text.replace(e.old_string, e.new_string ?? '')) : text), current);
 }
 
-const personalProfile = config.layers.find((l) => l.name === 'personal').path;
+const personalProfile = config.layers.find((l) => l.name === config.layer.personal).path;
 const approvalPart = (text) => {
   const fm = parseDoc(text).fm ?? {};
   const events = [fm.verified].flat().filter((e) => e && S.approvers.some((a) => String(e.by ?? '').startsWith(a)));
@@ -255,7 +255,7 @@ function scope(input, cwd) {
   if (!unit) return allow();
   // The system temp folder, outside every checkout of the repo, holds a builder's report file (docs/design/hook-checks.md).
   const under = (dir) => (file + sep).startsWith(real(dir) + sep);
-  const trees = gitLines(cwd, 'worktree', 'list', '--porcelain').filter((l) => l.startsWith('worktree ')).map((l) => l.slice(9));
+  const trees = gitLines(cwd, 'worktree', 'list', '--porcelain').filter((l) => l.startsWith(TREE)).map((l) => l.slice(TREE.length));
   if (under(tmpdir()) && !trees.some(under)) return allow();
   if (path.startsWith('..') || isAbsolute(path)) return deny(cwd, input, 'SCOPE-OUT', 'scopeOut', { path, unit }); // outside the worktree
   const { profile } = loadProfile(top);
@@ -392,7 +392,7 @@ function steer(input, cwd) {
   if (input.stop_hook_active || asked) return allow();
   const next = nextAction(readState(cwd));
   const stop = readJson(join(cwd, personalProfile))?.run?.stop; // the owner's stopping point (aidlc mode --stop)
-  return next.kind === 'act' && S.stops[stop] !== next.key ? JSON.stringify({ decision: 'block', reason: next.line }) : allow();
+  return next.kind === S.kinds.act && S.stops[stop] !== next.key ? JSON.stringify({ decision: 'block', reason: next.line }) : allow();
 }
 
 function status(input, cwd) {

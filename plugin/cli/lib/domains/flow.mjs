@@ -13,7 +13,7 @@ import { inside, overlaps } from '../foundation/glob.mjs';
 import { baseOf, baseRedFile, branchOf, ciFile, heartbeatAt, heartbeatFresh, hostDeniedFile, mergedUnits, runtimeFile, worktrees } from '../foundation/store.mjs';
 import { acsKept, approval, approvedAt, delegated, findDoc, ownerLines, reviewDue } from './approval.mjs';
 import { diffHash, keptPass, readReview, reviewFocuses, roundsOf, untagged, verdictCurrent } from './review.mjs';
-const S = config.state;
+const S = config.state, CI = config.ci.states;
 const DATE = /^\d{4}-\d{2}-\d{2}$/; // an escape hatch's until
 
 // ---- State ----
@@ -128,7 +128,7 @@ function ciOf(cwd, profile, base) {
   if (!profile.ci?.wait) return null;
   const head = tryGit(cwd, 'rev-parse', base);
   const rec = readJson(ciFile(cwd));
-  const red = rec?.state === 'red' && noMergeSince(cwd, rec.sha, head);
+  const red = rec?.state === CI.red && noMergeSince(cwd, rec.sha, head);
   return { head, remote: tryGit(cwd, 'rev-parse', '-q', '--verify', `${config.gate.remote}/${base}`), rec, red };
 }
 
@@ -143,7 +143,7 @@ const noMergeSince = (cwd, sha, head) => tryGit(cwd, 'rev-list', '--count', '--m
 
 const ids = (docs) => docs.map((u) => u.id).join(' ');
 // An owner step starts with the owner badge, a refusal or stop with the stop badge; the lead's own steps carry none.
-const badgeOf = (kind, key) => (S.badges.stops.includes(key) ? S.badges.stop : kind === 'human' ? S.badges.owner : '');
+const badgeOf = (kind, key) => (S.badges.stops.includes(key) ? S.badges.stop : kind === S.kinds.human ? S.badges.owner : '');
 // An elaborate step names the role the lead works in (decision 0019).
 const roleOf = (key) => config.personas.steps[key];
 const action = (kind, key, data = {}) => ({ kind, key, line: badgeOf(kind, key) + msg(key, data) + (roleOf(key) ? msg('personaLine', { role: roleOf(key) }) : '') });
@@ -179,20 +179,20 @@ const citedDecisions = (st, units) => decisionsOf(st, units).filter((d) => appro
 // The owner gate of steps 2-5 (docs/design/state.md#next) and the docs it waits on, or the lead's own step.
 function gateOf(st, intent, scope) {
   const rel = (dir) => relPath(st.cwd, join(st.bundle, dir)) || dir;
-  const gate = (key, docs, data, kind = 'human') => ({ action: action(kind, key, data), docs: new Set(docs) });
+  const gate = (key, docs, data, kind = S.kinds.human) => ({ action: action(kind, key, data), docs: new Set(docs) });
   const stale = [...st.requirements, ...st.intents, ...st.units, ...st.decisions.filter((d) => d.fm.type === config.grid.decisionType && approval(d.doc) === 'stale').map((d) => ({ ...d, state: 'stale' }))].filter((d) => d.state === 'stale'); // an approved decision edited is the owner's again
   if (stale.length) {
     const decisions = [...citedDecisions(st, stale.filter((d) => st.units.includes(d))), ...st.requirements.filter((r) => r.state === 'draft' && stale.some((d) => (d.requirements ?? []).includes(r.id))).map((r) => r.id)]; // and the new drafts they cite
     const docs = [ids(stale), ...decisions].join(' ');
     // A delegated re-approval keeps every unit's ACs, as `approve --auto` checks: what done means is the owner's.
     const kept = stale.filter((d) => st.units.includes(d)).every((d) => acsKept(st.cwd, d.file, d.doc));
-    return gate(...(st.auto.includes(S.auto[0]) && !decisions.length && kept ? ['nextAutoApprove', stale.map((d) => d.id), { docs }, 'act'] : ['nextReapprove', stale.map((d) => d.id), { docs }]));
+    return gate(...(st.auto.includes(S.auto[0]) && !decisions.length && kept ? ['nextAutoApprove', stale.map((d) => d.id), { docs }, S.kinds.act] : ['nextReapprove', stale.map((d) => d.id), { docs }]));
   }
   const open = [...st.requirements, ...st.intents, ...st.units].filter((d) => d.state === 'draft').map((d) => ({ d, points: openPoints(d.doc) })).find((x) => x.points.length);
   // An open conversation with the owner comes before any unit work: no docs, so nothing counts as independent.
   if (open) return gate(st.intents.includes(open.d) && !decisionsOf(st, [open.d]).length ? 'nextOpenIntent' : 'nextOpenDraft', [], { doc: open.d.id, points: open.points.join(', '), file: relPath(st.cwd, open.d.file) }); // decisions take shape with the intent (U139)
   if (!intent && !st.intents.length && !st.units.length) {
-    if (st.profile.adopted) return gate('nextMigrate', [], { dir: rel(config.grid.intents), commit: String(st.profile.adopted).slice(0, 12) });
+    if (st.profile.adopted) return gate('nextMigrate', [], { dir: rel(config.grid.intents), commit: String(st.profile.adopted).slice(0, config.text.sha.long) });
     return gate('nextNoIntent', [], { dir: rel(config.grid.intents) });
   }
   // A first approval names the draft requirements its docs cite, so one owner prompt covers them (U39).
@@ -200,7 +200,7 @@ function gateOf(st, intent, scope) {
   if (intent && intent.state === 'draft') {
     const docs = [intent, ...draftCited([intent])];
     // A method 9 intent is reviewed first; its findings go to the owner as advice (docs/design/intake.md#review-before-approval).
-    if (reviewDue(st.cwd, st.profile, st, intent)) return gate('nextReviewIntent', [], { intent: intent.id }, 'act');
+    if (reviewDue(st.cwd, st.profile, st, intent)) return gate('nextReviewIntent', [], { intent: intent.id }, S.kinds.act);
     const advice = readJson(runtimeFile(st.cwd, 'intentReview', intent.id))?.findings ?? [];
     if (advice.length) return gate('nextApproveReviewed', docs.map((d) => d.id), { intent: ids(docs), review: intent.id, findings: advice.map((f) => `${f.id} ${f.claim}`).join('; ') });
     return gate('nextApproveIntent', docs.map((d) => d.id), { intent: ids(docs) });
@@ -208,9 +208,9 @@ function gateOf(st, intent, scope) {
   // The draft decisions an approved intent links come before its units: an architecture choice shapes the cut.
   const linked = intent && intent.state === 'approved' && !intent.units.length ? decisionsOf(st, [intent]).filter((d) => approval(d.doc) === 'draft') : [];
   const unfinished = linked.find((d) => openPoints(d.doc).length);
-  if (unfinished) return gate('nextFinishDecision', [], { intent: intent.id, doc: relPath(st.cwd, unfinished.file), points: openPoints(unfinished.doc).join(', ') }, 'act');
+  if (unfinished) return gate('nextFinishDecision', [], { intent: intent.id, doc: relPath(st.cwd, unfinished.file), points: openPoints(unfinished.doc).join(', ') }, S.kinds.act);
   if (linked.length) return gate('nextApproveDecisions', [], { intent: intent.id, docs: linked.map((d) => relPath(st.cwd, d.file)).join(' ') });
-  if (intent && intent.state === 'approved' && !intent.units.length) return gate('nextDraftUnits', [], { intent: intent.id, file: st.profile.system ? msg('draftBoltFile', { dir: rel(config.grid.bolts) }) : msg('draftUnitFile', { dir: rel(config.grid.units) }) }, 'act'); // a v2 plan writes bolts
+  if (intent && intent.state === 'approved' && !intent.units.length) return gate('nextDraftUnits', [], { intent: intent.id, file: st.profile.system ? msg('draftBoltFile', { dir: rel(config.grid.bolts) }) : msg('draftUnitFile', { dir: rel(config.grid.units) }) }, S.kinds.act); // a v2 plan writes bolts
   const cited = new Set([...(intent?.requirements ?? []), ...scope.filter((u) => u.state !== 'merged').flatMap((u) => u.requirements)]);
   const draftReqs = st.requirements.filter((r) => r.state === 'draft' && cited.has(r.id));
   const drafts = scope.filter((u) => u.state === 'draft');
@@ -218,7 +218,7 @@ function gateOf(st, intent, scope) {
   const decisions = citedDecisions(st, drafts);
   const docs = [ids([...drafts, ...draftReqs]), ...decisions].join(' ');
   const auto = st.auto.includes(S.auto[1]) && drafts.every((u) => u.lane === QUICK) && !decisions.length && !draftReqs.length;
-  return gate(auto ? 'nextAutoApprove' : 'nextApprovePlan', [...drafts, ...draftReqs].map((d) => d.id), { docs, units: docs }, auto ? 'act' : 'human');
+  return gate(auto ? 'nextAutoApprove' : 'nextApprovePlan', [...drafts, ...draftReqs].map((d) => d.id), { docs, units: docs }, auto ? S.kinds.act : S.kinds.human);
 }
 
 // Steps 6-12 for the given units; a held unit gets no action until the hold is released.
@@ -230,28 +230,28 @@ function unitWork(st, scope) {
   const backAtWork = [];
   for (const u of live.filter((x) => x.state === 'reviewed' && x.depends.every(merged) && fixOnly(x))) {
     const missing = u.lane === QUICK ? [] : untagged(st, u);
-    if (!missing.length) return action('act', 'nextMerge', { unit: u.id });
-    if (!u.fresh) return action('act', 'nextUntagged', { unit: u.id, tags: missing.join(', ') });
+    if (!missing.length) return action(S.kinds.act, 'nextMerge', { unit: u.id });
+    if (!u.fresh) return action(S.kinds.act, 'nextUntagged', { unit: u.id, tags: missing.join(', ') });
     backAtWork.push(u);
   }
   const fix = live.find((u) => u.state === 'fix');
-  if (fix) return action('act', 'nextFixRound', { unit: fix.id });
+  if (fix) return action(S.kinds.act, 'nextFixRound', { unit: fix.id });
   const reported = live.find((u) => u.state === 'reported');
-  if (reported) return action('act', 'nextReview', { unit: reported.id, focus: (reported.focuses.length ? reported.focuses : [reported.focus]).join(', '), model: st.profile.models.review });
+  if (reported) return action(S.kinds.act, 'nextReview', { unit: reported.id, focus: (reported.focuses.length ? reported.focuses : [reported.focus]).join(', '), model: st.profile.models.review });
   const lost = live.find((u) => u.state === 'building' && !u.fresh);
-  if (lost) return action('act', 'nextRestart', { unit: lost.id, branch: branchOf(lost.id) });
+  if (lost) return action(S.kinds.act, 'nextRestart', { unit: lost.id, branch: branchOf(lost.id) });
   // A unit waiting on the owner or on its spec holds back no other unit's review, fix or restart (U141).
   const onRed = (u) => u.state === 'gated' && readJson(runtimeFile(st.cwd, 'gates', u.id)).codes.every((c) => c === 'GATE-BASE'); // waits for the base's fix, which it never blocks
   const gated = live.find((u) => u.state === 'gated' && !onRed(u));
-  if (gated) return action('human', 'nextGated', { unit: gated.id, codes: readJson(runtimeFile(st.cwd, 'gates', gated.id)).codes.join(', ') });
+  if (gated) return action(S.kinds.human, 'nextGated', { unit: gated.id, codes: readJson(runtimeFile(st.cwd, 'gates', gated.id)).codes.join(', ') });
   const escalated = live.find((u) => u.state === 'escalated');
-  if (escalated) return action('human', 'nextEscalated', { unit: escalated.id });
+  if (escalated) return action(S.kinds.human, 'nextEscalated', { unit: escalated.id });
   const stopped = live.find((u) => u.state === 'stopped');
-  if (stopped) return action('act', 'nextStopped', { unit: stopped.id, reason: String(stopped.report.stop ?? stopped.report.summary ?? '') });
+  if (stopped) return action(S.kinds.act, 'nextStopped', { unit: stopped.id, reason: String(stopped.report.stop ?? stopped.report.summary ?? '') });
   // A builder still holding a merged unit's worktree: the merge could not remove it.
   const trees = worktrees(st.cwd);
   const left = st.units.find((x) => x.state === 'merged' && trees.has(branchOf(x.id)));
-  if (left) return action('act', 'nextWorktreeLeft', { unit: left.id, path: trees.get(branchOf(left.id)), branch: branchOf(left.id) });
+  if (left) return action(S.kinds.act, 'nextWorktreeLeft', { unit: left.id, path: trees.get(branchOf(left.id)), branch: branchOf(left.id) });
 
   const inFlight = [...scope.filter((u) => u.state === 'reviewing' || (u.state === 'building' && u.fresh)), ...backAtWork]; // a held unit's quiet builder is not in flight
   const max = st.profile.parallel.max;
@@ -267,22 +267,22 @@ function unitWork(st, scope) {
   // With ci.wait, builders start on a pushed base; a CI not yet known holds none: its wait runs beside them,
   // and a red result holds their merges (U115). On a red base the fix unit builds.
   const ci = st.ci && !st.ci.red;
-  if (picked.length && ci && st.ci.head !== st.ci.remote) return action('act', 'nextCiPush');
-  const wait = ci && (st.ci.rec?.sha !== st.ci.head || st.ci.rec.state === 'pending') ? [true] : [];
-  if (picked.length) return action('act', 'nextBuild', { units: picked.map((u) => u.id).join(', '), cards: picked.map((u) => msg('cardCommand', { unit: u.id })).join(', '), wait });
-  if (inFlight.length) return action('wait', 'nextWait', { units: inFlight.map((u) => u.id).join(', ') });
+  if (picked.length && ci && st.ci.head !== st.ci.remote) return action(S.kinds.act, 'nextCiPush');
+  const wait = ci && (st.ci.rec?.sha !== st.ci.head || st.ci.rec.state === CI.pending) ? [true] : [];
+  if (picked.length) return action(S.kinds.act, 'nextBuild', { units: picked.map((u) => u.id).join(', '), cards: picked.map((u) => msg('cardCommand', { unit: u.id })).join(', '), wait });
+  if (inFlight.length) return action(S.kinds.wait, 'nextWait', { units: inFlight.map((u) => u.id).join(', ') });
   const held = scope.filter((u) => u.held && u.state !== 'merged');
-  if (held.length) return action('human', 'nextHeld', { units: held.map((u) => (u.fm.hold === true ? u.id : msg('heldReason', { unit: u.id, reason: u.fm.hold }))).join(', ') });
+  if (held.length) return action(S.kinds.human, 'nextHeld', { units: held.map((u) => (u.fm.hold === true ? u.id : msg('heldReason', { unit: u.id, reason: u.fm.hold }))).join(', ') });
   return null;
 }
 
 // An action auto mode refused at this commit goes to the owner, not demanded again (docs/design/state.md#next).
 export function nextAction(st) {
   const next = pickAction(st);
-  const refused = next.kind === 'act' && new RegExp(S.refusedLine).exec(next.line)?.[1];
+  const refused = next.kind === S.kinds.act && new RegExp(S.refusedLine).exec(next.line)?.[1];
   const head = refused && tryGit(st.cwd, 'rev-parse', 'HEAD');
   if (!refused || !(readJson(hostDeniedFile(st.cwd)) ?? []).some((d) => d.head === head && String(d.command).includes(refused))) return next;
-  return action('human', 'nextHostDenied', { refused, command: refused.split(' ').filter((a) => a !== S.autoFlag).join(' ') });
+  return action(S.kinds.human, 'nextHostDenied', { refused, command: refused.split(' ').filter((a) => a !== S.autoFlag).join(' ') });
 }
 
 // A question the lead held for research (decision 0010) and the questions the bundle's research docs answer.
@@ -303,7 +303,7 @@ function researched(bundle) {
 }
 
 function pickAction(st) {
-  if (st.mergeUnit) return action('act', 'nextContinueMerge', { unit: st.mergeUnit });
+  if (st.mergeUnit) return action(S.kinds.act, 'nextContinueMerge', { unit: st.mergeUnit });
   const unreleased = st.intents.find((i) => i.state === 'merged' || i.incrementDue); // its release does not hold back the next intent
   const ops = unreleased && releaseStep(st, unreleased);
   if (S.badges.stops.includes(ops?.key) || ops?.key === 'nextSmokeFix') return ops; // a failed release or smoke comes first
@@ -311,30 +311,30 @@ function pickAction(st) {
   const fixLive = st.units.some((u) => !u.fm.intent && u.state !== 'merged');
   if (st.ci?.red && !fixLive) {
     const red = st.ci.rec.runs.filter((r) => config.ci.red.includes(r.conclusion));
-    return action('act', 'nextCiFix', { runs: red.map((r) => r.name).join(', '), logs: red.map((r) => render(config.ci.log, r, 'ci.log')).join('; '), tests: firstTests(st.profile) });
+    return action(S.kinds.act, 'nextCiFix', { runs: red.map((r) => r.name).join(', '), logs: red.map((r) => render(config.ci.log, r)).join('; '), tests: firstTests(st.profile) });
   }
-  if (st.red && !fixLive) return action('act', 'nextBaseFix', { level: st.red.level, unit: st.red.unit, tests: firstTests(st.profile) });
+  if (st.red && !fixLive) return action(S.kinds.act, 'nextBaseFix', { level: st.red.level, unit: st.red.unit, tests: firstTests(st.profile) });
   const asked = [...st.requirements, ...st.intents, ...st.units, ...st.decisions].find((d) => researchOf(d) && !st.answered.has(researchOf(d)));
-  if (asked) return heartbeatFresh(st.cwd, asked.id, Date.now(), S.researching) ? action('wait', 'nextWaitResearch', { doc: asked.id }) : action('act', 'nextResearch', { doc: asked.id, model: st.profile.models.research });
+  if (asked) return heartbeatFresh(st.cwd, asked.id, Date.now(), S.researching) ? action(S.kinds.wait, 'nextWaitResearch', { doc: asked.id }) : action(S.kinds.act, 'nextResearch', { doc: asked.id, model: st.profile.models.research });
   const intent = st.intents.find((i) => !['released', 'merged'].includes(i.state)) ?? unreleased;
   const scope = st.units.filter((u) => !u.fm.intent || u.fm.intent === intent?.id);
   const gate = gateOf(st, intent, scope);
-  if (gate?.action.kind === 'act') return gate.action;
+  if (gate?.action.kind === S.kinds.act) return gate.action;
   if (gate) {
     // Units that do not wait on the gate's docs go first, so builders run while the owner answers.
     const waits = (u) => [u.id, u.fm.intent, ...u.requirements, ...u.depends].some((d) => gate.docs.has(d));
     const work = unitWork(st, gate.docs.size ? scope.filter((u) => !waits(u)) : []);
-    return work?.kind === 'act' ? work : gate.action;
+    return work?.kind === S.kinds.act ? work : gate.action;
   }
   const work = unitWork(st, scope);
-  if (work && !(work.kind === 'wait' && ops)) return work; // a due release step beats waiting (U121)
+  if (work && !(work.kind === S.kinds.wait && ops)) return work; // a due release step beats waiting (U121)
   if (intent?.state === 'approved' && intent.uncut.length && intent.units.length && intent.units.every((u) => u.state === 'merged')) {
-    return action('act', 'nextCutIncrements', { intent: intent.id, increments: intent.uncut.map((t) => t.replace(/^([-*]|\d+\.)\s+/, '')).join('; ') });
+    return action(S.kinds.act, 'nextCutIncrements', { intent: intent.id, increments: intent.uncut.map((t) => t.replace(/^([-*]|\d+\.)\s+/, '')).join('; ') });
   }
   if (ops) return ops;
   // A clear newer than the last merge on the base already gave the lead a fresh session (docs/design/resume.md).
   const lastMerge = Number(tryGit(st.cwd, 'log', '-1', '--merges', '--format=%ct', st.base) || 0) * 1000;
-  return action('human', heartbeatAt(st.cwd, S.cleared, '.') > lastMerge ? 'nextIdleCleared' : 'nextIdle');
+  return action(S.kinds.human, heartbeatAt(st.cwd, S.cleared, '.') > lastMerge ? 'nextIdleCleared' : 'nextIdle');
 }
 
 const firstTests = (profile) => Object.values(withDefaults(profile).levels).flatMap((l) => list(l?.paths))[0] ?? S.testsPlaceholder;
@@ -344,31 +344,31 @@ function releaseStep(st, i) {
   const base = tryGit(st.cwd, 'rev-parse', st.base);
   const smokeDown = rec.smoke && !rec.smoke.ok && !(rec.rollback?.ok && rec.rollback.at > rec.smoke.at);
   // A held intent parks its release steps until the owner resumes them; a failed smoke still stops (U59).
-  if (i.fm.hold && !smokeDown) return action('human', 'nextReleaseHeld', { intent: i.id, reason: i.fm.hold === true ? [] : [String(i.fm.hold)] });
-  if (!st.profile.deploy && !st.profile.release) return action('human', 'nextRelease', { intent: i.id });
+  if (i.fm.hold && !smokeDown) return action(S.kinds.human, 'nextReleaseHeld', { intent: i.id, reason: i.fm.hold === true ? [] : [String(i.fm.hold)] });
+  if (!st.profile.deploy && !st.profile.release) return action(S.kinds.human, 'nextRelease', { intent: i.id });
   // A fix unit's scope holds its test: the example names the first level's test location (U58).
   const tests = firstTests(st.profile);
   // A failed smoke stops everything until the owner rolled back; then a fix unit, after which the base moves.
-  if (smokeDown) return action('human', 'nextSmokeFailed', { intent: i.id, ...rec.smoke });
-  if (rec.smoke && !rec.smoke.ok && rec.smoke.base === base) return action('act', 'nextSmokeFix', { intent: i.id, tests, file: relPath(st.cwd, runtimeFile(st.cwd, 'deploys', i.id)) });
-  if (rec.release && !rec.release.ok && rec.release.base === base) return action('human', 'nextReleaseFailed', { intent: i.id, tests, ...rec.release });
+  if (smokeDown) return action(S.kinds.human, 'nextSmokeFailed', { intent: i.id, ...rec.smoke });
+  if (rec.smoke && !rec.smoke.ok && rec.smoke.base === base) return action(S.kinds.act, 'nextSmokeFix', { intent: i.id, tests, file: relPath(st.cwd, runtimeFile(st.cwd, 'deploys', i.id)) });
+  if (rec.release && !rec.release.ok && rec.release.base === base) return action(S.kinds.human, 'nextReleaseFailed', { intent: i.id, tests, ...rec.release });
   const checked = list(st.profile.deploy?.check).length > 0;
-  if (checked && rec.check?.base !== base) return action('act', 'nextDeployCheck', { intent: i.id });
-  if (checked && !rec.check.ok) return action('act', 'nextDeployFailed', { intent: i.id, tests, ...rec.check });
+  if (checked && rec.check?.base !== base) return action(S.kinds.act, 'nextDeployCheck', { intent: i.id });
+  if (checked && !rec.check.ok) return action(S.kinds.act, 'nextDeployFailed', { intent: i.id, tests, ...rec.check });
   // With ci.wait the owner releases only a pushed base whose CI passed (U129).
   const ci = ciGreen(st.ci);
-  if (ci === 'unpushed') return action('act', 'nextCiPush');
-  if (ci === 'red') return action('wait', 'nextReleaseCiRed', { intent: i.id });
-  if (ci !== true) return action('act', 'nextReleaseCiWait', { intent: i.id });
-  return action('human', 'nextDeployRelease', { intent: i.id });
+  if (ci === CI.unpushed) return action(S.kinds.act, 'nextCiPush');
+  if (ci === CI.red) return action(S.kinds.wait, 'nextReleaseCiRed', { intent: i.id });
+  if (ci !== true) return action(S.kinds.act, 'nextReleaseCiWait', { intent: i.id });
+  return action(S.kinds.human, 'nextDeployRelease', { intent: i.id });
 }
 
 // True without ci.wait or on a pushed base whose last CI passed; else what holds it: unpushed, red, pending or unknown.
 export function ciGreen(ci) {
   if (!ci) return true;
-  if (ci.head !== ci.remote) return 'unpushed';
-  if (ci.red) return 'red';
-  return ci.rec?.sha === ci.head && ['green', 'none'].includes(ci.rec.state) ? true : ci.rec?.sha === ci.head ? ci.rec.state : 'unknown';
+  if (ci.head !== ci.remote) return CI.unpushed;
+  if (ci.red) return CI.red;
+  return ci.rec?.sha === ci.head && [CI.green, CI.none].includes(ci.rec.state) ? true : ci.rec?.sha === ci.head ? ci.rec.state : CI.unknown;
 }
 
 // ---- Commands ----
@@ -409,7 +409,7 @@ const usage = (key) => { throw new UsageError(msg(key, {})); };
 // `status` and `next` exit blocked when the next step is the owner's.
 const showNext = (cwd, text) => {
   const st = readState(cwd), next = nextAction(st);
-  return done(text(st, next, seam('statusTail', st.profile).map((tail) => tail(st)).join('')), next.kind === 'human' ? config.exit.blocked : config.exit.ok);
+  return done(text(st, next, seam('statusTail', st.profile).map((tail) => tail(st)).join('')), next.kind === S.kinds.human ? config.exit.blocked : config.exit.ok);
 };
 
 export const commands = {

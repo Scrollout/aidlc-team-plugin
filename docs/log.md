@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M26 B235 built: the core's values live in `cli.json`, held by a test that reads every literal ([Values as data](design/values.md)); B239 narrowed to structured answers, `--json` and `next`'s action as `{ command, args }`. Release 0.179.0.
 - **Update** Vocabulary aligned with the slice checks: story and surface in the [Canonical model](design/canonical-model.md), the personas, the intent template, [Models](design/models.md) and [Plan lint](design/plan-lint.md). Release 0.178.1.
 - **Update** M27 B246 built: slices named and routed by the naming registry, and a new slice delivered whole (`SLICE-NAME`, `SLICE-ROUTE`, `SLICE-DELIVER`); [Vertical slices checked](design/vertical-slices.md) is stable and M27 is done. Release 0.178.0.
 - **Update** M27 B245 built: [Vertical slices checked](design/vertical-slices.md), B245's part built; six `SLICE-*` checks run at the merge gate on what a bolt changes. Release 0.177.0.

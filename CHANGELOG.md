@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.179.0] - 2026-10-27
+### Changed
+- The core holds no hard-coded value (M26 B235). Names, ids, doc grammars, thresholds, labels, levels, the action kinds and CI states, the naming registry's patterns and word forms all live in `cli.json`; the code holds logic, the protocol of the tools it calls, and keys into the data.
+- A test reads every literal and number of `aidlc.mjs` and `lib/` and fails on one that is no data key, template variable, profile or front-matter key, or listed tool protocol (`tests/values.test.mjs`, `tests/fixtures/protocol.json`).
+- M26 B239 narrowed: commands will answer with structured data, `--json` printing the whole answer and `next` its action as `{ command, args }`; a JSON-RPC adapter is left to an MCP adapter, if remote use is ever planned.
+
 ## [0.178.1] - 2026-10-27
 ### Changed
 - The vocabulary follows the slice checks. The glossary names the **story** (one feature or use case, `US<g>.<s>`, which a vertical slice serves) and the **surface** (a domain's commands, queries and events); a vertical slice is declared as a folder of its domain's application layer, listed as a `Command` or `Query` line under the domain doc's `# Surface`.
@@ -321,7 +327,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.178.1...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.179.0...HEAD
+[0.179.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.178.1...v0.179.0
 [0.178.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.178.0...v0.178.1
 [0.178.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.177.0...v0.178.0
 [0.177.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.176.0...v0.177.0

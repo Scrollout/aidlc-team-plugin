@@ -4,7 +4,7 @@ import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { bundleOf, config, lapsed, list, readJson, relPath } from '../foundation/data.mjs';
 import { git, tryGit } from '../foundation/git.mjs';
-import { msg } from '../foundation/text.mjs';
+import { msg, render } from '../foundation/text.mjs';
 import { parseDoc } from './bundle.mjs';
 import { exceptDocs } from './architecture.mjs';
 import { inForce, incrementLines, readPlan, topLevel } from './plan.mjs';
@@ -89,7 +89,7 @@ export function hatchesOf(st) {
   const out = docHatches(st.profile, st.intents.filter(live), st.units.filter(live), st.cwd).map((h) => ({ ...h, id: h.doc.id }));
   const d = delegation(st.cwd);
   if (list(d.auto).length && !lapsed(d.until)) out.push({ id: list(d.auto).join(', '), hatch: C.hatches.delegate, until: d.until });
-  const findings = [...st.units.flatMap((u) => (u.review?.rounds ?? []).flatMap((r) => (r.findings ?? []).map((f, k) => ({ f, id: `${u.id} F-${k + 1}` })))),
+  const findings = [...st.units.flatMap((u) => (u.review?.rounds ?? []).flatMap((r) => (r.findings ?? []).map((f, k) => ({ f, id: `${u.id} ${render(config.ids.finding, { k: k + 1 })}` })))),
     ...st.intents.flatMap((i) => (readJson(runtimeFile(st.cwd, 'design', i.id))?.findings ?? []).map((f) => ({ f, id: `${i.id} ${f.id}` })))];
   for (const { f, id } of findings.filter((x) => x.f.disposition === config.state.dispositions[1] && !lapsed(x.f.until))) out.push({ id, hatch: C.hatches.accepted, until: f.until });
   return out;
@@ -113,7 +113,7 @@ export function traceOf(cwd, profile) {
       // At the commit that shipped or merged it, else in the tree as it stands (the gate's merge result).
       const at = ref ?? sha, found = tryGit(cwd, 'grep', '-l', '-F', tag, ...(at ? [at] : []), '--', '.', `:(exclude)${bundleRel}/**`) ?? '';
       const files = found.split('\n').filter(Boolean).map((f) => (at ? f.slice(at.length + 1) : f));
-      return { reqs: u.requirements, tag, tests: files, merge: sha?.slice(0, 7), release: ref && files.length ? ref.slice(0, 12) : null };
+      return { reqs: u.requirements, tag, tests: files, merge: sha?.slice(0, config.text.sha.short), release: ref && files.length ? ref.slice(0, config.text.sha.long) : null };
     }));
     const cited = [...new Set(rows.flatMap((r) => r.reqs))];
     return { intent: i, rows, delivered: cited.filter((r) => rows.filter((x) => x.reqs.includes(r)).every((x) => x.release)) };
@@ -125,7 +125,7 @@ export function writeTrace(cwd, profile) {
   if (!profile.system) return [];
   return traceOf(cwd, profile).filter((t) => t.rows.length).flatMap((t) => {
     const rows = t.rows.map((r) => msg('traceRow', { reqs: r.reqs.join(', ') || '-', tag: r.tag, tests: r.tests.join(', ') || '-', merge: r.merge ?? '-', release: r.release ?? '-' })).join('');
-    const file = join(bundleOf(cwd, profile), C.trace.replace('{{id}}', t.intent.id.toLowerCase()));
+    const file = join(bundleOf(cwd, profile), render(C.trace, { id: t.intent.id.toLowerCase() }));
     return writePage(file, msg('traceBody', { rows, delivered: t.delivered.join(', ') || '-' }), 'traceDoc', { intent: t.intent.id });
   });
 }

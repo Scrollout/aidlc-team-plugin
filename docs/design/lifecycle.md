@@ -11,11 +11,11 @@ The transitions in `cli.json` only draw the diagrams. The states and the next ac
 
 # The machines
 - `state.machines.bolt` and `state.machines.intent` list the states, and each transition as an object: `{ "from", "to", "on", "when" }`.
-- `on` names the command that fires the transition (`start`, `report`, `review`, `merge`), the same method the `rpc` adapter serves ([Values as data](values.md)).
+- `on` names the command that fires the transition (`start`, `report`, `review`, `merge`), the same command `next` names ([Values as data](values.md)).
 - `when` names a guard: `dependencyMerged`, `ciGreen`, `everyFocusPassed`. A guard is a small predicate in code, with its own test. Data names and orders guards; it never holds an expression.
 
 # The next action
-`next.order` is an ordered list of `{ "when", "action" }`. `next` serves the first entry whose guard holds as a JSON-RPC 2.0 request (`method`, `params`), and its text from the action's message.
+`next.order` is an ordered list of `{ "when", "action" }`. `next` serves the first entry whose guard holds as `{ "command", "args" }`, and its text from the action's message.
 
 # Pipelines
 The merge gate's checks, the review focuses and the hook chain are ordered stage lists of `{ "id", "check", "level" }`. A project's profile may add a stage, whose check is a profile command, or set a stage's level; it cannot remove a stage the core requires.

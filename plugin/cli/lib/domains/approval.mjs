@@ -2,9 +2,9 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
-import { bundleOf, config, QUICK, done, isMap, lapsed, list, readJson, UsageError, relPath } from '../foundation/data.mjs';
+import { bundleOf, config, QUICK, done, isMap, isoDay, lapsed, list, readJson, UsageError, relPath } from '../foundation/data.mjs';
 import { git, gitLines, tryGit } from '../foundation/git.mjs';
-import { finding as codeFinding, msg } from '../foundation/text.mjs';
+import { escapeRe, finding as codeFinding, msg } from '../foundation/text.mjs';
 import { loadProfile, withDefaults } from '../foundation/profile.mjs';
 import { hashDoc, parseDoc, sizeCap } from './bundle.mjs';
 import { acsOf, computeLane, inForce, lintPlan, readPlan, reqId as reqIdOf, withIntents } from './plan.mjs';
@@ -85,7 +85,7 @@ function stamp(text, by, at) {
   // An intent is pinned to the method it is approved under: its bolts are judged by that method's rules (docs/design/canonical-model.md).
   const pin = doc.fm.type === S.intentType ? [`method: ${config.method.version}`] : [];
   // A decision is stamped as MADR has it: accepted, with the date (docs/design/standards.md).
-  const madr = Object.entries(S.stamped[doc.fm.type] ?? {}).map(([k, v]) => `${k}: ${v === 'today' ? at.slice(0, 10) : v}`);
+  const madr = Object.entries(S.stamped[doc.fm.type] ?? {}).map(([k, v]) => `${k}: ${v === S.today ? isoDay(at) : v}`);
   const draft = ['---', ...kept, ...pin, ...(madr.length ? madr : [`status: ${S.stable}`]), 'verified:', ...all.map((e) => `  - ${flowMap(e)}`), '---', body].join('\n');
   const hash = hashDoc(parseDoc(draft));
   return draft.replace(/\nverified:\n/, `\nverified_hash: ${hash}\nverified:\n`);
@@ -122,7 +122,7 @@ export function findDoc(cwd, bundle, name) {
   // A decision by its number, as the owner types it: `approve 0010` (docs/design/cli.md).
   const files = readdirSync(bundle, { recursive: true }).map(String);
   const decision = /^\d+$/.test(name) && files
-    .filter((f) => Number(basename(f).match(/^(\d+)-.*\.md$/)?.[1]) === Number(name)).map((f) => join(bundle, f))
+    .filter((f) => Number(basename(f).match(new RegExp(config.ids.decisionFile + escapeRe(config.okf.ext) + '$'))?.[1]) === Number(name)).map((f) => join(bundle, f))
     .find((f) => parseDoc(readFileSync(f, 'utf8')).fm?.type === config.grid.decisionType);
   if (decision) return decision;
   // Any other doc by its file name, as `next` names a held one: `aidlc research reputation`.
@@ -155,7 +155,7 @@ export const commands = {
     const doors = named.filter(({ doc }) => doc.fm?.oneWayDoor === true).map(({ name }) => name);
     if (doors.length > 1) throw new UsageError(msg('approveBulk', { docs: doors.join(', ') }));
     for (const { name, file: f, doc: d } of named) {
-      const intents = d.fm?.type === S.intentType ? [d.fm.id ?? basename(f).match(/^(I-\d+)/)?.[1]] : d.fm?.oneWayDoor === true ? readPlan(bundle).intents.filter((i) => i.doc.lines.some((l) => l.includes(basename(f)))).map((i) => i.id) : [];
+      const intents = d.fm?.type === S.intentType ? [d.fm.id ?? basename(f).match(new RegExp(config.grid.intentFile))?.[1]] : d.fm?.oneWayDoor === true ? readPlan(bundle).intents.filter((i) => i.doc.lines.some((l) => l.includes(basename(f)))).map((i) => i.id) : [];
       const plan = d.fm?.type === S.intentType ? readPlan(bundle) : null, own = plan?.intents.find((i) => i.file === f);
       if (own && approval(d) === 'draft' && reviewDue(cwd, profile, plan, own)) throw new UsageError(msg('approveReview', { doc: name, intent: own.id }));
       for (const intent of intents.filter(Boolean)) {
@@ -183,10 +183,10 @@ export const commands = {
       writeFileSync(file, stamped);
       out += msg('approved', { doc: relPath(cwd, file) });
       // Approving a decision that supersedes another marks the older one superseded, never edits its content (decision 0013).
-      const sup = parseDoc(stamped).fm?.supersedes, old = sup !== undefined && readdirSync(dirname(file)).find((f) => f.startsWith(`${String(sup).padStart(4, '0')}-`));
+      const sup = parseDoc(stamped).fm?.supersedes, old = sup !== undefined && readdirSync(dirname(file)).find((f) => f.startsWith(`${String(sup).padStart(config.ids.decisionDigits, '0')}-`));
       if (old) {
         const path = join(dirname(file), old);
-        writeFileSync(path, readFileSync(path, 'utf8').replace(/^status: .*$/m, `status: ${msg('supersededStatus', { n: basename(file).slice(0, 4) })}`));
+        writeFileSync(path, readFileSync(path, 'utf8').replace(/^status: .*$/m, `status: ${msg('supersededStatus', { n: basename(file).slice(0, config.ids.decisionDigits) })}`));
         out += msg('supersededBy', { old: relPath(cwd, path), doc: relPath(cwd, file) });
       }
     }
@@ -212,7 +212,7 @@ export const commands = {
       return done(msg('modeSet', { run: S.off }));
     }
     const flags = rest.filter((_, k) => k % 2 === 0);
-    if (!S.modes.includes(mode) || (stop !== undefined && !S.stops[stop]) || rest.length % 2 || flags.some((f) => !config.commands.find((c) => c.name === 'mode').flags.includes(f))) usage('modeUsage');
+    if (!S.modes.includes(mode) || (stop !== undefined && !S.stops[stop]) || rest.length % 2 || flags.some((f) => !config.commands.find((c) => c.name === config.fields.mode).flags.includes(f))) usage('modeUsage');
     const run = { mode, stop, report: opt('--report') };
     writeJson(personal(cwd), { ...data, run });
     return done(msg('modeSet', { run: msg('runLine', { mode, stop: list(stop), report: list(run.report) }) }));

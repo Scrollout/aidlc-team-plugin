@@ -15,7 +15,7 @@ export function registry(profile, bundle) {
   const vocabularies = { ...N.vocabularies, ...(own.vocabularies ?? {}) };
   const domains = { ...(own.domains ?? {}) };
   const dir = bundle && join(bundle, DOMAIN);
-  for (const f of dir && existsSync(dir) ? readdirSync(dir).filter((x) => x.endsWith('.md')) : []) {
+  for (const f of dir && existsSync(dir) ? readdirSync(dir).filter((x) => x.endsWith(config.okf.ext)) : []) {
     const code = readFileSync(join(dir, f), 'utf8').match(/^code:\s*["']?([^"'\s]+)/m)?.[1];
     if (code && !domains[code]) domains[code] = {};
   }
@@ -46,11 +46,11 @@ export function namingProblems(profile) {
 
 // ---- Names from the grammar (docs/design/naming.md#grammar) ----
 
-const words = (text) => String(text).replace(/['’]/g, '').split(/[^A-Za-z0-9]+/).filter(Boolean).map((w) => w.toLowerCase());
+const words = (text) => String(text).replace(/['’]/g, '').split(new RegExp(N.wordSplit)).filter(Boolean).map((w) => w.toLowerCase());
 const cap = (w) => w.charAt(0).toUpperCase() + w.slice(1);
 const pascal = (ws) => ws.map(cap).join('');
 const camel = (ws) => ws.map((w, k) => (k ? cap(w) : w)).join('');
-const singular = (ws) => [...ws.slice(0, -1), ws.at(-1).replace(/ies$/, 'y').replace(/([^s])s$/, '$1')];
+const singular = (ws) => [...ws.slice(0, -1), N.singular.reduce((w, [from, to]) => w.replace(new RegExp(from), to), ws.at(-1))];
 
 // A registered domain's word forms, from its registered name (or its code) and singular: the API's type in camel
 // and Pascal case, and the singular as one lower-case word, in camel and in Pascal case.
@@ -64,25 +64,25 @@ export function nameOf(kind, flags, reg) {
   const spec = N.grammar[kind];
   if (!spec) throw new UsageError(msg('nameUsage', { kinds: Object.keys(N.grammar).join(', ') }));
   const known = (what, value, list, where) => { if (value !== undefined && !list.includes(value)) throw new UsageError(msg('nameUnregistered', { what, value, where, known: list.join(', ') || '-' })); return value; };
-  const v = { ...reg.tokens, tag: flags.tag ?? '<semver>', previewSuffix: flags.preview ? '-preview' : '', date: flags.date, section: flags.section, unit: known('unit', flags.unit, N.metricUnits, 'naming.metricUnits') };
+  const v = { ...reg.tokens, tag: flags.tag ?? N.tagPlaceholder, previewSuffix: flags.preview ? N.previewSuffix : '', date: flags.date, section: flags.section, unit: known('unit', flags.unit, N.metricUnits, N.where.unit) };
   if (flags.domain !== undefined) {
-    known('domain', flags.domain, Object.keys(reg.domains), 'naming.domains or a domain doc');
+    known('domain', flags.domain, Object.keys(reg.domains), N.where.domain);
     Object.assign(v, { domain: flags.domain, part: flags.domain, ...domainForms(flags.domain, reg) });
   }
-  if (flags.stage !== undefined) v.part = known('stage', flags.stage, reg.vocabularies.pipeline, 'naming.vocabularies.pipeline');
-  if (flags.verb !== undefined) Object.assign(v, { verb: known('verb', flags.verb, reg.vocabularies.verb, 'naming.vocabularies.verb'), OperationVerb: N.operationVerbs[flags.verb] ?? cap(flags.verb), PastVerb: N.pastTense[flags.verb] ?? `${cap(flags.verb)}ed` });
-  v.role = known('role', flags.role, reg.vocabularies.role, 'naming.vocabularies.role');
+  if (flags.stage !== undefined) v.part = known('stage', flags.stage, reg.vocabularies.pipeline, N.where.pipeline);
+  if (flags.verb !== undefined) Object.assign(v, { verb: known('verb', flags.verb, reg.vocabularies.verb, N.where.verb), OperationVerb: N.operationVerbs[flags.verb] ?? cap(flags.verb), PastVerb: N.pastTense[flags.verb] ?? cap(flags.verb) + N.pastSuffix });
+  v.role = known('role', flags.role, reg.vocabularies.role, N.where.role);
   v.roleSuffix = flags.role ? `-${flags.role}` : '';
-  v.env = known('env', flags.env, reg.vocabularies.env, 'naming.vocabularies.env');
-  v.action = known('action', flags.action, N.actions, 'naming.actions');
+  v.env = known('env', flags.env, reg.vocabularies.env, N.where.env);
+  v.action = known('action', flags.action, N.actions, N.where.action);
   if (v.org && v.system) v.Namespace = `${pascal(words(v.org))}.${pascal(words(v.system))}`;
-  for (const [flag, key] of [['table', 'tableSnake'], ['object', 'objectSnake'], ['metric', 'metricSnake']]) if (flags[flag] !== undefined) v[key] = words(flags[flag]).join('_');
-  if (flags.key !== undefined) v.keyCamel = camel(words(flags.key));
-  if (flags.number !== undefined) v.number4 = String(Number(flags.number)).padStart(4, '0');
-  const derived = { number: 'number4', table: 'tableSnake', object: 'objectSnake', metric: 'metricSnake', key: 'keyCamel' }; // a flag the grammar reads in another form
+  for (const flag of ['table', 'object', 'metric']) if (flags[flag] !== undefined) v[N.forms[flag]] = words(flags[flag]).join('_');
+  if (flags.key !== undefined) v[N.forms.key] = camel(words(flags.key));
+  if (flags.number !== undefined) v[N.forms.number] = String(Number(flags.number)).padStart(N.numberDigits, '0');
+  const derived = N.forms; // a flag the grammar reads in another form
   const missing = spec.needs.filter((n) => v[derived[n] ?? n] === undefined || v[derived[n] ?? n] === null);
-  if (missing.length) throw new UsageError(msg('nameMissing', { kind, missing: missing.join(', '), flags: missing.map((n) => (reg.tokens[n] === undefined && N.tokens[n] ? `naming.tokens.${n}` : `--${n === 'part' ? 'domain or --stage' : n}`)).join(', ') }));
-  const name = render(spec.template, v, `cli.json naming.grammar.${kind}`);
+  if (missing.length) throw new UsageError(msg('nameMissing', { kind, missing: missing.join(', '), flags: missing.map((n) => (reg.tokens[n] === undefined && N.tokens[n] ? N.where.token + n : `--${n === 'part' ? N.partFlags : n}`)).join(', ') }));
+  const name = render(spec.template, v, N.grammarSource + kind);
   if (!new RegExp(spec.regex).test(name)) throw new UsageError(msg('nameMissing', { kind, missing: name, flags: spec.regex }));
   return name;
 }
@@ -121,17 +121,17 @@ const alt = (xs) => xs.map((x) => String(x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&
 export function generatedRules(profile, bundle) {
   if (!isMap(profile.naming)) return [];
   const reg = registry(profile, bundle), t = reg.tokens, G = N.generated, domains = Object.keys(reg.domains), out = [];
-  if (domains.length) out.push({ id: 'migration', ...G.migration, pattern: `migrations/(?:${alt(domains)})/\\d{4}_[a-z]+_[a-z0-9_]+\\.sql` });
-  if (t.registry && t.org && t.system) out.push({ id: 'image', ...G.image, pattern: `${alt([t.registry])}/${alt([t.org])}/${alt([t.system])}-(?:${alt([...domains, ...reg.vocabularies.pipeline])})-(?:${alt(reg.vocabularies.role)}):[A-Za-z0-9._-]+` });
-  if (t.system) out.push({ id: 'namespace', ...G.namespace, pattern: `${alt([t.system])}-(?:${alt(reg.vocabularies.env)})` });
-  out.push({ id: 'banned', ...G.banned, pattern: `(?!(?:.*/)?(?:${alt(reg.banned)})(?:[./_-][^/]*)?(?:/|$)).*` });
+  if (domains.length) out.push({ id: 'migration', ...G.migration, pattern: render(N.patterns.migration, { domains: alt(domains) }) });
+  if (t.registry && t.org && t.system) out.push({ id: 'image', ...G.image, pattern: render(N.patterns.image, { registry: alt([t.registry]), org: alt([t.org]), system: alt([t.system]), parts: alt([...domains, ...reg.vocabularies.pipeline]), roles: alt(reg.vocabularies.role) }) });
+  if (t.system) out.push({ id: 'namespace', ...G.namespace, pattern: render(N.patterns.namespace, { system: alt([t.system]), envs: alt(reg.vocabularies.env) }) });
+  out.push({ id: 'banned', ...G.banned, pattern: render(N.patterns.banned, { banned: alt(reg.banned) }) });
   return out;
 }
 
 // Modules whose id the registry does not hold for their kind: a domain's code, a pipeline stage, a foundation kit.
 export function moduleProblems(profile, bundle) {
   if (!isMap(profile.naming)) return [];
-  const reg = registry(profile, bundle), lists = { domain: [Object.keys(reg.domains), 'naming.domains or a domain doc'], pipeline: [reg.vocabularies.pipeline, 'naming.vocabularies.pipeline'], foundation: [reg.vocabularies.foundation, 'naming.vocabularies.foundation'] };
+  const reg = registry(profile, bundle), lists = { domain: [Object.keys(reg.domains), N.where.domain], pipeline: [reg.vocabularies.pipeline, N.where.pipeline], foundation: [reg.vocabularies.foundation, N.where.foundation] };
   return (profile.modules ?? []).filter((m) => lists[m.kind] && !lists[m.kind][0].includes(String(m.id ?? m.name))).map((m) => ['namingModule', { module: String(m.id ?? m.name), kind: m.kind, where: lists[m.kind][1] }]);
 }
 
@@ -140,8 +140,8 @@ export function moduleProblems(profile, bundle) {
 // Every glossary entry of the domain docs: `- **term** (not: a, b): meaning` under # Glossary.
 export function glossaryOf(bundle) {
   const dir = bundle && join(bundle, DOMAIN), entry = new RegExp(N.glossary.entry), out = [];
-  for (const f of dir && existsSync(dir) ? readdirSync(dir).filter((x) => x.endsWith('.md')).sort() : []) {
-    const text = readFileSync(join(dir, f), 'utf8'), domain = text.match(/^code:\s*["']?([^"'\s]+)/m)?.[1] ?? f.replace(/\.md$/, '');
+  for (const f of dir && existsSync(dir) ? readdirSync(dir).filter((x) => x.endsWith(config.okf.ext)).sort() : []) {
+    const text = readFileSync(join(dir, f), 'utf8'), domain = text.match(/^code:\s*["']?([^"'\s]+)/m)?.[1] ?? f.slice(0, -config.okf.ext.length);
     let on = false;
     for (const line of text.split('\n')) {
       if (/^#{1,6}\s/.test(line)) on = new RegExp(`^#{1,6}\\s+${N.glossary.section}\\s*$`).test(line);

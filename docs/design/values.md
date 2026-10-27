@@ -1,7 +1,7 @@
 ---
 type: Design
 title: Values as data
-description: Draft - nothing hard-coded, in the plugin and in every project it governs - values in data, several values as structured objects and answers served as JSON and JSON-RPC 2.0, code holding only logic, tool protocol and keys, a test for the plugin and a gate check for projects, and the board as a declarative JSON template.
+description: Draft - nothing hard-coded, in the plugin and in every project it governs - values in data, several values as structured objects and answers served as JSON, code holding only logic, tool protocol and keys, a test for the plugin and a gate check for projects, and the board as a declarative JSON template.
 status: draft
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T23:00:00Z }
 ---
@@ -16,8 +16,8 @@ The board's issue shape, pathway names, factor names, file names and message fra
 # Structured, not encoded
 Where it is feasible, several values travel as one structured object, so neither the code nor a caller parses text.
 - **In data:** several values are a JSON array or object in `cli.json`, `extension.json` and the profile, and a YAML list or map in front matter. Never a delimited string (`kind:surface`, `a -> b` lines, a comma list) the code splits.
-- **In answers:** a command that serves several values returns them as `data` beside `{ code, findings, output }`, and its text is rendered from that data. `next` serves its action as a JSON-RPC 2.0 request object (`method`, `params`) that names the command to run.
-- **The `rpc` adapter:** `aidlc rpc` reads JSON-RPC 2.0 requests from stdin, one per line or a batch array. The method is a command name and the params are its `args`. The result is `{ code, findings, output, data }`. A usage error is `-32602` and an unknown method `-32601`; owner commands are refused there ([decision 0006](../decisions/0006-engine-behind-adapters.md)). A later MCP adapter speaks the same protocol.
+- **In answers:** a command that serves several values returns them as `data` beside `{ code, findings, output }`, and its text is rendered from that data. `next` serves its action as `{ "command", "args" }`, the command to run. `--json` prints the whole answer as one object.
+- **Remote callers:** none today. If the engine is served to remote agents, it is through an MCP adapter, which speaks JSON-RPC 2.0 itself ([decision 0006](../decisions/0006-engine-behind-adapters.md)); the structured answers keep that adapter thin.
 
 # The guard
 A test scans every module of the CLI for string and regex literals. One passes only when it is a key into the data, a message key or a check code, or is listed as tool protocol in `tests/fixtures/protocol.json`. Anything else fails, naming the file, the line and the literal.

@@ -11,13 +11,13 @@ import { loadProfile, withDefaults } from '../foundation/profile.mjs';
 import { linksOf, parseDoc, proseLines, sectionOf } from './bundle.mjs';
 
 const GRID = config.grid;
-const AC = /^\s*[-*]\s+(AC-\d+)\b\s*(?:\(([^)]*)\))?\s*:/;
+const AC = new RegExp(config.ids.acLine);
 const RESERVE = /^(\S+)\s+(\S+)\/(\d+)$/;
 const SPAN = /`([^`]+)`/g;
 const ITEM = /^\s*([-*]|\d+\.)\s+/; // a list line: a bullet or a number
 
 // Requirement IDs compare by number: R-018 and R-18 are the same.
-export const reqId = (id) => id.replace(/^(R-)0*(\d)/, '$1$2');
+export const reqId = (id) => id.replace(new RegExp(config.ids.requirementPad), '$1$2');
 
 // A back-fill: units whose scopes all lie inside the levels' test paths, so they ship no code (docs/design/backfill.md).
 export const testsOnly = (units, profile) => units.length > 0 && units.every((u) => u.scope.length
@@ -275,7 +275,7 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   const live = (i) => units.some((u) => u.fm.intent === i.id) || !all.some((u) => u.fm.intent === i.id);
   for (const i of profile.deploy ? liveIntents.filter((x) => live(x) && !shipsNothing(all.filter((u) => u.fm.intent === x.id), profile)) : []) {
     if (!linksOf(i, bundle).some((f) => existsSync(f) && parseDoc(readFileSync(f, 'utf8')).fm?.type === GRID.runbookType)) add('PLAN-RUNBOOK', i, 1, 'planRunbook', {});
-    if (!Object.hasOwn(profile.deploy, 'platform')) add('PLAN-PLATFORM', i, 1, 'planPlatform', {});
+    if (!Object.hasOwn(profile.deploy, config.fields.platform)) add('PLAN-PLATFORM', i, 1, 'planPlatform', {});
   }
   for (const u of units.filter((x) => x.modules.length > 1 && x.acs.length && x.acs.every((a) => a.level === levels[0]))) {
     add('PLAN-INCREMENT', u, keyLine(u, 'modules'), 'planIncrementUnit', { modules: u.modules.join(', '), level: levels[0] });
@@ -301,7 +301,7 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   for (const u of units) {
     for (const reserve of u.reserves) {
       const m = reserve.match(RESERVE);
-      const line = keyLine(u, 'reserves');
+      const line = keyLine(u, config.fields.reserves);
       if (!m) add('PLAN-RESERVE', u, line, 'reserveMalformed', { reserve });
       else if (kinds && !kinds.includes(m[1])) add('PLAN-RESERVE', u, line, 'reserveKind', { kind: m[1] });
       else {

@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { dirname, join } from 'node:path';
 import { bundleOf, CLI_DIR, config, done, list, readJson } from '../foundation/data.mjs';
 import { gitLines } from '../foundation/git.mjs';
-import { msg } from '../foundation/text.mjs';
+import { escapeRe, msg } from '../foundation/text.mjs';
 import { loadProfile, withDefaults } from '../foundation/profile.mjs';
 import { digestOf, parseDoc, sectionOf } from './bundle.mjs';
 import { graphOf } from './architecture.mjs';
@@ -53,10 +53,10 @@ function mapText(cwd, profile) {
   const names = [...new Set(shown.flatMap(layersOf))];
   const box = (m, i) => (layersOf(m).length ? [`    subgraph m${i}[${m.id}]`, ...layersOf(m).map((l, k) => `      m${i}l${k}[${l}]`), ...layersOf(m).slice(1).map((_, k) => `      m${i}l${k} --> m${i}l${k + 1}`), '    end'] : [`    m${i}[${m.id}]`]);
   const bands = [...new Set(shown.map(kindOf))].map((kind, b) => [`  subgraph b${b}[${kind}]`, '    direction LR', ...shown.flatMap((m, i) => (kindOf(m) === kind ? box(m, i) : [])), '  end'].join('\n')).join('\n');
-  const matrix = [`| Kind | Module | ${names.join(' | ')} |`, `|---|---|${names.map(() => '---|').join('')}`, ...shown.map((m) => `| ${kindOf(m)} | ${m.id} | ${names.map((l) => list(m.layers?.[l]).join(', ') || '-').join(' | ')} |`)].join('\n');
+  const matrix = [`${M.matrixHead} ${names.join(' | ')} |`, `|---|---|${names.map(() => '---|').join('')}`, ...shown.map((m) => `| ${kindOf(m)} | ${m.id} | ${names.map((l) => list(m.layers?.[l]).join(', ') || '-').join(' | ')} |`)].join('\n');
   // One page per part, each small enough for an agent to load: the tree, the diagram, the table.
-  const base = (typeof profile.map === 'string' ? profile.map : profile.system ? M.fileV2 : M.file).replace(/\.md$/, ''); // a v2 bundle keeps generated maps in architecture/
-  const pages = M.pages.filter((pg) => !pg.needs || { pairs: pairs.length, kinds: shown.some((m) => m.kind) }[pg.needs]).map((pg) => ({ ...pg, file: `${base}${pg.suffix}.md` }));
+  const base = (typeof profile.map === 'string' ? profile.map : profile.system ? M.fileV2 : M.file).replace(new RegExp(`${escapeRe(config.okf.ext)}$`), ''); // a v2 bundle keeps generated maps in architecture/
+  const pages = M.pages.filter((pg) => !pg.needs || { pairs: pairs.length, kinds: shown.some((m) => m.kind) }[pg.needs]).map((pg) => ({ ...pg, file: `${base}${pg.suffix}${config.okf.ext}` }));
   const link = (pg) => msg('mapLink', { title: pg.title, file: pg.file.split('/').at(-1) });
   return pages.map((pg) => ({ ...pg, body: msg(pg.body, { tree: lines.join('\n'), flow, table, bands, matrix, links: pages.filter((x) => x !== pg).map(link) }) }));
 }
@@ -94,12 +94,12 @@ export function writeGlossary(cwd, profile) {
 // downstream at every merge (docs/design/inception.md#domains).
 export function writeContextMap(cwd, profile) {
   const bundle = bundleOf(cwd, profile), dir = join(bundle, config.okf.bundle.folders.Domain), G = config.naming.glossary;
-  const docs = existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith('.md') && f !== config.okf.index).sort().map((f) => parseDoc(readFileSync(join(dir, f), 'utf8'))).filter((d) => d.fm?.code) : [];
+  const docs = existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith(config.okf.ext) && f !== config.okf.index).sort().map((f) => parseDoc(readFileSync(join(dir, f), 'utf8'))).filter((d) => d.fm?.code) : [];
   if (!docs.length) return [];
   const codes = docs.map((d) => String(d.fm.code)), edges = new Set();
   for (const d of docs) for (const [, t] of sectionOf(d, G.relationships)) {
-    const m = t.match(/^\s*[-*]\s+([a-z][a-z0-9]*):\s*(upstream|downstream)\s*,\s*([^<>\n]+?)\s*$/);
-    if (m && codes.includes(m[1])) edges.add(m[2] === 'upstream' ? `  ${m[1]} -->|${m[3]}| ${d.fm.code}\n` : `  ${d.fm.code} -->|${m[3]}| ${m[1]}\n`);
+    const m = t.match(new RegExp(M.relation.line));
+    if (m && codes.includes(m[1])) edges.add(m[2] === M.relation.upstream ? `  ${m[1]} -->|${m[3]}| ${d.fm.code}\n` : `  ${d.fm.code} -->|${m[3]}| ${m[1]}\n`);
   }
   const body = msg('contextMapBody', { nodes: codes.map((c) => `  ${c}[${c}]\n`).join(''), edges: [...edges].sort().join('') });
   return writePage(join(bundle, G.contextMap), body, 'contextMapDoc');

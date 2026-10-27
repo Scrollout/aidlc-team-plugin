@@ -67,7 +67,7 @@ function referencesOf(texts, plan, cwd, sha, top, shown) {
   const docs = new Map([...plan.intents, ...plan.units, ...plan.requirements].map((d) => [d.id, relPath(top, d.file)]));
   const files = gitLines(cwd, 'ls-tree', '-r', '--name-only', sha);
   const ids = [...new Set(texts.flatMap((t) => [...t.matchAll(new RegExp(C.refs, 'g'))].map((m) => m[1])))];
-  return ids.map((id) => [id, docs.get(id) ?? (/^0/.test(id) ? files.find((f) => f.split('/').pop().startsWith(id + '-') && f.endsWith('.md')) : undefined)])
+  return ids.map((id) => [id, docs.get(id) ?? (/^0/.test(id) ? files.find((f) => f.split('/').pop().startsWith(id + '-') && f.endsWith(config.okf.ext)) : undefined)])
     .filter(([id, path]) => !shown.some((x) => x === id || (path && x.includes(path))))
     .map(([id, path]) => msg(path ? 'cardRef' : 'cardRefMissing', { id, path })).join('');
 }
@@ -195,7 +195,7 @@ export function researchBrief(cwd, id) {
     doc: doc.id, question, questionYaml: JSON.stringify(question), file: relPath(cwd, doc.file), model: st.profile.models.research,
     index: relPath(cwd, join(st.bundle, config.okf.index)), stack: C.stack.filter((f) => existsSync(join(cwd, f))),
     rules: projectRules(existsSync(join(cwd, config.rules.dir)) ? readdirSync(join(cwd, config.rules.dir)) : [], st.profile, (p) => readFileSync(join(cwd, p), 'utf8')),
-    sources: list(st.profile.research?.sources), max: st.profile.research.max, cap: sizeCap('Research', st.profile.docs?.caps), out: relPath(cwd, join(st.bundle, config.grid.research, `${doc.id}-${slug(question, 6)}.md`)),
+    sources: list(st.profile.research?.sources), max: st.profile.research.max, cap: sizeCap('Research', st.profile.docs?.caps), out: relPath(cwd, join(st.bundle, config.grid.research, `${doc.id}-${slug(question, C.researchSlugWords)}${config.okf.ext}`)),
   }, file);
 }
 
@@ -231,7 +231,7 @@ export const commands = {
     }
     // A restarted builder sees what was merged since: the card's base goes into an older branch first.
     if (tryGit(cwd, 'merge-base', '--is-ancestor', record.base, 'HEAD') === null) {
-      if (tryGit(cwd, 'merge', '-q', '--no-edit', '-m', msg('startMergeMessage', { base: record.base.slice(0, 12), branch }), record.base) === null) {
+      if (tryGit(cwd, 'merge', '-q', '--no-edit', '-m', msg('startMergeMessage', { base: record.base.slice(0, config.text.sha.long), branch }), record.base) === null) {
         const files = gitLines(cwd, 'diff', '--name-only', '--diff-filter=U');
         return done(msg('startConflict', { branch, base: record.base, files: files.join(', ') }), config.exit.findings);
       }

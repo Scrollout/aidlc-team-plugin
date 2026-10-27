@@ -1,7 +1,22 @@
 {
   "pluginRoot": "..",
   "extensions": { "dir": "extensions", "entry": "index.mjs", "data": "extension.json" },
-  "text": { "anonymous": "<template>", "messageSource": "cli.json messages.", "defaultsLayer": "profile" },
+  "layer": { "plugin": "plugin", "project": "project", "personal": "personal" },
+  "text": { "anonymous": "<template>", "messageSource": "cli.json messages.", "defaultsLayer": "profile", "sha": { "short": 7, "long": 12 }, "digest": 16 },
+  "fields": { "reserves": "reserves", "platform": "platform", "mode": "mode", "supersedes": "supersedes", "affects": "affects", "serves": "serves", "pathway": "pathway" },
+  "ids": {
+    "intent": "^I-\\d+$",
+    "decisionDigits": 4,
+    "fact": "F-{{n}}",
+    "factNumber": "^F-(\\d+)",
+    "serves": "^(I-\\d+)\\.(\\d+)$",
+    "question": { "line": "^[-*]\\s+(Q\\d+)\\b\\s*(.*)$", "option": "^\\s+[-*]\\s+([a-z])\\)\\s+([^:]*)", "answer": "^\\s+[-*]\\s+Answer:\\s*(.*)$", "letter": "^([a-z])\\b", "lead": "^[a-z]\\b[,.]?" },
+    "decisionFile": "^(\\d+)-.*",
+    "requirementPad": "^(R-)0*(\\d)",
+    "acLine": "^\\s*[-*]\\s+(AC-\\d+)\\b\\s*(?:\\(([^)]*)\\))?\\s*:",
+    "finding": "F-{{k}}",
+    "findingId": "^F-\\d+$"
+  },
   "exit": {
     "ok": 0,
     "findings": 1,
@@ -586,6 +601,7 @@
     "domainTerm": "the term {{term}} has two meanings, in {{domains}}",
     "domainReq": "{{unit}} cites {{req}}, which names no domain",
     "factMissing": "{{unit}} affects the platform and cites no fact",
+    "factDescription": "{{title}}, probed on {{environment}}.",
     "factStale": "{{unit}} cites {{fact}}, older than {{days}} days",
     "docAmend": "{{unit}} is approved and was edited: supersede it, never amend it",
     "decisionHorizon": "{{unit}} serves only {{serves}}, beyond the next {{horizon}} increments from {{next}}",
@@ -661,6 +677,8 @@
     "delegated": "the lead may approve: {{classes}}\n"
   },
   "okf": {
+    "mdLink": "\\]\\(([^)#\\s]+{{ext}})(?:#[^)]*)?\\)",
+    "level": { "error": "error", "warning": "warning", "off": "off" },
     "profileKeys": {
       "top": ["name", "base", "docs", "levels", "modules", "lanes", "focus", "security", "shared", "reserve", "parallel", "architecture", "adopted", "deploy", "release", "regen", "review", "research", "models", "efforts", "board", "ci", "github", "decisions", "generated", "run", "approvals", "names", "deps", "plan", "checks", "system", "naming"],
       "security": ["secrets", "content", "threatModel", "check"]
@@ -811,6 +829,7 @@
     "requirementSection": "Requirement",
     "ears": ["^the .+ shall .+", "^when .+, the .+ shall .+", "^while .+, (when .+, )?the .+ shall .+", "^if .+, then the .+ shall .+", "^where .+, the .+ shall .+"],
     "boltTemplate": "docs/bolt.md",
+    "unitPrefix": "U-",
     "boltFile": "^(B-\\d+)(?:-[^/]*)?\\.md$",
     "intents": "intents",
     "unitFile": "^(U-\\d+)(?:-[^/]*)?\\.md$",
@@ -978,6 +997,7 @@
     "requirementFile": "^(R-\\d+)(?:-[^/]*)?\\.md$"
   },
   "state": {
+    "kinds": { "act": "act", "human": "human", "wait": "wait" },
     "dir": "aidlc",
     "reports": "reports",
     "reviews": "reviews",
@@ -1098,6 +1118,7 @@
       ["checked", "released", "release on a pushed green base passes, smoke too or none set"]
     ],
     "stamped": { "Decision": { "status": "accepted", "date": "today" } },
+    "today": "today",
     "approveBlocks": ["BOLT-BIND", "BOLT-SPAN", "INCR-SKELETON", "FIX-SHAPE", "PLAN-DECISION", "PLAN-INCREMENT", "PATHWAY-SKIP", "INTENT-SIZE", "ELAB-OPEN", "ELAB-BARE", "ELAB-VAGUE", "FACT-MISSING", "DOC-AMEND", "DESIGN-COHERENCE"],
     "gates": "gates",
     "reviewing": "reviewing",
@@ -1122,6 +1143,7 @@
     "refs": "\\b([IUR]-\\d+|0\\d{3})\\b",
     "template": "card.md",
     "researchTemplate": "research.md",
+    "researchSlugWords": 6,
     "stack": ["go.mod", "package.json", "pyproject.toml", "requirements.txt", "Cargo.toml", "pom.xml", "build.gradle", "Gemfile", "composer.json", "Makefile", "justfile", "Dockerfile"],
     "quickTemplate": "card-quick.md",
     "max": 100,
@@ -1132,6 +1154,7 @@
   ],
   "init": {
     "retired": [".aidlc/packs"],
+    "systemCode": { "split": "[^a-z0-9]+", "max": 6 },
     "system": { "core": [], "extensions": [] },
     "files": [
       {
@@ -1289,6 +1312,8 @@
     "searchDepth": 3
   },
   "gate": {
+    "tmpPrefix": "gate-",
+    "summaryMarks": { "error": "❌", "warning": "⚠️" },
     "exceptItem": "^\\s*[-*]\\s+|`",
     "summaryEnv": "GITHUB_STEP_SUMMARY",
     "fresh": { "GOFLAGS": "-count=1" },
@@ -1431,11 +1456,14 @@
   },
   "ci": {
     "completed": "completed",
+    "states": { "green": "green", "none": "none", "red": "red", "pending": "pending", "unpushed": "unpushed", "unknown": "unknown" },
     "red": ["failure", "cancelled", "timed_out", "action_required", "startup_failure", "stale"],
     "log": "gh run view {{id}} --log-failed"
   },
   "retro": {
     "stats": "stats.json",
+    "escalations": "escalations",
+    "codes": "codes",
     "interventions": "interventions",
     "stops": "stops",
     "sendBacks": "sendBacks",
@@ -1643,6 +1671,8 @@
   },
   "deps": { "pin": "@sha256:[0-9a-f]{64}|\\b[0-9a-f]{40}\\b|\\bv?\\d+\\.\\d+(\\.\\d+)?\\b" },
   "map": {
+    "matrixHead": "| Kind | Module |",
+    "relation": { "line": "^\\s*[-*]\\s+([a-z][a-z0-9]*):\\s*(upstream|downstream)\\s*,\\s*([^<>\\n]+?)\\s*$", "upstream": "upstream" },
     "file": "codebase-map.md",
     "fileV2": "architecture/codebase-map.md",
     "noModule": "(no module)",
@@ -1706,6 +1736,17 @@
     }
   },
   "naming": {
+    "wordSplit": "[^A-Za-z0-9]+",
+    "singular": [["ies$", "y"], ["([^s])s$", "$1"]],
+    "pastSuffix": "ed",
+    "tagPlaceholder": "<semver>",
+    "previewSuffix": "-preview",
+    "numberDigits": 4,
+    "grammarSource": "cli.json naming.grammar.",
+    "partFlags": "domain or --stage",
+    "where": { "domain": "naming.domains or a domain doc", "pipeline": "naming.vocabularies.pipeline", "foundation": "naming.vocabularies.foundation", "verb": "naming.vocabularies.verb", "role": "naming.vocabularies.role", "env": "naming.vocabularies.env", "unit": "naming.metricUnits", "action": "naming.actions", "token": "naming.tokens." },
+    "forms": { "table": "tableSnake", "object": "objectSnake", "metric": "metricSnake", "key": "keyCamel", "number": "number4" },
+    "patterns": { "migration": "migrations/(?:{{domains}})/\\d{4}_[a-z]+_[a-z0-9_]+\\.sql", "image": "{{registry}}/{{org}}/{{system}}-(?:{{parts}})-(?:{{roles}}):[A-Za-z0-9._-]+", "namespace": "{{system}}-(?:{{envs}})", "banned": "(?!(?:.*/)?(?:{{banned}})(?:[./_-][^/]*)?(?:/|$)).*" },
     "tokens": {
       "system": { "pattern": "^[a-z][a-z0-9]{1,5}$", "rule": "2-6 lower-case letters or digits" },
       "org": { "pattern": "^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$", "rule": "a DNS label" },

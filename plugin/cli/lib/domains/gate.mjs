@@ -3,7 +3,7 @@
 import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve, sep } from 'node:path';
-import { bundleOf, CLI_DIR, config, QUICK, VERDICT, done, lapsed, list, packageFile, readJson, UsageError, relPath } from '../foundation/data.mjs';
+import { bundleOf, CLI_DIR, config, QUICK, VERDICT, done, isoDay, lapsed, list, packageFile, readJson, UsageError, relPath } from '../foundation/data.mjs';
 import { addedLines, git, gitLines, sh, tryGit } from '../foundation/git.mjs';
 import { finding as codeFinding, msg, render } from '../foundation/text.mjs';
 import { loadProfile, withDefaults } from '../foundation/profile.mjs';
@@ -99,7 +99,7 @@ function runLevel(tree, level, l, add) {
 export function mergeWritten(path, bundleRel, profile) {
   const name = basename(path);
   return ((name === config.okf.index || name === config.okf.log) && matches(path, `/${bundleRel}/**`))
-    || config.map.pages.some((pg) => path === `${bundleRel}/${(typeof profile.map === 'string' ? profile.map : config.map.file).replace(/\.md$/, '')}${pg.suffix}.md`) || list(profile.shared).some((g) => matches(path, g));
+    || config.map.pages.some((pg) => path === `${bundleRel}/${(typeof profile.map === 'string' ? profile.map : config.map.file).slice(0, -config.okf.ext.length)}${pg.suffix}${config.okf.ext}`) || list(profile.shared).some((g) => matches(path, g));
 }
 
 // Paths a direct (non-unit) commit may touch: the bundle, .aidlc and the files init writes.
@@ -127,7 +127,7 @@ function architecture(cwd, profile, key = 'gateCheck') {
 function addLogEntry(bundleDir, entry) {
   const file = join(bundleDir, config.okf.log);
   if (!existsSync(file)) return;
-  const today = `## ${new Date().toISOString().slice(0, 10)}`;
+  const today = `## ${isoDay(new Date().toISOString())}`;
   const lines = readFileSync(file, 'utf8').split('\n');
   const first = lines.findIndex((l) => l.startsWith('## '));
   if (first >= 0 && lines[first] === today) lines.splice(first + 2, 0, entry);
@@ -137,7 +137,7 @@ function addLogEntry(bundleDir, entry) {
 }
 
 function trialWorktree(cwd, base) {
-  const dir = join(mkdtempSync(join(tmpdir(), 'gate-')), 'w');
+  const dir = join(mkdtempSync(join(tmpdir(), G.tmpPrefix)), 'w');
   git(cwd, 'worktree', 'add', '-q', '--detach', dir, base);
   return dir;
 }
@@ -206,7 +206,7 @@ function runGate(cwd, st, unit) {
   }
   // Every security finding, at any confidence, waits for the owner's disposition (docs/design/construction.md).
   const security = p.system ? roundsOf(unit.review, config.state.contentFocus).at(-1) : null;
-  const unsettled = (security?.findings ?? []).map((f, k) => [f, `F-${k + 1}`]).filter(([f]) => !f.disposition || lapsed(f.until));
+  const unsettled = (security?.findings ?? []).map((f, k) => [f, render(config.ids.finding, { k: k + 1 })]).filter(([f]) => !f.disposition || lapsed(f.until));
   if (unsettled.length) add('REVIEW-SECURITY', 'reviewSecurity', { findings: unsettled.map(([, id]) => id).join(', ') });
   // No later increment merges before increment 1 runs on its target.
   const intent = p.system && (p.deploy || p.release) ? st.intents.find((i) => i.id === unit.fm.intent) : null;
@@ -287,7 +287,7 @@ function historyFindings(cwd, range, st, codes) {
   for (const sha of shas) {
     const parents = git(cwd, 'rev-list', '--parents', '-n', '1', sha).split(' ').slice(1);
     const changed = gitLines(cwd, 'diff-tree', '--no-commit-id', '--name-only', '-r', '--root', ...(parents.length ? [parents[0]] : []), sha);
-    const short = sha.slice(0, 12);
+    const short = sha.slice(0, config.text.sha.long);
     if (parents.length > 1) {
       const trailers = git(cwd, 'log', '-1', '--format=%(trailers:only,unfold)', sha);
       const value = (key) => trailers.match(new RegExp(`^${key}: (.+)$`, 'm'))?.[1]?.trim();
@@ -306,7 +306,7 @@ function historyFindings(cwd, range, st, codes) {
 // The next work item: B-<n> in a v2 project (or by `new bolt`), numbered on from every unit and bolt, else U-<n>.
 function nextUnitId(bundle, bolt) {
   const ids = readPlan(bundle).units.map((u) => Number(u.id.split('-')[1]));
-  return `${bolt ? config.grid.boltPrefix : 'U-'}${(ids.length ? Math.max(...ids) : 0) + 1}`;
+  return `${bolt ? config.grid.boltPrefix : config.grid.unitPrefix}${(ids.length ? Math.max(...ids) : 0) + 1}`;
 }
 
 // Plan lint for `check`, with what the state and the cards know: a directory is linted as a bundle; a file inside the
@@ -322,7 +322,7 @@ export async function planCheck(args, { cwd }) {
   const docs = paths.filter((p) => existsSync(p) && !statSync(p).isDirectory() && p.startsWith(bundle + sep));
   const wanted = new Set([...withIntents(bundle, docs)].map((f) => relPath(cwd, f)));
   if (docs.length) findings.push(...lintPlan(bundle, profile, { base: cwd, skip }).filter((f) => wanted.has(f.path)));
-  const mds = dirs.flatMap((d) => readdirSync(d, { recursive: true }).map((f) => join(d, f)).filter((f) => f.endsWith('.md') && f.startsWith(bundle + sep)));
+  const mds = dirs.flatMap((d) => readdirSync(d, { recursive: true }).map((f) => join(d, f)).filter((f) => f.endsWith(config.okf.ext) && f.startsWith(bundle + sep)));
   findings.push(...stampFindings(cwd, profile, [...new Set([...mds, ...docs])]));
   // Size every unit not yet merged: before the owner's round, and after a rule or template change grew an approved card.
   const live = readPlan(bundle).units.filter((u) => u.fm.status !== config.grid.dropped && !skip.includes(u.id) && [...mds, ...docs].includes(u.file));
@@ -394,7 +394,7 @@ export const commands = {
     const lane = computeLane(scope, profile); // a full-lane fix waits for the owner's approval like any other unit
     const bundle = bundleOf(cwd, profile);
     const id = nextUnitId(bundle, Boolean(profile.system)), dir = profile.system ? config.grid.bolts : config.grid.units;
-    const file = join(bundle, dir, `${id}-${docSlug(title)}.md`);
+    const file = join(bundle, dir, `${id}-${docSlug(title)}${config.okf.ext}`);
     const version = existsSync(join(CLI_DIR, config.init.version)) ? readFileSync(join(CLI_DIR, config.init.version), 'utf8').trim() : config.init.devVersion;
     const text = render(readFileSync(packageFile(cwd, 'templates', G.fixTemplate), 'utf8'), {
       title: JSON.stringify(title),
@@ -422,7 +422,7 @@ export const commands = {
     if (kind !== 'bolt' || !title?.trim()) throw new UsageError(msg('newUsage', {}));
     const { profile } = loadProfile(cwd);
     const bundle = bundleOf(cwd, profile), id = nextUnitId(bundle, true);
-    const file = join(bundle, config.grid.bolts, `${id}-${docSlug(title)}.md`);
+    const file = join(bundle, config.grid.bolts, `${id}-${docSlug(title)}${config.okf.ext}`);
     const text = readFileSync(packageFile(cwd, 'templates', config.grid.boltTemplate), 'utf8').replace(/^title: .*$/m, `title: ${JSON.stringify(title.trim())}`);
     mkdirSync(dirname(file), { recursive: true });
     writeFileSync(file, text);
@@ -449,7 +449,7 @@ export const withSummary = (handler) => async (args, ctx) => {
   const cell = (v) => String(v ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
   const [errors, warnings] = ['error', 'warning'].map((l) => r.findings.filter((f) => f.level === l).length);
   const verdict = errors ? msg('summaryFailed', { errors, warnings }) : warnings ? msg('summaryWarned', { warnings }) : msg('summaryPassed', {});
-  const shown = r.findings.slice(0, G.summaryMax).map((f) => msg('summaryRow', { mark: f.level === 'error' ? '❌' : '⚠️', code: f.code, path: f.path, line: f.line, message: cell(f.message), fix: cell(f.fix) }));
+  const shown = r.findings.slice(0, G.summaryMax).map((f) => msg('summaryRow', { mark: f.level === config.okf.level.error ? G.summaryMarks.error : G.summaryMarks.warning, code: f.code, path: f.path, line: f.line, message: cell(f.message), fix: cell(f.fix) }));
   const st = readState(ctx.cwd);
   const plan = st.intents.flatMap((i) => [i, ...st.units.filter((u) => u.fm.intent === i.id)]).concat(st.units.filter((u) => !u.fm.intent))
     .map((d) => msg('summaryPlan', { indent: d.fm.intent ? '  ' : '', id: d.id, state: d.state, title: cell(d.fm.title) }));

@@ -136,8 +136,8 @@ export const commands = {
   // The owner's disposition of a finding: an intent's design review, or a bolt's latest review round.
   dispose(args, { cwd }) {
     const [id, fid, disposition, reason, flag, until] = args;
-    if (!id || !/^F-\d+$/.test(fid ?? '') || !config.state.dispositions.includes(disposition) || !reason || (flag && (flag !== S.until || !DATE.test(until ?? '')))) usage('disposeUsage');
-    const design = /^I-\d+$/.test(id), file = runtimeFile(cwd, design ? 'design' : 'reviews', id), data = readJson(file);
+    if (!id || !new RegExp(config.ids.findingId).test(fid ?? '') || !config.state.dispositions.includes(disposition) || !reason || (flag && (flag !== S.until || !DATE.test(until ?? '')))) usage('disposeUsage');
+    const design = new RegExp(config.ids.intent).test(id), file = runtimeFile(cwd, design ? 'design' : 'reviews', id), data = readJson(file);
     // A bolt's findings are those of its latest security round, which hold the merge (REVIEW-SECURITY), else of its latest round.
     const security = roundsOf(data, S.contentFocus).at(-1), round = security?.findings?.length ? security : data?.rounds?.at(-1);
     const list = design ? data?.findings : round?.findings, k = Number(fid.slice(2)) - 1;
@@ -163,7 +163,7 @@ export const commands = {
     if (pins.length && (!sourced.length || sourced.length < [data.deps].flat().length)) throw new UsageError(msg('reportDeps', { unit, files: pins.join(', ') }));
     writeJson(runtimeFile(ctx.cwd, 'reports', unit), { ...data, unit, at: new Date().toISOString() });
     if (data.status === S.stopped) {
-      bump(ctx.cwd, 'escalations', config.retro.reasons.stopped);
+      bump(ctx.cwd, config.retro.escalations, config.retro.reasons.stopped);
       bump(ctx.cwd, config.retro.stops, { unit, reason: String(data.stop ?? data.summary ?? ''), at: new Date().toISOString() }); // a restart's report replaces this one
     }
     return done(msg('recorded', { what: 'report', unit }));
@@ -171,21 +171,21 @@ export const commands = {
 
   review(args, ctx) {
     const { cwd } = ctx, [sub, unit, file] = args;
-    if (/^I-\d+$/.test(sub ?? '')) return done(intentBrief(cwd, sub));
+    if (new RegExp(config.ids.intent).test(sub ?? '')) return done(intentBrief(cwd, sub));
     if (sub !== 'record' || !unit || !file) throw new UsageError(msg('reviewUsage', {}));
     if (file !== S.stdin && !existsSync(resolve(cwd, file))) throw new UsageError(msg('noSuchPath', { name: file }));
     const data = parseObject(file === S.stdin ? readStdin(ctx) : readFileSync(resolve(cwd, file), 'utf8'), file);
     // An intent review: advice for the owner, kept with the hash of the docs it read (docs/design/intake.md#review-before-approval).
-    if (/^I-\d+$/.test(unit) && data.focus === S.intentFocus) {
+    if (new RegExp(config.ids.intent).test(unit) && data.focus === S.intentFocus) {
       const plan = readPlan(bundleOf(cwd, loadProfile(cwd).profile)), intent = plan.intents.find((i) => i.id === unit);
       if (!intent) throw new UsageError(msg('reviewNoIntent', { intent: unit }));
-      const findings = (data.findings ?? []).map((f, k) => ({ ...f, id: `F-${k + 1}` }));
+      const findings = (data.findings ?? []).map((f, k) => ({ ...f, id: render(config.ids.finding, { k: k + 1 }) }));
       writeJson(runtimeFile(cwd, 'intentReview', unit), { intent: unit, verdict: data.verdict, findings, hash: reviewedHash(intent, plan.requirements), at: new Date().toISOString() });
       return done(msg('recordedIntentReview', { intent: unit, count: findings.length }));
     }
     // An intent's design review: the architecture pass over its decision set, each finding numbered (docs/design/inception.md#approval).
-    if (/^I-\d+$/.test(unit)) {
-      const findings = (data.findings ?? []).map((f, k) => ({ ...f, id: `F-${k + 1}` }));
+    if (new RegExp(config.ids.intent).test(unit)) {
+      const findings = (data.findings ?? []).map((f, k) => ({ ...f, id: render(config.ids.finding, { k: k + 1 }) }));
       writeJson(runtimeFile(cwd, 'design', unit), { intent: unit, findings, at: new Date().toISOString() });
       return done(msg('recordedDesign', { intent: unit, count: findings.length, confirmed: findings.filter((f) => f.confidence === S.confirmed).length }));
     }
@@ -202,7 +202,7 @@ export const commands = {
     const relisted = new Set((data.findings ?? []).map((f) => f.id).filter(Boolean)), unanswered = data.verdict === VERDICT.pass ? [] : open.filter((id) => !list(data.fixed).includes(id) && !relisted.has(id)); // a pass answers them all
     if (unanswered.length) throw new UsageError(msg('reviewUnanswered', { unit, focus, ids: unanswered.join(', ') }));
     let numbered = Math.max(0, ...before.flatMap((r) => (r.findings ?? []).map((f) => Number(String(f.id ?? '').slice(2)) || 0)));
-    const keep = (f) => (f.id && open.includes(f.id) ? f : { ...f, id: `F-${++numbered}` });
+    const keep = (f) => (f.id && open.includes(f.id) ? f : { ...f, id: render(config.ids.finding, { k: ++numbered }) });
     // A `fix` that would start fix round `review.fixRounds + 1` in its focus since the unit's last approval
     // becomes `escalate`: the owner decides (U33).
     const planUnit = readPlan(bundleOf(cwd, profile)).units.find((u) => u.id === unit);
@@ -221,7 +221,7 @@ export const commands = {
     const verdict = [VERDICT.fix, VERDICT.escalate].includes(data.verdict) ? (round > limit ? VERDICT.escalate : VERDICT.fix) : data.verdict;
     const card = readJson(runtimeFile(cwd, 'cards', unit))?.hash ?? null, commit = git(cwd, 'rev-parse', branchOf(unit)); // a kept pass is measured from the commit (U34)
     writeJson(target, { unit, rounds: [...prior, { ...data, findings: (data.findings ?? []).map(keep), focus, verdict, card, diffHash: hash, commit, sent, at: new Date().toISOString() }] });
-    if (verdict === VERDICT.escalate && !retry) bump(cwd, 'escalations', config.retro.reasons.review);
+    if (verdict === VERDICT.escalate && !retry) bump(cwd, config.retro.escalations, config.retro.reasons.review);
     // This review is no longer in flight; reviewers of other focuses still are (U125).
     const flight = join(aidlcDir(cwd), S.reviewing, unit);
     const left = existsSync(flight) ? readFileSync(flight, 'utf8').split(S.reviewerLine).length - 2 : 0;

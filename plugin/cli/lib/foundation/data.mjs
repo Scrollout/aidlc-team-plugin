@@ -24,7 +24,7 @@ export const posix = (p) => p.split(sep).join('/');
 export const relPath = (from, to) => posix(relative(from, to));
 export const bundleOf = (cwd, profile) => resolve(cwd, profile.docs.bundle);
 // An escape hatch's `until` date that has passed (docs/design/construction.md#escape-hatches).
-const isoDay = (v) => String(v).split('T')[0];
+export const isoDay = (v) => String(v).split('T')[0];
 export const lapsed = (until) => until !== undefined && until !== null && isoDay(until) < isoDay(new Date().toISOString());
 export const slug = (text, words) => text.toLowerCase().split(new RegExp(config.okf.slugSplit)).filter(Boolean).slice(0, words).join('-');
 // A command's stdin: the test's, or the process's.

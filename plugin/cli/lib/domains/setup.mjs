@@ -3,7 +3,7 @@
 import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
-import { CLI_DIR, PLUGIN_DIR, config, done, isMap, readJson, UsageError, relPath } from '../foundation/data.mjs';
+import { CLI_DIR, PLUGIN_DIR, config, done, isMap, isoDay, readJson, UsageError, relPath } from '../foundation/data.mjs';
 import { git, tryGit } from '../foundation/git.mjs';
 import { msg, render, renderFile } from '../foundation/text.mjs';
 import { proposeKind } from './method.mjs';
@@ -95,7 +95,7 @@ function workflowVars(root) {
   return { runsOn: first(/^\s*runs-on:\s*(.+)$/m) ?? I.workflow.runsOn, checkout: first(/^\s*-?\s*uses:\s*(actions\/checkout@.+)$/m) ?? I.workflow.checkout,
     setupNode: first(/^\s*-?\s*uses:\s*(actions\/setup-node@.+)$/m) ?? I.workflow.setupNode };
 }
-const textVars = (name, bundle, version) => ({ name, bundle, date: new Date().toISOString().slice(0, 10), producer: msg('producer', { version }), at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') });
+const textVars = (name, bundle, version) => ({ name, bundle, date: isoDay(new Date().toISOString()), producer: msg('producer', { version }), at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') });
 
 // What a project set up by an older release lacks: each doc template, and a constitution when the bundle holds
 // no Principles doc (docs/design/method.md). Nothing is overwritten.
@@ -143,7 +143,7 @@ export const commands = {
     // The naming registry's tokens, as the owner gave them (docs/design/naming.md).
     // A new project starts on v2: its profile has a system, and a system code from its name unless the owner gave one
     // (initials of a name of several words, else its first letters); an adopted one stays as it was until it migrates.
-    const words = name.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean), code = (words.length > 1 ? words.map((w) => w[0]).join('') : words[0] ?? '').slice(0, 6);
+    const words = name.toLowerCase().split(new RegExp(I.systemCode.split)).filter(Boolean), code = (words.length > 1 ? words.map((w) => w[0]).join('') : words[0] ?? '').slice(0, I.systemCode.max);
     const given = Object.entries({ system: flags['system-code'] ?? (adopted || code.length < 2 ? undefined : code), org: flags.org, zone: flags.zone }).filter(([, v]) => v !== undefined);
     const tokens = given.length ? Object.fromEntries(given) : null;
     const json = {
@@ -200,7 +200,7 @@ export const commands = {
       const findings = checkBundle(join(root, bundle), { base: root });
       report.push(msg('initAdopted', { bundle, commit: adopted }));
       const count = (level) => findings.filter((f) => f.level === level).length;
-      report.push(msg('initFindings', { errors: count('error'), warnings: count('warning'), bundle }));
+      report.push(msg('initFindings', { errors: count(config.okf.level.error), warnings: count(config.okf.level.warning), bundle }));
       report.push(...leftovers(root));
     }
     return done(report.join(''), kept ? config.exit.blocked : config.exit.ok);

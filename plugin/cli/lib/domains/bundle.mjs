@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { at as dataAt, bundleOf, config, done, isMap, list, slug, UsageError, relPath } from '../foundation/data.mjs';
-import { finding as codeFinding, msg } from '../foundation/text.mjs';
+import { escapeRe, finding as codeFinding, msg, render } from '../foundation/text.mjs';
 import { loadProfile } from '../foundation/profile.mjs';
 import { parseYaml, YamlError } from '../foundation/yaml.mjs';
 import { kindProblems } from './method.mjs';
@@ -176,7 +176,7 @@ export function writeIndexes(root) {
 
 const DATE = /^## (\d{4})-(\d{2})-(\d{2})\s*$/;
 const ENTRY = /^\* \[[^\]]+\]\([^)\s]+\)( - .*)?$/;
-const MD_LINK = /\]\(([^)#\s]+\.md)(?:#[^)]*)?\)/g;
+const MD_LINK = new RegExp(render(config.okf.mdLink, { ext: escapeRe(config.okf.ext) }), 'g');
 const LINK = /!?\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
 
 const validDate = (y, m, d) => {
@@ -261,7 +261,7 @@ export function hashDoc(doc) {
 }
 
 // A generated doc's digest: its body's, so a hand edit shows (docs/design/bundle.md).
-export const digestOf = (body) => createHash('sha256').update(body).digest('hex').slice(0, 16);
+export const digestOf = (body) => createHash('sha256').update(body).digest('hex').slice(0, config.text.digest);
 
 // Bundle v2: each type's required keys and allowed values, its folder in a v2 project, and generated docs left to the CLI.
 function checkSchema(root, file, doc, type, add, v2) {
@@ -300,7 +300,7 @@ function checkConcept(file, text, doc, add, caps, root, v2) {
   if (type) checkSchema(root, file, doc, type, add, v2);
   // A file named by an id carries the slug of its title after it, the id dropped from the title (DOC-SLUG).
   const named = basename(file).match(OKF.bundle.idFile), title = String(fm.title ?? '').replace(new RegExp(`^${named?.[1]}\\s+`), '');
-  if (named && title && named[2] !== docSlug(title)) add(file, 1, 'DOC-SLUG', 'docSlug', { file: basename(file), expected: `${named[1]}-${docSlug(title)}.md` }, v2 ? 'error' : 'warning');
+  if (named && title && named[2] !== docSlug(title)) add(file, 1, 'DOC-SLUG', 'docSlug', { file: basename(file), expected: `${named[1]}-${docSlug(title)}${config.okf.ext}` }, v2 ? 'error' : 'warning');
 }
 
 // Findings for `profile.docs.rules`, reported against the project profile.
