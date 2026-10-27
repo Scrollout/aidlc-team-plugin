@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 // Entry point: dispatches subcommands, renders their data, maps errors to exit codes; handlers return { code, findings, output } (decision 0006).
-import { readdirSync, realpathSync } from 'node:fs';
+import { realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import './lib/index.mjs'; // the core, its rules plugged in first
-import { config, UsageError } from './lib/foundation/data.mjs';
+import { config, EXTENSIONS_DIR, extensionNames, UsageError } from './lib/foundation/data.mjs';
 import { msg } from './lib/foundation/text.mjs';
 import { commands as okf } from './lib/domains/bundle.mjs';
 import { commands as grid } from './lib/domains/plan.mjs';
@@ -23,8 +23,7 @@ import { commands as map } from './lib/domains/map.mjs';
 
 const EXIT = config.exit;
 // Every extension the vendored copy carries: each plugs into the core's seams and may add commands (docs/design/library.md#extensions).
-const EXT = join(import.meta.dirname, 'extensions');
-const extensions = await Promise.all(readdirSync(EXT).sort().map((name) => import(pathToFileURL(join(EXT, name, 'index.mjs')).href)));
+const extensions = await Promise.all(extensionNames.map((name) => import(pathToFileURL(join(EXTENSIONS_DIR, name, 'index.mjs')).href)));
 
 // Runs handlers in order and merges their results; the highest exit code wins.
 const combine = (...handlers) => async (args, ctx) => {

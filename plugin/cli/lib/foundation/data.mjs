@@ -1,5 +1,5 @@
 // Loads cli.json, the one place for commands, exit codes, paths and messages (docs/design/cli.md).
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -29,3 +29,12 @@ export const slug = (text, words) => text.toLowerCase().split(/[^a-z0-9]+/).filt
 // A command's stdin: the test's, or the process's.
 export const readStdin = (ctx) => (ctx.stdin ? ctx.stdin() : readFileSync(0, 'utf8'));
 export const done = (output, code = config.exit.ok, findings = []) => ({ code, findings, output });
+
+// Each extension's data joins the core's: its codes, messages, commands and values (docs/design/library.md#extensions).
+export const EXTENSIONS_DIR = join(CLI_DIR, 'extensions');
+export const extensionNames = existsSync(EXTENSIONS_DIR) ? readdirSync(EXTENSIONS_DIR).sort() : [];
+const merge = (into, from) => {
+  for (const [k, v] of Object.entries(from)) into[k] = Array.isArray(v) ? [...(into[k] ?? []), ...v] : isMap(v) && isMap(into[k]) ? merge(into[k], v) : v;
+  return into;
+};
+for (const name of extensionNames) merge(config, readJson(join(EXTENSIONS_DIR, name, 'extension.json'))?.data ?? {});

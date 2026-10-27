@@ -1,0 +1,65 @@
+{
+  "name": "contracts",
+  "description": "The API grammar of decision 0014, checked on the OpenAPI documents a project publishes (docs/design/naming.md).",
+  "when": "naming",
+  "data": {
+    "messages": {
+      "contractVersion": "info.version {{version}} is no api-version (YYYY-MM-DD or YYYY-MM-DD-preview)",
+      "contractParam": "{{path}}: parameter {{param}} is not a full lowerCamel name ending in Name or Id",
+      "contractSegment": "{{path}}: segment {{segment}} is not {{rule}}",
+      "contractPut": "{{path}}: a PUT path has an even number of segments (collection and name pairs)",
+      "contractOperationId": "{{path}} {{method}}: operationId {{id}} is not Noun_Verb",
+      "contractProperty": "{{at}}: property {{name}} is not lowerCamel",
+      "contractBoolean": "{{at}}: boolean {{name}} starts with is; name the state",
+      "contractEnum": "{{at}}: enum value {{value}} is not PascalCase",
+      "contractSystemData": "{{at}}: a resource (id, name, type) without systemData",
+      "contractNextLink": "{{at}}: a list (value) without nextLink",
+      "contractUnreadable": "the document cannot be read: {{error}}"
+    },
+    "naming": {
+      "contract": {
+        "files": [
+          "api/**/openapi*.yaml",
+          "api/**/openapi*.yml",
+          "api/**/openapi*.json"
+        ],
+        "methods": [
+          "get",
+          "put",
+          "post",
+          "patch",
+          "delete"
+        ],
+        "providers": "providers",
+        "segments": [
+          "subscriptions",
+          "resourceGroups",
+          "providers",
+          "operations"
+        ],
+        "params": [],
+        "resource": [
+          "id",
+          "name",
+          "type"
+        ],
+        "systemData": "systemData",
+        "list": "value",
+        "nextLink": "nextLink",
+        "patterns": {
+          "apiVersion": "^(20\\d{2})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])(-preview)?$",
+          "operationId": "^[A-Z][A-Za-z0-9]*_[A-Z][A-Za-z0-9]*$",
+          "segment": "^[a-z][A-Za-z0-9]*$",
+          "namespace": "^[A-Z][A-Za-z0-9]*(\\.[A-Z][A-Za-z0-9]*)+$",
+          "param": "^[a-z][A-Za-z0-9]*(Name|Id)$",
+          "property": "^[a-z][A-Za-z0-9]*$",
+          "enum": "^[A-Z][A-Za-z0-9]*$"
+        },
+        "rules": {
+          "segment": "camelCase",
+          "namespace": "a PascalCase dotted namespace, Org.Service"
+        }
+      }
+    }
+  }
+}

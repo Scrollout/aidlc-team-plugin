@@ -297,7 +297,7 @@ test('U82/AC-1 a stopped unit is On hold; reviewing and a refused merge read as 
   spawnSync(process.execPath, [CLI, 'report', 'U-1'], { cwd: ctx.dir, input: '{"status": "stopped", "stop": "an interface must change"}' });
   aidlc(ctx, 'sync');
   assert.equal(item(ctx, byTitle(ctx, 'U-1').number).values.Status, 'On hold');
-  const status = JSON.parse(readFileSync(join(ROOT, 'plugin/cli/cli.json'), 'utf8')).board.status;
+  const status = JSON.parse(readFileSync(join(ROOT, 'plugin/cli/extensions/board/extension.json'), 'utf8')).data.board.status;
   assert.deepEqual([status.reviewing, status.gated, status.started], ['In review', 'In review', 'In Progress']);
 });
 

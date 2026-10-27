@@ -13,7 +13,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T10:28:02Z }
 # Implementation limits
 - Node 22+, ESM, no dependencies; git through `execFileSync`, never a shell. Project commands from the profile run through the shell.
 - `plugin/cli/lib/` is a layered library, `foundation/`, `domains/` and `adapters/`, and `plugin/cli/extensions/` holds the opt-in extensions ([Library and extensions](library.md)).
-- Values and messages live in `cli.json` ([CLI](cli.md#values)).
+- Values and messages live in `cli.json`, and an extension's in its `extension.json` ([CLI](cli.md#values)).
 - Every module is tested with `node:test` against fixture repos created in a temp dir.
 
 # Output
@@ -23,4 +23,4 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T10:28:02Z }
 - No banners, no colour unless a TTY, no summaries longer than the findings.
 
 # Values
-No hand-coded values in code. Commands, exit codes, file paths, layer order and every user-facing message live in `plugin/cli/cli.json`, read by `config`. Messages are templates rendered by the template engine. `cli.json` sits beside the CLI so it is vendored with it. Tests check that its commands and exit codes match this doc.
+No hand-coded values in code. Commands, exit codes, file paths, layer order and every user-facing message live in `plugin/cli/cli.json`, read by `config`, which merges in each extension's `extension.json` data. Messages are templates rendered by the template engine. `cli.json` sits beside the CLI so it is vendored with it. Tests check that its commands and exit codes match this doc.

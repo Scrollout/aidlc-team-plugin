@@ -28,7 +28,7 @@ The plugin holds every project to kinds, layers and one-way dependencies. Its ow
 
 # Seams
 `foundation/seams` keeps a list per seam. A domain or an extension adds a function with `plug(<seam>, fn)` when it loads. A seam's caller gets only those whose extension the profile enables:
-- `planRules`: plan lint rules (inception, construction).
+- `planRules`: plan lint rules (inception, construction, board).
 - `docChecks`: findings for `check` (contracts, stacks).
 - `gateChecks`: findings on the merge result (contracts, stacks).
 - `statusLines`, `delivered`, `statusTail`: lines, the delivered requirements and the closing line `status` shows (construction, board).
@@ -39,10 +39,10 @@ The plugin holds every project to kinds, layers and one-way dependencies. Its ow
 
 # Extensions
 An extension is `extensions/<name>/extension.json` plus `index.mjs`:
-- `when`: the profile key that enables it (`github`, `naming`, a detected stack).
+- `when`: the profile key it serves (`github`, `naming`; none for the stacks, which detect a pack). A plug that acts only with it says so.
 - `data`: its codes, messages, commands and values, merged into the core's data when the CLI starts, so `cli.json` keeps only the core's.
 - `index.mjs`: plugs its functions into seams and exports its commands.
-The runtime loads every extension folder it finds, so a vendored copy carries them all. One the profile does not enable plugs nothing in.
+`data` merges into the core's data when `foundation/data` loads, and the runtime then imports every extension folder it finds, so a vendored copy carries them all. An extension's checks find nothing to report in a project that lacks what it serves.
 
 # Library entry
 `lib/index.mjs` loads the core and exports its public functions (`readPlan`, `lintPlan`, `readState`, `checkBundle`, …). Tools other than the CLI, and the tests, import from it.

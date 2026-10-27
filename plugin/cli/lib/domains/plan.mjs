@@ -1,8 +1,8 @@
 // Grid: reads intent and unit docs, lints the plan and computes lanes (docs/design/grid.md).
 // Settings, codes and messages come from cli.json.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
-import { at, bundleOf, config, FULL, QUICK, STANDARD, done, fieldPaths, isMap, readJson, list, UsageError, relPath } from '../foundation/data.mjs';
+import { join } from 'node:path';
+import { at, bundleOf, config, FULL, QUICK, STANDARD, done, isMap, list, UsageError, relPath } from '../foundation/data.mjs';
 import { git, tryGit } from '../foundation/git.mjs';
 import { finding as codeFinding, msg } from '../foundation/text.mjs';
 import { inside, overlaps } from '../foundation/glob.mjs';
@@ -208,27 +208,6 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
     for (const d of [...liveIntents, ...units]) {
       if (!d.requirements.length) add('PLAN-REQ', d, 1, 'reqNone', { doc: d.id });
       for (const req of d.requirements.filter((r) => !known.has(r))) add('PLAN-REQ', d, keyLine(d, 'requirements'), 'reqUnknown', { doc: d.id, req });
-    }
-  }
-  // With a board, each live unit carries the values it maps, except the derived wave (docs/design/board.md).
-  // The example uses the profile's own map, so the lead writes a value the board knows.
-  const planned = Object.entries(profile.github?.fields ?? {}).map(([field, spec]) => ({ field, path: fieldPaths({ field: spec })[0], map: spec.map }))
-    .filter((f) => ![config.board.wave, config.board.binding].includes(f.path));
-  for (const u of units) {
-    for (const { field, path, map } of planned.filter((f) => at(u.fm, f.path) === undefined)) {
-      const value = map ? Object.keys(map)[0] : msg('planBoardAny', {});
-      const example = path.split('.').reduceRight((inner, key, k) => (k ? `{ ${key}: ${inner} }` : `${key}: ${inner}`), value);
-      const mapping = map ? msg('planBoardMap', { pairs: Object.entries(map).map(([from, to]) => msg('planBoardPair', { from, to })).join(', ') }) : '';
-      add('PLAN-BOARD', u, 1, 'planBoard', { path, field, example, mapping });
-    }
-  }
-  // A value must be an option the Project has, as the last sync read them; no sync yet, no check.
-  const common = tryGit(base, 'rev-parse', '--git-common-dir');
-  const options = (common && readJson(join(resolve(base, common), config.state.dir, config.state.board))?.options) ?? {};
-  for (const u of units) {
-    for (const { field, path, map } of planned.filter((f) => options[f.field] && at(u.fm, f.path) !== undefined)) {
-      const value = map ? map[String(at(u.fm, path))] : at(u.fm, path);
-      if (value !== undefined && !options[field].includes(String(value))) add('PLAN-BOARD', u, 1, 'planBoardOption', { path, value, field, options: options[field].join(', ') });
     }
   }
   // A unit at a one-way door links a Decision doc or says why it is two-way (docs/design/approvals.md). Focus globs

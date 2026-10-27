@@ -161,16 +161,6 @@
       "flags": ["--domain", "--role", "--env", "--verb", "--stage", "--action", "--table", "--object", "--number", "--metric", "--unit", "--section", "--key", "--date", "--preview", "--tag"]
     },
     {
-      "name": "graph",
-      "usage": "graph",
-      "does": "print the dependency graph the stack pack reads from source: imports and data edges"
-    },
-    {
-      "name": "scaffold",
-      "usage": "scaffold <kind> <name> [--domain d]",
-      "does": "write a kind's templates from the stack pack, named from the registry; never overwrites"
-    },
-    {
       "name": "fact",
       "usage": "fact \"<title>\" --env <environment> -- <command>",
       "does": "run a read-only probe on the target and record its output as a platform fact"
@@ -202,19 +192,9 @@
       "does": "write the codebase map in the bundle (merge also writes it)"
     },
     {
-      "name": "sync",
-      "usage": "sync",
-      "does": "project intents and units onto GitHub issues and a Project"
-    },
-    {
       "name": "push",
       "usage": "push",
       "does": "push the base after checking its new commits"
-    },
-    {
-      "name": "ci",
-      "usage": "ci wait",
-      "does": "wait for the pushed base's CI runs and record the result"
     },
     {
       "name": "merge",
@@ -413,10 +393,6 @@
     "nextCiPush": "the base has merges its remote lacks: push it before new builders: aidlc push",
     "nextBaseFix": "the base fails its {{level}} level on its own (found merging {{unit}}): only a fix unit builds or merges. Draft one: aidlc fix \"<what failed>\" --scope <code globs> --scope \"{{tests}}\"",
     "nextCiFix": "CI is red on the base ({{runs}}): only a fix unit builds; read the logs ({{logs}}). A failure outside this repo (runner, registry, network): fix or wait for it, rerun with gh run rerun <id> --failed, then aidlc ci wait. Else draft a fix: aidlc fix \"<what failed>\" --scope <code globs> --scope \"{{tests}}\"",
-    "ciUsage": "usage: aidlc ci wait, with ci.wait (seconds) and github.repo in the profile",
-    "ciNotPushed": "push {{base}} first: aidlc push; CI runs on the pushed base",
-    "ciResult": "CI on {{base}} {{sha}}: {{state}}\n{{#each runs}}  {{name}}: {{status}} {{conclusion}} {{url}}\n{{/each}}",
-    "ciLog": "  logs: {{log}}\n",
     "deployPassed": "{{intent}} {{step}} passed\n",
     "deployFailed": "{{intent}} {{step}} failed: {{command}} exited {{exit}}\n{{output}}\n",
     "nextResearch": "research for {{doc}}: researcher on {{model}} (brief: aidlc research {{doc}})",
@@ -451,7 +427,6 @@
     "mergeSubject": "Merge {{unit}}: {{title}}",
     "producer": "aidlc/{{version}}",
     "cardCommand": "aidlc card {{unit}}",
-    "boardLink": "https://github.com/{{repo}}/blob/{{base}}/{{path}}",
     "startConflict": "merging the card's base {{base}} into {{branch}} conflicts in {{files}} → resolve them inside the scope, commit, and run start again\n",
     "upgradeDirty": "the plugin checkout at {{path}} has uncommitted changes → upgrade from the installed plugin or a clean checkout, or pass --dirty on purpose\n",
     "badJson": "{{name}}: not a JSON object",
@@ -471,11 +446,6 @@
     "cardFinding": "- {{focus}} {{confidence}} {{path}}:{{line}}: {{claim}} ({{scenario}})\n",
     "cardRequirement": "{{id}} {{path}}",
     "reqNone": "{{doc}} cites no requirement",
-    "planBoard": "{{unit}} has no {{path}}, which the board shows as {{field}}: add {{example}}{{mapping}}",
-    "planBoardOption": "{{unit}}'s {{path}} gives {{field}} {{value}}, which the board lacks (it has {{options}}): plan one of those, or the owner adds the option on the Project",
-    "planBoardMap": " ({{pairs}})",
-    "planBoardPair": "{{from}} means {{to}}",
-    "planBoardAny": "<value>",
     "moduleUnknown": "{{unit}} names module {{module}}, which profile.modules lacks (has: {{modules}})",
     "reqUnknown": "{{doc}} cites {{req}}, which does not exist",
     "nextApproveRequirements": "ask the owner to approve the requirements the plan cites: aidlc approve {{reqs}} (the owner confirms the prompt or types: approve {{reqs}})",
@@ -582,24 +552,6 @@
     "gateIdentity": "{{path}}:{{line}} adds a static credential between components (trust auth, a password in a URL or a client secret)",
     "gateSecret": "{{path}}:{{line}} adds what looks like a secret",
     "gateNamePath": "{{path}} does not match the {{rule}} rule {{pattern}} ({{why}})",
-    "contractEvent": "event type {{type}} is not <Org>.<Service>.<Noun><PastTenseVerb> with no version suffix",
-    "packNone": "no stack pack fits this project; the packs look for: {{detect}}",
-    "scaffoldUsage": "usage: aidlc scaffold <kind> <name> [--domain d]; kinds: {{kinds}}",
-    "scaffoldWrote": "wrote {{path}}\n",
-    "scaffoldKept": "kept {{path}}: it exists\n",
-    "graphSelftest": "the project's graph ({{command}}) lacks {{count}} edges the stack pack reads from source, e.g. {{edges}}",
-    "cardReference": "Copy the shape of the stack pack's reference domain ({{domain}}): the command slice {{command}} and the query slice {{query}}.\n",
-    "contractVersion": "info.version {{version}} is no api-version (YYYY-MM-DD or YYYY-MM-DD-preview)",
-    "contractParam": "{{path}}: parameter {{param}} is not a full lowerCamel name ending in Name or Id",
-    "contractSegment": "{{path}}: segment {{segment}} is not {{rule}}",
-    "contractPut": "{{path}}: a PUT path has an even number of segments (collection and name pairs)",
-    "contractOperationId": "{{path}} {{method}}: operationId {{id}} is not Noun_Verb",
-    "contractProperty": "{{at}}: property {{name}} is not lowerCamel",
-    "contractBoolean": "{{at}}: boolean {{name}} starts with is; name the state",
-    "contractEnum": "{{at}}: enum value {{value}} is not PascalCase",
-    "contractSystemData": "{{at}}: a resource (id, name, type) without systemData",
-    "contractNextLink": "{{at}}: a list (value) without nextLink",
-    "contractUnreadable": "the document cannot be read: {{error}}",
     "gateSynonym": "{{path}}:{{line}} says {{word}}, a synonym of {{term}} in the {{domain}} glossary",
     "contextMapDoc": "---\ntype: Map\ntitle: Context map\ndescription: The domains and how each relates to its neighbours, upstream to downstream with the pattern between them; drawn from the domain docs at every merge, never by hand.\ngenerated: { by: {{producer}}, at: {{at}}, digest: {{digest}} }\n---\n{{body}}",
     "contextMapBody": "\n**TL;DR:** Each domain and its relationships, upstream to downstream, labelled with the pattern between them.\n\n# Context map\n```mermaid\nflowchart LR\n{{nodes}}{{edges}}```\n",
@@ -710,20 +662,6 @@
     "docsRestamped": "generated.at {{from}} was not the current UTC time; the docs hook set it to {{to}}: re-read the file before editing it again\n",
     "docsErrors": "fix these OKF errors now:\n{{errors}}",
     "statusResume": "Load the aidlc skill and run aidlc next.\n",
-    "boardOff": "no github section in the profile: the board is off",
-    "boardProject": "github.project {{project}} is not orgs/<owner>/projects/<n> or users/<owner>/projects/<n>",
-    "boardNoField": "the project has no field {{name}}",
-    "boardNoOption": "field {{name}} has no option {{value}}",
-    "boardMarker": "<!-- {{kind}}: {{id}} -->",
-    "boardLabel": "created label {{name}}\n",
-    "boardCreated": "created #{{number}} {{title}}\n",
-    "boardMilestoneCreated": "created milestone {{title}}\n",
-    "boardMilestoneDue": "set milestone {{title}} due {{due}}\n",
-    "boardUpdated": "updated #{{number}}: {{what}}\n",
-    "boardLinked": "linked #{{child}} under #{{parent}}\n",
-    "boardAdded": "added #{{number}} to the project\n",
-    "boardSet": "set {{field}} of #{{number}} to {{value}}\n",
-    "boardInSync": "the board is in sync\n",
     "mapOwns": "owns {{data}}",
     "mapApi": "public: {{api}}",
     "mapLayers": "layers {{layers}}",
@@ -737,12 +675,6 @@
     "mapDoc": "---\ntype: Map\ntitle: {{title}}\ndescription: {{description}}\ngenerated: { by: {{producer}}, at: {{at}}, digest: {{digest}} }\n---\n{{body}}",
     "mapWritten": "wrote {{files}}\n",
     "mapSame": "the codebase map is current\n",
-    "boardBehind": "the board is behind: aidlc sync\n",
-    "boardMissingOption": "{{name}} {{value}} (the board has {{options}})",
-    "boardNoOptions": "sync wrote nothing: the Project lacks {{#each missing}}{{this}}; {{/each}}→ add the option on the Project, or plan a value it has, then run aidlc sync",
-    "boardItemHidden": "#{{number}} is on the Project but not listed, also after waiting (an archived item?) → restore it or remove it on the Project, then run aidlc sync",
-    "boardShort": "GitHub listed {{got}} of the repository's {{count}} issues, also after waiting → sync created nothing; run aidlc sync again later",
-    "boardFailed": "warning: sync failed, run aidlc sync: {{error}}\n",
     "nextMigrate": "elaborate the migration intent with the owner in {{dir}}/I-1-<slug>.md (adopted at {{commit}}): docs, always-on context, profile, architecture baseline, data owners, naming rules, module audit, cleanup; then ask for approval",
     "nextStopped": "the builder of {{unit}} stopped ({{reason}}): if the unit doc is wrong, fix it and ask the owner to re-approve it; otherwise remove the cause and start its builder again (card: aidlc card {{unit}})",
     "holdUsage": "usage: hold <unit> [off|<reason>]",
@@ -885,10 +817,6 @@
         "level": "error",
         "fix": "set docs.rules entries to a HOUSE-* code and one of error, warning, off"
       },
-      "GRAPH-SELFTEST": {
-        "level": "error",
-        "fix": "make the project's architecture.graph print every import and data edge, or set it to the plugin's: node .aidlc/bin/aidlc.mjs graph (docs: Stack packs)"
-      },
       "CONTRACT-NAME": {
         "level": "error",
         "fix": "follow the API grammar of decision 0014: full lowerCamel names, Noun_Verb operation ids, a dated api-version, camelCase segments and properties, PascalCase enums, systemData on resources, nextLink on lists (aidlc name path|operation-id|api-version) (docs: Naming)"
@@ -958,10 +886,6 @@
       "PLAN-REQ": {
         "level": "error",
         "fix": "cite the requirements the intent or unit serves: requirements: [R-<n>]"
-      },
-      "PLAN-BOARD": {
-        "level": "error",
-        "fix": "add the planned value to the unit's frontmatter, as the example shows"
       },
       "PLAN-TEST": {
         "level": "error",
@@ -1723,77 +1647,8 @@
     "versionFile": "VERSION",
     "manifest": "../.claude-plugin/plugin.json"
   },
-  "board": {
-    "gh": "gh",
-    "perPage": 100,
-    "maxBody": 1500,
-    "itemExists": "Content already exists in this project",
-    "template": "issue.md",
-    "issue": "board.issue",
-    "statusField": "Status",
-    "held": "held",
-    "holdable": [
-      "approved",
-      "blocked"
-    ],
-    "done": [
-      "merged",
-      "released"
-    ],
-    "unstarted": [
-      "draft",
-      "approved",
-      "stale",
-      "blocked"
-    ],
-    "started": "started",
-    "status": {
-      "draft": "Todo",
-      "approved": "Todo",
-      "stale": "Todo",
-      "building": "In Progress",
-      "fix": "In Progress",
-      "reported": "In review",
-      "reviewing": "In review",
-      "reviewed": "In review",
-      "gated": "In review",
-      "stopped": "On hold",
-      "started": "In Progress",
-      "blocked": "Todo",
-      "escalated": "On hold",
-      "held": "On hold",
-      "merged": "Done",
-      "released": "Done"
-    },
-    "project": "^(orgs|users)/([^/]+)/projects/(\\d+)$",
-    "owners": {
-      "orgs": "organization",
-      "users": "user"
-    },
-    "queries": {
-      "project": "query($login: String!, $number: Int!, $cursor: String) { {{owner}}(login: $login) { projectV2(number: $number) { id fields(first: 50) { nodes { ... on ProjectV2FieldCommon { id name dataType } ... on ProjectV2SingleSelectField { options { id name } } } } items(first: 100, after: $cursor) { pageInfo { hasNextPage endCursor } nodes { id content { ... on Issue { number repository { nameWithOwner } } } fieldValues(first: 30) { nodes { ... on ProjectV2ItemFieldSingleSelectValue { name field { ... on ProjectV2FieldCommon { name } } } ... on ProjectV2ItemFieldNumberValue { number field { ... on ProjectV2FieldCommon { name } } } ... on ProjectV2ItemFieldDateValue { date field { ... on ProjectV2FieldCommon { name } } } ... on ProjectV2ItemFieldTextValue { text field { ... on ProjectV2FieldCommon { name } } } } } } } } } }",
-      "issueCount": "query($owner: String!, $name: String!) { repository(owner: $owner, name: $name) { issues { totalCount } } }",
-      "addItem": "mutation($project: ID!, $content: ID!) { addProjectV2ItemById(input: { projectId: $project, contentId: $content }) { item { id } } }",
-      "setField": "mutation($project: ID!, $item: ID!, $field: ID!, $value: ProjectV2FieldValue!) { updateProjectV2ItemFieldValue(input: { projectId: $project, itemId: $item, fieldId: $field, value: $value }) { projectV2Item { id } } }"
-    },
-    "wave": "board.wave",
-    "binding": "board.binding",
-    "types": {
-      "intent": "Feature",
-      "unit": "Task",
-      "fix": "Bug"
-    },
-    "typedOwner": "Organization",
-    "target": "board.target",
-    "dueTime": "T00:00:00Z"
-  },
   "packs": {
     "dir": "packs",
-    "manifest": "manifest.json",
-    "templates": "templates",
-    "tests": "(_test\\.|\\.test\\.|\\.spec\\.)",
-    "skip": ["node_modules", "vendor", "dist", "build", "testdata", "coverage", "reference"],
-    "dataPrefix": "data/",
     "vendored": ".aidlc/packs"
   },
   "construction": {
@@ -1877,27 +1732,6 @@
     "operationVerbs": { "get": "Get", "list": "List", "create": "CreateOrUpdate", "update": "Update", "delete": "Delete" },
     "pastTense": { "get": "Read", "list": "Listed", "create": "Created", "update": "Updated", "delete": "Deleted", "register": "Registered", "unregister": "Unregistered", "evaluate": "Evaluated", "cancel": "Canceled" },
     "actions": ["read", "write", "delete", "action"],
-    "contract": {
-      "files": ["api/**/openapi*.yaml", "api/**/openapi*.yml", "api/**/openapi*.json"],
-      "methods": ["get", "put", "post", "patch", "delete"],
-      "providers": "providers",
-      "segments": ["subscriptions", "resourceGroups", "providers", "operations"],
-      "params": [],
-      "resource": ["id", "name", "type"],
-      "systemData": "systemData",
-      "list": "value",
-      "nextLink": "nextLink",
-      "patterns": {
-        "apiVersion": "^(20\\d{2})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])(-preview)?$",
-        "operationId": "^[A-Z][A-Za-z0-9]*_[A-Z][A-Za-z0-9]*$",
-        "segment": "^[a-z][A-Za-z0-9]*$",
-        "namespace": "^[A-Z][A-Za-z0-9]*(\\.[A-Z][A-Za-z0-9]*)+$",
-        "param": "^[a-z][A-Za-z0-9]*(Name|Id)$",
-        "property": "^[a-z][A-Za-z0-9]*$",
-        "enum": "^[A-Z][A-Za-z0-9]*$"
-      },
-      "rules": { "segment": "camelCase", "namespace": "a PascalCase dotted namespace, Org.Service" }
-    },
     "cardKinds": [
       { "label": "schema", "kind": "schema" },
       { "label": "database role", "kind": "db-role" },

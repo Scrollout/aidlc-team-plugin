@@ -1,0 +1,51 @@
+{
+  "name": "stacks",
+  "description": "The stack packs: the dependency graph read from source, scaffolds, reference slices, event types and compile errors (docs/design/stack-packs.md).",
+  "when": null,
+  "data": {
+    "messages": {
+      "contractEvent": "event type {{type}} is not <Org>.<Service>.<Noun><PastTenseVerb> with no version suffix",
+      "packNone": "no stack pack fits this project; the packs look for: {{detect}}",
+      "scaffoldUsage": "usage: aidlc scaffold <kind> <name> [--domain d]; kinds: {{kinds}}",
+      "scaffoldWrote": "wrote {{path}}\n",
+      "scaffoldKept": "kept {{path}}: it exists\n",
+      "graphSelftest": "the project's graph ({{command}}) lacks {{count}} edges the stack pack reads from source, e.g. {{edges}}",
+      "cardReference": "Copy the shape of the stack pack's reference domain ({{domain}}): the command slice {{command}} and the query slice {{query}}.\n"
+    },
+    "okf": {
+      "codes": {
+        "GRAPH-SELFTEST": {
+          "level": "error",
+          "fix": "make the project's architecture.graph print every import and data edge, or set it to the plugin's: node .aidlc/bin/aidlc.mjs graph (docs: Stack packs)"
+        }
+      }
+    },
+    "packs": {
+      "manifest": "manifest.json",
+      "templates": "templates",
+      "tests": "(_test\\.|\\.test\\.|\\.spec\\.)",
+      "skip": [
+        "node_modules",
+        "vendor",
+        "dist",
+        "build",
+        "testdata",
+        "coverage",
+        "reference"
+      ],
+      "dataPrefix": "data/"
+    },
+    "commands": [
+      {
+        "name": "graph",
+        "usage": "graph",
+        "does": "print the dependency graph the stack pack reads from source: imports and data edges"
+      },
+      {
+        "name": "scaffold",
+        "usage": "scaffold <kind> <name> [--domain d]",
+        "does": "write a kind's templates from the stack pack, named from the registry; never overwrites"
+      }
+    ]
+  }
+}

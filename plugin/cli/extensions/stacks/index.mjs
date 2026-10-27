@@ -2,12 +2,7 @@
 // reads from source, with no toolchain run (docs/design/stack-packs.md).
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
-import { bundleOf, PLUGIN_DIR, config, done, list, posix, UsageError } from '../../lib/foundation/data.mjs';
-import { msg, render } from '../../lib/foundation/text.mjs';
-import { loadProfile } from '../../lib/foundation/profile.mjs';
-import { domainForms, nameOf, registry } from '../../lib/domains/naming.mjs';
-import { graphOf } from '../../lib/domains/architecture.mjs';
-import { plug } from '../../lib/foundation/seams.mjs';
+import { bundleOf, config, domainForms, done, graphOf, list, loadProfile, msg, nameOf, plug, PLUGIN_DIR, posix, registry, render, UsageError } from '../../lib/index.mjs';
 
 const K = config.packs;
 const packsDir = () => join(PLUGIN_DIR, K.dir);

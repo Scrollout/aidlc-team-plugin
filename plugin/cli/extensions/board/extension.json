@@ -1,0 +1,123 @@
+{
+  "name": "board",
+  "description": "The owner's Project board: issues, fields and milestones synced from the plan, and the PLAN-BOARD rule (docs/design/board.md).",
+  "when": "github",
+  "data": {
+    "messages": {
+      "ciUsage": "usage: aidlc ci wait, with ci.wait (seconds) and github.repo in the profile",
+      "ciNotPushed": "push {{base}} first: aidlc push; CI runs on the pushed base",
+      "ciResult": "CI on {{base}} {{sha}}: {{state}}\n{{#each runs}}  {{name}}: {{status}} {{conclusion}} {{url}}\n{{/each}}",
+      "ciLog": "  logs: {{log}}\n",
+      "boardLink": "https://github.com/{{repo}}/blob/{{base}}/{{path}}",
+      "planBoard": "{{unit}} has no {{path}}, which the board shows as {{field}}: add {{example}}{{mapping}}",
+      "planBoardOption": "{{unit}}'s {{path}} gives {{field}} {{value}}, which the board lacks (it has {{options}}): plan one of those, or the owner adds the option on the Project",
+      "planBoardMap": " ({{pairs}})",
+      "planBoardPair": "{{from}} means {{to}}",
+      "planBoardAny": "<value>",
+      "boardOff": "no github section in the profile: the board is off",
+      "boardProject": "github.project {{project}} is not orgs/<owner>/projects/<n> or users/<owner>/projects/<n>",
+      "boardNoField": "the project has no field {{name}}",
+      "boardNoOption": "field {{name}} has no option {{value}}",
+      "boardMarker": "<!-- {{kind}}: {{id}} -->",
+      "boardLabel": "created label {{name}}\n",
+      "boardCreated": "created #{{number}} {{title}}\n",
+      "boardMilestoneCreated": "created milestone {{title}}\n",
+      "boardMilestoneDue": "set milestone {{title}} due {{due}}\n",
+      "boardUpdated": "updated #{{number}}: {{what}}\n",
+      "boardLinked": "linked #{{child}} under #{{parent}}\n",
+      "boardAdded": "added #{{number}} to the project\n",
+      "boardSet": "set {{field}} of #{{number}} to {{value}}\n",
+      "boardInSync": "the board is in sync\n",
+      "boardBehind": "the board is behind: aidlc sync\n",
+      "boardMissingOption": "{{name}} {{value}} (the board has {{options}})",
+      "boardNoOptions": "sync wrote nothing: the Project lacks {{#each missing}}{{this}}; {{/each}}→ add the option on the Project, or plan a value it has, then run aidlc sync",
+      "boardItemHidden": "#{{number}} is on the Project but not listed, also after waiting (an archived item?) → restore it or remove it on the Project, then run aidlc sync",
+      "boardShort": "GitHub listed {{got}} of the repository's {{count}} issues, also after waiting → sync created nothing; run aidlc sync again later",
+      "boardFailed": "warning: sync failed, run aidlc sync: {{error}}\n"
+    },
+    "board": {
+      "gh": "gh",
+      "perPage": 100,
+      "maxBody": 1500,
+      "itemExists": "Content already exists in this project",
+      "template": "issue.md",
+      "issue": "board.issue",
+      "statusField": "Status",
+      "held": "held",
+      "holdable": [
+        "approved",
+        "blocked"
+      ],
+      "done": [
+        "merged",
+        "released"
+      ],
+      "unstarted": [
+        "draft",
+        "approved",
+        "stale",
+        "blocked"
+      ],
+      "started": "started",
+      "status": {
+        "draft": "Todo",
+        "approved": "Todo",
+        "stale": "Todo",
+        "building": "In Progress",
+        "fix": "In Progress",
+        "reported": "In review",
+        "reviewing": "In review",
+        "reviewed": "In review",
+        "gated": "In review",
+        "stopped": "On hold",
+        "started": "In Progress",
+        "blocked": "Todo",
+        "escalated": "On hold",
+        "held": "On hold",
+        "merged": "Done",
+        "released": "Done"
+      },
+      "project": "^(orgs|users)/([^/]+)/projects/(\\d+)$",
+      "owners": {
+        "orgs": "organization",
+        "users": "user"
+      },
+      "queries": {
+        "project": "query($login: String!, $number: Int!, $cursor: String) { {{owner}}(login: $login) { projectV2(number: $number) { id fields(first: 50) { nodes { ... on ProjectV2FieldCommon { id name dataType } ... on ProjectV2SingleSelectField { options { id name } } } } items(first: 100, after: $cursor) { pageInfo { hasNextPage endCursor } nodes { id content { ... on Issue { number repository { nameWithOwner } } } fieldValues(first: 30) { nodes { ... on ProjectV2ItemFieldSingleSelectValue { name field { ... on ProjectV2FieldCommon { name } } } ... on ProjectV2ItemFieldNumberValue { number field { ... on ProjectV2FieldCommon { name } } } ... on ProjectV2ItemFieldDateValue { date field { ... on ProjectV2FieldCommon { name } } } ... on ProjectV2ItemFieldTextValue { text field { ... on ProjectV2FieldCommon { name } } } } } } } } } }",
+        "issueCount": "query($owner: String!, $name: String!) { repository(owner: $owner, name: $name) { issues { totalCount } } }",
+        "addItem": "mutation($project: ID!, $content: ID!) { addProjectV2ItemById(input: { projectId: $project, contentId: $content }) { item { id } } }",
+        "setField": "mutation($project: ID!, $item: ID!, $field: ID!, $value: ProjectV2FieldValue!) { updateProjectV2ItemFieldValue(input: { projectId: $project, itemId: $item, fieldId: $field, value: $value }) { projectV2Item { id } } }"
+      },
+      "wave": "board.wave",
+      "binding": "board.binding",
+      "types": {
+        "intent": "Feature",
+        "unit": "Task",
+        "fix": "Bug"
+      },
+      "typedOwner": "Organization",
+      "target": "board.target",
+      "dueTime": "T00:00:00Z"
+    },
+    "grid": {
+      "codes": {
+        "PLAN-BOARD": {
+          "level": "error",
+          "fix": "add the planned value to the unit's frontmatter, as the example shows"
+        }
+      }
+    },
+    "commands": [
+      {
+        "name": "sync",
+        "usage": "sync",
+        "does": "project intents and units onto GitHub issues and a Project"
+      },
+      {
+        "name": "ci",
+        "usage": "ci wait",
+        "does": "wait for the pushed base's CI runs and record the result"
+      }
+    ]
+  }
+}

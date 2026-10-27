@@ -4,15 +4,8 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { at, config, done, list, readJson, relPath, UsageError } from '../../lib/foundation/data.mjs';
-import { git, tryGit } from '../../lib/foundation/git.mjs';
-import { msg, render } from '../../lib/foundation/text.mjs';
-import { templateFile } from '../../lib/domains/card.mjs';
-import { readState } from '../../lib/domains/flow.mjs';
-import { aidlcDir, ciFile, writeJson } from '../../lib/foundation/store.mjs';
-import { bindingName } from '../../lib/domains/construction.mjs';
-import { plug } from '../../lib/foundation/seams.mjs';
+import { join, resolve } from 'node:path';
+import { aidlcDir, at, bindingName, ciFile, config, done, fieldPaths, git, list, msg, plug, readJson, readState, relPath, render, templateFile, tryGit, UsageError, writeJson } from '../../lib/index.mjs';
 
 const B = config.board;
 let ghCommand = [B.gh]; // `github.gh` overrides it (docs/design/board.md)
@@ -296,3 +289,28 @@ export const commands = {
 plug('afterMerge', (cwd) => { try { return sync(cwd); } catch (e) { return msg('boardFailed', { error: e.message.split('\n')[0] }); } }, (profile) => Boolean(profile.github));
 plug('statusTail', boardBehind);
 plug('issueTitle', issueTitle);
+
+// With a board, each live unit carries the values it maps, except the derived ones (docs/design/board.md). The
+// example uses the profile's own map, so the lead writes a value the board knows (PLAN-BOARD).
+function lintBoard({ profile, units, add, base }) {
+  const planned = Object.entries(profile.github?.fields ?? {}).map(([field, spec]) => ({ field, path: fieldPaths({ field: spec })[0], map: spec.map }))
+    .filter((f) => ![config.board.wave, config.board.binding].includes(f.path));
+  for (const u of units) {
+    for (const { field, path, map } of planned.filter((f) => at(u.fm, f.path) === undefined)) {
+      const value = map ? Object.keys(map)[0] : msg('planBoardAny', {});
+      const example = path.split('.').reduceRight((inner, key, k) => (k ? `{ ${key}: ${inner} }` : `${key}: ${inner}`), value);
+      const mapping = map ? msg('planBoardMap', { pairs: Object.entries(map).map(([from, to]) => msg('planBoardPair', { from, to })).join(', ') }) : '';
+      add('PLAN-BOARD', u, 1, 'planBoard', { path, field, example, mapping });
+    }
+  }
+  // A value must be an option the Project has, as the last sync read them; no sync yet, no check.
+  const common = tryGit(base, 'rev-parse', '--git-common-dir');
+  const options = (common && readJson(join(resolve(base, common), config.state.dir, config.state.board))?.options) ?? {};
+  for (const u of units) {
+    for (const { field, path, map } of planned.filter((f) => options[f.field] && at(u.fm, f.path) !== undefined)) {
+      const value = map ? map[String(at(u.fm, path))] : at(u.fm, path);
+      if (value !== undefined && !options[field].includes(String(value))) add('PLAN-BOARD', u, 1, 'planBoardOption', { path, value, field, options: options[field].join(', ') });
+    }
+  }
+}
+plug('planRules', lintBoard);

@@ -4,6 +4,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { git } from './state-repo.mjs';
+import { config as merged } from '../plugin/cli/lib/index.mjs'; // cli.json with each extension's data
 
 const ROOT = join(import.meta.dirname, '..');
 const CLI = join(ROOT, 'plugin/cli/aidlc.mjs');
@@ -30,7 +31,7 @@ test('U1/AC-1 --help lists every command in the CLI design', () => {
 });
 
 test('U1/AC-1 cli.json matches the CLI design: commands and exit codes', () => {
-  const config = readJson('plugin/cli/cli.json');
+  const config = merged;
   assert.deepEqual(config.commands.map((c) => c.name).sort(), documentedCommands().sort());
   const md = readFileSync(join(ROOT, 'docs/design/cli.md'), 'utf8');
   const line = md.split('# Exit codes')[1].trim().split('\n')[0];
@@ -39,7 +40,7 @@ test('U1/AC-1 cli.json matches the CLI design: commands and exit codes', () => {
 });
 
 test('every message the CLI uses is defined in cli.json, and none is unused', () => {
-  const { messages, retro, map } = readJson('plugin/cli/cli.json');
+  const { messages, retro, map } = merged;
   const named = new Set([...retro.proposals.map((p) => p.text), ...map.pages.map((p) => p.body)]); // the retro's proposals and the map's pages name theirs in cli.json
   const files = readdirSync(join(ROOT, 'plugin/cli'), { recursive: true }).filter((f) => f.endsWith('.mjs')).map((f) => `plugin/cli/${f}`); // the core and its extensions
   const code = files.map((f) => readFileSync(join(ROOT, f), 'utf8')).join('\n');
