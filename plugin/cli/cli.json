@@ -1177,6 +1177,10 @@
         "to": "CLAUDE.md"
       },
       {
+        "template": "CHANGELOG.md",
+        "to": "CHANGELOG.md"
+      },
+      {
         "template": "bundle/index.md",
         "to": "{{bundle}}/index.md",
         "bundle": true

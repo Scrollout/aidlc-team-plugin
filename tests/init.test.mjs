@@ -64,7 +64,7 @@ test('U5/AC-1 init never overwrites without asking', () => {
   assert.deepEqual(JSON.parse(readFileSync(join(dir, '.claude/settings.json'), 'utf8')), { worktree: { baseRef: 'fresh' }, model: 'opus' });
   assert.equal(readFileSync(join(dir, '.gitignore'), 'utf8'), 'node_modules/\n.aidlc/local/\n.claude/worktrees/\n', 'lines are added, nothing replaced');
 
-  const again = run(dir, ['init', '--overwrite', 'CLAUDE.md', '--overwrite', 'AGENTS.md', '--overwrite', '.aidlc/profile.json',
+  const again = run(dir, ['init', '--overwrite', 'CLAUDE.md', '--overwrite', 'CHANGELOG.md', '--overwrite', 'AGENTS.md', '--overwrite', '.aidlc/profile.json',
     ...['requirement', 'intent', 'bolt', 'decision', 'runbook', 'naming', 'system', 'domain', 'fact', 'module'].flatMap((t) => ['--overwrite', `.aidlc/templates/docs/${t}.md`]),
     '--overwrite', 'docs/index.md', '--overwrite', 'docs/log.md', '--overwrite', 'docs/constitution/principles.md', '--overwrite', '.github/workflows/aidlc.yml', '--overwrite', '.github/dependabot.yml']);
   assert.equal(again.code, 0, again.out);

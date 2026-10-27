@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M20 B211: the plugin keeps `CHANGELOG.md` per Keep a Changelog 1.1.0 and SemVer, held by a test to `plugin.json`, and `init` writes one for each project ([Standard formats](design/standards.md)). Release 0.151.0.
 - **Update** M20 B209-B210 (method 5): acceptance criteria read Given/When/Then and requirements are stated in an EARS pattern under `# Requirement`; in a v2 project a draft that does not is `PLAN-AC` or `PLAN-REQ`, and the bolt, fix and requirement templates are written that way ([Standard formats](design/standards.md)). Release 0.150.0.
 - **Update** M20 B208: decisions follow MADR 4.0 ([0018](decisions/0018-standard-formats-over-home-made-ones.md)): the template is MADR's, approving stamps `status: accepted` and `date`, a successor sets `superseded by ADR-<NNNN>`, and a draft decision in a v2 project lacking a required section (Confirmation for a one-way door) is `DOC-SCHEMA`. The plugin's own decisions are in MADR form. Release 0.149.0.
 - **Update** M20 B193: the old words are gone from what the plugin ships and from its design docs: bolt for a work item, increment for a delivery step, domain or runtime for a component; a test holds the messages, fixes, usage, skill, agents and templates to it. Release 0.148.0.
