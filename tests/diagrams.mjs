@@ -62,7 +62,7 @@ export const pages = () => ({
   'bolt-states.md': page('Bolt states', "A bolt's derived states and what moves it between them; drawn from state.transitions in cli.json.", states(S.transitions)),
   'intent-states.md': page('Intent states', "An intent's derived states, from approval to release; drawn from state.intentTransitions in cli.json.", states(S.intentTransitions)),
   'kinds.md': page('Kinds and layers', 'What each module kind may depend on, and the layers inside a domain pointing inward; drawn from vocabulary.kindRules and layerRules in cli.json.',
-    mdTable(['from \\ to', ...V.kinds], V.kinds.map((a) => [a, ...V.kinds.map((b) => (V.kindRules[a].includes(b) ? 'yes' : V.kindRules[a].includes(`${b}:surface`) ? 'surface' : ''))])) + '\n'
+    mdTable(['from \\ to', ...V.kinds], V.kinds.map((a) => [a, ...V.kinds.map((b) => (V.kindRules[a].any.includes(b) ? 'yes' : V.kindRules[a].surface.includes(b) ? 'surface' : ''))])) + '\n'
     + mermaid(['flowchart LR', ...Object.entries(V.layerRules).flatMap(([a, bs]) => bs.map((b) => `  ${a} --> ${b}`))])),
   'bundle-types.md': page('Bundle types', "The bundle's doc types, the folder each lives in and the keys its schema requires; drawn from the bundle settings in cli.json.",
     mdTable(['Type', 'Folder', 'Required keys'], [['Intent', config.grid.intents], ['Requirement', config.grid.requirements], ['Decision', config.grid.decisions], ...Object.entries(config.okf.bundle.folders)]

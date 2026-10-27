@@ -33,7 +33,7 @@ function parse(text, file) {
     last = m.index + m[0].length;
     const tag = m[1];
     if (tag.startsWith('#each')) {
-      const node = { each: tag.slice(5).trim(), body: [] };
+      const node = { each: tag.slice('#each'.length).trim(), body: [] };
       top.body.push(node);
       stack.push(node);
     } else if (tag === '/each') {
@@ -66,16 +66,18 @@ function emit(nodes, scopes, file) {
   return out;
 }
 
-export const render = (text, data, file = '<template>') => emit(parse(text, file), [data], file);
+// A string as a pattern that matches it literally.
+export const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+export const render = (text, data, file = config.text.anonymous) => emit(parse(text, file), [data], file);
 
 // Renders a message template from cli.json.
-export const msg = (key, data) => render(config.messages[key], data, `cli.json messages.${key}`);
+export const msg = (key, data) => render(config.messages[key], data, config.text.messageSource + key);
 
 // A finding of `code` from a cli.json code table, whose fix and level (error unless the table sets one) it carries.
-export const finding = (codes, code, path, line, key, data = {}, level = codes[code].level ?? 'error') => ({ code, level, path, line, message: msg(key, data), fix: codes[code].fix });
+export const finding = (codes, code, path, line, key, data = {}, level = codes[code].level ?? config.okf.levels[0]) => ({ code, level, path, line, message: msg(key, data), fix: codes[code].fix });
 
 // Template directories, highest priority first.
-const templateDirs = (root, pluginDir) => config.templates.map((t) => join(t.from === 'plugin' ? pluginDir : root, t.path));
+const templateDirs = (root, pluginDir) => config.templates.map((t) => join({ plugin: pluginDir, project: root }[t.from], t.path));
 
 // The first template directory in cli.json holding `rel` wins (project overrides plugin).
 function resolveTemplate(rel, { root, pluginDir = PLUGIN_DIR }) {

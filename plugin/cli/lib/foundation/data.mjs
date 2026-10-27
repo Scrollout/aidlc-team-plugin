@@ -24,17 +24,18 @@ export const posix = (p) => p.split(sep).join('/');
 export const relPath = (from, to) => posix(relative(from, to));
 export const bundleOf = (cwd, profile) => resolve(cwd, profile.docs.bundle);
 // An escape hatch's `until` date that has passed (docs/design/construction.md#escape-hatches).
-export const lapsed = (until) => until !== undefined && until !== null && String(until).slice(0, 10) < new Date().toISOString().slice(0, 10);
-export const slug = (text, words) => text.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).slice(0, words).join('-');
+const isoDay = (v) => String(v).split('T')[0];
+export const lapsed = (until) => until !== undefined && until !== null && isoDay(until) < isoDay(new Date().toISOString());
+export const slug = (text, words) => text.toLowerCase().split(new RegExp(config.okf.slugSplit)).filter(Boolean).slice(0, words).join('-');
 // A command's stdin: the test's, or the process's.
 export const readStdin = (ctx) => (ctx.stdin ? ctx.stdin() : readFileSync(0, 'utf8'));
 export const done = (output, code = config.exit.ok, findings = []) => ({ code, findings, output });
 
 // Each extension's data joins the core's: its codes, messages, commands and values (docs/design/library.md#extensions).
-export const EXTENSIONS_DIR = join(CLI_DIR, 'extensions');
+export const EXTENSIONS_DIR = join(CLI_DIR, config.extensions.dir);
 export const extensionNames = existsSync(EXTENSIONS_DIR) ? readdirSync(EXTENSIONS_DIR).sort() : [];
 const merge = (into, from) => {
   for (const [k, v] of Object.entries(from)) into[k] = Array.isArray(v) ? [...(into[k] ?? []), ...v] : isMap(v) && isMap(into[k]) ? merge(into[k], v) : v;
   return into;
 };
-for (const name of extensionNames) merge(config, readJson(join(EXTENSIONS_DIR, name, 'extension.json'))?.data ?? {});
+for (const name of extensionNames) merge(config, readJson(join(EXTENSIONS_DIR, name, config.extensions.data))?.data ?? {});

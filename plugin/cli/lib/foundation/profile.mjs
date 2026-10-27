@@ -58,7 +58,7 @@ function layerFiles(root, cliDir = CLI_DIR) {
 
 // The plugin defaults, beside the CLI so a project's pinned copy carries them.
 export const DEFAULTS = readJson(join(CLI_DIR, config.layers.find((l) => l.from === 'cli').path));
-export const withDefaults = (profile = {}) => mergeLayer(DEFAULTS, profile, 'profile');
+export const withDefaults = (profile = {}) => mergeLayer(DEFAULTS, profile, config.text.defaultsLayer);
 
 // Returns the merged profile, the layers that were found and the project rule files.
 export function loadProfile(root, { cliDir = CLI_DIR } = {}) {

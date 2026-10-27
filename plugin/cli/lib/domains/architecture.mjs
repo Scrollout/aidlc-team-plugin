@@ -20,7 +20,7 @@ export const exceptDocs = (arch) => [...(arch.boundaries ?? []).flatMap((b) => l
 
 // Denied edges of the dependency graph the project's `architecture.graph` command prints. An approved
 // `except` decision covers the edges it lists as `<from> -> <to>` lines, or the whole boundary if it lists none.
-const excepted = (docs, approved, from, to) => list(docs).filter((d) => approved.has(d)).map((d) => approved.get(d).split('\n').map((l) => l.replace(/^\s*[-*]\s+|`/g, '').trim())).some((t) => !t.some((l) => l.includes(config.gate.edge)) || t.includes(`${from}${config.gate.edge}${to}`));
+const excepted = (docs, approved, from, to) => list(docs).filter((d) => approved.has(d)).map((d) => approved.get(d).split('\n').map((l) => l.replace(new RegExp(config.gate.exceptItem, 'g'), '').trim())).some((t) => !t.some((l) => l.includes(config.gate.edge)) || t.includes(`${from}${config.gate.edge}${to}`));
 
 export function boundaryFindings(edges, architecture, approved = new Map()) {
   const out = [];
@@ -79,10 +79,10 @@ export function kindFindings(edges, profile) {
   for (const [from, to] of edges) {
     const [a, b] = [moduleAt(mods, from), moduleAt(mods, to)];
     if (!a?.kind || !b?.kind || a === b) continue;
-    const allowed = V.kindRules[a.kind] ?? [];
-    if (allowed.includes(b.kind)) continue;
-    if (allowed.includes(`${b.kind}:surface`) && inSurface(b, to)) continue;
-    const note = allowed.includes(`${b.kind}:surface`) ? msg('archKindSurface', { surface: surfaceOf(b).join(', ') || '-' }) : '';
+    const allowed = V.kindRules[a.kind] ?? {};
+    if (list(allowed.any).includes(b.kind)) continue;
+    if (list(allowed.surface).includes(b.kind) && inSurface(b, to)) continue;
+    const note = list(allowed.surface).includes(b.kind) ? msg('archKindSurface', { surface: surfaceOf(b).join(', ') || '-' }) : '';
     out.push(finding('ARCH-KIND', from, 'archKind', { from, to, fromKind: a.kind, a: a.id, toKind: b.kind, b: b.id, note }));
   }
   return out;

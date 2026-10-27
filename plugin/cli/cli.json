@@ -1,5 +1,7 @@
 {
   "pluginRoot": "..",
+  "extensions": { "dir": "extensions", "entry": "index.mjs", "data": "extension.json" },
+  "text": { "anonymous": "<template>", "messageSource": "cli.json messages.", "defaultsLayer": "profile" },
   "exit": {
     "ok": 0,
     "findings": 1,
@@ -686,6 +688,7 @@
     },
     "log": "log.md",
     "ext": ".md",
+    "slugSplit": "[^a-z0-9]+",
     "rootIndexKeys": [
       "okf_version"
     ],
@@ -1289,6 +1292,7 @@
     "searchDepth": 3
   },
   "gate": {
+    "exceptItem": "^\\s*[-*]\\s+|`",
     "summaryEnv": "GITHUB_STEP_SUMMARY",
     "fresh": { "GOFLAGS": "-count=1" },
     "logLines": 25,
@@ -1692,6 +1696,7 @@
     "steps": { "questions": "every question answered by an option", "domains": "a domain doc for each of its domains", "facts": "a platform fact for each decision that affects the platform", "map": "the codebase map written", "kinds": "a kind for every module", "business": "the business transactions the code serves under # Business transactions, each naming a module or domain", "baseline": "baseline: a passing platform fact for each test level's run, and # Debt" }
   },
   "method": {
+    "block": { "open": "<!-- generated: {{name}} -->", "close": "<!-- /generated -->" },
     "version": 10,
     "since": { "planIncrementId": 2, "pathwaySkip": 3, "boltBind": 4, "acGherkin": 5, "claimSource": 6, "elabVague": 7, "elabCorner": 7, "elabPersona": 8, "approveReview": 9, "brownfieldBaseline": 10 },
     "changes": {
@@ -1802,13 +1807,13 @@
     "surfaces": ["client", "server", "events"],
     "systemKeys": ["core", "extensions"],
     "kindRules": {
-      "domain": ["foundation", "domain:surface"],
-      "pipeline": ["foundation", "domain:surface"],
-      "foundation": ["foundation"],
-      "adapter": ["foundation"],
-      "runtime": ["domain", "pipeline", "foundation", "adapter"],
-      "extension": ["foundation", "domain:surface"],
-      "delivery": ["domain", "pipeline", "foundation", "adapter", "runtime", "extension", "delivery"]
+      "domain": { "any": ["foundation"], "surface": ["domain"] },
+      "pipeline": { "any": ["foundation"], "surface": ["domain"] },
+      "foundation": { "any": ["foundation"], "surface": [] },
+      "adapter": { "any": ["foundation"], "surface": [] },
+      "runtime": { "any": ["domain", "pipeline", "foundation", "adapter"], "surface": [] },
+      "extension": { "any": ["foundation"], "surface": ["domain"] },
+      "delivery": { "any": ["domain", "pipeline", "foundation", "adapter", "runtime", "extension", "delivery"], "surface": [] }
     },
     "layerAliases": { "api": "interface", "app": "application", "domain": "model", "store": "infrastructure" },
     "layerRules": { "interface": ["application", "model"], "application": ["model"], "infrastructure": ["model"], "model": [] },

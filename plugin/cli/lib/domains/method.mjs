@@ -2,10 +2,10 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { CLI_DIR, config, done, UsageError } from '../foundation/data.mjs';
-import { msg, render } from '../foundation/text.mjs';
+import { escapeRe, msg, render } from '../foundation/text.mjs';
 
 const V = config.vocabulary;
-const BLOCK = (name) => new RegExp(`(<!-- generated: ${name} -->\\n)[\\s\\S]*?(<!-- /generated -->)`);
+const BLOCK = (name) => new RegExp(`(${escapeRe(render(config.method.block.open, { name }))}\\n)[\\s\\S]*?(${escapeRe(config.method.block.close)})`);
 
 // The glossary table: every word with its scale and AI-DLC term, then the retired words and what replaces them.
 export function glossary() {
@@ -40,8 +40,8 @@ export const proposeKind = (m) => V.kindHints.find((h) => [m.id ?? m.name, ...(m
 // A role persona and its knowledge, as the lead reads them before an elaborate step (decision 0019).
 export const commands = {
   persona([role], { cwd }) {
-    const dir = join(CLI_DIR, config.personas.dir), file = join(dir, `${role}.md`);
-    if (!role || !existsSync(file)) throw new UsageError(msg('personaUsage', { roles: readdirSync(dir).filter((f) => f.endsWith('.md')).map((f) => f.slice(0, -3)).join(', ') }));
+    const ext = config.okf.ext, dir = join(CLI_DIR, config.personas.dir), file = join(dir, role + ext);
+    if (!role || !existsSync(file)) throw new UsageError(msg('personaUsage', { roles: readdirSync(dir).filter((f) => f.endsWith(ext)).map((f) => f.slice(0, -ext.length)).join(', ') }));
     const knowledge = existsSync(join(dir, role)) ? readdirSync(join(dir, role)).sort().map((f) => join(dir, role, f)) : [];
     return done(readFileSync(file, 'utf8') + msg('personaKnowledge', { files: knowledge.map((f) => `- ${f.slice(cwd.length + 1) || f}`).join('\n') }));
   },

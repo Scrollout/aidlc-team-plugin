@@ -22,7 +22,7 @@ import { commands as method } from './lib/domains/method.mjs';
 
 const EXIT = config.exit;
 // Every extension the vendored copy carries: each plugs into the core's seams and may add commands (docs/design/library.md#extensions).
-const extensions = await Promise.all(extensionNames.map((name) => import(pathToFileURL(join(EXTENSIONS_DIR, name, 'index.mjs')).href)));
+const extensions = await Promise.all(extensionNames.map((name) => import(pathToFileURL(join(EXTENSIONS_DIR, name, config.extensions.entry)).href)));
 
 // Runs handlers in order and merges their results; the highest exit code wins.
 const combine = (...handlers) => async (args, ctx) => {

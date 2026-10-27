@@ -109,7 +109,7 @@ function coherence(decisions, domains, profile, add, keyLine) {
     for (const tx of list(a.transactions).map((x) => String(x).split(/\s*[+,]\s*/))) if (new Set(tx).size > 1) add('DESIGN-COHERENCE', d, at, 'coherenceTx', { domains: tx.join(' + ') });
     for (const dep of list(a.dependencies)) {
       const [from, to] = dep.split(config.gate.edge).map((s) => s.trim()), [fk, tk] = [kinds.get(from), kinds.get(to)];
-      if (fk && tk && !(rules[fk] ?? []).some((r) => r === tk || r === `${tk}:surface`)) add('DESIGN-COHERENCE', d, at, 'coherenceDep', { dep, fromKind: fk, toKind: tk });
+      if (fk && tk && ![...list(rules[fk]?.any), ...list(rules[fk]?.surface)].includes(tk)) add('DESIGN-COHERENCE', d, at, 'coherenceDep', { dep, fromKind: fk, toKind: tk });
     }
     for (const [table, who] of Object.entries(isMap(a.data) ? a.data : {})) {
       if (kinds.get(who) && kinds.get(who) !== 'domain') add('DESIGN-COHERENCE', d, at, 'coherenceHorizontal', { table, owner: who, kind: kinds.get(who) });

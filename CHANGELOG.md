@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.173.1] - 2026-10-27
+### Changed
+- The core's small modules take their values from `cli.json`: the extensions' folder, entry and data file, template labels, the slug and generated-block patterns, the list-item pattern of an architecture exception, and the default finding level (M26 B235, in part).
+- `vocabulary.kindRules` is a structured object per kind, `{ any, surface }`, in place of `kind:surface` strings.
+
 ## [0.173.0] - 2026-10-27
 ### Changed
 - The architecture words follow the method and the reference architecture (decision 0023). The glossary names the **vertical slice** (a domain or an extension that owns its data end to end and plugs into the horizontal layers through its contract), the **horizontal layer** (a runtime, pipeline, foundation or adapter every request crosses), the **core**, the **operation** (one command or query of a vertical slice) and the **internal layer** (interface, application, model, infrastructure, pointing inward).
@@ -279,7 +284,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.173.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.173.1...HEAD
+[0.173.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.173.0...v0.173.1
 [0.173.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.172.2...v0.173.0
 [0.172.2]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.172.1...v0.172.2
 [0.172.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.172.0...v0.172.1
