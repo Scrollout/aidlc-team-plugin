@@ -1,6 +1,6 @@
 {
   "name": "stacks",
-  "description": "The stack packs: the dependency graph read from source, scaffolds, reference slices, event types and compile errors (docs/design/stack-packs.md).",
+  "description": "The stack packs: the dependency graph read from source, scaffolds, reference domains, event types and compile errors (docs/design/stack-packs.md).",
   "when": null,
   "data": {
     "messages": {
@@ -10,7 +10,7 @@
       "scaffoldWrote": "wrote {{path}}\n",
       "scaffoldKept": "kept {{path}}: it exists\n",
       "graphSelftest": "the project's graph ({{command}}) lacks {{count}} edges the stack pack reads from source, e.g. {{edges}}",
-      "cardReference": "Copy the shape of the stack pack's reference domain ({{domain}}): the command slice {{command}} and the query slice {{query}}.\n"
+      "cardReference": "Copy the shape of the stack pack's reference domain ({{domain}}): the command operation {{command}} and the query operation {{query}}.\n"
     },
     "okf": {
       "codes": {

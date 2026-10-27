@@ -9,6 +9,8 @@ generated: { by: tests/diagrams.mjs }
 ```mermaid
 flowchart LR
   subgraph System["System"]
+    System_vertical_slice["vertical slice"]
+    System_horizontal_layer["horizontal layer"]
     System_core["core"]
     System_extension["extension"]
   end
@@ -17,8 +19,8 @@ flowchart LR
     Domain_kind["kind"]
   end
   subgraph Code["Code"]
-    Code_slice["slice"]
-    Code_layer["layer"]
+    Code_operation["operation"]
+    Code_internal_layer["internal layer"]
   end
   subgraph Delivery["Delivery"]
     Delivery_intent["intent"]

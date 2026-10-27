@@ -98,7 +98,7 @@ function eventFindings(root, profile) {
   return out;
 }
 
-// The reference slices a card points a builder at, as paths from the project root.
+// The reference operations a card points a builder at, as paths from the project root.
 const referenceOf = (root) => { const p = packFor(root); return p ? Object.fromEntries(Object.entries(p.manifest.reference ?? {}).map(([k, v]) => [k, posix(relative(root, join(p.dir, v)))])) : null; };
 
 export const commands = {
@@ -118,7 +118,7 @@ export const commands = {
     const domain = kind === 'domain' ? name : flag('domain');
     const v = { domain, stage: name, kit: name, system: name, deployable: name };
     if (domain !== undefined) { const f = domainForms(nameOf('domain', { domain }, reg), reg); Object.assign(v, { domain, singular: f.singularCompact, Singular: f.SingularPascal }); }
-    if (kind === 'slice') v.operation = nameOf('slice', { domain, verb: name }, reg);
+    if (kind === 'operation') v.operation = nameOf('operation', { domain, verb: name }, reg);
     const what = { foundation: 'kit', pipeline: 'stage' }[kind], known = reg.vocabularies[kind]; // registered, never invented
     if (what && !known.includes(name)) throw new UsageError(msg('nameUnregistered', { what, value: name, where: `naming.vocabularies.${kind}`, known: known.join(', ') }));
     if (kind === 'runtime') { // a deployable is <system>-<domain or stage>-<role>, composed, never invented
@@ -127,7 +127,7 @@ export const commands = {
       if (composed !== name) throw new UsageError(msg('nameUnregistered', { what: 'deployable', value: name, where: 'naming.grammar.deployable', known: composed }));
     }
     if (kind === 'adapter' && (!new RegExp(config.naming.word).test(name) || reg.banned.includes(name))) throw new UsageError(msg('nameUnregistered', { what: 'system', value: name, where: 'a lower-case word, not banned', known: '-' }));
-    v.dir = render(pack.manifest.folders[kind === 'slice' ? 'domain' : kind], v);
+    v.dir = render(pack.manifest.folders[kind === 'operation' ? 'domain' : kind], v);
     const out = [];
     for (const [template, to] of pack.manifest.scaffold[kind]) {
       const path = render(to, v), file = join(cwd, path);
@@ -154,7 +154,7 @@ const events = (root, profile) => eventFindings(root, profile).map(([path, key, 
 plug('docChecks', (root, profile) => [...events(root, profile), ...selftestFindings(root, profile).map(([key, data]) => ({ code: 'GRAPH-SELFTEST', key, data }))]);
 plug('gateChecks', events);
 plug('proofPatterns', (root) => packFor(root)?.manifest.compileError);
-// The card of a bolt that names a domain links the reference slices to copy.
+// The card of a bolt that names a domain links the reference operations to copy.
 plug('cardSections', (top, bolt, profile) => {
   const ref = referenceOf(top), named = (profile.modules ?? []).some((m) => m.kind === 'domain' && bolt.modules.includes(String(m.id ?? m.name)));
   return ref && named ? [msg('cardReference', ref)] : [];

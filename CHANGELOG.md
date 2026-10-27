@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.173.0] - 2026-10-27
+### Changed
+- The architecture words follow the method and the reference architecture (decision 0023). The glossary names the **vertical slice** (a domain or an extension that owns its data end to end and plugs into the horizontal layers through its contract), the **horizontal layer** (a runtime, pipeline, foundation or adapter every request crosses), the **core**, the **operation** (one command or query of a vertical slice) and the **internal layer** (interface, application, model, infrastructure, pointing inward).
+- `aidlc name operation` and `aidlc scaffold operation` replace `name slice` and `scaffold slice`; the stack packs' `operation` templates replace their `slice` templates.
+- The project constitution's rule 9 says vertical slices own their data and communicate only through published interfaces, events or shared domain services.
+- Shipped messages and the models wording say "vertical slice" and "horizontal layer" in full.
+
 ## [0.172.2] - 2026-10-27
 ### Changed
 - The project constitution's rule 9 states in plain terms that a domain never reaches into another domain's database and that domains communicate through their published interfaces, events or shared domain services.
@@ -272,7 +279,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.172.2...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.173.0...HEAD
+[0.173.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.172.2...v0.173.0
 [0.172.2]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.172.1...v0.172.2
 [0.172.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.172.0...v0.172.1
 [0.172.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.171.0...v0.172.0

@@ -10,7 +10,7 @@
   "migrations": "migrations/{{domain}}",
   "scaffold": {
     "domain": [["domain/model.go", "{{dir}}/model/{{singular}}.go"], ["domain/events.go", "{{dir}}/events/events.go"], ["domain/client.go", "{{dir}}/client/client.go"], ["domain/infrastructure.go", "{{dir}}/infrastructure/infrastructure.go"], ["domain/interface.go", "{{dir}}/interface/interface.go"], ["domain/migration.sql", "migrations/{{domain}}/0001_create_{{domain}}.sql"]],
-    "slice": [["slice/handler.go", "{{dir}}/application/{{operation}}/handler.go"], ["slice/handler_test.go", "{{dir}}/application/{{operation}}/handler_test.go"]],
+    "operation": [["operation/handler.go", "{{dir}}/application/{{operation}}/handler.go"], ["operation/handler_test.go", "{{dir}}/application/{{operation}}/handler_test.go"]],
     "foundation": [["foundation.go", "{{dir}}/{{kit}}.go"]],
     "pipeline": [["pipeline.go", "{{dir}}/{{stage}}.go"]],
     "adapter": [["adapter.go", "{{dir}}/{{system}}.go"]],

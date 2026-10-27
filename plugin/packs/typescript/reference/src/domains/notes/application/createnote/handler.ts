@@ -1,8 +1,8 @@
-// The command slice that creates a note: its ports, its rules and its event, end to end.
+// The command operation that creates a note: its ports, its rules and its event, end to end.
 import type { NoteCreated } from '../../events/events.ts';
 import { type Note, newNote } from '../../model/note.ts';
 
-/** What the slice needs from storage; the infrastructure layer implements it. */
+/** What the operation needs from storage; the infrastructure layer implements it. */
 export interface Repository {
   save(note: Note): Promise<void>;
 }

@@ -148,7 +148,7 @@ test('B161/AC-1 aidlc name prints each kind from the grammar and the registry, a
   const dir = makeRepo(I1, { naming });
   const name = (...args) => run(dir, ['name', ...args]);
   const cases = [
-    [['slice', '--domain', 'providers', '--verb', 'register'], 'registerprovider'],
+    [['operation', '--domain', 'providers', '--verb', 'register'], 'registerprovider'],
     [['operation-id', '--domain', 'roleassignments', '--verb', 'create'], 'RoleAssignments_CreateOrUpdate'],
     [['path', '--domain', 'roleassignments'], '/providers/Acme.Shop/roleAssignments/{roleAssignmentName}'],
     [['permission', '--domain', 'providers', '--action', 'write'], 'Acme.Shop/providers/write'],
@@ -165,7 +165,7 @@ test('B161/AC-1 aidlc name prints each kind from the grammar and the registry, a
   assert.match(name('deployable', '--domain', 'providers', '--role', 'manager').err, /role manager is not in the registry/);
   assert.match(name('deployable', '--domain', 'providers').err, /deployable needs role: --role/);
   assert.match(run(makeRepo(I1, {}), ['name', 'k8s-namespace', '--env', 'dev']).err, /needs system: naming\.tokens\.system/);
-  assert.match(name('nonsense').err, /^name: usage: aidlc name <kind>; kinds: domain, slice/);
+  assert.match(name('nonsense').err, /^name: usage: aidlc name <kind>; kinds: domain, operation/);
 });
 
 test('B162/AC-1 the registry generates the gate rules for migrations, images, namespaces and banned segments, and holds each module id', async () => {

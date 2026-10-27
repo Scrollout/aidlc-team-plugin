@@ -9,7 +9,7 @@
   "migrations": "migrations/{{domain}}",
   "scaffold": {
     "domain": [["domain/model.ts", "{{dir}}/model/{{singular}}.ts"], ["domain/events.ts", "{{dir}}/events/events.ts"], ["domain/client.ts", "{{dir}}/client/client.ts"], ["domain/infrastructure.ts", "{{dir}}/infrastructure/infrastructure.ts"], ["domain/interface.ts", "{{dir}}/interface/interface.ts"], ["domain/migration.sql", "migrations/{{domain}}/0001_create_{{domain}}.sql"]],
-    "slice": [["slice/handler.ts", "{{dir}}/application/{{operation}}/handler.ts"], ["slice/handler.spec.ts", "{{dir}}/application/{{operation}}/handler.spec.ts"]],
+    "operation": [["operation/handler.ts", "{{dir}}/application/{{operation}}/handler.ts"], ["operation/handler.spec.ts", "{{dir}}/application/{{operation}}/handler.spec.ts"]],
     "foundation": [["foundation.ts", "{{dir}}/{{kit}}.ts"]],
     "pipeline": [["pipeline.ts", "{{dir}}/{{stage}}.ts"]],
     "adapter": [["adapter.ts", "{{dir}}/{{system}}.ts"]],

@@ -1,4 +1,4 @@
-// Package infrastructure implements the slices' ports; it depends on the model only.
+// Package infrastructure implements the operations' ports; it depends on the model only.
 package infrastructure
 
 import (

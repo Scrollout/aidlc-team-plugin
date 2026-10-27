@@ -18,13 +18,13 @@ A new project starts from a proven shape, and an existing one is measured agains
 A folder, `models/<name>/`:
 - `model.json`:
   - `layers`: the horizontal layers, in order, each with its kind and its role;
-  - `domains`: the shared domains every slice relies on;
-  - `slice`: the vertical contract: what each slice declares and must offer;
+  - `domains`: the shared domains every vertical slice relies on;
+  - `slice`: what each vertical slice declares and must offer;
   - `contracts`: what passes between layers and slices;
   - `rules`: rule types with their parameters;
   - `decisions`: the starter decisions;
   - `fit`: the signals intake matches;
-  - `slices`: the reference slice per stack pack.
+  - `slices`: a vertical slice's reference code per stack pack.
 - `knowledge/`: what the architect persona reads to apply the model.
 - `decisions/`: starter decisions in MADR, proposed until the owner approves each one.
 

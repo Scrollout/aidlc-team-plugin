@@ -1,2 +1,2 @@
-// Package infrastructure implements the {{domain}} slices' ports; it depends on the model only.
+// Package infrastructure implements the {{domain}} operations' ports; it depends on the model only.
 package infrastructure

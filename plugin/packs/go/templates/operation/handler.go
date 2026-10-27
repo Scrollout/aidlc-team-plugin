@@ -1,4 +1,4 @@
-// Package {{operation}} is the {{operation}} slice of the {{domain}} domain: its port, its rules and its events, end to end.
+// Package {{operation}} is the {{operation}} operation of the {{domain}} domain: its port, its rules and its events, end to end.
 package {{operation}}
 
 import "context"

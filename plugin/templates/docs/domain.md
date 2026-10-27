@@ -16,8 +16,8 @@ kind: domain
 - `<table>`: <what it holds>
 
 # Surface
-- Commands: <operation>, one slice each
-- Queries: <operation>, one slice each
+- Commands: <operation>, one folder each
+- Queries: <operation>, one folder each
 - Events: <Noun><PastTenseVerb>
 
 # Relationships

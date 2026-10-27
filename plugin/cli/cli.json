@@ -1736,7 +1736,7 @@
     },
     "grammar": {
       "domain": { "template": "{{domain}}", "needs": ["domain"], "regex": "^[a-z][a-z0-9]*$" },
-      "slice": { "template": "{{verb}}{{singularCompact}}", "needs": ["domain", "verb"], "regex": "^[a-z][a-z0-9]*$" },
+      "operation": { "template": "{{verb}}{{singularCompact}}", "needs": ["domain", "verb"], "regex": "^[a-z][a-z0-9]*$" },
       "operation-id": { "template": "{{TypePascal}}_{{OperationVerb}}", "needs": ["domain", "verb"], "regex": "^[A-Z][A-Za-z0-9]*_[A-Z][A-Za-z0-9]*$" },
       "namespace-api": { "template": "{{Namespace}}", "needs": ["org", "system"], "regex": "^[A-Z][A-Za-z0-9]*(\\.[A-Z][A-Za-z0-9]*)+$" },
       "path": { "template": "/providers/{{Namespace}}/{{typeCamel}}/{{{singularCamel}}Name}", "needs": ["org", "system", "domain"], "regex": "^/providers/[A-Z][A-Za-z0-9.]+/[a-z][A-Za-z0-9]*/\\{[a-z][A-Za-z0-9]*Name\\}$" },
@@ -1773,12 +1773,14 @@
   },
   "vocabulary": {
     "words": [
-      { "word": "core", "scale": "System", "meaning": "the shared platform every extension uses", "method": "the system", "declared": "profile `system.core`" },
-      { "word": "extension", "scale": "System", "meaning": "a vertical capability owned elsewhere, built only against published contracts", "method": "another team's Units", "declared": "profile `system.extensions`" },
-      { "word": "domain", "scale": "Domain", "meaning": "a bounded context: its data, language, contract and events", "method": "**Unit**", "declared": "`domains/<code>.md`, module `kind: domain`" },
+      { "word": "vertical slice", "scale": "System", "meaning": "a part of the system that owns its data end to end, built by one team and plugged into the horizontal layers through its contract: a domain or an extension", "method": "a Unit's column, domain design to deployment", "declared": "module `kind: domain` or `kind: extension`" },
+      { "word": "horizontal layer", "scale": "System", "meaning": "a part every request crosses, built once for every vertical slice: the entry, a governance stage, a shared kit or an adapter", "method": "-", "declared": "module `kind: runtime`, `pipeline`, `foundation` or `adapter`" },
+      { "word": "core", "scale": "System", "meaning": "the horizontal layers and the shared domains every vertical slice uses", "method": "the system", "declared": "profile `system.core`" },
+      { "word": "extension", "scale": "System", "meaning": "a vertical slice another team owns, built only against published contracts", "method": "another team's Units", "declared": "profile `system.extensions`" },
+      { "word": "domain", "scale": "Domain", "meaning": "a vertical slice holding one bounded context: its data, language, contract and events", "method": "**Unit**", "declared": "`domains/<code>.md`, module `kind: domain`" },
       { "word": "kind", "scale": "Domain", "meaning": "`domain`, `pipeline`, `foundation`, `adapter`, `runtime`, `extension` or `delivery`", "method": "-", "declared": "module `kind`" },
-      { "word": "slice", "scale": "Code", "meaning": "one operation (command or query) of one domain, end to end, in one folder", "method": "part of a Unit's stories", "declared": "the domain's `surface`" },
-      { "word": "layer", "scale": "Code", "meaning": "a position inside a module: `interface`, `application`, `model` or `infrastructure`", "method": "logical design", "declared": "the stack pack" },
+      { "word": "operation", "scale": "Code", "meaning": "one command or query of a vertical slice, end to end, in one folder", "method": "part of a Unit's stories", "declared": "the domain's `surface`" },
+      { "word": "internal layer", "scale": "Code", "meaning": "a position inside a vertical slice, pointing inward: `interface`, `application`, `model` or `infrastructure`", "method": "logical design", "declared": "the stack pack" },
       { "word": "intent", "scale": "Delivery", "meaning": "one business outcome, with its why and success measures", "method": "**Intent**", "declared": "`intents/I-<n>-<slug>.md`" },
       { "word": "increment", "scale": "Delivery", "meaning": "a shippable step of an intent; increment 1 is the walking skeleton", "method": "groups Bolts", "declared": "the intent's `# Increments`, `I-<n>.<k>`" },
       { "word": "bolt", "scale": "Delivery", "meaning": "the smallest build cycle: one card, worktree, review and merge", "method": "**Bolt**", "declared": "`bolts/B-<n>-<slug>.md`" },
@@ -1791,6 +1793,7 @@
     "retired": [
       { "word": "unit", "sense": "a work item", "use": "bolt (unit stays a test level)" },
       { "word": "slice", "sense": "a delivery step", "use": "increment" },
+      { "word": "slice", "sense": "one command or query", "use": "operation" },
       { "word": "bundle", "sense": "a piece of the architecture, not the docs bundle", "use": "domain" },
       { "word": "component", "sense": "a piece of the architecture", "use": "domain, or runtime for a deployable" },
       { "word": "capability", "sense": "a module", "use": "domain" }

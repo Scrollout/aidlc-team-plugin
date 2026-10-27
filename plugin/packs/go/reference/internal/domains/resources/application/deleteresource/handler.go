@@ -1,4 +1,4 @@
-// Package deleteresource is the command slice that removes a resource's metadata; removing one that is not there
+// Package deleteresource is the command operation that removes a resource's metadata; removing one that is not there
 // is not an error, so the front door answers it with no content.
 package deleteresource
 
@@ -9,7 +9,7 @@ import (
 	"example.com/reference/internal/domains/resources/model"
 )
 
-// Repository is what the slice needs from storage.
+// Repository is what the operation needs from storage.
 type Repository interface {
 	Get(ctx context.Context, id string) (model.Resource, bool)
 	Remove(ctx context.Context, id string) error

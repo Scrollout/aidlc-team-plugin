@@ -106,7 +106,7 @@ test('B230/AC-1 B230/AC-2 only the chosen model\'s rules run, each reporting wha
   const lines = ruleLines(dir);
   for (const want of [
     'src/gate/stages.txt:1 PIPELINE-ORDER model minimal: the stages come as authenticate, policy, authorize, not in the model\'s order authenticate, authorize, policy',
-    '.aidlc/profile.json:1 PROVIDER-CONTRACT model minimal: module things (extension) declares no types under slice',
+    '.aidlc/profile.json:1 PROVIDER-CONTRACT model minimal: module things (extension) declares no types under `slice`',
     'api/things/openapi.yaml:1 LONG-RUNNING model minimal: PUT /things/{thingName} is flagged long-running but answers none of 201 with Op-Status and Retry-After, or 202 with Op-Result and Retry-After',
     'api/things/openapi.yaml:1 LONG-RUNNING model minimal: DELETE /things/{thingName} declares no 204 answer for an absent resource',
     'api/things/openapi.yaml:1 EVENT-COVERAGE model minimal: PUT /things/{thingName} emits things.written, which no events file defines',
@@ -142,7 +142,7 @@ test('B231/AC-1 intake lists the models that fit the request; apply records the 
     'increments along minimal\'s layers, for the intent\'s # Increments:',
     '- I-<n>.1 Walking skeleton: one request through gate, end to end on the target',
     '- I-<n>.2 records: what exists',
-    '- I-<n>.3 A first slice, declaring namespace',
+    '- I-<n>.3 A first vertical slice, declaring namespace',
     '',
   ].join('\n'));
   assert.equal(JSON.parse(read(dir, '.aidlc/profile.json')).model.name, 'minimal');

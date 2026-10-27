@@ -1,4 +1,4 @@
-// Package createnote is the command slice that creates a note: its port, its rules and its event, end to end.
+// Package createnote is the command operation that creates a note: its port, its rules and its event, end to end.
 package createnote
 
 import (
@@ -8,7 +8,7 @@ import (
 	"example.com/reference/internal/domains/notes/model"
 )
 
-// Repository is what the slice needs from storage; the infrastructure layer implements it.
+// Repository is what the operation needs from storage; the infrastructure layer implements it.
 type Repository interface {
 	Save(ctx context.Context, n model.Note) error
 }

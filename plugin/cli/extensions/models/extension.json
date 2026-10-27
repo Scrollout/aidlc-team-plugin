@@ -5,9 +5,9 @@
   "data": {
     "okf": {
       "codes": {
-        "MODEL-FORMAT": { "level": "error", "fix": "give the model folder a model.json with name, title, description, layers and slice; layers and domains with unique ids and kinds from the vocabulary; rules of known types; contracts between known ids; decisions as Decision docs (docs: Models)" },
+        "MODEL-FORMAT": { "level": "error", "fix": "give the model folder a model.json with `name`, `title`, `description`, `layers` (its horizontal layers) and `slice` (its vertical slice); layers and domains with unique ids and kinds from the vocabulary; rules of known types; contracts between known ids; decisions as Decision docs (docs: Models)" },
         "PIPELINE-ORDER": { "level": "error", "fix": "wire the stages in the model's order, or point model.wiring in the profile at the file and the pattern that name them (docs: Models)" },
-        "PROVIDER-CONTRACT": { "level": "error", "fix": "declare each field the model's slice asks under the module's slice in the profile (docs: Models)" },
+        "PROVIDER-CONTRACT": { "level": "error", "fix": "declare each field the model's vertical slice asks under the module's `slice` in the profile (docs: Models)" },
         "LONG-RUNNING": { "level": "error", "fix": "answer the flagged operation in one of the model's shapes, with its link and retry headers named in model.operations, and give a delete its no-content answer (docs: Models)" },
         "EVENT-COVERAGE": { "level": "error", "fix": "name the events each write operation emits under model.events.marker, each defined in the model.events.files (docs: Models)" }
       },
@@ -37,7 +37,7 @@
       "modelItemTwice": "model {{model}}: {{id}} is named twice",
       "modelKind": "model {{model}}: {{id}} has kind {{kind}}, not one of {{kinds}}",
       "modelRule": "model {{model}}: rule type {{type}} is not one of {{types}}",
-      "modelContract": "model {{model}}: a contract's {{end}} is {{id}}, which is no layer, domain or the slice",
+      "modelContract": "model {{model}}: a contract's {{end}} is {{id}}, which is no horizontal layer, domain or the vertical slice",
       "modelDecision": "model {{model}}: decisions/{{file}} is not a Decision doc",
       "modelLine": "{{name}} ({{source}}): {{title}}{{problems}}\n",
       "modelProblems": ", {{count}} format problems: aidlc check",
@@ -52,7 +52,7 @@
       "stageNoFile": "model {{model}}: {{file}}, the wiring model.wiring names, does not exist",
       "stageMissing": "model {{model}}: the wiring names no {{stage}} stage",
       "stageOrder": "model {{model}}: the stages come as {{found}}, not in the model's order {{stages}}",
-      "sliceMissing": "model {{model}}: module {{module}} ({{kind}}) declares no {{fields}} under slice",
+      "sliceMissing": "model {{model}}: module {{module}} ({{kind}}) declares no {{fields}} under `slice`",
       "lroNoNames": "model {{model}}: model.operations in the profile names no {{roles}} header",
       "lroShape": "model {{model}}: {{method}} {{path}} is flagged long-running but answers none of {{shapes}}",
       "lroDelete": "model {{model}}: DELETE {{path}} declares no {{code}} answer for an absent resource",
@@ -70,7 +70,7 @@
       "incLine": "- I-<n>.{{k}} {{text}}\n",
       "incSkeleton": "Walking skeleton: one request through {{layers}}, end to end on the target",
       "incDomain": "{{id}}: {{role}}",
-      "incSlice": "A first slice, declaring {{declares}}",
+      "incSlice": "A first vertical slice, declaring {{declares}}",
       "incGap": "{{id}} ({{kind}}): {{role}}",
       "gapsNoModel": "the profile chooses no model: aidlc models apply <name>, or model.name in {{file}}",
       "gapsHead": "model {{name}}: {{played}} of {{total}} items played by modules (modules[].layer)\n",
