@@ -209,3 +209,47 @@ test('B164/AC-1 the card prints the names a bolt will create for each registered
   assert.match(card, /^- names this bolt creates for providers \(aidlc name\): schema providers, database role rsm_providers, path \/providers\/Acme\.Rsm\/providers\/\{providerName\}, write permission Acme\.Rsm\/providers\/write, created event Acme\.Rsm\.ProviderCreated$/m);
   assert.doesNotMatch(card, /names this bolt creates for db/, 'only domains');
 });
+
+test('B165/AC-1 CONTRACT-NAME checks a published OpenAPI document against the API grammar', async () => {
+  const { contractProblems } = await import('../plugin/cli/lib/contract.mjs');
+  const keys = (doc) => contractProblems(doc).map(([k, d]) => `${k} ${Object.values(d).join(' ')}`);
+  const good = {
+    info: { version: '2026-10-27' },
+    paths: { '/providers/Acme.Rsm/roleAssignments/{roleAssignmentName}': { put: { operationId: 'RoleAssignments_CreateOrUpdate' }, get: { operationId: 'RoleAssignments_Get' } } },
+    components: { schemas: {
+      RoleAssignment: { properties: { id: { type: 'string' }, name: {}, type: {}, systemData: {}, properties: {}, enabled: { type: 'boolean' } } },
+      RoleAssignmentList: { properties: { value: { type: 'array' }, nextLink: { type: 'string' } } },
+      State: { type: 'string', enum: ['Succeeded', 'Failed', 'Canceled'] },
+    } },
+  };
+  assert.deepEqual(keys(good), []);
+  const bad = {
+    info: { version: 'v1' },
+    paths: { '/providers/acme/role_assignments/{name}/x': { put: { operationId: 'roleAssignments_get' } } },
+    components: { schemas: { R: { properties: { id: {}, name: {}, type: {}, Display_Name: {}, isEnabled: { type: 'boolean' } } }, L: { properties: { value: { type: 'array' } } }, S: { type: 'string', enum: ['succeeded'] } } },
+  };
+  assert.deepEqual(keys(bad), [
+    'contractVersion v1',
+    'contractSegment /providers/acme/role_assignments/{name}/x acme a PascalCase dotted namespace, Org.Service',
+    'contractSegment /providers/acme/role_assignments/{name}/x role_assignments camelCase',
+    'contractParam /providers/acme/role_assignments/{name}/x name',
+    'contractPut /providers/acme/role_assignments/{name}/x',
+    'contractOperationId /providers/acme/role_assignments/{name}/x put roleAssignments_get',
+    'contractProperty components.schemas.R Display_Name',
+    'contractBoolean components.schemas.R isEnabled',
+    'contractSystemData components.schemas.R',
+    'contractNextLink components.schemas.L',
+    'contractEnum components.schemas.S succeeded',
+  ]);
+});
+
+test('B165/AC-1 check reports CONTRACT-NAME on the documents under api/ once the profile has a naming registry', () => {
+  const spec = 'openapi: 3.1.0\ninfo:\n  title: x\n  version: v1\npaths:\n  /providers/{namespace}:\n    get:\n      operationId: Providers_get\n';
+  const found = (profile) => run(makeRepo({ ...I1, 'api/frontdoor/openapi.yaml': spec }, profile), ['check']).out.split('\n').filter((l) => /CONTRACT-NAME/.test(l)).map((l) => l.replace(/ → .*$/, ''));
+  assert.deepEqual(found({}), [], 'no registry, no contract check');
+  assert.deepEqual(found({ naming: { tokens: { system: 'rsm' } } }), [
+    'api/frontdoor/openapi.yaml:1 CONTRACT-NAME info.version v1 is no api-version (YYYY-MM-DD or YYYY-MM-DD-preview)',
+    'api/frontdoor/openapi.yaml:1 CONTRACT-NAME /providers/{namespace}: parameter namespace is not a full lowerCamel name ending in Name or Id',
+    'api/frontdoor/openapi.yaml:1 CONTRACT-NAME /providers/{namespace} get: operationId Providers_get is not Noun_Verb',
+  ]);
+});

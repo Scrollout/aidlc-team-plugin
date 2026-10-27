@@ -29,6 +29,8 @@ Warnings (house rules; `profile.docs.rules` sets each to `error`, `warning` or `
 
 On the base (`check --ci` and the merge gate), `HOUSE-INDEX-STALE` and `HOUSE-LINK` are errors unless `docs.rules` sets their level (`okf.bundle.baseErrors`).
 
+`CONTRACT-NAME` (error, with a naming registry): a published OpenAPI document against the API grammar ([Naming](naming.md)).
+
 `DOC-SLUG` (an error in a v2 bundle, a warning in v1): a file named by an ID whose slug is not its title's. `DOC-SCHEMA` and `DOC-GENERATED` (errors, not house rules): a doc missing a key its type requires, with a value its list does not allow, or outside its type's folder in a v2 project; a generated doc edited by hand or written by anyone but the CLI ([Bundle v2](bundle.md)).
 
 `PROFILE-RULE` (error): a `docs.rules` entry that is not a `HOUSE-*` code set to `error`, `warning` or `off`.

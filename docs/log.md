@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M16 B165: `CONTRACT-NAME` checks each published OpenAPI document against the reference API grammar in `check` and at the gate, once the profile has a naming registry; event types move to M17. M16 is built ([Naming](design/naming.md)). Release 0.136.0.
 - **Update** M16 B164: the card names what the bolt will create: for each registered domain module it names, its schema, database role, path, write permission and created event, printed from the grammar ([Naming](design/naming.md)). Release 0.135.0.
 - **Update** M16 B163: one term, one meaning: the domain docs' glossaries generate `naming/glossary.md` at every merge and by `aidlc map`, and a synonym a glossary says to avoid, added by a bolt outside the domain docs, is `TERM-SYNONYM` at the gate ([Naming](design/naming.md)). Release 0.134.0.
 - **Update** M16 B162: the registry generates the gate's naming rules (migrations, images, namespaces, and no banned word as a path segment) beside the project's own; module ids must be registered for their kind, and a v2 profile needs a system code (`PROFILE-NAMING`); the names doc folds into [Naming](design/naming.md). Release 0.133.0.
