@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** Plan M26 Values as data: principle 11 (values are data; the owner: "Nothing should be hardcoded"), the design doc [Values as data](design/values.md) and the roadmap [M26](roadmap/m26.md) (B235-B237, the board as a declarative template). The M21 pilot follows it.
 - **Update** Docs aligned with M22 and M24: the overview's goals (plain prose in, proven shapes) and layout (shipped models, stack packs), the arc42 page (context, strategy, concepts, every code page), the README (what the plugin is now, its parts and what it writes into a project) and Later (the method-pin gap, role-scoped rules).
 - **Update** the Agent hook spawns git twice instead of nine times (the common dir once per folder, branch refs read from the repository's files), for the Windows hook budget. Release 0.172.1.
 - **Update** M24 B234: the architect persona knows how to model a reference and apply a model (`architect/models.md`, held to the rule types the CLI knows). M24 Models is built: its design and roadmap are stable. Release 0.172.0.

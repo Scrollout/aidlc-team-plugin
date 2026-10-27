@@ -1,7 +1,7 @@
 ---
 type: Principles
 title: Principles
-description: The ten rules every design choice in this plugin is checked against.
+description: The eleven rules every design choice in this plugin is checked against.
 status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 ---
@@ -26,3 +26,5 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
    *Why:* a previous tool's skills were squeezed under a cap instead of being simplified.
 10. **No ceremony for the plugin itself.** This repo is built with a plain plan, tests and review; it never governs its own process with its own process.
     *Why:* a previous tool spent its effort enforcing its own rules and delivered none of its requirements.
+11. **Values are data.** Every name, word, heading, path, pattern, threshold, default, mapping, message and doc grammar lives in `cli.json`, an extension's data, a template or the profile. Code holds logic, the protocol of the tools it calls (git, gh, HTTP, Node) and keys into the data; a test fails on any other literal ([Values as data](../design/values.md)).
+    *Why:* the owner, 2026-10-27: "Nothing should be hardcoded." A value in code changes only with a release and cannot be reviewed or overridden.
