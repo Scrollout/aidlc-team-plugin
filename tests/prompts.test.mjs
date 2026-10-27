@@ -2,7 +2,7 @@
 // contract, the review focuses `next` names, and the eval fixture.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { approve, branch, commit, git, intentDoc, makeRepo, review, run, tempDir, unitDoc } from './state-repo.mjs';
 import { DEFECTS, score, setup } from './evals/run.mjs';
@@ -207,4 +207,11 @@ test('U64/AC-2 the README shows every hook, module, agent, template, trailer, th
   assert.ok(readme.includes(`at most ${rounds} fix rounds`));
   assert.match(readme, /\]\(docs\/roadmap\/index\.md\)/);
   assert.doesNotMatch(readme, /roadmap\/m1\.md/);
+});
+
+test('the skill works in the role a step names and asks for the naming tokens at setup', () => {
+  const skill = parse(SKILL).body;
+  assert.match(skill, /\*\*elaborate, draft\*\*: work as the role the line names \(`aidlc persona <role>`\)/);
+  for (const role of new Set(Object.values(config.personas.steps))) assert.ok(existsSync(join(ROOT, 'plugin/personas', `${role}.md`)), `the ${role} persona the steps name exists`);
+  for (const flag of ['--system-code', '--org', '--zone']) assert.ok(skill.includes(flag) && config.commands.find((c) => c.name === 'init').flags.includes(flag), flag);
 });

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.183.1] - 2026-10-27
+### Changed
+- The lead's skill works in the role a step names (`aidlc persona <role>`) while elaborating, asks the owner for the naming tokens at setup and passes them to `init`, and says once that a hook adds each agent's card or brief.
+
 ## [0.183.0] - 2026-10-27
 ### Added
 - Structured answers (M26 B239). `status`, `next`, `lane`, `graph`, `models` and `check` return their values as `data`, and their text is rendered from it. `next` serves its action as `{ command, args }`, the `aidlc` command its line names, from `state.actions`; an agent's or the owner's own step serves none.
@@ -361,7 +365,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.183.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.183.1...HEAD
+[0.183.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.183.0...v0.183.1
 [0.183.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.182.1...v0.183.0
 [0.182.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.182.0...v0.182.1
 [0.182.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.181.0...v0.182.0

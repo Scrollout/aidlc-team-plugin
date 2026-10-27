@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** The lead's skill works in the role a step names and asks for the naming tokens at setup ([Prompts](design/prompts.md#skill-aidlc)). Release 0.183.1.
 - **Update** M26 B239 built: structured answers and `--json` ([CLI engine](design/cli-engine.md)); `next` serves its action as `{ command, args }` ([State](design/state.md#next)). [Values as data](design/values.md) is stable. Release 0.183.0.
 - **Update** The lifecycle states are named in `state.names` and referred to by that map; the values guard reports a state name written as a literal ([Values as data](design/values.md#the-guard)). The stated minimum is Node 24 ([CLI engine](design/cli-engine.md), [arc42](design/arc42.md)). Release 0.182.1.
 - **Update** M26 B238 built: `VALUE-LITERAL` at every project's merge gate, read by the stack pack's literal syntax, and the rule in the project constitution, the builder and the reviewer ([Values as data](design/values.md#in-projects), [Stack packs](design/stack-packs.md)). CI tests on Node 24 and 26. Release 0.182.0.
