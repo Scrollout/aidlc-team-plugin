@@ -1,8 +1,8 @@
 ---
 type: Design
 title: Vertical slices checked
-description: Draft - deterministic checks that a domain's code is grouped into vertical slices across its horizontal layers - no slice imports another, slices are entered only from the interface layer, every file sits in one layer and one slice, the slice folders match the domain doc's commands and queries, each slice cites the stories it serves and has its own test.
-status: draft
+description: Deterministic checks that a domain's code is grouped into vertical slices across its horizontal layers - no slice imports another, slices are entered only from the interface layer, every file sits in one layer and one slice, the slice folders match the domain doc's commands and queries, each slice cites the stories it serves and has its own test.
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-28T02:30:00Z }
 ---
 
@@ -23,7 +23,10 @@ Each is static and reads the graph the pack already builds; which layers may ent
 - `SLICE-STORY`: a surface line cites no story, or one no intent holds; a story of an approved intent's unit of work that changes the domain is cited by no slice.
 - `SLICE-TEST`: no test sits in the slice's folder and none imports it.
 
-Later, in their own bolt: a slice name that is not a verb and a noun from the naming registry; every route mapped to exactly one slice through a unique operation id equal to its name; a bolt that adds a slice also adding its route, its test and its surface line.
+With a naming registry, the slice's name and its route:
+- `SLICE-NAME`: a slice folder that is no name the registry composes from one of its verbs and the domain's noun (`aidlc name slice`).
+- `SLICE-ROUTE`: an operation id used twice in the contracts, one that maps to no slice folder, or a slice of a domain the contracts serve that no operation maps to. An operation id maps to the slice the registry composes from the same domain and verb.
+- `SLICE-DELIVER`: a bolt that adds a slice changes no file of its domain's interface layer or of a runtime, which wire its route, or not the domain doc, which lists it.
 
 # Where they run
 At the merge gate, on the merge result. A project's existing code is measured as it changes: a finding counts only where the bolt changed a file, the slice folder or the domain doc it names, so debt from before adoption waits for the bolt that touches it.

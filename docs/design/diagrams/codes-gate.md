@@ -52,3 +52,6 @@ generated: { by: tests/diagrams.mjs }
 | `SLICE-SURFACE` | list each slice folder under the domain doc's # Surface as - Command <slice>: <the use case it serves> [I-<n>:US<g>.<s>], or - Query, and no other (docs: Vertical slices checked) |
 | `SLICE-STORY` | cite on each slice's surface line the stories it serves, as [I-<n>:US<g>.<s>], so every story of a unit of work that changes the domain has a slice (docs: Vertical slices checked) |
 | `SLICE-TEST` | give the slice a test in its folder, or a test that imports it (docs: Vertical slices checked) |
+| `SLICE-NAME` | name the slice as aidlc name slice composes it, from a verb of the registry and the domain's noun (docs: Vertical slices checked) |
+| `SLICE-ROUTE` | give each slice its operation, with the operation id aidlc name operation-id composes from the same domain and verb, once in the contracts (docs: Vertical slices checked) |
+| `SLICE-DELIVER` | deliver a new slice whole: its route in the domain's interface layer or a runtime, its test and its line under the domain doc's # Surface, in the same bolt (docs: Vertical slices checked) |

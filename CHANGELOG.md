@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.178.0] - 2026-10-27
+### Added
+- With a naming registry, slices are named and routed by it at the merge gate: `SLICE-NAME` (a slice folder that is no name the registry composes from a verb and the domain's noun) and `SLICE-ROUTE` (an operation id used twice, one that maps to no slice folder or to no domain and verb, or a slice of a domain the contracts serve that no operation reaches).
+- `SLICE-DELIVER`: a bolt that adds a slice must also change its domain's interface layer or a runtime, which wire its route, and the domain doc, which lists it.
+
 ## [0.177.0] - 2026-10-27
 ### Added
 - Vertical slices checked at the merge gate, from the stack pack's graph, the folders, the domain doc and the tests: `SLICE-IMPORT` (a slice imports another), `SLICE-ENTRY` (a slice entered from outside its domain's interface layer or a runtime, or from nowhere), `SLICE-PLACE` (a file in no layer or no slice, an empty folder), `SLICE-SURFACE` (slice folders and the domain doc's commands and queries differ, or a slice names no use case), `SLICE-STORY` (a slice cites no story or an unknown one, or an approved unit of work's story has no slice) and `SLICE-TEST` (a slice with no test). A finding counts only where the bolt changed a file.
@@ -311,7 +316,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.177.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.178.0...HEAD
+[0.178.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.177.0...v0.178.0
 [0.177.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.176.0...v0.177.0
 [0.176.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.175.0...v0.176.0
 [0.175.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.174.0...v0.175.0

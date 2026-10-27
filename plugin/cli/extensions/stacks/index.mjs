@@ -2,7 +2,7 @@
 // reads from source, with no toolchain run (docs/design/stack-packs.md).
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
-import { approval, bundleOf, config, domainForms, done, graphOf, list, loadProfile, methodOf, msg, nameOf, parseDoc, plug, posix, readPlan, registry, render, sectionOf, seam, shippedDir, UsageError, withDefaults } from '../../lib/index.mjs';
+import { approval, bundleOf, config, domainForms, done, gitLines, globRegex, graphOf, isMap, list, loadProfile, methodOf, msg, nameOf, parseDoc, parseYaml, plug, posix, readPlan, registry, render, sectionOf, seam, shippedDir, tryGit, UsageError, withDefaults } from '../../lib/index.mjs';
 
 const K = config.packs;
 const packsDir = () => shippedDir('packs');
@@ -208,11 +208,55 @@ export function sliceFindings(root, profile) {
     if (!edges.some(([from, to]) => sliceOf(to) === s && entry(from, s))) add('SLICE-ENTRY', s.dir, 'sliceUnreached', { slice: `${s.domain}/${s.name}`, layers: V.entryLayers.join(', '), kinds: V.entryKinds.join(', ') });
     if (!tests.some((t) => t.startsWith(`${s.dir}/`)) && !testEdges.some(([, to]) => sliceOf(to) === s)) add('SLICE-TEST', s.dir, 'sliceTest', { slice: `${s.domain}/${s.name}` });
   }
+  if (isMap(profile.naming)) routeFindings(root, profile, slices, add);
+  return out;
+}
+// With a naming registry: each slice a name the registry composes, each operation id of the contracts once and mapped to
+// the slice composed from the same domain and verb, and each slice of a domain the contracts serve reached by one.
+function routeFindings(root, profile, slices, add) {
+  const reg = registry(profile, bundleOf(root, withDefaults(profile))), verbs = reg.vocabularies.verb, compose = (kind, domain, verb) => { try { return nameOf(kind, { domain, verb }, reg); } catch { return null; } };
+  const routes = new Map();
+  for (const d of [...new Set(slices.map((s) => s.domain))]) for (const verb of verbs) { const id = compose('operation-id', d, verb); if (id) routes.set(id, { domain: d, slice: compose('slice', d, verb) }); }
+  for (const s of slices) {
+    const names = verbs.map((v) => compose('slice', s.domain, v)).filter(Boolean);
+    if (names.length && !names.includes(s.name)) add('SLICE-NAME', s.dir, 'sliceName', { slice: s.name, domain: s.domain, names: names.join(', ') });
+  }
+  const globs = (profile.naming.contracts ?? config.naming.contract.files).map((g) => globRegex(`/${g}`)), seen = new Map(), served = new Set(), reached = new Set();
+  for (const f of gitLines(root, 'ls-files', '--cached', '--others', '--exclude-standard').filter((x) => globs.some((g) => g.test(x)))) {
+    let doc;
+    try { doc = f.endsWith('.json') ? JSON.parse(readFileSync(join(root, f), 'utf8')) : parseYaml(readFileSync(join(root, f), 'utf8')); } catch { continue; } // CONTRACT-NAME reports it
+    for (const item of Object.values(isMap(doc?.paths) ? doc.paths : {})) for (const op of Object.values(isMap(item) ? item : {}).filter((o) => isMap(o) && o.operationId !== undefined)) {
+      const id = String(op.operationId), route = routes.get(id);
+      if (seen.has(id)) add('SLICE-ROUTE', f, 'sliceRouteTwice', { id });
+      seen.set(id, f);
+      if (!route) { add('SLICE-ROUTE', f, 'sliceRouteUnknown', { id }); continue; }
+      served.add(route.domain);
+      const s = slices.find((x) => x.domain === route.domain && x.name === route.slice);
+      if (s) reached.add(s);
+      else add('SLICE-ROUTE', f, 'sliceRouteNone', { id, slice: route.slice, domain: route.domain });
+    }
+  }
+  for (const s of slices.filter((x) => served.has(x.domain) && !reached.has(x))) add('SLICE-ROUTE', s.dir, 'sliceNoRoute', { slice: `${s.domain}/${s.name}`, domain: s.domain });
+}
+// A bolt that adds a slice delivers it whole: its route wired and its surface line written in the same bolt.
+function deliverFindings(tree, profile, paths) {
+  const pack = packFor(tree);
+  if (!pack) return [];
+  const m = pack.manifest, L = m.layers, out = [], hosts = V.entryKinds.map((k) => m.folders[k].split('{{')[0]);
+  for (const d of (profile.modules ?? []).filter((x) => x.kind === 'domain').map((x) => String(x.id ?? x.name))) {
+    const dir = render(m.folders.domain, { domain: d }), app = `${dir}/${L.application}`, doc = posix(relative(tree, join(bundleOf(tree, withDefaults(profile)), config.okf.bundle.folders.Domain, `${d}${config.okf.ext}`)));
+    const added = [...new Set(paths.filter((p) => p.startsWith(`${app}/`) && p.split('/').length > app.split('/').length + 1).map((p) => p.split('/').slice(0, app.split('/').length + 1).join('/')))].filter((s) => tryGit(tree, 'cat-file', '-e', `HEAD:${s}`) === null);
+    for (const s of added) {
+      const slice = `${d}/${s.split('/').at(-1)}`, layers = V.entryLayers.map((l) => `${dir}/${L[l]}/`);
+      if (!paths.some((p) => layers.some((l) => p.startsWith(l)) || hosts.some((h) => p.startsWith(h)))) out.push({ code: 'SLICE-DELIVER', path: s, key: 'sliceDeliverRoute', data: { slice, layers: layers.join(', ') } });
+      if (!paths.includes(doc)) out.push({ code: 'SLICE-DELIVER', path: s, key: 'sliceDeliverDoc', data: { slice, doc } });
+    }
+  }
   return out;
 }
 // At the gate, a project's existing code is measured as it changes: only findings where the bolt changed a file count.
 const touched = (paths) => (f) => paths.some((p) => p === f.path || p.startsWith(`${f.path}/`));
-plug('gateChecks', (tree, profile, paths = []) => sliceFindings(tree, profile).filter(touched(paths)));
+plug('gateChecks', (tree, profile, paths = []) => [...sliceFindings(tree, profile).filter(touched(paths)), ...deliverFindings(tree, profile, paths)]);
 
 plug('docChecks', (root, profile) => [...events(root, profile), ...selftestFindings(root, profile).map(([key, data]) => ({ code: 'GRAPH-SELFTEST', key, data }))]);
 plug('gateChecks', events);

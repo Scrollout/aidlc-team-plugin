@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { seam } from '../plugin/cli/lib/index.mjs';
 import '../plugin/cli/extensions/intake/index.mjs'; // its stories seam, as the CLI loads every extension
 import { sliceFindings } from '../plugin/cli/extensions/stacks/index.mjs';
-import { makeRepo } from './state-repo.mjs';
+import { makeRepo, write } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const NOTES = { system: { core: ['internal/**', 'cmd/**'] }, modules: [{ id: 'notes', kind: 'domain', paths: ['internal/domains/notes/**'] }, { id: 'notes-api', kind: 'runtime', paths: ['cmd/notes-api/**'] }] };
@@ -72,4 +72,40 @@ test('B245/AC-2 the slice folders equal the domain doc\'s commands and queries, 
   const gate = (paths) => seam('gateChecks', ORDERS).flatMap((check) => check(dir, ORDERS, paths)).filter((f) => f.code.startsWith('SLICE-'));
   assert.deepEqual(gate([`${D}/model/order.go`]), [], 'existing debt is not the bolt\'s');
   assert.deepEqual(lines(gate(['docs/domains/orders.md'])), ['SLICE-SURFACE docs/domains/orders.md sliceUseCase'], 'a bolt that changes the doc answers for it');
+});
+
+// B246: with a naming registry, slices named and routed by it, and a new slice delivered whole.
+const NAMED = { ...ORDERS, naming: { tokens: { system: 'shop', org: 'acme' }, domains: { orders: {} } } };
+const shop = (extra = {}) => ({
+  'go.mod': 'module example.com/shop\n\ngo 1.22\n',
+  [`${D}/application/createorder/handler.go`]: go('createorder', [`${D}/model`]), [`${D}/application/createorder/handler_test.go`]: 'package createorder\n',
+  [`${D}/model/order.go`]: go('model'), [`${D}/interface/http.go`]: go('iface', [`${D}/application/createorder`]),
+  ...extra,
+});
+const api = (ops) => `openapi: 3.1.0\ninfo: { title: Orders, version: 2026-10-01 }\npaths:\n${ops.map(([path, method, id]) => `  ${path}:\n    ${method}:\n      operationId: ${id}\n`).join('')}`;
+
+test('B246/AC-1 a slice is a name the registry composes, and each operation id maps once to the slice of its domain and verb', () => {
+  assert.deepEqual(lines(sliceFindings(makeRepo(shop({ 'api/orders/openapi.yaml': api([['/orders/{orderName}', 'put', 'Orders_CreateOrUpdate']]) }), NAMED), NAMED)), [], 'named and routed');
+  const dir = makeRepo(shop({
+    [`${D}/application/placeorder/handler.go`]: go('placeorder', [`${D}/model`]), [`${D}/application/placeorder/handler_test.go`]: 'package placeorder\n',
+    [`${D}/interface/http.go`]: go('iface', [`${D}/application/createorder`, `${D}/application/placeorder`]),
+    'api/orders/openapi.yaml': api([['/orders/{orderName}', 'put', 'Orders_CreateOrUpdate'], ['/orders/{orderName}/copy', 'put', 'Orders_CreateOrUpdate'], ['/orders', 'get', 'Orders_List'], ['/orders/{orderName}/bake', 'post', 'Orders_Bake']]),
+  }), NAMED);
+  assert.deepEqual(lines(sliceFindings(dir, NAMED)), [
+    `SLICE-NAME ${D}/application/placeorder sliceName`,
+    'SLICE-ROUTE api/orders/openapi.yaml sliceRouteNone',
+    'SLICE-ROUTE api/orders/openapi.yaml sliceRouteTwice',
+    'SLICE-ROUTE api/orders/openapi.yaml sliceRouteUnknown',
+    `SLICE-ROUTE ${D}/application/placeorder sliceNoRoute`,
+  ]);
+});
+
+test('B246/AC-2 a bolt that adds a slice also wires its route and lists it in the domain doc', () => {
+  const dir = makeRepo(shop(), NAMED);
+  const slice = { [`${D}/application/getorder/handler.go`]: go('getorder', [`${D}/model`]), [`${D}/application/getorder/handler_test.go`]: 'package getorder\n' };
+  write(dir, slice);
+  const gate = (paths) => lines(seam('gateChecks', NAMED).flatMap((check) => check(dir, NAMED, paths)).filter((f) => f.code === 'SLICE-DELIVER'));
+  assert.deepEqual(gate(Object.keys(slice)), [`SLICE-DELIVER ${D}/application/getorder sliceDeliverRoute`, `SLICE-DELIVER ${D}/application/getorder sliceDeliverDoc`].sort());
+  assert.deepEqual(gate([...Object.keys(slice), `${D}/interface/http.go`, 'docs/domains/orders.md']), [], 'delivered whole');
+  assert.deepEqual(gate([`${D}/application/createorder/handler.go`]), [], 'a slice the base holds is no new slice');
 });

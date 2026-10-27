@@ -24,7 +24,14 @@
       "sliceBadStory": "domain {{domain}}: slice {{slice}} cites {{story}}, which no intent holds",
       "sliceUncovered": "domain {{domain}}: no slice cites {{story}}, a story of {{intent}}'s unit of work that changes it",
       "sliceTest": "slice {{slice}} has no test: none in its folder and none importing it",
-      "cardReference": "Copy the shape of the stack pack's reference domain ({{domain}}): the command slice {{command}} and the query slice {{query}}.\n"
+      "cardReference": "Copy the shape of the stack pack's reference domain ({{domain}}): the command slice {{command}} and the query slice {{query}}.\n",
+      "sliceName": "slice {{slice}} of domain {{domain}} is no name the registry composes from a verb and the domain's noun: {{names}}",
+      "sliceRouteTwice": "operation id {{id}} is used twice in the contracts",
+      "sliceRouteNone": "operation id {{id}} maps to slice {{slice}} of {{domain}}, which has no folder",
+      "sliceRouteUnknown": "operation id {{id}} maps to no domain and verb of the registry",
+      "sliceNoRoute": "slice {{slice}} has no operation in the contracts, though its domain {{domain}} is served there",
+      "sliceDeliverRoute": "the bolt adds slice {{slice}} but changes nothing in {{layers}} or a runtime that wires its route",
+      "sliceDeliverDoc": "the bolt adds slice {{slice}} but does not change {{doc}}, which lists it"
     },
     "okf": {
       "codes": {
@@ -86,6 +93,18 @@
         "SLICE-TEST": {
           "level": "error",
           "fix": "give the slice a test in its folder, or a test that imports it (docs: Vertical slices checked)"
+        },
+        "SLICE-NAME": {
+          "level": "error",
+          "fix": "name the slice as aidlc name slice composes it, from a verb of the registry and the domain's noun (docs: Vertical slices checked)"
+        },
+        "SLICE-ROUTE": {
+          "level": "error",
+          "fix": "give each slice its operation, with the operation id aidlc name operation-id composes from the same domain and verb, once in the contracts (docs: Vertical slices checked)"
+        },
+        "SLICE-DELIVER": {
+          "level": "error",
+          "fix": "deliver a new slice whole: its route in the domain's interface layer or a runtime, its test and its line under the domain doc's # Surface, in the same bolt (docs: Vertical slices checked)"
         }
       }
     },
