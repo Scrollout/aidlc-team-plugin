@@ -10,9 +10,9 @@ import { exceptDocs } from './architecture.mjs';
 import { inForce, incrementLines, readPlan, topLevel } from './plan.mjs';
 import { overlaps } from '../foundation/glob.mjs';
 import { writePage } from './map.mjs';
-import { delegation, mergedUnits } from './flow.mjs';
+import { mergedUnits, runtimeFile } from '../foundation/store.mjs';
+import { delegation } from './approval.mjs';
 import { plug } from '../foundation/seams.mjs';
-import { runtimeFile } from '../foundation/store.mjs';
 
 const C = config.construction, GRID = config.grid;
 const idOf = (m) => String(m.id ?? m.name);

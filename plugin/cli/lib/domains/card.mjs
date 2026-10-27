@@ -6,13 +6,15 @@ import { bundleOf, CLI_DIR, config, QUICK, STANDARD, VERDICT, done, list, readJs
 import { git, gitLines, tryGit } from '../foundation/git.mjs';
 import { msg, render } from '../foundation/text.mjs';
 import { loadProfile, withDefaults } from '../foundation/profile.mjs';
-import { nameProblem, parseDoc, sectionOf, sizeCap } from './bundle.mjs';
+import { nameProblem, parseDoc, sectionOf, sizeCap, hashDoc } from './bundle.mjs';
 import { generatedRules, nameOf, registry } from './naming.mjs';
 import { seam } from '../foundation/seams.mjs';
 import { computeLane, readPlan, reqId, unitFields } from './plan.mjs';
 import { overlaps } from '../foundation/glob.mjs';
-import { approval, baseOf, branchOf, diffHash, hashDoc, readReview, readState, heldDoc, researchOf, roundsOf, worktrees } from './flow.mjs';
-import { aidlcDir, runtimeFile, sha256, writeJson } from '../foundation/store.mjs';
+import { readState, heldDoc, researchOf } from './flow.mjs';
+import { baseOf, branchOf, worktrees, aidlcDir, runtimeFile, sha256, writeJson } from '../foundation/store.mjs';
+import { diffHash, readReview, roundsOf } from './review.mjs';
+import { approval } from './approval.mjs';
 
 const C = config.card;
 

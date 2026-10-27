@@ -10,8 +10,9 @@ import { loadProfile, withDefaults } from '../foundation/profile.mjs';
 import { checkBundle, parseDoc, writeIndexes } from '../domains/bundle.mjs';
 import { readPlan } from '../domains/plan.mjs';
 import { inside } from '../foundation/glob.mjs';
-import { baseOf, commands as owner, delegated, nextAction, readState, statusText } from '../domains/flow.mjs';
-import { aidlcDir, bump, heartbeatFresh, hostDeniedFile, runtimeFile, writeJson } from '../foundation/store.mjs';
+import { nextAction, readState, statusText } from '../domains/flow.mjs';
+import { commands as owner, delegated } from '../domains/approval.mjs';
+import { baseOf, aidlcDir, bump, heartbeatFresh, hostDeniedFile, runtimeFile, writeJson } from '../foundation/store.mjs';
 import { directAllowed, mergeWritten, secretIn } from '../domains/gate.mjs';
 
 const H = config.hooks;

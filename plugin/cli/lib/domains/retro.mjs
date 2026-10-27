@@ -4,7 +4,8 @@ import { config, VERDICT, done, readJson, UsageError } from '../foundation/data.
 import { tryGit } from '../foundation/git.mjs';
 import { msg } from '../foundation/text.mjs';
 import { basename } from 'node:path';
-import { decisionsOf, events, readState } from './flow.mjs';
+import { decisionsOf, readState } from './flow.mjs';
+import { events } from './approval.mjs';
 import { runtimeFile, statsFile, writeJson } from '../foundation/store.mjs';
 import { incrementLines } from './plan.mjs';
 import { hatchesOf, hatchLine } from './construction.mjs';

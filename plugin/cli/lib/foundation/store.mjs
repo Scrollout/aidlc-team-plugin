@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { config, readJson } from './data.mjs';
-import { git } from './git.mjs';
+import { git, gitLines, tryGit } from './git.mjs';
 
 const S = config.state;
 
@@ -31,3 +31,23 @@ export const sha256 = (text) => createHash('sha256').update(text).digest('hex');
 export const heartbeatAt = (cwd, unit, kind = S.heartbeats) => statSync(join(aidlcDir(cwd), kind, unit), { throwIfNoEntry: false })?.mtimeMs ?? 0;
 export const heartbeatFresh = (cwd, unit, now = Date.now(), kind = S.heartbeats) => now - heartbeatAt(cwd, unit, kind) < S.heartbeatMs;
 export const hostDeniedFile = (cwd) => join(aidlcDir(cwd), S.hostDenied);
+
+// A bolt builds on bolt/B-<n>, a v1 unit on unit/U-<n> (docs/design/increments-and-bolts.md).
+export const branchOf = (unit) => (unit.startsWith(config.grid.boltPrefix) ? S.boltBranch : S.branchPrefix) + unit;
+export const baseOf = (profile) => profile.base;
+// The paths a unit's branch changes since its merge base with the base branch.
+export const unitPaths = (cwd, base, unit) => gitLines(cwd, 'diff', '--name-only', `${base}...${branchOf(unit)}`);
+// The worktree holding each branch: branch → path.
+export const worktrees = (cwd) => new Map(git(cwd, 'worktree', 'list', '--porcelain').split('\n\n')
+  .flatMap((w) => [w.match(/^branch refs\/heads\/(.+)$/m)?.[1]].filter(Boolean).map((b) => [b, w.split('\n')[0].replace(/^worktree /, '')])));
+
+// The units merged on the base, by their Unit trailer: unit → merge commit.
+export function mergedUnits(cwd, base) {
+  const out = new Map();
+  const log = tryGit(cwd, 'log', base, `--format=%H%x1f%(trailers:key=${config.gate.trailers.unit},valueonly,separator=%x1e)%x1d`);
+  for (const rec of (log ?? '').split('\x1d')) {
+    const [sha, values] = rec.trim().split('\x1f');
+    for (const v of (values ?? '').split('\x1e').map((x) => x.trim()).filter(Boolean)) if (!out.has(v)) out.set(v, sha);
+  }
+  return out;
+}

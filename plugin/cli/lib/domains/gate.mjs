@@ -16,8 +16,10 @@ import { writeContextMap, writeGlossary, writeMap } from './map.mjs';
 import { generatedRules, glossaryOf, parseFlags } from './naming.mjs';
 import { boundaryFindings, exceptDocs, graphOf, kindFindings, layerFindings, moduleFindings, reachFindings } from './architecture.mjs';
 import { seam } from '../foundation/seams.mjs';
-import { approval, baseOf, branchOf, codeChanges, diffHash, keptPass, verdictCurrent, mergedUnits, mutationOf, readState, reviewFocuses, roundsOf, stampFindings, unitPaths, worktrees } from './flow.mjs';
-import { aidlcDir, baseRedFile, bump, runtimeFile, writeJson } from '../foundation/store.mjs';
+import { readState } from './flow.mjs';
+import { baseOf, branchOf, mergedUnits, unitPaths, worktrees, aidlcDir, baseRedFile, bump, runtimeFile, writeJson } from '../foundation/store.mjs';
+import { codeChanges, diffHash, keptPass, verdictCurrent, mutationOf, reviewFocuses, roundsOf } from './review.mjs';
+import { approval, stampFindings } from './approval.mjs';
 
 const G = config.gate;
 export { boundaryFindings, moduleFindings } from './architecture.mjs'; // the gate's graph checks live in architecture.mjs

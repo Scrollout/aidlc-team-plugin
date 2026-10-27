@@ -9,6 +9,8 @@ import { msg } from './lib/foundation/text.mjs';
 import { commands as okf } from './lib/domains/bundle.mjs';
 import { commands as grid } from './lib/domains/plan.mjs';
 import { commands as state } from './lib/domains/flow.mjs';
+import { commands as approval } from './lib/domains/approval.mjs';
+import { commands as review } from './lib/domains/review.mjs';
 import { commands as card } from './lib/domains/card.mjs';
 import { commands as init } from './lib/domains/setup.mjs';
 import { commands as gate, planCheck, withSummary } from './lib/domains/gate.mjs';
@@ -36,7 +38,7 @@ const combine = (...handlers) => async (args, ctx) => {
 };
 
 // Each unit that builds a command adds its handler here, keyed by the command name in cli.json.
-export const HANDLERS = { ...okf, ...state, ...card, ...init, ...gate, ...hooks, ...retro, ...deploy, ...map, ...naming, ...inception, ...Object.assign({}, ...extensions.map((x) => x.commands ?? {})), lane: grid.lane, check: withSummary(combine(okf.check, planCheck, gate.check)) };
+export const HANDLERS = { ...okf, ...state, ...approval, ...review, ...card, ...init, ...gate, ...hooks, ...retro, ...deploy, ...map, ...naming, ...inception, ...Object.assign({}, ...extensions.map((x) => x.commands ?? {})), lane: grid.lane, check: withSummary(combine(okf.check, planCheck, gate.check)) };
 
 function help() {
   const width = Math.max(...config.commands.map((c) => c.usage.length));
