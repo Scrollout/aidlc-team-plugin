@@ -115,7 +115,7 @@
     },
     {
       "name": "delegate",
-      "usage": "delegate <class>…|off",
+      "usage": "delegate <class>…|off [--until <date>]",
       "does": "let the lead approve re-approvals or quick-lane units (owner only)"
     },
     {
@@ -177,7 +177,7 @@
     },
     {
       "name": "dispose",
-      "usage": "dispose <I-n|B-n> F-<k> fixed|accepted \"<reason>\"",
+      "usage": "dispose <I-n|B-n> F-<k> fixed|accepted \"<reason>\" [--until <date>]",
       "does": "record the owner's disposition of a review finding"
     },
     {
@@ -243,6 +243,24 @@
     }
   ],
   "messages": {
+    "boltSpan": "{{unit}} binds the domains {{domains}}: outside increment 1 a bolt binds one domain",
+    "boltReach": "{{unit}} reaches the domain {{module}} through scope {{glob}} without binding it",
+    "boltBind": "{{unit}} binds {{modules}}: bind one domain, or one horizontal module",
+    "boltNeeded": "{{unit}} binds the horizontal module {{module}} with no neededBy naming a bolt of {{increment}} that binds a domain",
+    "incrSkeletonAc": "{{unit}}'s increment 1 has no bolt with a {{level}} AC: the walking skeleton runs end to end",
+    "incrSkeletonDelivery": "{{unit}}'s increment 1 has no bolt binding a delivery module: the walking skeleton runs on its target",
+    "fixAcs": "fix bolt {{unit}} has {{count}} ACs: a fix bolt has exactly one, its regression test",
+    "fixDecision": "fix bolt {{unit}} reaches {{area}} through scope {{glob}}: a fix bolt touches no decision",
+    "hatchExpired": "the {{hatch}} {{unit}} expired on {{until}}",
+    "proofAc": "level {{level}} fails to compile with {{unit}}'s changes reverted: a compile failure proves no AC at run time",
+    "reviewSecurity": "the security review of {{unit}} has open findings {{findings}}: the owner disposes of each",
+    "incrDone": "{{unit}} is on increment {{increment}} of {{intent}}, whose increment 1 is not done: not in a passing release with its smoke",
+    "traceDoc": "---\ntype: Map\ntitle: Traceability {{intent}}\ndescription: Each AC of {{intent}}'s bolts with its requirements, tagged tests, merge and release, and the requirements delivered; written at every merge, never by hand.\ngenerated: { by: {{producer}}, at: {{at}}, digest: {{digest}} }\n---\n{{body}}",
+    "traceBody": "| Requirements | AC | Tests | Merge | Release |\n|---|---|---|---|---|\n{{rows}}\nDelivered: {{delivered}}\n",
+    "traceRow": "| {{reqs}} | {{tag}} | {{tests}} | {{merge}} | {{release}} |\n",
+    "statusHatches": "escape hatches: {{hatches}}\n",
+    "hatchItem": "{{id}} {{hatch}}{{#each until}} until {{this}}{{/each}}",
+    "retroMeasures": "measures:\n  lead time, approval to passing smoke: {{lead}}\n  increments shipped: {{shipped}} of {{committed}}\n  merge refusals by binding: {{refusals}}\n  owner dwell per approval: {{dwell}}\n  escape hatches: {{hatches}}\n",
     "help": "usage: aidlc <command> [args]\n\n{{#each commands}}  {{usage}}  {{does}}\n{{/each}}",
     "unknownCommand": "unknown command: {{name}} → run aidlc --help\n",
     "failed": "{{name}}: {{error}}\n",
@@ -613,7 +631,7 @@
     "approveBulk": "APPROVE-BULK: {{docs}} are one-way doors; approve each one on its own, after its options, findings and facts",
     "approveOpen": "APPROVE-OPEN: {{doc}} waits on the design review of {{intent}}: {{findings}} still open; the owner disposes of each: aidlc dispose {{intent}} F-<k> fixed|accepted \"<reason>\"",
     "recordedDesign": "recorded the design review of {{intent}}: {{count}} findings, {{confirmed}} confirmed\n",
-    "disposeUsage": "usage: aidlc dispose <I-n|B-n> F-<k> fixed|accepted \"<reason>\"",
+    "disposeUsage": "usage: aidlc dispose <I-n|B-n> F-<k> fixed|accepted \"<reason>\" [--until <date>]",
     "disposed": "{{id}} {{finding}}: {{disposition}} ({{reason}})\n",
     "supersededBy": "{{old}} is superseded by {{doc}}\n",
     "pathwayNone": "{{unit}} declares no pathway: one of {{pathways}}",
@@ -743,7 +761,7 @@
     "guardSchedule": "a scheduled prompt that approves",
     "promptApproved": "The owner typed this approval; the prompt hook ran it:\n{{out}}Commit the stamps and continue with aidlc next; do not run aidlc approve for it.",
     "promptApproveFailed": "The owner typed an approval, but it failed: {{error}}. Tell the owner; do not run aidlc approve for it.",
-    "delegateUsage": "usage: delegate <class>… | off, classes: reapprove, quick, upgrade",
+    "delegateUsage": "usage: delegate <class>… | off [--until <date>], classes: reapprove, quick, upgrade",
     "delegated": "the lead may approve: {{classes}}\n"
   },
   "okf": {
@@ -1048,7 +1066,12 @@
       "PLAN-DECISION": {
         "level": "error",
         "fix": "link a Decision doc from the unit (template .aidlc/templates/docs/decision.md: options, choice, why), for the owner to approve with it, or set twoWay: \"<why it is easy to undo>\" in its frontmatter"
-      }
+      },
+      "BOLT-BIND": { "level": "error", "fix": "bind the bolt to one domain in modules, or to one horizontal module with neededBy: B-<v> naming a bolt of the same increment that binds a domain (docs: Construction by proof)" },
+      "BOLT-SPAN": { "level": "error", "fix": "split the bolt into one bolt per domain, or move it to increment 1, the walking skeleton (docs: Construction by proof)" },
+      "INCR-SKELETON": { "level": "error", "fix": "put on increment 1 a bolt with a top-level AC and a bolt binding the delivery module, so the skeleton runs end to end on its target (docs: Construction by proof)" },
+      "FIX-SHAPE": { "level": "error", "fix": "give the fix bolt exactly one AC, a regression test that fails before the fix, and a scope outside the decisions and one-way doors; a design change goes through a decision and an increment (docs: Construction by proof)" },
+      "HATCH-EXPIRED": { "level": "error", "fix": "close the escape hatch (merge or drop the fix bolt, end the waiver, supersede the exception), or the owner sets a later until (docs: Construction by proof)" }
     },
     "runners": { "make": "Makefile", "npm run": "package.json", "just": "justfile" },
     "requirements": "requirements",
@@ -1100,6 +1123,7 @@
     ],
     "focus": "general",
     "contentFocus": "security",
+    "until": "--until",
     "answered": "answered",
     "stdin": "-",
     "stopped": "stopped",
@@ -1129,7 +1153,7 @@
     ],
     "upgradeOwnerFlags": ["--downgrade", "--dirty"],
     "unitType": "Unit",
-    "approveBlocks": ["PLAN-DECISION", "PLAN-INCREMENT", "PATHWAY-SKIP", "INTENT-SIZE", "ELAB-OPEN", "ELAB-BARE", "FACT-MISSING", "DOC-AMEND", "DESIGN-COHERENCE"],
+    "approveBlocks": ["BOLT-BIND", "BOLT-SPAN", "INCR-SKELETON", "FIX-SHAPE", "PLAN-DECISION", "PLAN-INCREMENT", "PATHWAY-SKIP", "INTENT-SIZE", "ELAB-OPEN", "ELAB-BARE", "FACT-MISSING", "DOC-AMEND", "DESIGN-COHERENCE"],
     "gates": "gates",
     "reviewing": "reviewing",
     "reviewerLine": "reviewer\n",
@@ -1446,7 +1470,10 @@
       },
       "TERM-SYNONYM": {
         "fix": "use the glossary's term; if the domain's language changed, change its domain doc's glossary first (docs: Naming)"
-      }
+      },
+      "PROOF-AC": { "fix": "make the reverted tree compile (keep the interfaces, revert the behaviour), or report a mutation per AC (docs: Construction by proof)" },
+      "REVIEW-SECURITY": { "fix": "the owner disposes of each finding: aidlc dispose <B-n> F-<k> fixed|accepted \"<reason>\" [--until <date>] (docs: Construction by proof)" },
+      "INCR-DONE": { "fix": "release increment 1 and pass its smoke on the target first (docs: Construction by proof)" }
     },
     "noReview": "none"
   },
@@ -1466,7 +1493,8 @@
     "hostDenied": "hostDenied",
     "ownerRefused": "ownerRefused",
     "deployFailures": "deployFailures",
-    "lists": ["interventions", "stops", "hostDenied", "sendBacks", "ownerRefused", "deployFailures"],
+    "refusals": "refusals",
+    "lists": ["interventions", "stops", "hostDenied", "sendBacks", "ownerRefused", "deployFailures", "refusals"],
     "keep": 50,
     "min": 3,
     "max": 3,
@@ -1749,6 +1777,7 @@
       "setField": "mutation($project: ID!, $item: ID!, $field: ID!, $value: ProjectV2FieldValue!) { updateProjectV2ItemFieldValue(input: { projectId: $project, itemId: $item, fieldId: $field, value: $value }) { projectV2Item { id } } }"
     },
     "wave": "board.wave",
+    "binding": "board.binding",
     "types": {
       "intent": "Feature",
       "unit": "Task",
@@ -1767,6 +1796,15 @@
     "dataPrefix": "data/",
     "vendored": ".aidlc/packs"
   },
+  "construction": {
+    "vertical": ["domain", "pipeline"],
+    "delivery": "delivery",
+    "neededBy": "neededBy",
+    "trace": "architecture/traceability-{{id}}.md",
+    "hatches": { "fix": "fix bolt", "waiver": "waiver", "except": "exception", "delegate": "delegation", "accepted": "accepted finding" },
+    "span": "span",
+    "fix": "fix"
+  },
   "inception": {
     "questions": "Questions",
     "owns": "Owns",
@@ -1780,9 +1818,10 @@
     "steps": { "questions": "every question answered by an option", "domains": "a domain doc for each of its domains", "facts": "a platform fact for each decision that affects the platform", "map": "the codebase map written", "kinds": "a kind for every module" }
   },
   "method": {
-    "version": 3,
-    "since": { "planIncrementId": 2, "pathwaySkip": 3 },
+    "version": 4,
+    "since": { "planIncrementId": 2, "pathwaySkip": 3, "boltBind": 4 },
     "changes": {
+      "4": "bolts bind one domain outside increment 1, increment 1 holds the delivery module, fix bolts have one AC, and escape hatches may expire (docs: Construction by proof)",
       "3": "intents declare a pathway and its steps (answered questions, domain docs, platform facts), a size, and decisions that cohere (docs: Inception)",
       "2": "intents ship # Increments with ids I-<n>.<k>; work items are bolts B-<n> under bolts/; modules take a kind; the profile takes system (docs: Canonical model)"
     }
@@ -1880,7 +1919,7 @@
       { "word": "intent", "scale": "Delivery", "meaning": "one business outcome, with its why and success measures", "method": "**Intent**", "declared": "`intents/I-<n>-<slug>.md`" },
       { "word": "increment", "scale": "Delivery", "meaning": "a shippable step of an intent; increment 1 is the walking skeleton", "method": "groups Bolts", "declared": "the intent's `# Increments`, `I-<n>.<k>`" },
       { "word": "bolt", "scale": "Delivery", "meaning": "the smallest build cycle: one card, worktree, review and merge", "method": "**Bolt**", "declared": "`bolts/B-<n>-<slug>.md`" },
-      { "word": "fix bolt", "scale": "Delivery", "meaning": "one regression, one AC that fails before the fix", "method": "defect-fix pathway", "declared": "a bolt with `fix: true`" },
+      { "word": "fix bolt", "scale": "Delivery", "meaning": "one regression, one AC that fails before the fix", "method": "defect-fix pathway", "declared": "a bolt with no `intent`" },
       { "word": "lane", "scale": "Plugin", "meaning": "quick, standard or full; decides which grid rows run", "method": "-", "declared": "the profile's `lanes`" },
       { "word": "card", "scale": "Plugin", "meaning": "the generated brief one builder works from and one reviewer checks against", "method": "-", "declared": "`aidlc card`" },
       { "word": "lead", "scale": "Plugin", "meaning": "the main session running the loop", "method": "-", "declared": "the skill" },

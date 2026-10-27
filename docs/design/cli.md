@@ -19,7 +19,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 | `card <unit>` | renders the unit card | lead |
 | `start <unit>` | in a builder's worktree: names the branch `unit/U-<n>`, checks the base matches the card, and merges the card's base into an existing branch | builder |
 | `approve [--auto] <doc>…` | stamps approval; a doc is a path, an ID (`U-3`, `I-1`, `R-12`) or a decision's number (`0010` or `10`) | owner (typed words, prompt or `!`); `--auto` the lead, for what the owner delegated ([0008](../decisions/0008-delegated-approvals.md)) |
-| `delegate <class>…\|off` | lets the lead approve re-approvals and quick-lane units, or run `upgrade` ([0008](../decisions/0008-delegated-approvals.md)) | owner (prompt or `!`) |
+| `delegate <class>…\|off [--until <date>]` | lets the lead approve re-approvals and quick-lane units, or run `upgrade` ([0008](../decisions/0008-delegated-approvals.md)) | owner (prompt or `!`) |
 | `mode attended\|unattended [--stop <action>] [--report <to>]\|off` | records the owner's run mode in the personal profile: unattended or not, the `next` action to stop at (`build`, `review`, `fix`, `merge`, `release`), where to report | owner (prompt or `!`) |
 | `research <doc>` | prints the researcher's brief for the doc's held question: the question, the project's docs, stack files and `research.sources`, the budget, and where the digest goes ([0010](../decisions/0010-research-for-open-questions.md)) | lead |
 | `retro <intent>` | lists the codes that fired 3+ times, the intent's escalations, the owner's interventions and failed deploy steps, proposes at most three changes, and resets the counters ([Steering](steering.md#3-across-intents-the-retro)) | lead, owner |
@@ -30,7 +30,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 | `name <kind> [--<flag> <value>]…` | a name from the grammar and registry; the flags each kind needs are in `cli.json` ([Naming](naming.md)) | lead, builder |
 | `new bolt "<title>"` | a draft `B-<n>`, named from its title | lead |
 | `fact "<title>" --env <environment> -- <command>` | runs a read-only probe on the target and records its output as a platform fact ([Inception](inception.md)) | lead |
-| `dispose <I-n\|B-n> F-<k> fixed\|accepted "<reason>"` | records the owner's disposition of a review finding | owner (prompt) |
+| `dispose <I-n\|B-n> F-<k> fixed\|accepted "<reason>" [--until <date>]` | records the owner's disposition of a review finding | owner (prompt) |
 | `graph` | the dependency graph the stack pack reads from source, imports and data ([Stack packs](stack-packs.md)) | gate, lead |
 | `scaffold <kind> <name> [--domain d]` | a kind's templates from the stack pack, named from the registry; never overwrites | lead, builder |
 | `fix "<title>"\|--from-issue <n> --scope <glob>… [--requirement R-<n>…] [--after <intent>]` | a fix (a bolt in a v2 project) without an intent; from an issue, titled and linked like it; `--after` links the release it fixes; prints its plan lint findings ([Everyday paths](paths.md#fixes-without-an-intent)) | lead |

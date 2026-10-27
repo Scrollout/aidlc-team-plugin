@@ -61,7 +61,7 @@ export function mapText(cwd, profile) {
 
 // Writes a generated page when its body changed, with its producer and digest; returns the files written. The map
 // also rewrites a page from before generated docs carried a digest.
-function writePage(file, body, key, data = {}, digested = false) {
+export function writePage(file, body, key, data = {}, digested = false) {
   const old = existsSync(file) ? parseDoc(readFileSync(file, 'utf8')) : null;
   if (old?.fm && old.lines.slice(old.body).join('\n') === body && (!digested || old.fm.generated?.digest)) return [];
   mkdirSync(dirname(file), { recursive: true });

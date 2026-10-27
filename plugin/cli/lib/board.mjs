@@ -9,6 +9,7 @@ import { at, config, done, git, list, readJson, relPath, tryGit, UsageError } fr
 import { msg, render } from './template.mjs';
 import { templateFile } from './card.mjs';
 import { aidlcDir, ciFile, readState, writeJson } from './state.mjs';
+import { bindingName } from './construction.mjs';
 
 const B = config.board;
 let ghCommand = [B.gh]; // `github.gh` overrides it (docs/design/board.md)
@@ -59,7 +60,8 @@ function wanted(cwd, st, gh) {
     return waves.get(u.id);
   };
   const one = (d, kind, state, parent) => {
-    const value = (path) => at(d.fm, path) ?? (kind === 'unit' && path === B.wave ? wave(d) : undefined);
+    const derived = { [B.wave]: () => wave(d), [B.binding]: () => bindingName(d, st.profile) }; // a value in the doc wins
+    const value = (path) => at(d.fm, path) ?? (kind === 'unit' && derived[path] ? derived[path]() : undefined);
     const done = B.done.includes(state);
     const acs = (d.acs ?? []).map((a) => ({ box: done ? 'x' : ' ', text: d.doc.lines[a.line - 1].replace(/^\s*[-*]\s+/, '') }));
     const marker = msg('boardMarker', { kind, id: d.id });

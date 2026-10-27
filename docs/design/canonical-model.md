@@ -27,7 +27,7 @@ Generated from `cli.json` `vocabulary`; a test keeps it in step.
 | Delivery | intent | one business outcome, with its why and success measures | **Intent** | `intents/I-<n>-<slug>.md` |
 | Delivery | increment | a shippable step of an intent; increment 1 is the walking skeleton | groups Bolts | the intent's `# Increments`, `I-<n>.<k>` |
 | Delivery | bolt | the smallest build cycle: one card, worktree, review and merge | **Bolt** | `bolts/B-<n>-<slug>.md` |
-| Delivery | fix bolt | one regression, one AC that fails before the fix | defect-fix pathway | a bolt with `fix: true` |
+| Delivery | fix bolt | one regression, one AC that fails before the fix | defect-fix pathway | a bolt with no `intent` |
 | Plugin | lane | quick, standard or full; decides which grid rows run | - | the profile's `lanes` |
 | Plugin | card | the generated brief one builder works from and one reviewer checks against | - | `aidlc card` |
 | Plugin | lead | the main session running the loop | - | the skill |

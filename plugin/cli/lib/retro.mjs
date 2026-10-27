@@ -1,11 +1,31 @@
 // The retro: what fired, escalated and needed the owner during an intent, and at most three changes to propose
 // (docs/design/steering.md#3-across-intents-the-retro). Proposals and messages come from cli.json.
-import { config, VERDICT, done, readJson, UsageError } from './config.mjs';
+import { config, VERDICT, done, readJson, tryGit, UsageError } from './config.mjs';
 import { msg } from './template.mjs';
 import { basename } from 'node:path';
 import { decisionsOf, events, readState, runtimeFile, statsFile, writeJson } from './state.mjs';
+import { incrementLines } from './grid.mjs';
+import { hatchesOf, hatchLine } from './construction.mjs';
 
 const R = config.retro;
+const human = (e) => String(e.by).startsWith(config.state.human);
+const hours = (from, to) => `${Math.round((Date.parse(to) - Date.parse(from)) / 36e5)}h`;
+
+// What a v2 project measures per intent: lead time, increments shipped of those committed, merge refusals by binding,
+// the owner's dwell per approval and the escape hatches used (docs/design/construction.md#retro).
+function measures(st, intent, units, docs, stats) {
+  const approved = events(intent.fm).filter(human).map((e) => String(e.at)).sort()[0];
+  const smoke = intent.deploy.smoke?.ok ? intent.deploy.smoke.at : intent.deploy.release?.ok ? intent.deploy.release.at : null;
+  const lines = incrementLines(intent), committed = lines.length ? lines : [{ ids: intent.units.map((u) => u.id) }];
+  const mine = new Set(units.map((u) => u.id));
+  const refusals = Object.entries(Object.groupBy((stats[R.refusals] ?? []).filter((r) => mine.has(r.unit)), (r) => r.binding)).map(([b, rs]) => `${b} ${rs.length}`);
+  // From the doc's last commit before each stamp to the stamp.
+  const dwell = docs.filter((d) => d.file).flatMap((d) => events(d.fm).filter(human).map((e) => [d.id, e.at, tryGit(st.cwd, 'log', '-1', '--format=%cI', `--before=${e.at}`, '--', d.file)]))
+    .filter(([, , c]) => c).map(([id, at, c]) => `${id} ${hours(c, at)}`);
+  const hatches = hatchesOf(st).filter((h) => h.id === intent.id || mine.has(String(h.id).split(' ')[0]));
+  return msg('retroMeasures', { lead: approved && smoke ? hours(approved, smoke) : '-', shipped: committed.filter((l) => l.ids.length && intent.shipped(l.ids)).length, committed: committed.length,
+    refusals: refusals.join(', ') || '-', dwell: dwell.join(', ') || '-', hatches: hatchLine(hatches) || '-' });
+}
 
 export const commands = {
   retro(args, { cwd }) {
@@ -46,6 +66,7 @@ export const commands = {
     const failed = (stats[R.deployFailures] ?? []).filter((d) => d.intent === intent.id).map((d) => msg('retroDeploy', d)).join('');
     out += msg('retroDeploys', {}) + (failed + (fixes.length ? msg('retroDeployFixes', { intent: intent.id, units: fixes.join(', ') }) : '') || msg('retroNone', {}));
 
+    if (st.profile.system) out += measures(st, intent, units, docs, stats);
     // One proposal per most frequent code or escalation reason, from the first matching entry of the map.
     const proposals = [...codes, ...reasons].slice(0, R.max).map(([key, count]) => {
       const p = R.proposals.find((x) => key.startsWith(x.match)) ?? R.proposals.at(-1);

@@ -16,6 +16,7 @@
     "adapter": [["adapter.go", "{{dir}}/{{system}}.go"]],
     "runtime": [["runtime.go", "{{dir}}/main.go"]]
   },
+  "compileError": "\\[(build|setup) failed\\]",
   "eventType": "Type\\s*=\\s*\"([^\"]+)\"",
   "reference": { "domain": "reference/internal/domains/notes", "command": "reference/internal/domains/notes/application/createnote", "query": "reference/internal/domains/notes/application/getnote" }
 }

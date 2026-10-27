@@ -15,6 +15,7 @@
     "adapter": [["adapter.ts", "{{dir}}/{{system}}.ts"]],
     "runtime": [["runtime.ts", "{{dir}}/main.ts"]]
   },
+  "compileError": "ERR_MODULE_NOT_FOUND|SyntaxError: |does not provide an export named",
   "eventType": "Type\\s*=\\s*['\"]([^'\"]+)['\"]",
   "reference": { "domain": "reference/src/domains/notes", "command": "reference/src/domains/notes/application/createnote", "query": "reference/src/domains/notes/application/getnote" }
 }

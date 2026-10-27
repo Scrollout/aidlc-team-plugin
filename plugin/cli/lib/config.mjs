@@ -24,6 +24,8 @@ export const fieldPaths = (fields) => Object.values(fields ?? {}).map((spec) => 
 export const posix = (p) => p.split(sep).join('/');
 export const relPath = (from, to) => posix(relative(from, to));
 export const bundleOf = (cwd, profile) => resolve(cwd, profile.docs.bundle);
+// An escape hatch's `until` date that has passed (docs/design/construction.md#escape-hatches).
+export const lapsed = (until) => until !== undefined && until !== null && String(until).slice(0, 10) < new Date().toISOString().slice(0, 10);
 export const slug = (text, words) => text.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).slice(0, words).join('-');
 export const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 export const tryGit = (cwd, ...args) => { try { return git(cwd, ...args); } catch { return null; } };

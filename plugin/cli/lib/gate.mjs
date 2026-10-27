@@ -3,17 +3,18 @@
 import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
-import { addedLines, bundleOf, CLI_DIR, PLUGIN_DIR, config, QUICK, VERDICT, done, git, gitLines, list, readJson, sh, tryGit, UsageError, relPath } from './config.mjs';
+import { addedLines, bundleOf, CLI_DIR, PLUGIN_DIR, config, QUICK, VERDICT, done, git, gitLines, lapsed, list, readJson, sh, tryGit, UsageError, relPath } from './config.mjs';
 import { finding as codeFinding, msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, docSlug, nameProblem, parseDoc, writeIndexes } from './okf.mjs';
-import { computeLane, inside, lintPlan, readPlan, runTarget, spansOf } from './grid.mjs';
+import { computeLane, incrementLines, inside, lintPlan, readPlan, runTarget, spansOf } from './grid.mjs';
+import { bindingName, writeTrace } from './construction.mjs';
 import { issueTitle, sync } from './board.mjs';
 import { writeContextMap, writeGlossary, writeMap } from './map.mjs';
 import { generatedRules, glossaryOf, parseFlags } from './naming.mjs';
 import { contractFindings } from './contract.mjs';
 import { boundaryFindings, exceptDocs, kindFindings, layerFindings, moduleFindings, reachFindings } from './arch.mjs';
-import { eventFindings } from './packs.mjs';
+import { eventFindings, packFor } from './packs.mjs';
 import { aidlcDir, approval, baseOf, baseRedFile, branchOf, bump, codeChanges, diffHash, keptPass, verdictCurrent, mergedUnits, mutationOf, readState, reviewFocuses, roundsOf, runtimeFile, unitPaths, worktrees, writeJson } from './state.mjs';
 
 const G = config.gate;
@@ -24,7 +25,7 @@ const finding = (code, path, line, key, data) => codeFinding(G.codes, code, path
 export const secretIn = (text, profile) => [...config.hooks.secrets, ...list(profile.security?.secrets)].some((p) => new RegExp(p, 'i').test(text));
 
 // Proof-revert: with the unit's code reverted, each level that holds a tagged test must fail (docs/design/gate.md).
-function proofRevert(tree, card, paths, levels, tagged, bundleRel, add, unit, mutations) {
+function proofRevert(tree, card, paths, levels, tagged, bundleRel, add, unit, mutations, compile) {
   const code = codeChanges(paths, levels, bundleRel);
   // Reported mutations replace the revert: for a back-fill, and for a change its revert cannot test, such as wiring (docs/design/backfill.md).
   if (card && card.lane !== QUICK && (!code.length || [mutations].flat().some((m) => m?.ac))) return proofMutate(tree, unit, mutations, levels, add);
@@ -38,7 +39,12 @@ function proofRevert(tree, card, paths, levels, tagged, bundleRel, add, unit, mu
   if (atBase.length) git(tree, 'restore', '--source=HEAD', '--staged', '--worktree', '--', ...atBase);
   const added = code.filter((x) => !atBase.includes(x) && staged.has(x));
   if (added.length) git(tree, 'rm', '-q', '-f', '--', ...added);
-  for (const [level, l] of runs) if (runLevel(tree, level, l, add) === true) add('GATE-PROOF', 'gateProof', { level }); // a skip is no proof
+  for (const [level, l] of runs) {
+    const passed = runLevel(tree, level, l, add);
+    if (passed === true) add('GATE-PROOF', 'gateProof', { level }); // a skip is no proof
+    // A revert that does not compile proves no AC at run time (docs/design/construction.md#a-proof-that-runs).
+    else if (passed === false && compile?.(l) && new RegExp(compile(l)).test(lastRun)) add('PROOF-AC', 'proofAc', { level });
+  }
   git(tree, 'read-tree', merged);
   const back = code.filter((f) => staged.has(f));
   if (back.length) git(tree, 'checkout-index', '-f', '--', ...back);
@@ -69,6 +75,7 @@ function proofMutate(tree, unit, mutations, levels, add) {
 
 // Each failed command's last lines, for the refusal to show where they are (U147).
 let failed = [];
+let lastRun = ''; // the output of the last level run
 const logged = (command, r) => r.status === 0 || (failed.push(`$ ${command} (exit ${r.status})\n${`${r.stdout ?? ''}\n${r.stderr ?? ''}`.trim().split('\n').slice(-G.logLines).join('\n')}`), false);
 const shell = (cwd, command) => logged(command, sh(cwd, command));
 
@@ -78,7 +85,8 @@ function runLevel(tree, level, l, add) {
   const unset = list(l.needs).filter((v) => !process.env[v]);
   if (unset.length) return add('GATE-RUN', 'gateNeeds', { level, vars: unset.join(', ') }), null;
   const r = sh(tree, l.run, Object.fromEntries(Object.entries(G.fresh).map(([k, v]) => [k, [process.env[k], v].filter(Boolean).join(' ')]))); // no cached pass over a revert or mutation
-  const skipped = l.skip && `${r.stdout}\n${r.stderr}`.split('\n').find((line) => new RegExp(l.skip).test(line));
+  lastRun = `${r.stdout}\n${r.stderr}`;
+  const skipped = l.skip && lastRun.split('\n').find((line) => new RegExp(l.skip).test(line));
   if (skipped) return add('GATE-SKIP', 'gateSkip', { level, line: skipped.trim() }), null;
   return logged(l.run, r);
 }
@@ -202,6 +210,14 @@ function runGate(cwd, st, unit) {
       if (!last || last.verdict !== VERDICT.pass || (!verdictCurrent(last, hash, unit.report) && !keptPass(cwd, p, unit.id, focus, last))) add('GATE-SPECIALIST', 'gateSpecialist', { focus, why });
     }
   }
+  // Every security finding, at any confidence, waits for the owner's disposition (docs/design/construction.md).
+  const security = p.system ? roundsOf(unit.review, config.state.contentFocus).at(-1) : null;
+  const unsettled = (security?.findings ?? []).map((f, k) => [f, `F-${k + 1}`]).filter(([f]) => !f.disposition || lapsed(f.until));
+  if (unsettled.length) add('REVIEW-SECURITY', 'reviewSecurity', { findings: unsettled.map(([, id]) => id).join(', ') });
+  // No later increment merges before increment 1 runs on its target.
+  const intent = p.system && (p.deploy || p.release) ? st.intents.find((i) => i.id === unit.fm.intent) : null;
+  const lines = intent ? incrementLines(intent) : [], slot = lines.findIndex((l) => l.ids.includes(unit.id));
+  if (slot > 0 && !intent.shipped(lines[0].ids)) add('INCR-DONE', 'incrDone', { increment: lines[slot].id ?? slot + 1, intent: intent.id });
 
   const tree = trialWorktree(cwd, base);
   if (tryGit(tree, 'merge', '-q', '--no-ff', '--no-commit', branchOf(unit.id)) === null) {
@@ -212,7 +228,7 @@ function runGate(cwd, st, unit) {
 
   // What merge writes comes first and is staged, so each check sees the tree that will be committed (docs/design/gate.md).
   const treeBundle = join(tree, bundleRel);
-  for (const write of [writeMap, writeGlossary, writeContextMap]) write(tree, withDefaults(loadProfile(tree).profile)); // before the indexes, which list them
+  for (const write of [writeMap, writeGlossary, writeContextMap, writeTrace]) write(tree, withDefaults(loadProfile(tree).profile)); // before the indexes, which list them
   writeIndexes(treeBundle);
   addLogEntry(treeBundle, msg('gateLogEntry', { unit: unit.id, title: String(unit.fm.title ?? '') }));
   for (const command of list(p.regen)) shell(tree, command);
@@ -248,7 +264,7 @@ function runGate(cwd, st, unit) {
     }
   }
 
-  const proof = out.length ? null : proofRevert(tree, card, paths, levels, tagged, bundleRel, add, unit, readJson(runtimeFile(cwd, 'reports', unit.id))?.mutations); // only on a green merge result
+  const proof = out.length ? null : proofRevert(tree, card, paths, levels, tagged, bundleRel, add, unit, readJson(runtimeFile(cwd, 'reports', unit.id))?.mutations, p.system && ((l) => l.compileError ?? packFor(tree)?.manifest.compileError)); // only on a green merge result
 
   const touched = (p.modules ?? []).filter((m) => paths.some((x) => list(m.paths).some((g) => matches(x, g))));
   for (const command of [...touched.filter((x) => x.check).map((m) => m.check), ...list(p.checks)]) if (!shell(tree, command)) add('GATE-CHECK', 'gateCheck', { command }); // the touched modules', then the project's on every merge (U140)
@@ -316,6 +332,7 @@ export const commands = {
       const codes = [...new Set(findings.map((f) => f.code))];
       writeJson(runtimeFile(cwd, 'gates', unit.id), { base: git(cwd, 'rev-parse', st.base), diffHash: diffHash(cwd, st.base, unit.id), codes, at: new Date().toISOString() });
       for (const code of codes) bump(cwd, 'codes', code);
+      if (st.profile.system) bump(cwd, config.retro.refusals, { unit: unit.id, binding: bindingName(unit, st.profile), codes: codes.join(', '), at: new Date().toISOString() }); // the retro counts them by binding
       const red = findings.find((f) => f.code === 'GATE-BASE');
       if (red) writeJson(baseRedFile(cwd), { sha: git(cwd, 'rev-parse', st.base), unit: unit.id, level: red.red, at: new Date().toISOString() });
       const log = join(aidlcDir(cwd), 'gates', `${unit.id}.log`); // the failed commands' last lines, beside the refusal (U147)

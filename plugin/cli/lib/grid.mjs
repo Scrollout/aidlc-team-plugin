@@ -3,6 +3,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve, sep } from 'node:path';
 import { lintInception } from './inception.mjs';
+import { lintConstruction } from './construction.mjs';
 import { at, bundleOf, config, FULL, QUICK, STANDARD, done, fieldPaths, git, isMap, readJson, tryGit, list, UsageError, relPath } from './config.mjs';
 import { finding as codeFinding, msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
@@ -261,7 +262,7 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   // With a board, each live unit carries the values it maps, except the derived wave (docs/design/board.md).
   // The example uses the profile's own map, so the lead writes a value the board knows.
   const planned = Object.entries(profile.github?.fields ?? {}).map(([field, spec]) => ({ field, path: fieldPaths({ field: spec })[0], map: spec.map }))
-    .filter((f) => ![config.board.wave, config.board.spec].includes(f.path));
+    .filter((f) => ![config.board.wave, config.board.binding].includes(f.path));
   for (const u of units) {
     for (const { field, path, map } of planned.filter((f) => at(u.fm, f.path) === undefined)) {
       const value = map ? Object.keys(map)[0] : msg('planBoardAny', {});
@@ -400,6 +401,8 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   }
   // A deterministic Inception: pathways, answers, domains, facts and decisions that cohere (docs/design/inception.md).
   lintInception({ bundle, profile, intents, requirements, merged: new Set(skip), add, inForce, incrementLines, keyLine });
+  // Construction by proof: bindings, the walking skeleton, fix bolts, escape hatches (docs/design/construction.md).
+  lintConstruction({ profile, intents: liveIntents, units, all, add, keyLine, bundleRel, base });
   return out;
 }
 

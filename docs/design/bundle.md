@@ -1,8 +1,8 @@
 ---
 type: Design
 title: Bundle v2
-description: Draft - the project's OKF bundle as AI-DLC's context memory - one folder per closed doc type, authored and generated docs kept apart, a front-matter schema per type, typed references, decisions superseded never amended, CLI-made ids and slugs, and errors on the base.
-status: draft
+description: The project's OKF bundle as AI-DLC's context memory - one folder per closed doc type, authored and generated docs kept apart, a front-matter schema per type, typed references, decisions superseded never amended, CLI-made ids and slugs, and errors on the base.
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T00:40:00Z }
 ---
 
@@ -55,7 +55,7 @@ Each type's required keys and allowed values live in `cli.json` (`okf.bundle.sch
 - Relations are front-matter IDs, checked as `DOC-REF`: the target must exist and be of the right type.
 - Prose links stay for reading only.
 - Indexes list who cites each doc.
-- A generated traceability page per intent links requirement → AC → bolt → test → gate run → release (M19).
+- A generated traceability page per intent links requirement → AC → bolt → test → gate run → release ([Construction by proof](construction.md)).
 
 # Decisions
 - An approved decision can't be edited (`DOC-AMEND`).
@@ -87,4 +87,4 @@ The brownfield step:
 
 `upgrade` reports each move first.
 
-Bolts: [M15](../roadmap/m15.md) B156-B158; [M18](../roadmap/m18.md) B177, B181; still to build: [M19](../roadmap/m19.md) B187 (the traceability page).
+Bolts: [M15](../roadmap/m15.md) B156-B158; [M18](../roadmap/m18.md) B177, B181; [M19](../roadmap/m19.md) B187 (the traceability page).

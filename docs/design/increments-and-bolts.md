@@ -1,8 +1,8 @@
 ---
 type: Design
 title: Increments and bolts
-description: Draft - an intent ships in increments (increment 1 the walking skeleton on its target), each built by bolts B-<n> that the CLI allocates, with legacy units read as aliases only; replaces the intent's Slices section, the Spec labels and the slice cap.
-status: draft
+description: An intent ships in increments (increment 1 the walking skeleton on its target), each built by bolts B-<n> that the CLI allocates, with legacy units read as aliases only; replaces the intent's Slices section, the Spec labels and the slice cap.
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T00:40:00Z }
 ---
 
@@ -11,7 +11,7 @@ The intent's `# Slices` mixed delivery steps with code slices. The card's `Spec:
 
 # Increments
 - An intent lists `# Increments`, one line each: `- I-<n>.<k> <name>: <outcome>, proven by <top-level AC>`.
-- **Increment 1 is the walking skeleton.** It holds a target-level AC and the delivery module, so it is done only once it runs where it will run (`INCR-SKELETON`, `INCR-DONE`, M19).
+- **Increment 1 is the walking skeleton.** It holds a target-level AC and the delivery module, so it is done only once it runs where it will run (`INCR-SKELETON`, `INCR-DONE`, [M19](construction.md)).
 - Bolts are cut for the current increment only, just in time.
 - An increment line naming no bolt is an increment still to cut: the intent is not done, and `next` asks to cut it.
 
@@ -29,9 +29,9 @@ An intent ships each increment when its bolts merge, not only at the end. While 
 # Bolts
 - **IDs.** `B-<n>`, allocated by `aidlc new bolt "<title>"`, never typed: the next number over every unit and bolt, the file named from the title (no apostrophes, at most 48 characters, cut at a word). `aidlc fix` writes a fix bolt the same way in a v2 project.
 - **Names.** Branch `bolt/B-<n>`; test tags `B-<n>/AC-<k>`, or `R-<n>/AC-<k>` for a requirement's ACs.
-- **Front matter.** `intent`, `increment`, `binding` (`domain: <code>`, or `module: <id>` plus `neededBy: B-<v>`), `scope`, `acs`, `fix`.
-- **Binding** (M19): one domain, or one horizontal module needed by a domain bolt of the same increment. Several domains only in increment 1.
-- **Fix bolts.** `fix: true`, exactly one AC (a regression test failing before the fix), no decision touched. They take free slots beside the increments and never carry feature or design work.
+- **Front matter.** `intent`, `increment`, `modules` (its binding), `neededBy`, `scope`, `acs`.
+- **Binding** (M19): one domain, or one horizontal module needed by a domain bolt of the same increment. Several domains only in increment 1 ([Construction by proof](construction.md)).
+- **Fix bolts.** No intent, exactly one AC (a regression test failing before the fix), no decision touched. They take free slots beside the increments and never carry feature or design work.
 
 # Removed
 - the intent's `# Slices` and its plan rules;
@@ -48,4 +48,4 @@ B152 removed the section, the `Spec:` line, `plan.sliceUnits` and `slices.md`, k
 - Old test tags `U-<n>/AC-<k>` still count for their bolt.
 - The aliases expire one milestone after the last pilot migrates (M21).
 
-Bolts: [M15](../roadmap/m15.md) B152, B153; still to build: B182 (binding), B186 (`INCR-SKELETON`, `INCR-DONE`), B188 (`FIX-SHAPE`).
+Bolts: [M15](../roadmap/m15.md) B152, B153; [M19](../roadmap/m19.md) B182 (binding), B186 (`INCR-SKELETON`, `INCR-DONE`), B188 (`FIX-SHAPE`).

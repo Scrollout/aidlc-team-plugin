@@ -4,14 +4,16 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
-import { addedLines, bundleOf, config, QUICK, VERDICT, done, git, gitLines, isMap, list, readJson, readStdin, tryGit, UsageError, relPath } from './config.mjs';
+import { addedLines, bundleOf, config, QUICK, VERDICT, done, git, gitLines, isMap, lapsed, list, readJson, readStdin, tryGit, UsageError, relPath } from './config.mjs';
 import { finding as codeFinding, msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { hashDoc, linksOf, parseDoc, sectionOf, sizeCap } from './okf.mjs';
 import { boardBehind } from './board.mjs';
+import { hatchesOf, hatchLine, traceOf } from './construction.mjs';
 import { acsOf, computeLane, incrementLines, incrementSection, inside, lintPlan, overlaps, readPlan, reqId as reqIdOf, productGlobs, testsOnly, withIntents } from './grid.mjs';
 
 const S = config.state;
+const DATE = /^\d{4}-\d{2}-\d{2}$/; // an escape hatch's until
 
 // ---- git ----
 
@@ -134,7 +136,8 @@ export function approval(doc) {
 
 // Approval classes the owner delegated to the lead; only the untracked personal layer counts (decision 0008).
 const personal = (cwd) => join(cwd, config.layers.find((l) => l.name === 'personal').path);
-export const delegated = (cwd) => list(readJson(personal(cwd))?.approvals?.auto);
+export const delegation = (cwd) => readJson(personal(cwd))?.approvals ?? {};
+export const delegated = (cwd) => (lapsed(delegation(cwd).until) ? [] : list(delegation(cwd).auto)); // a delegation past its until lapses
 
 // The owner's run mode and the last owner prompt, as status shows them (docs/design/approvals.md#owner-prompts).
 function ownerLines(cwd) {
@@ -330,7 +333,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
     const incrementDue = !complete && Boolean(profile.deploy || profile.release) && increments.length > 0 && !shipped(increments.flat());
     const released = complete && (nothing || (profile.deploy || profile.release) && Boolean(shipped(own.map((u) => u.id)))
       || own.every((u) => (tryGit(cwd, 'tag', '--contains', merged.get(u.id)) ?? '') !== ''));
-    return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own, deploy, uncut, incrementDue };
+    return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own, deploy, uncut, incrementDue, shipped };
   });
   const requirements = plan.requirements.map((r) => ({ ...r, state: approval(r.doc) }));
   return { cwd, profile, base, bundle, intents, units, requirements, decisions: bundleHeld(bundle), answered, auto: delegated(cwd), mergeUnit: mergeInProgress(cwd, units), ci: ciOf(cwd, profile, base), red: redOf(cwd, base) };
@@ -479,7 +482,8 @@ function unitWork(st, scope) {
   const started = [...inFlight, ...st.units.filter((u) => !inFlight.includes(u) && !onRed(u) && !['draft', 'stale', 'approved', 'blocked', 'merged'].includes(u.state))];
   for (const u of ready) {
     if (inFlight.length + picked.length >= max) break;
-    const clash = [...started, ...picked].some((o) => u.scope.some((g) => o.scope.some((h) => overlaps(g, h))));
+    // Side by side only with disjoint scopes and, in a v2 project, bindings that share no module (docs/design/construction.md).
+    const clash = [...started, ...picked].some((o) => u.scope.some((g) => o.scope.some((h) => overlaps(g, h))) || (st.profile.system && o.modules.some((m) => u.modules.includes(m))));
     if (!clash) picked.push(u);
   }
   // With ci.wait, builders start on a pushed base; a CI not yet known holds none: its wait runs beside them,
@@ -634,9 +638,11 @@ export function statusText(st, next, tail = '') {
   const lines = [...st.intents.map((i) => msg('statusIntent', { id: i.id, state: i.state, title: i.fm.title ?? '' })),
     ...st.units.filter((x) => x.state !== 'merged' || !st.intents.some((i) => i.state === 'released' && i.id === x.fm.intent))
       .map((u) => msg('statusUnit', { id: u.id, state: u.state, title: u.fm.title ?? '' }))];
-  const delivered = new Set(st.units.filter((u) => u.state === 'merged').flatMap((u) => u.requirements));
+  // A v2 requirement is delivered by released tests (the traceability page); a v1 one by a merged unit citing it.
+  const v2 = Boolean(st.profile.system), hatches = v2 ? hatchesOf(st) : [];
+  const delivered = new Set(v2 ? traceOf(st.cwd, st.profile).flatMap((t) => t.delivered) : st.units.filter((u) => u.state === 'merged').flatMap((u) => u.requirements));
   const open = st.requirements.filter((r) => !delivered.has(r.id));
-  const end = (open.length ? msg('statusUncovered', { reqs: ids(open) }) : '') + msg('statusNext', { line: next.line }) + tail;
+  const end = (open.length ? msg('statusUncovered', { reqs: ids(open) }) : '') + (hatches.length ? msg('statusHatches', { hatches: hatchLine(hatches) }) : '') + msg('statusNext', { line: next.line }) + tail;
   let out = ownerLines(st.cwd);
   for (let k = 0; k < lines.length; k++) {
     const more = msg('statusMore', { count: lines.length - k });
@@ -680,7 +686,7 @@ export const commands = {
     for (const { name, file: f, doc: d } of named) {
       const intents = d.fm?.type === S.intentType ? [d.fm.id ?? basename(f).match(/^(I-\d+)/)?.[1]] : d.fm?.oneWayDoor === true ? readPlan(bundle).intents.filter((i) => i.doc.lines.some((l) => l.includes(basename(f)))).map((i) => i.id) : [];
       for (const intent of intents.filter(Boolean)) {
-        const open = (readJson(runtimeFile(cwd, 'design', intent))?.findings ?? []).filter((x) => x.confidence === S.confirmed && !x.disposition);
+        const open = (readJson(runtimeFile(cwd, 'design', intent))?.findings ?? []).filter((x) => x.confidence === S.confirmed && (!x.disposition || lapsed(x.until)));
         if (open.length) throw new UsageError(msg('approveOpen', { doc: name, intent, findings: open.map((x) => x.id).join(', ') }));
       }
     }
@@ -715,21 +721,24 @@ export const commands = {
 
   // The owner's disposition of a finding: an intent's design review, or a bolt's latest review round.
   dispose(args, { cwd }) {
-    const [id, fid, disposition, reason] = args;
-    if (!id || !/^F-\d+$/.test(fid ?? '') || !config.state.dispositions.includes(disposition) || !reason) usage('disposeUsage');
+    const [id, fid, disposition, reason, flag, until] = args;
+    if (!id || !/^F-\d+$/.test(fid ?? '') || !config.state.dispositions.includes(disposition) || !reason || (flag && (flag !== S.until || !DATE.test(until ?? '')))) usage('disposeUsage');
     const design = /^I-\d+$/.test(id), file = runtimeFile(cwd, design ? 'design' : 'reviews', id), data = readJson(file);
-    const list = design ? data?.findings : data?.rounds?.at(-1)?.findings, k = Number(fid.slice(2)) - 1;
+    // A bolt's findings are those of its latest security round, which hold the merge (REVIEW-SECURITY), else of its latest round.
+    const security = roundsOf(data, S.contentFocus).at(-1), round = security?.findings?.length ? security : data?.rounds?.at(-1);
+    const list = design ? data?.findings : round?.findings, k = Number(fid.slice(2)) - 1;
     if (!list?.[k]) usage('disposeUsage');
-    list[k] = { ...list[k], disposition, reason, by: tryGit(cwd, 'config', 'user.email'), at: new Date().toISOString() };
+    list[k] = { ...list[k], disposition, reason, by: tryGit(cwd, 'config', 'user.email'), at: new Date().toISOString(), until };
     writeJson(file, data);
     return done(msg('disposed', { id, finding: fid, disposition, reason }));
   },
 
   delegate(args, { cwd }) {
-    if (!args.length || args.some((a) => ![...S.auto, S.off].includes(a))) usage('delegateUsage');
+    const k = args.indexOf(S.until), until = k >= 0 ? args[k + 1] : undefined, classes = k >= 0 ? args.slice(0, k) : args;
+    if (!classes.length || classes.some((a) => ![...S.auto, S.off].includes(a)) || (k >= 0 && (!DATE.test(until ?? '') || args.length > k + 2))) usage('delegateUsage');
     const data = readJson(personal(cwd)) ?? {};
-    const auto = args.includes(S.off) ? [] : args;
-    writeJson(personal(cwd), { ...data, approvals: { ...data.approvals, auto } });
+    const auto = classes.includes(S.off) ? [] : classes;
+    writeJson(personal(cwd), { ...data, approvals: { ...data.approvals, auto, until } }); // a delegation with an until lapses then
     return done(msg('delegated', { classes: auto.join(', ') || S.off }));
   },
 
