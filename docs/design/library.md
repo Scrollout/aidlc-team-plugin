@@ -37,6 +37,7 @@ The plugin holds every project to kinds, layers and one-way dependencies. Its ow
 - `afterMerge`: work after a merge lands (board).
 - `issueTitle`: the title of an issue `fix --from-issue` reads (board).
 - `stack`: the stack pack a project's files match (stacks), for the intake proposal.
+- `pathwaySteps`: an intent's pathway steps an extension adds (models).
 
 # Extensions
 An extension is `extensions/<name>/extension.json` plus `index.mjs`:

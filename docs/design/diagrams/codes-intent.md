@@ -32,3 +32,4 @@ generated: { by: tests/diagrams.mjs }
 | `ELAB-PERSONA` | list each kind of user the request names under # Personas, as - **<Name>**: <who they are and what they want> [source], or set onePersona: "<why one kind of user>" (docs: Elaboration checks) |
 | `ELAB-STORY` | give each persona a story under # Stories: - As a <persona>, I want <capability>, so that <benefit>. R-<n> [source], citing a requirement the intent cites (docs: Elaboration checks) |
 | `REQUEST-COVERAGE` | cite each sentence of the request where the intent or a requirement answers it, or under # Out of scope with the reason (docs: Intake) |
+| `MODEL-SOURCE` | give each layer, domain and rule of the model sources: ids of the sources of the research: digests the intent names (docs: Models) |

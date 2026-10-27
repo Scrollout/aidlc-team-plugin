@@ -36,13 +36,13 @@ A model's rules name roles and shapes, never one vendor's names; the project's o
 - `aidlc check` validates every model it can see.
 
 # Modelling a reference
-The `model` pathway:
-1. a research brief on the reference;
-2. the researcher's cited digest;
-3. the architect persona drafts the model from it;
-4. the owner approves it, the one-way doors one at a time.
+The `model` pathway, for an intent that names its `model:` and its `research:` digests:
+1. **`research`:** the researcher's cited digests of the reference, filed under `research/`.
+2. **The draft:** the architect persona writes `.aidlc/models/<name>/model.json`. Each layer, domain and rule carries `sources`: ids of the digests' sources. One with none, or with an id no digest has, is `MODEL-SOURCE`.
+3. **`model`:** `aidlc models doc <name>` writes the Model doc, `models/<name>.md`, from it: the layers, domains, slice, contracts and rules, each with its sources as footnotes, and `digest`, the hash of `model.json`. Only the CLI writes it, so a stale or hand-edited doc fails the step.
+4. **The approval:** the owner approves the Model doc like any doc, and re-approves it after the model changes. The model's one-way doors are approved one at a time when it is applied.
 
-The model doc cites the digest's sources, as an intent cites its request.
+Shipped models carry no sources: a plugin release vouches for them.
 
 # Applying a model
 - **Greenfield:** intake proposes the models whose fit matches the request. Choosing one writes the system doc and the proposed decisions, and cuts the increments along its layers and slices.

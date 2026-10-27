@@ -10,7 +10,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T06:00:00Z }
 On `resource-manager` (2026-10-26) 21 decisions were approved in 20 seconds, two pairs contradicted each other, decisions were amended in place to match code, and the cluster's identity form was assumed, not probed. AI-DLC's safeguard is human validation of what the AI proposes; these rules make it real ([0015](../decisions/0015-one-way-doors-are-approved-one-at-a.md)).
 
 # Pathways
-An intent declares `pathway`: `greenfield`, `feature`, `brownfield` or `defect` (`cli.json` `inception.pathways`). Each names the steps it requires before the intent is approved; a missing one is `PATHWAY-SKIP`, which blocks the approval:
+An intent declares `pathway`: `greenfield`, `feature`, `brownfield`, `model` ([Models](models.md#modelling-a-reference)) or `defect` (`cli.json` `inception.pathways`). Each names the steps it requires before the intent is approved; a missing one is `PATHWAY-SKIP`, which blocks the approval:
 - `questions`: every question answered (below).
 - `domains`: a domain doc for each code in the intent's `domains`.
 - `facts`: each decision the intent cites with `affects.platform` cites a fact.

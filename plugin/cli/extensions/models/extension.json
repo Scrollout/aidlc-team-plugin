@@ -6,13 +6,17 @@
     "okf": {
       "codes": {
         "MODEL-FORMAT": { "level": "error", "fix": "give the model folder a model.json with name, title, description, layers and slice; layers and domains with unique ids and kinds from the vocabulary; rules of known types; contracts between known ids; decisions as Decision docs (docs: Models)" }
+      },
+      "bundle": {
+        "folders": { "Model": "models" },
+        "generated": ["Model"]
       }
     },
     "commands": [
       {
         "name": "models",
-        "usage": "models",
-        "does": "list the architecture models this project can apply: the shipped ones and its own in .aidlc/models/"
+        "usage": "models [doc <name>]",
+        "does": "list the architecture models this project can apply; doc writes a project model's Model doc for the owner to approve"
       }
     ],
     "messages": {
@@ -30,7 +34,13 @@
       "modelDecision": "model {{model}}: decisions/{{file}} is not a Decision doc",
       "modelLine": "{{name}} ({{source}}): {{title}}{{problems}}\n",
       "modelProblems": ", {{count}} format problems: aidlc check",
-      "modelNone": "no models: the plugin ships none yet, and the project keeps its own in {{dir}}/<name>/\n"
+      "modelNone": "no models: the plugin ships none yet, and the project keeps its own in {{dir}}/<name>/\n",
+      "modelsUsage": "usage: aidlc models, or aidlc models doc <name> for a project model",
+      "modelUnknown": "no project model {{name}} in {{dir}}: aidlc models lists them",
+      "modelDocWrote": "wrote {{path}} from {{file}}: ask the owner to approve it (aidlc approve {{path}})\n",
+      "modelDoc": "---\ntype: Model\ntitle: {{title}}\ndescription: {{description}}\nmodel: {{name}}\nresearch: [{{research}}]\ndigest: {{digest}}\ngenerated: { by: {{producer}}, at: {{at}}, digest: {{bodyDigest}} }\n---\n{{body}}",
+      "modelSourceNone": "{{unit}} model {{model}}: {{item}} cites no source",
+      "modelSourceUnknown": "{{unit}} model {{model}}: {{item}} cites {{ref}}, no source of {{research}}"
     },
     "models": {
       "dir": "models",
@@ -40,7 +50,34 @@
       "required": ["name", "title", "description", "layers", "slice"],
       "lists": ["layers", "domains", "contracts", "rules"],
       "sliceId": "slice",
-      "ruleTypes": ["stageOrder", "sliceContract", "longRunning", "idempotency", "data", "events"]
+      "ruleTypes": ["stageOrder", "sliceContract", "longRunning", "idempotency", "data", "events"],
+      "docHeadings": {
+        "layers": "Layers",
+        "domains": "Domains",
+        "slice": "Slice",
+        "contracts": "Contracts",
+        "rules": "Rules",
+        "sources": "Sources"
+      },
+      "research": "research"
+    },
+    "inception": {
+      "pathways": {
+        "model": ["questions", "research", "model"]
+      },
+      "steps": {
+        "research": "a Research digest under research/ for each name in research:",
+        "model": "a current Model doc for model: (aidlc models doc <name>), its model in the format"
+      }
+    },
+    "state": {
+      "approvable": ["Model"],
+      "approveBlocks": ["MODEL-SOURCE"]
+    },
+    "grid": {
+      "codes": {
+        "MODEL-SOURCE": { "level": "error", "fix": "give each layer, domain and rule of the model sources: ids of the sources of the research: digests the intent names (docs: Models)" }
+      }
     }
   }
 }

@@ -12,7 +12,7 @@ Each comes with its extension ([Library and extensions](library.md#extensions));
 | Command | Does | Run by |
 |---|---|---|
 | `retro <intent>` | lists the codes that fired 3+ times, the intent's escalations, the owner's interventions and failed deploy steps, proposes at most three changes, and resets the counters ([Steering](steering.md#3-across-intents-the-retro)) | lead, owner |
-| `models` | lists the models the project can apply ([Models](models.md)) | lead |
+| `models [doc <name>]` | lists the models the project can apply; `doc` writes a project model's Model doc for the owner to approve ([Models](models.md)) | lead |
 | `intake "<prose>"\|--file <path>\|Q-<n> [--<factor> <band>:<ids>]…` | keeps the owner's request word for word as `requests/Q-<n>` and proposes pathway, stack and lane; with `Q-<n>`, records the lead's bands ([Intake](intake.md)) | lead |
 | `graph` | the dependency graph the stack pack reads from source, imports and data ([Stack packs](stack-packs.md)) | gate, lead |
 | `scaffold <kind> <name> [--domain d]` | a kind's templates from the stack pack, named from the registry; never overwrites | lead, builder |

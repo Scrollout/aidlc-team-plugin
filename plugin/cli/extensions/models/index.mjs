@@ -1,10 +1,12 @@
 // Architecture models: a proven system's vertical and horizontal shape as data, shipped with the CLI or kept by a
 // project, the project's own winning (docs/design/models.md, decision 0020).
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { CLI_DIR, config, done, msg, parseDoc, plug, relPath } from '../../lib/index.mjs';
+import { bundleOf, CLI_DIR, config, done, list, loadProfile, msg, parseDoc, plug, readJson, relPath, UsageError } from '../../lib/index.mjs';
 
-const M = config.models;
+const M = config.models, F = config.okf.bundle.folders;
+const sha16 = (text) => createHash('sha256').update(text).digest('hex').slice(0, 16);
 const folders = (dir) => (existsSync(dir) ? readdirSync(dir).filter((n) => statSync(join(dir, n)).isDirectory()).sort() : []);
 
 // Every model the project can see, by name: the shipped ones, then its own, which replace a shipped one of the same name.
@@ -49,10 +51,58 @@ function problems(m, d) {
   return out;
 }
 
+// A project model by name, and the research digests a list names (files under research/), with their sources.
+const project = (root, name) => modelsOf(root).find((m) => m.name === name && m.source === 'project');
+const digests = (bundle, names) => list(names).map((n) => join(bundle, M.research, `${n}.md`)).filter(existsSync).map((f) => parseDoc(readFileSync(f, 'utf8')).fm?.sources ?? []);
+// A model's items that carry sources: its layers, its domains, and its rules by id or type.
+const items = (d) => [...(d.layers ?? []), ...(d.domains ?? []), ...(d.rules ?? []).map((r) => ({ ...r, id: r.id ?? r.type }))];
+
+// The Model doc the owner approves, drawn from model.json with its sources as footnotes (docs/design/models.md#modelling-a-reference).
+function modelDoc(cwd, name) {
+  const { profile } = loadProfile(cwd), bundle = bundleOf(cwd, profile), m = name && project(cwd, name);
+  if (!m?.data) throw new UsageError(msg(name ? 'modelUnknown' : 'modelsUsage', { name, dir: M.local }));
+  const d = m.data, H = M.docHeadings, sources = new Map(digests(bundle, d.research).flat().map((s) => [String(s.id), s]));
+  const cite = (x) => list(x.sources).map((s) => `[^${s}]`).join('');
+  const line = (x) => `- **${x.id}** (${x.kind ?? '-'}): ${x.role ?? ''} ${cite(x)}`.trimEnd();
+  const used = [...new Set(items(d).flatMap((x) => list(x.sources)))].filter((s) => sources.has(s));
+  const body = ['', `# ${H.layers}`, ...d.layers.map(line), '', `# ${H.domains}`, ...(d.domains ?? []).map(line), '', `# ${H.slice}`, ...Object.entries(d.slice ?? {}).map(([k, v]) => `- ${k}: ${[v].flat().join(', ')}`),
+    '', `# ${H.contracts}`, ...(d.contracts ?? []).map((c) => `- ${c.from} → ${c.to}${c.via ? ` via ${c.via}` : ''}`), '', `# ${H.rules}`, ...(d.rules ?? []).map((r) => `- ${r.id ?? r.type}: ${r.type} ${cite(r)}`.trimEnd()),
+    ...(used.length ? ['', `# ${H.sources}`, ...used.map((s) => `[^${s}]: ${sources.get(s).title ?? s}, ${sources.get(s).resource ?? ''}`.trimEnd())] : [])].join('\n') + '\n';
+  const dir = join(bundle, F.Model), file = join(dir, `${name}.md`), at = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(file, msg('modelDoc', { title: JSON.stringify(d.title), description: JSON.stringify(d.description), name, research: list(d.research).join(', '), digest: sha16(readFileSync(join(m.dir, M.file), 'utf8')),
+    producer: msg('producer', { version: readJson(join(CLI_DIR, config.map.manifest))?.version ?? config.init.devVersion }), at, bodyDigest: sha16(body), body }));
+  return done(msg('modelDocWrote', { path: relPath(cwd, file), file: relPath(cwd, join(m.dir, M.file)) }));
+}
+
+// The model pathway's steps: its research digests filed, and a current Model doc of a model in the format.
+plug('pathwaySteps', (i, { bundle, base }) => ({
+  research: () => list(i.fm.research).length > 0 && list(i.fm.research).every((n) => existsSync(join(bundle, M.research, `${n}.md`))),
+  model: () => {
+    const name = String(i.fm.model ?? ''), m = name && project(base, name), file = join(bundle, F.Model, `${name}.md`);
+    return Boolean(m?.data && !m.problems.length && existsSync(file) && parseDoc(readFileSync(file, 'utf8')).fm?.digest === sha16(readFileSync(join(m.dir, M.file), 'utf8')));
+  },
+}));
+
+// MODEL-SOURCE: each layer, domain and rule of a project model cites a source of the research its intent names.
+plug('planRules', ({ bundle, intents, add, keyLine, base }) => {
+  for (const i of intents.filter((x) => x.fm.pathway === 'model' && x.fm.status !== config.grid.dropped)) {
+    const m = project(base, String(i.fm.model ?? ''));
+    if (!m?.data) continue;
+    const known = new Set(digests(bundle, i.fm.research).flat().map((s) => String(s.id)));
+    for (const x of items(m.data)) {
+      if (!list(x.sources).length) add('MODEL-SOURCE', i, keyLine(i, 'model'), 'modelSourceNone', { model: m.name, item: x.id });
+      for (const ref of list(x.sources).filter((r) => !known.has(r))) add('MODEL-SOURCE', i, keyLine(i, 'model'), 'modelSourceUnknown', { model: m.name, item: x.id, ref, research: list(i.fm.research).join(', ') || '-' });
+    }
+  }
+});
+
 plug('docChecks', (root) => modelsOf(root).flatMap((m) => m.problems.map(([key, data]) => ({ code: 'MODEL-FORMAT', path: relPath(root, join(m.dir, M.file)), key, data }))));
 
 export const commands = {
   models(args, { cwd }) {
+    if (args[0] === 'doc') return modelDoc(cwd, args[1]);
+    if (args.length) throw new UsageError(msg('modelsUsage', {}));
     const all = modelsOf(cwd);
     if (!all.length) return done(msg('modelNone', { dir: M.local }));
     return done(all.map((m) => msg('modelLine', { name: m.name, source: m.source, title: m.data?.title ?? '-', problems: m.problems.length ? msg('modelProblems', { count: m.problems.length }) : '' })).join(''));

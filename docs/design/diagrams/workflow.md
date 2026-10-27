@@ -12,6 +12,7 @@ flowchart LR
     greenfield([greenfield]) --> questions --> domains --> facts --> approved
     feature([feature]) --> questions --> domains --> facts --> approved
     brownfield([brownfield]) --> map --> kinds --> business --> baseline --> questions --> domains --> facts --> approved
+    model([model]) --> questions --> research --> model([model]) --> approved
   end
   subgraph Construction
     b_approved[approved] -->|builder starts| b_building[building]

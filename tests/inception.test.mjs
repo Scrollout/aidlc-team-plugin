@@ -17,7 +17,7 @@ const decision = (n, fm, title = `Decision ${n}`) => [`docs/decisions/${String(n
 const codes = (dir, profile = V2) => lintPlan(join(dir, 'docs'), profile, { base: dir }).filter((f) => !/^PLAN-/.test(f.code)).map((f) => `${f.code} ${f.message}`);
 
 test('B173/AC-1 a v2 intent declares its pathway, and a step the pathway requires that is missing is PATHWAY-SKIP', () => {
-  assert.deepEqual(codes(makeRepo({ 'docs/intents/I-1-backbone.md': intent('') }, V2)), ['PATHWAY-SKIP I-1 declares no pathway: one of greenfield, feature, brownfield']);
+  assert.deepEqual(codes(makeRepo({ 'docs/intents/I-1-backbone.md': intent('') }, V2)), ['PATHWAY-SKIP I-1 declares no pathway: one of greenfield, feature, brownfield, model']);
   assert.deepEqual(codes(makeRepo({ 'docs/intents/I-1-backbone.md': intent('pathway: greenfield\ndomains: [quotas]\n') }, V2)), ['PATHWAY-SKIP I-1 (greenfield) skips its domains step: a domain doc for each of its domains']);
   const legacy = { ...V2, modules: [...V2.modules, { id: 'legacy', paths: ['lib/**'] }] };
   const brown = codes(makeRepo({ 'docs/intents/I-1-backbone.md': intent('pathway: brownfield\n') }, legacy), legacy);

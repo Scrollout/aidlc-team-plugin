@@ -9,7 +9,7 @@ import { msg } from '../foundation/text.mjs';
 import { loadProfile, withDefaults } from '../foundation/profile.mjs';
 import { docSlug, hashDoc, parseDoc, sectionOf } from './bundle.mjs';
 import { glossaryOf } from './naming.mjs';
-import { plug } from '../foundation/seams.mjs';
+import { plug, seam } from '../foundation/seams.mjs';
 
 const P = config.inception, F = config.okf.bundle.folders;
 const superseded = (d) => String(d.fm.status ?? '').startsWith(P.superseded); // MADR's superseded by ADR-<NNNN>, or v1's superseded
@@ -36,7 +36,7 @@ const answered = (q) => q.answer && !undecided(q) && q.options.includes(q.answer
 const vagueIn = (q) => P.vague.find((w) => new RegExp(`\\b${w}\\b`, 'i').test(q.answer.replace(/^[a-z]\b[,.]?/, '')));
 
 // The findings, through `add(code, doc, line, key, data)` and `inForce(intent, key)` from plan lint.
-export function lintInception({ bundle, profile, intents, requirements, merged, add, inForce, incrementLines, keyLine }) {
+export function lintInception({ bundle, profile, intents, requirements, merged, add, inForce, incrementLines, keyLine, base }) {
   const v2 = Boolean(profile.system);
   const decisions = docsIn(bundle, config.grid.decisions).map((d) => ({ ...d, id: d.name.slice(0, 4), fm: d.doc.fm, stale: Boolean(d.doc.fm.verified_hash) && d.doc.fm.verified_hash !== hashDoc(d.doc) }));
   const domains = docsIn(bundle, F.Domain).map((d) => ({ ...d, code: String(d.doc.fm.code ?? d.name.replace(/\.md$/, '')) })).map((d) => ({ ...d, id: d.code, owns: bullets(d.doc, P.owns).map(([, t]) => t.match(/`([^`]+)`/)?.[1]).filter(Boolean) }));
@@ -92,6 +92,7 @@ export function lintInception({ bundle, profile, intents, requirements, merged, 
       // Method 10 (docs/design/intake.md#brownfield): what the code serves, and the suite passing on the base with its debt.
       business: () => bullets(i.doc, P.business).some(([, t]) => known.some((k) => new RegExp(`(^|[^\\w-])${k}([^\\w-]|$)`, 'i').test(t.replace(/^[^:]*:/, '')))),
       baseline: () => runs.every((run) => list(i.fm.baseline).some((f) => String(facts.get(f)?.doc.fm.command ?? '') === run)) && bullets(i.doc, P.debt).length > 0,
+      ...Object.assign({}, ...seam('pathwaySteps', profile).map((steps) => steps(i, { bundle, profile, base }))), // an extension's steps (docs/design/library.md#seams)
     };
     const due = (s) => !P.stepsSince[s] || inForce(i, P.stepsSince[s]);
     for (const step of P.pathways[pathway].filter((s) => due(s) && !steps[s]())) add('PATHWAY-SKIP', i, keyLine(i, 'pathway'), 'pathwaySkip', { pathway, step, why: P.steps[step] });

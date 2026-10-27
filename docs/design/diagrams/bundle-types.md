@@ -19,3 +19,4 @@ generated: { by: tests/diagrams.mjs }
 | Map | `architecture/` | - |
 | Glossary | `naming/` | - |
 | Request | `requests/` | - |
+| Model | `models/` | - |

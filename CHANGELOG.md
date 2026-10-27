@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.166.0] - 2026-10-27
+### Added
+- The `model` pathway: an intent that names its `model:` and `research:` digests needs the digests filed and a current Model doc; `aidlc models doc <name>` writes the Model doc (`models/<name>.md`, generated, with the model's digest) for the owner to approve. Each layer, domain and rule of a project model cites a source of that research (`MODEL-SOURCE`).
+- The `pathwaySteps` seam: an extension adds pathway steps.
+
 ## [0.165.0] - 2026-10-27
 ### Added
 - Architecture models (decision 0020), in the new `models` extension: a model folder (`model.json`, `knowledge/`, `decisions/`) loads from the CLI's shipped `models/` and the project's `.aidlc/models/`, the project's own winning; `aidlc models` lists them, and `aidlc check` reports a model that breaks the format (`MODEL-FORMAT`).
@@ -225,7 +230,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.165.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.166.0...HEAD
+[0.166.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.165.0...v0.166.0
 [0.165.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.164.0...v0.165.0
 [0.164.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.163.0...v0.164.0
 [0.163.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.162.0...v0.163.0
