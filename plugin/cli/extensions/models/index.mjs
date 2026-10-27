@@ -215,7 +215,9 @@ plug('planRules', (ctx) => {
 // ---- Applying a model (docs/design/models.md#applying-a-model) ----
 
 // The models whose fit words a request's sentences hold, with those sentences, for the intake proposal.
+// With each model's slices, as the registry names them, so stories are written per use case.
 plug('modelFit', (root, sentences) => modelsOf(root).filter((m) => m.data && !m.problems.length).map((m) => ({ name: m.name, title: m.data.title,
+  slices: (m.data.domains ?? []).flatMap((x) => sliceNames(x, named(registry(loadProfile(root).profile), (m.data.domains ?? []).map((y) => y.id)))),
   ids: sentences.filter((s) => list(m.data.fit?.words).some((w) => new RegExp(`\\b${w.replace(/ /g, '\\s+')}\\b`, 'i').test(s.text))).map((s) => s.id) })).filter((m) => m.ids.length));
 
 // The increments a model suggests, slice by slice: the walking skeleton through every layer serving the first slice,

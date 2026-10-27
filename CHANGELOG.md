@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.188.0] - 2026-10-28
+### Added
+- Vertical slices in units of work and intake (M28 B248). Method 12: each unit of work names the slices that serve its stories under `Slices`, one `<Kind> <slice> [US<g>.<s>]` each; `UNIT-WORK` reports a story no slice serves, a slice citing no story of its unit of work, a kind other than Command or Query, and, with a naming registry, a name the registry does not compose from its verbs and the unit of work's domains. Intents pinned to method 11 need no slices.
+- Intake lists each fitting model's slices; the intent template and the product analyst carry the Slices part.
+
 ## [0.187.0] - 2026-10-28
 ### Added
 - Vertical slices in models (M28 B247). A model's domains and its extension list their slices as `{ kind, verb, useCase }`, and `MODEL-FORMAT` checks each kind, verb, use case and pair. `models apply` writes each model domain's doc the bundle lacks, its `# Surface` one line per slice with the name the naming registry composes, and prints the increments slice by slice, the walking skeleton serving the first slice. `models gaps` lists the slices a played domain's doc does not list.
@@ -388,7 +393,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.187.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.188.0...HEAD
+[0.188.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.187.0...v0.188.0
 [0.187.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.186.0...v0.187.0
 [0.186.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.185.0...v0.186.0
 [0.185.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.184.0...v0.185.0

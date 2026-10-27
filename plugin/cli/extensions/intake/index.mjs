@@ -3,7 +3,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { approval, bundleOf, CLI_DIR, config, docSlug, done, git, gitLines, globRegex, list, render, loadProfile, msg, parseDoc, plug, questionsOf, readJson, readPlan, relPath, seam, sectionOf, UsageError, withDefaults } from '../../lib/index.mjs';
+import { approval, bundleOf, CLI_DIR, config, docSlug, done, git, gitLines, globRegex, list, loadProfile, msg, nameOf, parseDoc, plug, questionsOf, readJson, readPlan, registry, relPath, render, seam, sectionOf, UsageError, withDefaults } from '../../lib/index.mjs';
 
 const ST = config.state.names; // the lifecycle states, by name
 
@@ -65,7 +65,7 @@ function report(id, m, p, lead, fits = []) {
   const unscored = K.scored.filter((c) => !lead[c] && c !== 'risk');
   return msg('intakeProposal', { ...p.proposal, pathwayWhy: msg(WHY[p.proposal.pathway], {}) }) + lines.join('')
     + (unscored.length ? msg('intakeUnscored', { factors: unscored.join(', '), id }) : '')
-    + (fits.length ? msg('intakeModels', { models: fits.map((f) => `${f.name} (${f.ids.join(', ')})`).join(', ') }) : '') + msg('intakeTell', { id });
+    + (fits.length ? msg('intakeModels', { models: fits.map((f) => msg('intakeModel', { ...f, ids: f.ids.join(', '), slices: f.slices?.length ? [f.slices.map((s) => msg('intakeSlice', s)).join(', ')] : [] })).join(', ') }) : '') + msg('intakeTell', { id });
 }
 
 // The lead's scores from `--<factor> <band>:<ids>` flags, each checked against the request's sentences.
@@ -141,7 +141,7 @@ function lintSources({ bundle, profile, intents, units, requirements, add, inFor
   const facts = new Set(docsIn(join(bundle, F.Fact), new RegExp(K.ids.factFile)).map((f) => f.match(new RegExp(K.ids.factFile))[1]));
   for (const i of intents.filter((x) => x.fm.status !== config.grid.dropped && inForce(x, 'claimSource'))) {
     if (inForce(i, 'elabCorner')) { corners(i, add); readBack(i, add); }
-    if (inForce(i, 'unitsOfWork')) unitsOfWork(i, profile, units.filter((b) => b.fm.intent === i.id && b.fm.status !== config.grid.dropped), add);
+    if (inForce(i, 'unitsOfWork')) unitsOfWork(i, profile, units.filter((b) => b.fm.intent === i.id && b.fm.status !== config.grid.dropped), add, inForce(i, 'unitSlices'), bundle);
     const named = list(i.fm.request);
     if (!named.length) { add('CLAIM-SOURCE', i, 1, 'claimNoRequest', {}); continue; }
     for (const ref of named.filter((r) => !requests.has(r))) add('CLAIM-SOURCE', i, keyLine(i, 'request'), 'claimNoSuchRequest', { ref, dir: relPath(bundle, dir) });
@@ -239,7 +239,25 @@ function cycleOf(deps) {
   for (const name of deps.keys()) { const c = visit(name, []); if (c) return c; }
   return null;
 }
-function unitsOfWork(i, profile, bolts, add) {
+// Method 12: the slices that serve a Unit's stories, in the slice checks' grammar; with a naming registry, each a name it
+// composes from one of its verbs and a domain of the Unit's modules (docs/design/vertical-slices.md#planned-before-built).
+function unitSlices(i, u, listed, profile, bundle, add) {
+  const value = u.parts[U.slices.part.toLowerCase()];
+  if (value === undefined) return add('UNIT-WORK', i, u.n, 'unitPart', { name: u.name, part: U.slices.part });
+  const slices = [...value.matchAll(new RegExp(U.slices.entry, 'g'))].map((m) => ({ kind: m[1], slice: m[2], stories: idsOf(m[3], U.story) }));
+  const reg = profile.naming && registry(profile, bundle), domains = namesIn(u.parts[U.parts.modules.toLowerCase()]).filter((d) => (profile.modules ?? []).some((m) => String(m.id ?? m.name) === d && m.kind === U.slices.domainKind));
+  const names = reg && domains.flatMap((d) => reg.vocabularies.verb.map((verb) => nameOf(U.slices.grammar, { domain: d, verb }, { ...reg, domains: { [d]: {}, ...reg.domains } })));
+  for (const s of slices) {
+    const at = { name: u.name, slice: s.slice };
+    if (!config.slices.kinds.includes(s.kind)) add('UNIT-WORK', i, u.n, 'unitSliceKind', { ...at, kind: s.kind, kinds: config.slices.kinds.join(', ') });
+    if (!s.stories.length) add('UNIT-WORK', i, u.n, 'unitSliceNoStory', at);
+    for (const story of s.stories.filter((x) => !listed.includes(x))) add('UNIT-WORK', i, u.n, 'unitSliceStory', { ...at, story });
+    if (names && !names.includes(s.slice)) add('UNIT-WORK', i, u.n, 'unitSliceName', { ...at, names: names.join(', ') || '-' });
+  }
+  for (const story of listed.filter((x) => !slices.some((s) => s.stories.includes(x)))) add('UNIT-WORK', i, u.n, 'unitStorySlice', { name: u.name, story });
+}
+
+function unitsOfWork(i, profile, bolts, add, sliced, bundle) {
   const units = unitBlocks(i.doc), P = U.parts, of = (u, k) => u.parts[P[k].toLowerCase()];
   if (!units.length) return add('UNIT-WORK', i, 1, 'unitsNone', {});
   const modules = new Set((profile.modules ?? []).map((m) => String(m.id ?? m.name))), names = units.map((u) => u.name), seen = new Set();
@@ -259,6 +277,7 @@ function unitsOfWork(i, profile, bolts, add) {
     const listed = idsOf(of(u, 'stories'), U.story);
     if (of(u, 'stories') !== undefined && !listed.length) add('UNIT-WORK', i, n, 'unitNoStory', { name });
     for (const story of listed.filter((s) => !stories.some(([, , id]) => id === s))) add('UNIT-WORK', i, n, 'unitStory', { name, story });
+    if (sliced) unitSlices(i, u, listed, profile, bundle, add);
     for (const other of namesIn(of(u, 'depends')).filter((d) => d !== U.none && !names.includes(d))) add('UNIT-WORK', i, n, 'unitDepends', { name, other });
   }
   const inUnits = new Set(units.flatMap((u) => idsOf(of(u, 'stories'), U.story)));

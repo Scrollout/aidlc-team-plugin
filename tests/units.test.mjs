@@ -9,8 +9,9 @@ const V2 = { system: { core: ['src/**'] }, modules: [{ id: 'orders', kind: 'doma
 const unit = (name, parts) => `## ${name}\n${Object.entries(parts).map(([k, v]) => `- ${k}: ${v}`).join('\n')}\n`;
 const ORDERS = { Kind: 'service', Modules: 'orders, gateway', Responsibilities: 'takes cake orders [Q-1.1]', Stories: 'US1.1', Requirements: 'R-1', Risks: 'an order lost between steps', Measures: 'every order confirmed in a minute [M1]', 'Depends on': 'payments' };
 const PAYMENTS = { Kind: 'service', Modules: 'payments', Responsibilities: 'charges the card [Q-1.2]', Stories: 'US1.2', Requirements: 'R-1', Risks: 'a charge made twice', Measures: 'no double charge [M1]', 'Depends on': 'none' };
-const intent = (units, stories = '- US1.1 As a customer, I want to order a cake, so that I get it on time. R-1 [Q-1.1]\n- US1.2 As a customer, I want to pay by card, so that I need no cash. R-1 [Q-1.2]\n') =>
-  `---\ntype: Intent\ntitle: Cake orders\ndescription: Customers order cakes.\npathway: feature\nrequirements: [R-1]\n---\n\n# Goal\n- Customers order cakes online [Q-1.1]\n\n# Stories\n${stories}\n# Units\n${units}\n# Success measures\n- M1 orders confirmed within a minute\n`;
+// Method 11's rules (B243) on an intent pinned to it; method 12 adds each Unit's slices (B248, below).
+const intent = (units, stories = '- US1.1 As a customer, I want to order a cake, so that I get it on time. R-1 [Q-1.1]\n- US1.2 As a customer, I want to pay by card, so that I need no cash. R-1 [Q-1.2]\n', method = 11) =>
+  `---\ntype: Intent\ntitle: Cake orders\ndescription: Customers order cakes.\npathway: feature\nrequirements: [R-1]\nmethod: ${method}\n---\n\n# Goal\n- Customers order cakes online [Q-1.1]\n\n# Stories\n${stories}\n# Units\n${units}\n# Success measures\n- M1 orders confirmed within a minute\n`;
 const req = '---\ntype: Requirement\ntitle: Orders\ndescription: Orders are taken.\n---\n\n# Requirement\nThe shop shall take orders.\n';
 const bolt = (modules) => `---\ntype: Bolt\ntitle: Take orders\ndescription: Take orders.\nintent: I-1\nmodules: [${modules}]\nscope: ["src/orders/**"]\n---\n\n# Why\nOrders.\n`;
 const found = (docs) => run(makeRepo({ 'docs/requirements/R-1-orders.md': req, ...docs }, V2), ['check']).out.split('\n').filter((l) => /UNIT-WORK/.test(l)).map((l) => l.replace(/ → .*$/, '').replace(/^\S+:\d+ UNIT-WORK /, ''));
@@ -44,4 +45,42 @@ test('B243/AC-2 every story has an id and a unit, every unit a story, the depend
   assert.deepEqual(found({ 'docs/intents/I-1-cakes.md': both, 'docs/bolts/B-1-take-orders.md': bolt('orders') }), [], 'a bolt inside a unit');
   assert.deepEqual(found({ 'docs/intents/I-1-cakes.md': intent(unit('orders', { ...ORDERS, Modules: 'orders' }) + unit('payments', PAYMENTS)), 'docs/bolts/B-1-take-orders.md': bolt('orders, gateway') }), ['I-1 bolt B-1 changes gateway, which no unit of work lists']);
   assert.ok(config.state.approveBlocks.includes('UNIT-WORK'), 'it blocks the approval, as the other elaboration checks do');
+});
+
+// M28 B248: each Unit names the slices that serve its stories (docs/design/vertical-slices.md#planned-before-built).
+const SLICED = (orders, payments) => intent(unit('orders', { ...ORDERS, Slices: orders }) + unit('payments', { ...PAYMENTS, Slices: payments }), undefined, 12);
+const foundWith = (profile, docs) => run(makeRepo({ 'docs/requirements/R-1-orders.md': req, ...docs }, profile), ['check']).out.split('\n').filter((l) => /UNIT-WORK/.test(l)).map((l) => l.replace(/ → .*$/, '').replace(/^\S+:\d+ UNIT-WORK /, ''));
+
+test('B248/AC-1 from method 12 each Unit names the slices that serve its stories, each citing a story of the Unit', () => {
+  assert.deepEqual(found({ 'docs/intents/I-1-cakes.md': SLICED('Command createorder [US1.1]', 'Command createpayment [US1.2]') }), [], 'every story served');
+  assert.deepEqual(found({ 'docs/intents/I-1-cakes.md': intent(unit('orders', ORDERS) + unit('payments', { ...PAYMENTS, Slices: 'Command createpayment [US1.2]' }), undefined, 12) }), ['I-1 unit of work orders has no Slices line']);
+  assert.deepEqual(found({ 'docs/intents/I-1-cakes.md': SLICED('Event ordertaken [US1.1], Query getorder [], Command createorder [US1.2]', 'Command createpayment [US1.2]') }), [
+    'I-1 unit of work orders: slice ordertaken has kind Event, not one of Command, Query',
+    'I-1 unit of work orders: slice getorder cites no story of the unit of work in brackets',
+    'I-1 unit of work orders: slice createorder cites US1.2, which is no story of the unit of work',
+  ]);
+  assert.deepEqual(found({ 'docs/intents/I-1-cakes.md': SLICED('Query getorder []', 'Command createpayment [US1.2]') }).filter((l) => /story US1\.1/.test(l)),
+    ['I-1 unit of work orders: story US1.1 has no slice under Slices: name the vertical slice that serves it, <Kind> <slice> [US1.1]']);
+  assert.deepEqual(found({ 'docs/intents/I-1-cakes.md': intent(unit('orders', ORDERS) + unit('payments', PAYMENTS)) }), [], 'an intent pinned to method 11 needs no slices');
+});
+
+test('B248/AC-1 with a naming registry, a Unit\'s slice is a name the registry composes from its verbs and the Unit\'s domains', () => {
+  const named = { ...V2, naming: { tokens: { system: 'shop' }, domains: { orders: {}, payments: {} } } };
+  assert.deepEqual(foundWith(named, { 'docs/intents/I-1-cakes.md': SLICED('Command createorder [US1.1]', 'Command createpayment [US1.2]') }), []);
+  const lines = foundWith(named, { 'docs/intents/I-1-cakes.md': SLICED('Command placeorder [US1.1]', 'Command createorder [US1.2]') });
+  assert.equal(lines.length, 2, lines.join('\n'));
+  assert.match(lines[0], /^I-1 unit of work orders: slice placeorder is no name the naming registry composes from its verbs and the domains of the unit of work \(getorder, listorder, createorder, /);
+  assert.match(lines[1], /slice createorder is no name .*\(getpayment, /, 'a slice of another Unit\'s domain');
+});
+
+test('B248/AC-2 intake lists a fitting model\'s slices; the persona and the intent template carry the Slices part', async () => {
+  const { readFileSync, writeFileSync, mkdirSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const dir = makeRepo({}, V2);
+  mkdirSync(join(dir, '.aidlc/models/shop'), { recursive: true });
+  writeFileSync(join(dir, '.aidlc/models/shop/model.json'), JSON.stringify({ name: 'shop', title: 'Shop', description: 'A shop.', layers: [{ id: 'web', kind: 'runtime' }], domains: [{ id: 'orders', kind: 'domain', slices: [{ kind: 'Command', verb: 'create', useCase: 'a customer orders' }] }], extension: { declares: [] }, rules: [], fit: { words: ['cakes'] } }));
+  assert.match(run(dir, ['intake', 'Customers order cakes online.']).out, /models that fit: shop \(Q-1\.1; its slices: Command createorder\)/);
+  const root = join(import.meta.dirname, '..');
+  assert.match(readFileSync(join(root, 'plugin/templates/docs/intent.md'), 'utf8'), /^- Slices: <Command or Query> <slice> \[US<g>\.<s>\]/m);
+  assert.match(readFileSync(join(root, 'plugin/personas/product-analyst.md'), 'utf8'), /the vertical slices that serve its stories/);
 });

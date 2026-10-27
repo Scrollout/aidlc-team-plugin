@@ -32,6 +32,7 @@ requirements: [R-<n>]
 - Risks: <what could sink it>
 - Measures: <a measurable outcome> [M1]
 - Depends on: <the units of work its code needs, or none>
+- Slices: <Command or Query> <slice> [US<g>.<s>], one per vertical slice that serves its stories
 <optional: Integration (APIs, shared data, events), Deployment (standalone, shared or embedded), Complexity (S, M, L or XL), Bolts, PRFAQ>
 
 # Increments

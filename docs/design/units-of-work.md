@@ -1,8 +1,8 @@
 ---
 type: Design
 title: Units of work
-description: Draft - an intent lists its Units of work as the method's Mob Elaboration and Units Generation give them, each with its kind, modules, responsibilities, stories, requirements, risks, measures and dependencies, every story in a Unit, the dependencies acyclic, and each bolt's modules in a Unit of its intent.
-status: draft
+description: An intent lists its Units of work as the method's Mob Elaboration and Units Generation give them, each with its kind, modules, responsibilities, stories, requirements, risks, measures and dependencies, every story in a Unit, the dependencies acyclic, and each bolt's modules in a Unit of its intent.
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-28T01:30:00Z }
 ---
 

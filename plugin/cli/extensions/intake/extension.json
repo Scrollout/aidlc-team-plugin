@@ -42,6 +42,8 @@
       "intakeProposal": "proposal: pathway {{pathway}} ({{pathwayWhy}}), stack {{stack}}, lane {{lane}}\n",
       "intakeLine": "  {{factor}} {{band}}: {{why}}\n",
       "intakeUnscored": "  {{factors}} not scored: aidlc intake {{id}} --<factor> <band>:<sentence ids>\n",
+      "intakeModel": "{{name}} ({{ids}}{{#each slices}}; its slices: {{this}}{{/each}})",
+      "intakeSlice": "{{kind}} {{name}}",
       "intakeModels": "  models that fit: {{models}}; once the owner picks one: aidlc models apply <name>\n",
       "intakeTell": "tell the owner in two or three plain sentences what kind of change this is and how much process it needs, then this proposal; they confirm or change it, and the intent records request: {{id}}, pathway and lane\n",
       "intakeVerification": "a test level that runs: {{tests}}; CI: {{ci}}",
@@ -78,6 +80,11 @@
       "unitRequirement": "{{unit}} unit of work {{name}} cites {{req}}, which the intent does not cite",
       "unitMeasure": "{{unit}} unit of work {{name}} measure cites no success measure of the intent: {{text}}",
       "unitStory": "{{unit}} unit of work {{name}} lists {{story}}, which is no story of the intent",
+      "unitStorySlice": "{{unit}} unit of work {{name}}: story {{story}} has no slice under Slices: name the vertical slice that serves it, <Kind> <slice> [{{story}}]",
+      "unitSliceKind": "{{unit}} unit of work {{name}}: slice {{slice}} has kind {{kind}}, not one of {{kinds}}",
+      "unitSliceNoStory": "{{unit}} unit of work {{name}}: slice {{slice}} cites no story of the unit of work in brackets",
+      "unitSliceStory": "{{unit}} unit of work {{name}}: slice {{slice}} cites {{story}}, which is no story of the unit of work",
+      "unitSliceName": "{{unit}} unit of work {{name}}: slice {{slice}} is no name the naming registry composes from its verbs and the domains of the unit of work ({{names}})",
       "unitNoStory": "{{unit}} unit of work {{name}} lists no story",
       "storyNoId": "{{unit}} story has no id US<g>.<s>: {{text}}",
       "storyNoUnit": "{{unit}} story {{story}} is in no unit of work",
@@ -102,7 +109,8 @@
         "requirement": "R-\\d+",
         "none": "none",
         "parts": { "kind": "Kind", "modules": "Modules", "responsibilities": "Responsibilities", "stories": "Stories", "requirements": "Requirements", "risks": "Risks", "measures": "Measures", "depends": "Depends on" },
-        "kinds": ["service", "spec", "ui", "packaging", "library"]
+        "kinds": ["service", "spec", "ui", "packaging", "library"],
+        "slices": { "part": "Slices", "entry": "(\\S+)\\s+([^\\s\\[,]+)\\s*\\[([^\\]]*)\\]", "domainKind": "domain", "grammar": "slice" }
       },
       "waivers": ["n/a", "out of scope"],
       "corners": [

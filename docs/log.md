@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-28
 
+- **Update** M28 B248 built: method 12, each unit of work names the slices that serve its stories, and intake lists a fitting model's slices ([Units of work](design/units-of-work.md), [Vertical slices checked](design/vertical-slices.md#planned-before-built)). Release 0.188.0.
 - **Update** M28 B247 built: vertical slices in models, applied to the domain docs and reported as gaps ([Vertical slices checked](design/vertical-slices.md#planned-before-built)). Release 0.187.0.
 
 ## 2026-10-27

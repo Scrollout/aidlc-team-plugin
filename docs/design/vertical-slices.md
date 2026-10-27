@@ -33,8 +33,9 @@ The chain story → slice → folder → test starts where the story is written,
 - **Units of work** (method 12): each Unit names the slices it delivers under `Slices`, one `<Kind> <slice> [US<g>.<s>]` each, so every story of the Unit has a slice before any bolt is cut. `UNIT-WORK` reports a story no slice serves, a slice citing no story of the Unit, a kind other than Command or Query, and, with a naming registry, a name the registry does not compose from one of its verbs and a domain of the Unit's modules ([Units of work](units-of-work.md)).
 - **Models:** a model's domains and its extension list their slices as `{ kind, verb, useCase }`, the registry composing each name from the verb and the domain's noun. `models apply` writes each domain doc the bundle lacks with its `# Surface`, the stories left for elaboration to cite, and prints the increments slice by slice; `models gaps` lists a domain's model slices its doc does not list ([Models](models.md)).
 - **Intake** lists a fitting model's slices beside it, so stories are written per use case ([Intake](intake.md)).
+- **Bolts** list the slices they deliver; `PLAN-SLICE` holds each to its domain doc and `SLICE-DELIVER` to the bolt's diff, and the board labels a bolt `slice:<name>`, or `layer:<kind>` when it binds a horizontal module ([Board](board.md#shape)).
 
 # Where they run
 At the merge gate, on the merge result. A project's existing code is measured as it changes: a finding counts only where the bolt changed a file, the slice folder or the domain doc it names, so debt from before adoption waits for the bolt that touches it.
 
-Bolts: [M27](../roadmap/m27.md) B245, B246; [M28](../roadmap/m28.md) B247, B248.
+Bolts: [M27](../roadmap/m27.md) B245, B246; [M28](../roadmap/m28.md) B247, B248, B249.
