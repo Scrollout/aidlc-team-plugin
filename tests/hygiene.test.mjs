@@ -46,6 +46,6 @@ test('B195/AC-1 every export of the CLI is used by another module, the entry or 
 
 test('B195/AC-1 the v1 aliases (units/, U-<n>) are gone once the milestone they expire with is built', () => {
   const roadmap = join(ROOT, 'docs/roadmap', `${config.grid.legacyUntil.toLowerCase()}.md`);
-  const built = existsSync(roadmap) && /^Built on /m.test(readFileSync(roadmap, 'utf8'));
+  const built = existsSync(roadmap) && /^status: stable$/m.test(readFileSync(roadmap, 'utf8')); // the whole milestone, not one bolt of it
   assert.ok(!built || !config.grid.units, `${config.grid.legacyUntil} is built: remove the units/ alias`);
 });

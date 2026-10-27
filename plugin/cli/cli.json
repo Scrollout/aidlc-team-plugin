@@ -794,7 +794,7 @@
     "units": "units",
     "bolts": "bolts",
     "boltPrefix": "B-",
-    "legacyUntil": "M22",
+    "legacyUntil": "M25",
     "gherkin": "\\bwhen\\b.*\\bthen\\b",
     "requirementSection": "Requirement",
     "ears": ["^the .+ shall .+", "^when .+, the .+ shall .+", "^while .+, (when .+, )?the .+ shall .+", "^if .+, then the .+ shall .+", "^where .+, the .+ shall .+"],
