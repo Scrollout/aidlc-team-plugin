@@ -21,10 +21,8 @@ export const commands = {
     out += msg('retroCodes', {}) + (codes.map(([code, count]) => msg('retroCount', { key: code, count })).join('') || msg('retroNone', {}));
     // Each escalation of the intent's units, from the verdicts and reports on disk.
     const units = [...intent.units, ...st.units.filter((u) => u.fm.after === intent.id)]; // and the fix units after its release
-    const escalations = units.flatMap((u) => [
-      ...(readJson(runtimeFile(cwd, 'reviews', u.id))?.rounds ?? []).filter((r) => r.verdict === VERDICT.escalate)
-        .map((r) => msg('retroReview', { unit: u.id, focus: r.focus ?? config.state.focus, findings: (r.findings ?? []).length, at: r.at })),
-    ]);
+    const escalations = units.flatMap((u) => (readJson(runtimeFile(cwd, 'reviews', u.id))?.rounds ?? []).filter((r) => r.verdict === VERDICT.escalate)
+      .map((r) => msg('retroReview', { unit: u.id, focus: r.focus ?? config.state.focus, findings: (r.findings ?? []).length, at: r.at })));
     const mine = new Set(units.map((u) => u.id));
     escalations.push(...(stats[R.stops] ?? []).filter((s) => mine.has(s.unit)).map((s) => msg('retroStopped', s)));
     escalations.push(...(stats[R.sendBacks] ?? []).filter((s) => mine.has(s.unit)).map((s) => msg('retroSentBack', s)));

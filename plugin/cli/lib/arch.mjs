@@ -1,7 +1,7 @@
-// The architecture model's checks over the dependency graph: kinds, layers and a runtime's reach (docs/design/architecture-model.md).
+// The architecture checks over the dependency graph: boundaries, data owners, surfaces and cycles (docs/design/data-ownership.md,
+// docs/design/module-surface.md), and the architecture model's kinds, layers and a runtime's reach (docs/design/architecture-model.md).
 import { config, list } from './config.mjs';
 import { finding as codeFinding, msg } from './template.mjs';
-import { globRegex } from './gate.mjs';
 
 const V = config.vocabulary;
 const finding = (code, path, key, data) => codeFinding(config.gate.codes, code, path, 1, key, data);
@@ -12,6 +12,71 @@ const moduleAt = (mods, path) => mods.find((m) => hit(m.paths, path));
 const surfaceOf = (m) => (m.surfaces ? [...list(m.surfaces.client), ...list(m.surfaces.events)] : list(m.api));
 const inSurface = (m, path) => hit(surfaceOf(m), path);
 const layerOf = (m, path) => { const l = Object.entries(m.layers ?? {}).find(([, globs]) => hit(globs, path))?.[0]; return l && (V.layerAliases[l] ?? l); };
+
+// A glob as a regex whose single `*` segments are captured, for `same: false` boundaries.
+export function globRegex(glob) {
+  let g = glob.replace(/^\.?\//, '');
+  if (!glob.startsWith('/') && !g.includes('/')) g = '**/' + g;
+  const body = g.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*\*\/?|\*|\?/g, (t) => (t.startsWith('**') ? (t.endsWith('/') ? '(?:.*/)?' : '.*') : t === '*' ? '([^/]*)' : '[^/]'));
+  return new RegExp(`^${body}$`);
+}
+
+export const exceptDocs = (arch) => [...(arch.boundaries ?? []).flatMap((b) => list(b.except)), ...[arch.data, arch.api, arch.acyclic].flatMap((r) => list(r?.except))];
+
+// Denied edges of the dependency graph the project's `architecture.graph` command prints. An approved
+// `except` decision covers the edges it lists as `<from> -> <to>` lines, or the whole boundary if it lists none.
+const excepted = (docs, approved, from, to) => list(docs).filter((d) => approved.has(d)).map((d) => approved.get(d).split('\n').map((l) => l.replace(/^\s*[-*]\s+|`/g, '').trim())).some((t) => !t.some((l) => l.includes(config.gate.edge)) || t.includes(`${from}${config.gate.edge}${to}`));
+
+export function boundaryFindings(edges, architecture, approved = new Map()) {
+  const out = [];
+  for (const [from, to] of edges) {
+    for (const b of architecture.boundaries ?? []) {
+      if (excepted(b.except, approved, from, to)) continue;
+      const fm = from.match(globRegex(b.from));
+      if (!fm) continue;
+      for (const deny of list(b.deny)) {
+        const tm = to.match(globRegex(deny));
+        if (!tm) continue;
+        if (b.same === false && fm.slice(1).join('/') === tm.slice(1).join('/')) continue;
+        out.push(finding('ARCH-BOUNDARY', from, 'archEdge', { from, to, reason: b.reason ?? deny }));
+      }
+    }
+  }
+  return out;
+}
+
+// Module rules over the graph: data owners, public surfaces and cycles.
+export function moduleFindings(edges, profile, approved = new Map()) {
+  const { data, api, acyclic } = profile.architecture ?? {};
+  const mods = modsOf(profile), out = [];
+  const [seen, links] = [new Set(), new Map()];
+  for (const [from, to] of edges) {
+    const [a, b] = [moduleAt(mods, from), moduleAt(mods, to)];
+    if (data?.prefix && to.startsWith(data.prefix)) {
+      const owners = mods.filter((m) => hit(m.data, to));
+      if (!seen.has(to) && (seen.add(to), owners.length > 1)) out.push(finding('ARCH-DATA', to, 'archDataTwice', { to, owners: owners.map((m) => m.id).join(', ') }));
+      if (owners.includes(a) || (!owners.length && hit(data.shared, to)) || excepted(data.except, approved, from, to)) continue;
+      out.push(finding('ARCH-DATA', from, owners.length ? 'archDataEdge' : 'archDataNoOwner', { from, to, owner: owners.map((m) => m.id).join(', ') }));
+    } else if (a && b && a !== b) {
+      // With kinds on both ends the kind table decides (ARCH-KIND); otherwise a module's surface does.
+      const surface = surfaceOf(b);
+      if (!(a.kind && b.kind) && surface.length && !hit(surface, to) && !excepted(api?.except, approved, from, to)) out.push(finding('ARCH-API', from, 'archApi', { from, to, module: b.id, api: surface.join(', ') }));
+      if (acyclic && !excepted(acyclic.except, approved, a.id, b.id)) links.set(a.id, new Set([...(links.get(a.id) ?? []), b.id]));
+    }
+  }
+  // One circle per set of modules: the shortest way back to each start, breadth first.
+  const circles = new Set();
+  for (const start of links.keys()) {
+    const back = new Map([[start, null]]);
+    const queue = [start];
+    let id;
+    while ((id = queue.shift()) !== undefined && !links.get(id)?.has(start)) for (const n of links.get(id) ?? []) if (!back.has(n)) back.set(n, id), queue.push(n);
+    const circle = id === undefined ? [] : [id];
+    while (circle.length && circle[0] !== start) circle.unshift(back.get(circle[0]));
+    if (circle.length && !circles.has([...circle].sort().join())) circles.add([...circle].sort().join()), out.push(finding('ARCH-CYCLE', '.', 'archCycle', { circle: [...circle, start].join(config.gate.edge) }));
+  }
+  return out;
+}
 
 // An edge the kind table forbids: by the depending module's kind, the kinds it may reach and the surface it must use.
 export function kindFindings(edges, profile) {

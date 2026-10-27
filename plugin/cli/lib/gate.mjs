@@ -3,7 +3,7 @@
 import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
-import { bundleOf, CLI_DIR, PLUGIN_DIR, config, QUICK, VERDICT, done, git, gitLines, list, readJson, sh, slug, tryGit, UsageError, relPath } from './config.mjs';
+import { bundleOf, CLI_DIR, PLUGIN_DIR, config, QUICK, VERDICT, done, git, gitLines, list, readJson, sh, tryGit, UsageError, relPath } from './config.mjs';
 import { finding as codeFinding, msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, docSlug, nameProblem, parseDoc, writeIndexes } from './okf.mjs';
@@ -12,11 +12,12 @@ import { issueTitle, sync } from './board.mjs';
 import { writeContextMap, writeGlossary, writeMap } from './map.mjs';
 import { generatedRules, glossaryOf } from './naming.mjs';
 import { contractFindings } from './contract.mjs';
-import { kindFindings, layerFindings, reachFindings } from './arch.mjs';
+import { boundaryFindings, exceptDocs, kindFindings, layerFindings, moduleFindings, reachFindings } from './arch.mjs';
 import { eventFindings } from './packs.mjs';
 import { aidlcDir, approval, baseOf, baseRedFile, branchOf, bump, codeChanges, diffHash, keptPass, verdictCurrent, mergedUnits, mutationOf, readState, reviewFocuses, roundsOf, runtimeFile, unitPaths, worktrees, writeJson } from './state.mjs';
 
 const G = config.gate;
+export { boundaryFindings, globRegex, moduleFindings } from './arch.mjs'; // the gate's graph checks live in arch.mjs
 const matches = (path, glob) => inside('/' + path, glob);
 const finding = (code, path, line, key, data) => codeFinding(G.codes, code, path, line, key, data);
 // Text that matches a built-in secret pattern or one in profile.security.secrets (the secrets hook and the gate).
@@ -96,73 +97,6 @@ export function directAllowed(path, bundleRel) {
     || init.includes(path) || [config.init.gitignore, config.init.settings].includes(path);
 }
 
-// A glob as a regex whose single `*` segments are captured, for `same: false` boundaries.
-export function globRegex(glob) {
-  let g = glob.replace(/^\.?\//, '');
-  if (!glob.startsWith('/') && !g.includes('/')) g = '**/' + g;
-  const body = g.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*\*\/?|\*|\?/g, (t) => (t.startsWith('**') ? (t.endsWith('/') ? '(?:.*/)?' : '.*') : t === '*' ? '([^/]*)' : '[^/]'));
-  return new RegExp(`^${body}$`);
-}
-
-const exceptDocs = (arch) => [...(arch.boundaries ?? []).flatMap((b) => list(b.except)), ...[arch.data, arch.api, arch.acyclic].flatMap((r) => list(r?.except))];
-
-// Denied edges of the dependency graph the project's `architecture.graph` command prints. An approved
-// `except` decision covers the edges it lists as `<from> -> <to>` lines, or the whole boundary if it lists none.
-const excepted = (docs, approved, from, to) => list(docs).filter((d) => approved.has(d)).map((d) => approved.get(d).split('\n').map((l) => l.replace(/^\s*[-*]\s+|`/g, '').trim())).some((t) => !t.some((l) => l.includes(G.edge)) || t.includes(`${from}${G.edge}${to}`));
-
-export function boundaryFindings(edges, architecture, approved = new Map()) {
-  const out = [];
-  for (const [from, to] of edges) {
-    for (const b of architecture.boundaries ?? []) {
-      if (excepted(b.except, approved, from, to)) continue;
-      const fm = from.match(globRegex(b.from));
-      if (!fm) continue;
-      for (const deny of list(b.deny)) {
-        const tm = to.match(globRegex(deny));
-        if (!tm) continue;
-        if (b.same === false && fm.slice(1).join('/') === tm.slice(1).join('/')) continue;
-        out.push(finding('ARCH-BOUNDARY', from, 1, 'archEdge', { from, to, reason: b.reason ?? deny }));
-      }
-    }
-  }
-  return out;
-}
-
-// Module rules over the graph: data owners (docs/design/data-ownership.md), public surfaces and cycles (docs/design/module-surface.md).
-export function moduleFindings(edges, profile, approved = new Map()) {
-  const { data, api, acyclic } = profile.architecture ?? {};
-  const hit = (globs, path) => list(globs).some((g) => globRegex('/' + g).test(path) || globRegex('/' + g).test(path + '/'));
-  const mods = (profile.modules ?? []).map((m) => ({ ...m, id: String(m.id ?? m.name) }));
-  const out = [];
-  const [seen, links] = [new Set(), new Map()];
-  for (const [from, to] of edges) {
-    const [a, b] = [from, to].map((p) => mods.find((m) => hit(m.paths, p)));
-    if (data?.prefix && to.startsWith(data.prefix)) {
-      const owners = mods.filter((m) => hit(m.data, to));
-      if (!seen.has(to) && (seen.add(to), owners.length > 1)) out.push(finding('ARCH-DATA', to, 1, 'archDataTwice', { to, owners: owners.map((m) => m.id).join(', ') }));
-      if (owners.includes(a) || (!owners.length && hit(data.shared, to)) || excepted(data.except, approved, from, to)) continue;
-      out.push(finding('ARCH-DATA', from, 1, owners.length ? 'archDataEdge' : 'archDataNoOwner', { from, to, owner: owners.map((m) => m.id).join(', ') }));
-    } else if (a && b && a !== b) {
-      // With kinds on both ends the kind table decides (ARCH-KIND); otherwise a module's api, or its client and events, is its surface.
-      const surface = b.surfaces ? [...list(b.surfaces.client), ...list(b.surfaces.events)] : list(b.api);
-      if (!(a.kind && b.kind) && surface.length && !hit(surface, to) && !excepted(api?.except, approved, from, to)) out.push(finding('ARCH-API', from, 1, 'archApi', { from, to, module: b.id, api: surface.join(', ') }));
-      if (acyclic && !excepted(acyclic.except, approved, a.id, b.id)) links.set(a.id, new Set([...(links.get(a.id) ?? []), b.id]));
-    }
-  }
-  // One circle per set of modules: the shortest way back to each start, breadth first.
-  const circles = new Set();
-  for (const start of links.keys()) {
-    const back = new Map([[start, null]]);
-    const queue = [start];
-    let id;
-    while ((id = queue.shift()) !== undefined && !links.get(id)?.has(start)) for (const n of links.get(id) ?? []) if (!back.has(n)) back.set(n, id), queue.push(n);
-    const circle = id === undefined ? [] : [id];
-    while (circle.length && circle[0] !== start) circle.unshift(back.get(circle[0]));
-    if (circle.length && !circles.has([...circle].sort().join())) circles.add([...circle].sort().join()), out.push(finding('ARCH-CYCLE', '.', 1, 'archCycle', { circle: [...circle, start].join(G.edge) }));
-  }
-  return out;
-}
-
 // The project's dependency graph, run once per tree: the codebase map and the architecture checks share it.
 const graphs = new Map();
 export function graphOf(cwd, command) {
@@ -239,19 +173,21 @@ function runGate(cwd, st, unit) {
   for (const l of gitLines(cwd, 'diff', '-U0', '--no-color', '--no-ext-diff', `${base}...${branchOf(unit.id)}`)) {
     if (l.startsWith('+++ ')) file = l.slice(6);
     else if (l.startsWith('@@')) line = Number(l.match(/\+(\d+)/)?.[1]);
-    else if (l.startsWith('+') && file && secretIn(l.slice(1), profile)) add('GATE-SECRET', 'gateSecret', { path: file, line }, file);
+    if (!l.startsWith('+') || l.startsWith('+++ ') || !file) continue;
+    const text = l.slice(1);
+    if (secretIn(text, profile)) add('GATE-SECRET', 'gateSecret', { path: file, line }, file);
     // A static credential between components, outside the tests: identities, not secrets (docs/design/workload-identity.md).
-    else if (l.startsWith('+') && file && codeChanges([file], p.levels, bundleRel).length && config.hooks.identity.some((x) => new RegExp(x, 'i').test(l.slice(1)))) add('GATE-IDENTITY', 'gateIdentity', { path: file, line }, file);
+    else if (codeChanges([file], p.levels, bundleRel).length && config.hooks.identity.some((x) => new RegExp(x, 'i').test(text))) add('GATE-IDENTITY', 'gateIdentity', { path: file, line }, file);
     // A name the line adds where a naming rule looks, which its pattern does not match (docs/design/naming.md).
-    if (l.startsWith('+') && !l.startsWith('+++ ') && file) for (const r of names.filter((x) => x.find && list(x.files).some((g) => matches(file, g)))) {
-      for (const m of l.slice(1).matchAll(new RegExp(r.find, 'g'))) {
+    for (const r of names.filter((x) => x.find && list(x.files).some((g) => matches(file, g)))) {
+      for (const m of text.matchAll(new RegExp(r.find, 'g'))) {
         const name = m[1] ?? m[0];
         if (!new RegExp(`^(?:${r.pattern})$`).test(name)) add('GATE-NAME', 'gateName', { path: file, line, rule: r.id, name, pattern: r.pattern, why: r.why ?? '-' }, file);
       }
     }
     // A synonym a domain's glossary says to avoid, on an added line outside the domain docs (docs/design/naming.md#checks).
-    if (l.startsWith('+') && !l.startsWith('+++ ') && file && !file.startsWith(`${bundleRel}/${config.okf.bundle.folders.Domain}/`)) for (const s of synonyms.filter((x) => x.re.test(l.slice(1)))) add('TERM-SYNONYM', 'gateSynonym', { path: file, line, word: s.word, term: s.term, domain: s.domain }, file);
-    if (l.startsWith('+') && !l.startsWith('+++ ')) line++;
+    if (!file.startsWith(`${bundleRel}/${config.okf.bundle.folders.Domain}/`)) for (const s of synonyms.filter((x) => x.re.test(text))) add('TERM-SYNONYM', 'gateSynonym', { path: file, line, word: s.word, term: s.term, domain: s.domain }, file);
+    line++;
   }
   // A path rule: each file the unit adds or renames under its files (docs/design/naming.md).
   for (const path of gitLines(cwd, 'diff', '--name-only', '--diff-filter=AR', `${base}...${branchOf(unit.id)}`)) {
@@ -283,9 +219,7 @@ function runGate(cwd, st, unit) {
 
   // What merge writes comes first and is staged, so each check sees the tree that will be committed (docs/design/gate.md).
   const treeBundle = join(tree, bundleRel);
-  writeMap(tree, withDefaults(loadProfile(tree).profile)); // before the indexes, which list it
-  writeGlossary(tree, withDefaults(loadProfile(tree).profile));
-  writeContextMap(tree, withDefaults(loadProfile(tree).profile));
+  for (const write of [writeMap, writeGlossary, writeContextMap]) write(tree, withDefaults(loadProfile(tree).profile)); // before the indexes, which list them
   writeIndexes(treeBundle);
   addLogEntry(treeBundle, msg('gateLogEntry', { unit: unit.id, title: String(unit.fm.title ?? '') }));
   for (const command of list(p.regen)) shell(tree, command);
@@ -430,11 +364,11 @@ export const commands = {
     const flags = Object.fromEntries(config.commands.find((c) => c.name === 'fix').flags.map((f) => [f.slice(2), []]));
     let title = null;
     for (let k = 0; k < args.length; k++) {
-      if (args[k].startsWith('--') && args[k].slice(2) in flags) {
-        if (!args[k + 1]) throw new UsageError(msg('badFlag', { name: args[k] }));
-        flags[args[k].slice(2)].push(args[++k]);
-      } else if (args[k].startsWith('--')) throw new UsageError(msg('unknownFlag', { name: args[k] }));
-      else title = title ?? args[k];
+      const a = args[k];
+      if (!a.startsWith('--')) title ??= a;
+      else if (!(a.slice(2) in flags)) throw new UsageError(msg('unknownFlag', { name: a }));
+      else if (!args[k + 1]) throw new UsageError(msg('badFlag', { name: a }));
+      else flags[a.slice(2)].push(args[++k]);
     }
     const { profile } = loadProfile(cwd);
     const issue = flags['from-issue'].map(Number);

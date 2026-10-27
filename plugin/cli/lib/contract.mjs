@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { config, gitLines, isMap } from './config.mjs';
 import { parseYaml } from './okf.mjs';
-import { globRegex } from './gate.mjs';
+import { globRegex } from './arch.mjs';
 
 const C = config.naming.contract;
 const re = (k) => new RegExp(C.patterns[k]);
