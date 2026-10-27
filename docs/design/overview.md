@@ -54,7 +54,7 @@ sequenceDiagram
 # Non-goals
 - Sandboxing the shell. The guard stops mistakes, not attackers.
 - Built-in deployment pipelines. Operation commands come from the project profile.
-- Simulated meetings (multi-agent debates, PM/tech-lead/architect personas).
+- Simulated meetings (multi-agent debates). The lead does work in role personas, with the owner in the loop ([0019](../decisions/0019-the-lead-works-in-role-personas.md)).
 - Tracking the plugin's own process with the plugin.
 
 # Budgets (hard limits)

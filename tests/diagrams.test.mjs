@@ -31,7 +31,8 @@ test('B192/AC-1 every check code is documented on exactly one page, and every co
   // A refusal the CLI prints with its code as the message's prefix counts as a code too.
   const known = new Set([...codes, ...Object.values(config.messages).map((m) => m.match(/^([A-Z]+(?:-[A-Z0-9]+)+): /)?.[1]).filter(Boolean)]);
   const design = join(import.meta.dirname, '../docs/design');
-  const named = readdirSync(design, { recursive: true }).filter((f) => f.endsWith('.md')).flatMap((f) => [...readFileSync(join(design, f), 'utf8').matchAll(/`([A-Z]{2,}(?:-[A-Z][A-Z0-9]*)+)`/g)].map((m) => [f, m[1]]));
+  // A draft design doc describes codes still to build; a stable one names only codes that exist.
+  const named = readdirSync(design, { recursive: true }).filter((f) => f.endsWith('.md') && !/^status: draft$/m.test(readFileSync(join(design, f), 'utf8'))).flatMap((f) => [...readFileSync(join(design, f), 'utf8').matchAll(/`([A-Z]{2,}(?:-[A-Z][A-Z0-9]*)+)`/g)].map((m) => [f, m[1]]));
   const format = (c) => c.split('-').every((seg) => new Set(seg).size === 1); // a placeholder such as YYYY-MM-DD
   assert.deepEqual(named.filter(([, c]) => !known.has(c) && !format(c)).map(([f, c]) => `${f}: ${c}`), []);
 });
