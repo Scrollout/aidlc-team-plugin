@@ -40,8 +40,8 @@ test('U1/AC-1 cli.json matches the CLI design: commands and exit codes', () => {
 });
 
 test('every message the CLI uses is defined in cli.json, and none is unused', () => {
-  const { messages, retro, map } = merged;
-  const named = new Set([...retro.proposals.map((p) => p.text), ...map.pages.map((p) => p.body)]); // the retro's proposals and the map's pages name theirs in cli.json
+  const { messages, retro, map, intake } = merged;
+  const named = new Set([...retro.proposals.map((p) => p.text), ...map.pages.map((p) => p.body), ...intake.ids.refKinds.map((k) => k.message)]); // the retro's proposals, the map's pages and the intake's source kinds name theirs in data
   const files = readdirSync(join(ROOT, 'plugin/cli'), { recursive: true }).filter((f) => f.endsWith('.mjs')).map((f) => `plugin/cli/${f}`); // the core and its extensions
   const code = files.map((f) => readFileSync(join(ROOT, f), 'utf8')).join('\n');
   const used = [...code.matchAll(/(?:msg|fail|yerr)\('(\w+)'|add\([^;]*?'[A-Z]+-[A-Z-]+', '(\w+)'/g)].map((m) => m[1] ?? m[2]);

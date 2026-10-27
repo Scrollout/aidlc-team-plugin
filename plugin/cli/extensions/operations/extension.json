@@ -14,6 +14,7 @@
       "deployNotOnBase": "check out {{base}} first: deploy steps run on the base",
       "deployPassed": "{{intent}} {{step}} passed\n",
       "deployFailed": "{{intent}} {{step}} failed: {{command}} exited {{exit}}\n{{output}}\n",
+      "retroHours": "{{n}}h",
       "retroUsage": "usage: retro I-<n> (an intent in the bundle)",
       "retroHead": "retro {{intent}}, counters since {{since}}\n",
       "retroNever": "the first run",
@@ -69,11 +70,13 @@
       }
     ],
     "deploy": {
-      "outputMax": 2000
+      "outputMax": 2000,
+      "steps": { "release": "release", "smoke": "smoke", "rollback": "rollback" }
     },
     "retro": {
       "min": 3,
       "max": 3,
+      "approvals": "\\bapprove\\b",
       "proposals": [
         {
           "match": "PLAN-TEST",

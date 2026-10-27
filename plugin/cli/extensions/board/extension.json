@@ -39,6 +39,8 @@
       "gh": "gh",
       "perPage": 100,
       "maxBody": 1500,
+      "errorArgs": 3,
+      "box": { "done": "x", "open": " " },
       "itemExists": "Content already exists in this project",
       "template": "issue.md",
       "issue": "board.issue",

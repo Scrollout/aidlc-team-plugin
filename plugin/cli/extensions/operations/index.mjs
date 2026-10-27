@@ -4,12 +4,14 @@
 import { bump, ciGreen, config, done, git, list, msg, readJson, readState, runtimeFile, sh, tryGit, UsageError, writeJson } from '../../lib/index.mjs';
 import { commands as retro } from './retro.mjs';
 
+const D = config.deploy;
+
 // Runs the commands in order until one fails: { ok, command, exit, output }, with the tail of the output.
 function runAll(cwd, commands) {
   let last = { ok: true };
   for (const command of commands) {
     const r = sh(cwd, command);
-    last = { ok: r.status === 0, command, exit: r.status, output: (r.stdout + r.stderr).slice(-config.deploy.outputMax).trim() };
+    last = { ok: r.status === 0, command, exit: r.status, output: (r.stdout + r.stderr).slice(-D.outputMax).trim() };
     if (!last.ok) break;
   }
   return last;
@@ -55,9 +57,9 @@ export const commands = {
     const ci = ciGreen(t.st.ci);
     if (ci !== true) throw new UsageError(msg('releaseCiNotGreen', { intent: t.intent.id, ci }));
     const result = runAll(t.top, commands);
-    let out = record(t, 'release', result);
+    let out = record(t, D.steps.release, result);
     const smoke = result.ok && deploy.smoke ? runAll(t.top, [deploy.smoke]) : result;
-    if (result.ok && deploy.smoke) out += record(t, 'smoke', smoke);
+    if (result.ok && deploy.smoke) out += record(t, D.steps.smoke, smoke);
     return done(out, smoke.ok ? config.exit.ok : config.exit.findings);
   },
 
@@ -65,6 +67,6 @@ export const commands = {
   rollback([id, ...more], { cwd }) {
     const t = target(cwd, more.length ? null : id, 'rollbackUsage', ['merged', 'released']);
     const result = runAll(t.top, list(t.st.profile.deploy?.rollback));
-    return done(record(t, 'rollback', result), result.ok ? config.exit.ok : config.exit.findings);
+    return done(record(t, D.steps.rollback, result), result.ok ? config.exit.ok : config.exit.findings);
   },
 };

@@ -11,7 +11,7 @@ A dependency graph the AI writes in the first unit can read error-message prose 
 
 # A pack
 `plugin/packs/<stack>/` holds data, not code:
-- `manifest.json`: how the stack is detected (`go.mod`, `tsconfig.json`), the folder of each kind and layer (`internal/domains/{{domain}}/model`, `cmd/{{deployable}}`), how imports are read, and where event types sit.
+- `manifest.json`: how the stack is detected (`go.mod`, `tsconfig.json`), the folder of each kind and layer (`internal/domains/{{domain}}/model`, `cmd/{{deployable}}`), how imports are read (`imports`: patterns that find a path in a file or in a block it names, resolved inside the module or relative to the file), how the language writes a string literal (`stringLiteral`), and where event types sit.
 - `templates/`: one file per scaffold kind, rendered with the names the registry composes ([Naming](naming.md)).
 - `reference/`: one domain (`notes`) with a command slice and a query slice, fully tested, in the pack's layout, passing every `ARCH-*` code on its own graph. Go's runs with `go test ./...`; TypeScript's with its `npm test` (`node --test` on `*.spec.ts`, type stripping), named so the plugin's own test run skips it.
 - A model's walking skeleton lives with the model, under its `reference/<stack>/` ([Models](models.md), [Shipped layout](layout.md)); CI runs its tests too.
@@ -20,7 +20,7 @@ A dependency graph the AI writes in the first unit can read error-message prose 
 
 # Graph
 `aidlc graph` prints the dependency graph the architecture checks read, one `from -> to` per line:
-- **Imports.** Go: each `.go` file's imports inside the module (`go.mod`'s path), as package folders. TypeScript: each `import`/`require` of a relative path, as folders. No toolchain is run, so CI needs only Node.
+- **Imports.** By the manifest's patterns. Go: each `.go` file's imports inside the module (`go.mod`'s path), as package folders. TypeScript: each `import`/`require` of a relative path, as folders. No toolchain is run, so CI needs only Node.
 - **Data.** A domain's `infrastructure` layer to `data/<domain>/<table>` for each table its migrations create, and any code naming another domain's table schema-qualified (`<domain>.<table>`, the grammar's form) to that table, so `ARCH-DATA` sees a reach across owners.
 
 A schema-qualified table counts only inside a string literal, where SQL lives: `notes.save(x)` in code is a call. A project may keep its own `architecture.graph`; with a pack detected, `check` runs both and reports `GRAPH-SELFTEST` when the project's graph lacks an edge the pack reads, naming a few.

@@ -2,7 +2,11 @@
   "stack": "typescript",
   "detect": ["tsconfig.json"],
   "sources": "\\.(ts|tsx|mts)$",
-  "imports": "relative",
+  "imports": {
+    "resolve": "relative",
+    "patterns": [{ "path": "(?:from\\s+|require\\(\\s*|import\\(\\s*)['\"](\\.{1,2}\\/[^'\"]+)['\"]" }]
+  },
+  "stringLiteral": "([\"'`])((?:\\\\.|(?!\\1)[^\\\\])*)\\1",
   "folders": { "domain": "src/domains/{{domain}}", "pipeline": "src/pipeline/{{stage}}", "foundation": "src/foundation/{{kit}}", "adapter": "src/adapters/{{system}}", "runtime": "src/runtimes/{{deployable}}" },
   "layers": { "interface": "interface", "application": "application", "model": "model", "infrastructure": "infrastructure" },
   "surfaces": { "client": "client", "events": "events", "server": "interface" },

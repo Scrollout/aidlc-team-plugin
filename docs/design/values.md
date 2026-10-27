@@ -10,7 +10,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T23:00:00Z }
 The board's issue shape, pathway names, factor names, file names and message fragments are literals in code. A literal changes only with a release, and a project cannot see or override it (principle 11).
 
 # The line
-- **Data:** every name, word, heading, path, prefix, pattern, threshold, default, mapping and message, and the grammars of the docs (headings, list items, AC and requirement forms). It lives in `cli.json` for the core, in `extension.json` for an extension, in a template file, or in the profile when only the project knows it.
+- **Data:** every name, word, heading, path, prefix, pattern, threshold, default, mapping and message, and the grammars of the docs (headings, list items, AC and requirement forms). It lives in `cli.json` for the core, in `extension.json` for an extension, in a stack pack's manifest for its language's syntax, in a template file, or in the profile when only the project knows it.
 - **Code:** logic; the protocol of the tools it calls (git subcommands and flags, `gh` and HTTP verbs, Node encodings and hash names); and keys into the data (data keys, message keys, check codes).
 
 # Structured, not encoded

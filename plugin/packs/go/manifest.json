@@ -3,7 +3,14 @@
   "detect": ["go.mod"],
   "module": { "file": "go.mod", "pattern": "^module\\s+(\\S+)" },
   "sources": "\\.go$",
-  "imports": "go",
+  "imports": {
+    "resolve": "module",
+    "patterns": [
+      { "block": "^import\\s*\\(([\\s\\S]*?)\\)", "flags": "m", "path": "\"([^\"]+)\"" },
+      { "path": "^import\\s+(?:[\\w.]+\\s+)?\"([^\"]+)\"", "flags": "m" }
+    ]
+  },
+  "stringLiteral": "([\"'`])((?:\\\\.|(?!\\1)[^\\\\])*)\\1",
   "folders": { "domain": "internal/domains/{{domain}}", "pipeline": "internal/pipeline/{{stage}}", "foundation": "internal/foundation/{{kit}}", "adapter": "internal/adapters/{{system}}", "runtime": "cmd/{{deployable}}" },
   "layers": { "interface": "interface", "application": "application", "model": "model", "infrastructure": "infrastructure" },
   "surfaces": { "client": "client", "events": "events", "server": "interface" },

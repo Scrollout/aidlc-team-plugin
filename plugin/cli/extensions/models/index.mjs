@@ -2,11 +2,11 @@
 // project, the project's own winning (docs/design/models.md, decision 0020).
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { bundleOf, CLI_DIR, config, docSlug, done, gitLines, globRegex, isMap, list, loadProfile, msg, parseDoc, parseYaml, plug, readJson, relPath, sectionOf, shippedDir, templateFile, UsageError, writeJson } from '../../lib/index.mjs';
 
 const M = config.models, F = config.okf.bundle.folders;
-const sha16 = (text) => createHash('sha256').update(text).digest('hex').slice(0, 16);
+const sha16 = (text) => createHash('sha256').update(text).digest('hex').slice(0, config.text.digest);
 const folders = (dir) => (existsSync(dir) ? readdirSync(dir).filter((n) => statSync(join(dir, n)).isDirectory()).sort() : []);
 
 // Every model the project can see, by name: the shipped ones, then its own, which replace a shipped one of the same name.
@@ -45,7 +45,7 @@ function problems(m, d) {
   for (const r of Array.isArray(d.rules) ? d.rules : []) if (!M.ruleTypes.includes(r?.type)) add('modelRule', { type: r?.type ?? '-', types: M.ruleTypes.join(', ') });
   for (const c of Array.isArray(d.contracts) ? d.contracts : []) for (const end of ['from', 'to']) if (c?.[end] !== undefined && !ids.has(c[end]) && c[end] !== M.extensionId) add('modelContract', { end, id: c[end] });
   const dir = join(m.dir, M.decisions);
-  for (const f of existsSync(dir) ? readdirSync(dir).filter((x) => x.endsWith('.md')).sort() : []) {
+  for (const f of existsSync(dir) ? readdirSync(dir).filter((x) => x.endsWith(config.okf.ext)).sort() : []) {
     if (parseDoc(readFileSync(join(dir, f), 'utf8')).fm?.type !== config.grid.decisionType) add('modelDecision', { file: f });
   }
   return out;
@@ -53,7 +53,7 @@ function problems(m, d) {
 
 // A project model by name, and the research digests a list names (files under research/), with their sources.
 const project = (root, name) => modelsOf(root).find((m) => m.name === name && m.source === 'project');
-const digests = (bundle, names) => list(names).map((n) => join(bundle, M.research, `${n}.md`)).filter(existsSync).map((f) => parseDoc(readFileSync(f, 'utf8')).fm?.sources ?? []);
+const digests = (bundle, names) => list(names).map((n) => join(bundle, M.research, `${n}${config.okf.ext}`)).filter(existsSync).map((f) => parseDoc(readFileSync(f, 'utf8')).fm?.sources ?? []);
 // A model's items that carry sources: its layers, its domains, and its rules by id or type.
 const items = (d) => [...(d.layers ?? []), ...(d.domains ?? []), ...(d.rules ?? []).map((r) => ({ ...r, id: r.id ?? r.type }))];
 
@@ -66,9 +66,9 @@ function modelDoc(cwd, name) {
   const line = (x) => `- **${x.id}** (${x.kind ?? '-'}): ${x.role ?? ''} ${cite(x)}`.trimEnd();
   const used = [...new Set(items(d).flatMap((x) => list(x.sources)))].filter((s) => sources.has(s));
   const body = ['', `# ${H.layers}`, ...d.layers.map(line), '', `# ${H.domains}`, ...(d.domains ?? []).map(line), '', `# ${H.extension}`, ...Object.entries(d.extension ?? {}).map(([k, v]) => `- ${k}: ${[v].flat().join(', ')}`),
-    '', `# ${H.contracts}`, ...(d.contracts ?? []).map((c) => `- ${c.from} → ${c.to}${c.via ? ` via ${c.via}` : ''}`), '', `# ${H.rules}`, ...(d.rules ?? []).map((r) => `- ${r.id ?? r.type}: ${r.type} ${cite(r)}`.trimEnd()),
+    '', `# ${H.contracts}`, ...(d.contracts ?? []).map((c) => `- ${c.from} → ${c.to}${c.via ? msg('modelVia', c) : ''}`), '', `# ${H.rules}`, ...(d.rules ?? []).map((r) => `- ${r.id ?? r.type}: ${r.type} ${cite(r)}`.trimEnd()),
     ...(used.length ? ['', `# ${H.sources}`, ...used.map((s) => `[^${s}]: ${sources.get(s).title ?? s}, ${sources.get(s).resource ?? ''}`.trimEnd())] : [])].join('\n') + '\n';
-  const dir = join(bundle, F.Model), file = join(dir, `${name}.md`), at = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
+  const dir = join(bundle, F.Model), file = join(dir, `${name}${config.okf.ext}`), at = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
   mkdirSync(dir, { recursive: true });
   writeFileSync(file, msg('modelDoc', { title: JSON.stringify(d.title), description: JSON.stringify(d.description), name, research: list(d.research).join(', '), digest: sha16(readFileSync(join(m.dir, M.file), 'utf8')),
     producer: msg('producer', { version: readJson(join(CLI_DIR, config.map.manifest))?.version ?? config.init.devVersion }), at, bodyDigest: sha16(body), body }));
@@ -77,9 +77,9 @@ function modelDoc(cwd, name) {
 
 // The model pathway's steps: its research digests filed, and a current Model doc of a model in the format.
 plug('pathwaySteps', (i, { bundle, base }) => ({
-  research: () => list(i.fm.research).length > 0 && list(i.fm.research).every((n) => existsSync(join(bundle, M.research, `${n}.md`))),
+  research: () => list(i.fm.research).length > 0 && list(i.fm.research).every((n) => existsSync(join(bundle, M.research, `${n}${config.okf.ext}`))),
   modelDoc: () => {
-    const name = String(i.fm.model ?? ''), m = name && project(base, name), file = join(bundle, F.Model, `${name}.md`);
+    const name = String(i.fm.model ?? ''), m = name && project(base, name), file = join(bundle, F.Model, `${name}${config.okf.ext}`);
     return Boolean(m?.data && !m.problems.length && existsSync(file) && parseDoc(readFileSync(file, 'utf8')).fm?.digest === sha16(readFileSync(join(m.dir, M.file), 'utf8')));
   },
 }));
@@ -133,13 +133,13 @@ function extensionContract(root, profile, m, r, out) {
 }
 
 function longRunning(root, profile, m, r, out) {
-  const o = { ...M.defaults.operations, ...profile.model.operations }, roles = ['status', 'result', 'retry'].filter((k) => !o[k]);
+  const o = { ...M.defaults.operations, ...profile.model.operations }, roles = M.lro.roles.filter((k) => !o[k]);
   if (roles.length) return out.push(['LONG-RUNNING', PROFILE, 'lroNoNames', { roles: roles.join(', ') }]);
   const shapes = list(r.shapes).length ? r.shapes : [];
-  const fits = (responses, s) => isMap(responses[String(s.code)]) && [...list(s.links), 'retry'].every((l) => has(responses[String(s.code)].headers, o[l]));
+  const fits = (responses, s) => isMap(responses[String(s.code)]) && [...list(s.links), ...M.lro.always].every((l) => has(responses[String(s.code)].headers, o[l]));
   for (const { file, path, method, op } of operations(root, profile)) {
     const responses = isMap(op.responses) ? op.responses : {};
-    if (op[o.marker] === true && !shapes.some((s) => fits(responses, s))) out.push(['LONG-RUNNING', file, 'lroShape', { method: method.toUpperCase(), path, shapes: shapes.map((s) => `${s.code} with ${[...list(s.links).map((l) => o[l]), o.retry].join(' and ')}`).join(', or ') }]);
+    if (op[o.marker] === true && !shapes.some((s) => fits(responses, s))) out.push(['LONG-RUNNING', file, 'lroShape', { method: method.toUpperCase(), path, shapes: shapes.map((s) => msg('lroShapeItem', { code: s.code, headers: [...list(s.links), ...M.lro.always].map((l) => o[l]).join(M.lro.join.headers) })).join(M.lro.join.shapes) }]);
     if (r.deleteAbsent && method === 'delete' && !(String(r.deleteAbsent) in responses)) out.push(['LONG-RUNNING', file, 'lroDelete', { path, code: r.deleteAbsent }]);
   }
 }
@@ -166,27 +166,29 @@ plug('docChecks', (root, profile) => {
 });
 
 // The plan's rules: a write bolt has its repeat AC, and each owned table declares its partition and class.
-plug('planRules', ({ bundle, units, merged, add, base, profile }) => {
-  const m = chosen(base, profile);
-  for (const r of rulesOf(m, 'idempotency')) {
-    const writes = new RegExp(r.writes, 'i'), repeat = new RegExp(r.repeat, 'i');
-    for (const u of units.filter((x) => !merged.has(x.id) && x.fm.status !== config.grid.dropped)) {
-      const write = u.acs.find((ac) => writes.test(ac.text));
-      if (write && !u.acs.some((ac) => repeat.test(ac.text))) add('IDEMPOTENCY-AC', u, write.line, 'idempotentMissing', {});
+function idempotency({ units, merged, add }, r) {
+  const writes = new RegExp(r.writes, 'i'), repeat = new RegExp(r.repeat, 'i');
+  for (const u of units.filter((x) => !merged.has(x.id) && x.fm.status !== config.grid.dropped)) {
+    const write = u.acs.find((ac) => writes.test(ac.text));
+    if (write && !u.acs.some((ac) => repeat.test(ac.text))) add('IDEMPOTENCY-AC', u, write.line, 'idempotentMissing', {});
+  }
+}
+function data({ bundle, add }, r) {
+  const dir = join(bundle, F.Domain);
+  for (const f of existsSync(dir) ? readdirSync(dir).filter((x) => x.endsWith(config.okf.ext) && x !== config.okf.index).sort() : []) {
+    const doc = parseDoc(readFileSync(join(dir, f), 'utf8')), d = { file: join(dir, f), id: String(doc.fm?.code ?? basename(f, config.okf.ext)), doc };
+    for (const [n] of sectionOf(doc, config.inception.owns)) {
+      const line = doc.lines[n - 1], table = line.match(/`([^`]+)`/)?.[1], decl = line.match(new RegExp(M.partitionLine));
+      if (!table) continue;
+      if (!decl) add('DATA-PARTITION', d, n, 'dataUndeclared', { table });
+      else if (!list(r.classes).includes(decl[1])) add('DATA-PARTITION', d, n, 'dataClass', { table, class: decl[1], classes: list(r.classes).join(', ') });
     }
   }
-  for (const r of rulesOf(m, 'data')) {
-    const dir = join(bundle, F.Domain);
-    for (const f of existsSync(dir) ? readdirSync(dir).filter((x) => x.endsWith('.md') && x !== config.okf.index).sort() : []) {
-      const doc = parseDoc(readFileSync(join(dir, f), 'utf8')), d = { file: join(dir, f), id: String(doc.fm?.code ?? f.replace(/\.md$/, '')), doc };
-      for (const [n] of sectionOf(doc, config.inception.owns)) {
-        const line = doc.lines[n - 1], table = line.match(/`([^`]+)`/)?.[1], decl = line.match(/\(partition:\s*[^,)]+,\s*class:\s*([\w-]+)\)/);
-        if (!table) continue;
-        if (!decl) add('DATA-PARTITION', d, n, 'dataUndeclared', { table });
-        else if (!list(r.classes).includes(decl[1])) add('DATA-PARTITION', d, n, 'dataClass', { table, class: decl[1], classes: list(r.classes).join(', ') });
-      }
-    }
-  }
+}
+const PLAN = { idempotency, data };
+plug('planRules', (ctx) => {
+  const m = chosen(ctx.base, ctx.profile);
+  for (const [type, check] of Object.entries(PLAN)) for (const r of rulesOf(m, type)) check(ctx, r);
 });
 
 // ---- Applying a model (docs/design/models.md#applying-a-model) ----
@@ -207,12 +209,12 @@ function apply(cwd, name) {
   const file = join(cwd, PROFILE), own = readJson(file) ?? {};
   if (own.model?.name !== name) { writeJson(file, { ...own, model: { ...(isMap(own.model) ? own.model : {}), name } }); out.push(msg('applyChosen', { name, file: PROFILE })); }
   // The system doc, when the bundle has none: the template with the model's building blocks.
-  const sysDir = join(bundle, F.System), system = existsSync(sysDir) && readdirSync(sysDir).some((f) => f.endsWith('.md') && f !== config.okf.index);
+  const sysDir = join(bundle, F.System), system = existsSync(sysDir) && readdirSync(sysDir).some((f) => f.endsWith(config.okf.ext) && f !== config.okf.index);
   if (!system) {
     const tpl = [templateFile(cwd, M.systemTemplate)].find(existsSync);
     const blocks = [...m.data.layers, ...(m.data.domains ?? [])].map((x) => `- **${x.id}** (${x.kind ?? '-'}): ${x.role ?? ''}`.trimEnd()).join('\n');
-    const text = readFileSync(tpl, 'utf8').replace(/(# Building Block View\n)<[^>\n]*>/, `$1${blocks}`);
-    const at = join(sysDir, `${String(profile.naming?.tokens?.system ?? M.systemName)}.md`);
+    const text = readFileSync(tpl, 'utf8').replace(new RegExp(M.systemBlocks), `$1${blocks}`);
+    const at = join(sysDir, `${String(profile.naming?.tokens?.system ?? M.systemName)}${config.okf.ext}`);
     mkdirSync(sysDir, { recursive: true });
     writeFileSync(at, text);
     out.push(msg('applySystem', { path: relPath(cwd, at) }));
@@ -220,12 +222,12 @@ function apply(cwd, name) {
   // The model's decisions, as proposals numbered on, each once.
   const decDir = join(bundle, config.grid.decisions), have = existsSync(decDir) ? readdirSync(decDir).filter((f) => /^\d{4}-/.test(f)) : [];
   const taken = new Set(have.map((f) => parseDoc(readFileSync(join(decDir, f), 'utf8')).fm).filter((fm) => fm?.model === name).map((fm) => String(fm.title).replace(/^\d{4}\s+/, '')));
-  let n = Math.max(0, ...have.map((f) => Number(f.slice(0, 4))));
+  let n = Math.max(0, ...have.map((f) => Number(f.slice(0, config.ids.decisionDigits))));
   const src = join(m.dir, M.decisions);
-  for (const f of existsSync(src) ? readdirSync(src).filter((x) => x.endsWith('.md')).sort() : []) {
+  for (const f of existsSync(src) ? readdirSync(src).filter((x) => x.endsWith(config.okf.ext)).sort() : []) {
     const text = readFileSync(join(src, f), 'utf8'), title = String(parseDoc(text).fm?.title ?? f).replace(/^\d{4}\s+/, '');
     if (taken.has(title)) continue;
-    const num = String(++n).padStart(4, '0'), at = join(decDir, `${num}-${docSlug(title)}.md`);
+    const num = String(++n).padStart(config.ids.decisionDigits, '0'), at = join(decDir, `${num}-${docSlug(title)}${config.okf.ext}`);
     mkdirSync(decDir, { recursive: true });
     writeFileSync(at, text.replace(/^title: .*$/m, `title: ${num} ${title}\nmodel: ${name}`));
     out.push(msg('applyDecision', { path: relPath(cwd, at) }));

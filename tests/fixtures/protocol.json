@@ -1,5 +1,5 @@
 {
-  "about": "Tool protocol the CLI's code may spell: the commands, flags and words of the tools it calls, and text mechanics. Every other literal is a value and lives in data (principle 11, docs/design/values.md). `numbers` are arithmetic (an index, a step, a pair, milliseconds per second and per day); any other number is a threshold or a size and lives in data. `host` is the coding agent's hook protocol, `cli` the CLI's own command and flag names, `mermaid` the diagram syntax, `github` the workflow keys it reads.",
+  "about": "Tool protocol the CLI's code may spell: the commands, flags and words of the tools it calls, and text mechanics. Every other literal is a value and lives in data (principle 11, docs/design/values.md). `numbers` are arithmetic (an index, a step, a pair, milliseconds per second, per hour and per day); any other number is a threshold or a size and lives in data. `host` is the coding agent's hook protocol, `cli` the CLI's own command and flag names, `mermaid` the diagram syntax, `github` the workflow keys it reads, `githubApi` the REST and GraphQL paths, flags and field types of the API the board calls, `openapi` the OpenAPI and JSON Schema words the contract checks read.",
   "git": [
     "rev-parse",
     "rev-list",
@@ -202,7 +202,9 @@
     "y",
     "Z",
     "exit",
-    "en"
+    "en",
+    "gi",
+    "gs"
   ],
   "words": [],
   "regex": [],
@@ -220,7 +222,8 @@
     "stack",
     "pathwaySteps",
     "modelFit",
-    "modelContract"
+    "modelContract",
+    "intentStories"
   ],
   "yaml": [
     "True",
@@ -258,7 +261,8 @@
     -1,
     2,
     1000,
-    86400000
+    86400000,
+    3600000
   ],
   "iso": [
     "T",
@@ -316,11 +320,38 @@
     "from-issue",
     "bolt",
     "--stop",
-    "--report"
+    "--report",
+    "gaps"
   ],
   "github": [
     "/^\\s*runs-on:\\s*(.+)$/",
     "/^\\s*-?\\s*uses:\\s*(actions\\/checkout@.+)$/",
     "/^\\s*-?\\s*uses:\\s*(actions\\/setup-node@.+)$/"
+  ],
+  "githubApi": [
+    "-X",
+    "--input",
+    "graphql",
+    "user",
+    "repos/",
+    "/milestones",
+    "/milestones/",
+    "/milestones?state=all",
+    "/issues",
+    "/issues/",
+    "/issues?state=all",
+    "/labels",
+    "/sub_issues",
+    "/actions/runs?head_sha=",
+    "per_page=",
+    "&per_page=",
+    "&page=",
+    "closed",
+    "NUMBER",
+    "DATE"
+  ],
+  "openapi": [
+    "put",
+    "array"
   ]
 }

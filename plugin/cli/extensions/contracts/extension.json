@@ -29,7 +29,8 @@
           "namespace": "^[A-Z][A-Za-z0-9]*(\\.[A-Z][A-Za-z0-9]*)+$",
           "param": "^[a-z][A-Za-z0-9]*(Name|Id)$",
           "property": "^[a-z][A-Za-z0-9]*$",
-          "enum": "^[A-Z][A-Za-z0-9]*$"
+          "enum": "^[A-Z][A-Za-z0-9]*$",
+          "booleanPrefix": "^is[A-Z]"
         },
         "rules": {
           "segment": "camelCase",

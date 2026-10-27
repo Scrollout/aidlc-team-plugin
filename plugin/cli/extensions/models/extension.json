@@ -54,6 +54,8 @@
       "stageOrder": "model {{model}}: the stages come as {{found}}, not in the model's order {{stages}}",
       "declaresMissing": "model {{model}}: module {{module}} ({{kind}}) declares no {{fields}} under `declares`",
       "lroNoNames": "model {{model}}: model.operations in the profile names no {{roles}} header",
+      "lroShapeItem": "{{code}} with {{headers}}",
+      "modelVia": " via {{via}}",
       "lroShape": "model {{model}}: {{method}} {{path}} is flagged long-running but answers none of {{shapes}}",
       "lroDelete": "model {{model}}: DELETE {{path}} declares no {{code}} answer for an absent resource",
       "eventsNoFiles": "model {{model}}: model.events in the profile names no events files",
@@ -101,7 +103,10 @@
       },
       "methods": ["get", "put", "post", "patch", "delete"],
       "systemTemplate": "docs/system.md",
-      "systemName": "system"
+      "systemName": "system",
+      "systemBlocks": "(# Building Block View\\n)<[^>\\n]*>",
+      "partitionLine": "\\(partition:\\s*[^,)]+,\\s*class:\\s*([\\w-]+)\\)",
+      "lro": { "roles": ["status", "result", "retry"], "always": ["retry"], "join": { "headers": " and ", "shapes": ", or " } }
     },
     "inception": {
       "pathways": {

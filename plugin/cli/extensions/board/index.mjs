@@ -17,7 +17,7 @@ function api(args, body) {
     out = execFileSync(ghCommand[0], [...ghCommand.slice(1), 'api', ...args, ...(body ? ['--input', '-'] : [])], opts);
   } catch (e) {
     // gh's own message (stderr, or the API's error body) says what failed; the command line does not.
-    throw new Error(`${args.slice(0, 3).join(' ')}: ${(e.stderr || e.stdout || e.message).trim().split('\n').join(' ')}`);
+    throw new Error(`${args.slice(0, B.errorArgs).join(' ')}: ${(e.stderr || e.stdout || e.message).trim().split('\n').join(' ')}`);
   }
   return out.trim() ? JSON.parse(out) : null;
 }
@@ -32,7 +32,7 @@ function pages(path) {
   }
 }
 
-const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT)), 0, 0, ms);
 
 const github = (profile) => {
   if (!profile.github?.repo) throw new UsageError(msg('boardOff', {}));
@@ -59,7 +59,7 @@ function wanted(cwd, st, gh) {
     const derived = { [B.wave]: () => wave(d), [B.binding]: () => bindingName(d, st.profile) }; // a value in the doc wins
     const value = (path) => at(d.fm, path) ?? (kind === 'unit' && derived[path] ? derived[path]() : undefined);
     const done = B.done.includes(state);
-    const acs = (d.acs ?? []).map((a) => ({ box: done ? 'x' : ' ', text: d.doc.lines[a.line - 1].replace(/^\s*[-*]\s+/, '') }));
+    const acs = (d.acs ?? []).map((a) => ({ box: done ? B.box.done : B.box.open, text: d.doc.lines[a.line - 1].replace(/^\s*[-*]\s+/, '') }));
     const marker = msg('boardMarker', { kind, id: d.id });
     const data = { description: String(d.fm.description ?? ''), link: msg('boardLink', { repo: gh.repo, base: st.base, path: relPath(top, d.file) }), marker };
     let body;
@@ -90,7 +90,7 @@ function milestones(repo, docs, out) {
     if (!m) {
       m = rest('POST', `${repo}/milestones`, due ? { title, due_on } : { title }); // GitHub refuses a null due_on
       out.push(msg('boardMilestoneCreated', { title }));
-    } else if (due && (m.due_on ?? '').slice(0, 10) !== String(due)) {
+    } else if (due && (m.due_on ?? '').slice(0, String(due).length) !== String(due)) {
       rest('PATCH', `${repo}/milestones/${m.number}`, { due_on });
       out.push(msg('boardMilestoneDue', { title, due }));
     }
@@ -272,7 +272,7 @@ function ciWait(cwd) {
   const state = !runs.length ? 'none' : runs.some(red) ? 'red' : runs.every((r) => r.status === C.completed) ? 'green' : 'pending';
   writeJson(ciFile(cwd), { sha, state, runs, at: new Date().toISOString() });
   const logs = runs.filter(red).map((r) => msg('ciLog', { log: render(C.log, r, 'ci.log') })).join('');
-  return done(msg('ciResult', { base: st.base, sha: sha.slice(0, 12), state, runs }) + logs, state === 'red' ? config.exit.findings : config.exit.ok);
+  return done(msg('ciResult', { base: st.base, sha: sha.slice(0, config.text.sha.long), state, runs }) + logs, state === 'red' ? config.exit.findings : config.exit.ok);
 }
 
 export const commands = {

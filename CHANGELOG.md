@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.180.0] - 2026-10-27
+### Changed
+- The extensions hold no hard-coded value (M26 B236). The intake's id patterns, the models' heading and partition patterns, long-running roles and joiners, the stacks' migration grammar, event-type rules and scaffold words, the deploy steps and the retro's hours live in each `extension.json`; each stack pack's manifest names how its language's imports are read and how it writes a string literal. `tests/values.test.mjs` now reads `plugin/cli/extensions/` too, with the board's API paths and the contract checks' OpenAPI words listed as protocol.
+
 ## [0.179.0] - 2026-10-27
 ### Changed
 - The core holds no hard-coded value (M26 B235). Names, ids, doc grammars, thresholds, labels, levels, the action kinds and CI states, the naming registry's patterns and word forms all live in `cli.json`; the code holds logic, the protocol of the tools it calls, and keys into the data.
@@ -327,7 +331,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.179.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.180.0...HEAD
+[0.180.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.179.0...v0.180.0
 [0.179.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.178.1...v0.179.0
 [0.178.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.178.0...v0.178.1
 [0.178.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.177.0...v0.178.0

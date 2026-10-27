@@ -40,7 +40,7 @@ export function contractProblems(doc, C = BASE) {
     const props = isMap(s.properties) ? s.properties : {};
     for (const [name, p] of Object.entries(props)) {
       if (!re('property').test(name)) add('contractProperty', { at, name });
-      else if (p?.type === 'boolean' && /^is[A-Z]/.test(name)) add('contractBoolean', { at, name });
+      else if (p?.type === 'boolean' && re('booleanPrefix').test(name)) add('contractBoolean', { at, name });
     }
     if (s.type === 'string' && Array.isArray(s.enum)) for (const v of s.enum.filter((x) => !re('enum').test(String(x)))) add('contractEnum', { at, value: String(v) });
     if (list(C.resource).length && C.systemData && C.resource.every((k) => k in props) && !(C.systemData in props)) add('contractSystemData', { at, field: C.systemData });

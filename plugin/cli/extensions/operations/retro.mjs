@@ -5,7 +5,7 @@ import { config, decisionsOf, done, events, hatchesOf, hatchLine, incrementLines
 
 const R = config.retro;
 const human = (e) => String(e.by).startsWith(config.state.human);
-const hours = (from, to) => `${Math.round((Date.parse(to) - Date.parse(from)) / 36e5)}h`;
+const hours = (from, to) => msg('retroHours', { n: Math.round((Date.parse(to) - Date.parse(from)) / 3600000) });
 
 // What a v2 project measures per intent: lead time, increments shipped of those committed, merge refusals by binding,
 // the owner's dwell per approval and the escape hatches used (docs/design/construction.md#retro).
@@ -52,7 +52,7 @@ export const commands = {
     const owner = [
       ...docs.flatMap((d) => events(d.fm).filter((e) => String(e.by).startsWith(config.state.human) && Date.parse(e.at) >= since)
         .map((e) => ({ at: String(e.at), line: msg('retroApproval', { at: e.at, doc: d.id, by: String(e.by).slice(config.state.human.length) }) }))),
-      ...(stats[R.interventions] ?? []).filter((i) => !/\bapprove\b/.test(i.command)).map((i) => ({ at: i.at, line: msg('retroIntervention', i) })),
+      ...(stats[R.interventions] ?? []).filter((i) => !new RegExp(R.approvals).test(i.command)).map((i) => ({ at: i.at, line: msg('retroIntervention', i) })),
       ...(stats[R.hostDenied] ?? []).map((d) => ({ at: d.at, line: msg('retroHostDenied', d) })),
       ...(stats[R.ownerRefused] ?? []).map((d) => ({ at: d.at, line: msg('retroOwnerRefused', d) })),
     ].sort((a, b) => (a.at < b.at ? -1 : 1));

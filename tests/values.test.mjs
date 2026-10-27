@@ -85,3 +85,7 @@ const offenders = (list) => list.filter((f) => !(f in PROTOCOL.files)).flatMap((
 test('B235/AC-1 the core holds no value: every literal of aidlc.mjs and lib/ is a key, syntax or listed protocol', () => {
   assert.deepEqual(offenders(['plugin/cli/aidlc.mjs', ...files('plugin/cli/lib')]), []);
 });
+
+test('B236/AC-1 the extensions hold no value: every literal of plugin/cli/extensions/ is a key, syntax or listed protocol', () => {
+  assert.deepEqual(offenders(files('plugin/cli/extensions')), []);
+});

@@ -3,7 +3,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { approval, bundleOf, CLI_DIR, config, docSlug, done, git, gitLines, globRegex, list, loadProfile, msg, parseDoc, plug, questionsOf, readJson, readPlan, relPath, seam, sectionOf, UsageError, withDefaults } from '../../lib/index.mjs';
+import { approval, bundleOf, CLI_DIR, config, docSlug, done, git, gitLines, globRegex, list, render, loadProfile, msg, parseDoc, plug, questionsOf, readJson, readPlan, relPath, seam, sectionOf, UsageError, withDefaults } from '../../lib/index.mjs';
 
 const K = config.intake, F = config.okf.bundle.folders;
 const WHY = { greenfield: 'intakeGreenfield', feature: 'intakeFeature', brownfield: 'intakeBrownfield' }; // why the project has its pathway
@@ -20,7 +20,7 @@ function paragraphs(prose) {
 }
 
 // A request's sentences as written in its doc: [{ id, text }].
-const sentencesOf = (doc) => doc.lines.map((l) => l.match(/^- (Q-\d+\.\d+) (.*)$/)).filter(Boolean).map((m) => ({ id: m[1], text: m[2] }));
+const sentencesOf = (doc) => doc.lines.map((l) => l.match(new RegExp(K.ids.sentenceLine))).filter(Boolean).map((m) => ({ id: m[1], text: m[2] }));
 
 // The risk words of each sentence, as { risk, band, ids } per risk the request touches.
 function riskWords(sentences) {
@@ -83,7 +83,7 @@ function scores(args, id, sentences, kept) {
 }
 
 const write = (file, fm, body) => {
-  const digest = createHash('sha256').update(body).digest('hex').slice(0, 16);
+  const digest = createHash('sha256').update(body).digest('hex').slice(0, config.text.digest);
   writeFileSync(file, msg('intakeDoc', { ...fm, digest, body }));
 };
 const version = () => readJson(join(CLI_DIR, config.map.manifest))?.version ?? config.init.devVersion;
@@ -94,7 +94,7 @@ export const commands = {
     const files = existsSync(dir) ? readdirSync(dir).filter((f) => f.startsWith(K.prefix)) : [];
     const m = measure(cwd, profile, bundle);
     // A request already kept: the lead scores it, and only the front matter changes.
-    if (/^Q-\d+$/.test(args[0] ?? '')) {
+    if (new RegExp(K.ids.request).test(args[0] ?? '')) {
       const id = args[0], name = files.find((f) => f.startsWith(`${id}-`));
       if (!name) throw new UsageError(msg('intakeUnknown', { id, dir: relPath(cwd, dir) }));
       const file = join(dir, name), text = readFileSync(file, 'utf8'), doc = parseDoc(text), sentences = sentencesOf(doc);
@@ -117,7 +117,7 @@ export const commands = {
     if (!sentences.length) throw new UsageError(msg('intakeEmpty', {}));
     const title = sentences[0].text.split(' ').slice(0, K.titleWords).join(' ').replace(/[.!?…:;,]+$/, '');
     const body = `\n# ${K.heading}\n${paras.map((p) => p.map((s) => `- ${s.id} ${s.text}`).join('\n')).join('\n\n')}\n`;
-    const p = propose(m, sentences, {}), file = join(dir, `${id}-${docSlug(title)}.md`);
+    const p = propose(m, sentences, {}), file = join(dir, `${id}-${docSlug(title)}${config.okf.ext}`);
     mkdirSync(dir, { recursive: true });
     write(file, { title: JSON.stringify(title), bands: flow(p.bands), cites: flow(p.cites), proposal: flow(p.proposal), producer: msg('producer', { version: version() }), at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') }, body);
     return done(msg('intakeWrote', { path: relPath(cwd, file), count: sentences.length, first: sentences[0].id, last: sentences.at(-1).id }) + report(id, m, p, {}, fitsOf(cwd, profile, sentences)));
@@ -126,7 +126,7 @@ export const commands = {
 
 // Sources and coverage over the intents judged by method 6 in a v2 project: each goal line, story and draft
 // requirement statement cites a source that resolves, and each sentence of its requests is cited (docs/design/intake.md).
-const REF = /^(?:Q-\d+\.\d+|Q\d+|A\d+|F-\d+)$/;
+const REF = new RegExp(K.ids.ref);
 const refsIn = (line) => [...line.matchAll(/\[([^\]]+)\]/g)].flatMap((m) => m[1].split(/\s*,\s*/)).filter((r) => REF.test(r));
 const cut = (text) => (text.length > K.textMax ? `${text.slice(0, K.textMax).replace(/\s+\S*$/, '')}…` : text);
 const docsIn = (dir, pattern) => (existsSync(dir) ? readdirSync(dir).filter((f) => pattern.test(f)) : []);
@@ -135,8 +135,8 @@ const linesOf = (doc, heading) => sectionOf(doc, heading).map(([n]) => [n, doc.l
 
 function lintSources({ bundle, profile, intents, units, requirements, add, inForce, keyLine }) {
   if (!profile.system) return;
-  const dir = join(bundle, F.Request), requests = new Map(docsIn(dir, /^Q-\d+-.*\.md$/).map((f) => [f.match(/^Q-\d+/)[0], sentencesOf(parseDoc(readFileSync(join(dir, f), 'utf8')))]));
-  const facts = new Set(docsIn(join(bundle, F.Fact), /^F-\d+/).map((f) => f.match(/^F-\d+/)[0]));
+  const dir = join(bundle, F.Request), requests = new Map(docsIn(dir, new RegExp(K.ids.requestFile)).map((f) => [f.match(new RegExp(K.ids.requestFile))[1], sentencesOf(parseDoc(readFileSync(join(dir, f), 'utf8')))]));
+  const facts = new Set(docsIn(join(bundle, F.Fact), new RegExp(K.ids.factFile)).map((f) => f.match(new RegExp(K.ids.factFile))[1]));
   for (const i of intents.filter((x) => x.fm.status !== config.grid.dropped && inForce(x, 'claimSource'))) {
     if (inForce(i, 'elabCorner')) { corners(i, add); readBack(i, add); }
     if (inForce(i, 'unitsOfWork')) unitsOfWork(i, profile, units.filter((b) => b.fm.intent === i.id && b.fm.status !== config.grid.dropped), add);
@@ -145,8 +145,9 @@ function lintSources({ bundle, profile, intents, units, requirements, add, inFor
     for (const ref of named.filter((r) => !requests.has(r))) add('CLAIM-SOURCE', i, keyLine(i, 'request'), 'claimNoSuchRequest', { ref, dir: relPath(bundle, dir) });
     const sentences = new Set(named.flatMap((r) => requests.get(r) ?? []).map((s) => s.id));
     const answered = new Set(questionsOf(i.doc).filter((q) => q.answer).map((q) => q.id));
-    const assumed = new Set(linesOf(i.doc, K.claims.assumptions).map(([, t]) => t.match(/^\s*[-*]\s+(A\d+)\b/)?.[1]).filter(Boolean));
-    const unresolved = (r) => (r.startsWith('Q-') ? !sentences.has(r) && 'claimSentence' : r.startsWith('Q') ? !answered.has(r) && 'claimQuestion' : r.startsWith('A') ? !assumed.has(r) && 'claimAssumption' : !facts.has(r) && 'claimFact');
+    const assumed = new Set(linesOf(i.doc, K.claims.assumptions).map(([, t]) => t.match(new RegExp(K.ids.assumptionLine))?.[1]).filter(Boolean));
+    const known = { claimSentence: sentences, claimQuestion: answered, claimAssumption: assumed, claimFact: facts };
+    const unresolved = (r) => { const { message } = K.ids.refKinds.find((k) => r.startsWith(k.prefix)); return !known[message].has(r) && message; };
     const cited = requirements.filter((r) => i.requirements.includes(r.id));
     // A corner's source is checked like a claim's, though n/a with a reason needs none.
     for (const [n, t] of linesOf(i.doc, K.claims.corners)) for (const ref of refsIn(t)) { const key = unresolved(ref); if (key) add('CLAIM-SOURCE', i, n, key, { ref, intent: i.id, requests: named.join(', ') }); }
@@ -176,14 +177,14 @@ function corners(i, add) {
   if (missing.length) add('ELAB-CORNER', i, sectionOf(i.doc, K.claims.corners)[0]?.[0] - 1 || 1, 'cornerMissing', { surfaces: missing.join(', ') });
   for (const c of K.corners.filter((x) => lines.has(x.surface.toLowerCase()))) {
     const { n, rest } = lines.get(c.surface.toLowerCase());
-    if (!refsIn(rest).length && !/\b[RB]-\d+\b/.test(rest) && !WAIVED.test(rest)) add('ELAB-CORNER', i, n, 'cornerUnsettled', { surface: c.surface });
+    if (!refsIn(rest).length && !new RegExp(K.ids.settled).test(rest) && !WAIVED.test(rest)) add('ELAB-CORNER', i, n, 'cornerUnsettled', { surface: c.surface });
   }
 }
 // Method 7: the last question reads back the summary, and the owner picked looks correct.
 function readBack(i, add) {
   const q = questionsOf(i.doc).at(-1);
   if (!q?.text.startsWith(K.readBack.prefix)) return add('ELAB-OPEN', i, q?.n ?? 1, 'readBackMissing', {});
-  const picked = q.labels[q.options.indexOf(q.answer?.match(/^([a-z])\b/)?.[1])];
+  const picked = q.labels[q.options.indexOf(q.answer?.match(new RegExp(config.ids.question.letter))?.[1])];
   if (picked !== undefined && picked.toLowerCase() !== K.readBack.yes) add('ELAB-OPEN', i, q.n, 'readBackChanges', { q: q.id });
 }
 
@@ -201,7 +202,7 @@ function personas(i, sentences, cited, add) {
     else if (!who) add('ELAB-STORY', i, n, 'storyPersona', { persona: m[1].trim(), personas: names.join(', ') });
     else {
       told.add(who);
-      if (![...t.matchAll(/\bR-\d+\b/g)].some((r) => reqs.has(r[0]))) add('ELAB-STORY', i, n, 'storyNoRequirement', { persona: who, reqs: [...reqs].join(', ') || '-' });
+      if (!idsOf(t, U.requirement).some((r) => reqs.has(r))) add('ELAB-STORY', i, n, 'storyNoRequirement', { persona: who, reqs: [...reqs].join(', ') || '-' });
     }
   }
   for (const [n, p] of listed.filter(([, p]) => !told.has(p))) add('ELAB-STORY', i, n, 'storyNone', { persona: p });
@@ -209,7 +210,7 @@ function personas(i, sentences, cited, add) {
 
 // Method 11: the intent's Units of work, as the method's Mob Elaboration and Units Generation give them
 // (docs/design/units-of-work.md). A Unit is a level-two heading under # Units with one `- <Part>: <value>` line per part.
-const U = K.units, STORY = new RegExp(`^\\s*[-*]\\s+(?:${U.story}\\s+)?As (?:an? )?(.+?), I want .+?, so that .+$`, 'i');
+const U = K.units, STORY = new RegExp(render(U.storyLine, { story: U.story }), 'i');
 const idsOf = (text, pattern) => [...(text ?? '').matchAll(new RegExp(`\\b${pattern}\\b`, 'g'))].map((m) => m[0]);
 const namesIn = (text) => (text ?? '').split(/\s*,\s*/).filter(Boolean);
 function unitBlocks(doc) {
