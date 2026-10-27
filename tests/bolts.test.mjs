@@ -169,3 +169,22 @@ test('B161/AC-1 aidlc name prints each kind from the grammar and the registry, a
   assert.match(run(makeRepo(I1, {}), ['name', 'k8s-namespace', '--env', 'dev']).err, /needs system: naming\.tokens\.system/);
   assert.match(name('nonsense').err, /^name: usage: aidlc name <kind>; kinds: domain, slice/);
 });
+
+test('B162/AC-1 the registry generates the gate rules for migrations, images, namespaces and banned segments, and holds each module id', async () => {
+  const { generatedRules } = await import('../plugin/cli/lib/naming.mjs');
+  const naming = { tokens: { system: 'rsm', org: 'acme', registry: 'ghcr.io' }, domains: { providers: {} } };
+  const rules = Object.fromEntries(generatedRules({ naming }).map((r) => [r.id, r]));
+  const full = (id, s) => new RegExp(`^(?:${rules[id].pattern})$`).test(s);
+  assert.ok(full('migration', 'migrations/providers/0001_create_resource_types.sql'));
+  assert.ok(!full('migration', 'migrations/registry/0001_init.sql'), 'an unregistered domain');
+  assert.ok(full('image', 'ghcr.io/acme/rsm-providers-api:1.4.0') && full('image', 'ghcr.io/acme/rsm-ingress-gateway:sha-abc'));
+  assert.ok(!full('image', 'ghcr.io/acme/resource-manager-frontdoor:sha-abc'), 'an invented name');
+  assert.ok(full('namespace', 'rsm-dev') && !full('namespace', 'resource-manager-dev'));
+  assert.ok(full('banned', 'internal/domains/providers/model/provider.go'));
+  for (const bad of ['internal/store/x.go', 'pkg/utils.go', 'internal/frontdoor/app/a.go']) assert.ok(!full('banned', bad), bad);
+  assert.deepEqual(generatedRules({}), [], 'no registry, no generated rule');
+  const modules = [{ id: 'providers', kind: 'domain', paths: ['a/**'] }, { id: 'registry', kind: 'domain', paths: ['b/**'] }, { id: 'store', kind: 'foundation', paths: ['c/**'] }, { id: 'ingress', kind: 'pipeline', paths: ['d/**'] }];
+  const lines = run(makeRepo(I1, { naming, modules }), ['check']).out.split('\n').filter((l) => /PROFILE-NAMING module/.test(l)).map((l) => l.replace(/^\S+ PROFILE-NAMING /, '').replace(/ → .*$/, ''));
+  assert.deepEqual(lines, ['module registry is a domain, and registry is not in naming.domains or a domain doc', 'module store is a foundation, and store is not in naming.vocabularies.foundation']);
+  assert.match(run(makeRepo(I1, { system: { core: ['src/**'] } }), ['check']).out, /PROFILE-NAMING a v2 profile \(it has system\) needs naming\.tokens\.system/);
+});

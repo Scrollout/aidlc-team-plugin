@@ -63,7 +63,7 @@ Merge rules:
 - `levels.<name>.paths`: the test files (`**/*_test.go`), never a folder holding helpers, which are code the proof reverts.
 - `checks`: commands run on every merge: lint, format, static analysis. Each must be safe to run several at once, as the gate, builders and reviewers run in parallel.
 - `review.fixRounds`: fix rounds per focus before a `fix` escalates (default 3). `decisions.paths` and `generated`: [Plan lint](plan-lint.md#profile-keys-it-reads).
-- `names`: [Naming rules](names.md); `deps`: [Current dependencies](dependencies.md); `deploy.platform`: [Operations](operations.md).
+- `names`: [Naming rules](naming.md); `deps`: [Current dependencies](dependencies.md); `deploy.platform`: [Operations](operations.md).
 - `research.sources` lists sources the owner trusts for the researcher, and `research.max` its source budget (default 8); `models.research` its model ([0010](../decisions/0010-research-for-open-questions.md)).
 - When the project has a lint target (`make lint`, `npm run lint` or `just lint`, from `grid.runners` and `init.lintTargets`), `init` offers it as a module check, for the owner to add to `modules[].check`; it writes nothing for it.
 - `init` takes its answers as flags (`--name`, `--base`, `--bundle`); the skill asks the owner first. It never overwrites: it lists an existing file and exits 2 until the owner reruns with `--overwrite <path>`.

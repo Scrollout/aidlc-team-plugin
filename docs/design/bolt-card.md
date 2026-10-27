@@ -25,7 +25,7 @@ The cap counts lines (owner, 2026-10-25: a line is what a reader scans; a char c
 - **Reserves:** tokens no two units in flight may share: a migration number `regional/0005`, or an exclusive runtime resource a unit's tests need, such as `ci-cluster/port-25` ([Parallel builders](parallel.md)).
 - **Checks:** the commands for the unit's modules, by `id` (or `name`), and the project's `checks`, run on every merge.
 - **Data:** the data the unit's modules own and the shared data; any other data only through its owner ([Data ownership](data-ownership.md)).
-- **Names:** the naming rules whose files overlap the unit's scope ([Naming rules](names.md)).
+- **Names:** the naming rules whose files overlap the unit's scope ([Naming rules](naming.md)).
 - **Platform:** the `deploy.platform` refs, where the deploy target is already defined, to build on ([Operations](operations.md)).
 - **Out of scope** and **stop and report if** (interface change, scope too small, AC ambiguous).
 - **Report format:** what the builder returns.

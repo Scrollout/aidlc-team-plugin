@@ -10,6 +10,7 @@ import { checkBundle, docSlug, nameProblem, parseDoc, writeIndexes } from './okf
 import { computeLane, inside, lintPlan, readPlan, runTarget, spansOf } from './grid.mjs';
 import { issueTitle, sync } from './board.mjs';
 import { writeMap } from './map.mjs';
+import { generatedRules } from './naming.mjs';
 import { aidlcDir, approval, baseOf, baseRedFile, branchOf, bump, codeChanges, diffHash, keptPass, verdictCurrent, mergedUnits, mutationOf, readState, reviewFocuses, roundsOf, runtimeFile, unitPaths, worktrees, writeJson } from './state.mjs';
 
 const G = config.gate;
@@ -225,7 +226,7 @@ function runGate(cwd, st, unit) {
     if (mergeWritten(path, bundleRel, profile)) add('GATE-SHARED', 'gateShared', { path }, path);
     else if (!unit.scope.some((g) => matches(path, g))) add('SCOPE-OUT', 'gateScope', { path }, path);
   }
-  const names = [profile.names ?? []].flat().filter((r) => !nameProblem(r));
+  const names = [...[profile.names ?? []].flat().filter((r) => !nameProblem(r)), ...generatedRules(profile, st.bundle)]; // the project's rules and the registry's (docs/design/naming.md)
   // Each added line, so a secret written from Bash, which the secrets hook never sees, stops the merge.
   let file = null;
   let line = 0;
@@ -235,7 +236,7 @@ function runGate(cwd, st, unit) {
     else if (l.startsWith('+') && file && secretIn(l.slice(1), profile)) add('GATE-SECRET', 'gateSecret', { path: file, line }, file);
     // A static credential between components, outside the tests: identities, not secrets (docs/design/workload-identity.md).
     else if (l.startsWith('+') && file && codeChanges([file], p.levels, bundleRel).length && config.hooks.identity.some((x) => new RegExp(x, 'i').test(l.slice(1)))) add('GATE-IDENTITY', 'gateIdentity', { path: file, line }, file);
-    // A name the line adds where a naming rule looks, which its pattern does not match (docs/design/names.md).
+    // A name the line adds where a naming rule looks, which its pattern does not match (docs/design/naming.md).
     if (l.startsWith('+') && !l.startsWith('+++ ') && file) for (const r of names.filter((x) => x.find && list(x.files).some((g) => matches(file, g)))) {
       for (const m of l.slice(1).matchAll(new RegExp(r.find, 'g'))) {
         const name = m[1] ?? m[0];
@@ -244,7 +245,7 @@ function runGate(cwd, st, unit) {
     }
     if (l.startsWith('+') && !l.startsWith('+++ ')) line++;
   }
-  // A path rule: each file the unit adds or renames under its files (docs/design/names.md).
+  // A path rule: each file the unit adds or renames under its files (docs/design/naming.md).
   for (const path of gitLines(cwd, 'diff', '--name-only', '--diff-filter=AR', `${base}...${branchOf(unit.id)}`)) {
     for (const r of names.filter((x) => !x.find && list(x.files).some((g) => matches(path, g)) && !new RegExp(`^(?:${x.pattern})$`).test(path))) add('GATE-NAME', 'gateNamePath', { path, rule: r.id, pattern: r.pattern, why: r.why ?? '-' }, path);
   }

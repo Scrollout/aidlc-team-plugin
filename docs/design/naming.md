@@ -29,14 +29,14 @@ The profile's `naming` is the one source. The CLI adds its defaults (`cli.json` 
 Each kind of name is a template over tokens in `cli.json` `naming.grammar`, with its regex and an example. `aidlc name <kind> --domain <code> --role <role> --env <env> …` prints the name, so a builder never composes one. The kinds: domain folder and package, slice folder, operation ID, API path, api-version, permission, event type, schema, database role, table, migration, deployable, image, namespace, host, metric and config key. The API and event kinds follow [0014](../decisions/0014-the-reference-clouds-api-and-event-conventions.md); the workload identity is never composed: it comes from a platform fact.
 
 # Checks
-- `NAME-UNREGISTERED`: a module of kind `domain` whose id is not a registered domain code, or a pipeline or foundation module whose id is not in its vocabulary.
-- `NAME-BANNED`: a banned word as a path segment, or as a word of an identifier, on an added line or path of a bolt's diff.
-- `GATE-NAME`: the project's own `names` rules, still read as before; M16 generates them from the grammar for the kinds the project's stack pack places (M17).
+- **Module IDs** (`PROFILE-NAMING`): a module of kind `domain` whose id is not a registered domain code, or a pipeline or foundation module whose id is not in its vocabulary. A v2 profile without `naming.tokens.system` is one too, and a profile with modules but no registry a warning.
+- **Generated rules** (`GATE-NAME`, B162): with a registry, the gate reads `naming.generated` rules beside the project's own: migrations under a registered domain, images and namespaces in `deploy/` composed from the tokens and vocabularies, and `banned`, no new path with a banned word as a segment. Identifiers are left to review: a banned word inside one (`baseUrl`) is too often legitimate.
+- **The project's rules** (`GATE-NAME`): a `names` rule has `id`, `files` globs, `pattern` (the full name), an optional `find` regex whose first group is the name on an added line (without one, the rule checks each path the bolt adds or renames), and `why`, the decision that sets it. Only added lines count, so a rule needs no baseline. A rule without `id`, `files` or `pattern`, or with a regex that does not compile, is `PROFILE-NAMES`. A project keeps `names` only for kinds the grammar does not cover.
 - `TERM-SYNONYM`: a glossary entry lists its synonyms (`- **term** (not: a, b): meaning`); a synonym on an added line of code or docs is reported.
 - `CONTRACT-NAME`: a published OpenAPI document breaks the API grammar (paths, operation IDs, api-version, property and enum casing, the resource envelope with `systemData`, `value` and `nextLink`, the error envelope).
 - The card's `## Names` lists the names the bolt will create, printed in advance from its modules.
 
 # Replaces
-`names.md`: hand-written regexes per project become generated rules; a project keeps `names` only for kinds the grammar does not cover.
+`names.md` (B162): its rule format, card section and profile check live on above; the hand-written rules a project needed for every kind become generated ones.
 
 Bolts: [M16](../roadmap/m16.md) B160 to B165.

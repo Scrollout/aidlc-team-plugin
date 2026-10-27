@@ -96,3 +96,11 @@ test('U144/AC-1 merge marks the base as merging while its gate runs, and clears 
   assert.doesNotMatch(r.out + r.err, /GATE-CHECK/, 'the mark exists while the gate runs');
   assert.equal(existsSync(mark), false, 'cleared after the gate');
 });
+
+test('B162/AC-2 with a naming registry the gate refuses a new path with a banned segment, as the generated banned rule', () => {
+  const naming = { tokens: { system: 'shop' }, domains: { orders: {} } };
+  const r = merge(setup({ profile: { ...PROFILE, naming }, files: { ...CODE, ...TEST, 'src/utils/x.mjs': 'export const x = 1;\n' } }));
+  assert.match(r.out, /GATE-NAME src\/utils\/x\.mjs does not match the banned rule/);
+  assert.doesNotMatch(r.out, /GATE-NAME src\/add\.mjs/, 'a plain name passes');
+  assert.ok(!codes(merge(setup({ profile: PROFILE, files: { ...CODE, ...TEST, 'src/utils/x.mjs': 'export const x = 1;\n' } }))).includes('GATE-NAME'), 'no registry, no generated rule');
+});

@@ -6,7 +6,7 @@ import { bundleOf, config, done, isMap, list, UsageError, relPath } from './conf
 import { finding as codeFinding, msg } from './template.mjs';
 import { loadProfile } from './profile.mjs';
 import { kindProblems } from './vocab.mjs';
-import { namingProblems } from './naming.mjs';
+import { moduleProblems, namingProblems } from './naming.mjs';
 
 const OKF = config.okf;
 
@@ -557,7 +557,7 @@ function lintRules(rules = {}, file = config.layers.find((l) => l.from === 'proj
   return out;
 }
 
-// A naming rule's problem, or null (docs/design/names.md); the gate skips a rule with one.
+// A naming rule's problem, or null (docs/design/naming.md); the gate skips a rule with one.
 export function nameProblem(r) {
   if (!isMap(r) || !r.id || !list(r.files).length || !r.pattern) return 'namesShape';
   try { new RegExp(r.find ?? ''); new RegExp(r.pattern); } catch { return 'namesRegex'; }
@@ -622,7 +622,7 @@ export const commands = {
     const rules = profile.docs?.rules ?? {};
     const bundle = bundleOf(cwd, profile);
     const findings = [...lintRules(rules), ...lintNames(profile.names), ...lintKeys(sources)];
-    // A codebase in modules grows names from the first unit: without a rule nothing holds them (docs/design/names.md#lifecycle).
+    // A codebase in modules grows names from the first unit: without a rule nothing holds them (docs/design/naming.md).
     // Slices own their data: critical, so an error once the project is past adoption (docs/design/architecture-model.md).
     const arch = profile.architecture ?? {}, mods = profile.modules ?? [], at = config.layers.find((l) => l.from === 'project').path;
     if (mods.length && !arch.data) findings.push(finding('PROFILE-ARCH', profile.adopted ? 'warning' : 'error', at, 1, 'archNoData', {}));
@@ -631,8 +631,9 @@ export const commands = {
     if (open.length) findings.push(finding('PROFILE-ARCH', 'warning', at, 1, 'archNoApi', { modules: open.join(', ') }));
     // Every module has a kind: an error on a v2 profile (it has system), a warning on a v1 one until it migrates (docs/design/architecture-model.md).
     for (const [key, data] of kindProblems(profile)) findings.push(finding('PROFILE-KIND', profile.system ? 'error' : 'warning', at, 1, key, data));
-    for (const [key, data] of namingProblems(profile)) findings.push(finding('PROFILE-NAMING', 'error', at, 1, key, data)); // the registry names everything (docs/design/naming.md)
-    if ((profile.modules ?? []).length && ![profile.names ?? []].flat().length) findings.push(finding('PROFILE-NAMES', 'warning', config.layers.find((l) => l.from === 'project').path, 1, 'namesNone', {}));
+    for (const [key, data] of [...namingProblems(profile), ...moduleProblems(profile, bundle)]) findings.push(finding('PROFILE-NAMING', 'error', at, 1, key, data)); // the registry names everything (docs/design/naming.md)
+    if (profile.system && !profile.naming?.tokens?.system) findings.push(finding('PROFILE-NAMING', 'error', at, 1, 'namingV2', {}));
+    if ((profile.modules ?? []).length && !profile.naming && ![profile.names ?? []].flat().length) findings.push(finding('PROFILE-NAMING', 'warning', at, 1, 'namesNone', {}));
     const given = args.filter((a) => !a.startsWith('--'));
     const paths = given.length ? given.map((a) => resolve(cwd, a)) : [bundle];
     for (const p of paths) {

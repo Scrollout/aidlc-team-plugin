@@ -290,7 +290,9 @@
     "upgradeMethod": "Method {{from}} to {{to}}: {{changes}}. An intent approved before keeps method {{from}}'s rules; one approved from now on is judged by method {{to}}.\n",
     "upgradeKinds": "Module kinds, proposed from paths and names (docs: Architecture model); add each as the module's kind, or the kind it really is:\n{{list}}\n",
     "upgradeKind": "  {{module}}: {{kind}}",
-    "namesNone": "the profile has modules but no names rule",
+    "namesNone": "the profile has modules but no naming registry (naming.tokens): nothing names them",
+    "namingV2": "a v2 profile (it has system) needs naming.tokens.system: every name is composed from it",
+    "namingModule": "module {{module}} is a {{kind}}, and {{module}} is not in {{where}}",
     "namesRegex": "names rule {{id}}: find or pattern is no valid regex",
     "profileKey": "{{key}} is read by nothing in the plugin",
     "ruleFixed": "docs.rules.{{code}}: spec codes cannot be changed",
@@ -1620,6 +1622,12 @@
       "pipeline": ["ingress", "authentication", "authorization", "admission", "ratelimit", "routing"],
       "foundation": ["config", "database", "transport", "contract", "workloadidentity", "events", "telemetry"],
       "verb": ["get", "list", "create", "update", "delete", "register", "unregister", "evaluate", "cancel"]
+    },
+    "generated": {
+      "migration": { "files": ["migrations/**"], "why": "docs/design/naming.md" },
+      "image": { "files": ["deploy/**/*.yaml", "deploy/**/*.yml"], "find": "image:\\s*[\"']?([^\"'\\s]+)", "why": "docs/design/naming.md" },
+      "namespace": { "files": ["deploy/**/*.yaml", "deploy/**/*.yml"], "find": "namespace:\\s*[\"']?([^\"'\\s]+)", "why": "docs/design/naming.md" },
+      "banned": { "files": ["**"], "why": "docs/design/naming.md" }
     },
     "grammar": {
       "domain": { "template": "{{domain}}", "needs": ["domain"], "regex": "^[a-z][a-z0-9]*$" },

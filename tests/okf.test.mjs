@@ -143,7 +143,7 @@ test('U95/AC-1 check fails a malformed naming rule', () => {
   assert.doesNotMatch(r.stdout + r.stderr, /names rule c/);
   writeFileSync(join(dir, '.aidlc/profile.json'), JSON.stringify({ modules: [{ id: 'core', paths: ['src/**'], api: ['src/**'] }], architecture: { data: { prefix: 'data/' }, acyclic: true } }));
   const none = spawnSync(process.execPath, [join(import.meta.dirname, '../plugin/cli/aidlc.mjs'), 'check'], { cwd: dir, encoding: 'utf8' });
-  assert.match(none.stdout + none.stderr, /PROFILE-NAMES the profile has modules but no names rule/, 'U96/AC-2');
+  assert.match(none.stdout + none.stderr, /PROFILE-NAMING the profile has modules but no naming registry \(naming\.tokens\): nothing names them/, 'U96/AC-2, B162');
   assert.equal(none.status, 0, 'a warning');
 });
 
@@ -215,7 +215,7 @@ test('B151/AC-1 every module has a known kind and surfaces: an error on a v2 pro
   assert.match(v2.stdout, /PROFILE-KIND module kit has kind library, not one of domain/);
   assert.match(v2.stdout, /PROFILE-KIND module edge has surface private, not one of client, server, events/);
   assert.match(check({ system: { core: 'src/**' }, modules: [mod({ kind: 'domain' })] }).stdout, /PROFILE-KIND system takes core and extensions, each a list of globs; core is not one/);
-  const clean = check({ system, modules: [mod({ kind: 'domain', surfaces: { client: ['src/client/**'], events: ['src/events/**'] } })] });
+  const clean = check({ system, naming: { tokens: { system: 'shop' }, domains: { providers: {} } }, modules: [mod({ kind: 'domain', surfaces: { client: ['src/client/**'], events: ['src/events/**'] } })] });
   assert.equal(clean.status, 0, clean.stdout);
   assert.doesNotMatch(clean.stdout, /PROFILE-KIND/);
 });

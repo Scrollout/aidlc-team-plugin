@@ -101,3 +101,26 @@ export const commands = {
     return done(`${nameOf(flags._[0], flags, registry(profile, bundleOf(cwd, profile)))}\n`);
   },
 };
+
+// ---- Rules generated from the registry, read by the gate's GATE-NAME like the project's own (docs/design/naming.md#checks) ----
+
+const alt = (xs) => xs.map((x) => String(x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+
+// The generated names rules: migrations under a registered domain, images and namespaces composed from the tokens,
+// and no path segment a banned word. None without a registry.
+export function generatedRules(profile, bundle) {
+  if (!isMap(profile.naming)) return [];
+  const reg = registry(profile, bundle), t = reg.tokens, G = N.generated, domains = Object.keys(reg.domains), out = [];
+  if (domains.length) out.push({ id: 'migration', ...G.migration, pattern: `migrations/(?:${alt(domains)})/\\d{4}_[a-z]+_[a-z0-9_]+\\.sql` });
+  if (t.registry && t.org && t.system) out.push({ id: 'image', ...G.image, pattern: `${alt([t.registry])}/${alt([t.org])}/${alt([t.system])}-(?:${alt([...domains, ...reg.vocabularies.pipeline])})-(?:${alt(reg.vocabularies.role)}):[A-Za-z0-9._-]+` });
+  if (t.system) out.push({ id: 'namespace', ...G.namespace, pattern: `${alt([t.system])}-(?:${alt(reg.vocabularies.env)})` });
+  out.push({ id: 'banned', ...G.banned, pattern: `(?!(?:.*/)?(?:${alt(reg.banned)})(?:[./_-][^/]*)?(?:/|$)).*` });
+  return out;
+}
+
+// Modules whose id the registry does not hold for their kind: a domain's code, a pipeline stage, a foundation kit.
+export function moduleProblems(profile, bundle) {
+  if (!isMap(profile.naming)) return [];
+  const reg = registry(profile, bundle), lists = { domain: [Object.keys(reg.domains), 'naming.domains or a domain doc'], pipeline: [reg.vocabularies.pipeline, 'naming.vocabularies.pipeline'], foundation: [reg.vocabularies.foundation, 'naming.vocabularies.foundation'] };
+  return (profile.modules ?? []).filter((m) => lists[m.kind] && !lists[m.kind][0].includes(String(m.id ?? m.name))).map((m) => ['namingModule', { module: String(m.id ?? m.name), kind: m.kind, where: lists[m.kind][1] }]);
+}

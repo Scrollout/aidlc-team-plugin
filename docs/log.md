@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M16 B162: the registry generates the gate's naming rules (migrations, images, namespaces, and no banned word as a path segment) beside the project's own; module ids must be registered for their kind, and a v2 profile needs a system code (`PROFILE-NAMING`); the names doc folds into [Naming](design/naming.md). Release 0.133.0.
 - **Update** M16 B161: `aidlc name <kind>` prints a name from the grammar (`cli.json` `naming.grammar`: domain, slice, operation ID, API path, permission, event, api-version, schema, database role, table, migration, deployable, image, namespace, host, metric, config key) and the registry, refusing an unregistered token or a missing flag; the CLI doc's output and values sections move to [CLI engine](design/cli-engine.md) ([Naming](design/naming.md)). Release 0.132.0.
 - **Update** M16 B160: the naming registry: the profile's `naming` (tokens, domains, closed vocabularies, banned words) over the CLI's defaults, with each domain doc's code registered; `PROFILE-NAMING` checks it, and `init` takes `--system-code`, `--org` and `--zone` ([Naming](design/naming.md)). Release 0.131.0.
 - **Update** M15 B159: the plugin's docs and templates speak the canonical model: [Architecture model](design/architecture-model.md) absorbs the slice-architecture doc, the unit card doc is the [Bolt card](design/bolt-card.md), `init` writes bolt, system, domain, fact and module templates in place of the unit and hand-drawn architecture ones, and constitution rule 9 says domains own their data, quoting the owner. M15 is built. Release 0.130.0.
@@ -45,7 +46,7 @@ title: aidlc-team-plugin docs history
 - **Fix** M13 U130: a fix-round builder at work keeps its unit building, so a kept pass of another focus no longer makes `next` ask for a review of a moving head ([In flight](design/in-flight.md)). Release 0.117.2.
 - **Fix** M13 U129: with `ci.wait`, the owner's release ships only a pushed base whose CI passed; `next` asks for the push and the wait first ([CI on the base](design/base-ci.md)). Release 0.117.1.
 - **Update** M13 U128: the card names the unit's slice (vertical or horizontal) and intent path, carries its why, keeps each interface line's text with its path, and lists the docs its text names with their paths ([Unit card](design/bolt-card.md)). Release 0.117.0.
-- **Fix** M13 U127: the card shows what each name rule finds, and a banned-word rule as its word list instead of `(?!)` ([Naming rules](design/names.md)). Release 0.116.3.
+- **Fix** M13 U127: the card shows what each name rule finds, and a banned-word rule as its word list instead of `(?!)` ([Naming rules](design/naming.md)). Release 0.116.3.
 - **Update** M13 U126: the intent is the vertical spec, with `# Risks` and a why for each rule; horizontal docs are extracted when a second slice reuses a pattern ([Grid](design/grid.md)). Release 0.116.2.
 - **Fix** M13 U125: the reviewing mark counts the reviewers in flight, so a focus that records first leaves the others waited for ([In flight](design/in-flight.md)). Release 0.116.1.
 - **Update** M13 U124: `report` asks for sourced `deps` only when the diff adds a pin line (`deps.pin`) to a manifest, so files that pin among other content can be manifests ([Current dependencies](design/dependencies.md)). Release 0.116.0.
@@ -79,8 +80,8 @@ title: aidlc-team-plugin docs history
 - **Fix** M11 U99: a unit whose AC is a profile setting may prove it by a mutation of `.aidlc/profile.json` ([Back-fill](design/backfill.md)). Release 0.103.1.
 - **Creation** M11 U98: [current dependencies](design/dependencies.md): versions from the registry with their source, scanners at merge and daily in CI, constitution rule 8. Release 0.103.0.
 - **Update** M11 U97: `upgrade` lists the findings the new release adds, to plan before a merge ([Vendoring](design/vendoring.md)). Release 0.102.0.
-- **Update** M11 U96: [naming](design/names.md#lifecycle) through the lifecycle: path rules, a naming decision template per stage, a warning for a codebase with no naming rule. Release 0.101.0.
-- **Creation** M11 U95: [naming rules](design/names.md): `names` in the profile, checked on added lines at merge (`GATE-NAME`) and listed on cards. Release 0.100.0.
+- **Update** M11 U96: [naming](design/naming.md) through the lifecycle: path rules, a naming decision template per stage, a warning for a codebase with no naming rule. Release 0.101.0.
+- **Creation** M11 U95: [naming rules](design/naming.md): `names` in the profile, checked on added lines at merge (`GATE-NAME`) and listed on cards. Release 0.100.0.
 - **Fix** M11 U94: the guard compares git dirs by their real path, and the test quotes Windows paths as a shell needs. Release 0.99.1.
 - **Update** M11 U94: the guard judges a git call in the repository its `cd` and `-C` lead to, and leaves another repository alone ([Hook mechanics](design/hooks.md#wiring)). Release 0.99.0.
 - **Update** M11 U93: the gate counts a verdict only when newer than the last report, as `next` does, and `report` words a code unit's missing mutation right ([Gate](design/gate.md)). Release 0.98.0.

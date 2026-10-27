@@ -55,7 +55,7 @@ test('U78/AC-1 check --ci on GitHub Actions writes a job summary: the verdict, t
   assert.equal(ci({ GITHUB_STEP_SUMMARY: summary }).status, 0);
   const text = readFileSync(summary, 'utf8');
   assert.match(text, /^## aidlc check\n\n⚠️ Passed with 3 warnings\.\n/);
-  assert.match(text, /^\| ⚠️ \| PROFILE-NAMES \| `.aidlc\/profile.json:1` \| the profile has modules but no names rule \| write the naming decision/m, 'U96/AC-2');
+  assert.match(text, /^\| ⚠️ \| PROFILE-NAMING \| `.aidlc\/profile.json:1` \| the profile has modules but no naming registry \(naming\.tokens\): nothing names them \| set naming\.tokens/m, 'U96/AC-2, B162');
   assert.match(text, /^\| ⚠️ \| HOUSE-GENERATED \| `docs\/units\/U-1-add\.md:1` \| .+ \| add generated: .+ \|$/m);
   assert.match(text, /^- \*\*I-1\*\* \w+: Math$/m);
   assert.match(text, /^ {2}- \*\*U-1\*\* merged: /m);

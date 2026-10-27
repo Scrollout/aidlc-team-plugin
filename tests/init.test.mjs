@@ -90,7 +90,7 @@ test('U97/AC-1 upgrade lists the findings the new release reports and the pinned
   writeFileSync(join(dir, '.aidlc/profile.json'), JSON.stringify({ ...profile, modules: [{ id: 'core', paths: ['src/**'] }] }));
   const r = run(dir, ['upgrade', '--dirty']);
   assert.equal(r.code, 0, r.err);
-  assert.match(r.out, new RegExp(`${PLUGIN.version.replace(/\./g, '\\.')} reports findings the pinned release did not; plan a fix before the next merge:\n[\\s\\S]*\\.aidlc/profile\\.json:1 PROFILE-NAMES `));
+  assert.match(r.out, new RegExp(`${PLUGIN.version.replace(/\./g, '\\.')} reports findings the pinned release did not; plan a fix before the next merge:\n[\\s\\S]*\\.aidlc/profile\\.json:1 PROFILE-NAMING `));
   assert.doesNotMatch(run(dir, ['upgrade', '--dirty']).out, /reports findings the pinned release did not/, 'none new the second time');
 });
 
