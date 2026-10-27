@@ -20,7 +20,7 @@ requirements: [R-<n>]
 
 # Stories
 - US1.1 As a <persona>, I want <capability>, so that <benefit>. R-<n> [Q-<n>.<k>]
-<each story a vertical slice: one feature or use case, through every layer it needs>
+<each story one feature or use case, served by a vertical slice through every layer it needs>
 
 # Units
 ## <name of the unit of work, lower case, as a path segment>

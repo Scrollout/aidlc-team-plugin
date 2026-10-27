@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.178.1] - 2026-10-27
+### Changed
+- The vocabulary follows the slice checks. The glossary names the **story** (one feature or use case, `US<g>.<s>`, which a vertical slice serves) and the **surface** (a domain's commands, queries and events); a vertical slice is declared as a folder of its domain's application layer, listed as a `Command` or `Query` line under the domain doc's `# Surface`.
+- The product analyst writes stories with ids and groups them into units of work; the architect sorts kinds into vertical parts and horizontal layers, gives each domain its slices, and cuts bolts that deliver a slice whole.
+
 ## [0.178.0] - 2026-10-27
 ### Added
 - With a naming registry, slices are named and routed by it at the merge gate: `SLICE-NAME` (a slice folder that is no name the registry composes from a verb and the domain's noun) and `SLICE-ROUTE` (an operation id used twice, one that maps to no slice folder or to no domain and verb, or a slice of a domain the contracts serve that no operation reaches).
@@ -316,7 +321,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.178.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.178.1...HEAD
+[0.178.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.178.0...v0.178.1
 [0.178.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.177.0...v0.178.0
 [0.177.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.176.0...v0.177.0
 [0.176.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.175.0...v0.176.0

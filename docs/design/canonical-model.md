@@ -24,8 +24,10 @@ Generated from `cli.json` `vocabulary`; a test keeps it in step.
 | System | extension | a domain another team owns, built only against published contracts | another team's Units | profile `system.extensions` |
 | Domain | domain | a bounded context holding the vertical slices of one business capability, with its data, language, contract and events | a Domain Design component | `domains/<code>.md`, module `kind: domain` |
 | Domain | kind | `domain`, `pipeline`, `foundation`, `adapter`, `runtime`, `extension` or `delivery` | - | module `kind` |
-| Code | vertical slice | the code of one business feature or use case, a command or a query, in its own folder, cutting through every horizontal layer it needs; it names the use case it serves | a user story, cut through all layers | the domain's `surface` |
+| Code | vertical slice | the code of one business feature or use case, a command or a query, in its own folder, cutting through every horizontal layer it needs; it names the use case it serves | a user story, cut through all layers | a folder of the domain's application layer, listed under its doc's `# Surface` as a `Command` or `Query` line |
+| Code | surface | what a domain offers others: its commands, queries and events, served from its `client`, `server` and `events` folders | integration specification | the domain doc's `# Surface`; the profile's `surfaces` |
 | Delivery | intent | one business outcome, with its why and success measures | **Intent** | `intents/I-<n>-<slug>.md` |
+| Delivery | story | one feature or use case a user wants, as a persona, a capability and a benefit, which a vertical slice serves | user story | the intent's `# Stories`, `US<g>.<s>` |
 | Delivery | unit of work | a cohesive part of an intent built by one team: its kind, modules, stories, requirements, risks, measures and the units of work it depends on | **Unit** | the intent's `# Units` |
 | Delivery | increment | a shippable step of an intent; increment 1 is the walking skeleton | groups Bolts | the intent's `# Increments`, `I-<n>.<k>` |
 | Delivery | bolt | the smallest build cycle: one card, worktree, review and merge | **Bolt** | `bolts/B-<n>-<slug>.md` |
@@ -38,28 +40,16 @@ Generated from `cli.json` `vocabulary`; a test keeps it in step.
 **Retired, in these senses:** *unit* (a work item) → bolt (unit stays a test level); *slice* (a delivery step) → increment; *operation* (one command or query) → vertical slice; *internal layer* (a layer inside a domain) → horizontal layer; *bundle* (a piece of the architecture, not the docs bundle) → domain; *component* (a piece of the architecture) → domain, or runtime for a deployable; *capability* (a module) → domain.
 <!-- /generated -->
 
-# What is AI-DLC's and what is the plugin's own
-- **From AI-DLC:**
-  - Intent, Unit, Bolt;
-  - the loop at every stage (AI plans, human validates, AI executes, human verifies);
-  - Mob Elaboration;
-  - context kept in the repository;
-  - the walking-skeleton first Unit.
-- **The plugin's own, to reach AI-DLC's enterprise goal:**
-  - the closed kinds and the kind matrix;
-  - one domain per bolt;
-  - increments;
-  - the naming registry;
-  - every rule as a check.
+# The method's words and the plugin's own
+- **The method's:** Intent, Unit (the unit of work), Bolt, and the user story; the loop at every stage; Mob Elaboration; context kept in the repository; the walking skeleton first.
+- **The plugin's own:** the closed kinds, one domain per bolt, increments, the naming registry, every rule as a check.
 
-  Neither the reference AI-DLC workflows nor the method's launch talk gives a rule for where a Unit's boundary falls.
-
-Docs and messages say "the method" for the first group and "the plugin" for the second, never "AI-DLC requires" for the plugin's own rules.
+Docs and messages say "the method" for the first group and "the plugin" for the second.
 
 # Rules
 - `cli.json` holds the vocabulary: words, retired words with their replacement, and the closed lists. Checks and the generated glossary read it, nothing else.
 - `TERM-SYNONYM` reports a retired word in its old sense, on the project's docs and code (M16) and on this repo (M20).
-- **Pinned method.** Approving an intent writes `method: <version>` (`cli.json` `method.version`), a stamp field outside the doc's hash. An intent is judged by that method; one approved before pinning by method 1, a draft by the current one. A rule a later method added is listed in `method.since` by its message key, and holds only for intents pinned at or after it. `upgrade` lists the changes since the pinned CLI's method (`method.changes`).
+- **Pinned method.** Approving an intent writes `method: <version>`, a stamp outside the doc's hash, and the intent is judged by that method: one approved before pinning by method 1, a draft by the current one. `method.since` names the method each later rule starts at, by message key; `upgrade` lists the changes (`method.changes`).
 - An approved intent's `method/` pages are frozen at its version ([Bundle](bundle.md)).
 
 Bolts: [M15](../roadmap/m15.md) B150, B154; still to build: B163 and B193 (`TERM-SYNONYM`).

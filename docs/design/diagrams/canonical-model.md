@@ -19,9 +19,11 @@ flowchart LR
   end
   subgraph Code["Code"]
     Code_vertical_slice["vertical slice"]
+    Code_surface["surface"]
   end
   subgraph Delivery["Delivery"]
     Delivery_intent["intent"]
+    Delivery_story["story"]
     Delivery_unit_of_work["unit of work"]
     Delivery_increment["increment"]
     Delivery_bolt["bolt"]

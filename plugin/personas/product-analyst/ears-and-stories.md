@@ -14,7 +14,7 @@ A quality requirement names its measure: the metric, the target, the load and ho
 `- AC-<k> (<level>): Given <context>, when <action>, then <outcome>.` One behaviour each, observable, at the level whose test can show it.
 
 ## Stories (several kinds of user)
-Under `# Personas`, one line each: `- **<Name>**: <who they are and what they want> [source]`; a persona has a role, a goal and a frustration. Under `# Stories`, at least one per persona: `- As a <persona>, I want <capability>, so that <benefit>. R-<n> [source]`, citing the requirements it needs; a requirement no story needs is questioned.
+Under `# Personas`, one line each: `- **<Name>**: <who they are and what they want> [source]`; a persona has a role, a goal and a frustration. Under `# Stories`, at least one per persona: `- US<g>.<s> As a <persona>, I want <capability>, so that <benefit>. R-<n> [source]`, citing the requirements it needs; a requirement no story needs is questioned. Each story is one feature or use case, which a vertical slice serves; every story belongs to a unit of work.
 
 ## Vague words that need a follow-up
 maybe, probably, depends, mix of, not sure, fast, easy, secure, scalable, highly available, user-friendly, as needed, etc.

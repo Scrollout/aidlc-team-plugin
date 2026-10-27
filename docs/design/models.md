@@ -70,7 +70,7 @@ The OpenAPI files are the contracts'.
 
 # The first model: control plane
 - **Layers:** a front door; governance (authenticate, authorize, policy, lock, throttle); resource metadata; operations; deployments; events and an activity log.
-- **Slice:** a provider per namespace, its resource types, and whether each type's writes are long-running.
+- **Extension:** a provider per namespace, its resource types, and whether each type's writes are long-running.
 - **Rules:** the stage order; long-running operations; idempotent writes; deployments that converge by re-applying, without compensation unless a project decides otherwise.
 - **Contract:** the resource hierarchy the contract grammar adds for it: the `providers` segment and its namespace, `systemData` on a resource, `nextLink` on a list ([0021](../decisions/0021-the-control-planes-api-conventions-belong-to-its.md)).
 - **First applied** to an existing control-plane project (M21).

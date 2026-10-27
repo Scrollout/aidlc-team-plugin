@@ -6,7 +6,7 @@
 - A word with two meanings is two domains, or one glossary entry to fix.
 
 ## Kinds
-domain (owns data), pipeline (a request-path stage), foundation (a shared kit, no AI-DLC or business words), adapter (talks to one outside system), runtime (wires and runs; owns nothing), extension (built elsewhere against published contracts), delivery (build and deploy). Layers inside a domain point inward: interface, then application, then model; infrastructure points at the model.
+Vertical: domain (owns data and holds the slices of one business capability), extension (a domain built elsewhere against published contracts). Horizontal layers: runtime (wires and runs; owns nothing), pipeline (a request-path stage), foundation (a shared kit, no AI-DLC or business words), adapter (talks to one outside system). Neither: delivery (build and deploy). Inside a domain the layers point inward: interface, then application, then model; infrastructure points at the model. Each slice is a folder of the application layer.
 
 ## Decisions (MADR)
 Problem, drivers, at least two options with their pros and cons, the choice and why, and the confirmation: the check, test or review that keeps it true. A decision that is hard to undo is a one-way door: give it `oneWayDoor: true` and a fact for any platform claim.

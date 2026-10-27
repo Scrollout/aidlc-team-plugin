@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** Vocabulary aligned with the slice checks: story and surface in the [Canonical model](design/canonical-model.md), the personas, the intent template, [Models](design/models.md) and [Plan lint](design/plan-lint.md). Release 0.178.1.
 - **Update** M27 B246 built: slices named and routed by the naming registry, and a new slice delivered whole (`SLICE-NAME`, `SLICE-ROUTE`, `SLICE-DELIVER`); [Vertical slices checked](design/vertical-slices.md) is stable and M27 is done. Release 0.178.0.
 - **Update** M27 B245 built: [Vertical slices checked](design/vertical-slices.md), B245's part built; six `SLICE-*` checks run at the merge gate on what a bolt changes. Release 0.177.0.
 - **Creation** [Vertical slices checked](design/vertical-slices.md), draft, and [M27](roadmap/m27.md) B245 and B246: deterministic checks that code is grouped into vertical slices across horizontal layers, from the import graph, the folders, the domain doc's surface, the stories and the tests.
