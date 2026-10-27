@@ -12,6 +12,7 @@ import { issueTitle, sync } from './board.mjs';
 import { writeGlossary, writeMap } from './map.mjs';
 import { generatedRules, glossaryOf } from './naming.mjs';
 import { contractFindings } from './contract.mjs';
+import { kindFindings, layerFindings, reachFindings } from './arch.mjs';
 import { aidlcDir, approval, baseOf, baseRedFile, branchOf, bump, codeChanges, diffHash, keptPass, verdictCurrent, mergedUnits, mutationOf, readState, reviewFocuses, roundsOf, runtimeFile, unitPaths, worktrees, writeJson } from './state.mjs';
 
 const G = config.gate;
@@ -141,7 +142,9 @@ export function moduleFindings(edges, profile, approved = new Map()) {
       if (owners.includes(a) || (!owners.length && hit(data.shared, to)) || excepted(data.except, approved, from, to)) continue;
       out.push(finding('ARCH-DATA', from, 1, owners.length ? 'archDataEdge' : 'archDataNoOwner', { from, to, owner: owners.map((m) => m.id).join(', ') }));
     } else if (a && b && a !== b) {
-      if (b.api && !hit(b.api, to) && !excepted(api?.except, approved, from, to)) out.push(finding('ARCH-API', from, 1, 'archApi', { from, to, module: b.id, api: list(b.api).join(', ') }));
+      // With kinds on both ends the kind table decides (ARCH-KIND); otherwise a module's api, or its client and events, is its surface.
+      const surface = b.surfaces ? [...list(b.surfaces.client), ...list(b.surfaces.events)] : list(b.api);
+      if (!(a.kind && b.kind) && surface.length && !hit(surface, to) && !excepted(api?.except, approved, from, to)) out.push(finding('ARCH-API', from, 1, 'archApi', { from, to, module: b.id, api: surface.join(', ') }));
       if (acyclic && !excepted(acyclic.except, approved, a.id, b.id)) links.set(a.id, new Set([...(links.get(a.id) ?? []), b.id]));
     }
   }
@@ -178,7 +181,7 @@ function architecture(cwd, profile, key = 'gateCheck') {
     if (!ok) out.push(finding('ARCH-CHECK', '.', 1, key, { command: arch.graph }));
     const approved = new Map(exceptDocs(arch).map((d) => [d, existsSync(join(cwd, d)) ? readFileSync(join(cwd, d), 'utf8') : ''])
       .filter(([, text]) => text && approval(parseDoc(text)) === 'approved'));
-    out.push(...boundaryFindings(edges, arch, approved), ...moduleFindings(edges, profile, approved));
+    out.push(...boundaryFindings(edges, arch, approved), ...moduleFindings(edges, profile, approved), ...kindFindings(edges, profile), ...layerFindings(edges, profile), ...reachFindings(edges, profile));
   }
   for (const command of list(arch.checks)) if (!shell(cwd, command)) out.push(finding('ARCH-CHECK', '.', 1, key, { command }));
   return out;

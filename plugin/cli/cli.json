@@ -498,6 +498,11 @@
     "archEdge": "{{from}} -> {{to}}: {{reason}}",
     "archDataEdge": "{{from}} -> {{to}}: {{to}} belongs to {{owner}}; reach it through {{owner}}'s interface, an event or a shared service",
     "archDataNoOwner": "{{from}} -> {{to}}: no module owns {{to}}; add it to one module's data, or to architecture.data.shared",
+    "archKind": "{{from}} -> {{to}}: {{a}} ({{fromKind}}) may not depend on {{b}} ({{toKind}}){{note}}",
+    "archKindSurface": ", only on its client or events ({{surface}})",
+    "archLayer": "{{from}} -> {{to}}: {{fromLayer}} may not depend on {{toLayer}} in {{module}}",
+    "archLayerModel": "{{from}} -> {{to}}: the model of {{module}} depends on {{b}} ({{toKind}}); a model depends only on foundation kits",
+    "archReach": "runtime {{runtime}} reaches {{at}}, inside {{domain}}, which it does not host: {{path}}",
     "archApi": "{{from}} -> {{to}}: {{to}} is inside {{module}}; depend only on its public paths ({{api}})",
     "archCycle": "modules depend on each other in a circle: {{circle}}",
     "archDataTwice": "{{to}} is claimed by {{owners}}; one module owns it",
@@ -1275,6 +1280,15 @@
       "ARCH-CHECK": {
         "fix": "fix what the architecture check reports"
       },
+      "ARCH-KIND": {
+        "fix": "depend only on what the kind table allows (docs: Architecture model): a domain on foundation kits and other domains' client or events, never the core on an extension or product code on delivery; move the code, or the owner approves the edge as an exception"
+      },
+      "ARCH-LAYER": {
+        "fix": "point layers inward: interface to application and model, application to model, infrastructure to model; model depends only on foundation kits"
+      },
+      "ARCH-REACH": {
+        "fix": "split the domain's client from its internals so a runtime that only calls it links only the client (its surfaces), or host the domain in the runtime"
+      },
       "ARCH-API": {
         "fix": "call the module through its public paths, move what is needed into them, or the owner approves the edge in the architecture.api.except decision with a fix unit"
       },
@@ -1741,6 +1755,17 @@
     "kinds": ["domain", "pipeline", "foundation", "adapter", "runtime", "extension", "delivery"],
     "surfaces": ["client", "server", "events"],
     "systemKeys": ["core", "extensions"],
+    "kindRules": {
+      "domain": ["foundation", "domain:surface"],
+      "pipeline": ["foundation", "domain:surface"],
+      "foundation": ["foundation"],
+      "adapter": ["foundation"],
+      "runtime": ["domain", "pipeline", "foundation", "adapter"],
+      "extension": ["foundation"],
+      "delivery": ["domain", "pipeline", "foundation", "adapter", "runtime", "extension", "delivery"]
+    },
+    "layerAliases": { "api": "interface", "app": "application", "domain": "model", "store": "infrastructure" },
+    "layerRules": { "interface": ["application", "model"], "application": ["model"], "infrastructure": ["model"], "model": [] },
     "kindHints": [
       { "kind": "delivery", "match": "(^|/)(deploy|build|\\.github|tooling|toolchain|ci|scripts)(/|$)|^(toolchain|deploy|tooling)$" },
       { "kind": "runtime", "match": "(^|/)cmd(/|$)" },

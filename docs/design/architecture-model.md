@@ -53,10 +53,10 @@ Inside a module that declares them, layers point inward: `interface → applicat
 | Code | Milestone | What it reports |
 |---|---|---|
 | `PROFILE-KIND` | M15 | a module without a kind, or an unknown one |
-| `ARCH-KIND` | M17 | an edge the kind table forbids |
-| `ARCH-LAYER` | M17 | an outward layer edge |
-| `ARCH-API` | M17 | an import outside `client` or `events` |
-| `ARCH-REACH` | M17 | a runtime's transitive closure reaching internals of a domain it does not host |
+| `ARCH-KIND` | M17 B166 | an edge the kind table forbids (`vocabulary.kindRules`) |
+| `ARCH-LAYER` | M17 B167 | an outward layer edge, or a model depending on anything but a foundation kit; v1 names `api`, `app`, `domain`, `store` read as the canonical four |
+| `ARCH-API` | M17 B168 | an import outside a module's surface (`client` and `events`, or a v1 `api`), when either end has no kind; with kinds on both ends `ARCH-KIND` decides |
+| `ARCH-REACH` | M17 B169 | a runtime reaching, through anything it links, internals of a domain it does not host (it hosts the domains it imports beyond their surfaces) |
 | `ARCH-DATA`, `ARCH-CYCLE` | existing | as today |
 
 All of them run at every gate on the merged tree. A project writes only exceptions, each an owner-approved decision listing its edges.
@@ -68,7 +68,7 @@ With `modules` in the profile, `check` reports `PROFILE-ARCH`: an error when dat
 `init` writes rule 9: domains own their data, in the canonical words, with the owner's sentence quoted word for word and the checks that hold it.
 
 # Replaces
-- `architecture-model.md` folded into this doc (B159); `module-surface.md` and `data-ownership.md` follow with the surfaces (B168).
+- The slice-architecture doc folded into this doc (B159). [Module surfaces](module-surface.md) and [Data ownership](data-ownership.md) stay as the detail docs of `ARCH-API`, `ARCH-CYCLE` and `ARCH-DATA`: folding them in would pass the doc's cap.
 - Hand-written `architecture.boundaries` remain only as `except` lists.
 
-Bolts: [M15](../roadmap/m15.md) B151, B155; still to build: [M17](../roadmap/m17.md) B166 to B170.
+Bolts: [M15](../roadmap/m15.md) B151, B155; [M17](../roadmap/m17.md) B166 to B169; still to build: B170 to B172.
