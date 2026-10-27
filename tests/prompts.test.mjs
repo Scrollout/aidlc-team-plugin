@@ -177,8 +177,8 @@ test('U64/AC-1 the skill names the deploy steps and the typed go words, the buil
 
 test('U64/AC-1 the constitution template carries the quick-lane, back-fill and no-deploy exceptions, naming only existing codes', () => {
   const text = read('plugin/templates/bundle/constitution.md');
-  assert.match(text, /quick-lane unit gets no review/);
-  assert.match(text, /quick-lane unit has no tagged tests and gets no proof/);
+  assert.match(text, /quick-lane bolt gets no review/);
+  assert.match(text, /quick-lane bolt has no tagged tests and gets no proof/);
   assert.match(text, /back-fill.*proved by one mutation per AC/);
   assert.match(text, /When the profile deploys, a release counts once its deploy check and smoke pass/);
   assert.match(text, /back-fill intent ships no code: it needs no runbook/);

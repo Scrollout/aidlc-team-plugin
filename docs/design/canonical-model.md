@@ -1,8 +1,8 @@
 ---
 type: Design
 title: Canonical model
-description: Draft - one word per concept at each scale (system, domain, code, delivery), mapped to AI-DLC's Intent, Unit and Bolt, with the rule that a word used in another sense fails a check and that an approved intent keeps the method version it was approved under.
-status: draft
+description: One word per concept at each scale (system, domain, code, delivery), mapped to AI-DLC's Intent, Unit and Bolt, with the rule that a word used in another sense fails a check and that an approved intent keeps the method version it was approved under.
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T00:40:00Z }
 ---
 

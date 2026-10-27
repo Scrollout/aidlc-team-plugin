@@ -7,7 +7,7 @@
 * [Bolt card](bolt-card.md) - The generated, read-only brief one builder works from and one reviewer checks against, for a bolt or a v1 unit.
 * [Build method from day one](method.md) - How a project gets the build method on its first init - level runs asked at init, a constitution that names the check behind each rule, and an upgrade that adds what an older project lacks.
 * [Bundle v2](bundle.md) - The project's OKF bundle as AI-DLC's context memory - one folder per closed doc type, authored and generated docs kept apart, a front-matter schema per type, typed references, decisions superseded never amended, CLI-made ids and slugs, and errors on the base.
-* [Canonical model](canonical-model.md) - Draft - one word per concept at each scale (system, domain, code, delivery), mapped to AI-DLC's Intent, Unit and Bolt, with the rule that a word used in another sense fails a check and that an approved intent keeps the method version it was approved under.
+* [Canonical model](canonical-model.md) - One word per concept at each scale (system, domain, code, delivery), mapped to AI-DLC's Intent, Unit and Bolt, with the rule that a word used in another sense fails a check and that an approved intent keeps the method version it was approved under.
 * [CI check](ci-check.md) - What aidlc check --ci adds in CI - the base history since adoption, architecture on the checked-out tree, and a GitHub Actions job summary the owner reads on the run page.
 * [CI on the base](base-ci.md) - With profile ci.wait, no builder starts on a base whose CI is unknown or red - push first, wait for the base's GitHub Actions runs, and on a red base only a fix bolt builds.
 * [CLI](cli.md) - The aidlc commands, their exit codes and the terse output format.

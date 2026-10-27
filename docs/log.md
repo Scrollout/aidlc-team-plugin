@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M20 B193: the old words are gone from what the plugin ships and from its design docs: bolt for a work item, increment for a delivery step, domain or runtime for a component; a test holds the messages, fixes, usage, skill, agents and templates to it. Release 0.148.0.
 - **Update** M20 B192: every check code is documented exactly once, on a generated page per code table (`design/diagrams/codes-bundle`, `codes-plan`, `codes-gate`, `codes-hooks`), and a test fails on a code a design doc names that does not exist (`DOC-CODE`); the docs' stray names (`DOC-STATUS`, `PLAN-SLICE`, `REQ-DELIVERED`) are gone. Release 0.147.0.
 - **Update** M20 B191: diagrams drawn from the data the CLI enforces, one page each under `design/diagrams/` (words by scale, workflow, bolt and intent states, kinds and layers, bundle types, naming grammar, gate checks), written by `tests/diagrams.mjs` and held to their data by a golden test; the hand-drawn state and workflow diagrams are gone, and bolt and intent transitions are data in `cli.json`. Release 0.146.0.
 - **Update** M20 B207: a test gives each of the CLI's files a kind and runs `ARCH-KIND`, `ARCH-LAYER` and `ARCH-CYCLE` on its file graph; they pass. It found the host's hook rules depending on domains, so they move from `adapters` to `domains/host`. The kind table's data now lets an extension use a domain's published surface, as the architecture model always said. The library layout is built ([Library and extensions](design/library.md)). Release 0.145.0.
