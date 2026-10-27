@@ -1,0 +1,4 @@
+events:
+  - Example.Resources.ResourceCreated
+  - Example.Resources.ResourceUpdated
+  - Example.Resources.ResourceDeleted

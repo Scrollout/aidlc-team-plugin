@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { readdirSync } from 'node:fs';
+import { cpSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { CHILD_ENV, commit, I1, makeRepo, pinnedRepo, read, run, write } from './state-repo.mjs';
 
@@ -184,4 +184,24 @@ test('B232/AC-2 the model\'s contract applies only where a project chose it (dec
   const found = (profile) => run(makeRepo({ ...I1, 'api/things/openapi.yaml': spec }, profile), ['check']).out.split('\n').filter((l) => /CONTRACT-NAME/.test(l)).map((l) => l.replace(/ → .*$/, ''));
   assert.deepEqual(found(V2), [], 'the generic grammar asks no systemData');
   assert.deepEqual(found({ ...V2, model: { name: 'control-plane' } }), ["api/things/openapi.yaml:1 CONTRACT-NAME components.schemas.Thing: a resource without systemData, which its model's contract asks"]);
+});
+
+test('B233/AC-1 the Go pack\'s control-plane reference meets the model\'s rules and contract, and covers its walking skeleton', () => {
+  const dir = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n' }, {});
+  cpSync(join(import.meta.dirname, '..', 'plugin/packs/go/reference'), dir, { recursive: true });
+  const profile = {
+    ...V2, system: { core: ['internal/**', 'cmd/**'] },
+    model: { name: 'control-plane', wiring: { file: 'cmd/frontdoor/frontdoor.go', pattern: 'stages\\.Stage(\\w+)' }, operations: { status: 'Operation-Status', result: 'Location', retry: 'Retry-After' }, events: { files: ['api/events/*.yaml'] } },
+    modules: [
+      { id: 'frontdoor', kind: 'runtime', layer: 'frontdoor', paths: ['cmd/frontdoor/**'] },
+      ...['authenticate', 'authorize', 'policy', 'lock', 'throttle'].map((s) => ({ id: s, kind: 'pipeline', layer: s, paths: [`internal/pipeline/stages/**`] })),
+      { id: 'resources', kind: 'domain', layer: 'resources', paths: ['internal/domains/resources/**'] },
+      { id: 'operations', kind: 'domain', layer: 'operations', paths: ['internal/domains/operations/**'] },
+      { id: 'things', kind: 'extension', paths: ['api/things/**'], slice: { namespace: 'Example.Things', types: ['things', 'widgets'], longRunning: ['widgets'] } },
+    ],
+  };
+  write(dir, { '.aidlc/profile.json': profile });
+  const lines = run(dir, ['check']).out.split('\n').filter((l) => /PIPELINE-ORDER|PROVIDER-CONTRACT|LONG-RUNNING|EVENT-COVERAGE|CONTRACT-NAME/.test(l));
+  assert.deepEqual(lines, [], 'the reference meets the stage order, slice contract, long-running shapes, events and the model\'s contract');
+  assert.match(run(dir, ['models', 'gaps']).out, /^model control-plane: 8 of 10 items played by modules[\s\S]*missing, for the brownfield intent's # Increments:\n- I-<n>\.1 deployments \(domain\)[^\n]*\n- I-<n>\.2 activity \(domain\)/m, 'the walking skeleton: no deployments or activity yet');
 });

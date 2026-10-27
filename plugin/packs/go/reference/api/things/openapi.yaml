@@ -1,0 +1,39 @@
+openapi: 3.1.0
+info: { title: Things, version: 2026-10-01 }
+paths:
+  /scopes/{scopeName}/providers/Example.Things/things/{thingName}:
+    put:
+      operationId: Things_CreateOrUpdate
+      x-events: [Example.Resources.ResourceCreated, Example.Resources.ResourceUpdated]
+      responses:
+        "200": { description: unchanged or changed }
+        "201": { description: created }
+    delete:
+      operationId: Things_Delete
+      x-events: [Example.Resources.ResourceDeleted]
+      responses:
+        "200": { description: deleted }
+        "204": { description: absent }
+  /scopes/{scopeName}/providers/Example.Things/widgets/{widgetName}:
+    put:
+      operationId: Widgets_CreateOrUpdate
+      x-long-running: true
+      x-events: [Example.Resources.ResourceCreated, Example.Resources.ResourceUpdated]
+      responses:
+        "202":
+          description: accepted
+          headers:
+            Location: { schema: { type: string } }
+            Retry-After: { schema: { type: integer } }
+    delete:
+      operationId: Widgets_Delete
+      x-events: [Example.Resources.ResourceDeleted]
+      responses:
+        "200": { description: deleted }
+        "204": { description: absent }
+components:
+  schemas:
+    Thing:
+      properties: { id: { type: string }, name: { type: string }, type: { type: string }, systemData: { type: object }, properties: { type: object } }
+    ThingList:
+      properties: { value: { type: array }, nextLink: { type: string } }
