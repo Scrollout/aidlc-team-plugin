@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.162.0] - 2026-10-27
+### Added
+- Method 9: an intent is reviewed before the owner approves it. `next` asks for the review, `aidlc review I-<n>` prints the reviewer's brief (the request, the intent and its requirements, and what to check), and `aidlc review record I-<n> -` with focus `intent` keeps the hash of the docs it read. The approval refuses without a review of the docs as they are now (`APPROVE-REVIEW`); the findings are listed for the owner at the approval and block nothing.
+
 ## [0.161.0] - 2026-10-27
 ### Added
 - Method 8: a request whose role words name two or more kinds of user needs a persona each under `# Personas`, unless the intent says `onePersona: "<why>"` (`ELAB-PERSONA`); each persona has a story `As a <persona>, I want…, so that…` citing one of the intent's requirements (`ELAB-STORY`); persona lines need a source. Both block approval.
@@ -203,7 +207,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.161.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.162.0...HEAD
+[0.162.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.161.0...v0.162.0
 [0.161.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.160.0...v0.161.0
 [0.160.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.159.0...v0.160.0
 [0.159.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.158.0...v0.159.0

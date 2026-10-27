@@ -7,8 +7,8 @@ import { git, gitLines, tryGit } from '../foundation/git.mjs';
 import { finding as codeFinding, msg } from '../foundation/text.mjs';
 import { loadProfile, withDefaults } from '../foundation/profile.mjs';
 import { hashDoc, parseDoc, sizeCap } from './bundle.mjs';
-import { acsOf, computeLane, lintPlan, readPlan, reqId as reqIdOf, withIntents } from './plan.mjs';
-import { aidlcDir, mergedUnits, runtimeFile, writeJson } from '../foundation/store.mjs';
+import { acsOf, computeLane, inForce, lintPlan, readPlan, reqId as reqIdOf, withIntents } from './plan.mjs';
+import { aidlcDir, mergedUnits, runtimeFile, sha256, writeJson } from '../foundation/store.mjs';
 
 
 const S = config.state;
@@ -21,6 +21,16 @@ export function approval(doc) {
   const human = events(doc.fm).some((e) => S.approvers.some((a) => String(e.by ?? '').startsWith(a)));
   if (!human) return 'draft';
   return doc.fm.verified_hash === hashDoc(doc) ? 'approved' : 'stale';
+}
+
+// The docs an intent review reads, as one hash: the intent and the requirements it cites (docs/design/intake.md#review-before-approval).
+export function reviewedHash(intent, requirements) {
+  return sha256([intent, ...requirements.filter((r) => intent.requirements.includes(r.id))].map((d) => hashDoc(d.doc)).join('\n'));
+}
+// A v2 intent judged by method 9 whose current docs no intent review has read.
+export function reviewDue(cwd, profile, plan, intent) {
+  if (!profile.system || !inForce(intent, 'approveReview')) return false;
+  return readJson(runtimeFile(cwd, 'intentReview', intent.id))?.hash !== reviewedHash(intent, plan.requirements);
 }
 
 // Approval classes the owner delegated to the lead; only the untracked personal layer counts (decision 0008).
@@ -146,6 +156,8 @@ export const commands = {
     if (doors.length > 1) throw new UsageError(msg('approveBulk', { docs: doors.join(', ') }));
     for (const { name, file: f, doc: d } of named) {
       const intents = d.fm?.type === S.intentType ? [d.fm.id ?? basename(f).match(/^(I-\d+)/)?.[1]] : d.fm?.oneWayDoor === true ? readPlan(bundle).intents.filter((i) => i.doc.lines.some((l) => l.includes(basename(f)))).map((i) => i.id) : [];
+      const plan = d.fm?.type === S.intentType ? readPlan(bundle) : null, own = plan?.intents.find((i) => i.file === f);
+      if (own && approval(d) === 'draft' && reviewDue(cwd, profile, plan, own)) throw new UsageError(msg('approveReview', { doc: name, intent: own.id }));
       for (const intent of intents.filter(Boolean)) {
         const open = (readJson(runtimeFile(cwd, 'design', intent))?.findings ?? []).filter((x) => x.confidence === S.confirmed && (!x.disposition || lapsed(x.until)));
         if (open.length) throw new UsageError(msg('approveOpen', { doc: name, intent, findings: open.map((x) => x.id).join(', ') }));

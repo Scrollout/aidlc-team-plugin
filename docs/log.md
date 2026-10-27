@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M22 B218: method 9, an advisory review before approval ([Intake](design/intake.md#review-before-approval)): `next` asks for it, `aidlc review I-<n>` prints the brief, the record keeps the reviewed docs' hash, and the approval refuses a change since (`APPROVE-REVIEW`); findings are advice for the owner. Release 0.162.0.
 - **Update** M22 B217: method 8, personas and stories ([Elaboration checks](design/elaboration.md#personas-and-stories)): the request's role words name the kinds of user, each gets a persona unless the intent says why one (`ELAB-PERSONA`), and each persona a story citing a requirement (`ELAB-STORY`). Release 0.161.0.
 - **Update** M22 B216: method 7, corners and answers ([Elaboration checks](design/elaboration.md#corners-and-answers), split from Intake): every surface of the corner checklist settled (`ELAB-CORNER`), vague answers followed up (`ELAB-VAGUE`), "not decided" kept open, and a read-back the owner confirms as the last question (`ELAB-OPEN`). Release 0.160.0.
 - **Update** the [Overview](design/overview.md#repo-layout) says who does the work and where each lives: the lead's one skill, the three subagents, and the role personas under `plugin/cli/personas/` (the path M22 and Intake had wrong).

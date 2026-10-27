@@ -38,7 +38,11 @@ The lead elaborates in a role, with its knowledge (`plugin/cli/personas/`, so a 
 Sources, coverage, corners and answers: [Elaboration checks](elaboration.md).
 
 # Review before approval
-`next` names an advisory review of the intent (`review I-<n>`, focus `intent`: testable requirements, ACs a tester could write tests from, scope boundaries, corners). Approval refuses without a recorded review for the docs' current hash (`APPROVE-REVIEW`). Findings stay advisory: the owner disposes of the confirmed ones, as for the design review.
+Method 9, for intents in a v2 project:
+- **The review:** before it offers the approval, `next` asks for an advisory review of the intent. `aidlc review I-<n>` prints the reviewer's brief: the request, the intent and its requirements, and what to check (testable requirements, ACs a tester could write tests from, scope, corners, contradictions, sources that do not say what is claimed).
+- **The record:** the reviewer pipes its findings to `aidlc review record I-<n> -` with focus `intent`. The record keeps the hash of the intent and its requirements as they were reviewed.
+- **The approval:** it refuses when no review matches the docs as they are now (`APPROVE-REVIEW`): hard on the review having happened.
+- **The findings:** they stay advice. `next` lists them for the owner to weigh at the approval, and they block nothing: soft on the verdict.
 
 # Agents get exactly their brief
 - A hook renders the card or research brief from the CLI as the subagent's prompt, bound to the card's hash.

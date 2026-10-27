@@ -131,8 +131,8 @@
     },
     {
       "name": "review",
-      "usage": "review record <bolt> <file|->",
-      "does": "store a reviewer verdict keyed by diff hash"
+      "usage": "review I-<n> | review record <bolt|intent> <file|->",
+      "does": "print an intent reviewer's brief, or store a reviewer verdict keyed by diff hash or by the reviewed docs' hash"
     },
     {
       "name": "report",
@@ -348,6 +348,8 @@
     "nextNoIntent": "keep the owner's request word for word with aidlc intake \"<their words>\", then elaborate an intent with the owner in {{dir}}/I-1-<slug>.md that records its request, pathway and lane, then ask for approval",
     "nextOpenDraft": "finish elaborating {{doc}} with the owner: {{points}} still open in {{file}}; then ask for approval",
     "nextOpenIntent": "finish elaborating {{doc}} with the owner: {{points}} still open in {{file}}; meanwhile draft the decisions it needs from .aidlc/templates/docs/decision.md, linked from it, so the owner sees the how with the what; then ask for approval",
+    "nextReviewIntent": "start a reviewer on the intent before the owner approves it: its brief is aidlc review {{intent}}, and it records with aidlc review record {{intent}} -",
+    "nextApproveReviewed": "ask the owner to approve {{intent}}, with the intent review's findings for them to weigh ({{findings}}): aidlc approve {{intent}} (the owner confirms the prompt or types: approve {{intent}})",
     "nextApproveIntent": "ask the owner to approve {{intent}}: aidlc approve {{intent}} (the owner confirms the prompt or types: approve {{intent}})",
     "nextFinishDecision": "finish {{doc}}, which {{intent}} links, with the owner before its bolts: {{points}}",
     "nextApproveDecisions": "ask the owner to approve the decisions {{intent}} links before its bolts: aidlc approve {{docs}} (the owner confirms the prompt or types: approve {{docs}})",
@@ -425,7 +427,9 @@
     "untaggedClaim": "{{tag}} has no tagged test on the branch",
     "untaggedScenario": "the merge gate refuses the bolt until a test carries the tag",
     "recordedEscalate": "recorded {{what}} for {{unit}}: fix round {{round}} in focus {{focus}} would pass the limit of {{limit}} since the owner's last approval, so the owner decides\n",
-    "reviewUsage": "usage: review record <bolt> <file|->",
+    "reviewUsage": "usage: review I-<n> (an intent reviewer's brief), or review record <bolt|intent> <file|->",
+    "reviewNoIntent": "no intent {{intent}} in the plan",
+    "recordedIntentReview": "recorded the intent review of {{intent}}: {{count}} findings, advice for the owner at the approval\n",
     "cardFixes": "## Findings to fix\n{{list}}",
     "cardAnswered": "## Findings the owner answered by re-approving\nThe owner kept or changed the spec after these escalated; report each again only if it still holds against the spec as it is now.\n{{list}}",
     "cardFinding": "- {{focus}} {{confidence}} {{path}}:{{line}}: {{claim}} ({{scenario}})\n",
@@ -566,6 +570,7 @@
     "factWrote": "wrote {{path}}: cite it as {{id}} in the decisions it settles\n",
     "factDoc": "---\ntype: Fact\ntitle: {{title}}\ndescription: {{description}}\ncommand: {{command}}\nenvironment: {{environment}}\ndigest: {{digest}}\nat: {{at}}\ngenerated: { by: {{producer}}, at: {{at}} }\n---\n\n# Output\n```\n{{output}}\n```\n\n# Settles\n<the decisions or assumptions this fact confirms or refutes>\n",
     "approveBulk": "APPROVE-BULK: {{docs}} are one-way doors; approve each one on its own, after its options, findings and facts",
+    "approveReview": "APPROVE-REVIEW: {{doc}} has no intent review of its docs as they are now: start a reviewer on aidlc review {{intent}}, then ask again",
     "approveOpen": "APPROVE-OPEN: {{doc}} waits on the design review of {{intent}}: {{findings}} still open; the owner disposes of each: aidlc dispose {{intent}} F-<k> fixed|accepted \"<reason>\"",
     "recordedDesign": "recorded the design review of {{intent}}: {{count}} findings, {{confirmed}} confirmed\n",
     "disposeUsage": "usage: aidlc dispose <I-n|B-n> F-<k> fixed|accepted \"<reason>\" [--until <date>]",
@@ -973,6 +978,9 @@
     "reports": "reports",
     "reviews": "reviews",
     "design": "design",
+    "intentReview": "intent-reviews",
+    "intentFocus": "intent",
+    "intentReviewTemplate": "intent-review.md",
     "cards": "cards",
     "heartbeats": "heartbeats",
     "heartbeatMs": 720000,
@@ -1664,9 +1672,10 @@
     "steps": { "questions": "every question answered by an option", "domains": "a domain doc for each of its domains", "facts": "a platform fact for each decision that affects the platform", "map": "the codebase map written", "kinds": "a kind for every module" }
   },
   "method": {
-    "version": 8,
-    "since": { "planIncrementId": 2, "pathwaySkip": 3, "boltBind": 4, "acGherkin": 5, "claimSource": 6, "elabVague": 7, "elabCorner": 7, "elabPersona": 8 },
+    "version": 9,
+    "since": { "planIncrementId": 2, "pathwaySkip": 3, "boltBind": 4, "acGherkin": 5, "claimSource": 6, "elabVague": 7, "elabCorner": 7, "elabPersona": 8, "approveReview": 9 },
     "changes": {
+      "9": "an intent is reviewed before the owner approves it, and the approval refuses one whose docs changed since the review (docs: Intake)",
       "8": "a request naming two or more kinds of user gets a persona for each, and each persona a story citing the intent's requirements (docs: Elaboration checks)",
       "7": "intents settle every surface of the corner checklist, follow up vague answers, and end with a read-back the owner confirms (docs: Elaboration checks)",
       "6": "intents name the owner's requests, every goal line, story and requirement statement cites its source, and every request sentence is cited (docs: Intake)",

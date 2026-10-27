@@ -10,9 +10,9 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 | Command | Does | Run by |
 |---|---|---|
 | `init [--adopt] [--name n] [--base b] [--bundle dir] [--run level=command]… [--overwrite path]… [--system-code c] [--org o] [--zone z]` | writes a v2 profile, templates and the pinned CLI; `--adopt` keeps a bundle ([Profile and templates](profile.md)) | owner via the skill |
-| `upgrade [--downgrade] [--dirty]` | re-vendors the CLI from the installed plugin's release and adds missing templates; refuses an older release or uncommitted changes unless told; says which release it copied | owner (prompt or `!`) |
-| `index [bundle]` | regenerates every `index.md` in the bundle like the OKF reference implementation | docs hook, merge, anyone |
-| `check [--ci] [path…]` | OKF validation, plan lint, profile lint; `--ci` adds the base history and architecture checks. A directory is checked as a bundle, or within the profile's bundle when it lies below its root; a file reports only its own findings | hooks, CI, anyone |
+| `upgrade [--downgrade] [--dirty]` | re-vendors the CLI from the installed plugin and adds missing templates; refuses an older release or uncommitted changes unless told; names the release | owner (prompt or `!`) |
+| `index [bundle]` | regenerates every `index.md` in the bundle, as OKF's reference does | docs hook, merge, anyone |
+| `check [--ci] [path…]` | OKF validation, plan lint, profile lint; `--ci` adds the base history and architecture checks. A directory is checked as a bundle (or within the profile's bundle below its root), a file for its own findings | hooks, CI, anyone |
 | `status` | the state table | SessionStart hook, anyone |
 | `next` | the single next action | lead |
 | `lane <bolt>\|--diff <range>` | the computed lane and why | lead, gate |
@@ -20,10 +20,10 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 | `start <bolt>` | in a builder's worktree: names the branch `bolt/B-<n>`, checks the base matches the card, and merges the card's base into an existing branch | builder |
 | `approve [--auto] <doc>…` | stamps approval; a doc is a path, an ID (`B-3`, `I-1`, `R-12`) or a decision's number (`0010` or `10`) | owner (typed words, prompt or `!`); `--auto` the lead, for what the owner delegated ([0008](../decisions/0008-delegated-approvals.md)) |
 | `delegate <class>…\|off [--until <date>]` | lets the lead approve re-approvals and quick-lane bolts, or run `upgrade` ([0008](../decisions/0008-delegated-approvals.md)) | owner (prompt or `!`) |
-| `mode attended\|unattended [--stop <action>] [--report <to>]\|off` | records the owner's run mode in the personal profile: unattended or not, the `next` action to stop at (`build`, `review`, `fix`, `merge`, `release`), where to report | owner (prompt or `!`) |
+| `mode attended\|unattended [--stop <action>] [--report <to>]\|off` | records the owner's run mode in the personal profile: unattended or not, the `next` action to stop at, where to report | owner (prompt or `!`) |
 | `research <doc>` | prints the researcher's brief for the doc's held question ([0010](../decisions/0010-research-for-open-questions.md)) | lead |
 | `retro <intent>` | lists the codes that fired 3+ times, the intent's escalations, the owner's interventions and failed deploy steps, proposes at most three changes, and resets the counters ([Steering](steering.md#3-across-intents-the-retro)) | lead, owner |
-| `review record <bolt> <file\|->` | stores a reviewer verdict keyed by diff hash; `-` reads it from stdin | reviewer |
+| `review I-<n>\|record <bolt\|intent> <file\|->` | prints an intent reviewer's brief; `record` stores a verdict (by diff hash) or an intent review (by its docs' hash, [Intake](intake.md)); `-` reads stdin | lead, reviewer |
 | `report <bolt> [file]` | stores the builder's report (JSON from the file, or stdin) | builder |
 | `hold <doc> [off\|<reason>]` | records an owner hold in the plan: `hold: true` or a reason; `off` removes it. The lead also holds a doc while it parks a question, and a merged intent to park its release | lead |
 | `priority <bolt> <n>` | records `priority: <n>` in the plan, higher first | lead |
@@ -38,7 +38,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 | `fix "<title>"\|--from-issue <n> --scope <glob>… [--requirement R-<n>…] [--after <intent>]` | a fix (a bolt in a v2 project) without an intent; from an issue, titled and linked like it; `--after` links the release it fixes; prints its plan lint findings ([Everyday paths](paths.md#fixes-without-an-intent)) | lead |
 | `map` | writes the codebase map in the bundle ([Codebase map](codebase-map.md)) | lead, merge |
 | `sync` | projects intents and bolts onto GitHub issues and a Project ([Board](board.md)) | lead, merge |
-| `push` | checked base push | lead |
+| `push` | a checked base push | lead |
 | `ci wait` | waits for the pushed base's GitHub Actions runs and records green, red, pending or none ([CI on the base](base-ci.md)) | lead |
 | `merge <bolt>` | the merge gate, then `git merge --no-ff` with trailers | lead |
 | `deploy check <intent>` | runs `deploy.check` on the base and records it ([Deployment and operation](operations.md)) | lead |

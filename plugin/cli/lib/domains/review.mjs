@@ -1,15 +1,15 @@
 // Review: review rounds and focuses, the back-fill proof by mutations, builder reports, reviewer verdicts and the owner's
 // disposition of findings (docs/design/review-rounds.md, backfill.md).
-import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { bundleOf, config, QUICK, VERDICT, done, isMap, list, readJson, readStdin, UsageError, relPath } from '../foundation/data.mjs';
+import { bundleOf, CLI_DIR, config, QUICK, VERDICT, done, isMap, list, readJson, readStdin, UsageError, relPath } from '../foundation/data.mjs';
 import { addedLines, git, gitLines, tryGit } from '../foundation/git.mjs';
-import { msg } from '../foundation/text.mjs';
+import { msg, render } from '../foundation/text.mjs';
 import { loadProfile, withDefaults } from '../foundation/profile.mjs';
 import { computeLane, readPlan } from './plan.mjs';
 import { inside, overlaps } from '../foundation/glob.mjs';
 import { aidlcDir, baseOf, branchOf, bump, runtimeFile, sha256, unitPaths, writeJson } from '../foundation/store.mjs';
-import { approvedAt, beforeApproval } from './approval.mjs';
+import { approvedAt, beforeApproval, reviewedHash } from './approval.mjs';
 
 const S = config.state;
 const DATE = /^\d{4}-\d{2}-\d{2}$/; // an escape hatch's until
@@ -120,6 +120,18 @@ function parseObject(text, name) {
 
 const usage = (key) => { throw new UsageError(msg(key, {})); };
 
+// The intent reviewer's brief: the request, the intent and its requirements, and what to check.
+function intentBrief(cwd, id) {
+  const { profile } = loadProfile(cwd), bundle = bundleOf(cwd, profile), plan = readPlan(bundle), intent = plan.intents.find((i) => i.id === id);
+  if (!intent) throw new UsageError(msg('reviewNoIntent', { intent: id }));
+  const dir = join(bundle, config.okf.bundle.folders.Request ?? ''), requests = existsSync(dir) ? readdirSync(dir).filter((f) => list(intent.fm.request).some((q) => f.startsWith(`${q}-`))) : [];
+  const file = join(CLI_DIR, S.intentReviewTemplate);
+  return render(readFileSync(file, 'utf8'), {
+    intent: id, file: relPath(cwd, intent.file), requests: requests.map((f) => relPath(cwd, join(dir, f))),
+    requirements: plan.requirements.filter((r) => intent.requirements.includes(r.id)).map((r) => relPath(cwd, r.file)),
+  }, file);
+}
+
 export const commands = {
   // The owner's disposition of a finding: an intent's design review, or a bolt's latest review round.
   dispose(args, { cwd }) {
@@ -159,9 +171,18 @@ export const commands = {
 
   review(args, ctx) {
     const { cwd } = ctx, [sub, unit, file] = args;
+    if (/^I-\d+$/.test(sub ?? '')) return done(intentBrief(cwd, sub));
     if (sub !== 'record' || !unit || !file) throw new UsageError(msg('reviewUsage', {}));
     if (file !== S.stdin && !existsSync(resolve(cwd, file))) throw new UsageError(msg('noSuchPath', { name: file }));
     const data = parseObject(file === S.stdin ? readStdin(ctx) : readFileSync(resolve(cwd, file), 'utf8'), file);
+    // An intent review: advice for the owner, kept with the hash of the docs it read (docs/design/intake.md#review-before-approval).
+    if (/^I-\d+$/.test(unit) && data.focus === S.intentFocus) {
+      const plan = readPlan(bundleOf(cwd, loadProfile(cwd).profile)), intent = plan.intents.find((i) => i.id === unit);
+      if (!intent) throw new UsageError(msg('reviewNoIntent', { intent: unit }));
+      const findings = (data.findings ?? []).map((f, k) => ({ ...f, id: `F-${k + 1}` }));
+      writeJson(runtimeFile(cwd, 'intentReview', unit), { intent: unit, verdict: data.verdict, findings, hash: reviewedHash(intent, plan.requirements), at: new Date().toISOString() });
+      return done(msg('recordedIntentReview', { intent: unit, count: findings.length }));
+    }
     // An intent's design review: the architecture pass over its decision set, each finding numbered (docs/design/inception.md#approval).
     if (/^I-\d+$/.test(unit)) {
       const findings = (data.findings ?? []).map((f, k) => ({ ...f, id: `F-${k + 1}` }));

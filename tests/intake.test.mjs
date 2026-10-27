@@ -191,3 +191,29 @@ test('B217/AC-2 each persona has a story As a <persona>, I want…, so that…, 
   write(dir, { 'docs/intents/I-1-cake-orders.md': read(dir, 'docs/intents/I-1-cake-orders.md').replace('- **Staff**: bakes and marks orders [Q-1.2]', '- **Staff**: bakes and marks orders') });
   assert.deepEqual(elab(dir), ['I-1:15 CLAIM-SOURCE I-1 Personas line has no source: - **Staff**: bakes and marks orders'], 'a persona line needs a source');
 });
+
+test('B218/AC-1 a method 9 intent is reviewed before approval: next names review I-<n>, its findings are advice, and a change since the review is APPROVE-REVIEW', () => {
+  const dir = makeRepo({}, V2);
+  run(dir, ['intake', PROSE]);
+  const goal = 'Customers order cakes online [Q-1.1].\nThey pay by card [Q-1.2, Q1], in one shop [A1].';
+  commit(dir, 'plan', { 'docs/intents/I-1-cake-orders.md': cakes('request: [Q-1]\nrequirements: [R-1]\n', goal), 'docs/requirements/R-1-order-email.md': R1('When a customer orders, the bakery system shall email the baker [Q-1.4, Q-1.5].') });
+  assert.match(run(dir, ['next']).out, /^start a reviewer on the intent before the owner approves it: its brief is aidlc review I-1, and it records with aidlc review record I-1 -/);
+  assert.match(run(dir, ['approve', 'I-1']).err, /APPROVE-REVIEW: I-1 has no intent review of its docs as they are now: start a reviewer on aidlc review I-1/);
+  const brief = run(dir, ['review', 'I-1']).out;
+  assert.match(brief, /^# Intent review for I-1\n/);
+  assert.match(brief, /- The owner's request, word for word: docs\/requests\/Q-1-i-run-a-small-bakery-and-want-customers\.md\n- The intent: docs\/intents\/I-1-cake-orders\.md\n- A requirement it cites: docs\/requirements\/R-1-order-email\.md\n/);
+  assert.match(brief, /Pipe exactly this JSON to `aidlc review record I-1 -`/);
+  const verdict = { verdict: 'fix', focus: 'intent', findings: [{ path: 'docs/intents/I-1-cake-orders.md', line: 9, claim: 'no limit on cake size', scenario: 'a 40 kg cake is accepted', confidence: 'PLAUSIBLE' }] };
+  assert.match(run(dir, ['review', 'record', 'I-1', '-'], JSON.stringify(verdict)).out, /^recorded the intent review of I-1: 1 findings, advice for the owner at the approval/);
+  assert.match(run(dir, ['next']).out, /ask the owner to approve I-1 R-1, with the intent review's findings for them to weigh \(F-1 no limit on cake size\)/);
+  writeFileSync(join(dir, 'docs/requirements/R-1-order-email.md'), R1('When a customer orders, the bakery system shall email the baker at once [Q-1.4, Q-1.5].'));
+  assert.match(run(dir, ['approve', 'I-1']).err, /APPROVE-REVIEW/, 'a requirement changed since the review');
+  run(dir, ['review', 'record', 'I-1', '-'], JSON.stringify({ ...verdict, verdict: 'pass', findings: [] }));
+  commit(dir, 'reviewed');
+  const r = run(dir, ['approve', 'I-1', 'R-1']);
+  assert.equal(r.code, 0, r.err);
+  const old = makeRepo({}, V2);
+  run(old, ['intake', PROSE]);
+  commit(old, 'plan', { 'docs/intents/I-1-cake-orders.md': cakes('request: [Q-1]\nrequirements: [R-1]\nmethod: 8\n', goal), 'docs/requirements/R-1-order-email.md': R1('When a customer orders, the bakery system shall email the baker [Q-1.4, Q-1.5].') });
+  assert.match(run(old, ['next']).out, /ask the owner to approve I-1/, 'a method 8 intent keeps its rules');
+});

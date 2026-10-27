@@ -11,7 +11,7 @@ import { seam } from '../foundation/seams.mjs';
 import { computeLane, incrementLines, incrementSection, readPlan, productGlobs, testsOnly } from './plan.mjs';
 import { inside, overlaps } from '../foundation/glob.mjs';
 import { baseOf, baseRedFile, branchOf, ciFile, heartbeatAt, heartbeatFresh, hostDeniedFile, mergedUnits, runtimeFile, worktrees } from '../foundation/store.mjs';
-import { acsKept, approval, approvedAt, delegated, findDoc, ownerLines } from './approval.mjs';
+import { acsKept, approval, approvedAt, delegated, findDoc, ownerLines, reviewDue } from './approval.mjs';
 import { diffHash, keptPass, readReview, reviewFocuses, roundsOf, untagged, verdictCurrent } from './review.mjs';
 const S = config.state;
 const DATE = /^\d{4}-\d{2}-\d{2}$/; // an escape hatch's until
@@ -199,6 +199,10 @@ function gateOf(st, intent, scope) {
   const draftCited = (docs) => st.requirements.filter((r) => r.state === 'draft' && docs.some((d) => d.requirements.includes(r.id)));
   if (intent && intent.state === 'draft') {
     const docs = [intent, ...draftCited([intent])];
+    // A method 9 intent is reviewed first; its findings go to the owner as advice (docs/design/intake.md#review-before-approval).
+    if (reviewDue(st.cwd, st.profile, st, intent)) return gate('nextReviewIntent', [], { intent: intent.id }, 'act');
+    const advice = readJson(runtimeFile(st.cwd, 'intentReview', intent.id))?.findings ?? [];
+    if (advice.length) return gate('nextApproveReviewed', docs.map((d) => d.id), { intent: ids(docs), review: intent.id, findings: advice.map((f) => `${f.id} ${f.claim}`).join('; ') });
     return gate('nextApproveIntent', docs.map((d) => d.id), { intent: ids(docs) });
   }
   // The draft decisions an approved intent links come before its units: an architecture choice shapes the cut.
