@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Creation** [Lifecycle as data](design/lifecycle.md) and [Shipped layout](design/layout.md), drafts, with decision [0022](decisions/0022-one-layout-for-shipped-content.md) and the bolts B240 (the bolt and intent lifecycles as state machines in data, the next action from an ordered list, pipelines as stage lists) and B241 (each content package at the top of the plugin folder, one pinned copy, one resolver) in [M26](roadmap/m26.md).
 - **Update** Every doc states its rules and reasons in general terms ([Standard formats](design/standards.md#rationale)): principles, design docs, decisions, plans, the log and the changelog name the behaviour, the risk or the gap, with no session history, other tools, trial projects or quotes; decisions carry `decision-makers` and `date` in front matter; the run reports folder is now [Lessons](lessons/index.md), and a test (`tests/history.test.mjs`) keeps history out. Release 0.172.2.
 - **Update** M26 plans structured answers (B239): several values form one structured object, never a delimited string, and the CLI serves answers and actions as JSON and JSON-RPC 2.0.
 - **Update** M26 extended to projects, since a value fixed in a project's code is as hard to review and override as one in the plugin's: B238 puts the rule in every project's constitution, builder and reviewer, and checks it at the merge gate (`VALUE-LITERAL`).
