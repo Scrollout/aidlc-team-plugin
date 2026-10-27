@@ -21,6 +21,7 @@
 * [Design rows before code](design-rows.md) - The grid's Domain and Logical rows are checked - a full-lane bolt carries a Domain and a Logical section, a standard-lane bolt a Logical one, approved with the plan, on the card, and checked by every review.
 * [Elaboration checks](elaboration.md) - What the CLI checks while the lead elaborates an intent with the owner - every claim sourced, every request sentence covered, the corner checklist settled, vague answers followed up, and the owner's read-back confirmed.
 * [Everyday paths](paths.md) - Fixes without an intent, changes mid-flight, shared files, pushing and base health, cleanup, adopting an existing project, and removing the plugin.
+* [Extension commands](cli-extensions.md) - The aidlc commands the CLI's extensions add - the stack packs' graph and scaffold, the board's sync, operations' deploy, release, rollback and retro, intake and models - with what each does and who runs it.
 * [Grid](grid.md) - The AI-DLC rows, the plan-execute-validate loop in each cell, lanes and the doc types each row produces.
 * [Guard limits](guard-limits.md) - What the hooks do not stop, by the owner's choice of 2026-10-24 - deliberate evasion such as shell wrappers, Bash writes to state files and raw API calls - and what catches each instead.
 * [Hook checks](hook-checks.md) - What each hook checks or records - guard, scope, secrets, model, docs, heartbeat, steer, prompt, status and denied.

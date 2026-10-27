@@ -28,4 +28,5 @@ generated: { by: tests/diagrams.mjs }
 | `PROFILE-NAMING` | set naming.tokens (system: 2-6 lower-case letters or digits; org and zone: DNS labels), domains as lower-case plural nouns, vocabulary words as lower-case words, none of them banned (docs: Naming) |
 | `PROFILE-KIND` | give each module its kind (domain, pipeline, foundation, adapter, runtime, extension or delivery), surfaces from client, server and events, and system as core and extensions globs (docs: Architecture model) |
 | `PROFILE-KEY` (warning) | remove it, or use the key the profile doc names for what you meant |
+| `MODEL-FORMAT` | give the model folder a model.json with name, title, description, layers and slice; layers and domains with unique ids and kinds from the vocabulary; rules of known types; contracts between known ids; decisions as Decision docs (docs: Models) |
 | `GRAPH-SELFTEST` | make the project's architecture.graph print every import and data edge, or set it to the plugin's: node .aidlc/bin/aidlc.mjs graph (docs: Stack packs) |

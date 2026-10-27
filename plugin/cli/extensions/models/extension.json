@@ -1,0 +1,46 @@
+{
+  "name": "models",
+  "description": "Architecture models: a proven system's vertical and horizontal shape as data, shipped with the CLI or kept by a project (docs/design/models.md).",
+  "when": null,
+  "data": {
+    "okf": {
+      "codes": {
+        "MODEL-FORMAT": { "level": "error", "fix": "give the model folder a model.json with name, title, description, layers and slice; layers and domains with unique ids and kinds from the vocabulary; rules of known types; contracts between known ids; decisions as Decision docs (docs: Models)" }
+      }
+    },
+    "commands": [
+      {
+        "name": "models",
+        "usage": "models",
+        "does": "list the architecture models this project can apply: the shipped ones and its own in .aidlc/models/"
+      }
+    ],
+    "messages": {
+      "modelNoFile": "model {{model}} has no {{file}}",
+      "modelUnreadable": "model {{model}}: {{error}}",
+      "modelKey": "model {{model}} lacks {{key}}",
+      "modelName": "model {{model}} is named {{name}} inside: the folder name is its name",
+      "modelList": "model {{model}}: {{key}} is a list",
+      "modelNoLayers": "model {{model}} has no layers",
+      "modelItemId": "model {{model}}: an item of {{key}} has no id",
+      "modelItemTwice": "model {{model}}: {{id}} is named twice",
+      "modelKind": "model {{model}}: {{id}} has kind {{kind}}, not one of {{kinds}}",
+      "modelRule": "model {{model}}: rule type {{type}} is not one of {{types}}",
+      "modelContract": "model {{model}}: a contract's {{end}} is {{id}}, which is no layer, domain or the slice",
+      "modelDecision": "model {{model}}: decisions/{{file}} is not a Decision doc",
+      "modelLine": "{{name}} ({{source}}): {{title}}{{problems}}\n",
+      "modelProblems": ", {{count}} format problems: aidlc check",
+      "modelNone": "no models: the plugin ships none yet, and the project keeps its own in {{dir}}/<name>/\n"
+    },
+    "models": {
+      "dir": "models",
+      "local": ".aidlc/models",
+      "file": "model.json",
+      "decisions": "decisions",
+      "required": ["name", "title", "description", "layers", "slice"],
+      "lists": ["layers", "domains", "contracts", "rules"],
+      "sliceId": "slice",
+      "ruleTypes": ["stageOrder", "sliceContract", "longRunning", "idempotency", "data", "events"]
+    }
+  }
+}

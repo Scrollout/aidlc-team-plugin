@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M24 B228: the model format ([Models](design/models.md)): a model folder loads from the CLI's shipped models and the project's own, the project's winning; `aidlc models` lists them and `aidlc check` reports a broken one (`MODEL-FORMAT`). The extensions' commands move from CLI to their own page, [Extension commands](design/cli-extensions.md). Release 0.165.0.
 - **Update** Plan M24 Models: decision [0020](decisions/0020-architecture-models-are-data.md) (architecture models are data: reverse-engineered from a proven system, shipped or kept by a project, applied by the method, the plugin generic), the design doc [Models](design/models.md) and the roadmap [M24](roadmap/m24.md) (B228-B234). The owner's order: M24, then the M21 pilot, then M23.
 - **Update** M22 B220: method 10, the brownfield baseline ([Intake](design/intake.md#brownfield)): a brownfield intent lists the business transactions the code serves and cites a passing baseline of each test level, with its debt. M22 Intake is built. Release 0.164.0.
 - **Update** M22 B219: agents get exactly their brief ([Intake](design/intake.md#agents-get-exactly-their-brief)): the `Agent` hook renders the card or brief and sets the role's effort (`efforts`), review findings keep their ids across rounds, and a subagent runs only its role's commands (`GUARD-SUBAGENT`). Release 0.163.0.

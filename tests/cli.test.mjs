@@ -13,7 +13,7 @@ const readJson = (p) => JSON.parse(readFileSync(join(ROOT, p), 'utf8'));
 
 // Command names from the first column of the table in docs/design/cli.md.
 function documentedCommands() {
-  const md = readFileSync(join(ROOT, 'docs/design/cli.md'), 'utf8');
+  const md = ['cli.md', 'cli-extensions.md'].map((f) => readFileSync(join(ROOT, 'docs/design', f), 'utf8')).join('\n'); // the core's commands and the extensions'
   const names = [];
   for (const line of md.split('\n')) {
     const cell = line.match(/^\|\s*(`[^|]*)\|/);

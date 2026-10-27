@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.165.0] - 2026-10-27
+### Added
+- Architecture models (decision 0020), in the new `models` extension: a model folder (`model.json`, `knowledge/`, `decisions/`) loads from the CLI's shipped `models/` and the project's `.aidlc/models/`, the project's own winning; `aidlc models` lists them, and `aidlc check` reports a model that breaks the format (`MODEL-FORMAT`).
+
 ## [0.164.0] - 2026-10-27
 ### Added
 - Method 10: the brownfield pathway requires `business` (`# Business transactions`, each line naming a module or domain the profile or bundle knows) and `baseline` (`baseline: [F-<n>]` citing a passing platform fact for each test level's `run`, and `# Debt`); else `PATHWAY-SKIP`. M22 Intake is built.
@@ -221,7 +225,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.164.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.165.0...HEAD
+[0.165.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.164.0...v0.165.0
 [0.164.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.163.0...v0.164.0
 [0.163.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.162.0...v0.163.0
 [0.162.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.161.0...v0.162.0

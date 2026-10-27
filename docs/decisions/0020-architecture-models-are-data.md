@@ -30,7 +30,7 @@ Chosen option: "Models as data", because a model is then reviewable like any doc
 
 The owner's answers, 2026-10-27:
 * **Who builds models:** both. The plugin ships a pathway for modelling a reference, and we use it for the first model.
-* **Where they live:** shipped under `plugin/models/`, and a project or organisation may add or override one in `.aidlc/models/`.
+* **Where they live:** shipped under `plugin/cli/models/` (so a project's pinned CLI carries them), and a project or organisation may add or override one in `.aidlc/models/`.
 * **The first project:** the control-plane model is first applied to an existing control-plane project, as the M21 pilot, with the owner's yes on each step.
 
 ### Consequences
