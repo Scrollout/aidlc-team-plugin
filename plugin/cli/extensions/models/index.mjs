@@ -3,7 +3,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { bundleOf, CLI_DIR, config, done, gitLines, globRegex, isMap, list, loadProfile, msg, parseDoc, parseYaml, plug, readJson, relPath, sectionOf, UsageError } from '../../lib/index.mjs';
+import { bundleOf, CLI_DIR, config, docSlug, done, gitLines, globRegex, isMap, list, loadProfile, msg, parseDoc, parseYaml, PLUGIN_DIR, plug, readJson, relPath, sectionOf, templateFile, UsageError, writeJson } from '../../lib/index.mjs';
 
 const M = config.models, F = config.okf.bundle.folders;
 const sha16 = (text) => createHash('sha256').update(text).digest('hex').slice(0, 16);
@@ -187,9 +187,70 @@ plug('planRules', ({ bundle, units, merged, add, base, profile }) => {
   }
 });
 
+// ---- Applying a model (docs/design/models.md#applying-a-model) ----
+
+// The models whose fit words a request's sentences hold, with those sentences, for the intake proposal.
+plug('modelFit', (root, sentences) => modelsOf(root).filter((m) => m.data && !m.problems.length).map((m) => ({ name: m.name, title: m.data.title,
+  ids: sentences.filter((s) => list(m.data.fit?.words).some((w) => new RegExp(`\\b${w.replace(/ /g, '\\s+')}\\b`, 'i').test(s.text))).map((s) => s.id) })).filter((m) => m.ids.length));
+
+// The increments a model suggests: the walking skeleton through every layer, then each shared domain, then a first slice.
+const increments = (d) => [msg('incSkeleton', { layers: d.layers.map((l) => l.id).join(' → ') }), ...(d.domains ?? []).map((x) => msg('incDomain', { id: x.id, role: x.role ?? '' })), msg('incSlice', { declares: list(d.slice?.declares).join(', ') || '-' })]
+  .map((text, k) => msg('incLine', { k: k + 1, text })).join('');
+
+function apply(cwd, name) {
+  const { profile } = loadProfile(cwd), bundle = bundleOf(cwd, profile), m = name && modelsOf(cwd).find((x) => x.name === name);
+  if (!m?.data || m.problems.length) throw new UsageError(msg(name ? 'modelNotApplicable' : 'modelsUsage', { name: name ?? '' }));
+  const out = [];
+  // The choice, in the project's profile.
+  const file = join(cwd, PROFILE), own = readJson(file) ?? {};
+  if (own.model?.name !== name) { writeJson(file, { ...own, model: { ...(isMap(own.model) ? own.model : {}), name } }); out.push(msg('applyChosen', { name, file: PROFILE })); }
+  // The system doc, when the bundle has none: the template with the model's building blocks.
+  const sysDir = join(bundle, F.System), system = existsSync(sysDir) && readdirSync(sysDir).some((f) => f.endsWith('.md') && f !== config.okf.index);
+  if (!system) {
+    const tpl = [templateFile(cwd, M.systemTemplate), join(PLUGIN_DIR, 'templates', M.systemTemplate)].find(existsSync);
+    const blocks = [...m.data.layers, ...(m.data.domains ?? [])].map((x) => `- **${x.id}** (${x.kind ?? '-'}): ${x.role ?? ''}`.trimEnd()).join('\n');
+    const text = readFileSync(tpl, 'utf8').replace(/(# Building Block View\n)<[^>\n]*>/, `$1${blocks}`);
+    const at = join(sysDir, `${String(profile.naming?.tokens?.system ?? M.systemName)}.md`);
+    mkdirSync(sysDir, { recursive: true });
+    writeFileSync(at, text);
+    out.push(msg('applySystem', { path: relPath(cwd, at) }));
+  }
+  // The model's decisions, as proposals numbered on, each once.
+  const decDir = join(bundle, config.grid.decisions), have = existsSync(decDir) ? readdirSync(decDir).filter((f) => /^\d{4}-/.test(f)) : [];
+  const taken = new Set(have.map((f) => parseDoc(readFileSync(join(decDir, f), 'utf8')).fm).filter((fm) => fm?.model === name).map((fm) => String(fm.title).replace(/^\d{4}\s+/, '')));
+  let n = Math.max(0, ...have.map((f) => Number(f.slice(0, 4))));
+  const src = join(m.dir, M.decisions);
+  for (const f of existsSync(src) ? readdirSync(src).filter((x) => x.endsWith('.md')).sort() : []) {
+    const text = readFileSync(join(src, f), 'utf8'), title = String(parseDoc(text).fm?.title ?? f).replace(/^\d{4}\s+/, '');
+    if (taken.has(title)) continue;
+    const num = String(++n).padStart(4, '0'), at = join(decDir, `${num}-${docSlug(title)}.md`);
+    mkdirSync(decDir, { recursive: true });
+    writeFileSync(at, text.replace(/^title: .*$/m, `title: ${num} ${title}\nmodel: ${name}`));
+    out.push(msg('applyDecision', { path: relPath(cwd, at) }));
+  }
+  return done(out.join('') + msg('applyIncrements', { name }) + increments(m.data));
+}
+
+// What a project's modules miss of its chosen model: each item played (modules[].layer), missing, or of another kind.
+function gaps(cwd) {
+  const { profile } = loadProfile(cwd), m = chosen(cwd, profile);
+  if (!m) throw new UsageError(msg('gapsNoModel', { file: PROFILE }));
+  const mods = profile.modules ?? [], lines = [], missing = [];
+  for (const x of [...m.data.layers, ...(m.data.domains ?? [])]) {
+    const by = mods.filter((mod) => mod.layer === x.id);
+    if (!by.length) missing.push(x);
+    for (const mod of by) lines.push(msg(mod.kind === x.kind ? 'gapPlayed' : 'gapKind', { item: x.id, module: mod.id ?? mod.name, kind: mod.kind ?? '-', want: x.kind ?? '-' }));
+  }
+  if (!mods.some((mod) => mod.kind === (m.data.slice?.kind ?? 'extension'))) missing.push({ id: M.sliceId, kind: m.data.slice?.kind ?? 'extension', role: list(m.data.slice?.declares).join(', ') });
+  const plan = missing.map((x, k) => msg('incLine', { k: k + 1, text: msg('incGap', { id: x.id, kind: x.kind ?? '-', role: x.role ?? '' }) })).join('');
+  return done(msg('gapsHead', { name: m.name, played: lines.length, total: m.data.layers.length + (m.data.domains ?? []).length }) + lines.join('') + (missing.length ? msg('gapsMissing', {}) + plan : msg('gapsNone', {})));
+}
+
 export const commands = {
   models(args, { cwd }) {
     if (args[0] === 'doc') return modelDoc(cwd, args[1]);
+    if (args[0] === 'apply') return apply(cwd, args[1]);
+    if (args[0] === 'gaps') return gaps(cwd);
     if (args.length) throw new UsageError(msg('modelsUsage', {}));
     const all = modelsOf(cwd);
     if (!all.length) return done(msg('modelNone', { dir: M.local }));

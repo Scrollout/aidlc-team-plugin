@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.168.0] - 2026-10-27
+### Added
+- Applying a model: intake lists the models whose fit words the request holds; `aidlc models apply <name>` records the choice in the profile, writes the system doc from the template with the model's building blocks when there is none, copies the model's decisions into the bundle as proposals once, and prints increments along its layers; `aidlc models gaps` matches the modules (`modules[].layer`) to the chosen model's items and kinds and prints the missing ones as increments.
+- The `modelFit` seam, from the models extension to intake.
+
 ## [0.167.0] - 2026-10-27
 ### Added
 - Model rule types: a project chooses its model in the profile (`model.name`), and only the rules that model lists run, with the model's parameters and the profile's project names: stage order (`PIPELINE-ORDER`, the stages a pattern finds in the wiring file), slice contract (`PROVIDER-CONTRACT`), long-running operations (`LONG-RUNNING`, an OpenAPI operation's answer shapes and headers, and a delete's no-content answer), idempotency (`IDEMPOTENCY-AC`), data (`DATA-PARTITION`, each owned table's partition and class) and events (`EVENT-COVERAGE`).
@@ -234,7 +239,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.167.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.168.0...HEAD
+[0.168.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.167.0...v0.168.0
 [0.167.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.166.0...v0.167.0
 [0.166.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.165.0...v0.166.0
 [0.165.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.164.0...v0.165.0

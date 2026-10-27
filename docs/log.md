@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M24 B231: applying a model ([Models](design/models.md#applying-a-model)): intake lists the models that fit, `aidlc models apply` takes one on (profile, system doc, proposed decisions, increments) and `aidlc models gaps` lists what a brownfield project's modules miss of it. Release 0.168.0.
 - **Update** M24 B230: rule types ([Models](design/models.md#rule-types)): a project's chosen model runs only its listed rules (stage order, slice contract, long-running operations, idempotency, data, events), with the model's parameters and the profile's project names. Release 0.167.0.
 - **Update** M24 B229: the modelling pathway ([Models](design/models.md#modelling-a-reference)): a `model` pathway intent files its research digests and a current Model doc (`aidlc models doc`), which the owner approves, and every layer, domain and rule of the model cites a source of that research (`MODEL-SOURCE`). Release 0.166.0.
 - **Update** M24 B228: the model format ([Models](design/models.md)): a model folder loads from the CLI's shipped models and the project's own, the project's winning; `aidlc models` lists them and `aidlc check` reports a broken one (`MODEL-FORMAT`). The extensions' commands move from CLI to their own page, [Extension commands](design/cli-extensions.md). Release 0.165.0.

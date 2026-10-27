@@ -45,8 +45,14 @@ The `model` pathway, for an intent that names its `model:` and its `research:` d
 Shipped models carry no sources: a plugin release vouches for them.
 
 # Applying a model
-- **Greenfield:** intake proposes the models whose fit matches the request. Choosing one writes the system doc and the proposed decisions, and cuts the increments along its layers and slices.
-- **Brownfield:** the codebase map's modules are matched to the model's layers and kinds; the gaps become the intent's increments.
+- **Greenfield:** intake lists the models whose `fit.words` appear in the request, with their sentences. Once the owner picks one, `aidlc models apply <name>`:
+  - records it in the profile (`model.name`);
+  - writes the system doc from the template, its layers and domains under `# Building Block View`, when the bundle has none;
+  - copies the model's decisions into `decisions/` as proposals, numbered on, for the owner to approve one at a time;
+  - prints the increments along its layers, the walking skeleton through every layer first.
+
+  Applying again copies nothing twice.
+- **Brownfield:** each module names the model item it plays (`modules[].layer`, set in the `kinds` step). `aidlc models gaps` lists the items played, those missing and those played by a module of another kind; the missing ones are printed as the intent's increments.
 
 # Rule types
 A project chooses its model in the profile: `model: { "name": "<model>", … }`. Only the rules that model lists run. Each rule type takes its parameters from the model, and the names only the project knows from the profile's `model`, so no vendor's names live in the plugin.

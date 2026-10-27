@@ -27,6 +27,9 @@ function riskWords(sentences) {
   return K.riskWords.map((r) => ({ ...r, ids: sentences.filter((s) => r.words.some((w) => new RegExp(`\\b${w.replace(/ /g, '\\s+')}\\b`, 'i').test(s.text))).map((s) => s.id) })).filter((r) => r.ids.length);
 }
 
+// The architecture models whose fit words the request holds (docs/design/models.md#applying-a-model).
+const fitsOf = (cwd, profile, sentences) => seam('modelFit', profile).flatMap((fit) => fit(git(cwd, 'rev-parse', '--show-toplevel'), sentences));
+
 // What the CLI reads from the project itself: the pathway, the stack, and the verification band.
 function measure(cwd, profile, bundle) {
   const top = git(cwd, 'rev-parse', '--show-toplevel'), docs = relPath(top, bundle);
@@ -50,7 +53,7 @@ function propose(m, sentences, lead) {
 }
 
 // The proposal as the lead reads it: the pathway and why, each band and why, the factors still unscored.
-function report(id, m, p, lead) {
+function report(id, m, p, lead, fits = []) {
   const yes = (v) => msg(v ? 'intakeYes' : 'intakeNo', {});
   const why = {
     verification: msg('intakeVerification', { tests: yes(m.tests), ci: yes(m.ci) }),
@@ -59,7 +62,8 @@ function report(id, m, p, lead) {
   const lines = Object.entries(p.bands).map(([c, band]) => msg('intakeLine', { factor: c, band, why: why[c] ?? msg('intakeLead', { ids: (lead[c]?.ids ?? []).join(', ') || '-' }) }));
   const unscored = K.scored.filter((c) => !lead[c] && c !== 'risk');
   return msg('intakeProposal', { ...p.proposal, pathwayWhy: msg(WHY[p.proposal.pathway], {}) }) + lines.join('')
-    + (unscored.length ? msg('intakeUnscored', { factors: unscored.join(', '), id }) : '') + msg('intakeTell', { id });
+    + (unscored.length ? msg('intakeUnscored', { factors: unscored.join(', '), id }) : '')
+    + (fits.length ? msg('intakeModels', { models: fits.map((f) => `${f.name} (${f.ids.join(', ')})`).join(', ') }) : '') + msg('intakeTell', { id });
 }
 
 // The lead's scores from `--<factor> <band>:<ids>` flags, each checked against the request's sentences.
@@ -101,7 +105,7 @@ export const commands = {
       if (lead.risk && rank(lead.risk.band) < rank(p.floor)) throw new UsageError(msg('intakeRiskFloor', { band: lead.risk.band, floor: p.floor }));
       const body = doc.lines.slice(doc.body).join('\n');
       write(file, { title: JSON.stringify(doc.fm.title), bands: flow(p.bands), cites: flow(p.cites), proposal: flow(p.proposal), producer: msg('producer', { version: version() }), at: doc.fm.generated?.at }, body);
-      return done(msg('intakeScored', { path: relPath(cwd, file) }) + report(id, m, p, lead));
+      return done(msg('intakeScored', { path: relPath(cwd, file) }) + report(id, m, p, lead, fitsOf(cwd, profile, sentences)));
     }
     const fileArg = args[0] === '--file' ? args[1] : null;
     const prose = fileArg ? readFileSync(resolve(cwd, fileArg), 'utf8') : args.join(' ');
@@ -116,7 +120,7 @@ export const commands = {
     const p = propose(m, sentences, {}), file = join(dir, `${id}-${docSlug(title)}.md`);
     mkdirSync(dir, { recursive: true });
     write(file, { title: JSON.stringify(title), bands: flow(p.bands), cites: flow(p.cites), proposal: flow(p.proposal), producer: msg('producer', { version: version() }), at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') }, body);
-    return done(msg('intakeWrote', { path: relPath(cwd, file), count: sentences.length, first: sentences[0].id, last: sentences.at(-1).id }) + report(id, m, p, {}));
+    return done(msg('intakeWrote', { path: relPath(cwd, file), count: sentences.length, first: sentences[0].id, last: sentences.at(-1).id }) + report(id, m, p, {}, fitsOf(cwd, profile, sentences)));
   },
 };
 

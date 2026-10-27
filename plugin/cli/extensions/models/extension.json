@@ -22,8 +22,8 @@
     "commands": [
       {
         "name": "models",
-        "usage": "models [doc <name>]",
-        "does": "list the architecture models this project can apply; doc writes a project model's Model doc for the owner to approve"
+        "usage": "models [doc <name> | apply <name> | gaps]",
+        "does": "list the architecture models this project can apply; doc writes a project model's Model doc, apply takes one on, gaps lists what the modules miss of it"
       }
     ],
     "messages": {
@@ -42,7 +42,7 @@
       "modelLine": "{{name}} ({{source}}): {{title}}{{problems}}\n",
       "modelProblems": ", {{count}} format problems: aidlc check",
       "modelNone": "no models: the plugin ships none yet, and the project keeps its own in {{dir}}/<name>/\n",
-      "modelsUsage": "usage: aidlc models, or aidlc models doc <name> for a project model",
+      "modelsUsage": "usage: aidlc models, or aidlc models doc <name>, apply <name> or gaps",
       "modelUnknown": "no project model {{name}} in {{dir}}: aidlc models lists them",
       "modelDocWrote": "wrote {{path}} from {{file}}: ask the owner to approve it (aidlc approve {{path}})\n",
       "modelDoc": "---\ntype: Model\ntitle: {{title}}\ndescription: {{description}}\nmodel: {{name}}\nresearch: [{{research}}]\ndigest: {{digest}}\ngenerated: { by: {{producer}}, at: {{at}}, digest: {{bodyDigest}} }\n---\n{{body}}",
@@ -61,7 +61,23 @@
       "eventsUnknown": "model {{model}}: {{method}} {{path}} emits {{event}}, which no events file defines",
       "idempotentMissing": "{{unit}} has a write AC but none that repeats it and finds status and state unchanged",
       "dataUndeclared": "{{unit}} owns {{table}} with no (partition: <key>, class: <class>)",
-      "dataClass": "{{unit}} gives {{table}} class {{class}}, not one of {{classes}}"
+      "dataClass": "{{unit}} gives {{table}} class {{class}}, not one of {{classes}}",
+      "modelNotApplicable": "no model {{name}} in the format: aidlc models lists them, aidlc check says what breaks one",
+      "applyChosen": "chose {{name}} in {{file}}\n",
+      "applySystem": "wrote {{path}}: its building blocks are the model's; fill the other sections with the owner\n",
+      "applyDecision": "wrote {{path}}, a proposal for the owner to approve (one-way doors one at a time)\n",
+      "applyIncrements": "increments along {{name}}'s layers, for the intent's # Increments:\n",
+      "incLine": "- I-<n>.{{k}} {{text}}\n",
+      "incSkeleton": "Walking skeleton: one request through {{layers}}, end to end on the target",
+      "incDomain": "{{id}}: {{role}}",
+      "incSlice": "A first slice, declaring {{declares}}",
+      "incGap": "{{id}} ({{kind}}): {{role}}",
+      "gapsNoModel": "the profile chooses no model: aidlc models apply <name>, or model.name in {{file}}",
+      "gapsHead": "model {{name}}: {{played}} of {{total}} items played by modules (modules[].layer)\n",
+      "gapPlayed": "  {{item}}: {{module}} ({{kind}})\n",
+      "gapKind": "  {{item}}: {{module}} is {{kind}}, the model's {{item}} is {{want}}\n",
+      "gapsMissing": "missing, for the brownfield intent's # Increments:\n",
+      "gapsNone": "nothing missing\n"
     },
     "models": {
       "dir": "models",
@@ -85,7 +101,9 @@
         "operations": { "marker": "x-long-running" },
         "events": { "marker": "x-events" }
       },
-      "methods": ["get", "put", "post", "patch", "delete"]
+      "methods": ["get", "put", "post", "patch", "delete"],
+      "systemTemplate": "docs/system.md",
+      "systemName": "system"
     },
     "inception": {
       "pathways": {

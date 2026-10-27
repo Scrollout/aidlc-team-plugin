@@ -126,3 +126,40 @@ test('B230/AC-1 B230/AC-2 only the chosen model\'s rules run, each reporting wha
   write(dir, { ...broken, '.aidlc/profile.json': { ...chosen({}), model: undefined } });
   assert.equal(ruleLines(dir), '', 'no chosen model, no rule runs');
 });
+
+test('B231/AC-1 intake lists the models that fit the request; apply records the choice, writes the system doc, copies the decisions once and prints increments', () => {
+  const dir = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n', 'docs/decisions/0003-earlier.md': '---\ntype: Decision\ntitle: 0003 Earlier\ndescription: d.\n---\n' }, V2);
+  write(dir, { '.aidlc/models/minimal/model.json': model('minimal', { fit: { words: ['gate', 'records'] } }), '.aidlc/models/minimal/decisions/0001-one-gate.md': decision });
+  assert.match(run(dir, ['intake', 'Every request passes the gate. The records keep what exists. Nothing else.']).out, /\n  models that fit: minimal \(Q-1\.1, Q-1\.2\); once the owner picks one: aidlc models apply <name>\n/);
+  const r = run(dir, ['models', 'apply', 'minimal']);
+  assert.equal(r.code, 0, r.err);
+  assert.equal(r.out, [
+    'chose minimal in .aidlc/profile.json',
+    'wrote docs/system/bak.md: its building blocks are the model\'s; fill the other sections with the owner',
+    'wrote docs/decisions/0004-one-gate.md, a proposal for the owner to approve (one-way doors one at a time)',
+    'increments along minimal\'s layers, for the intent\'s # Increments:',
+    '- I-<n>.1 Walking skeleton: one request through gate, end to end on the target',
+    '- I-<n>.2 records: what exists',
+    '- I-<n>.3 A first slice, declaring namespace',
+    '',
+  ].join('\n'));
+  assert.equal(JSON.parse(read(dir, '.aidlc/profile.json')).model.name, 'minimal');
+  assert.match(read(dir, 'docs/system/bak.md'), /\n# Building Block View\n- \*\*gate\*\* \(pipeline\): checks each request\n- \*\*records\*\* \(domain\): what exists\n/);
+  assert.match(read(dir, 'docs/decisions/0004-one-gate.md'), /^title: 0004 One gate\nmodel: minimal$/m);
+  assert.doesNotMatch(run(dir, ['models', 'apply', 'minimal']).out, /^(chose|wrote)/m, 'applying again copies nothing twice');
+  assert.match(run(dir, ['models', 'apply', 'nothere']).err, /no model nothere in the format/);
+});
+
+test('B231/AC-2 gaps matches the modules to the chosen model\'s items and kinds, and prints the missing ones as increments', () => {
+  const profile = { ...V2, model: { name: 'minimal' }, modules: [{ id: 'gw', kind: 'pipeline', layer: 'gate', paths: ['src/gw/**'] }, { id: 'store', kind: 'foundation', layer: 'records', paths: ['src/store/**'] }] };
+  const dir = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n', '.aidlc/models/minimal/model.json': model('minimal', { slice: { kind: 'extension', declares: ['namespace'] } }) }, profile);
+  assert.equal(run(dir, ['models', 'gaps']).out, [
+    'model minimal: 2 of 2 items played by modules (modules[].layer)',
+    '  gate: gw (pipeline)',
+    '  records: store is foundation, the model\'s records is domain',
+    'missing, for the brownfield intent\'s # Increments:',
+    '- I-<n>.1 slice (extension): namespace',
+    '',
+  ].join('\n'));
+  assert.match(run(makeRepo({}, V2), ['models', 'gaps']).err, /the profile chooses no model/);
+});
