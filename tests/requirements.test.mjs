@@ -2,8 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { cpSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { lintPlan, readPlan } from '../plugin/cli/lib/domains/plan.mjs';
-import { checkBundle, writeIndexes } from '../plugin/cli/lib/domains/bundle.mjs';
+import { lintPlan, readPlan, checkBundle, writeIndexes } from '../plugin/cli/lib/index.mjs';
 import { approve, branch, commit, intentDoc, makeRepo, merge, read, run, tempDir, unitDoc, write } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');

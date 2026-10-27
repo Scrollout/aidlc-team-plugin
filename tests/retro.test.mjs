@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
 import { approve, branch, git, hook, intentDoc, makeRepo, read, review, run, unitDoc, write } from './state-repo.mjs';
-import { writeIndexes } from '../plugin/cli/lib/domains/bundle.mjs';
+import { writeIndexes } from '../plugin/cli/lib/index.mjs';
 
 const U = (n) => `docs/units/U-${n}-u.md`;
 const stats = (dir) => JSON.parse(read(dir, '.git/aidlc/stats.json'));

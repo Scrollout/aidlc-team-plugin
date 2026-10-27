@@ -3,8 +3,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { aidlc, approve, branch, commit, git, heartbeat, I1, intentDoc, makeRepo, merge, read, report, review, run, tempDir, twoUnits, U, unitDoc, write } from './state-repo.mjs';
-import { parseDoc } from '../plugin/cli/lib/domains/bundle.mjs';
-import { approval, hashDoc } from '../plugin/cli/lib/domains/flow.mjs';
+import { parseDoc, approval, hashDoc } from '../plugin/cli/lib/index.mjs';
 
 // Everything `next` must never lose: branch tips, runtime files, the working tree.
 function snapshot(dir) {

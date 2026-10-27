@@ -4,7 +4,7 @@ import { readFileSync, utimesSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { aidlc, approve, branch, commit, git, heartbeat, I1, intentDoc, makeRepo, merge, read, report, review, run, tempDir, twoUnits, U, unitDoc, write } from './state-repo.mjs';
-import { approval } from '../plugin/cli/lib/domains/flow.mjs';
+import { approval } from '../plugin/cli/lib/index.mjs';
 
 test('U4/AC-2 a stopped builder sends the unit back to the lead; re-approval restarts it', () => {
   const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['src/**'] }) });

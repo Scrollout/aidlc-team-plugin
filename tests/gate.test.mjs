@@ -5,7 +5,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { approve, CHILD_ENV, CLI, commit, git, makeRepo, read, review, run, tempDir } from './state-repo.mjs';
 import { CODE, codes, FAIL, FAIL_MERGED, LOG, merge, OK, PROFILE, setup, TEST } from './gate-repo.mjs';
-import { boundaryFindings, moduleFindings } from '../plugin/cli/lib/domains/gate.mjs';
+import { boundaryFindings, moduleFindings } from '../plugin/cli/lib/index.mjs';
 
 test('U6/AC-2 a passing gate merges --no-ff with trailers, writes index and log, removes the branch', () => {
   const dir = setup();

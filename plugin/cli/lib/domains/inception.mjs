@@ -9,6 +9,7 @@ import { msg } from '../foundation/text.mjs';
 import { loadProfile } from '../foundation/profile.mjs';
 import { docSlug, hashDoc, parseDoc, sectionOf } from './bundle.mjs';
 import { glossaryOf } from './naming.mjs';
+import { plug } from '../foundation/seams.mjs';
 
 const P = config.inception, F = config.okf.bundle.folders;
 const docsIn = (bundle, dir) => (existsSync(join(bundle, dir)) ? readdirSync(join(bundle, dir)).filter((f) => f.endsWith('.md') && f !== 'index.md').sort() : [])
@@ -123,3 +124,5 @@ export const commands = {
     return done(msg('factWrote', { path: relPath(cwd, file), id }));
   },
 };
+
+plug('planRules', lintInception);

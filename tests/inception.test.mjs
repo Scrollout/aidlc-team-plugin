@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { lintPlan } from '../plugin/cli/lib/domains/plan.mjs';
+import { lintPlan } from '../plugin/cli/lib/index.mjs';
 import { approve, commit, makeRepo, read, run } from './state-repo.mjs';
 
 const V2 = { system: { core: ['src/**'] }, naming: { tokens: { system: 'rsm' } }, modules: [

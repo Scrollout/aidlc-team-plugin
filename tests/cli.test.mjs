@@ -57,7 +57,7 @@ test('U1/AC-1 unknown command exits 64', () => {
 
 test('U1/AC-1 every documented command is built', async () => {
   const { HANDLERS } = await import('../plugin/cli/aidlc.mjs');
-  const { config } = await import('../plugin/cli/lib/foundation/data.mjs');
+  const { config } = await import('../plugin/cli/lib/index.mjs');
   assert.deepEqual(config.commands.map((c) => c.name).filter((n) => !HANDLERS[n]), []);
 });
 

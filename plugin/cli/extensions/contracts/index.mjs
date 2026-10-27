@@ -5,6 +5,7 @@ import { config, isMap } from '../../lib/foundation/data.mjs';
 import { gitLines } from '../../lib/foundation/git.mjs';
 import { parseYaml } from '../../lib/foundation/yaml.mjs';
 import { globRegex } from '../../lib/foundation/glob.mjs';
+import { plug } from '../../lib/foundation/seams.mjs';
 
 const C = config.naming.contract;
 const re = (k) => new RegExp(C.patterns[k]);
@@ -61,3 +62,8 @@ export function contractFindings(root, profile) {
     return contractProblems(doc ?? {}).map(([key, data]) => [f, key, data]);
   });
 }
+
+// The published API speaks the grammar (decision 0014), in check and on the merge result.
+const named = (root, profile) => contractFindings(root, profile).map(([path, key, data]) => ({ code: 'CONTRACT-NAME', path, key, data }));
+plug('docChecks', named);
+plug('gateChecks', named);

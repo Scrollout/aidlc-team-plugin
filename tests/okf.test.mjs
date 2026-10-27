@@ -3,8 +3,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { cpSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildIndexes, checkBundle, writeIndexes } from '../plugin/cli/lib/domains/bundle.mjs';
-import { parseYaml } from '../plugin/cli/lib/foundation/yaml.mjs';
+import { buildIndexes, checkBundle, writeIndexes, parseYaml } from '../plugin/cli/lib/index.mjs';
 import { tempDir } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');

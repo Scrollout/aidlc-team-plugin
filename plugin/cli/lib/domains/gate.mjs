@@ -1,23 +1,22 @@
 // Merge gate, push, fix and the CI history check (docs/design/verification.md, docs/design/gate.md).
 // Settings, codes and messages come from cli.json; project commands come from the owner's profile.
-import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { basename, dirname, join } from 'node:path';
+import { basename, dirname, join, resolve, sep } from 'node:path';
 import { bundleOf, CLI_DIR, PLUGIN_DIR, config, QUICK, VERDICT, done, lapsed, list, readJson, UsageError, relPath } from '../foundation/data.mjs';
 import { addedLines, git, gitLines, sh, tryGit } from '../foundation/git.mjs';
 import { finding as codeFinding, msg, render } from '../foundation/text.mjs';
 import { loadProfile, withDefaults } from '../foundation/profile.mjs';
 import { checkBundle, docSlug, nameProblem, parseDoc, writeIndexes } from './bundle.mjs';
-import { computeLane, incrementLines, lintPlan, readPlan, runTarget, spansOf } from './plan.mjs';
+import { computeLane, finding as planFinding, incrementLines, lintPlan, noRun, readPlan, runTarget, spansOf, withIntents } from './plan.mjs';
+import { cardsOver } from './card.mjs';
 import { inside } from '../foundation/glob.mjs';
 import { bindingName, writeTrace } from './construction.mjs';
-import { issueTitle, sync } from '../../extensions/board/index.mjs';
 import { writeContextMap, writeGlossary, writeMap } from './map.mjs';
 import { generatedRules, glossaryOf, parseFlags } from './naming.mjs';
-import { contractFindings } from '../../extensions/contracts/index.mjs';
-import { boundaryFindings, exceptDocs, kindFindings, layerFindings, moduleFindings, reachFindings } from './architecture.mjs';
-import { eventFindings, packFor } from '../../extensions/stacks/index.mjs';
-import { approval, baseOf, branchOf, codeChanges, diffHash, keptPass, verdictCurrent, mergedUnits, mutationOf, readState, reviewFocuses, roundsOf, unitPaths, worktrees } from './flow.mjs';
+import { boundaryFindings, exceptDocs, graphOf, kindFindings, layerFindings, moduleFindings, reachFindings } from './architecture.mjs';
+import { seam } from '../foundation/seams.mjs';
+import { approval, baseOf, branchOf, codeChanges, diffHash, keptPass, verdictCurrent, mergedUnits, mutationOf, readState, reviewFocuses, roundsOf, stampFindings, unitPaths, worktrees } from './flow.mjs';
 import { aidlcDir, baseRedFile, bump, runtimeFile, writeJson } from '../foundation/store.mjs';
 
 const G = config.gate;
@@ -106,16 +105,6 @@ export function directAllowed(path, bundleRel) {
   const init = config.init.files.map((f) => render(f.to, { bundle: bundleRel }));
   return matches(path, `/${bundleRel}/**`) || G.direct.some((g) => matches(path, '/' + g))
     || init.includes(path) || [config.init.gitignore, config.init.settings].includes(path);
-}
-
-// The project's dependency graph, run once per tree: the codebase map and the architecture checks share it.
-const graphs = new Map();
-export function graphOf(cwd, command) {
-  if (!graphs.has(cwd + command)) {
-    const r = sh(cwd, command);
-    graphs.set(cwd + command, { ok: r.status === 0, edges: (r.stdout ?? '').split('\n').map((l) => l.split(G.edge).map((x) => x.trim())).filter((e) => e.length === 2 && e[0] && e[1]) });
-  }
-  return graphs.get(cwd + command);
 }
 
 function architecture(cwd, profile, key = 'gateCheck') {
@@ -267,7 +256,7 @@ function runGate(cwd, st, unit) {
     }
   }
 
-  const proof = out.length ? null : proofRevert(tree, card, paths, levels, tagged, bundleRel, add, unit, readJson(runtimeFile(cwd, 'reports', unit.id))?.mutations, p.system && ((l) => l.compileError ?? packFor(tree)?.manifest.compileError)); // only on a green merge result
+  const proof = out.length ? null : proofRevert(tree, card, paths, levels, tagged, bundleRel, add, unit, readJson(runtimeFile(cwd, 'reports', unit.id))?.mutations, p.system && ((l) => l.compileError ?? seam('proofPatterns', p).map((pattern) => pattern(tree)).find(Boolean))); // only on a green merge result
 
   const touched = (p.modules ?? []).filter((m) => paths.some((x) => list(m.paths).some((g) => matches(x, g))));
   for (const command of [...touched.filter((x) => x.check).map((m) => m.check), ...list(p.checks)]) if (!shell(tree, command)) add('GATE-CHECK', 'gateCheck', { command }); // the touched modules', then the project's on every merge (U140)
@@ -283,7 +272,7 @@ function runGate(cwd, st, unit) {
     out.push(finding('GATE-OKF', f.path, f.line, 'gateOkf', f));
   }
   // The published API on the merged tree speaks the grammar of decision 0014 (docs/design/naming.md#checks).
-  for (const [file, key, data] of [...contractFindings(tree, p), ...eventFindings(tree, p)]) out.push(finding('CONTRACT-NAME', file, 1, key, data));
+  for (const f of seam('gateChecks', p).flatMap((check) => check(tree, p))) out.push(finding(f.code, f.path, 1, f.key, f.data)); // the extensions' checks on the merge result
   return { findings: out, tree, tested: tested.map(([level]) => level), proof, card };
 }
 
@@ -316,6 +305,27 @@ function historyFindings(cwd, range, st, codes) {
 function nextUnitId(bundle, bolt) {
   const ids = readPlan(bundle).units.map((u) => Number(u.id.split('-')[1]));
   return `${bolt ? config.grid.boltPrefix : 'U-'}${(ids.length ? Math.max(...ids) : 0) + 1}`;
+}
+
+// Plan lint for `check`, with what the state and the cards know: a directory is linted as a bundle; a file inside the
+// profile's bundle reports only itself.
+export async function planCheck(args, { cwd }) {
+  const { profile } = loadProfile(cwd);
+  const bundle = bundleOf(cwd, profile);
+  const skip = [...mergedUnits(cwd, profile.base).keys()]; // merged units are history
+  const paths = args.filter((a) => !a.startsWith('--')).map((a) => resolve(cwd, a));
+  const findings = [];
+  const dirs = (paths.length ? paths : [bundle]).filter((x) => existsSync(x) && statSync(x).isDirectory());
+  for (const p of dirs) findings.push(...lintPlan(p, profile, { base: cwd, skip }), ...noRun(cwd, p, profile, skip));
+  const docs = paths.filter((p) => existsSync(p) && !statSync(p).isDirectory() && p.startsWith(bundle + sep));
+  const wanted = new Set([...withIntents(bundle, docs)].map((f) => relPath(cwd, f)));
+  if (docs.length) findings.push(...lintPlan(bundle, profile, { base: cwd, skip }).filter((f) => wanted.has(f.path)));
+  const mds = dirs.flatMap((d) => readdirSync(d, { recursive: true }).map((f) => join(d, f)).filter((f) => f.endsWith('.md') && f.startsWith(bundle + sep)));
+  findings.push(...stampFindings(cwd, profile, [...new Set([...mds, ...docs])]));
+  // Size every unit not yet merged: before the owner's round, and after a rule or template change grew an approved card.
+  const live = readPlan(bundle).units.filter((u) => u.fm.status !== config.grid.dropped && !skip.includes(u.id) && [...mds, ...docs].includes(u.file));
+  for (const c of cardsOver(cwd, live.map((u) => u.id))) findings.push(planFinding('PLAN-CARD', live.find((u) => u.id === c.id).file, 1, 'planCard', { unit: c.id, ...c }, cwd));
+  return done('', findings.some((f) => f.level === 'error') ? config.exit.findings : config.exit.ok, findings); // a warning does not fail
 }
 
 export const commands = {
@@ -356,8 +366,7 @@ export const commands = {
       else try { git(cwd, 'worktree', 'remove', '--force', '--force', path); } catch (e) { output += msg('gateKept', { path, error: e.message.split('\n')[0] }); }
     }
     tryGit(cwd, 'branch', '-q', '-D', branchOf(unit.id));
-    // The board follows a merge; it is best effort and never fails one (docs/design/board.md).
-    if (st.profile.github) try { output += sync(cwd); } catch (e) { output += msg('boardFailed', { error: e.message.split('\n')[0] }); }
+    for (const after of seam('afterMerge', st.profile)) output += after(cwd, st); // the board follows a merge
     return done(output);
   },
 
@@ -378,7 +387,7 @@ export const commands = {
     let title = flags._[0] ?? null;
     const { profile } = loadProfile(cwd);
     const issue = list(flags['from-issue']).map(Number), scope = list(flags.scope), reqs = list(flags.requirement);
-    if (issue.length) title = issueTitle(profile, issue[0]);
+    if (issue.length) title = seam('issueTitle', profile)[0]?.(profile, issue[0]) ?? null;
     if (!title || !scope.length) throw new UsageError(msg('fixUsage', {}));
     const lane = computeLane(scope, profile); // a full-lane fix waits for the owner's approval like any other unit
     const bundle = bundleOf(cwd, profile);

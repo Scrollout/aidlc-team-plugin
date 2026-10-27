@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { lintPlan } from '../plugin/cli/lib/domains/plan.mjs';
+import { lintPlan } from '../plugin/cli/lib/index.mjs';
 import { approve, commit, git, makeRepo, read, review, run, tempDir, unitDoc } from './state-repo.mjs';
 
 const OK = 'node -e "process.exit(0)"';
@@ -118,7 +118,7 @@ test('B189/AC-2 the retro measures lead time, increments shipped, refusals by bi
 });
 
 test('B190/AC-1 the board derives a bolt binding: its domain, its horizontal kind, fix or span', async () => {
-  const { bindingName } = await import('../plugin/cli/lib/domains/construction.mjs');
+  const { bindingName } = await import('../plugin/cli/lib/index.mjs');
   const b = (modules, intent = 'I-1') => bindingName({ modules, fm: { intent } }, V2);
   assert.deepEqual([b(['quotas']), b(['database']), b(['quotas', 'deployments']), b(['quotas'], null)], ['quotas', 'foundation', 'span', 'fix']);
 });

@@ -3,8 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { cpSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { kindFindings, layerFindings, reachFindings } from '../plugin/cli/lib/domains/architecture.mjs';
-import { moduleFindings } from '../plugin/cli/lib/domains/gate.mjs';
+import { kindFindings, layerFindings, reachFindings, moduleFindings } from '../plugin/cli/lib/index.mjs';
 import { packGraph } from '../plugin/cli/extensions/stacks/index.mjs';
 import { I1, U, approve, makeRepo, read, run, tempDir, unitDoc } from './state-repo.mjs';
 

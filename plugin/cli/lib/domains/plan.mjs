@@ -1,13 +1,12 @@
 // Grid: reads intent and unit docs, lints the plan and computes lanes (docs/design/grid.md).
 // Settings, codes and messages come from cli.json.
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, resolve, sep } from 'node:path';
-import { lintInception } from './inception.mjs';
-import { lintConstruction } from './construction.mjs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { at, bundleOf, config, FULL, QUICK, STANDARD, done, fieldPaths, isMap, readJson, list, UsageError, relPath } from '../foundation/data.mjs';
 import { git, tryGit } from '../foundation/git.mjs';
 import { finding as codeFinding, msg } from '../foundation/text.mjs';
 import { inside, overlaps } from '../foundation/glob.mjs';
+import { seam } from '../foundation/seams.mjs';
 import { loadProfile, withDefaults } from '../foundation/profile.mjs';
 import { linksOf, parseDoc, proseLines, sectionOf } from './bundle.mjs';
 
@@ -72,7 +71,7 @@ export function readPlan(bundle) {
 export const withIntents = (bundle, files, { intents, units } = readPlan(bundle)) =>
   new Set([...files, ...units.filter((u) => files.includes(u.file)).flatMap((u) => intents.filter((i) => i.id === u.fm.intent).map((i) => i.file))]);
 
-const finding = (code, file, line, key, data, base) => codeFinding(GRID.codes, code, relPath(base, file), line, key, data);
+export const finding = (code, file, line, key, data, base) => codeFinding(GRID.codes, code, relPath(base, file), line, key, data);
 
 // The line of a front matter key, or 1 when the key is absent.
 const keyLine = (u, key) => u.doc.lines.slice(0, u.doc.body).findIndex((l) => l.startsWith(`${key}:`)) + 1 || 1;
@@ -351,10 +350,9 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
       add('PLAN-SCOPE', b, keyLine(b, 'scope'), loose ? 'scopeOverlapRoot' : 'scopeOverlap', { glob: pair[1], other: a.id, otherGlob: pair[0], root: loose && '/' + loose[0] });
     }
   }
-  // A deterministic Inception: pathways, answers, domains, facts and decisions that cohere (docs/design/inception.md).
-  lintInception({ bundle, profile, intents, requirements, merged: new Set(skip), add, inForce, incrementLines, keyLine });
-  // Construction by proof: bindings, the walking skeleton, fix bolts, escape hatches (docs/design/construction.md).
-  lintConstruction({ profile, intents: liveIntents, units, all, add, keyLine, bundleRel, base });
+  // The plugged rules: Inception's and Construction's (docs/design/inception.md, construction.md).
+  const ctx = { bundle, profile, intents, live: liveIntents, units, all, requirements, merged: new Set(skip), add, inForce, incrementLines, keyLine, bundleRel, base };
+  for (const rule of seam('planRules', profile)) rule(ctx);
   return out;
 }
 
@@ -381,7 +379,7 @@ export function computeLane(items, profile = {}, { paths = false } = {}) {
 // ---- Commands ----
 
 // Live units while no level runs: the gate would run no tests (docs/design/method.md).
-function noRun(cwd, bundle, profile, skip) {
+export function noRun(cwd, bundle, profile, skip) {
   const live = readPlan(bundle).units.some((u) => u.fm.status !== GRID.dropped && !skip.includes(u.id));
   const path = join(cwd, config.layers.find((l) => l.from === 'project').path);
   return live && !Object.values(withDefaults(profile).levels).some((l) => l?.run) ? [finding('PLAN-RUN', path, 1, 'planRun', {}, cwd)] : [];
@@ -396,27 +394,5 @@ export const commands = {
     const unit = readPlan(bundle).units.find((u) => u.id === args[0]);
     if (!unit) throw new UsageError(msg('unknownUnit', { name: args[0], dir: relPath(cwd, join(bundle, GRID.units)) }));
     return done(msg('laneLine', computeLane(unit.scope, profile)));
-  },
-
-  // Plan lint for `check`: a directory is linted as a bundle; a file inside the profile's bundle reports only itself.
-  async check(args, { cwd }) {
-    const { profile } = loadProfile(cwd);
-    const bundle = bundleOf(cwd, profile);
-    const state = await import('./flow.mjs');
-    const skip = [...state.mergedUnits(cwd, profile.base).keys()]; // merged units are history
-    const paths = args.filter((a) => !a.startsWith('--')).map((a) => resolve(cwd, a));
-    const findings = [];
-    const dirs = (paths.length ? paths : [bundle]).filter((x) => existsSync(x) && statSync(x).isDirectory());
-    for (const p of dirs) findings.push(...lintPlan(p, profile, { base: cwd, skip }), ...noRun(cwd, p, profile, skip));
-    const docs = paths.filter((p) => existsSync(p) && !statSync(p).isDirectory() && p.startsWith(bundle + sep));
-    const wanted = new Set([...withIntents(bundle, docs)].map((f) => relPath(cwd, f)));
-    if (docs.length) findings.push(...lintPlan(bundle, profile, { base: cwd, skip }).filter((f) => wanted.has(f.path)));
-    const mds = dirs.flatMap((d) => readdirSync(d, { recursive: true }).map((f) => join(d, f)).filter((f) => f.endsWith('.md') && f.startsWith(bundle + sep)));
-    findings.push(...state.stampFindings(cwd, profile, [...new Set([...mds, ...docs])]));
-    // Size every unit not yet merged: before the owner's round, and after a rule or template change grew an approved card.
-    const live = readPlan(bundle).units.filter((u) => u.fm.status !== GRID.dropped && !skip.includes(u.id) && [...mds, ...docs].includes(u.file));
-    const { cardsOver } = await import('./card.mjs');
-    for (const c of cardsOver(cwd, live.map((u) => u.id))) findings.push(finding('PLAN-CARD', live.find((u) => u.id === c.id).file, 1, 'planCard', { unit: c.id, ...c }, cwd));
-    return done('', findings.some((f) => f.level === 'error') ? config.exit.findings : config.exit.ok, findings); // a warning does not fail
   },
 };

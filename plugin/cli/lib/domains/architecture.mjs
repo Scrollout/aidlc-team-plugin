@@ -3,6 +3,7 @@
 import { config, list } from '../foundation/data.mjs';
 import { finding as codeFinding, msg } from '../foundation/text.mjs';
 import { globRegex } from '../foundation/glob.mjs';
+import { sh } from '../foundation/git.mjs';
 
 const V = config.vocabulary;
 const finding = (code, path, key, data) => codeFinding(config.gate.codes, code, path, 1, key, data);
@@ -125,4 +126,14 @@ export function reachFindings(edges, profile) {
     }
   }
   return out;
+}
+
+// The project's dependency graph, run once per tree: the codebase map and the architecture checks share it.
+const graphs = new Map();
+export function graphOf(cwd, command) {
+  if (!graphs.has(cwd + command)) {
+    const r = sh(cwd, command);
+    graphs.set(cwd + command, { ok: r.status === 0, edges: (r.stdout ?? '').split('\n').map((l) => l.split(config.gate.edge).map((x) => x.trim())).filter((e) => e.length === 2 && e[0] && e[1]) });
+  }
+  return graphs.get(cwd + command);
 }

@@ -11,6 +11,7 @@ import { inForce, incrementLines, readPlan, topLevel } from './plan.mjs';
 import { overlaps } from '../foundation/glob.mjs';
 import { writePage } from './map.mjs';
 import { delegation, mergedUnits } from './flow.mjs';
+import { plug } from '../foundation/seams.mjs';
 import { runtimeFile } from '../foundation/store.mjs';
 
 const C = config.construction, GRID = config.grid;
@@ -58,7 +59,7 @@ function docHatches(profile, intents, units, root) {
 }
 
 // The findings, through plan lint's `add(code, doc, line, key, data)`; `units` are the live ones, `all` every bolt.
-export function lintConstruction({ profile, intents, units, all, add, keyLine, bundleRel, base }) {
+export function lintConstruction({ profile, live: intents, units, all, add, keyLine, bundleRel, base }) {
   if (!profile.system) return;
   const top = topLevel(profile), fresh = (u) => !u.fm.verified_hash;
   const kindOf = (id) => (profile.modules ?? []).find((m) => idOf(m) === id)?.kind;
@@ -127,3 +128,8 @@ export function writeTrace(cwd, profile) {
     return writePage(file, msg('traceBody', { rows, delivered: t.delivered.join(', ') || '-' }), 'traceDoc', { intent: t.intent.id });
   });
 }
+
+plug('planRules', lintConstruction);
+// A v2 requirement is delivered by released tests; status lists the live escape hatches.
+plug('delivered', (st) => (st.profile.system ? traceOf(st.cwd, st.profile).flatMap((t) => t.delivered) : null));
+plug('statusLines', (st) => { const hatches = st.profile.system ? hatchesOf(st) : []; return hatches.length ? msg('statusHatches', { hatches: hatchLine(hatches) }) : ''; });

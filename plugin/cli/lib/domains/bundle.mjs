@@ -8,8 +8,7 @@ import { loadProfile } from '../foundation/profile.mjs';
 import { parseYaml, YamlError } from '../foundation/yaml.mjs';
 import { kindProblems } from './method.mjs';
 import { moduleProblems, namingProblems } from './naming.mjs';
-import { contractFindings } from '../../extensions/contracts/index.mjs';
-import { eventFindings, selftestFindings } from '../../extensions/stacks/index.mjs';
+import { seam } from '../foundation/seams.mjs';
 
 const OKF = config.okf;
 const PROFILE = config.layers.find((l) => l.from === 'project').path; // findings about the profile point at it
@@ -382,8 +381,8 @@ export const commands = {
     for (const [key, data] of kindProblems(profile)) findings.push(finding('PROFILE-KIND', profile.system ? 'error' : 'warning', at, 1, key, data));
     for (const [key, data] of [...namingProblems(profile), ...moduleProblems(profile, bundle)]) findings.push(finding('PROFILE-NAMING', 'error', at, 1, key, data)); // the registry names everything (docs/design/naming.md)
     if (profile.system && !profile.naming?.tokens?.system) findings.push(finding('PROFILE-NAMING', 'error', at, 1, 'namingV2', {}));
-    for (const [file, key, data] of [...contractFindings(cwd, profile), ...eventFindings(cwd, profile)]) findings.push(finding('CONTRACT-NAME', 'error', file, 1, key, data)); // the published API and events speak the grammar (decision 0014)
-    for (const [key, data] of selftestFindings(cwd, profile)) findings.push(finding('GRAPH-SELFTEST', 'error', at, 1, key, data)); // a project's graph sees what the pack sees (docs/design/stack-packs.md)
+    // The extensions' checks: the published API and events speak the grammar, a project's graph sees what its pack sees.
+    for (const f of seam('docChecks', profile).flatMap((check) => check(cwd, profile))) findings.push(finding(f.code, 'error', f.path ?? at, 1, f.key, f.data));
     if (mods.length && !profile.naming && ![profile.names ?? []].flat().length) findings.push(finding('PROFILE-NAMING', 'warning', at, 1, 'namesNone', {}));
     const given = args.filter((a) => !a.startsWith('--'));
     const paths = given.length ? given.map((a) => resolve(cwd, a)) : [bundle];

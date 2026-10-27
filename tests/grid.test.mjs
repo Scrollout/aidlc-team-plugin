@@ -3,8 +3,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { computeLane, lintPlan as lintAll, readPlan } from '../plugin/cli/lib/domains/plan.mjs';
-import { inside, overlaps } from '../plugin/cli/lib/foundation/glob.mjs';
+import { computeLane, lintPlan as lintAll, readPlan, inside, overlaps } from '../plugin/cli/lib/index.mjs';
 import { git, tempDir } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');

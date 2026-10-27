@@ -31,8 +31,7 @@ The plugin holds every project to kinds, layers and one-way dependencies. Its ow
 - `planRules`: plan lint rules (inception, construction).
 - `docChecks`: findings for `check` (contracts, stacks).
 - `gateChecks`: findings on the merge result (contracts, stacks).
-- `mergeWrites`: pages written at every merge (maps, glossary, context map, traceability).
-- `statusLines`, `delivered`: lines and the delivered requirements `status` shows (construction, board).
+- `statusLines`, `delivered`, `statusTail`: lines, the delivered requirements and the closing line `status` shows (construction, board).
 - `cardSections`: sections a card adds (stacks).
 - `proofPatterns`: compile-error patterns of the proof (stacks).
 - `afterMerge`: work after a merge lands (board).

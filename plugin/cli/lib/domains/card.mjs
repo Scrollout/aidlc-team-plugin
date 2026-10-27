@@ -8,8 +8,8 @@ import { msg, render } from '../foundation/text.mjs';
 import { loadProfile, withDefaults } from '../foundation/profile.mjs';
 import { nameProblem, parseDoc, sectionOf, sizeCap } from './bundle.mjs';
 import { generatedRules, nameOf, registry } from './naming.mjs';
-import { referenceOf } from '../../extensions/stacks/index.mjs';
-import { computeLane, readPlan, reqId, topLevel, unitFields } from './plan.mjs';
+import { seam } from '../foundation/seams.mjs';
+import { computeLane, readPlan, reqId, unitFields } from './plan.mjs';
 import { overlaps } from '../foundation/glob.mjs';
 import { approval, baseOf, branchOf, diffHash, hashDoc, readReview, readState, heldDoc, researchOf, roundsOf, worktrees } from './flow.mjs';
 import { aidlcDir, runtimeFile, sha256, writeJson } from '../foundation/store.mjs';
@@ -133,7 +133,7 @@ function renderCard(cwd, unitId, { preview = false } = {}) {
       // a rule shows what it finds too: a pattern nothing matches bans each found word (U127)
       .map((r) => msg(!r.find ? 'cardNamePath' : r.pattern === C.bannedPattern ? 'cardNameBanned' : 'cardName', { id: r.id, files: list(r.files).join(', '), find: r.find, pattern: r.pattern, why: r.why ?? '-' })).join('') + namesCreated(atBase, profile, bundle)].filter(Boolean),
     // The stack pack's reference slices, for a bolt that names a domain (docs/design/stack-packs.md).
-    reference: (() => { const ref = referenceOf(top), named = (profile.modules ?? []).some((m) => m.kind === 'domain' && atBase.modules.includes(String(m.id ?? m.name))); return ref && named ? [msg('cardReference', ref)] : []; })(),
+    reference: seam('cardSections', profile).flatMap((section) => section(top, atBase, profile)), // the stack pack's reference slices
     // Versions from the registry, never from memory (docs/design/dependencies.md).
     deps: list(profile.deps?.manifests).some((g) => atBase.scope.some((s) => overlaps(s, g))) ? [msg('cardDeps', { manifests: list(profile.deps.manifests).join(', '), checks: list(profile.deps.check).join('; ') || '-' })] : [],
     // Where the deploy target is already defined, so a unit builds on it (docs/design/operations.md).

@@ -12,6 +12,7 @@ import { templateFile } from '../../lib/domains/card.mjs';
 import { readState } from '../../lib/domains/flow.mjs';
 import { aidlcDir, ciFile, writeJson } from '../../lib/foundation/store.mjs';
 import { bindingName } from '../../lib/domains/construction.mjs';
+import { plug } from '../../lib/foundation/seams.mjs';
 
 const B = config.board;
 let ghCommand = [B.gh]; // `github.gh` overrides it (docs/design/board.md)
@@ -290,3 +291,8 @@ export const commands = {
     return ciWait(cwd);
   },
 };
+
+// The board follows a merge, best effort: it never fails one (docs/design/board.md).
+plug('afterMerge', (cwd) => { try { return sync(cwd); } catch (e) { return msg('boardFailed', { error: e.message.split('\n')[0] }); } }, (profile) => Boolean(profile.github));
+plug('statusTail', boardBehind);
+plug('issueTitle', issueTitle);

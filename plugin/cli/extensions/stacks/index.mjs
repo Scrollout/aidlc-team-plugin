@@ -6,7 +6,8 @@ import { bundleOf, PLUGIN_DIR, config, done, list, posix, UsageError } from '../
 import { msg, render } from '../../lib/foundation/text.mjs';
 import { loadProfile } from '../../lib/foundation/profile.mjs';
 import { domainForms, nameOf, registry } from '../../lib/domains/naming.mjs';
-import { graphOf } from '../../lib/domains/gate.mjs';
+import { graphOf } from '../../lib/domains/architecture.mjs';
+import { plug } from '../../lib/foundation/seams.mjs';
 
 const K = config.packs;
 const packsDir = () => join(PLUGIN_DIR, K.dir);
@@ -151,3 +152,14 @@ export function selftestFindings(root, profile) {
   const missing = edges.map(([a, b]) => `${a}${config.gate.edge}${b}`).filter((e) => !own.has(e));
   return missing.length ? [['graphSelftest', { command, count: missing.length, edges: missing.slice(0, 3).join('; ') }]] : [];
 }
+
+// Event types speak the grammar; a project's graph sees what its pack sees (docs/design/stack-packs.md).
+const events = (root, profile) => eventFindings(root, profile).map(([path, key, data]) => ({ code: 'CONTRACT-NAME', path, key, data }));
+plug('docChecks', (root, profile) => [...events(root, profile), ...selftestFindings(root, profile).map(([key, data]) => ({ code: 'GRAPH-SELFTEST', key, data }))]);
+plug('gateChecks', events);
+plug('proofPatterns', (root) => packFor(root)?.manifest.compileError);
+// The card of a bolt that names a domain links the reference slices to copy.
+plug('cardSections', (top, bolt, profile) => {
+  const ref = referenceOf(top), named = (profile.modules ?? []).some((m) => m.kind === 'domain' && bolt.modules.includes(String(m.id ?? m.name)));
+  return ref && named ? [msg('cardReference', ref)] : [];
+});

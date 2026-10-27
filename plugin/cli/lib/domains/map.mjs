@@ -7,7 +7,7 @@ import { gitLines } from '../foundation/git.mjs';
 import { msg } from '../foundation/text.mjs';
 import { loadProfile, withDefaults } from '../foundation/profile.mjs';
 import { digestOf, parseDoc, sectionOf } from './bundle.mjs';
-import { graphOf } from './gate.mjs';
+import { graphOf } from './architecture.mjs';
 import { globRegex } from '../foundation/glob.mjs';
 import { glossaryOf } from './naming.mjs';
 

@@ -7,12 +7,11 @@ import { bundleOf, config, QUICK, VERDICT, done, isMap, lapsed, list, readJson, 
 import { addedLines, git, gitLines, tryGit } from '../foundation/git.mjs';
 import { finding as codeFinding, msg, render } from '../foundation/text.mjs';
 import { loadProfile, withDefaults } from '../foundation/profile.mjs';
-import { hashDoc, linksOf, parseDoc, sectionOf, sizeCap } from './bundle.mjs';
-import { boardBehind } from '../../extensions/board/index.mjs';
-import { hatchesOf, hatchLine, traceOf } from './construction.mjs';
+import { hashDoc, linksOf, parseDoc, sizeCap } from './bundle.mjs';
+import { seam } from '../foundation/seams.mjs';
 import { acsOf, computeLane, incrementLines, incrementSection, lintPlan, readPlan, reqId as reqIdOf, productGlobs, testsOnly, withIntents } from './plan.mjs';
 import { inside, overlaps } from '../foundation/glob.mjs';
-import { aidlcDir, baseRedFile, bump, ciFile, heartbeatAt, heartbeatFresh, hostDeniedFile, runtimeFile, sha256, statsFile, writeJson } from '../foundation/store.mjs';
+import { aidlcDir, baseRedFile, bump, ciFile, heartbeatAt, heartbeatFresh, hostDeniedFile, runtimeFile, sha256, writeJson } from '../foundation/store.mjs';
 
 const S = config.state;
 const DATE = /^\d{4}-\d{2}-\d{2}$/; // an escape hatch's until
@@ -619,11 +618,12 @@ export function statusText(st, next, tail = '') {
   const lines = [...st.intents.map((i) => msg('statusIntent', { id: i.id, state: i.state, title: i.fm.title ?? '' })),
     ...st.units.filter((x) => x.state !== 'merged' || !st.intents.some((i) => i.state === 'released' && i.id === x.fm.intent))
       .map((u) => msg('statusUnit', { id: u.id, state: u.state, title: u.fm.title ?? '' }))];
-  // A v2 requirement is delivered by released tests (the traceability page); a v1 one by a merged unit citing it.
-  const v2 = Boolean(st.profile.system), hatches = v2 ? hatchesOf(st) : [];
-  const delivered = new Set(v2 ? traceOf(st.cwd, st.profile).flatMap((t) => t.delivered) : st.units.filter((u) => u.state === 'merged').flatMap((u) => u.requirements));
+  // Delivered as a plugged rule says (construction: by released tests), else by a merged unit citing it.
+  const proven = seam('delivered', st.profile).map((rule) => rule(st)).find(Boolean);
+  const delivered = new Set(proven ?? st.units.filter((u) => u.state === 'merged').flatMap((u) => u.requirements));
   const open = st.requirements.filter((r) => !delivered.has(r.id));
-  const end = (open.length ? msg('statusUncovered', { reqs: ids(open) }) : '') + (hatches.length ? msg('statusHatches', { hatches: hatchLine(hatches) }) : '') + msg('statusNext', { line: next.line }) + tail;
+  const extra = seam('statusLines', st.profile).map((line) => line(st)).join('');
+  const end = (open.length ? msg('statusUncovered', { reqs: ids(open) }) : '') + extra + msg('statusNext', { line: next.line }) + tail;
   let out = ownerLines(st.cwd);
   for (let k = 0; k < lines.length; k++) {
     const more = msg('statusMore', { count: lines.length - k });
@@ -637,7 +637,7 @@ const usage = (key) => { throw new UsageError(msg(key, {})); };
 // `status` and `next` exit blocked when the next step is the owner's.
 const showNext = (cwd, text) => {
   const st = readState(cwd), next = nextAction(st);
-  return done(text(st, next, boardBehind(st)), next.kind === 'human' ? config.exit.blocked : config.exit.ok);
+  return done(text(st, next, seam('statusTail', st.profile).map((tail) => tail(st)).join('')), next.kind === 'human' ? config.exit.blocked : config.exit.ok);
 };
 
 export const commands = {

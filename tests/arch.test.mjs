@@ -1,7 +1,7 @@
 // M17: the architecture model's checks over the dependency graph (docs/design/architecture-model.md).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { kindFindings, layerFindings, reachFindings } from '../plugin/cli/lib/domains/architecture.mjs';
+import { kindFindings, layerFindings, reachFindings } from '../plugin/cli/lib/index.mjs';
 
 const layers = (d) => ({ interface: [`internal/domains/${d}/interface/**`], application: [`internal/domains/${d}/application/**`], model: [`internal/domains/${d}/model/**`], infrastructure: [`internal/domains/${d}/infrastructure/**`] });
 const domain = (d) => ({ id: d, kind: 'domain', paths: [`internal/domains/${d}/**`], layers: layers(d), surfaces: { client: [`internal/domains/${d}/client`], events: [`internal/domains/${d}/events`], server: [`internal/domains/${d}/interface`] } });
@@ -69,7 +69,7 @@ test('B169/AC-1 a runtime hosts the domains it imports directly; reaching anothe
 });
 
 test('B168/AC-1 a module surface is its client and events; ARCH-API judges modules without kinds, ARCH-KIND those with', async () => {
-  const { moduleFindings } = await import('../plugin/cli/lib/domains/gate.mjs');
+  const { moduleFindings } = await import('../plugin/cli/lib/index.mjs');
   const mods = (kind) => [{ id: 'registry', paths: ['internal/registry/**'], surfaces: { client: ['internal/registry/client'], server: ['internal/registry/api'] }, ...(kind ? { kind: 'domain' } : {}) }, { id: 'frontdoor', paths: ['internal/frontdoor/**'], ...(kind ? { kind: 'pipeline' } : {}) }];
   const edges = [['internal/frontdoor/app', 'internal/registry/api'], ['internal/frontdoor/app', 'internal/registry/client']];
   assert.deepEqual(lines(moduleFindings(edges, { modules: mods(false) })), ['ARCH-API internal/frontdoor/app -> internal/registry/api: internal/registry/api is inside registry; depend only on its public paths (internal/registry/client)'], 'the server surface is not public');
