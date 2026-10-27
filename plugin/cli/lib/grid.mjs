@@ -12,6 +12,7 @@ const GRID = config.grid;
 const AC = /^\s*[-*]\s+(AC-\d+)\b\s*(?:\(([^)]*)\))?\s*:/;
 const RESERVE = /^(\S+)\s+(\S+)\/(\d+)$/;
 const SPAN = /`([^`]+)`/g;
+const ITEM = /^\s*([-*]|\d+\.)\s+/; // a list line: a bullet or a number
 
 // Requirement IDs compare by number: R-018 and R-18 are the same.
 export const reqId = (id) => id.replace(/^(R-)0*(\d)/, '$1$2');
@@ -120,10 +121,8 @@ export const withIntents = (bundle, files, { intents, units } = readPlan(bundle)
 
 const finding = (code, file, line, key, data, base) => codeFinding(GRID.codes, code, relPath(base, file), line, key, data);
 
-const keyLine = (u, key) => {
-  const k = u.doc.lines.slice(0, u.doc.body).findIndex((l) => l.startsWith(`${key}:`));
-  return k < 0 ? 1 : k + 1;
-};
+// The line of a front matter key, or 1 when the key is absent.
+const keyLine = (u, key) => u.doc.lines.slice(0, u.doc.body).findIndex((l) => l.startsWith(`${key}:`)) + 1 || 1;
 
 function reachable(units) {
   const deps = new Map(units.map((u) => [u.id, u.depends]));
@@ -151,10 +150,10 @@ export const methodOf = (intent) => Number(intent?.fm.method ?? (intent?.fm.veri
 export const inForce = (intent, key) => methodOf(intent) >= (config.method.since[key] ?? 1);
 
 // An intent's increments section, under # Increments or a v1 intent's # Slices (docs/design/increments-and-bolts.md).
-export const incrementSection = (doc) => GRID.increments.map((h) => sectionOf(doc, h)).find((s) => s.some(([, t]) => /^\s*([-*]|\d+\.)\s/.test(t))) ?? [];
+export const incrementSection = (doc) => GRID.increments.map((h) => sectionOf(doc, h)).find((s) => s.some(([, t]) => ITEM.test(t))) ?? [];
 // Its increment lines: line number, the bolts each names, its id (I-<n>.<k>, none on a v1 line) and its name.
-export const incrementLines = (intent) => incrementSection(intent.doc).filter(([, t]) => /^\s*([-*]|\d+\.)\s/.test(t)).map(([n, t]) => {
-  const text = t.replace(/^\s*([-*]|\d+\.)\s+/, '');
+export const incrementLines = (intent) => incrementSection(intent.doc).filter(([, t]) => ITEM.test(t)).map(([n, t]) => {
+  const text = t.replace(ITEM, '');
   return { n, ids: [...new Set(text.match(new RegExp(GRID.lineIds, 'g')))], id: text.match(GRID.incrementId)?.[0], name: text.split(':')[0].trim() };
 });
 
@@ -211,10 +210,11 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   const { units: all, intents, requirements } = readPlan(bundle);
   const units = all.filter((u) => u.fm.status !== GRID.dropped && !skip.includes(u.id));
   const known = new Set(all.map((u) => u.id));
-  const levels = Object.keys(withDefaults(profile).levels);
+  const levelDefs = withDefaults(profile).levels;
+  const levels = Object.keys(levelDefs);
   const kinds = profile.reserve ? Object.keys(profile.reserve) : null;
   const modules = new Set((profile.modules ?? []).map((m) => String(m.id ?? m.name)));
-  const levelDefs = withDefaults(profile).levels;
+  const liveIntents = intents.filter((i) => i.fm.status !== GRID.dropped);
   const out = [];
   const add = (code, u, line, key, data) => out.push(finding(code, u.file, line, key, { unit: u.id, ...data }, base));
   const bundleRel = relPath(base, bundle);
@@ -232,16 +232,14 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
     }
     for (const m of u.modules.filter((x) => !modules.has(x))) add('PLAN-MODULE', u, keyLine(u, 'modules'), 'moduleUnknown', { module: m, modules: [...modules].join(', ') || '-' });
     if (!u.scope.length) add('PLAN-SCOPE', u, 1, 'scopeMissing', {});
+    const lane = computeLane(u.scope, profile).lane;
     // Each AC's test must have a place in the scope, unless the quick lane adds no tests.
-    else if (computeLane(u.scope, profile).lane !== QUICK) {
-      for (const ac of u.acs.filter((a) => levels.includes(a.level))) {
-        const paths = list(levelDefs[ac.level].paths);
-        if (paths.length && !u.scope.some((g) => overlaps(g, PROFILE) || paths.some((p) => overlaps(g, p)))) add('PLAN-TEST', u, ac.line, 'acNoTestPath', { ac: ac.id, level: ac.level, paths: paths.join(', ') });
-      }
+    for (const ac of u.scope.length && lane !== QUICK ? u.acs.filter((a) => levels.includes(a.level)) : []) {
+      const paths = list(levelDefs[ac.level].paths);
+      if (paths.length && !u.scope.some((g) => overlaps(g, PROFILE) || paths.some((p) => overlaps(g, p)))) add('PLAN-TEST', u, ac.line, 'acNoTestPath', { ac: ac.id, level: ac.level, paths: paths.join(', ') });
     }
     // Design rows before code: an unapproved unit carries its lane's design sections, or a reason it needs none (U72).
     if (u.scope.length && !u.fm.verified_hash && !u.fm[GRID.design]) {
-      const lane = computeLane(u.scope, profile).lane;
       for (const section of GRID.designRows[lane] ?? []) {
         if (!sectionOf(u.doc, section).some(([, t]) => t.trim())) add('PLAN-DESIGN', u, 1, 'planDesign', { lane, section });
       }
@@ -255,7 +253,7 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   }
   if (requirements.length) {
     const known = new Set(requirements.map((r) => r.id));
-    for (const d of [...intents.filter((i) => i.fm.status !== GRID.dropped), ...units]) {
+    for (const d of [...liveIntents, ...units]) {
       if (!d.requirements.length) add('PLAN-REQ', d, 1, 'reqNone', { doc: d.id });
       for (const req of d.requirements.filter((r) => !known.has(r))) add('PLAN-REQ', d, keyLine(d, 'requirements'), 'reqUnknown', { doc: d.id, req });
     }
@@ -296,36 +294,37 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   // Each intent ends to end once: an AC at the top level that runs; a unit crossing modules is tested above the
   // first level (docs/design/plan-lint.md).
   const top = topLevel(profile);
+  const ends = (u) => u?.acs.some((a) => a.level === top); // an AC at the top level
   const waived = (i) => GRID.endToEnd.some((k) => i.fm[k]);
   const fixes = new Set(units.filter((u) => !u.fm.intent).map((u) => u.id));
   for (const u of units.filter((x) => x.fm.intent)) for (const dep of u.depends.filter((d) => fixes.has(d))) add('PLAN-INCREMENT', u, keyLine(u, 'depends'), 'planIncrementAhead', { dep });
-  for (const i of intents.filter((x) => x.fm.status !== GRID.dropped && !waived(x))) {
+  for (const i of liveIntents.filter((x) => !waived(x))) {
     const own = units.filter((u) => u.fm.intent === i.id);
     // A line under # Increments opens with its id, in order; a v1 intent's # Slices lines carry none (docs/design/increments-and-bolts.md).
     if (inForce(i, 'planIncrementId') && sectionOf(i.doc, GRID.increments[0]).length) incrementLines(i).forEach((l, k) => { const expected = `${i.id}.${k + 1}`; if (l.id !== expected) add('PLAN-INCREMENT', i, l.n, 'planIncrementId', { n: l.n, found: l.id ?? l.name.split(' ')[0], expected }); });
-    if (top && own.length && !own.some((u) => u.acs.some((a) => a.level === top))) add('PLAN-INCREMENT', i, 1, 'planIncrementIntent', { level: top });
+    if (top && own.length && !own.some(ends)) add('PLAN-INCREMENT', i, 1, 'planIncrementIntent', { level: top });
     // A walking skeleton first: the first end-to-end AC waits on at most half the intent's product units (second project).
     const made = new Set(own.filter((u) => u.scope.some((s) => productGlobs(profile).some((g) => overlaps(s, g)))).map((u) => u.id));
-    const wait = Math.min(...own.filter((u) => u.acs.some((a) => a.level === top)).map((u) => [...reachable(own)(u.id)].filter((d) => made.has(d)).length));
+    const wait = Math.min(...own.filter(ends).map((u) => [...reachable(own)(u.id)].filter((d) => made.has(d)).length));
     if (top && made.size > 2 && wait > made.size / 2) add('PLAN-SKELETON', i, 1, 'planSkeleton', { level: top, wait, units: made.size });
     // Each increment is proven end to end: every bolt on one, a top-level AC among them, none waiting on a later one.
     if (!top || !made.size) continue;
     const written = incrementLines(i), lines = written.length ? written : [{ n: 1, ids: own.map((u) => u.id) }]; // no section: one increment
     const slot = new Map(lines.flatMap((l, k) => l.ids.map((id) => [id, k])));
     for (const u of written.length ? own.filter((x) => !slot.has(x.id)) : []) add('PLAN-INCREMENT', u, 1, 'planIncrementsOff', { intent: i.id });
-    const proven = (id) => all.find((x) => x.id === id)?.acs.some((a) => a.level === top);
+    const proven = (id) => ends(all.find((x) => x.id === id));
     lines.forEach((l, k) => { if (written.length && l.ids.length && !l.ids.some(proven)) add('PLAN-INCREMENT', i, l.n, 'planIncrementsLayer', { increment: l.id ?? k + 1, bolts: l.ids.join(', '), level: top }); });
     for (const u of own) for (const dep of u.depends.filter((d) => slot.get(d) > slot.get(u.id))) add('PLAN-INCREMENT', u, keyLine(u, 'depends'), 'planIncrementsOrder', { dep });
     // A bolt with no top-level AC sits on an increment only if a bolt of it with one depends on it (U131).
     const reach = reachable(all);
     for (const u of own.filter((x) => slot.has(x.id) && !proven(x.id))) {
-      const l = lines[slot.get(u.id)], ends = l.ids.filter(proven);
-      if (ends.length && !ends.some((id) => reach(id).has(u.id))) add('PLAN-INCREMENT', u, keyLine(u, 'depends'), 'planIncrementLoose', { increment: l.id ?? slot.get(u.id) + 1, level: top });
+      const l = lines[slot.get(u.id)], tops = l.ids.filter(proven);
+      if (tops.length && !tops.some((id) => reach(id).has(u.id))) add('PLAN-INCREMENT', u, keyLine(u, 'depends'), 'planIncrementLoose', { increment: l.id ?? slot.get(u.id) + 1, level: top });
     }
   }
   // The waiver is for work outside the running product: a new unit reaching a module or a one-way door voids it.
   const product = productGlobs(profile);
-  for (const i of top ? intents.filter((x) => x.fm.status !== GRID.dropped && waived(x)) : []) {
+  for (const i of top ? liveIntents.filter(waived) : []) {
     for (const u of units.filter((x) => x.fm.intent === i.id && !x.fm.verified_hash)) {
       const area = product.find((g) => u.scope.some((s) => overlaps(s, g)));
       if (area) add('PLAN-INCREMENT', u, keyLine(u, 'scope'), 'planIncrementWaiver', { intent: i.id, glob: u.scope.find((s) => overlaps(s, area)), area, level: top });
@@ -333,7 +332,7 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
   }
   // With a deploy, each live intent links its runbook and the profile says where the target is defined (docs/design/operations.md).
   const live = (i) => units.some((u) => u.fm.intent === i.id) || !all.some((u) => u.fm.intent === i.id);
-  for (const i of profile.deploy ? intents.filter((x) => x.fm.status !== GRID.dropped && live(x) && !shipsNothing(all.filter((u) => u.fm.intent === x.id), profile)) : []) {
+  for (const i of profile.deploy ? liveIntents.filter((x) => live(x) && !shipsNothing(all.filter((u) => u.fm.intent === x.id), profile)) : []) {
     if (!linksOf(i, bundle).some((f) => existsSync(f) && parseDoc(readFileSync(f, 'utf8')).fm?.type === GRID.runbookType)) add('PLAN-RUNBOOK', i, 1, 'planRunbook', {});
     if (!Object.hasOwn(profile.deploy, 'platform')) add('PLAN-PLATFORM', i, 1, 'planPlatform', {});
   }
@@ -436,19 +435,12 @@ function noRun(cwd, bundle, profile, skip) {
 export const commands = {
   lane(args, { cwd }) {
     const { profile } = loadProfile(cwd);
-    let items;
-    let paths = false;
-    if (args[0] === '--diff') {
-      paths = true;
-      if (!args[1]) throw new UsageError(msg('laneUsage', {}));
-      items = git(cwd, 'diff', '--name-only', args[1]).split('\n').filter(Boolean);
-    } else if (args[0]) {
-      const bundle = bundleOf(cwd, profile);
-      const unit = readPlan(bundle).units.find((u) => u.id === args[0]);
-      if (!unit) throw new UsageError(msg('unknownUnit', { name: args[0], dir: relPath(cwd, join(bundle, GRID.units)) }));
-      items = unit.scope;
-    } else throw new UsageError(msg('laneUsage', {}));
-    return done(msg('laneLine', computeLane(items, profile, { paths })));
+    if (!args[0] || (args[0] === '--diff' && !args[1])) throw new UsageError(msg('laneUsage', {}));
+    if (args[0] === '--diff') return done(msg('laneLine', computeLane(git(cwd, 'diff', '--name-only', args[1]).split('\n').filter(Boolean), profile, { paths: true })));
+    const bundle = bundleOf(cwd, profile);
+    const unit = readPlan(bundle).units.find((u) => u.id === args[0]);
+    if (!unit) throw new UsageError(msg('unknownUnit', { name: args[0], dir: relPath(cwd, join(bundle, GRID.units)) }));
+    return done(msg('laneLine', computeLane(unit.scope, profile)));
   },
 
   // Plan lint for `check`: a directory is linted as a bundle; a file inside the profile's bundle reports only itself.
@@ -459,11 +451,11 @@ export const commands = {
     const skip = [...state.mergedUnits(cwd, profile.base).keys()]; // merged units are history
     const paths = args.filter((a) => !a.startsWith('--')).map((a) => resolve(cwd, a));
     const findings = [];
-    for (const p of (paths.length ? paths : [bundle]).filter((x) => existsSync(x) && statSync(x).isDirectory())) findings.push(...lintPlan(p, profile, { base: cwd, skip }), ...noRun(cwd, p, profile, skip));
+    const dirs = (paths.length ? paths : [bundle]).filter((x) => existsSync(x) && statSync(x).isDirectory());
+    for (const p of dirs) findings.push(...lintPlan(p, profile, { base: cwd, skip }), ...noRun(cwd, p, profile, skip));
     const docs = paths.filter((p) => existsSync(p) && !statSync(p).isDirectory() && p.startsWith(bundle + sep));
     const wanted = new Set([...withIntents(bundle, docs)].map((f) => relPath(cwd, f)));
     if (docs.length) findings.push(...lintPlan(bundle, profile, { base: cwd, skip }).filter((f) => wanted.has(f.path)));
-    const dirs = (paths.length ? paths : [bundle]).filter((x) => existsSync(x) && statSync(x).isDirectory());
     const mds = dirs.flatMap((d) => readdirSync(d, { recursive: true }).map((f) => join(d, f)).filter((f) => f.endsWith('.md') && f.startsWith(bundle + sep)));
     findings.push(...state.stampFindings(cwd, profile, [...new Set([...mds, ...docs])]));
     // Size every unit not yet merged: before the owner's round, and after a rule or template change grew an approved card.

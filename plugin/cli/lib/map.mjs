@@ -59,20 +59,19 @@ export function mapText(cwd, profile) {
   return pages.map((pg) => ({ ...pg, body: msg(pg.body, { tree: lines.join('\n'), flow, table, bands, matrix, links: pages.filter((x) => x !== pg).map(link) }) }));
 }
 
-// Writes each page whose body changed; returns the files written.
-export function writeMap(cwd, profile) {
-  const written = [];
-  for (const pg of mapText(cwd, profile) ?? []) {
-    const file = join(bundleOf(cwd, profile), pg.file);
-    const old = existsSync(file) ? parseDoc(readFileSync(file, 'utf8')) : null;
-    if (old?.fm && old.lines.slice(old.body).join('\n') === pg.body && old.fm.generated?.digest) continue;
-    mkdirSync(dirname(file), { recursive: true });
-    const version = existsSync(join(CLI_DIR, M.versionFile)) ? readFileSync(join(CLI_DIR, M.versionFile), 'utf8').trim() : readJson(join(CLI_DIR, M.manifest))?.version;
-    writeFileSync(file, msg('mapDoc', { ...pg, producer: msg('producer', { version }), digest: digestOf(pg.body), at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') }));
-    written.push(file);
-  }
-  return written;
+// Writes a generated page when its body changed, with its producer and digest; returns the files written. The map
+// also rewrites a page from before generated docs carried a digest.
+function writePage(file, body, key, data = {}, digested = false) {
+  const old = existsSync(file) ? parseDoc(readFileSync(file, 'utf8')) : null;
+  if (old?.fm && old.lines.slice(old.body).join('\n') === body && (!digested || old.fm.generated?.digest)) return [];
+  mkdirSync(dirname(file), { recursive: true });
+  const version = existsSync(join(CLI_DIR, M.versionFile)) ? readFileSync(join(CLI_DIR, M.versionFile), 'utf8').trim() : readJson(join(CLI_DIR, M.manifest))?.version;
+  writeFileSync(file, msg(key, { ...data, body, producer: msg('producer', { version }), digest: digestOf(body), at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') }));
+  return [file];
 }
+
+export const writeMap = (cwd, profile) => (mapText(cwd, profile) ?? [])
+  .flatMap((pg) => writePage(join(bundleOf(cwd, profile), pg.file), pg.body, 'mapDoc', pg, true));
 
 export const commands = {
   map(args, { cwd }) {
@@ -86,13 +85,7 @@ export function writeGlossary(cwd, profile) {
   const entries = glossaryOf(bundleOf(cwd, profile));
   if (!entries.length) return [];
   const body = msg('glossaryBody', { rows: entries.map((e) => msg('glossaryRow', { ...e, avoid: e.synonyms.join(', ') || '-' })).join('') });
-  const file = join(bundleOf(cwd, profile), config.naming.glossary.file);
-  const old = existsSync(file) ? parseDoc(readFileSync(file, 'utf8')) : null;
-  if (old?.fm && old.lines.slice(old.body).join('\n') === body) return [];
-  mkdirSync(dirname(file), { recursive: true });
-  const version = existsSync(join(CLI_DIR, M.versionFile)) ? readFileSync(join(CLI_DIR, M.versionFile), 'utf8').trim() : readJson(join(CLI_DIR, M.manifest))?.version;
-  writeFileSync(file, msg('glossaryDoc', { body, digest: digestOf(body), producer: msg('producer', { version }), at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') }));
-  return [file];
+  return writePage(join(bundleOf(cwd, profile), config.naming.glossary.file), body, 'glossaryDoc');
 }
 
 // The context map: each domain doc's relationships (`- <domain>: upstream|downstream, <pattern>`), drawn upstream to
@@ -107,10 +100,5 @@ export function writeContextMap(cwd, profile) {
     if (m && codes.includes(m[1])) edges.add(m[2] === 'upstream' ? `  ${m[1]} -->|${m[3]}| ${d.fm.code}\n` : `  ${d.fm.code} -->|${m[3]}| ${m[1]}\n`);
   }
   const body = msg('contextMapBody', { nodes: codes.map((c) => `  ${c}[${c}]\n`).join(''), edges: [...edges].sort().join('') });
-  const file = join(bundle, G.contextMap), old = existsSync(file) ? parseDoc(readFileSync(file, 'utf8')) : null;
-  if (old?.fm && old.lines.slice(old.body).join('\n') === body) return [];
-  mkdirSync(dirname(file), { recursive: true });
-  const version = existsSync(join(CLI_DIR, M.versionFile)) ? readFileSync(join(CLI_DIR, M.versionFile), 'utf8').trim() : readJson(join(CLI_DIR, M.manifest))?.version;
-  writeFileSync(file, msg('contextMapDoc', { body, digest: digestOf(body), producer: msg('producer', { version }), at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') }));
-  return [file];
+  return writePage(join(bundle, G.contextMap), body, 'contextMapDoc');
 }

@@ -26,12 +26,14 @@ export function questionsOf(doc) {
   }
   return out;
 }
+// An answer names one of its question's option letters.
+const answered = (q) => q.answer && q.options.includes(q.answer.match(/^([a-z])\b/)?.[1]);
 
 // The findings, through `add(code, doc, line, key, data)` and `inForce(intent, key)` from plan lint.
 export function lintInception({ bundle, profile, intents, requirements, merged, add, inForce, incrementLines, keyLine }) {
   const v2 = Boolean(profile.system);
   const decisions = docsIn(bundle, config.grid.decisions).map((d) => ({ ...d, id: d.name.slice(0, 4), fm: d.doc.fm, stale: Boolean(d.doc.fm.verified_hash) && d.doc.fm.verified_hash !== hashDoc(d.doc) }));
-  const domains = docsIn(bundle, F.Domain).map((d) => ({ ...d, id: String(d.doc.fm.code ?? d.name.replace(/\.md$/, '')), code: String(d.doc.fm.code ?? d.name.replace(/\.md$/, '')), owns: bullets(d.doc, P.owns).map(([, t]) => t.match(/`([^`]+)`/)?.[1]).filter(Boolean) }));
+  const domains = docsIn(bundle, F.Domain).map((d) => ({ ...d, code: String(d.doc.fm.code ?? d.name.replace(/\.md$/, '')) })).map((d) => ({ ...d, id: d.code, owns: bullets(d.doc, P.owns).map(([, t]) => t.match(/`([^`]+)`/)?.[1]).filter(Boolean) }));
   const facts = new Map(docsIn(bundle, F.Fact).map((d) => [d.name.match(/^(F-\d+)/)?.[1], d]));
   const stale = (fact) => (Date.now() - Date.parse(fact.doc.fm.at)) / 864e5 > Number(profile.facts?.maxAgeDays ?? P.maxAgeDays);
   const owners = new Map();
@@ -62,7 +64,7 @@ export function lintInception({ bundle, profile, intents, requirements, merged, 
   for (const i of intents.filter((x) => x.fm.status !== config.grid.dropped)) {
     const qs = questionsOf(i.doc);
     for (const q of qs.filter((x) => !x.answer)) add('ELAB-OPEN', i, q.n, 'elabOpen', { q: q.id });
-    for (const q of qs.filter((x) => x.answer && !x.options.includes(x.answer.match(/^([a-z])\b/)?.[1]))) add('ELAB-BARE', i, q.n, 'elabBare', { q: q.id, answer: q.answer, options: q.options.join(', ') || '-' });
+    for (const q of qs.filter((x) => x.answer && !answered(x))) add('ELAB-BARE', i, q.n, 'elabBare', { q: q.id, answer: q.answer, options: q.options.join(', ') || '-' });
     if (!v2 || !inForce(i, 'pathwaySkip')) continue; // a v1 project keeps its intents until it migrates (decision 0013)
     const incs = incrementLines(i).length, doms = list(i.fm.domains);
     if (incs > P.maxIncrements || doms.length > P.maxDomains) add('INTENT-SIZE', i, 1, 'intentSize', { increments: incs, domains: doms.length, maxIncrements: P.maxIncrements, maxDomains: P.maxDomains });
@@ -71,7 +73,7 @@ export function lintInception({ bundle, profile, intents, requirements, merged, 
     if (!P.pathways[pathway]) { add('PATHWAY-SKIP', i, 1, 'pathwayNone', { pathways: Object.keys(P.pathways).join(', ') }); continue; }
     const cited = decisions.filter((d) => i.doc.lines.some((l) => l.includes(d.name)));
     const steps = {
-      questions: () => qs.every((q) => q.answer && q.options.includes(q.answer.match(/^([a-z])\b/)?.[1])),
+      questions: () => qs.every(answered),
       domains: () => doms.every((c) => domains.some((d) => d.code === c)),
       facts: () => cited.every((d) => !factProblems(d).length),
       map: () => [config.map.file, config.map.fileV2].some((f) => existsSync(join(bundle, f))),
