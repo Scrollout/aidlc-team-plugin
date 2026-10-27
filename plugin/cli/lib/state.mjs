@@ -7,7 +7,7 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { bundleOf, config, QUICK, VERDICT, done, git, gitLines, isMap, list, readJson, readStdin, tryGit, UsageError, relPath } from './config.mjs';
 import { finding as codeFinding, msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
-import { linksOf, parseDoc, sectionOf, sizeCap } from './okf.mjs';
+import { hashDoc, linksOf, parseDoc, sectionOf, sizeCap } from './okf.mjs';
 import { boardBehind } from './board.mjs';
 import { acsOf, computeLane, incrementSection, inside, lintPlan, overlaps, readPlan, reqId as reqIdOf, productGlobs, testsOnly, withIntents } from './grid.mjs';
 
@@ -132,13 +132,9 @@ function mutationProblems(cwd, profile, unit, mutations) {
 
 // ---- Approvals ----
 
-const sortKeys = (v) => (Array.isArray(v) ? v.map(sortKeys) : isMap(v) ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, sortKeys(v[k])])) : v);
+export { hashDoc } from './okf.mjs';
 export const events = (fm) => (isMap(fm.verified) ? [fm.verified] : Array.isArray(fm.verified) ? fm.verified.filter(isMap) : []);
 
-export function hashDoc(doc) {
-  const fm = Object.fromEntries(Object.entries(doc.fm ?? {}).filter(([k]) => !S.hashExclude.includes(k)));
-  return sha256(JSON.stringify(sortKeys(fm)) + '\n' + doc.lines.slice(doc.body).join('\n'));
-}
 
 // approved: a human `verified` event and a matching hash; stale: approved once, changed since.
 export function approval(doc) {
@@ -688,6 +684,17 @@ export const commands = {
       const error = errors.find((f) => wanted.has(f.path));
       if (error) throw new UsageError(msg('approveLint', error));
     }
+    // One-way doors one at a time, and none while its intent's design review has an open confirmed finding (decision 0015).
+    const named = args.filter((a) => a !== S.autoFlag).map((n) => [n, findDoc(cwd, bundle, n)]).map(([n, f]) => [n, f, parseDoc(readFileSync(f, 'utf8'))]);
+    const doors = named.filter(([, , d]) => d.fm?.oneWayDoor === true).map(([n]) => n);
+    if (doors.length > 1) throw new UsageError(msg('approveBulk', { docs: doors.join(', ') }));
+    for (const [n, f, d] of named) {
+      const intents = d.fm?.type === S.intentType ? [d.fm.id ?? basename(f).match(/^(I-\d+)/)?.[1]] : d.fm?.oneWayDoor === true ? readPlan(bundle).intents.filter((i) => i.doc.lines.some((l) => l.includes(basename(f)))).map((i) => i.id) : [];
+      for (const intent of intents.filter(Boolean)) {
+        const open = (readJson(runtimeFile(cwd, 'design', intent))?.findings ?? []).filter((x) => x.confidence === S.confirmed && !x.disposition);
+        if (open.length) throw new UsageError(msg('approveOpen', { doc: n, intent, findings: open.map((x) => x.id).join(', ') }));
+      }
+    }
     // All or nothing: every doc is checked before any is written; a doc named twice is stamped once.
     const writes = new Map();
     for (const name of args.filter((a) => a !== S.autoFlag)) {
@@ -709,8 +716,27 @@ export const commands = {
     for (const [file, stamped] of writes) {
       writeFileSync(file, stamped);
       out += msg('approved', { doc: relPath(cwd, file) });
+      // Approving a decision that supersedes another marks the older one superseded, never edits its content (decision 0013).
+      const sup = parseDoc(stamped).fm?.supersedes, old = sup !== undefined && readdirSync(dirname(file)).find((f) => f.startsWith(`${String(sup).padStart(4, '0')}-`));
+      if (old) {
+        const path = join(dirname(file), old), text = readFileSync(path, 'utf8').replace(/^status: .*$/m, `status: ${config.inception.superseded}`);
+        writeFileSync(path, /^superseded_by:/m.test(text) ? text : text.replace(/^status: .*$/m, (s) => `${s}\nsuperseded_by: "${basename(file).slice(0, 4)}"`));
+        out += msg('supersededBy', { old: relPath(cwd, path), doc: relPath(cwd, file) });
+      }
     }
     return done(out);
+  },
+
+  // The owner's disposition of a finding: an intent's design review, or a bolt's latest review round.
+  dispose(args, { cwd }) {
+    const [id, fid, disposition, reason] = args;
+    if (!id || !/^F-\d+$/.test(fid ?? '') || !config.state.dispositions.includes(disposition) || !reason) usage('disposeUsage');
+    const design = /^I-\d+$/.test(id), file = runtimeFile(cwd, design ? 'design' : 'reviews', id), data = readJson(file);
+    const list = design ? data?.findings : data?.rounds?.at(-1)?.findings, k = Number(fid.slice(2)) - 1;
+    if (!list?.[k]) usage('disposeUsage');
+    list[k] = { ...list[k], disposition, reason, by: tryGit(cwd, 'config', 'user.email'), at: new Date().toISOString() };
+    writeJson(file, data);
+    return done(msg('disposed', { id, finding: fid, disposition, reason }));
   },
 
   delegate(args, { cwd }) {
@@ -767,6 +793,12 @@ export const commands = {
     if (sub !== 'record' || !unit || !file) throw new UsageError(msg('reviewUsage', {}));
     if (file !== S.stdin && !existsSync(resolve(cwd, file))) throw new UsageError(msg('noSuchPath', { name: file }));
     const data = parseObject(file === S.stdin ? readStdin(ctx) : readFileSync(resolve(cwd, file), 'utf8'), file);
+    // An intent's design review: the architecture pass over its decision set, each finding numbered (docs/design/inception.md#approval).
+    if (/^I-\d+$/.test(unit)) {
+      const findings = (data.findings ?? []).map((f, k) => ({ ...f, id: `F-${k + 1}` }));
+      writeJson(runtimeFile(cwd, 'design', unit), { intent: unit, findings, at: new Date().toISOString() });
+      return done(msg('recordedDesign', { intent: unit, count: findings.length, confirmed: findings.filter((f) => f.confidence === S.confirmed).length }));
+    }
     if (!Object.values(VERDICT).includes(data.verdict)) throw new UsageError(msg('badVerdict', { verdicts: Object.values(VERDICT).join(', ') }));
     const { profile } = loadProfile(cwd);
     if (!tryGit(cwd, 'rev-parse', '-q', '--verify', branchOf(unit))) throw new UsageError(msg('noBranch', { branch: branchOf(unit) }));

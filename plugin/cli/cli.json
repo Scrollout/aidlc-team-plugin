@@ -171,6 +171,16 @@
       "does": "write a kind's templates from the stack pack, named from the registry; never overwrites"
     },
     {
+      "name": "fact",
+      "usage": "fact \"<title>\" --env <environment> -- <command>",
+      "does": "run a read-only probe on the target and record its output as a platform fact"
+    },
+    {
+      "name": "dispose",
+      "usage": "dispose <I-n|B-n> F-<k> fixed|accepted \"<reason>\"",
+      "does": "record the owner's disposition of a review finding"
+    },
+    {
       "name": "new",
       "usage": "new bolt \"<title>\"",
       "does": "write a draft bolt B-<n> under bolts/, the next free number, named from its title"
@@ -573,6 +583,8 @@
     "contractNextLink": "{{at}}: a list (value) without nextLink",
     "contractUnreadable": "the document cannot be read: {{error}}",
     "gateSynonym": "{{path}}:{{line}} says {{word}}, a synonym of {{term}} in the {{domain}} glossary",
+    "contextMapDoc": "---\ntype: Map\ntitle: Context map\ndescription: The domains and how each relates to its neighbours, upstream to downstream with the pattern between them; drawn from the domain docs at every merge, never by hand.\ngenerated: { by: {{producer}}, at: {{at}}, digest: {{digest}} }\n---\n{{body}}",
+    "contextMapBody": "\n**TL;DR:** Each domain and its relationships, upstream to downstream, labelled with the pattern between them.\n\n# Context map\n```mermaid\nflowchart LR\n{{nodes}}{{edges}}```\n",
     "glossaryDoc": "---\ntype: Glossary\ntitle: Glossary\ndescription: Every term the domains use, with its one meaning and the synonyms to avoid; written from the domain docs, never by hand.\ngenerated: { by: {{producer}}, at: {{at}}, digest: {{digest}} }\n---\n{{body}}",
     "glossaryBody": "\n**TL;DR:** One term, one meaning: each domain's words, the synonyms the gate refuses, and the meaning.\n\n# Terms\n| Term | Domain | Avoid | Meaning |\n|---|---|---|---|\n{{rows}}",
     "glossaryRow": "| **{{term}}** | {{domain}} | {{avoid}} | {{meaning}} |\n",
@@ -594,6 +606,33 @@
     "planBoltLegacy": "{{unit}} is new under units/: a v2 project writes its work items as bolts, aidlc new bolt \"<title>\"",
     "newUsage": "usage: aidlc new bolt \"<title>\"",
     "newWrote": "wrote {{path}}, a draft {{id}}: fill its intent, increment, scope and ACs, then aidlc check {{path}}\n",
+    "factUsage": "usage: aidlc fact \"<title>\" --env <environment> -- <read-only command>",
+    "factFailed": "the probe exited {{exit}}: a fact records what a command shows, so fix the command first\n{{output}}",
+    "factWrote": "wrote {{path}}: cite it as {{id}} in the decisions it settles\n",
+    "factDoc": "---\ntype: Fact\ntitle: {{title}}\ndescription: {{description}}\ncommand: {{command}}\nenvironment: {{environment}}\ndigest: {{digest}}\nat: {{at}}\ngenerated: { by: {{producer}}, at: {{at}} }\n---\n\n# Output\n```\n{{output}}\n```\n\n# Settles\n<the decisions or assumptions this fact confirms or refutes>\n",
+    "approveBulk": "APPROVE-BULK: {{docs}} are one-way doors; approve each one on its own, after its options, findings and facts",
+    "approveOpen": "APPROVE-OPEN: {{doc}} waits on the design review of {{intent}}: {{findings}} still open; the owner disposes of each: aidlc dispose {{intent}} F-<k> fixed|accepted \"<reason>\"",
+    "recordedDesign": "recorded the design review of {{intent}}: {{count}} findings, {{confirmed}} confirmed\n",
+    "disposeUsage": "usage: aidlc dispose <I-n|B-n> F-<k> fixed|accepted \"<reason>\"",
+    "disposed": "{{id}} {{finding}}: {{disposition}} ({{reason}})\n",
+    "supersededBy": "{{old}} is superseded by {{doc}}\n",
+    "pathwayNone": "{{unit}} declares no pathway: one of {{pathways}}",
+    "pathwaySkip": "{{unit}} ({{pathway}}) skips its {{step}} step: {{why}}",
+    "intentSize": "{{unit}} has {{increments}} increments and {{domains}} domains, more than {{maxIncrements}} and {{maxDomains}}",
+    "elabOpen": "{{unit}} {{q}} has no answer",
+    "elabBare": "{{unit}} {{q}}: the answer {{answer}} names none of the options {{options}}",
+    "domainData": "table {{table}} has two owners: {{owners}}",
+    "domainTerm": "the term {{term}} has two meanings, in {{domains}}",
+    "domainReq": "{{unit}} cites {{req}}, which names no domain",
+    "factMissing": "{{unit}} affects the platform and cites no fact",
+    "factStale": "{{unit}} cites {{fact}}, older than {{days}} days",
+    "docAmend": "{{unit}} is approved and was edited: supersede it, never amend it",
+    "decisionHorizon": "{{unit}} serves only {{serves}}, beyond the next {{horizon}} increments from {{next}}",
+    "docRef": "{{unit}} {{key}}: {{ref}} is no {{type}}",
+    "coherenceTx": "{{unit}} keeps a transaction across {{domains}}: one domain owns each transaction",
+    "coherenceDep": "{{unit}} has {{dep}}, a {{fromKind}} on a {{toKind}}, which the kind table forbids",
+    "coherenceHorizontal": "{{unit}} gives {{table}} to {{owner}}, a {{kind}}: only a domain owns data",
+    "coherenceTwice": "{{unit}} gives {{table}} to another owner than {{other}} does ({{owners}}), with no supersedes",
     "planIncrementId": "line {{n}} of {{unit}}'s # Increments starts with {{found}}, not {{expected}}: each increment line opens with its id, I-<n>.<k> in order",
     "planDesign": "{{unit}} is {{lane}} lane and has no # {{section}} section with content",
     "cardDataOwned": "- {{module}} owns {{data}}\n",
@@ -865,6 +904,7 @@
     "design": "design",
     "designRows": { "full": ["Domain", "Logical"], "standard": ["Logical"] },
     "decisionType": "Decision",
+    "decisions": "decisions",
     "interfaces": "Interfaces",
     "outOfScope": "Out of scope",
     "increments": ["Increments", "Slices"],
@@ -941,6 +981,58 @@
         "level": "error",
         "fix": "move the work item to bolts/ as B-<n> (aidlc new bolt \"<title>\"); units/ holds only the units a v1 plan approved (docs: Increments and bolts)"
       },
+      "PATHWAY-SKIP": {
+        "level": "error",
+        "fix": "declare the intent's pathway (greenfield, feature, brownfield) and complete each step it requires before approval (docs: Inception)"
+      },
+      "INTENT-SIZE": {
+        "level": "error",
+        "fix": "split the intent: at most 5 increments and 5 domains, each increment with its own success measure"
+      },
+      "ELAB-OPEN": {
+        "level": "error",
+        "fix": "ask the owner and record the answer under the question: - Answer: <letter> \u2026"
+      },
+      "ELAB-BARE": {
+        "level": "error",
+        "fix": "record which option the owner chose, by its letter, then any words of theirs"
+      },
+      "DOMAIN-DATA": {
+        "level": "error",
+        "fix": "give the table one owning domain; the others read it through that domain's client or events"
+      },
+      "DOMAIN-TERM": {
+        "level": "error",
+        "fix": "give the term one meaning, or qualify it per domain (an order in sales, a purchase order in buying)"
+      },
+      "DOMAIN-REQ": {
+        "level": "error",
+        "fix": "name the domains the requirement belongs to in its domains: key"
+      },
+      "FACT-MISSING": {
+        "level": "error",
+        "fix": "probe the target with aidlc fact \"<title>\" -- <read-only command> and cite the fact in the decision's facts:"
+      },
+      "FACT-STALE": {
+        "level": "error",
+        "fix": "probe again with aidlc fact and cite the new fact"
+      },
+      "DOC-AMEND": {
+        "level": "error",
+        "fix": "restore the approved decision and write a new one with supersedes: <its number>; approving it marks the old one superseded"
+      },
+      "DECISION-HORIZON": {
+        "level": "error",
+        "fix": "decide it when its increment is next but one; keep the intent's decisions to the increments being built"
+      },
+      "DESIGN-COHERENCE": {
+        "level": "error",
+        "fix": "make the decisions agree: one domain per transaction and per table, dependencies the kind table allows, or a superseding decision"
+      },
+      "DOC-REF": {
+        "level": "error",
+        "fix": "point the key at an existing doc of the right type, or remove it"
+      },
       "PLAN-INCREMENT": {
         "level": "error",
         "fix": "list the intent's increments under # Increments, each line opening with I-<n>.<k> and naming its bolts with a top-level AC among them, the walking skeleton first; no bolt waits on a later increment or a fix bolt (move what an increment needs into it); an intent without the section is one increment and runs end to end once with a top-level AC (or endToEnd: \"<why>\" outside every module and one-way door); a bolt crossing modules is tested at integration or higher (docs: Increments and bolts)"
@@ -967,6 +1059,7 @@
     "dir": "aidlc",
     "reports": "reports",
     "reviews": "reviews",
+    "design": "design",
     "cards": "cards",
     "heartbeats": "heartbeats",
     "heartbeatMs": 720000,
@@ -984,6 +1077,7 @@
       "verified_hash",
       "status",
       "method",
+      "superseded_by",
       "hold",
       "priority",
       "board"
@@ -994,6 +1088,7 @@
     "refusedLine": ": aidlc ([^()]+)$",
     "testsPlaceholder": "<test globs>",
     "confirmed": "CONFIRMED",
+    "dispositions": ["fixed", "accepted"],
     "statusMax": 1000,
     "openQuestions": "Open questions",
     "approvable": [
@@ -1034,7 +1129,7 @@
     ],
     "upgradeOwnerFlags": ["--downgrade", "--dirty"],
     "unitType": "Unit",
-    "approveBlocks": ["PLAN-DECISION", "PLAN-INCREMENT"],
+    "approveBlocks": ["PLAN-DECISION", "PLAN-INCREMENT", "PATHWAY-SKIP", "INTENT-SIZE", "ELAB-OPEN", "ELAB-BARE", "FACT-MISSING", "DOC-AMEND", "DESIGN-COHERENCE"],
     "gates": "gates",
     "reviewing": "reviewing",
     "reviewerLine": "reviewer\n",
@@ -1564,6 +1659,7 @@
     ],
     "owner": [
       "approve",
+      "dispose",
       "upgrade",
       "delegate",
       "mode",
@@ -1671,10 +1767,23 @@
     "dataPrefix": "data/",
     "vendored": ".aidlc/packs"
   },
+  "inception": {
+    "questions": "Questions",
+    "owns": "Owns",
+    "superseded": "superseded",
+    "maxAgeDays": 30,
+    "outputLines": 40,
+    "horizon": 2,
+    "maxIncrements": 5,
+    "maxDomains": 5,
+    "pathways": { "greenfield": ["questions", "domains", "facts"], "feature": ["questions", "domains", "facts"], "brownfield": ["map", "kinds", "questions", "domains", "facts"] },
+    "steps": { "questions": "every question answered by an option", "domains": "a domain doc for each of its domains", "facts": "a platform fact for each decision that affects the platform", "map": "the codebase map written", "kinds": "a kind for every module" }
+  },
   "method": {
-    "version": 2,
-    "since": { "planIncrementId": 2 },
+    "version": 3,
+    "since": { "planIncrementId": 2, "pathwaySkip": 3 },
     "changes": {
+      "3": "intents declare a pathway and its steps (answered questions, domain docs, platform facts), a size, and decisions that cohere (docs: Inception)",
       "2": "intents ship # Increments with ids I-<n>.<k>; work items are bolts B-<n> under bolts/; modules take a kind; the profile takes system (docs: Canonical model)"
     }
   },
@@ -1695,6 +1804,8 @@
     },
     "glossary": {
       "file": "naming/glossary.md",
+      "contextMap": "architecture/context-map.md",
+      "relationships": "Relationships",
       "section": "Glossary",
       "entry": "^\\s*[-*]\\s+\\*\\*([^*]+)\\*\\*(?:\\s*\\(not:\\s*([^)]*)\\))?\\s*:\\s*(.+)$"
     },

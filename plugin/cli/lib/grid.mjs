@@ -2,6 +2,7 @@
 // Settings, codes and messages come from cli.json.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve, sep } from 'node:path';
+import { lintInception } from './inception.mjs';
 import { at, bundleOf, config, FULL, QUICK, STANDARD, done, fieldPaths, git, isMap, readJson, tryGit, list, UsageError, relPath } from './config.mjs';
 import { finding as codeFinding, msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
@@ -398,6 +399,8 @@ export function lintPlan(bundle, profile = {}, { skip = [], base = process.cwd()
       add('PLAN-SCOPE', b, keyLine(b, 'scope'), loose ? 'scopeOverlapRoot' : 'scopeOverlap', { glob: pair[1], other: a.id, otherGlob: pair[0], root: loose && '/' + loose[0] });
     }
   }
+  // A deterministic Inception: pathways, answers, domains, facts and decisions that cohere (docs/design/inception.md).
+  lintInception({ bundle, profile, intents, requirements, merged: new Set(skip), add, inForce, incrementLines, keyLine });
   return out;
 }
 

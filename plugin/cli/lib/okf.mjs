@@ -508,6 +508,13 @@ export function docSlug(title) {
   return words.length > OKF.bundle.slugMax ? words.slice(0, OKF.bundle.slugMax + 1).replace(/-[^-]*$/, '') : words;
 }
 
+// A doc's approval hash: its front matter without the stamp and plan fields, keys sorted, and its body (docs/design/approvals.md).
+const sortKeys = (v) => (Array.isArray(v) ? v.map(sortKeys) : isMap(v) ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, sortKeys(v[k])])) : v);
+export function hashDoc(doc) {
+  const fm = Object.fromEntries(Object.entries(doc.fm ?? {}).filter(([k]) => !config.state.hashExclude.includes(k)));
+  return createHash('sha256').update(JSON.stringify(sortKeys(fm)) + '\n' + doc.lines.slice(doc.body).join('\n')).digest('hex');
+}
+
 // A generated doc's digest: its body's, so a hand edit shows (docs/design/bundle.md).
 export const digestOf = (body) => createHash('sha256').update(body).digest('hex').slice(0, 16);
 

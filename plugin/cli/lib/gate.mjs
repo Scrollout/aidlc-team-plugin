@@ -9,7 +9,7 @@ import { loadProfile, withDefaults } from './profile.mjs';
 import { checkBundle, docSlug, nameProblem, parseDoc, writeIndexes } from './okf.mjs';
 import { computeLane, inside, lintPlan, readPlan, runTarget, spansOf } from './grid.mjs';
 import { issueTitle, sync } from './board.mjs';
-import { writeGlossary, writeMap } from './map.mjs';
+import { writeContextMap, writeGlossary, writeMap } from './map.mjs';
 import { generatedRules, glossaryOf } from './naming.mjs';
 import { contractFindings } from './contract.mjs';
 import { kindFindings, layerFindings, reachFindings } from './arch.mjs';
@@ -285,6 +285,7 @@ function runGate(cwd, st, unit) {
   const treeBundle = join(tree, bundleRel);
   writeMap(tree, withDefaults(loadProfile(tree).profile)); // before the indexes, which list it
   writeGlossary(tree, withDefaults(loadProfile(tree).profile));
+  writeContextMap(tree, withDefaults(loadProfile(tree).profile));
   writeIndexes(treeBundle);
   addLogEntry(treeBundle, msg('gateLogEntry', { unit: unit.id, title: String(unit.fm.title ?? '') }));
   for (const command of list(p.regen)) shell(tree, command);

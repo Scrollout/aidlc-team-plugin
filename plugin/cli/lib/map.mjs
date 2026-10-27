@@ -1,11 +1,11 @@
 // The codebase map: the modules as a tree with their data, public paths and dependencies, written from the profile
 // and the dependency graph so it never drifts (docs/design/codebase-map.md).
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { bundleOf, CLI_DIR, config, done, gitLines, list, readJson } from './config.mjs';
 import { msg } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
-import { digestOf, parseDoc } from './okf.mjs';
+import { digestOf, parseDoc, sectionOf } from './okf.mjs';
 import { globRegex, graphOf } from './gate.mjs';
 import { glossaryOf } from './naming.mjs';
 
@@ -76,7 +76,7 @@ export function writeMap(cwd, profile) {
 
 export const commands = {
   map(args, { cwd }) {
-    const profile = withDefaults(loadProfile(cwd).profile), files = [...writeMap(cwd, profile), ...writeGlossary(cwd, profile)];
+    const profile = withDefaults(loadProfile(cwd).profile), files = [...writeMap(cwd, profile), ...writeGlossary(cwd, profile), ...writeContextMap(cwd, profile)];
     return done(msg(files.length ? 'mapWritten' : 'mapSame', { files: files.join(', ') }));
   },
 };
@@ -92,5 +92,25 @@ export function writeGlossary(cwd, profile) {
   mkdirSync(dirname(file), { recursive: true });
   const version = existsSync(join(CLI_DIR, M.versionFile)) ? readFileSync(join(CLI_DIR, M.versionFile), 'utf8').trim() : readJson(join(CLI_DIR, M.manifest))?.version;
   writeFileSync(file, msg('glossaryDoc', { body, digest: digestOf(body), producer: msg('producer', { version }), at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') }));
+  return [file];
+}
+
+// The context map: each domain doc's relationships (`- <domain>: upstream|downstream, <pattern>`), drawn upstream to
+// downstream at every merge (docs/design/inception.md#domains).
+export function writeContextMap(cwd, profile) {
+  const bundle = bundleOf(cwd, profile), dir = join(bundle, config.okf.bundle.folders.Domain), G = config.naming.glossary;
+  const docs = existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith('.md') && f !== config.okf.index).sort().map((f) => parseDoc(readFileSync(join(dir, f), 'utf8'))).filter((d) => d.fm?.code) : [];
+  if (!docs.length) return [];
+  const codes = docs.map((d) => String(d.fm.code)), edges = new Set();
+  for (const d of docs) for (const [, t] of sectionOf(d, G.relationships)) {
+    const m = t.match(/^\s*[-*]\s+([a-z][a-z0-9]*):\s*(upstream|downstream)\s*,\s*([^<>\n]+?)\s*$/);
+    if (m && codes.includes(m[1])) edges.add(m[2] === 'upstream' ? `  ${m[1]} -->|${m[3]}| ${d.fm.code}\n` : `  ${d.fm.code} -->|${m[3]}| ${m[1]}\n`);
+  }
+  const body = msg('contextMapBody', { nodes: codes.map((c) => `  ${c}[${c}]\n`).join(''), edges: [...edges].sort().join('') });
+  const file = join(bundle, G.contextMap), old = existsSync(file) ? parseDoc(readFileSync(file, 'utf8')) : null;
+  if (old?.fm && old.lines.slice(old.body).join('\n') === body) return [];
+  mkdirSync(dirname(file), { recursive: true });
+  const version = existsSync(join(CLI_DIR, M.versionFile)) ? readFileSync(join(CLI_DIR, M.versionFile), 'utf8').trim() : readJson(join(CLI_DIR, M.manifest))?.version;
+  writeFileSync(file, msg('contextMapDoc', { body, digest: digestOf(body), producer: msg('producer', { version }), at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') }));
   return [file];
 }

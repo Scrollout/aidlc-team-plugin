@@ -29,6 +29,8 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 | `priority <unit> <n>` | records `priority: <n>` in the plan, higher first | lead |
 | `name <kind> [--<flag> <value>]…` | a name from the grammar and registry; the flags each kind needs are in `cli.json` ([Naming](naming.md)) | lead, builder |
 | `new bolt "<title>"` | a draft `B-<n>`, named from its title | lead |
+| `fact "<title>" --env <environment> -- <command>` | runs a read-only probe on the target and records its output as a platform fact ([Inception](inception.md)) | lead |
+| `dispose <I-n\|B-n> F-<k> fixed\|accepted "<reason>"` | records the owner's disposition of a review finding | owner (prompt) |
 | `graph` | the dependency graph the stack pack reads from source, imports and data ([Stack packs](stack-packs.md)) | gate, lead |
 | `scaffold <kind> <name> [--domain d]` | a kind's templates from the stack pack, named from the registry; never overwrites | lead, builder |
 | `fix "<title>"\|--from-issue <n> --scope <glob>… [--requirement R-<n>…] [--after <intent>]` | a fix (a bolt in a v2 project) without an intent; from an issue, titled and linked like it; `--after` links the release it fixes; prints its plan lint findings ([Everyday paths](paths.md#fixes-without-an-intent)) | lead |
