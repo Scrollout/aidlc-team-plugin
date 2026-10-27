@@ -13,6 +13,8 @@ import { inside, overlaps } from '../foundation/glob.mjs';
 import { baseOf, baseRedFile, branchOf, ciFile, heartbeatAt, heartbeatFresh, hostDeniedFile, mergedUnits, runtimeFile, worktrees } from '../foundation/store.mjs';
 import { acsKept, approval, approvedAt, delegated, findDoc, ownerLines, reviewDue } from './approval.mjs';
 import { diffHash, keptPass, readReview, reviewFocuses, roundsOf, untagged, verdictCurrent } from './review.mjs';
+
+const ST = config.state.names; // the lifecycle states, by name
 const S = config.state, CI = config.ci.states;
 const DATE = /^\d{4}-\d{2}-\d{2}$/; // an escape hatch's until
 
@@ -49,15 +51,15 @@ export function readState(cwd, { now = Date.now() } = {}) {
     const relaunched = (at) => fresh && heartbeatAt(cwd, u.id, S.launches) > at;
     let state;
     let focus = null, focuses = [];
-    if (merged.has(u.id)) state = 'merged';
-    else if (needsApproval && approvalState !== 'approved') state = approvalState;
+    if (merged.has(u.id)) state = ST.merged;
+    else if (needsApproval && approvalState !== ST.approved) state = approvalState;
     // A builder that stopped hands the unit back to the lead until the owner re-approves its fixed spec.
     // A builder launched after the stop report has taken over: the unit reads as building. The launch mark, not the
     // heartbeat, decides: the stopped builder's own last calls touch the heartbeat after its report.
     else if (report?.status === S.stopped && Date.parse(report.at) > approvedAt(u.doc)
       && !(review?.rounds ?? []).some((r) => r.at > report.at)
-      && !(heartbeatAt(cwd, u.id, S.launches) > Date.parse(report.at))) state = 'stopped';
-    else if (!u.depends.every((d) => merged.has(d))) state = 'blocked';
+      && !(heartbeatAt(cwd, u.id, S.launches) > Date.parse(report.at))) state = ST.stopped;
+    else if (!u.depends.every((d) => merged.has(d))) state = ST.blocked;
     else if (branches.has(branchOf(u.id))) {
       // The last verdict of each required focus, counted only while it is for the current diff.
       // A quick-lane unit gets no review: its report alone makes it ready to merge.
@@ -74,26 +76,26 @@ export function readState(cwd, { now = Date.now() } = {}) {
       // A builder launched after the last verdict and the last report is at work on a new diff, whatever verdict a
       // focus kept: no review of a head it is still moving (U130).
       const atWork = relaunched(Date.parse(lastAt ?? 0)) && relaunched(Date.parse(report?.at ?? 0));
-      if (has(VERDICT.escalate)) state = 'escalated';
-      else if (atWork && review?.rounds?.length) state = 'building';
+      if (has(VERDICT.escalate)) state = ST.escalated;
+      else if (atWork && review?.rounds?.length) state = ST.building;
       // A fix round is in flight once a builder was launched after the verdict: the builder that reported before
       // the review keeps its heartbeat fresh for minutes (docs/design/in-flight.md).
       else if (has(VERDICT.fix)) {
         const fixAt = Math.max(0, ...(review?.rounds ?? []).filter((r) => r.verdict === VERDICT.fix).map((r) => Date.parse(r.at)));
-        state = relaunched(fixAt) ? 'building' : 'fix';
+        state = relaunched(fixAt) ? ST.building : ST.fix;
       }
       else if (!focus && (!quick || report)) {
         const gate = readJson(runtimeFile(cwd, 'gates', u.id));
         // A builder launched after the gate refused it is a fix round in flight, not a merge to offer again.
-        if (gate?.at && relaunched(Date.parse(gate.at))) state = 'building';
+        if (gate?.at && relaunched(Date.parse(gate.at))) state = ST.building;
         // Refused only for a red base, it stays refused until a merge lands: a plan commit does not fix the base (U145).
-        else state = gate?.diffHash === hash && (gate.base === tryGit(cwd, 'rev-parse', base) || (gate.codes.every((c) => c === 'GATE-BASE') && noMergeSince(cwd, gate.base, base))) ? 'gated' : 'reviewed';
+        else state = gate?.diffHash === hash && (gate.base === tryGit(cwd, 'rev-parse', base) || (gate.codes.every((c) => c === 'GATE-BASE') && noMergeSince(cwd, gate.base, base))) ? ST.gated : ST.reviewed;
       }
       else if (has(VERDICT.pass) || has(S.answered) || (report && report.status !== S.stopped && (!lastAt || report.at > lastAt) && Date.parse(report.at) > approvedAt(u.doc))) {
-        state = heartbeatFresh(cwd, u.id, now, S.reviewing) ? 'reviewing' : 'reported';
+        state = heartbeatFresh(cwd, u.id, now, S.reviewing) ? ST.reviewing : ST.reported;
       }
-      else state = 'building';
-    } else state = fresh ? 'building' : 'approved';
+      else state = ST.building;
+    } else state = fresh ? ST.building : ST.approved;
     return { ...u, lane, state, focus, focuses, fresh, report, review, held: Boolean(u.fm.hold) && !answered.has(researchOf(u)) }; // an answered research hold no longer holds
   });
 
@@ -102,7 +104,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
     // An increment line naming no bolt is an increment still to cut: the intent is not done (docs/design/increments-and-bolts.md).
     const ids = new RegExp(config.grid.lineIds, 'g');
     const uncut = incrementSection(i.doc).map(([, t]) => t.trim()).filter((t) => /^([-*]|\d+\.)\s/.test(t) && !t.match(ids));
-    const complete = own.length > 0 && own.every((u) => u.state === 'merged') && !uncut.length;
+    const complete = own.length > 0 && own.every((u) => u.state === ST.merged) && !uncut.length;
     // Released: the owner tagged it, or its recorded release (and smoke) passed (docs/design/operations.md).
     const deploy = readJson(runtimeFile(cwd, 'deploys', i.id)) ?? {};
     const smoked = !profile.deploy?.smoke || (deploy.smoke?.ok && deploy.smoke.at >= deploy.release.at);
@@ -116,7 +118,7 @@ export function readState(cwd, { now = Date.now() } = {}) {
     const incrementDue = !complete && Boolean(profile.deploy || profile.release) && increments.length > 0 && !shipped(increments.flat());
     const released = complete && (nothing || (profile.deploy || profile.release) && Boolean(shipped(own.map((u) => u.id)))
       || own.every((u) => (tryGit(cwd, 'tag', '--contains', merged.get(u.id)) ?? '') !== ''));
-    return { ...i, state: released ? 'released' : complete ? 'merged' : approval(i.doc), units: own, deploy, uncut, incrementDue, shipped };
+    return { ...i, state: released ? ST.released : complete ? ST.merged : approval(i.doc), units: own, deploy, uncut, incrementDue, shipped };
   });
   const requirements = plan.requirements.map((r) => ({ ...r, state: approval(r.doc) }));
   return { cwd, profile, base, bundle, intents, units, requirements, decisions: bundleHeld(bundle), answered, auto: delegated(cwd), mergeUnit: mergeInProgress(cwd, units), ci: ciOf(cwd, profile, base), red: redOf(cwd, base) };
@@ -174,21 +176,21 @@ export function decisionsOf(st, docs) {
   }
   return [...out.values()];
 }
-const citedDecisions = (st, units) => decisionsOf(st, units).filter((d) => approval(d.doc) === 'draft').map((d) => relPath(st.cwd, d.file));
+const citedDecisions = (st, units) => decisionsOf(st, units).filter((d) => approval(d.doc) === ST.draft).map((d) => relPath(st.cwd, d.file));
 
 // The owner gate of steps 2-5 (docs/design/state.md#next) and the docs it waits on, or the lead's own step.
 function gateOf(st, intent, scope) {
   const rel = (dir) => relPath(st.cwd, join(st.bundle, dir)) || dir;
   const gate = (key, docs, data, kind = S.kinds.human) => ({ action: action(kind, key, data), docs: new Set(docs) });
-  const stale = [...st.requirements, ...st.intents, ...st.units, ...st.decisions.filter((d) => d.fm.type === config.grid.decisionType && approval(d.doc) === 'stale').map((d) => ({ ...d, state: 'stale' }))].filter((d) => d.state === 'stale'); // an approved decision edited is the owner's again
+  const stale = [...st.requirements, ...st.intents, ...st.units, ...st.decisions.filter((d) => d.fm.type === config.grid.decisionType && approval(d.doc) === ST.stale).map((d) => ({ ...d, state: ST.stale }))].filter((d) => d.state === ST.stale); // an approved decision edited is the owner's again
   if (stale.length) {
-    const decisions = [...citedDecisions(st, stale.filter((d) => st.units.includes(d))), ...st.requirements.filter((r) => r.state === 'draft' && stale.some((d) => (d.requirements ?? []).includes(r.id))).map((r) => r.id)]; // and the new drafts they cite
+    const decisions = [...citedDecisions(st, stale.filter((d) => st.units.includes(d))), ...st.requirements.filter((r) => r.state === ST.draft && stale.some((d) => (d.requirements ?? []).includes(r.id))).map((r) => r.id)]; // and the new drafts they cite
     const docs = [ids(stale), ...decisions].join(' ');
     // A delegated re-approval keeps every unit's ACs, as `approve --auto` checks: what done means is the owner's.
     const kept = stale.filter((d) => st.units.includes(d)).every((d) => acsKept(st.cwd, d.file, d.doc));
     return gate(...(st.auto.includes(S.auto[0]) && !decisions.length && kept ? ['nextAutoApprove', stale.map((d) => d.id), { docs }, S.kinds.act] : ['nextReapprove', stale.map((d) => d.id), { docs }]));
   }
-  const open = [...st.requirements, ...st.intents, ...st.units].filter((d) => d.state === 'draft').map((d) => ({ d, points: openPoints(d.doc) })).find((x) => x.points.length);
+  const open = [...st.requirements, ...st.intents, ...st.units].filter((d) => d.state === ST.draft).map((d) => ({ d, points: openPoints(d.doc) })).find((x) => x.points.length);
   // An open conversation with the owner comes before any unit work: no docs, so nothing counts as independent.
   if (open) return gate(st.intents.includes(open.d) && !decisionsOf(st, [open.d]).length ? 'nextOpenIntent' : 'nextOpenDraft', [], { doc: open.d.id, points: open.points.join(', '), file: relPath(st.cwd, open.d.file) }); // decisions take shape with the intent (U139)
   if (!intent && !st.intents.length && !st.units.length) {
@@ -196,8 +198,8 @@ function gateOf(st, intent, scope) {
     return gate('nextNoIntent', [], { dir: rel(config.grid.intents) });
   }
   // A first approval names the draft requirements its docs cite, so one owner prompt covers them (U39).
-  const draftCited = (docs) => st.requirements.filter((r) => r.state === 'draft' && docs.some((d) => d.requirements.includes(r.id)));
-  if (intent && intent.state === 'draft') {
+  const draftCited = (docs) => st.requirements.filter((r) => r.state === ST.draft && docs.some((d) => d.requirements.includes(r.id)));
+  if (intent && intent.state === ST.draft) {
     const docs = [intent, ...draftCited([intent])];
     // A method 9 intent is reviewed first; its findings go to the owner as advice (docs/design/intake.md#review-before-approval).
     if (reviewDue(st.cwd, st.profile, st, intent)) return gate('nextReviewIntent', [], { intent: intent.id }, S.kinds.act);
@@ -206,14 +208,14 @@ function gateOf(st, intent, scope) {
     return gate('nextApproveIntent', docs.map((d) => d.id), { intent: ids(docs) });
   }
   // The draft decisions an approved intent links come before its units: an architecture choice shapes the cut.
-  const linked = intent && intent.state === 'approved' && !intent.units.length ? decisionsOf(st, [intent]).filter((d) => approval(d.doc) === 'draft') : [];
+  const linked = intent && intent.state === ST.approved && !intent.units.length ? decisionsOf(st, [intent]).filter((d) => approval(d.doc) === ST.draft) : [];
   const unfinished = linked.find((d) => openPoints(d.doc).length);
   if (unfinished) return gate('nextFinishDecision', [], { intent: intent.id, doc: relPath(st.cwd, unfinished.file), points: openPoints(unfinished.doc).join(', ') }, S.kinds.act);
   if (linked.length) return gate('nextApproveDecisions', [], { intent: intent.id, docs: linked.map((d) => relPath(st.cwd, d.file)).join(' ') });
-  if (intent && intent.state === 'approved' && !intent.units.length) return gate('nextDraftUnits', [], { intent: intent.id, file: st.profile.system ? msg('draftBoltFile', { dir: rel(config.grid.bolts) }) : msg('draftUnitFile', { dir: rel(config.grid.units) }) }, S.kinds.act); // a v2 plan writes bolts
-  const cited = new Set([...(intent?.requirements ?? []), ...scope.filter((u) => u.state !== 'merged').flatMap((u) => u.requirements)]);
-  const draftReqs = st.requirements.filter((r) => r.state === 'draft' && cited.has(r.id));
-  const drafts = scope.filter((u) => u.state === 'draft');
+  if (intent && intent.state === ST.approved && !intent.units.length) return gate('nextDraftUnits', [], { intent: intent.id, file: st.profile.system ? msg('draftBoltFile', { dir: rel(config.grid.bolts) }) : msg('draftUnitFile', { dir: rel(config.grid.units) }) }, S.kinds.act); // a v2 plan writes bolts
+  const cited = new Set([...(intent?.requirements ?? []), ...scope.filter((u) => u.state !== ST.merged).flatMap((u) => u.requirements)]);
+  const draftReqs = st.requirements.filter((r) => r.state === ST.draft && cited.has(r.id));
+  const drafts = scope.filter((u) => u.state === ST.draft);
   if (!drafts.length) return draftReqs.length ? gate('nextApproveRequirements', draftReqs.map((r) => r.id), { reqs: ids(draftReqs) }) : null;
   const decisions = citedDecisions(st, drafts);
   const docs = [ids([...drafts, ...draftReqs]), ...decisions].join(' ');
@@ -223,41 +225,41 @@ function gateOf(st, intent, scope) {
 
 // Steps 6-12 for the given units; a held unit gets no action until the hold is released.
 function unitWork(st, scope) {
-  const merged = (id) => st.units.find((x) => x.id === id)?.state === 'merged';
+  const merged = (id) => st.units.find((x) => x.id === id)?.state === ST.merged;
   const live = scope.filter((u) => !u.held);
   const fixOnly = (u) => !(st.ci?.red || st.red) || !u.fm.intent; // on a red base only fix units build or merge
   // A merge is offered only when each AC has a tagged test on the branch; a builder sent back for one is waited for.
   const backAtWork = [];
-  for (const u of live.filter((x) => x.state === 'reviewed' && x.depends.every(merged) && fixOnly(x))) {
+  for (const u of live.filter((x) => x.state === ST.reviewed && x.depends.every(merged) && fixOnly(x))) {
     const missing = u.lane === QUICK ? [] : untagged(st, u);
     if (!missing.length) return action(S.kinds.act, 'nextMerge', { unit: u.id });
     if (!u.fresh) return action(S.kinds.act, 'nextUntagged', { unit: u.id, tags: missing.join(', ') });
     backAtWork.push(u);
   }
-  const fix = live.find((u) => u.state === 'fix');
+  const fix = live.find((u) => u.state === ST.fix);
   if (fix) return action(S.kinds.act, 'nextFixRound', { unit: fix.id });
-  const reported = live.find((u) => u.state === 'reported');
+  const reported = live.find((u) => u.state === ST.reported);
   if (reported) return action(S.kinds.act, 'nextReview', { unit: reported.id, focus: (reported.focuses.length ? reported.focuses : [reported.focus]).join(', '), model: st.profile.models.review });
-  const lost = live.find((u) => u.state === 'building' && !u.fresh);
+  const lost = live.find((u) => u.state === ST.building && !u.fresh);
   if (lost) return action(S.kinds.act, 'nextRestart', { unit: lost.id, branch: branchOf(lost.id) });
   // A unit waiting on the owner or on its spec holds back no other unit's review, fix or restart (U141).
-  const onRed = (u) => u.state === 'gated' && readJson(runtimeFile(st.cwd, 'gates', u.id)).codes.every((c) => c === 'GATE-BASE'); // waits for the base's fix, which it never blocks
-  const gated = live.find((u) => u.state === 'gated' && !onRed(u));
+  const onRed = (u) => u.state === ST.gated && readJson(runtimeFile(st.cwd, 'gates', u.id)).codes.every((c) => c === 'GATE-BASE'); // waits for the base's fix, which it never blocks
+  const gated = live.find((u) => u.state === ST.gated && !onRed(u));
   if (gated) return action(S.kinds.human, 'nextGated', { unit: gated.id, codes: readJson(runtimeFile(st.cwd, 'gates', gated.id)).codes.join(', ') });
-  const escalated = live.find((u) => u.state === 'escalated');
+  const escalated = live.find((u) => u.state === ST.escalated);
   if (escalated) return action(S.kinds.human, 'nextEscalated', { unit: escalated.id });
-  const stopped = live.find((u) => u.state === 'stopped');
+  const stopped = live.find((u) => u.state === ST.stopped);
   if (stopped) return action(S.kinds.act, 'nextStopped', { unit: stopped.id, reason: String(stopped.report.stop ?? stopped.report.summary ?? '') });
   // A builder still holding a merged unit's worktree: the merge could not remove it.
   const trees = worktrees(st.cwd);
-  const left = st.units.find((x) => x.state === 'merged' && trees.has(branchOf(x.id)));
+  const left = st.units.find((x) => x.state === ST.merged && trees.has(branchOf(x.id)));
   if (left) return action(S.kinds.act, 'nextWorktreeLeft', { unit: left.id, path: trees.get(branchOf(left.id)), branch: branchOf(left.id) });
 
-  const inFlight = [...scope.filter((u) => u.state === 'reviewing' || (u.state === 'building' && u.fresh)), ...backAtWork]; // a held unit's quiet builder is not in flight
+  const inFlight = [...scope.filter((u) => u.state === ST.reviewing || (u.state === ST.building && u.fresh)), ...backAtWork]; // a held unit's quiet builder is not in flight
   const max = st.profile.parallel.max;
   const picked = [];
-  const ready = live.filter((u) => u.state === 'approved' && fixOnly(u)).sort((a, b) => priorityOf(b) - priorityOf(a) || !a.fm.intent - !b.fm.intent || byId(a, b));
-  const started = [...inFlight, ...st.units.filter((u) => !inFlight.includes(u) && !onRed(u) && !['draft', 'stale', 'approved', 'blocked', 'merged'].includes(u.state))];
+  const ready = live.filter((u) => u.state === ST.approved && fixOnly(u)).sort((a, b) => priorityOf(b) - priorityOf(a) || !a.fm.intent - !b.fm.intent || byId(a, b));
+  const started = [...inFlight, ...st.units.filter((u) => !inFlight.includes(u) && !onRed(u) && ![ST.draft, ST.stale, ST.approved, ST.blocked, ST.merged].includes(u.state))];
   for (const u of ready) {
     if (inFlight.length + picked.length >= max) break;
     // Side by side only with disjoint scopes and, in a v2 project, bindings that share no module (docs/design/construction.md).
@@ -271,7 +273,7 @@ function unitWork(st, scope) {
   const wait = ci && (st.ci.rec?.sha !== st.ci.head || st.ci.rec.state === CI.pending) ? [true] : [];
   if (picked.length) return action(S.kinds.act, 'nextBuild', { units: picked.map((u) => u.id).join(', '), cards: picked.map((u) => msg('cardCommand', { unit: u.id })).join(', '), wait });
   if (inFlight.length) return action(S.kinds.wait, 'nextWait', { units: inFlight.map((u) => u.id).join(', ') });
-  const held = scope.filter((u) => u.held && u.state !== 'merged');
+  const held = scope.filter((u) => u.held && u.state !== ST.merged);
   if (held.length) return action(S.kinds.human, 'nextHeld', { units: held.map((u) => (u.fm.hold === true ? u.id : msg('heldReason', { unit: u.id, reason: u.fm.hold }))).join(', ') });
   return null;
 }
@@ -304,11 +306,11 @@ function researched(bundle) {
 
 function pickAction(st) {
   if (st.mergeUnit) return action(S.kinds.act, 'nextContinueMerge', { unit: st.mergeUnit });
-  const unreleased = st.intents.find((i) => i.state === 'merged' || i.incrementDue); // its release does not hold back the next intent
+  const unreleased = st.intents.find((i) => i.state === ST.merged || i.incrementDue); // its release does not hold back the next intent
   const ops = unreleased && releaseStep(st, unreleased);
   if (S.badges.stops.includes(ops?.key) || ops?.key === 'nextSmokeFix') return ops; // a failed release or smoke comes first
   // A red base comes next: a fix unit, unless one is live (docs/design/base-ci.md).
-  const fixLive = st.units.some((u) => !u.fm.intent && u.state !== 'merged');
+  const fixLive = st.units.some((u) => !u.fm.intent && u.state !== ST.merged);
   if (st.ci?.red && !fixLive) {
     const red = st.ci.rec.runs.filter((r) => config.ci.red.includes(r.conclusion));
     return action(S.kinds.act, 'nextCiFix', { runs: red.map((r) => r.name).join(', '), logs: red.map((r) => render(config.ci.log, r)).join('; '), tests: firstTests(st.profile) });
@@ -316,7 +318,7 @@ function pickAction(st) {
   if (st.red && !fixLive) return action(S.kinds.act, 'nextBaseFix', { level: st.red.level, unit: st.red.unit, tests: firstTests(st.profile) });
   const asked = [...st.requirements, ...st.intents, ...st.units, ...st.decisions].find((d) => researchOf(d) && !st.answered.has(researchOf(d)));
   if (asked) return heartbeatFresh(st.cwd, asked.id, Date.now(), S.researching) ? action(S.kinds.wait, 'nextWaitResearch', { doc: asked.id }) : action(S.kinds.act, 'nextResearch', { doc: asked.id, model: st.profile.models.research });
-  const intent = st.intents.find((i) => !['released', 'merged'].includes(i.state)) ?? unreleased;
+  const intent = st.intents.find((i) => ![ST.released, ST.merged].includes(i.state)) ?? unreleased;
   const scope = st.units.filter((u) => !u.fm.intent || u.fm.intent === intent?.id);
   const gate = gateOf(st, intent, scope);
   if (gate?.action.kind === S.kinds.act) return gate.action;
@@ -328,7 +330,7 @@ function pickAction(st) {
   }
   const work = unitWork(st, scope);
   if (work && !(work.kind === S.kinds.wait && ops)) return work; // a due release step beats waiting (U121)
-  if (intent?.state === 'approved' && intent.uncut.length && intent.units.length && intent.units.every((u) => u.state === 'merged')) {
+  if (intent?.state === ST.approved && intent.uncut.length && intent.units.length && intent.units.every((u) => u.state === ST.merged)) {
     return action(S.kinds.act, 'nextCutIncrements', { intent: intent.id, increments: intent.uncut.map((t) => t.replace(/^([-*]|\d+\.)\s+/, '')).join('; ') });
   }
   if (ops) return ops;
@@ -388,11 +390,11 @@ function setField(cwd, name, key, value) {
 // (merged units of a released intent are), the requirements not delivered, then the next action and `tail`.
 export function statusText(st, next, tail = '') {
   const lines = [...st.intents.map((i) => msg('statusIntent', { id: i.id, state: i.state, title: i.fm.title ?? '' })),
-    ...st.units.filter((x) => x.state !== 'merged' || !st.intents.some((i) => i.state === 'released' && i.id === x.fm.intent))
+    ...st.units.filter((x) => x.state !== ST.merged || !st.intents.some((i) => i.state === ST.released && i.id === x.fm.intent))
       .map((u) => msg('statusUnit', { id: u.id, state: u.state, title: u.fm.title ?? '' }))];
   // Delivered as a plugged rule says (construction: by released tests), else by a merged unit citing it.
   const proven = seam('delivered', st.profile).map((rule) => rule(st)).find(Boolean);
-  const delivered = new Set(proven ?? st.units.filter((u) => u.state === 'merged').flatMap((u) => u.requirements));
+  const delivered = new Set(proven ?? st.units.filter((u) => u.state === ST.merged).flatMap((u) => u.requirements));
   const open = st.requirements.filter((r) => !delivered.has(r.id));
   const extra = seam('statusLines', st.profile).map((line) => line(st)).join('');
   const end = (open.length ? msg('statusUncovered', { reqs: ids(open) }) : '') + extra + msg('statusNext', { line: next.line }) + tail;

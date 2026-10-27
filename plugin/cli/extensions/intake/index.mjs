@@ -5,6 +5,8 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { join, resolve } from 'node:path';
 import { approval, bundleOf, CLI_DIR, config, docSlug, done, git, gitLines, globRegex, list, render, loadProfile, msg, parseDoc, plug, questionsOf, readJson, readPlan, relPath, seam, sectionOf, UsageError, withDefaults } from '../../lib/index.mjs';
 
+const ST = config.state.names; // the lifecycle states, by name
+
 const K = config.intake, F = config.okf.bundle.folders;
 const WHY = { greenfield: 'intakeGreenfield', feature: 'intakeFeature', brownfield: 'intakeBrownfield' }; // why the project has its pathway
 const rank = (band) => K.bands.indexOf(band);
@@ -35,7 +37,7 @@ function measure(cwd, profile, bundle) {
   const top = git(cwd, 'rev-parse', '--show-toplevel'), docs = relPath(top, bundle);
   const notCode = [...K.notCode, `${docs}/**`].map(globRegex);
   const code = gitLines(cwd, 'ls-files').some((f) => !notCode.some((g) => g.test(f)));
-  const approved = readPlan(bundle).intents.some((i) => approval(i.doc) !== 'draft');
+  const approved = readPlan(bundle).intents.some((i) => approval(i.doc) !== ST.draft);
   const pathway = !code ? 'greenfield' : approved ? 'feature' : 'brownfield';
   const tests = Object.values(withDefaults(profile).levels).some((l) => l?.run), ci = K.ci.some((p) => existsSync(join(top, p)));
   const stack = seam('stack', profile).map((fn) => fn(top)).find(Boolean) ?? K.noStack;
@@ -154,7 +156,7 @@ function lintSources({ bundle, profile, intents, units, requirements, add, inFor
     if (inForce(i, 'elabPersona')) personas(i, named.flatMap((r) => requests.get(r) ?? []), cited, add);
     const claims = [
       ...[K.claims.goal, K.claims.stories, ...(inForce(i, 'elabPersona') ? [K.claims.personas] : [])].flatMap((h) => linesOf(i.doc, h).map(([n, t]) => [i, h, n, t])),
-      ...cited.filter((r) => approval(r.doc) === 'draft').flatMap((r) => linesOf(r.doc, config.grid.requirementSection).map(([n, t]) => [r, config.grid.requirementSection, n, t])),
+      ...cited.filter((r) => approval(r.doc) === ST.draft).flatMap((r) => linesOf(r.doc, config.grid.requirementSection).map(([n, t]) => [r, config.grid.requirementSection, n, t])),
     ];
     for (const [doc, section, n, text] of claims) {
       const refs = refsIn(text);

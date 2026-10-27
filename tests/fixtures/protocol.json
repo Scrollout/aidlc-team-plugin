@@ -321,7 +321,8 @@
     "bolt",
     "--stop",
     "--report",
-    "gaps"
+    "gaps",
+    "fix"
   ],
   "github": [
     "/^\\s*runs-on:\\s*(.+)$/",

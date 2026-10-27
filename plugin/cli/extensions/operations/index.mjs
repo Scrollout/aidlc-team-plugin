@@ -4,6 +4,8 @@
 import { bump, ciGreen, config, done, git, list, msg, readJson, readState, runtimeFile, sh, tryGit, UsageError, writeJson } from '../../lib/index.mjs';
 import { commands as retro } from './retro.mjs';
 
+const ST = config.state.names; // the lifecycle states, by name
+
 const D = config.deploy;
 
 // Runs the commands in order until one fails: { ok, command, exit, output }, with the tail of the output.
@@ -18,7 +20,7 @@ function runAll(cwd, commands) {
 }
 
 // The intent the args name, in one of `states`, on a work tree checked out at the base.
-function target(cwd, id, usageKey, states = ['merged']) {
+function target(cwd, id, usageKey, states = [ST.merged]) {
   const st = readState(cwd);
   const intent = st.intents.find((i) => i.id === id);
   if (!intent) throw new UsageError(msg(usageKey, {}));
@@ -65,7 +67,7 @@ export const commands = {
 
   // The owner's step after a failed smoke; without deploy.rollback it records the owner's rollback by hand.
   rollback([id, ...more], { cwd }) {
-    const t = target(cwd, more.length ? null : id, 'rollbackUsage', ['merged', 'released']);
+    const t = target(cwd, more.length ? null : id, 'rollbackUsage', [ST.merged, ST.released]);
     const result = runAll(t.top, list(t.st.profile.deploy?.rollback));
     return done(record(t, D.steps.rollback, result), result.ok ? config.exit.ok : config.exit.findings);
   },

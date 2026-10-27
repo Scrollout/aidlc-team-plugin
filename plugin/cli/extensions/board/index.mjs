@@ -7,6 +7,8 @@ import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { aidlcDir, at, bindingName, ciFile, config, done, fieldPaths, git, isMap, list, msg, plug, readJson, readState, relPath, render, templateFile, tryGit, UsageError, writeJson } from '../../lib/index.mjs';
 
+const ST = config.state.names; // the lifecycle states, by name
+
 const B = config.board;
 let ghCommand = [B.gh]; // `github.gh` overrides it (docs/design/board.md)
 
@@ -88,7 +90,7 @@ function wanted(cwd, st, gh) {
   };
   return { T, docs: [
     // An approved intent is under way once one of its units is past approval (docs/design/board.md).
-    ...st.intents.map((i) => one(i, 'intent', i.state === 'approved' && st.units.some((u) => u.fm.intent === i.id && !B.unstarted.includes(u.state)) ? B.started : i.state)),
+    ...st.intents.map((i) => one(i, 'intent', i.state === ST.approved && st.units.some((u) => u.fm.intent === i.id && !B.unstarted.includes(u.state)) ? B.started : i.state)),
     ...st.units.map((u) => one(u, 'unit', u.held && B.holdable.includes(u.state) ? B.held : u.state)),
   ] };
 }
@@ -148,9 +150,9 @@ function issues(gh, docs, out, backoff, last) {
       if ((issue.body ?? '') !== d.body) change.body = d.body;
       if (issue.state !== state) change.state = state;
       // What the plugin set and the plan no longer gives goes; what people added stays.
-      const keep = (now, part, want) => [...new Set([...now.filter((x) => want.includes(x) || !(last[d.key]?.[part] ?? []).includes(x)), ...want])];
+      const keep = (now, set = [], want) => [...new Set([...now.filter((x) => want.includes(x) || !set.includes(x)), ...want])];
       const differs = (a, b) => a.length !== b.length || a.some((x) => !b.includes(x));
-      const labels = keep(names, 'labels', d.labels), people = (issue.assignees ?? []).map((a) => a.login), wantPeople = keep(people, 'assignees', d.assignees.length ? d.assignees : assignees);
+      const labels = keep(names, last[d.key]?.labels, d.labels), people = (issue.assignees ?? []).map((a) => a.login), wantPeople = keep(people, last[d.key]?.assignees, d.assignees.length ? d.assignees : assignees);
       if (differs(labels, names)) change.labels = labels;
       if (differs(wantPeople, people)) change.assignees = wantPeople;
       if (stones.get(d.group) && issue.milestone?.number !== stones.get(d.group)) change.milestone = stones.get(d.group);

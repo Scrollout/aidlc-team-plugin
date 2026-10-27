@@ -10,7 +10,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T14:00:00Z }
 AI-DLC with every rule that matters enforced by a CLI or a hook: [Overview](overview.md), [Method](method.md).
 
 # Constraints
-Node 22+, no dependencies, the budgets, nothing written into a project naming the plugin: [Overview](overview.md#budgets-hard-limits), [Library and extensions](library.md).
+Node 24+, no dependencies, the budgets, nothing written into a project naming the plugin: [Overview](overview.md#budgets-hard-limits), [Library and extensions](library.md).
 
 # Context and Scope
 The owner and their requests in plain prose, the lead session in its role personas, builder, reviewer and researcher agents, the project's git repository and its CI, and the coding agent's hooks: [Team](team.md), [Intake](intake.md), [Hook mechanics](hooks.md).

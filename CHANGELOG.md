@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.182.1] - 2026-10-27
+### Changed
+- The lifecycle states are named in `state.names`, and the core and the extensions refer to them by that map, never as literals. The values guard reports a state name written as a literal even where it is also some key, and no longer needs the board template's keys.
+- The stated minimum is Node 24, the lines CI tests.
+
 ## [0.182.0] - 2026-10-27
 ### Added
 - No hard-coded data in projects (M26 B238). `VALUE-LITERAL` at the merge gate reports a string literal on a line a bolt adds to a source file, outside tests and the profile's `values.data` globs, with a letter in it, and neither on a line the stack pack skips nor allowed by the pack's or the profile's `values.allow`. Each stack pack names its string literal and its protocol; the profile's `values.literal` replaces the pattern.
@@ -351,7 +356,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.182.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.182.1...HEAD
+[0.182.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.182.0...v0.182.1
 [0.182.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.181.0...v0.182.0
 [0.181.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.180.0...v0.181.0
 [0.180.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.179.0...v0.180.0

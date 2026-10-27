@@ -23,6 +23,8 @@ import { approval, stampFindings } from './approval.mjs';
 
 const G = config.gate;
 export { boundaryFindings, moduleFindings } from './architecture.mjs'; // the gate's graph checks live in architecture.mjs
+
+const ST = config.state.names; // the lifecycle states, by name
 const matches = (path, glob) => inside('/' + path, glob);
 const finding = (code, path, line, key, data) => codeFinding(G.codes, code, path, line, key, data);
 // Text that matches a built-in secret pattern or one in profile.security.secrets (the secrets hook and the gate).
@@ -117,7 +119,7 @@ function architecture(cwd, profile, key = 'gateCheck') {
     const { ok, edges } = graphOf(cwd, arch.graph);
     if (!ok) out.push(finding('ARCH-CHECK', '.', 1, key, { command: arch.graph }));
     const approved = new Map(exceptDocs(arch).map((d) => [d, existsSync(join(cwd, d)) ? readFileSync(join(cwd, d), 'utf8') : ''])
-      .filter(([, text]) => text && approval(parseDoc(text)) === 'approved'));
+      .filter(([, text]) => text && approval(parseDoc(text)) === ST.approved));
     out.push(...boundaryFindings(edges, arch, approved), ...moduleFindings(edges, profile, approved), ...kindFindings(edges, profile), ...layerFindings(edges, profile), ...reachFindings(edges, profile));
   }
   for (const command of list(arch.checks)) if (!shell(cwd, command)) out.push(finding('ARCH-CHECK', '.', 1, key, { command }));
@@ -157,8 +159,8 @@ function runGate(cwd, st, unit) {
   const out = [];
   const add = (code, key, data, path = relPath(cwd, unit.file)) => out.push(finding(code, path, 1, key, { unit: unit.id, ...data }));
 
-  if (['draft', 'stale'].includes(unit.state)) add('GATE-APPROVAL', 'gateApproval', { state: unit.state });
-  for (const dep of unit.depends) if (st.units.find((u) => u.id === dep)?.state !== 'merged') add('GATE-DEPS', 'gateDeps', { dep });
+  if ([ST.draft, ST.stale].includes(unit.state)) add('GATE-APPROVAL', 'gateApproval', { state: unit.state });
+  for (const dep of unit.depends) if (st.units.find((u) => u.id === dep)?.state !== ST.merged) add('GATE-DEPS', 'gateDeps', { dep });
   const card = readJson(runtimeFile(cwd, 'cards', unit.id));
   if (!card) add('GATE-CARD', 'gateNoCard', {});
 

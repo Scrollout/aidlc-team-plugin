@@ -4,6 +4,8 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSy
 import { dirname, join, relative, resolve } from 'node:path';
 import { approval, bundleOf, config, domainForms, done, gitLines, globRegex, graphOf, isMap, list, loadProfile, methodOf, msg, nameOf, parseDoc, parseYaml, plug, posix, readPlan, registry, render, sectionOf, seam, shippedDir, tryGit, UsageError, withDefaults } from '../../lib/index.mjs';
 
+const ST = config.state.names; // the lifecycle states, by name
+
 const K = config.packs;
 const packsDir = () => shippedDir('packs');
 
@@ -169,7 +171,7 @@ export function sliceFindings(root, profile) {
   // Each intent's stories and the modules of their units of work, from the elaboration checks' seam.
   const bundle = bundleOf(root, withDefaults(profile)), plan = readPlan(bundle), held = new Set(), owed = new Map();
   for (const i of plan.intents) {
-    const due = approval(i.doc) !== 'draft' && methodOf(i) >= config.method.since.unitsOfWork;
+    const due = approval(i.doc) !== ST.draft && methodOf(i) >= config.method.since.unitsOfWork;
     for (const s of seam('intentStories', profile).flatMap((f) => f(i))) {
       held.add(`${i.id}:${s.story}`);
       if (due) for (const mod of s.modules) owed.set(`${mod} ${i.id}:${s.story}`, i.id);

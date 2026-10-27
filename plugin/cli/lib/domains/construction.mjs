@@ -14,6 +14,8 @@ import { mergedUnits, runtimeFile } from '../foundation/store.mjs';
 import { delegation } from './approval.mjs';
 import { plug } from '../foundation/seams.mjs';
 
+const ST = config.state.names; // the lifecycle states, by name
+
 const C = config.construction, GRID = config.grid;
 const idOf = (m) => String(m.id ?? m.name);
 
@@ -85,7 +87,7 @@ function lintConstruction({ profile, live: intents, units, all, add, keyLine, bu
 
 // Every live escape hatch, for status and the retro: the docs' and the owner's delegation and accepted findings.
 export function hatchesOf(st) {
-  const live = (x) => !['merged', 'released'].includes(x.state);
+  const live = (x) => ![ST.merged, ST.released].includes(x.state);
   const out = docHatches(st.profile, st.intents.filter(live), st.units.filter(live), st.cwd).map((h) => ({ ...h, id: h.doc.id }));
   const d = delegation(st.cwd);
   if (list(d.auto).length && !lapsed(d.until)) out.push({ id: list(d.auto).join(', '), hatch: C.hatches.delegate, until: d.until });

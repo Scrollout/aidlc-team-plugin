@@ -13,7 +13,7 @@ A Claude Code plugin that brings AI-DLC (Intent → Units → Design → Code �
 - `docs/`: design, decisions, roadmap.
 
 ## Rules
-- Node 22+ (the oldest Node line still supported upstream), zero dependencies, ESM (`.mjs`).
+- Node 24+ (the Node lines CI tests), zero dependencies, ESM (`.mjs`).
 - Keep the budgets in `docs/design/overview.md`; CI fails when one is exceeded.
 - Nothing the plugin writes into a project may name the plugin.
 - Docs, comments and commit messages state rules and reasons in general terms, never session history ([Standard formats](docs/design/standards.md#rationale)).

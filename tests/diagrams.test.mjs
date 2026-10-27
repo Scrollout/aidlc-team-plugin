@@ -15,7 +15,7 @@ test('B191/AC-1 each generated diagram page matches the data it is drawn from (r
 test('B191/AC-1 the state diagrams name the states the CLI derives', () => {
   const code = ['flow', 'review', 'approval'].map((m) => readFileSync(join(import.meta.dirname, `../plugin/cli/lib/domains/${m}.mjs`), 'utf8')).join('\n');
   const named = (rows) => [...new Set(rows.flatMap(([a, b]) => [a, b]))];
-  assert.deepEqual(named(config.state.transitions).filter((s) => !code.includes(`'${s}'`)), [], 'every bolt state in the diagram is one the code sets');
+  assert.deepEqual(named(config.state.transitions).filter((s) => !code.includes(`ST.${s}`)), [], 'every bolt state in the diagram is one the code sets, by its name in state.names');
   // After the merge an intent moves through the release steps the deploy records hold; its derived states are all drawn.
   for (const s of ['draft', 'approved', 'stale', 'merged', 'released']) assert.ok(named(config.state.intentTransitions).includes(s), s);
 });

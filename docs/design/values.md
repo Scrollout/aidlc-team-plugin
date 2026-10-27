@@ -20,7 +20,7 @@ Where it is feasible, several values travel as one structured object, so neither
 - **Remote callers:** none today. If the engine is served to remote agents, it is through an MCP adapter, which speaks JSON-RPC 2.0 itself ([decision 0006](../decisions/0006-engine-behind-adapters.md)); the structured answers keep that adapter thin.
 
 # The guard
-A test scans every module of the CLI for string and regex literals. One passes only when it is a key into the data, a message key or a check code, or is listed as tool protocol in `tests/fixtures/protocol.json`. Anything else fails, naming the file, the line and the literal.
+A test scans every module of the CLI for string and regex literals. One passes only when it is a key into the data, a message key or a check code, or is listed as tool protocol in `tests/fixtures/protocol.json`. Anything else fails, naming the file, the line and the literal. A lifecycle state is a value even where its name is also a key: the code names it through `state.names`.
 
 # In projects
 The rule holds in every project the plugin governs, not only in the plugin.

@@ -10,6 +10,8 @@ import { hashDoc, parseDoc, sizeCap } from './bundle.mjs';
 import { acsOf, computeLane, inForce, lintPlan, readPlan, reqId as reqIdOf, withIntents } from './plan.mjs';
 import { aidlcDir, mergedUnits, runtimeFile, sha256, writeJson } from '../foundation/store.mjs';
 
+const ST = config.state.names; // the lifecycle states, by name
+
 
 const S = config.state;
 const DATE = /^\d{4}-\d{2}-\d{2}$/; // an escape hatch's until
@@ -19,8 +21,8 @@ export const events = (fm) => (isMap(fm.verified) ? [fm.verified] : Array.isArra
 // approved: a human `verified` event and a matching hash; stale: approved once, changed since.
 export function approval(doc) {
   const human = events(doc.fm).some((e) => S.approvers.some((a) => String(e.by ?? '').startsWith(a)));
-  if (!human) return 'draft';
-  return doc.fm.verified_hash === hashDoc(doc) ? 'approved' : 'stale';
+  if (!human) return ST.draft;
+  return doc.fm.verified_hash === hashDoc(doc) ? ST.approved : ST.stale;
 }
 
 // The docs an intent review reads, as one hash: the intent and the requirements it cites (docs/design/intake.md#review-before-approval).
@@ -103,7 +105,7 @@ export function stampFindings(cwd, profile, files) {
   const out = [];
   for (const file of by ? files : []) {
     const text = readFileSync(file, 'utf8'), doc = parseDoc(text);
-    if (doc.error || !S.approvable.includes(String(doc.fm?.type)) || approval(doc) === 'approved') continue;
+    if (doc.error || !S.approvable.includes(String(doc.fm?.type)) || approval(doc) === ST.approved) continue;
     if ([...text].length > sizeCap(String(doc.fm.type), profile.docs?.caps)) continue; // the docs check reports it already
     const over = stampOver(stamp(text, S.human + by, new Date().toISOString()), doc, profile);
     const level = config.okf.levels.includes(profile.docs?.rules?.['HOUSE-SIZE']) ? profile.docs.rules['HOUSE-SIZE'] : config.okf.codes['HOUSE-SIZE'].level;
@@ -157,7 +159,7 @@ export const commands = {
     for (const { name, file: f, doc: d } of named) {
       const intents = d.fm?.type === S.intentType ? [d.fm.id ?? basename(f).match(new RegExp(config.grid.intentFile))?.[1]] : d.fm?.oneWayDoor === true ? readPlan(bundle).intents.filter((i) => i.doc.lines.some((l) => l.includes(basename(f)))).map((i) => i.id) : [];
       const plan = d.fm?.type === S.intentType ? readPlan(bundle) : null, own = plan?.intents.find((i) => i.file === f);
-      if (own && approval(d) === 'draft' && reviewDue(cwd, profile, plan, own)) throw new UsageError(msg('approveReview', { doc: name, intent: own.id }));
+      if (own && approval(d) === ST.draft && reviewDue(cwd, profile, plan, own)) throw new UsageError(msg('approveReview', { doc: name, intent: own.id }));
       for (const intent of intents.filter(Boolean)) {
         const open = (readJson(runtimeFile(cwd, 'design', intent))?.findings ?? []).filter((x) => x.confidence === S.confirmed && (!x.disposition || lapsed(x.until)));
         if (open.length) throw new UsageError(msg('approveOpen', { doc: name, intent, findings: open.map((x) => x.id).join(', ') }));
@@ -169,8 +171,8 @@ export const commands = {
       if (writes.has(file)) continue;
       if (!S.approvable.includes(String(doc.fm?.type))) throw new UsageError(msg('notApprovable', { name }));
       const floor = readPlan(bundle).units.find((u) => u.file === file)?.floor;
-      const quick = doc.fm.type === S.unitType && approval(doc) === 'draft' && computeLane(list(doc.fm.scope), profile, { floor }).lane === QUICK;
-      const cls = approval(doc) === 'stale' ? S.auto[0] : quick ? S.auto[1] : null;
+      const quick = doc.fm.type === S.unitType && approval(doc) === ST.draft && computeLane(list(doc.fm.scope), profile, { floor }).lane === QUICK;
+      const cls = approval(doc) === ST.stale ? S.auto[0] : quick ? S.auto[1] : null;
       if (auto && !auto.includes(cls)) throw new UsageError(msg('notDelegated', { name }));
       if (auto && cls === S.auto[0] && doc.fm.type === S.unitType && !acsKept(cwd, file, doc)) throw new UsageError(msg('notDelegatedAcs', { name }));
       // The stamps count toward the doc's cap: an approved doc must still pass the docs check (docs/design/approvals.md).
@@ -181,7 +183,7 @@ export const commands = {
     }
     for (const [file, stamped] of writes) {
       writeFileSync(file, stamped);
-      out += msg('approved', { doc: relPath(cwd, file) });
+      out += msg('approvedDoc', { doc: relPath(cwd, file) });
       // Approving a decision that supersedes another marks the older one superseded, never edits its content (decision 0013).
       const sup = parseDoc(stamped).fm?.supersedes, old = sup !== undefined && readdirSync(dirname(file)).find((f) => f.startsWith(`${String(sup).padStart(config.ids.decisionDigits, '0')}-`));
       if (old) {

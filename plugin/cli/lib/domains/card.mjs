@@ -16,6 +16,8 @@ import { baseOf, branchOf, worktrees, aidlcDir, runtimeFile, sha256, writeJson }
 import { diffHash, readReview, roundsOf } from './review.mjs';
 import { approval } from './approval.mjs';
 
+const ST = config.state.names; // the lifecycle states, by name
+
 const C = config.card;
 
 // Model for a unit: lane default, escalated for size or complex globs, and for a fix round after a CONFIRMED finding.
@@ -93,8 +95,8 @@ function renderCard(cwd, unitId, { preview = false } = {}) {
   const doc = docText === null ? null : parseDoc(docText + '\n');
   const atBase = doc && !doc.error && doc.fm ? { ...unit, ...unitFields(doc) } : null; // as written at the base commit
   const lane = atBase ? computeLane(atBase.scope, profile, { floor: atBase.floor }) : null;
-  const state = !atBase ? 'draft' : atBase.fm.intent || lane.lane !== QUICK ? approval(doc) : 'approved';
-  if (state !== 'approved' && !preview) return done(msg('cardRefused', { unit: unitId, state }), config.exit.blocked);
+  const state = !atBase ? ST.draft : atBase.fm.intent || lane.lane !== QUICK ? approval(doc) : ST.approved;
+  if (state !== ST.approved && !preview) return done(msg('cardRefused', { unit: unitId, state }), config.exit.blocked);
 
   const review = preview ? null : readReview(cwd, unitId, doc);
   const hashNow = review && tryGit(cwd, 'rev-parse', '-q', '--verify', branchOf(unitId)) ? diffHash(cwd, base, unitId) : null;

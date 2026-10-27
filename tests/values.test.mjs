@@ -13,7 +13,6 @@ const allowed = new Set(Object.values(PROTOCOL).filter(Array.isArray).flat());
 const keys = new Set();
 const walk = (v) => { if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) { keys.add(k); walk(x); } };
 walk(config);
-walk(JSON.parse(readFileSync(join(ROOT, 'plugin/cli/extensions/board', config.board.file), 'utf8'))); // the board template is the board extension's data too
 // The profile's keys and the docs' front matter keys the data declares are keys too.
 const fields = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === 'string') : v && typeof v === 'object' ? Object.values(v).flatMap(fields) : []);
 // The variables the data's templates name, {{part}}, are keys too.
@@ -78,7 +77,9 @@ export function literals(source) {
 const syntax = (s) => /^[\s\p{P}\p{S}\d]*$/u.test(s.replace(/\\+[nrtsSdDwWbB]/g, ''));
 // Text whose every word is a data key or protocol word, `status: ` or /\nverified:\n/, is grammar around keys.
 const keyWords = (s) => { const words = s.replace(/\\[nrtsSdDwWbB]/g, ' ').match(/[A-Za-z_][\w-]*/g) ?? []; return words.length > 0 && words.every((w) => keys.has(w) || allowed.has(w)); };
-export const isValue = (s) => (typeof s === 'number' ? !PROTOCOL.numbers.includes(s) : s.trim() !== '' && !syntax(s) && !keys.has(s.trim()) && !allowed.has(s.trim()) && !keyWords(s));
+// A lifecycle state is a value even where its name is also some key: the code names it through state.names.
+const states = new Set(Object.keys(config.state.names));
+export const isValue = (s) => (typeof s === 'number' ? !PROTOCOL.numbers.includes(s) : (states.has(s) && !allowed.has(s)) || (s.trim() !== '' && !syntax(s) && !keys.has(s.trim()) && !allowed.has(s.trim()) && !keyWords(s)));
 
 const files = (dir) => readdirSync(join(ROOT, dir), { recursive: true }).filter((f) => f.endsWith('.mjs')).map((f) => `${dir}/${f.split(sep).join('/')}`);
 const offenders = (list) => list.filter((f) => !(f in PROTOCOL.files)).flatMap((f) => literals(readFileSync(join(ROOT, f), 'utf8')).filter(([, s]) => isValue(s)).map(([n, s]) => `${f}:${n} ${s}`));
