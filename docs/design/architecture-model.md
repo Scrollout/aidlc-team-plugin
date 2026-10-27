@@ -61,8 +61,14 @@ Inside a module that declares them, layers point inward: `interface → applicat
 
 All of them run at every gate on the merged tree. A project writes only exceptions, each an owner-approved decision listing its edges.
 
+# Profile check
+With `modules` in the profile, `check` reports `PROFILE-ARCH`: an error when data ownership is off (no `architecture.data`, so the gate cannot see a domain reaching another's data), a warning in an adopted project until the migration intent sets the owners ([Data ownership](data-ownership.md#adoption)); a warning when `architecture.acyclic` is off or a module has no `api`.
+
+# Constitution
+`init` writes rule 9: domains own their data, in the canonical words, with the owner's sentence quoted word for word and the checks that hold it.
+
 # Replaces
-- `slice-architecture.md`, `module-surface.md` and `data-ownership.md` fold into this doc.
+- `architecture-model.md` folded into this doc (B159); `module-surface.md` and `data-ownership.md` follow with the surfaces (B168).
 - Hand-written `architecture.boundaries` remain only as `except` lists.
 
 Bolts: [M15](../roadmap/m15.md) B151, B155; still to build: [M17](../roadmap/m17.md) B166 to B170.

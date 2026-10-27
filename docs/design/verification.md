@@ -31,7 +31,7 @@ The guard matches a short deny list on parsed argv; it does not try to model the
 Fails with one line per problem, each naming the fix, unless all hold:
 1. Unit approved and not stale; deps merged.
 2. Diff inside the card's scope; lane at merge ≥ lane at start.
-3. Every AC has a test tagged `U-<n>/AC-<k>` in the diff or the base, at its level; not in the quick lane ([Unit card](unit-card.md#quick-lane)).
+3. Every AC has a test tagged `U-<n>/AC-<k>` in the diff or the base, at its level; not in the quick lane ([Unit card](bolt-card.md#quick-lane)).
 4. Profile checks for the touched modules, the project's `checks` (lint, format, static analysis) and every level `run` pass on the merged result; with the unit's code reverted, each level of its tagged tests fails (proof-revert). A quick-lane unit runs no level: the commands its ACs name run instead ([Merge mechanics](gate.md#details)).
 5. Outside the quick lane, verdict `pass` for the current diff hash, plus each required specialist (a focus is required when its globs match the diff; `security` also when an added line matches `security.content`, M10 U75).
 6. Bundle passes OKF validation.

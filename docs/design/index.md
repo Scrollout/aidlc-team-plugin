@@ -4,6 +4,7 @@
 * [Approvals](approvals.md) - How the owner approves intents, requirements, units and decisions, what makes an approval stale, what the lead may approve for them, and how owner prompts are recorded.
 * [Architecture model](architecture-model.md) - Draft - the system's core and extensions, seven closed module kinds with what each may depend on, four inward-pointing layers, client, server and event surfaces, and data owned by one domain; boundaries are computed from these declarations, never written by hand.
 * [Board](board.md) - An optional one-way projection of derived state onto GitHub issues and a GitHub Project, written by deterministic code at zero model tokens.
+* [Bolt card](bolt-card.md) - The generated, read-only brief one builder works from and one reviewer checks against, for a bolt or a v1 unit.
 * [Build method from day one](method.md) - How a project gets the build method on its first init - level runs asked at init, a constitution that names the check behind each rule, and an upgrade that adds what an older project lacks.
 * [Bundle v2](bundle.md) - Draft - the project's OKF bundle as AI-DLC's context memory - one folder per closed doc type, authored and generated docs kept apart, a front-matter schema per type, typed references, decisions superseded never amended, CLI-made ids and slugs, and errors on the base.
 * [Canonical model](canonical-model.md) - Draft - one word per concept at each scale (system, domain, code, delivery), mapped to AI-DLC's Intent, Unit and Bolt, with the rule that a word used in another sense fails a check and that an approved intent keeps the method version it was approved under.
@@ -38,11 +39,9 @@
 * [Resume](resume.md) - How the lead survives a clear, a crash or a new session - what lives on disk instead of the conversation - and why the owner clears the lead between intents.
 * [Review rounds](review-rounds.md) - What review record does with a verdict - fix rounds and their limit, send-backs, and which focus passes still count after a fix.
 * [Skill and agents](prompts.md) - What the lead's skill and the builder and reviewer prompts say, how a review is picked and run, and why the prompts restate no enforced rule.
-* [Slice architecture](slice-architecture.md) - The architecture the method sets for every project - vertical slices as bounded contexts with inward-pointing layers, each owning its data, talking through published interfaces and events, with no cycles - and the merge checks that act as its fitness functions.
 * [State](state.md) - How the CLI derives progress from git and docs, how approvals work, and how next picks the one allowed step.
 * [Steering](steering.md) - How the plugin corrects the agent during work, keeps it moving, and improves its rules over time without growing.
 * [Team](team.md) - The four roles, how parallel worktree workers are run and merged, and where tokens are spent.
-* [Unit card](unit-card.md) - The generated, read-only brief one builder works from and one reviewer checks against.
 * [Vendoring](vendoring.md) - How init and upgrade copy the CLI into a project and pin it, and why only a release is copied.
 * [Verification](verification.md) - The inner loop (hooks), the merge gate, the reviewer's output contract and the CI mode.
 * [Workload identity](workload-identity.md) - Components, services and data authenticate by workload identity with short-lived credentials, never by shared or static secrets; a merge check fails the common static forms on added lines.

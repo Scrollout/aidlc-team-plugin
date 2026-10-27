@@ -9,7 +9,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T00:20:00Z }
 
 # Context
 The third project, `resource-manager` (2026-10-26), built a sound control-plane shape, but the plugin let its architecture drift:
-- "Vertical slice" meant three things in the plugin: a delivery step (`slices.md`), a bounded context (`slice-architecture.md`), and any module with `layers` (`map.mjs`). The project went through three architecture vocabularies in one day.
+- "Vertical slice" meant three things in the plugin: a delivery step (`slices.md`), a bounded context (`architecture-model.md`), and any module with `layers` (`map.mjs`). The project went through three architecture vocabularies in one day.
 - The profile had one axis, modules with layers. It could not tell a domain from a shared kit, or the core from an extension.
 - Units were never tied to domains.
 - Decisions were never checked against each other, and 21 were approved in one command.

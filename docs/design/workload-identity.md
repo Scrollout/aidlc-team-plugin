@@ -12,7 +12,7 @@ The owner made it a permanent rule of the method (2026-10-25), asking whether pr
 # Rule
 - Each service or slice has its own workload identity: a cluster service account with a projected token, a cloud managed identity, a workload ID from an identity issuer.
 - Calls between components use mTLS or tokens bound to those identities, and each API says which identities may call it.
-- Each slice's data is reachable only by its own identity, with short-lived certificates or tokens, so [data ownership](slice-architecture.md) holds in the database as well as at merge.
+- Each slice's data is reachable only by its own identity, with short-lived certificates or tokens, so [data ownership](architecture-model.md) holds in the database as well as at merge.
 - Anything outside the cluster (cloud APIs, CI deploys) uses federated credentials (OIDC), never a stored client secret.
 - Local development and tests use the same mechanism where they can; a test fixture may hold a throwaway password inside the levels' test paths.
 

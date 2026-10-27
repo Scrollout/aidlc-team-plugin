@@ -15,7 +15,7 @@ The checks are spread over the plan lint, the hooks, the gate and the deploy ste
 | 1 | Docs valid: OKF fields, links, size caps, stamps | docs hook on every bundle edit; `check` | `OKF-*`, `HOUSE-*` |
 | 2 | Plan lint: DAG, scopes, slices, design rows, decisions, cards | `check`; `approve` refuses on errors | `PLAN-*` ([Plan lint](plan-lint.md)) |
 | 3 | Approval: the owner's stamp, stale on any edit | prompt hook stamps typed approvals; delegated re-approvals only where delegated | ([Approvals](approvals.md)) |
-| 4 | Card: rendered from the base commit, approved and not stale, ≤ 100 lines | `card` | `PLAN-CARD` ([Unit card](unit-card.md)) |
+| 4 | Card: rendered from the base commit, approved and not stale, ≤ 100 lines | `card` | `PLAN-CARD` ([Unit card](bolt-card.md)) |
 | 5 | Dispatch: deps merged, scopes disjoint, reservations free, `parallel.max`, base pushed with `ci.wait` | `next`, `start` | ([Parallel builders](parallel.md), [CI on the base](base-ci.md)) |
 | 6 | Launch: the card's model, a unit named, an in-flight mark | model hook | `MODEL-*` |
 | 7 | While building: writes inside scope, no secrets, no raw git on the base, owner commands only by prompt | scope, secrets and guard hooks | `SCOPE-*`, `GUARD-*` ([Hook checks](hook-checks.md)) |

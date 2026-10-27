@@ -1,7 +1,7 @@
 ---
 type: Design
-title: Unit card
-description: The generated, read-only brief one builder works from and one reviewer checks against.
+title: Bolt card
+description: The generated, read-only brief one builder works from and one reviewer checks against, for a bolt or a v1 unit.
 status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:30:00Z }
 ---

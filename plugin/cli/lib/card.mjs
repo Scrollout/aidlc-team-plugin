@@ -1,5 +1,5 @@
 // Unit card: rendered from the base commit, refused for unapproved or stale units, recorded for `start`
-// and the model hook (docs/design/unit-card.md). Model routing follows docs/design/team.md.
+// and the model hook (docs/design/bolt-card.md). Model routing follows docs/design/team.md.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { bundleOf, CLI_DIR, config, QUICK, STANDARD, VERDICT, done, git, gitLines, list, readJson, slug, tryGit, UsageError, relPath } from './config.mjs';
@@ -38,7 +38,7 @@ export function templateFile(cwd, name) {
 // The non-blank lines of a section, as written.
 const section = (doc, heading) => sectionOf(doc, heading).filter(([, t]) => t.trim()).map(([n]) => doc.lines[n - 1]);
 
-// The project's rules, but those a review focus reads (docs/design/unit-card.md); `at` reads one, from the base or the disk.
+// The project's rules, but those a review focus reads (docs/design/bolt-card.md); `at` reads one, from the base or the disk.
 function projectRules(names, profile, at) {
   const { dir, ext } = config.rules;
   return names.filter((f) => f.endsWith(ext) && !Object.hasOwn(profile.focus ?? {}, f.slice(0, -ext.length))).sort()
@@ -60,7 +60,7 @@ const resolveLinks = (line, file, bundle, top) => line.replace(/\[([^\]]*)\]\(([
   /^[a-z][a-z0-9+.-]*:/i.test(href) ? `${text} (${href})` : `${text} (${relPath(top, href.startsWith('/') ? join(bundle, href) : resolve(dirname(file), href))})`);
 
 // Renders the card for `unitId` from the base commit, or a refusal; `preview` renders the doc on disk, whatever its
-// approval, and returns only the size `card` would count (PLAN-CARD, docs/design/unit-card.md).
+// approval, and returns only the size `card` would count (PLAN-CARD, docs/design/bolt-card.md).
 function renderCard(cwd, unitId, { preview = false } = {}) {
   const { profile } = loadProfile(cwd);
   const base = baseOf(profile);
@@ -135,7 +135,7 @@ function renderCard(cwd, unitId, { preview = false } = {}) {
   const hash = sha256(hashDoc(doc) + '\n' + render(template, { ...data, base: '', hash: '' }, file)).slice(0, C.hashLength);
   const card = render(template, { ...data, hash }, file);
   // Findings and mutations come from review rounds: outside the cap, so a fix round never needs a re-approval; the
-  // profile's sections grow with the project, not the unit, so they are outside it too (docs/design/unit-card.md).
+  // profile's sections grow with the project, not the unit, so they are outside it too (docs/design/bolt-card.md).
   const lines = (t) => t.replace(/\n$/, '').split('\n').length;
   const size = lines(render(template, { ...data, hash, fixes: '', mutations: '', data: [], names: [], deps: [], platform: [] }, file));
   const rules = data.rules.reduce((n, r) => n + lines(r.text), 0);

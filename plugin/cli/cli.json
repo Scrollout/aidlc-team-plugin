@@ -664,7 +664,7 @@
       "slugWords": 8,
       "slugMax": 48,
       "generated": ["Map"],
-      "folders": { "Bolt": "bolts", "Domain": "domains", "Fact": "platform", "System": "system", "Map": "architecture" },
+      "folders": { "Bolt": "bolts", "Domain": "domains", "Fact": "platform", "System": "system", "Module": "modules", "Map": "architecture" },
       "schemas": {
         "Bolt": { "required": ["scope"] },
         "Domain": { "required": ["code", "kind"], "enums": { "kind": "kinds" } },
@@ -1039,8 +1039,8 @@
         "upgrade": true
       },
       {
-        "template": "docs/unit.md",
-        "to": ".aidlc/templates/docs/unit.md",
+        "template": "docs/bolt.md",
+        "to": ".aidlc/templates/docs/bolt.md",
         "upgrade": true
       },
       {
@@ -1059,8 +1059,23 @@
         "upgrade": true
       },
       {
-        "template": "docs/architecture.md",
-        "to": ".aidlc/templates/docs/architecture.md",
+        "template": "docs/system.md",
+        "to": ".aidlc/templates/docs/system.md",
+        "upgrade": true
+      },
+      {
+        "template": "docs/domain.md",
+        "to": ".aidlc/templates/docs/domain.md",
+        "upgrade": true
+      },
+      {
+        "template": "docs/fact.md",
+        "to": ".aidlc/templates/docs/fact.md",
+        "upgrade": true
+      },
+      {
+        "template": "docs/module.md",
+        "to": ".aidlc/templates/docs/module.md",
         "upgrade": true
       },
       {

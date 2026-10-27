@@ -622,7 +622,7 @@ export const commands = {
     const bundle = bundleOf(cwd, profile);
     const findings = [...lintRules(rules), ...lintNames(profile.names), ...lintKeys(sources)];
     // A codebase in modules grows names from the first unit: without a rule nothing holds them (docs/design/names.md#lifecycle).
-    // Slices own their data: critical, so an error once the project is past adoption (docs/design/slice-architecture.md).
+    // Slices own their data: critical, so an error once the project is past adoption (docs/design/architecture-model.md).
     const arch = profile.architecture ?? {}, mods = profile.modules ?? [], at = config.layers.find((l) => l.from === 'project').path;
     if (mods.length && !arch.data) findings.push(finding('PROFILE-ARCH', profile.adopted ? 'warning' : 'error', at, 1, 'archNoData', {}));
     if (mods.length && !arch.acyclic) findings.push(finding('PROFILE-ARCH', 'warning', at, 1, 'archNoAcyclic', {}));

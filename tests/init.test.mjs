@@ -46,7 +46,7 @@ test('U5/AC-1 U50/AC-1 init on an empty repo writes a valid profile, a short AGE
   assert.equal(readFileSync(join(dir, '.aidlc/bin/VERSION'), 'utf8'), PLUGIN.version + '\n');
   assert.deepEqual(JSON.parse(readFileSync(join(dir, '.claude/settings.json'), 'utf8')), { worktree: { baseRef: 'head' } });
   assert.match(readFileSync(join(dir, '.gitignore'), 'utf8'), /^\.aidlc\/local\/$/m);
-  for (const t of ['requirement', 'intent', 'unit', 'decision', 'runbook', 'naming', 'architecture']) assert.ok(existsSync(join(dir, `.aidlc/templates/docs/${t}.md`)), t);
+  for (const t of ['requirement', 'intent', 'bolt', 'decision', 'runbook', 'naming', 'system', 'domain', 'fact', 'module']) assert.ok(existsSync(join(dir, `.aidlc/templates/docs/${t}.md`)), t);
   const check = run(dir, ['check']);
   assert.equal(check.code, 0, check.out);
   assert.equal(check.out, '', 'the new bundle passes with no warnings');
@@ -65,7 +65,7 @@ test('U5/AC-1 init never overwrites without asking', () => {
   assert.equal(readFileSync(join(dir, '.gitignore'), 'utf8'), 'node_modules/\n.aidlc/local/\n.claude/worktrees/\n', 'lines are added, nothing replaced');
 
   const again = run(dir, ['init', '--overwrite', 'CLAUDE.md', '--overwrite', 'AGENTS.md', '--overwrite', '.aidlc/profile.json',
-    ...['requirement', 'intent', 'unit', 'decision', 'runbook', 'naming', 'architecture'].flatMap((t) => ['--overwrite', `.aidlc/templates/docs/${t}.md`]),
+    ...['requirement', 'intent', 'bolt', 'decision', 'runbook', 'naming', 'system', 'domain', 'fact', 'module'].flatMap((t) => ['--overwrite', `.aidlc/templates/docs/${t}.md`]),
     '--overwrite', 'docs/index.md', '--overwrite', 'docs/log.md', '--overwrite', 'docs/constitution/principles.md', '--overwrite', '.github/workflows/aidlc.yml', '--overwrite', '.github/dependabot.yml']);
   assert.equal(again.code, 0, again.out);
   assert.equal(readFileSync(join(dir, 'CLAUDE.md'), 'utf8'), '@AGENTS.md\n');
@@ -284,13 +284,13 @@ test('U54/AC-1 upgrade adds each doc template and the constitution a project lac
   rmSync(join(dir, '.aidlc/templates/docs/runbook.md'));
   rmSync(join(dir, 'docs/constitution'), { recursive: true });
   run(dir, ['index']);
-  writeFileSync(join(dir, '.aidlc/templates/docs/unit.md'), '# our own unit template\n');
+  writeFileSync(join(dir, '.aidlc/templates/docs/bolt.md'), '# our own bolt template\n');
   const r = run(dir, ['upgrade', '--dirty']);
   assert.equal(r.code, 0, r.err);
   assert.match(r.out, /^added \.aidlc\/templates\/docs\/runbook\.md: the project lacked it$/m);
   assert.match(r.out, /^added docs\/constitution\/principles\.md: the project lacked it$/m);
   assert.equal((r.out.match(/^added /gm) ?? []).length, 2, 'only what was missing');
-  assert.equal(readFileSync(join(dir, '.aidlc/templates/docs/unit.md'), 'utf8'), '# our own unit template\n');
+  assert.equal(readFileSync(join(dir, '.aidlc/templates/docs/bolt.md'), 'utf8'), '# our own bolt template\n');
   assert.match(readFileSync(join(dir, 'docs/constitution/principles.md'), 'utf8'), /^title: How demo is built$/m);
   assert.match(readFileSync(join(dir, 'docs/index.md'), 'utf8'), /\[constitution\]\(constitution\/index\.md\)/);
   assert.equal(run(dir, ['check']).out, '', 'the bundle passes');
@@ -330,11 +330,13 @@ test('U137/AC-1 init writes the Dependabot config for the workflow actions, and 
   assert.equal(directAllowed('.github/other.yml', 'docs'), false);
 });
 
-test('U142/AC-3 init writes the architecture doc template and the constitution rule that keeps diagrams true', () => {
+test('B159/AC-2 init writes the system, domain, fact and module templates and the constitution rule that keeps diagrams true', () => {
   const dir = makeRepo({});
   rmSync(join(dir, '.aidlc'), { recursive: true, force: true });
   assert.equal(run(dir, ['init', '--name', 'p', '--base', 'main', '--bundle', 'docs']).code, 0);
-  assert.match(readFileSync(join(dir, '.aidlc/templates/docs/architecture.md'), 'utf8'), /^# Logical\n[\s\S]*^# Technical\n/m);
+  assert.match(readFileSync(join(dir, '.aidlc/templates/docs/system.md'), 'utf8'), /^type: System\n[\s\S]*^# Core\n[\s\S]*^# Extensions\n[\s\S]*The core never depends on an extension\./m);
+  assert.match(readFileSync(join(dir, '.aidlc/templates/docs/domain.md'), 'utf8'), /^type: Domain\n[\s\S]*^code: [\s\S]*^kind: domain\n[\s\S]*^# Glossary\n[\s\S]*^# Owns\n[\s\S]*^# Surface\n[\s\S]*^# Relationships\n/m);
+  assert.ok(!existsSync(join(dir, '.aidlc/templates/docs/architecture.md')), 'no hand-drawn architecture template');
   assert.match(readFileSync(join(dir, 'docs/constitution/principles.md'), 'utf8'), /^11\. \*\*Architecture you can see\.\*\* .*Checked by `PROFILE-KIND` and the codebase map\.$/m);
 });
 

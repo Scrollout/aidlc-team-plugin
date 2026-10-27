@@ -41,7 +41,7 @@ test('U72/AC-1 plan lint asks a full-lane unit for Domain and Logical, a standar
 });
 
 test('U72/AC-2 the unit template carries both sections, the card names them and the reviewer checks against them', () => {
-  const template = readFileSync(join(ROOT, 'plugin/templates/docs/unit.md'), 'utf8');
+  const template = readFileSync(join(ROOT, 'plugin/templates/docs/bolt.md'), 'utf8');
   assert.match(template, /^# Domain$/m);
   assert.match(template, /^# Logical$/m);
   assert.match(readFileSync(join(ROOT, 'plugin/agents/reviewer.md'), 'utf8'), /The card's design, requirement and interface docs\. Check the diff against each\./);
