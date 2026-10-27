@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"example.com/reference/internal/domains/resources/events"
-	"example.com/reference/internal/domains/resources/infrastructure"
-	"example.com/reference/internal/domains/resources/model"
+	"example.com/controlplane/internal/domains/resources/events"
+	"example.com/controlplane/internal/domains/resources/infrastructure"
+	"example.com/controlplane/internal/domains/resources/model"
 )
 
 type recorder struct{ deleted []string }

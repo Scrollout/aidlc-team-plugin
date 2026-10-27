@@ -1,7 +1,7 @@
 // The canonical words, and the generated blocks drawn from them (docs/design/canonical-model.md).
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { CLI_DIR, config, done, UsageError } from '../foundation/data.mjs';
+import { config, done, packageFile, shippedDir, UsageError } from '../foundation/data.mjs';
 import { escapeRe, msg, render } from '../foundation/text.mjs';
 
 const V = config.vocabulary;
@@ -40,7 +40,7 @@ export const proposeKind = (m) => V.kindHints.find((h) => [m.id ?? m.name, ...(m
 // A role persona and its knowledge, as the lead reads them before an elaborate step (decision 0019).
 export const commands = {
   persona([role], { cwd }) {
-    const ext = config.okf.ext, dir = join(CLI_DIR, config.personas.dir), file = join(dir, role + ext);
+    const ext = config.okf.ext, dir = shippedDir('personas'), file = packageFile(cwd, 'personas', role + ext);
     if (!role || !existsSync(file)) throw new UsageError(msg('personaUsage', { roles: readdirSync(dir).filter((f) => f.endsWith(ext)).map((f) => f.slice(0, -ext.length)).join(', ') }));
     const knowledge = existsSync(join(dir, role)) ? readdirSync(join(dir, role)).sort().map((f) => join(dir, role, f)) : [];
     return done(readFileSync(file, 'utf8') + msg('personaKnowledge', { files: knowledge.map((f) => `- ${f.slice(cwd.length + 1) || f}`).join('\n') }));

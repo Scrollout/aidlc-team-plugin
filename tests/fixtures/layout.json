@@ -1,0 +1,5 @@
+{
+  "about": "What the CLI folder may hold, and a lookup that goes around the package resolver (docs/design/layout.md).",
+  "engine": ["aidlc.mjs", "cli.json", "defaults.json", "extensions", "lib"],
+  "around": "join\\((CLI_DIR|PLUGIN_DIR)[^)]*(Template|template|personas|models|packs|\\.md)"
+}

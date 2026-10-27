@@ -1,7 +1,7 @@
 // Template engine: `{{a.b}}` and `{{#each list}}…{{/each}}`, nothing more (docs/design/profile.md).
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { config, PLUGIN_DIR } from './data.mjs';
+import { config, packageFile } from './data.mjs';
 
 export class TemplateError extends Error {}
 
@@ -76,12 +76,10 @@ export const msg = (key, data) => render(config.messages[key], data, config.text
 // A finding of `code` from a cli.json code table, whose fix and level (error unless the table sets one) it carries.
 export const finding = (codes, code, path, line, key, data = {}, level = codes[code].level ?? config.okf.levels[0]) => ({ code, level, path, line, message: msg(key, data), fix: codes[code].fix });
 
-// Template directories, highest priority first.
-const templateDirs = (root, pluginDir) => config.templates.map((t) => join({ plugin: pluginDir, project: root }[t.from], t.path));
-
-// The first template directory in cli.json holding `rel` wins (project overrides plugin).
-function resolveTemplate(rel, { root, pluginDir = PLUGIN_DIR }) {
-  for (const dir of templateDirs(root, pluginDir)) if (existsSync(join(dir, rel))) return join(dir, rel);
+// A template: the project's own under its override folder, else the shipped one (`pluginDir` for a plugin checkout).
+function resolveTemplate(rel, { root, pluginDir }) {
+  const file = packageFile(root, 'templates', rel, pluginDir && join(pluginDir, config.packages.templates.dir));
+  if (existsSync(file)) return file;
   throw fail('templateNotFound', { name: rel });
 }
 

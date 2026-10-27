@@ -16,6 +16,6 @@ const found = ([where, text]) => [...text.replace(KEPT, '').matchAll(RETIRED)].m
 test('B193/AC-1 B242/AC-2 no retired word in its old sense in the messages, fixes, usage, skill, agents or templates', () => {
   const tables = ['okf', 'grid', 'gate', 'hooks'].flatMap((t) => Object.entries(config[t].codes).map(([code, c]) => [code, c.fix]));
   const commands = config.commands.flatMap((c) => [[c.name, c.usage], [c.name, c.does]]);
-  const shipped = [...Object.entries(config.messages), ...tables, ...commands, ...files('plugin/skills'), ...files('plugin/agents'), ...files('plugin/templates'), ...readdirSync(join(ROOT, 'plugin/cli')).filter((f) => f.endsWith('.md')).map((f) => [f, readFileSync(join(ROOT, 'plugin/cli', f), 'utf8')])];
+  const shipped = [...Object.entries(config.messages), ...tables, ...commands, ...files('plugin/skills'), ...files('plugin/agents'), ...files('plugin/templates'), ...files('plugin/personas')];
   assert.deepEqual(shipped.flatMap(found), []);
 });

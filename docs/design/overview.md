@@ -76,7 +76,7 @@ sequenceDiagram
 # Repo layout
 - `plugin/.claude-plugin/plugin.json`: `name` `aidlc-team` (never `aidlc`, which projects use for the CLI and `.aidlc/`), the only `version`.
 - `plugin/cli/aidlc.mjs`, `plugin/cli/lib/` (foundation, domains, the entry) and `plugin/cli/extensions/`: the CLI ([Library and extensions](library.md)).
-- `plugin/cli/models/`: the shipped architecture models; `plugin/packs/`: the stack packs, their references included ([Stack packs](stack-packs.md)).
+- `plugin/templates/`, `plugin/models/` (each model with its reference code) and `plugin/packs/`: the shipped packages ([Shipped layout](layout.md)).
 - `plugin/hooks/`: thin wrappers that call the CLI.
 - Who does the work, each where it must live:
 
@@ -84,8 +84,7 @@ sequenceDiagram
 |---|---|---|
 | `plugin/skills/aidlc/SKILL.md` | the lead's loop, the one skill | the main session |
 | `plugin/agents/` | builder, reviewer, researcher | subagents, each with its own context |
-| `plugin/cli/personas/` | product analyst, architect, each with its knowledge folder | roles the main session reads with `aidlc persona` while it elaborates with the owner ([0019](../decisions/0019-the-lead-works-in-role-personas.md)); under `cli/` so a project's pinned copy carries them |
-- `plugin/templates/`: everything `init` renders.
+| `plugin/personas/` | product analyst, architect, each with its knowledge folder | roles the main session reads with `aidlc persona` while it elaborates with the owner ([0019](../decisions/0019-the-lead-works-in-role-personas.md)), pinned with the CLI |
 - `.claude-plugin/marketplace.json`: marketplace `scrollout.net`, one entry `aidlc-team`, `source: "./plugin"`, so tests and docs never ship.
 
 # Releases

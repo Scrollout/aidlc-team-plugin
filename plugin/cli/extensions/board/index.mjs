@@ -44,7 +44,7 @@ const github = (profile) => {
 function wanted(cwd, st, gh) {
   const top = git(cwd, 'rev-parse', '--show-toplevel');
   const status = { ...B.status, ...(gh.status ?? {}) };
-  const file = templateFile(cwd, B.template);
+  const file = templateFile(cwd, B.template, import.meta.dirname);
   const template = readFileSync(file, 'utf8');
   const types = { ...B.types, ...(gh.types ?? {}) };
   const waves = new Map();

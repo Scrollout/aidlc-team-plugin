@@ -167,7 +167,7 @@ test('B231/AC-2 gaps matches the modules to the chosen model\'s items and kinds,
 });
 
 test('B232/AC-1 the control-plane model ships in generic names (the neutral test scans it): in the format, its decisions valid MADR proposals once applied', () => {
-  const root = join(import.meta.dirname, '..'), dir = 'plugin/cli/models/control-plane';
+  const root = join(import.meta.dirname, '..'), dir = 'plugin/models/control-plane';
   const files = ['model.json', ...readdirSync(join(root, dir, 'decisions')).map((f) => `decisions/${f}`), ...readdirSync(join(root, dir, 'knowledge')).map((f) => `knowledge/${f}`)];
   assert.ok(files.length > 6, 'model, decisions, knowledge'); // tests/neutral.test.mjs holds every file under plugin/ to naming no vendor
   const cp = JSON.parse(read(root, `${dir}/model.json`));
@@ -187,9 +187,9 @@ test('B232/AC-2 the model\'s contract applies only where a project chose it (dec
   assert.deepEqual(found({ ...V2, model: { name: 'control-plane' } }), ["api/things/openapi.yaml:1 CONTRACT-NAME components.schemas.Thing: a resource without systemData, which its model's contract asks"]);
 });
 
-test('B233/AC-1 the Go pack\'s control-plane reference meets the model\'s rules and contract, and covers its walking skeleton', () => {
+test('B233/AC-1 the control-plane model\'s Go reference meets the model\'s rules and contract, and covers its walking skeleton', () => {
   const dir = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n' }, {});
-  cpSync(join(import.meta.dirname, '..', 'plugin/packs/go/reference'), dir, { recursive: true });
+  cpSync(join(import.meta.dirname, '..', 'plugin/models/control-plane/reference/go'), dir, { recursive: true });
   const profile = {
     ...V2, system: { core: ['internal/**', 'cmd/**'] },
     model: { name: 'control-plane', wiring: { file: 'cmd/frontdoor/frontdoor.go', pattern: 'stages\\.Stage(\\w+)' }, operations: { status: 'Operation-Status', result: 'Location', retry: 'Retry-After' }, events: { files: ['api/events/*.yaml'] } },
@@ -211,7 +211,7 @@ test('B234/AC-1 the architect persona reads how to model a reference and apply a
   const dir = makeRepo();
   const out = run(dir, ['persona', 'architect']).out;
   assert.match(out, /architect\/models\.md/, 'its knowledge lists the models file');
-  const knowledge = read(join(import.meta.dirname, '..'), 'plugin/cli/personas/architect/models.md');
+  const knowledge = read(join(import.meta.dirname, '..'), 'plugin/personas/architect/models.md');
   for (const type of config.models.ruleTypes) assert.ok(knowledge.includes(`\`${type}\``), `${type} is explained`);
   for (const step of ['Horizontal first', 'Then vertical', 'MODEL-SOURCE', 'aidlc models apply', 'aidlc models gaps']) assert.ok(knowledge.includes(step), step);
 });

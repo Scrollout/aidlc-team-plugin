@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.174.0] - 2026-10-27
+### Changed
+- One layout for shipped content (decision 0022): the templates the CLI renders (cards, fix, research, intent review) join `plugin/templates/`, the personas move to `plugin/personas/`, the models to `plugin/models/`, and the control-plane model keeps its Go walking skeleton in `plugin/models/control-plane/reference/go/` with its own tests; the board's issue template lives in its extension.
+- `init` and `upgrade` pin every package beside the CLI in `.aidlc/bin/<package>/` and remove the old `.aidlc/packs/`; a project file at the same path under `.aidlc/` still wins.
+- One resolver, from `cli.json` `packages`, finds every template, persona, model and pack; the bolt template of `aidlc new bolt` now resolves through it in a pinned project too.
+
 ## [0.173.1] - 2026-10-27
 ### Changed
 - The core's small modules take their values from `cli.json`: the extensions' folder, entry and data file, template labels, the slug and generated-block patterns, the list-item pattern of an architecture exception, and the default finding level (M26 B235, in part).
@@ -284,7 +290,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.173.1...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.174.0...HEAD
+[0.174.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.173.1...v0.174.0
 [0.173.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.173.0...v0.173.1
 [0.173.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.172.2...v0.173.0
 [0.172.2]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.172.1...v0.172.2

@@ -2,7 +2,7 @@
 // and the model hook (docs/design/bolt-card.md). Model routing follows docs/design/team.md.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { bundleOf, CLI_DIR, config, QUICK, STANDARD, VERDICT, done, list, readJson, slug, UsageError, relPath } from '../foundation/data.mjs';
+import { bundleOf, CLI_DIR, config, QUICK, STANDARD, VERDICT, done, list, packageFile, readJson, slug, UsageError, relPath } from '../foundation/data.mjs';
 import { branchSha, git, gitLines, tryGit } from '../foundation/git.mjs';
 import { msg, render } from '../foundation/text.mjs';
 import { loadProfile, withDefaults } from '../foundation/profile.mjs';
@@ -37,9 +37,8 @@ export function routeModel(unit, lane, profile = {}, review = null) {
   return { model, reason };
 }
 
-export function templateFile(cwd, name) {
-  const own = join(cwd, config.templates.find((t) => t.from === 'project').path, name);
-  return existsSync(own) ? own : join(CLI_DIR, name);
+export function templateFile(cwd, name, shipped) {
+  return packageFile(cwd, 'templates', name, shipped);
 }
 
 // The non-blank lines of a section, as written.

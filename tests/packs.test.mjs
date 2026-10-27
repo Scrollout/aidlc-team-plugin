@@ -75,8 +75,8 @@ test('B171/AC-2 a bolt that names a domain gets the reference operations on its 
   approve(dir, 'I-1', 'U-1');
   assert.match(run(dir, ['card', 'U-1']).out, /^## Reference\nCopy the shape of the stack pack's reference domain \(.*packs\/go\/reference\/internal\/domains\/notes\): the command operation .*createnote and the query operation .*getnote\.$/m);
   assert.equal(run(dir, ['upgrade', '--dirty']).code, 0);
-  assert.ok(existsSync(join(dir, '.aidlc/packs/go/manifest.json')) && existsSync(join(dir, '.aidlc/packs/go/reference/go.mod')), 'vendored with the CLI');
-  assert.equal(JSON.parse(readFileSync(join(dir, '.aidlc/packs/go/manifest.json'), 'utf8')).stack, 'go');
+  assert.ok(existsSync(join(dir, '.aidlc/bin/packs/go/manifest.json')) && existsSync(join(dir, '.aidlc/bin/packs/go/reference/go.mod')), 'pinned with the CLI');
+  assert.equal(JSON.parse(readFileSync(join(dir, '.aidlc/bin/packs/go/manifest.json'), 'utf8')).stack, 'go');
 });
 
 test('B172/AC-1 the TypeScript pack reads relative imports and migrations; its reference domain passes every architecture check; scaffold works the same', () => {

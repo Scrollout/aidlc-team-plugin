@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"sync/atomic"
 
-	opmodel "example.com/reference/internal/domains/operations/model"
-	"example.com/reference/internal/domains/resources/application/deleteresource"
-	"example.com/reference/internal/domains/resources/application/putresource"
-	"example.com/reference/internal/domains/resources/model"
-	"example.com/reference/internal/pipeline/stages"
+	opmodel "example.com/controlplane/internal/domains/operations/model"
+	"example.com/controlplane/internal/domains/resources/application/deleteresource"
+	"example.com/controlplane/internal/domains/resources/application/putresource"
+	"example.com/controlplane/internal/domains/resources/model"
+	"example.com/controlplane/internal/pipeline/stages"
 )
 
 // Provider is a vertical slice: the namespace it serves, and its resource types whose writes are long-running.

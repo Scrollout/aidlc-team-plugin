@@ -2,7 +2,7 @@
 // disposition of findings (docs/design/review-rounds.md, backfill.md).
 import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { bundleOf, CLI_DIR, config, QUICK, VERDICT, done, isMap, list, readJson, readStdin, UsageError, relPath } from '../foundation/data.mjs';
+import { bundleOf, config, QUICK, VERDICT, done, isMap, list, packageFile, readJson, readStdin, UsageError, relPath } from '../foundation/data.mjs';
 import { addedLines, git, gitLines, tryGit } from '../foundation/git.mjs';
 import { msg, render } from '../foundation/text.mjs';
 import { loadProfile, withDefaults } from '../foundation/profile.mjs';
@@ -125,7 +125,7 @@ export function intentBrief(cwd, id) {
   const { profile } = loadProfile(cwd), bundle = bundleOf(cwd, profile), plan = readPlan(bundle), intent = plan.intents.find((i) => i.id === id);
   if (!intent) throw new UsageError(msg('reviewNoIntent', { intent: id }));
   const dir = join(bundle, config.okf.bundle.folders.Request ?? ''), requests = existsSync(dir) ? readdirSync(dir).filter((f) => list(intent.fm.request).some((q) => f.startsWith(`${q}-`))) : [];
-  const file = join(CLI_DIR, S.intentReviewTemplate);
+  const file = packageFile(cwd, 'templates', S.intentReviewTemplate);
   return render(readFileSync(file, 'utf8'), {
     intent: id, file: relPath(cwd, intent.file), requests: requests.map((f) => relPath(cwd, join(dir, f))),
     requirements: plan.requirements.filter((r) => intent.requirements.includes(r.id)).map((r) => relPath(cwd, r.file)),

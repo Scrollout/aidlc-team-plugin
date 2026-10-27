@@ -17,7 +17,7 @@ const patterns = [...RULES.patterns, ...words.map((w) => ({ match: `\\b${escape(
 const applies = (p, f) => !p.in || p.in.some((x) => f.startsWith(x));
 
 const tracked = execFileSync('git', ['ls-files', '-z'], { cwd: ROOT, encoding: 'utf8' }).split('\0').filter(Boolean)
-  .filter((f) => RULES.extensions.some((x) => f.endsWith(x)) && !RULES.skip.some((s) => f.startsWith(s)));
+  .filter((f) => RULES.extensions.some((x) => f.endsWith(x)) && !RULES.skip.some((s) => f.startsWith(s)) && existsSync(join(ROOT, f)));
 
 test('tracked files carry no session history', () => {
   const found = tracked.flatMap((f) => readFileSync(join(ROOT, f), 'utf8').split('\n').flatMap((l, k) => patterns.filter((p) => applies(p, f) && p.re.test(l)).map((p) => `${f}:${k + 1} ${l.match(p.re)[0]}`)));

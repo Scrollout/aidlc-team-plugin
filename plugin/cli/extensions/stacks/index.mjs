@@ -2,10 +2,10 @@
 // reads from source, with no toolchain run (docs/design/stack-packs.md).
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
-import { bundleOf, config, domainForms, done, graphOf, list, loadProfile, msg, nameOf, plug, PLUGIN_DIR, posix, registry, render, UsageError } from '../../lib/index.mjs';
+import { bundleOf, config, domainForms, done, graphOf, list, loadProfile, msg, nameOf, plug, posix, registry, render, shippedDir, UsageError } from '../../lib/index.mjs';
 
 const K = config.packs;
-const packsDir = () => join(PLUGIN_DIR, K.dir);
+const packsDir = () => shippedDir('packs');
 
 // The pack whose detect file the project has, as { stack, dir, manifest }, or null.
 function packFor(root) {

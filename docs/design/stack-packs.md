@@ -14,9 +14,9 @@ A dependency graph the AI writes in the first unit can read error-message prose 
 - `manifest.json`: how the stack is detected (`go.mod`, `tsconfig.json`), the folder of each kind and layer (`internal/domains/{{domain}}/model`, `cmd/{{deployable}}`), how imports are read, and where event types sit.
 - `templates/`: one file per scaffold kind, rendered with the names the registry composes ([Naming](naming.md)).
 - `reference/`: one domain (`notes`) with a command operation and a query operation, fully tested, in the pack's layout, passing every `ARCH-*` code on its own graph. Go's runs with `go test ./...`; TypeScript's with its `npm test` (`node --test` on `*.spec.ts`, type stripping), named so the plugin's own test run skips it.
-- Go's `reference/` also holds the control-plane model's walking skeleton ([Models](models.md)): a front door wiring the five governance stages in order, the resources and operations domains, idempotent writes, long-running ones answering with a result link, its API and events, each tested; the model's `slices` point at them, and CI runs `go test ./...` on it.
+- A model's walking skeleton lives with the model, under its `reference/<stack>/` ([Models](models.md), [Shipped layout](layout.md)); CI runs its tests too.
 
-`init` and `upgrade` copy the packs to `.aidlc/packs/` with the templates, so the vendored CLI and the builder read the same files.
+`init` and `upgrade` pin the packs in `.aidlc/bin/packs/` with the CLI, so the vendored CLI and the builder read the same files ([Shipped layout](layout.md)).
 
 # Graph
 `aidlc graph` prints the dependency graph the architecture checks read, one `from -> to` per line:

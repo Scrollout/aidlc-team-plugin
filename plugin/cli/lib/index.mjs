@@ -1,6 +1,6 @@
 // The library's public entry: loads the core, whose domains plug their rules into its seams, and exports the
 // functions other tools and the tests use (docs/design/library.md#library-entry).
-export { at, bundleOf, CLI_DIR, config, done, fieldPaths, isMap, list, PLUGIN_DIR, posix, readJson, relPath, UsageError, VERDICT } from './foundation/data.mjs';
+export { at, bundleOf, CLI_DIR, config, done, fieldPaths, isMap, list, packageFile, PLUGIN_DIR, posix, readJson, relPath, shippedDir, UsageError, VERDICT } from './foundation/data.mjs';
 export { branchSha, git, gitLines, sh, tryGit } from './foundation/git.mjs';
 export { msg, render } from './foundation/text.mjs';
 export { loadProfile, withDefaults } from './foundation/profile.mjs';

@@ -31,7 +31,7 @@ A folder, `models/<name>/`:
 A model's rules name roles and shapes, never one vendor's names; the project's own contract fills those in.
 
 # Where models live
-- Shipped under `plugin/cli/models/<name>/`, so a project's pinned CLI carries them, as it carries the personas.
+- Shipped in `plugin/models/<name>/` with its reference code, pinned with the CLI ([Shipped layout](layout.md)).
 - A project or organisation adds or overrides one in `.aidlc/models/<name>/`; the local one wins.
 - `aidlc check` validates every model it can see.
 

@@ -87,7 +87,7 @@ test('U77/AC-1 the findings of a fix round do not count toward the card cap', ()
 
 test('U79/AC-2 both card templates tell the builder to report from a file, not a pipe', () => {
   for (const f of ['card.md', 'card-quick.md']) {
-    const text = readFileSync(join(ROOT, 'plugin/cli', f), 'utf8');
+    const text = readFileSync(join(ROOT, 'plugin/templates', f), 'utf8');
     assert.match(text, /aidlc report \{\{id\}\} <file>/, f);
     assert.doesNotMatch(text, /pipe JSON/i, f);
   }

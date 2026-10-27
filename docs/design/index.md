@@ -47,7 +47,7 @@
 * [Requirements and architecture checks](architecture.md) - Lasting requirements as their own docs, and architecture rules as checks that fail a merge, so a project cannot drift from its intended shape.
 * [Resume](resume.md) - How the lead survives a clear, a crash or a new session - what lives on disk instead of the conversation - and why the owner clears the lead between intents.
 * [Review rounds](review-rounds.md) - What review record does with a verdict - fix rounds and their limit, send-backs, and which focus passes still count after a fix.
-* [Shipped layout](layout.md) - Draft - every content package at the top of the plugin folder holding all it owns, one pinned copy in a project laid out the same way, a project override at the same path under .aidlc, and one resolver for every lookup.
+* [Shipped layout](layout.md) - Every content package at the top of the plugin folder holding all it owns, one pinned copy in a project laid out the same way, a project override at the same path under .aidlc, and one resolver for every lookup.
 * [Skill and agents](prompts.md) - What the lead's skill and the builder and reviewer prompts say, how a review is picked and run, and why the prompts restate no enforced rule.
 * [Stack packs](stack-packs.md) - A stack pack per language (Go first, then TypeScript) holds the layout of every module kind, the scaffold templates, a tested reference domain and the dependency-graph extractor the plugin trusts, all as data the CLI reads.
 * [Standard formats](standards.md) - Decisions in MADR 4.0, acceptance criteria as Given/When/Then, requirements in EARS, releases in Keep a Changelog with SemVer, and architecture in arc42 with C4 levels, each checked by the CLI on drafts and on intents approved under method 5.

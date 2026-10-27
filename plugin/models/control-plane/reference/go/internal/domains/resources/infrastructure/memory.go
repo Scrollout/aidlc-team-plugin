@@ -5,7 +5,7 @@ import (
 	"context"
 	"sync"
 
-	"example.com/reference/internal/domains/resources/model"
+	"example.com/controlplane/internal/domains/resources/model"
 )
 
 // Memory is a store safe for concurrent use.

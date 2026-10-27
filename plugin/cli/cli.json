@@ -36,16 +36,12 @@
     "dir": ".aidlc/rules",
     "ext": ".md"
   },
-  "templates": [
-    {
-      "from": "project",
-      "path": ".aidlc/templates"
-    },
-    {
-      "from": "plugin",
-      "path": "templates"
-    }
-  ],
+  "packages": {
+    "templates": { "dir": "templates", "override": ".aidlc/templates" },
+    "personas": { "dir": "personas", "override": ".aidlc/personas" },
+    "models": { "dir": "models", "override": ".aidlc/models" },
+    "packs": { "dir": "packs" }
+  },
   "commands": [
     {
       "name": "init",
@@ -814,7 +810,7 @@
     "gherkin": "\\bwhen\\b.*\\bthen\\b",
     "requirementSection": "Requirement",
     "ears": ["^the .+ shall .+", "^when .+, the .+ shall .+", "^while .+, (when .+, )?the .+ shall .+", "^if .+, then the .+ shall .+", "^where .+, the .+ shall .+"],
-    "boltTemplate": "templates/docs/bolt.md",
+    "boltTemplate": "docs/bolt.md",
     "boltFile": "^(B-\\d+)(?:-[^/]*)?\\.md$",
     "intents": "intents",
     "unitFile": "^(U-\\d+)(?:-[^/]*)?\\.md$",
@@ -1135,6 +1131,7 @@
     "levels"
   ],
   "init": {
+    "retired": [".aidlc/packs"],
     "system": { "core": [], "extensions": [] },
     "files": [
       {
@@ -1665,10 +1662,6 @@
     "versionFile": "VERSION",
     "manifest": "../.claude-plugin/plugin.json"
   },
-  "packs": {
-    "dir": "packs",
-    "vendored": ".aidlc/packs"
-  },
   "construction": {
     "vertical": ["domain", "pipeline"],
     "delivery": "delivery",
@@ -1773,7 +1766,6 @@
     "banned": ["manager", "service", "frontdoor", "portal", "store", "common", "util", "utils", "helper", "helpers", "misc", "base", "core", "data", "info", "stuff", "thing"]
   },
   "personas": {
-    "dir": "personas",
     "steps": { "nextNoIntent": "product-analyst", "nextOpenIntent": "product-analyst", "nextOpenDraft": "product-analyst", "nextFinishDecision": "architect", "nextDraftUnits": "architect" }
   },
   "vocabulary": {

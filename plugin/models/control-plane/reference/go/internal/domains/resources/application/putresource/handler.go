@@ -5,8 +5,8 @@ package putresource
 import (
 	"context"
 
-	"example.com/reference/internal/domains/resources/events"
-	"example.com/reference/internal/domains/resources/model"
+	"example.com/controlplane/internal/domains/resources/events"
+	"example.com/controlplane/internal/domains/resources/model"
 )
 
 // Outcome is what a write did, which the front door answers with: created, changed, or nothing to change.

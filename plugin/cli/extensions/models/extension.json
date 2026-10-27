@@ -80,8 +80,6 @@
       "gapsNone": "nothing missing\n"
     },
     "models": {
-      "dir": "models",
-      "local": ".aidlc/models",
       "file": "model.json",
       "decisions": "decisions",
       "required": ["name", "title", "description", "layers", "slice"],

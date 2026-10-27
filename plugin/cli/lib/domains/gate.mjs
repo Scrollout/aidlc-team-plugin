@@ -3,7 +3,7 @@
 import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve, sep } from 'node:path';
-import { bundleOf, CLI_DIR, PLUGIN_DIR, config, QUICK, VERDICT, done, lapsed, list, readJson, UsageError, relPath } from '../foundation/data.mjs';
+import { bundleOf, CLI_DIR, config, QUICK, VERDICT, done, lapsed, list, packageFile, readJson, UsageError, relPath } from '../foundation/data.mjs';
 import { addedLines, git, gitLines, sh, tryGit } from '../foundation/git.mjs';
 import { finding as codeFinding, msg, render } from '../foundation/text.mjs';
 import { loadProfile, withDefaults } from '../foundation/profile.mjs';
@@ -396,7 +396,7 @@ export const commands = {
     const id = nextUnitId(bundle, Boolean(profile.system)), dir = profile.system ? config.grid.bolts : config.grid.units;
     const file = join(bundle, dir, `${id}-${docSlug(title)}.md`);
     const version = existsSync(join(CLI_DIR, config.init.version)) ? readFileSync(join(CLI_DIR, config.init.version), 'utf8').trim() : config.init.devVersion;
-    const text = render(readFileSync(join(CLI_DIR, G.fixTemplate), 'utf8'), {
+    const text = render(readFileSync(packageFile(cwd, 'templates', G.fixTemplate), 'utf8'), {
       title: JSON.stringify(title),
       description: JSON.stringify(title),
       why: title,
@@ -423,7 +423,7 @@ export const commands = {
     const { profile } = loadProfile(cwd);
     const bundle = bundleOf(cwd, profile), id = nextUnitId(bundle, true);
     const file = join(bundle, config.grid.bolts, `${id}-${docSlug(title)}.md`);
-    const text = readFileSync(join(PLUGIN_DIR, config.grid.boltTemplate), 'utf8').replace(/^title: .*$/m, `title: ${JSON.stringify(title.trim())}`);
+    const text = readFileSync(packageFile(cwd, 'templates', config.grid.boltTemplate), 'utf8').replace(/^title: .*$/m, `title: ${JSON.stringify(title.trim())}`);
     mkdirSync(dirname(file), { recursive: true });
     writeFileSync(file, text);
     return done(msg('newWrote', { path: relPath(cwd, file), id }));

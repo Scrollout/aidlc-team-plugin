@@ -121,7 +121,7 @@ const elab = (dir) => run(dir, ['check', 'docs']).out.split('\n').filter((l) => 
 const sourced = 'Customers order cakes online [Q-1.1].';
 
 test('B216/AC-1 the corner checklist is data, and a surface a method 7 intent leaves out or unsettled is ELAB-CORNER', () => {
-  const knowledge = read(join(import.meta.dirname, '..'), 'plugin/cli/personas/product-analyst/corner-checklist.md');
+  const knowledge = read(join(import.meta.dirname, '..'), 'plugin/personas/product-analyst/corner-checklist.md');
   assert.deepEqual(knowledge.split('\n').filter((l) => l.startsWith('- **')), config.intake.corners.map((c) => `- **${c.surface}:** ${c.asks}`), 'the analyst reads the checklist the CLI checks');
   const dir = makeRepo({}, V2);
   run(dir, ['intake', PROSE]);

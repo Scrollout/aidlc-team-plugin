@@ -4,6 +4,7 @@ import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { render, renderFile, TemplateError } from '../plugin/cli/lib/foundation/text.mjs';
 import { tempDir } from './state-repo.mjs';
+import { config } from '../plugin/cli/lib/index.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 
@@ -45,7 +46,7 @@ test('U1/AC-3 a project override file wins over the plugin template', () => {
 test('files shipped into projects never name the plugin', () => {
   const name = JSON.parse(readFileSync(join(ROOT, 'plugin/.claude-plugin/plugin.json'), 'utf8')).name;
   const walk = (d) => readdirSync(d, { withFileTypes: true, recursive: true }).filter((e) => e.isFile()).map((e) => join(e.parentPath ?? e.path, e.name));
-  const shipped = ['plugin/cli', 'plugin/templates'].flatMap((d) => { try { return walk(join(ROOT, d)); } catch { return []; } });
+  const shipped = ['plugin/cli', ...Object.values(config.packages).map((p) => `plugin/${p.dir}`)].flatMap((d) => { try { return walk(join(ROOT, d)); } catch { return []; } });
   assert.ok(shipped.length > 0);
   for (const f of shipped) assert.ok(!readFileSync(f, 'utf8').toLowerCase().includes(name.toLowerCase()), `${f} names ${name}`);
 });

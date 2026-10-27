@@ -7,12 +7,12 @@ import (
 	"log"
 	"net/http"
 
-	opinfra "example.com/reference/internal/domains/operations/infrastructure"
-	"example.com/reference/internal/domains/resources/application/deleteresource"
-	"example.com/reference/internal/domains/resources/application/putresource"
-	"example.com/reference/internal/domains/resources/events"
-	"example.com/reference/internal/domains/resources/infrastructure"
-	"example.com/reference/internal/pipeline/stages"
+	opinfra "example.com/controlplane/internal/domains/operations/infrastructure"
+	"example.com/controlplane/internal/domains/resources/application/deleteresource"
+	"example.com/controlplane/internal/domains/resources/application/putresource"
+	"example.com/controlplane/internal/domains/resources/events"
+	"example.com/controlplane/internal/domains/resources/infrastructure"
+	"example.com/controlplane/internal/pipeline/stages"
 )
 
 type logged struct{}

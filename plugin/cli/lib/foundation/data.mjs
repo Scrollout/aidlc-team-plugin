@@ -31,6 +31,14 @@ export const slug = (text, words) => text.toLowerCase().split(new RegExp(config.
 export const readStdin = (ctx) => (ctx.stdin ? ctx.stdin() : readFileSync(0, 'utf8'));
 export const done = (output, code = config.exit.ok, findings = []) => ({ code, findings, output });
 
+// A shipped package's folder: the pinned copy's, else the plugin's beside the CLI (docs/design/layout.md).
+export const shippedDir = (pkg) => [join(CLI_DIR, config.packages[pkg].dir), join(PLUGIN_DIR, config.packages[pkg].dir)].find(existsSync) ?? join(PLUGIN_DIR, config.packages[pkg].dir);
+// A package's file: the project's own at the override path, else the shipped one (`shipped` for an extension's own).
+export function packageFile(root, pkg, rel, shipped = shippedDir(pkg)) {
+  const own = config.packages[pkg].override && join(root, config.packages[pkg].override, rel);
+  return own && existsSync(own) ? own : join(shipped, rel);
+}
+
 // Each extension's data joins the core's: its codes, messages, commands and values (docs/design/library.md#extensions).
 export const EXTENSIONS_DIR = join(CLI_DIR, config.extensions.dir);
 export const extensionNames = existsSync(EXTENSIONS_DIR) ? readdirSync(EXTENSIONS_DIR).sort() : [];

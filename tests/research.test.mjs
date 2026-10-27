@@ -41,7 +41,7 @@ test('U23/AC-2 U23/AC-3 U23/AC-4 a question held for research is next; the brief
   assert.doesNotMatch(brief.out, /Stack: package\.json/);
   assert.match(brief.out, /^- https:\/\/go\.dev\/ref\/mod$/m, 'the owner\'s sources');
   assert.match(brief.out, /^Read at most 8 sources\./m);
-  assert.doesNotMatch(readFileSync(join(ROOT, 'plugin/cli/research.md'), 'utf8'), /https?:/, 'the plugin ships no source list');
+  assert.doesNotMatch(readFileSync(join(ROOT, 'plugin/templates/research.md'), 'utf8'), /https?:/, 'the plugin ships no source list');
   const out = brief.out.match(/writes it unchanged to (\S+)/)[1];
   assert.equal(out, 'docs/research/U-1-how-does-go-get-read-a.md');
   assert.match(brief.out, /^The lead then runs `aidlc check docs\/research\/U-1-how-does-go-get-read-a\.md` and the project's own doc checks, and sends any finding back to you to fix; it never edits the digest itself\.$/m, 'a resend is the brief\'s step');

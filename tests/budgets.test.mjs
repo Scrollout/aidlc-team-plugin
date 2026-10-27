@@ -53,7 +53,7 @@ const CHECKS = {
   },
   'Skill body / agent prompt': {
     check: (items, limit) => sizes(items, limit * 1024, 'bytes', (t) => Buffer.byteLength(t)),
-    real: () => files('plugin/skills', /^SKILL\.md$/).concat(files('plugin/agents', /\.md$/), readdirSync(join(ROOT, 'plugin/cli/personas')).filter((f) => f.endsWith('.md')).map((f) => `plugin/cli/personas/${f}`)).map((f) => ({ name: f, text: read(f) })), // and the role personas (decision 0019)
+    real: () => files('plugin/skills', /^SKILL\.md$/).concat(files('plugin/agents', /\.md$/), readdirSync(join(ROOT, 'plugin/personas')).filter((f) => f.endsWith('.md')).map((f) => `plugin/personas/${f}`)).map((f) => ({ name: f, text: read(f) })), // and the role personas (decision 0019)
   },
   'Skill and agent descriptions': {
     check: (items, limit) => sizes(items.map((i) => ({ ...i, text: description(i.text) })), limit, 'chars', (t) => t.length),
@@ -61,7 +61,7 @@ const CHECKS = {
   },
   'Unit card': {
     check: (items, limit) => sizes(items, limit, 'lines', (t) => t.replace(/\n$/, '').split('\n').length),
-    real: () => files('plugin/cli', /^card.*\.md$/).map((f) => ({ name: f, text: read(f) })), // templates; rendered cards are capped at runtime
+    real: () => files('plugin/templates', /^card.*\.md$/).map((f) => ({ name: f, text: read(f) })), // templates; rendered cards are capped at runtime
   },
   // The core counts as one; each extension counts on its own (decision 0017).
   'CLI core (`plugin/cli/aidlc.mjs`, `plugin/cli/lib/`)': {

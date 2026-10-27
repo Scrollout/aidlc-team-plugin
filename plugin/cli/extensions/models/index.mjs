@@ -3,7 +3,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { bundleOf, CLI_DIR, config, docSlug, done, gitLines, globRegex, isMap, list, loadProfile, msg, parseDoc, parseYaml, PLUGIN_DIR, plug, readJson, relPath, sectionOf, templateFile, UsageError, writeJson } from '../../lib/index.mjs';
+import { bundleOf, CLI_DIR, config, docSlug, done, gitLines, globRegex, isMap, list, loadProfile, msg, parseDoc, parseYaml, plug, readJson, relPath, sectionOf, shippedDir, templateFile, UsageError, writeJson } from '../../lib/index.mjs';
 
 const M = config.models, F = config.okf.bundle.folders;
 const sha16 = (text) => createHash('sha256').update(text).digest('hex').slice(0, 16);
@@ -12,7 +12,7 @@ const folders = (dir) => (existsSync(dir) ? readdirSync(dir).filter((n) => statS
 // Every model the project can see, by name: the shipped ones, then its own, which replace a shipped one of the same name.
 function modelsOf(root) {
   const out = new Map();
-  for (const [source, dir] of [['shipped', join(CLI_DIR, M.dir)], ['project', join(root, M.local)]]) for (const name of folders(dir)) out.set(name, { name, source, dir: join(dir, name) });
+  for (const [source, dir] of [['shipped', shippedDir('models')], ['project', join(root, config.packages.models.override)]]) for (const name of folders(dir)) out.set(name, { name, source, dir: join(dir, name) });
   return [...out.values()].map((m) => ({ ...m, ...read(m) }));
 }
 
@@ -60,7 +60,7 @@ const items = (d) => [...(d.layers ?? []), ...(d.domains ?? []), ...(d.rules ?? 
 // The Model doc the owner approves, drawn from model.json with its sources as footnotes (docs/design/models.md#modelling-a-reference).
 function modelDoc(cwd, name) {
   const { profile } = loadProfile(cwd), bundle = bundleOf(cwd, profile), m = name && project(cwd, name);
-  if (!m?.data) throw new UsageError(msg(name ? 'modelUnknown' : 'modelsUsage', { name, dir: M.local }));
+  if (!m?.data) throw new UsageError(msg(name ? 'modelUnknown' : 'modelsUsage', { name, dir: config.packages.models.override }));
   const d = m.data, H = M.docHeadings, sources = new Map(digests(bundle, d.research).flat().map((s) => [String(s.id), s]));
   const cite = (x) => list(x.sources).map((s) => `[^${s}]`).join('');
   const line = (x) => `- **${x.id}** (${x.kind ?? '-'}): ${x.role ?? ''} ${cite(x)}`.trimEnd();
@@ -209,7 +209,7 @@ function apply(cwd, name) {
   // The system doc, when the bundle has none: the template with the model's building blocks.
   const sysDir = join(bundle, F.System), system = existsSync(sysDir) && readdirSync(sysDir).some((f) => f.endsWith('.md') && f !== config.okf.index);
   if (!system) {
-    const tpl = [templateFile(cwd, M.systemTemplate), join(PLUGIN_DIR, 'templates', M.systemTemplate)].find(existsSync);
+    const tpl = [templateFile(cwd, M.systemTemplate)].find(existsSync);
     const blocks = [...m.data.layers, ...(m.data.domains ?? [])].map((x) => `- **${x.id}** (${x.kind ?? '-'}): ${x.role ?? ''}`.trimEnd()).join('\n');
     const text = readFileSync(tpl, 'utf8').replace(/(# Building Block View\n)<[^>\n]*>/, `$1${blocks}`);
     const at = join(sysDir, `${String(profile.naming?.tokens?.system ?? M.systemName)}.md`);
@@ -255,7 +255,7 @@ export const commands = {
     if (args[0] === 'gaps') return gaps(cwd);
     if (args.length) throw new UsageError(msg('modelsUsage', {}));
     const all = modelsOf(cwd);
-    if (!all.length) return done(msg('modelNone', { dir: M.local }));
+    if (!all.length) return done(msg('modelNone', { dir: config.packages.models.override }));
     return done(all.map((m) => msg('modelLine', { name: m.name, source: m.source, title: m.data?.title ?? '-', problems: m.problems.length ? msg('modelProblems', { count: m.problems.length }) : '' })).join(''));
   },
 };

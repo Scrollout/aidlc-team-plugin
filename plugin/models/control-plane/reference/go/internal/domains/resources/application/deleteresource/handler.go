@@ -5,8 +5,8 @@ package deleteresource
 import (
 	"context"
 
-	"example.com/reference/internal/domains/resources/events"
-	"example.com/reference/internal/domains/resources/model"
+	"example.com/controlplane/internal/domains/resources/events"
+	"example.com/controlplane/internal/domains/resources/model"
 )
 
 // Repository is what the operation needs from storage.
