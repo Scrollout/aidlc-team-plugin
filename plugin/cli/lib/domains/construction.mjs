@@ -1,8 +1,8 @@
 // Construction by proof: bindings, the walking skeleton, fix bolts and escape hatches as plan lint findings, and the
 // traceability page that says which requirements are delivered (docs/design/construction.md).
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
-import { bundleOf, config, lapsed, list, readJson } from '../foundation/data.mjs';
+import { bundleOf, config, lapsed, list, readJson, relPath } from '../foundation/data.mjs';
 import { git, tryGit } from '../foundation/git.mjs';
 import { msg } from '../foundation/text.mjs';
 import { parseDoc } from './bundle.mjs';
@@ -100,7 +100,8 @@ export const hatchLine = (hatches) => hatches.map((h) => msg('hatchItem', { ...h
 // test files there. A requirement is delivered when every AC of every bolt citing it has a test in a release.
 export function traceOf(cwd, profile) {
   const bundle = bundleOf(cwd, profile), plan = readPlan(bundle), merged = mergedUnits(cwd, profile.base);
-  const top = git(cwd, 'rev-parse', '--show-toplevel'), bundleRel = bundle.slice(top.length + 1);
+  // Real paths on both sides: git names the top through a resolved symlink (macOS /var is /private/var), the bundle may not.
+  const top = git(cwd, 'rev-parse', '--show-toplevel'), bundleRel = relPath(realpathSync.native(top), existsSync(bundle) ? realpathSync.native(bundle) : bundle);
   return plan.intents.map((i) => {
     const deploy = readJson(runtimeFile(cwd, 'deploys', i.id)) ?? {};
     const smoked = !profile.deploy?.smoke || (deploy.smoke?.ok && deploy.smoke.at >= deploy.release.at);

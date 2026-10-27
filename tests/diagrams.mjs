@@ -1,7 +1,7 @@
 // The plugin's diagrams, drawn from the data the CLI enforces (docs/design/diagrams/). `node tests/diagrams.mjs` rewrites
 // them; tests/diagrams.test.mjs fails on any difference (DOC-DIAGRAM).
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join, relative } from 'node:path';
+import { basename, dirname, join, relative, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { config } from '../plugin/cli/lib/index.mjs';
 
@@ -14,7 +14,7 @@ const mdTable = (head, rows) => [`| ${head.join(' | ')} |`, `|${head.map(() => '
 
 // The CLI's files and each static relative import between them, file to file (the self-check reads the same graph).
 const CLI = 'plugin/cli', ROOT = join(import.meta.dirname, '..');
-export const cliFiles = () => readdirSync(join(ROOT, CLI), { recursive: true }).filter((f) => f.endsWith('.mjs')).map((f) => `${CLI}/${f}`);
+export const cliFiles = () => readdirSync(join(ROOT, CLI), { recursive: true }).filter((f) => f.endsWith('.mjs')).map((f) => `${CLI}/${f.split(sep).join('/')}`); // posix on Windows too
 export const cliEdges = () => cliFiles().flatMap((f) => [...readFileSync(join(ROOT, f), 'utf8').matchAll(/^(?:import|export) .* from '(\.[^']+)';$/gm)]
   .map((m) => [f, relative(ROOT, join(ROOT, dirname(f), m[1])).split('\\').join('/')]));
 // Each file's part in the C4 component view: its layer, and its name (an extension is its folder).

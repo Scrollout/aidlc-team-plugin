@@ -39,8 +39,10 @@ test('U4/AC-4 card renders from the base commit with the unit fields', () => {
   assert.match(r.out, /^- Currency conversion\.$/m);
   assert.doesNotMatch(r.out, /As a buyer/);
   assert.ok(r.out.split('\n').length <= 100);
-  const record = JSON.parse(read(dir, '.git/aidlc/cards/U-1.json'));
+  const { key, text, ...record } = JSON.parse(read(dir, '.git/aidlc/cards/U-1.json'));
   assert.deepEqual(record, { unit: 'U-1', hash: hashOf(r.out), base, lane: 'standard', model: 'sonnet', scope: ['src/pricing/**'] });
+  assert.equal(text, r.out, 'the card it rendered, for the launch hook while nothing it is drawn from changes');
+  assert.match(key, /^[0-9a-f]{64}$/);
 });
 
 test('U4/AC-4 U119/AC-1 card refuses an unapproved or stale unit, and one over 100 lines', () => {

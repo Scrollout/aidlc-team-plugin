@@ -160,8 +160,22 @@ function renderCard(cwd, unitId, { preview = false } = {}) {
   const rules = data.rules.reduce((n, r) => n + lines(r.text), 0);
   if (preview) return atBase ? { size, max: C.max, rules } : null;
   if (size > C.max) return done(msg('cardTooLong', { unit: unitId, size, max: C.max, rules }), config.exit.findings);
-  writeJson(runtimeFile(cwd, 'cards', unitId), { unit: unitId, hash, base: baseSha, lane: lane.lane, model, scope: atBase.scope });
+  writeJson(runtimeFile(cwd, 'cards', unitId), { unit: unitId, hash, base: baseSha, lane: lane.lane, model, scope: atBase.scope, key: cardKey(cwd, unitId, baseSha), text: card });
   return done(card);
+}
+
+// What a card is drawn from, as one hash: the base (the doc, its references and the rules as of it), the bolt's
+// branch, its review and report, the profile layers and the card templates. The same key means the same card.
+function cardKey(cwd, unitId, baseSha) {
+  const read = (f) => (existsSync(f) ? readFileSync(f, 'utf8') : '');
+  const files = [...config.layers.filter((l) => l.from === 'project').map((l) => join(cwd, l.path)), runtimeFile(cwd, 'reviews', unitId), runtimeFile(cwd, 'reports', unitId),
+    ...[C.template, C.quickTemplate].map((t) => templateFile(cwd, t)), join(CLI_DIR, config.init.version)];
+  return sha256(JSON.stringify([baseSha, tryGit(cwd, 'rev-parse', '-q', '--verify', branchOf(unitId)), ...files.map(read)]));
+}
+// The card `aidlc card` last rendered for a bolt, while nothing it is drawn from changed; else null.
+export function cachedCard(cwd, unitId) {
+  const record = readJson(runtimeFile(cwd, 'cards', unitId)), { profile } = loadProfile(cwd);
+  return record?.text && record.key === cardKey(cwd, unitId, tryGit(cwd, 'rev-parse', '-q', '--verify', `${baseOf(profile)}^{commit}`)) ? record.text : null;
 }
 
 // PLAN-CARD: the card size in lines of each unit in `ids` over the cap, from the doc on disk; none without a base commit.

@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.170.0] - 2026-10-27
+### Fixed
+- macOS: the traceability page found no tagged test when the merge ran in a temporary tree reached through a symlink (`/var` is `/private/var`); the bundle's path is now compared as a real path. CI on macOS was red on this since M19.
+- Windows: the generated diagrams and the CLI's architecture self-check listed its files with backslashes; they are now posix paths. CI on Windows was red on this since M20.
+- Windows: the Agent hook took about 700 ms to render the card at every launch, over the 500 ms budget; it now reuses the card `aidlc card` rendered while nothing the card is drawn from changed (base, branch, review and report, profile, templates, the CLI's version).
+
 ## [0.169.0] - 2026-10-27
 ### Added
 - The control-plane model ships under `plugin/cli/models/control-plane/`, in generic names: a stateless front door and five governance stages in order (authenticate, authorize, policy, lock, throttle), four shared domains (resources, operations, deployments, activity), the provider slice per namespace, the six rules, its contract, five starter decisions in MADR, and the architect's knowledge for applying it.
@@ -248,7 +254,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.169.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.170.0...HEAD
+[0.170.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.169.0...v0.170.0
 [0.169.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.168.0...v0.169.0
 [0.168.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.167.0...v0.168.0
 [0.167.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.166.0...v0.167.0

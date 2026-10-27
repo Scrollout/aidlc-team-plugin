@@ -14,7 +14,7 @@ import { nextAction, readState, statusText } from './flow.mjs';
 import { commands as owner, delegated } from './approval.mjs';
 import { baseOf, aidlcDir, bump, heartbeatFresh, hostDeniedFile, runtimeFile, writeJson } from '../foundation/store.mjs';
 import { directAllowed, mergeWritten, secretIn } from './gate.mjs';
-import { commands as cards, researchBrief } from './card.mjs';
+import { cachedCard, commands as cards, researchBrief } from './card.mjs';
 import { intentBrief } from './review.mjs';
 
 const H = config.hooks;
@@ -304,8 +304,9 @@ function model(input, cwd) {
     return b.text ? launch(input, b.text, profile.efforts.review) : deny(cwd, input, 'MODEL-UNIT', 'modelCard', { agent, unit: intent, why: b.why });
   }
   if (!unit) return deny(cwd, input, 'MODEL-UNIT', 'modelUnit', { agent });
-  // The card is rendered now, so the model it names and the brief the agent reads are current.
-  const rendered = cards.card([unit], { cwd });
+  // The card as `aidlc card` last rendered it while nothing it is drawn from changed, else rendered now, so the model
+  // it names and the brief the agent reads are current.
+  const cached = cachedCard(cwd, unit), rendered = cached ? { code: config.exit.ok, output: cached } : cards.card([unit], { cwd });
   if (rendered.code !== config.exit.ok) return deny(cwd, input, 'MODEL-UNIT', 'modelCard', { agent, unit, why: rendered.output.trim() });
   const expected = role === H.agents[0] ? readJson(runtimeFile(cwd, 'cards', unit))?.model : profile.models.review;
   if (!expected) return deny(cwd, input, 'MODEL-UNIT', 'modelUnit', { agent });
