@@ -9,7 +9,7 @@ import { finding as codeFinding, msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { hashDoc, linksOf, parseDoc, sectionOf, sizeCap } from './okf.mjs';
 import { boardBehind } from './board.mjs';
-import { acsOf, computeLane, incrementSection, inside, lintPlan, overlaps, readPlan, reqId as reqIdOf, productGlobs, testsOnly, withIntents } from './grid.mjs';
+import { acsOf, computeLane, incrementLines, incrementSection, inside, lintPlan, overlaps, readPlan, reqId as reqIdOf, productGlobs, testsOnly, withIntents } from './grid.mjs';
 
 const S = config.state;
 
@@ -96,14 +96,13 @@ export function keptPass(cwd, profile, unit, focus, last) {
 
 // ---- Back-fill ----
 
+const profilePath = config.layers.find((l) => l.from === 'project').path; // a profile AC is proved by mutating it, not reverting it
 // A path in one of the levels' test paths.
 const isTestPath = (f, levels) => Object.values(levels ?? {}).some((l) => list(l?.paths).some((g) => inside('/' + f, g)));
 // A unit's changes outside the test paths, the bundle and the project folder: what proof-revert reverts. None
 // makes it a back-fill unit, proved by mutations instead (docs/design/backfill.md).
-export const codeChanges = (paths, levels, bundleRel) => {
-  const project = dirname(config.layers.find((l) => l.from === 'project').path) + '/';
-  return paths.filter((f) => !isTestPath(f, levels) && !f.startsWith(bundleRel + '/') && !f.startsWith(project));
-};
+export const codeChanges = (paths, levels, bundleRel) => paths
+  .filter((f) => !isTestPath(f, levels) && !f.startsWith(bundleRel + '/') && !f.startsWith(dirname(profilePath) + '/'));
 
 // The reported mutation for an AC tag.
 export const mutationOf = (mutations, tag) => (Array.isArray(mutations) ? mutations : []).find((x) => x?.ac === tag);
@@ -111,7 +110,6 @@ export const mutationOf = (mutations, tag) => (Array.isArray(mutations) ? mutati
 // What a back-fill unit's mutations lack: one per AC, of a file outside the tests and the diff, whose `find`
 // occurs exactly once on the unit branch. A quick-lane unit needs none; one that changes code only when it reports
 // some, which may then edit its own diff (docs/design/backfill.md).
-const profilePath = config.layers.find((l) => l.from === 'project').path; // a profile AC is proved by mutating it, not reverting it
 function mutationProblems(cwd, profile, unit, mutations) {
   const u = readPlan(bundleOf(cwd, profile)).units.find((x) => x.id === unit);
   if (!u || computeLane(u.scope, profile).lane === QUICK) return [];
@@ -134,7 +132,6 @@ function mutationProblems(cwd, profile, unit, mutations) {
 
 export { hashDoc } from './okf.mjs';
 export const events = (fm) => (isMap(fm.verified) ? [fm.verified] : Array.isArray(fm.verified) ? fm.verified.filter(isMap) : []);
-
 
 // approved: a human `verified` event and a matching hash; stale: approved once, changed since.
 export function approval(doc) {
@@ -269,6 +266,9 @@ export function readState(cwd, { now = Date.now() } = {}) {
     const approvalState = approval(u.doc);
     const report = readJson(runtimeFile(cwd, 'reports', u.id));
     const review = readReview(cwd, u.id, u.doc);
+    const fresh = heartbeatFresh(cwd, u.id, now);
+    // A builder launched after `at` and still at work: a new round in flight, not the state `at` recorded.
+    const relaunched = (at) => fresh && heartbeatAt(cwd, u.id, S.launches) > at;
     let state;
     let focus = null, focuses = [];
     if (merged.has(u.id)) state = 'merged';
@@ -295,29 +295,28 @@ export function readState(cwd, { now = Date.now() } = {}) {
       focuses = verdicts.filter((x) => !x.verdict).map((x) => x.focus); // each one a reviewer of its own, in parallel (U115)
       // A builder launched after the last verdict and the last report is at work on a new diff, whatever verdict a
       // focus kept: no review of a head it is still moving (U130).
-      const launched = heartbeatAt(cwd, u.id, S.launches);
-      const atWork = heartbeatFresh(cwd, u.id, now) && launched > Date.parse(lastAt ?? 0) && launched > Date.parse(report?.at ?? 0);
+      const atWork = relaunched(Date.parse(lastAt ?? 0)) && relaunched(Date.parse(report?.at ?? 0));
       if (has(VERDICT.escalate)) state = 'escalated';
       else if (atWork && review?.rounds?.length) state = 'building';
       // A fix round is in flight once a builder was launched after the verdict: the builder that reported before
       // the review keeps its heartbeat fresh for minutes (docs/design/in-flight.md).
       else if (has(VERDICT.fix)) {
         const fixAt = Math.max(0, ...(review?.rounds ?? []).filter((r) => r.verdict === VERDICT.fix).map((r) => Date.parse(r.at)));
-        state = heartbeatFresh(cwd, u.id, now) && heartbeatAt(cwd, u.id, S.launches) > fixAt ? 'building' : 'fix';
+        state = relaunched(fixAt) ? 'building' : 'fix';
       }
       else if (!focus && (!quick || report)) {
         const gate = readJson(runtimeFile(cwd, 'gates', u.id));
         // A builder launched after the gate refused it is a fix round in flight, not a merge to offer again.
-        if (gate?.at && heartbeatFresh(cwd, u.id, now) && heartbeatAt(cwd, u.id, S.launches) > Date.parse(gate.at)) state = 'building';
+        if (gate?.at && relaunched(Date.parse(gate.at))) state = 'building';
         // Refused only for a red base, it stays refused until a merge lands: a plan commit does not fix the base (U145).
-        else state = gate?.diffHash === hash && (gate.base === tryGit(cwd, 'rev-parse', base) || (gate.codes.every((c) => c === 'GATE-BASE') && tryGit(cwd, 'rev-list', '--count', '--merges', `${gate.base}..${base}`) === '0')) ? 'gated' : 'reviewed';
+        else state = gate?.diffHash === hash && (gate.base === tryGit(cwd, 'rev-parse', base) || (gate.codes.every((c) => c === 'GATE-BASE') && noMergeSince(cwd, gate.base, base))) ? 'gated' : 'reviewed';
       }
       else if (has(VERDICT.pass) || has(S.answered) || (report && report.status !== S.stopped && (!lastAt || report.at > lastAt) && Date.parse(report.at) > approvedAt(u.doc))) {
         state = heartbeatFresh(cwd, u.id, now, S.reviewing) ? 'reviewing' : 'reported';
       }
       else state = 'building';
-    } else state = heartbeatFresh(cwd, u.id, now) ? 'building' : 'approved';
-    return { ...u, lane, state, focus, focuses, fresh: heartbeatFresh(cwd, u.id, now), report, review, held: Boolean(u.fm.hold) && !answered.has(researchOf(u)) }; // an answered research hold no longer holds
+    } else state = fresh ? 'building' : 'approved';
+    return { ...u, lane, state, focus, focuses, fresh, report, review, held: Boolean(u.fm.hold) && !answered.has(researchOf(u)) }; // an answered research hold no longer holds
   });
 
   const intents = plan.intents.sort(byId).map((i) => {
@@ -334,7 +333,8 @@ export function readState(cwd, { now = Date.now() } = {}) {
     const nothing = complete && (testsOnly(own, profile) || ((profile.modules ?? []).length > 0 && !changed().some((f) => productGlobs(profile).some((g) => inside('/' + f, g)))));
     // An increment ships when its bolts merge: due while a merged increment is not in the last passing release (U121).
     const shipped = (ids) => deploy.release?.ok && smoked && ids.every((id) => tryGit(cwd, 'merge-base', '--is-ancestor', merged.get(id), deploy.release.base) !== null);
-    const increments = incrementSection(i.doc).filter(([, t]) => /^\s*([-*]|\d+\.)\s/.test(t)).map(([, t]) => (t.match(ids) ?? []).filter((id) => own.some((u) => u.id === id))).filter((x) => x.length && x.every((id) => merged.has(id))); // another intent's bolt cited on a line is not this intent's work (U123)
+    // Another intent's bolt cited on a line is not this intent's work (U123).
+    const increments = incrementLines(i).map((l) => l.ids.filter((id) => own.some((u) => u.id === id))).filter((x) => x.length && x.every((id) => merged.has(id)));
     const incrementDue = !complete && Boolean(profile.deploy || profile.release) && increments.length > 0 && !shipped(increments.flat());
     const released = complete && (nothing || (profile.deploy || profile.release) && Boolean(shipped(own.map((u) => u.id)))
       || own.every((u) => (tryGit(cwd, 'tag', '--contains', merged.get(u.id)) ?? '') !== ''));
@@ -350,15 +350,16 @@ function ciOf(cwd, profile, base) {
   if (!profile.ci?.wait) return null;
   const head = tryGit(cwd, 'rev-parse', base);
   const rec = readJson(ciFile(cwd));
-  const red = rec?.state === 'red' && tryGit(cwd, 'rev-list', '--count', '--merges', `${rec.sha}..${head}`) === '0';
+  const red = rec?.state === 'red' && noMergeSince(cwd, rec.sha, head);
   return { head, remote: tryGit(cwd, 'rev-parse', '-q', '--verify', `${config.gate.remote}/${base}`), rec, red };
 }
 
 // The gate's red-base record while no merge has landed on the base since: a plan commit keeps it red.
 function redOf(cwd, base) {
   const rec = readJson(baseRedFile(cwd));
-  return rec && tryGit(cwd, 'rev-list', '--count', '--merges', `${rec.sha}..${base}`) === '0' ? rec : null;
+  return rec && noMergeSince(cwd, rec.sha, base) ? rec : null;
 }
+const noMergeSince = (cwd, sha, head) => tryGit(cwd, 'rev-list', '--count', '--merges', `${sha}..${head}`) === '0';
 
 // ---- next ----
 
@@ -431,10 +432,9 @@ function gateOf(st, intent, scope) {
   const drafts = scope.filter((u) => u.state === 'draft');
   if (!drafts.length) return draftReqs.length ? gate('nextApproveRequirements', draftReqs.map((r) => r.id), { reqs: ids(draftReqs) }) : null;
   const decisions = citedDecisions(st, drafts);
-  const reqs = draftReqs; // the ones the intent and these units cite
-  const docs = [ids([...drafts, ...reqs]), ...decisions].join(' ');
-  const auto = st.auto.includes(S.auto[1]) && drafts.every((u) => u.lane === QUICK) && !decisions.length && !reqs.length;
-  return gate(auto ? 'nextAutoApprove' : 'nextApprovePlan', [...drafts, ...reqs].map((d) => d.id), { docs, units: docs }, auto ? 'act' : 'human');
+  const docs = [ids([...drafts, ...draftReqs]), ...decisions].join(' ');
+  const auto = st.auto.includes(S.auto[1]) && drafts.every((u) => u.lane === QUICK) && !decisions.length && !draftReqs.length;
+  return gate(auto ? 'nextAutoApprove' : 'nextApprovePlan', [...drafts, ...draftReqs].map((d) => d.id), { docs, units: docs }, auto ? 'act' : 'human');
 }
 
 // AC tags that no file on the unit branch carries outside the bundle, as the gate looks for them.
@@ -514,7 +514,6 @@ export function nextAction(st) {
 
 // A question the lead held for research (decision 0010) and the questions the bundle's research docs answer.
 export const researchOf = (doc) => (typeof doc.fm.hold === 'string' && doc.fm.hold.startsWith(S.researchHold) ? doc.fm.hold.slice(S.researchHold.length).trim() : null);
-// The decisions, by number as the owner types them: an architecture choice is a usual research question (second project).
 // The other docs a research question can be held on: decisions by number, any other doc by its name (second project).
 const bundleHeld = (bundle) => (existsSync(bundle) ? readdirSync(bundle, { recursive: true }).map(String) : [])
   .filter((f) => f.endsWith(config.okf.ext) && ![config.okf.index, config.okf.log].includes(basename(f)))
@@ -536,11 +535,12 @@ function pickAction(st) {
   const ops = unreleased && releaseStep(st, unreleased);
   if (S.badges.stops.includes(ops?.key) || ops?.key === 'nextSmokeFix') return ops; // a failed release or smoke comes first
   // A red base comes next: a fix unit, unless one is live (docs/design/base-ci.md).
-  if (st.ci?.red && !st.units.some((u) => !u.fm.intent && u.state !== 'merged')) {
+  const fixLive = st.units.some((u) => !u.fm.intent && u.state !== 'merged');
+  if (st.ci?.red && !fixLive) {
     const red = st.ci.rec.runs.filter((r) => config.ci.red.includes(r.conclusion));
     return action('act', 'nextCiFix', { runs: red.map((r) => r.name).join(', '), logs: red.map((r) => render(config.ci.log, r, 'ci.log')).join('; '), tests: firstTests(st.profile) });
   }
-  if (st.red && !st.units.some((u) => !u.fm.intent && u.state !== 'merged')) return action('act', 'nextBaseFix', { level: st.red.level, unit: st.red.unit, tests: firstTests(st.profile) });
+  if (st.red && !fixLive) return action('act', 'nextBaseFix', { level: st.red.level, unit: st.red.unit, tests: firstTests(st.profile) });
   const asked = [...st.requirements, ...st.intents, ...st.units, ...st.decisions].find((d) => researchOf(d) && !st.answered.has(researchOf(d)));
   if (asked) return heartbeatFresh(st.cwd, asked.id, Date.now(), S.researching) ? action('wait', 'nextWaitResearch', { doc: asked.id }) : action('act', 'nextResearch', { doc: asked.id, model: st.profile.models.research });
   const intent = st.intents.find((i) => !['released', 'merged'].includes(i.state)) ?? unreleased;
@@ -607,12 +607,13 @@ function findDoc(cwd, bundle, name) {
   const hit = [...plan.units, ...plan.intents, ...plan.requirements].find((d) => reqIdOf(d.id) === reqIdOf(name));
   if (hit) return hit.file;
   // A decision by its number, as the owner types it: `approve 0010` (docs/design/cli.md).
-  const decision = /^\d+$/.test(name) && readdirSync(bundle, { recursive: true }).map(String)
+  const files = readdirSync(bundle, { recursive: true }).map(String);
+  const decision = /^\d+$/.test(name) && files
     .filter((f) => Number(basename(f).match(/^(\d+)-.*\.md$/)?.[1]) === Number(name)).map((f) => join(bundle, f))
     .find((f) => parseDoc(readFileSync(f, 'utf8')).fm?.type === config.grid.decisionType);
   if (decision) return decision;
   // Any other doc by its file name, as `next` names a held one: `aidlc research reputation`.
-  const named = readdirSync(bundle, { recursive: true }).map(String).filter((f) => basename(f) === `${name}${config.okf.ext}`);
+  const named = files.filter((f) => basename(f) === `${name}${config.okf.ext}`);
   if (named.length !== 1) throw new UsageError(msg('noDoc', { name }));
   return join(bundle, named[0]);
 }
@@ -654,20 +655,15 @@ export function statusText(st, next, tail = '') {
 }
 
 const usage = (key) => { throw new UsageError(msg(key, {})); };
-const humanGate = (a) => (a.kind === 'human' ? config.exit.blocked : config.exit.ok);
+// `status` and `next` exit blocked when the next step is the owner's.
+const showNext = (cwd, text) => {
+  const st = readState(cwd), next = nextAction(st);
+  return done(text(st, next, boardBehind(st)), next.kind === 'human' ? config.exit.blocked : config.exit.ok);
+};
 
 export const commands = {
-  status(args, { cwd }) {
-    const st = readState(cwd);
-    const next = nextAction(st);
-    return done(statusText(st, next, boardBehind(st)), humanGate(next));
-  },
-
-  next(args, { cwd }) {
-    const st = readState(cwd);
-    const next = nextAction(st);
-    return done(msg('nextLine', next) + boardBehind(st), humanGate(next));
-  },
+  status: (args, { cwd }) => showNext(cwd, statusText),
+  next: (args, { cwd }) => showNext(cwd, (st, next, tail) => msg('nextLine', next) + tail),
 
   approve(args, { cwd }) {
     const by = tryGit(cwd, 'config', 'user.email');
@@ -679,29 +675,27 @@ export const commands = {
     let out = '';
     // Not approved: a door without its decision, or an increment finding on the doc or its intent (docs/design/plan-lint.md).
     const errors = lintPlan(bundle, profile, { base: cwd, skip: [...mergedUnits(cwd, withDefaults(profile).base).keys()] }).filter((f) => S.approveBlocks.includes(f.code));
-    for (const name of args.filter((a) => a !== S.autoFlag)) {
-      const wanted = new Set([...withIntents(bundle, [findDoc(cwd, bundle, name)])].map((f) => relPath(cwd, f)));
+    const named = args.filter((a) => a !== S.autoFlag).map((name) => ({ name, file: findDoc(cwd, bundle, name) }))
+      .map((d) => ({ ...d, text: readFileSync(d.file, 'utf8') })).map((d) => ({ ...d, doc: parseDoc(d.text) }));
+    for (const { file } of named) {
+      const wanted = new Set([...withIntents(bundle, [file])].map((f) => relPath(cwd, f)));
       const error = errors.find((f) => wanted.has(f.path));
       if (error) throw new UsageError(msg('approveLint', error));
     }
     // One-way doors one at a time, and none while its intent's design review has an open confirmed finding (decision 0015).
-    const named = args.filter((a) => a !== S.autoFlag).map((n) => [n, findDoc(cwd, bundle, n)]).map(([n, f]) => [n, f, parseDoc(readFileSync(f, 'utf8'))]);
-    const doors = named.filter(([, , d]) => d.fm?.oneWayDoor === true).map(([n]) => n);
+    const doors = named.filter(({ doc }) => doc.fm?.oneWayDoor === true).map(({ name }) => name);
     if (doors.length > 1) throw new UsageError(msg('approveBulk', { docs: doors.join(', ') }));
-    for (const [n, f, d] of named) {
+    for (const { name, file: f, doc: d } of named) {
       const intents = d.fm?.type === S.intentType ? [d.fm.id ?? basename(f).match(/^(I-\d+)/)?.[1]] : d.fm?.oneWayDoor === true ? readPlan(bundle).intents.filter((i) => i.doc.lines.some((l) => l.includes(basename(f)))).map((i) => i.id) : [];
       for (const intent of intents.filter(Boolean)) {
         const open = (readJson(runtimeFile(cwd, 'design', intent))?.findings ?? []).filter((x) => x.confidence === S.confirmed && !x.disposition);
-        if (open.length) throw new UsageError(msg('approveOpen', { doc: n, intent, findings: open.map((x) => x.id).join(', ') }));
+        if (open.length) throw new UsageError(msg('approveOpen', { doc: name, intent, findings: open.map((x) => x.id).join(', ') }));
       }
     }
     // All or nothing: every doc is checked before any is written; a doc named twice is stamped once.
     const writes = new Map();
-    for (const name of args.filter((a) => a !== S.autoFlag)) {
-      const file = findDoc(cwd, bundle, name);
+    for (const { name, file, text, doc } of named) {
       if (writes.has(file)) continue;
-      const text = readFileSync(file, 'utf8');
-      const doc = parseDoc(text);
       if (!S.approvable.includes(String(doc.fm?.type))) throw new UsageError(msg('notApprovable', { name }));
       const quick = doc.fm.type === S.unitType && approval(doc) === 'draft' && computeLane(list(doc.fm.scope), profile).lane === QUICK;
       const cls = approval(doc) === 'stale' ? S.auto[0] : quick ? S.auto[1] : null;
