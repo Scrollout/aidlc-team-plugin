@@ -38,7 +38,7 @@ test('U28/AC-2 U28/AC-3 a quick-lane or run-less unit skips the proof and says s
 test('U74/AC-1 an AC at a level with a run and no paths refuses the merge instead of skipping its proof', () => {
   const r = merge(setup({ profile: { ...PROFILE, levels: { unit: { run: 'node --test' } } } }));
   assert.equal(r.code, 1);
-  assert.match(r.out, /GATE-LEVEL U-1\/AC-1 is at level unit, which has a run but no paths, so no merge can prove its test → move the test under the level's paths in profile.levels, or add the paths the level lacks, in this unit or in one merged before it/);
+  assert.match(r.out, /GATE-LEVEL U-1\/AC-1 is at level unit, which has a run but no paths, so no merge can prove its test → move the test under the level's paths in profile.levels, or add the paths the level lacks, in this bolt or in one merged before it/);
   assert.doesNotMatch(r.out, /proof skipped/);
 });
 

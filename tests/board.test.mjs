@@ -224,7 +224,7 @@ test('U11/AC-3 issue bodies come from the template, a project template wins, and
   assert.equal(byTitle(ctx, 'U-2').body, 'Goal: Currency goal.\n<!-- unit: U-2 -->\n');
 });
 
-test('U11/AC-4 fix --from-issue creates a fix unit linked to the issue; board edits never change docs', () => {
+test('U11/AC-4 fix --from-issue creates a fix bolt linked to the issue; board edits never change docs', () => {
   const report = { number: 12, id: 1012, node_id: 'I_12', title: 'Export drops the last row', body: 'seen in prod', state: 'open', labels: [], parent: null };
   const ctx = setup({ issues: [report] });
   const r = aidlc(ctx, 'fix', '--from-issue', '12', '--scope', 'src/z/**');

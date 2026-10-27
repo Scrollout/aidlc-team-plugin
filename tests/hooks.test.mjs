@@ -144,7 +144,7 @@ test('U7/AC-2 scope: in-scope writes pass, out-of-scope and merge-written files 
   const link = join(tempDir('link-'), 'wt');
   symlinkSync(wt, link, 'junction'); // a junction needs no admin rights on Windows
   assert.match(reason(hook('scope', writeTool(link, 'lib/x.mjs', '1;\n'))), /^SCOPE-OUT lib\/x\.mjs/, 'a symlink in the session\'s path does not escape the scope');
-  assert.equal(decision(hook('scope', writeTool(dir, 'lib/x.mjs', '1;\n'))), 'allow', 'outside a unit worktree there is no scope');
+  assert.equal(decision(hook('scope', writeTool(dir, 'lib/x.mjs', '1;\n'))), 'allow', 'outside a bolt worktree there is no scope');
   assert.match(reason(hook('scope', writeTool(dir, '.aidlc/local/profile.json', '{}'))), /^SCOPE-APPROVAL/, 'only the owner delegates approvals');
 
   approve(dir, 'U-1');

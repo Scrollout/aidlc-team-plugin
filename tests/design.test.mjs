@@ -33,7 +33,7 @@ test('U72/AC-1 plan lint asks a full-lane unit for Domain and Logical, a standar
   ], 'a design section with content passes; a reason waives it; the quick lane needs none; an empty heading counts for nothing');
   const fix = run(dir, ['fix', 'export drops a row', '--scope', 'migrations/**']);
   assert.match(fix.out, /^wrote docs\/units\/U-9-export-drops-a-row\.md/, fix.err);
-  assert.match(read(dir, 'docs/units/U-9-export-drops-a-row.md'), /^design: "a regression fix: its test pins the behaviour"$/m, 'a fix unit carries its waiver');
+  assert.match(read(dir, 'docs/units/U-9-export-drops-a-row.md'), /^design: "a regression fix: its test pins the behaviour"$/m, 'a fix bolt carries its waiver');
 
   const approved = makeRepo({ 'docs/intents/I-1-p.md': intentDoc('I-1'), 'docs/units/U-1-a.md': unit(['src/**']) });
   approve(approved, 'I-1', 'U-1');

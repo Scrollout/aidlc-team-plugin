@@ -365,7 +365,7 @@ test('U107/AC-1 PLAN-SKELETON warns when the first top-level AC waits on more th
   });
   const profile = { modules: [{ id: 'app', paths: ['src/**'] }], levels: { unit: { run: 'u' }, e2e: { run: 'e' } } };
   const skeleton = (dir) => lintPlan(join(dir, 'docs'), profile, { base: dir }).filter((f) => f.code === 'PLAN-SKELETON').map((f) => `${f.level} ${f.message}`);
-  assert.deepEqual(skeleton(plan(true)), ["warning I-1's first e2e AC waits on 3 of its 4 product units: end to end comes last"]);
+  assert.deepEqual(skeleton(plan(true)), ["warning I-1's first e2e AC waits on 3 of its 4 product bolts: end to end comes last"]);
   assert.deepEqual(skeleton(plan(false)), [], 'a skeleton after U-1');
 });
 

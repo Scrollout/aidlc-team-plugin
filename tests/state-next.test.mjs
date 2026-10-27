@@ -12,7 +12,7 @@ test('U4/AC-2 a stopped builder sends the unit back to the lead; re-approval res
   branch(dir, 'U-1');
   run(dir, ['report', 'U-1'], '{"status": "stopped", "stop": "the scope is too small"}');
   const r = run(dir, ['next']);
-  assert.match(r.out, /^⛔ the builder of U-1 stopped \(the scope is too small\): if the unit doc is wrong, fix it and ask the owner to re-approve it; otherwise remove the cause and start its builder again/);
+  assert.match(r.out, /^⛔ the builder of U-1 stopped \(the scope is too small\): if the bolt doc is wrong, fix it and ask the owner to re-approve it; otherwise remove the cause and start its builder again/);
   assert.equal(r.code, 0);
   write(dir, { [U(1)]: read(dir, U(1)).replace('src/**', 'src/**", "lib/**') });
   commit(dir, 'widen U-1');
@@ -158,7 +158,7 @@ test('U141/AC-1 a stopped unit holds back no other unit\'s review; its stop come
   assert.match(run(dir, ['next']).out, /^⛔ the builder of U-1 stopped \(the interface must change\)/);
 });
 
-test('U145/AC-1 a fix unit refused for a red base waits for a merge, and the base\'s fix builds past its scope', () => {
+test('U145/AC-1 a fix bolt refused for a red base waits for a merge, and the base\'s fix builds past its scope', () => {
   const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ intent: '', scope: ['src/**'] }), [U(2)]: unitDoc({ intent: '', scope: ['src/b/**'] }), [U(3)]: unitDoc({ scope: ['c/**'] }) });
   approve(dir, 'I-1', 'U-1', 'U-2', 'U-3');
   branch(dir, 'U-1', 'src/a.txt');
@@ -433,18 +433,18 @@ test('U65/AC-2 status and the session-start hook show the same units: merged uni
   assert.deepEqual(units(context), units(status));
 });
 
-test('U101/AC-1 the draft decisions an approved intent links come before its units: finish, then approve', () => {
+test('U101/AC-1 the draft decisions an approved intent links come before its bolts: finish, then approve', () => {
   const D = 'docs/decisions/0002-language.md';
   const intent = intentDoc('I-1').replace('# Goal', 'Language: [0002](../decisions/0002-language.md).\n\n# Goal');
   const dir = makeRepo({ 'docs/intents/I-1-x.md': intent, [D]: '---\ntype: Decision\ntitle: 0002 Language\ndescription: Which language.\n---\n\n# Decision\n<the option chosen>\n' });
   approve(dir, 'I-1');
-  assert.match(run(dir, ['next']).out, /^finish docs\/decisions\/0002-language\.md, which I-1 links, with the owner before its units: Decision/);
+  assert.match(run(dir, ['next']).out, /^finish docs\/decisions\/0002-language\.md, which I-1 links, with the owner before its bolts: Decision/);
   write(dir, { [D]: read(dir, D).replace('<the option chosen>', 'Go, by the owner.') });
   const ask = run(dir, ['next']);
   assert.equal(ask.code, 2, 'the owner acts');
-  assert.match(ask.out, /ask the owner to approve the decisions I-1 links before its units: aidlc approve docs\/decisions\/0002-language\.md/);
+  assert.match(ask.out, /ask the owner to approve the decisions I-1 links before its bolts: aidlc approve docs\/decisions\/0002-language\.md/);
   assert.equal(run(dir, ['approve', D]).code, 0);
-  assert.match(run(dir, ['next']).out, /^draft the units of I-1/);
+  assert.match(run(dir, ['next']).out, /^draft the bolts of I-1/);
 });
 
 test('U104/AC-1 a re-approval names the new draft requirements the stale intent cites', () => {
@@ -495,7 +495,7 @@ test('U117/AC-1 U117/AC-2 U122/AC-1 an intent with an increment line naming no b
   assert.match(readFileSync(join(import.meta.dirname, '../plugin/templates/docs/intent.md'), 'utf8'), /^# Risks\n- <what could sink this, riskiest first/m, 'U126/AC-1');
 });
 
-test('U118/AC-3 next never starts a unit whose scope overlaps one started and not merged; intent units before fix units', () => {
+test('U118/AC-3 next never starts a unit whose scope overlaps one started and not merged; intent units before fix bolts', () => {
   const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['src/**'], acs: ['- AC-1 (e2e): it works.'] }), [U(2)]: unitDoc({ intent: '', scope: ['src/go.mod'] }) }, { levels: { unit: {}, e2e: {} } });
   approve(dir, 'I-1', 'U-1', 'U-2');
   branch(dir, 'U-1');

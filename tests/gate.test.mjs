@@ -171,7 +171,7 @@ test('U6/AC-3 and AC-10 check --ci flags merges without trailers or out of scope
   git(dir, 'merge', '-q', '--no-ff', 'side', '-m', 'Merge side', '-m', 'Unit: U-1');
   let r = run(dir, ['check', '--ci']);
   assert.equal(r.code, 1);
-  assert.match(r.out, /CI-COMMIT commit \w+ changes src\/hack\.mjs outside a unit/);
+  assert.match(r.out, /CI-COMMIT commit \w+ changes src\/hack\.mjs outside a bolt/);
   assert.match(r.out, /CI-MERGE merge \w+ lacks the Card trailer/);
   assert.match(r.out, /CI-MERGE merge \w+ of U-1 changes lib\/x\.mjs, outside its scope/);
 
@@ -195,7 +195,7 @@ test('U6/AC-6 push refuses a base commit that is neither a gate merge nor docs-o
   commit(dir, 'code on base', { 'src/hack.mjs': '1;\n' });
   r = run(dir, ['push']);
   assert.equal(r.code, 1);
-  assert.match(r.out, /PUSH-COMMIT commit \w+ changes src\/hack\.mjs outside a unit/);
+  assert.match(r.out, /PUSH-COMMIT commit \w+ changes src\/hack\.mjs outside a bolt/);
   assert.notEqual(git(remote, 'rev-parse', 'main'), git(dir, 'rev-parse', 'main'));
 });
 
@@ -301,7 +301,7 @@ test('U98/AC-2 check --ci runs deps.check, so an advisory published after a merg
   commit(dir, 'a scanner', { '.aidlc/profile.json': { ...PROFILE, deps: { manifests: ['package.json'], check: [FAIL] } } });
   const r = run(dir, ['check', '--ci']);
   assert.equal(r.code, 1);
-  assert.match(r.out, /CI-DEPENDENCY .+ reports a dependency with a known advisory or out of date → plan a fix unit/);
+  assert.match(r.out, /CI-DEPENDENCY .+ reports a dependency with a known advisory or out of date → plan a fix bolt/);
   commit(dir, 'clean', { '.aidlc/profile.json': { ...PROFILE, deps: { manifests: ['package.json'], check: [OK] } } });
   assert.doesNotMatch(run(dir, ['check', '--ci']).out, /CI-DEPENDENCY/);
 });
@@ -313,13 +313,13 @@ test('U109/AC-1 gate level runs bypass test caches (gate.fresh), added to the va
   assert.equal(r.status, 0, r.stdout + r.stderr);
 });
 
-test('U114/AC-2 a level red on the base alone is GATE-BASE: only fix units build or merge, and next asks for one', () => {
+test('U114/AC-2 a level red on the base alone is GATE-BASE: only fix bolts build or merge, and next asks for one', () => {
   const dir = setup({ profile: { ...PROFILE, levels: { unit: { paths: ['tests/**'], run: `node --test && ${FAIL}` } } } });
   const r = merge(dir);
   assert.equal(r.code, 1);
   assert.deepEqual(codes(r), ['GATE-BASE'], r.out);
-  assert.match(r.out, /level unit run .* fails on the base alone too → not this unit's to fix/);
-  assert.match(run(dir, ['next']).out, /^the base fails its unit level on its own \(found merging U-1\): only a fix unit builds or merges/);
+  assert.match(r.out, /level unit run .* fails on the base alone too → not this bolt's to fix/);
+  assert.match(run(dir, ['next']).out, /^the base fails its unit level on its own \(found merging U-1\): only a fix bolt builds or merges/);
   commit(dir, 'a plan commit', { 'docs/notes.md': '---\ntype: Note\n---\n' });
   assert.match(run(dir, ['next']).out, /^the base fails its unit level/, 'a plan commit keeps it red');
   assert.equal(run(dir, ['fix', 'the unit level', '--scope', 'docs/guide/**']).code, 0);

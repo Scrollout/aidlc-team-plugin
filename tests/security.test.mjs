@@ -161,7 +161,7 @@ test('U70/AC-2 #16 a merge whose Unit trailer names no unit in the plan fails pu
   git(dir, 'merge', '-q', '--no-ff', 'forged', '-m', 'Merge U-99', '-m', 'Unit: U-99\nCard: x\nReview: pass\nTested: none\nProof: none');
   let r = run(dir, ['push']);
   assert.equal(r.code, 1);
-  assert.match(r.out, /PUSH-COMMIT merge \w+ names U-99, a unit not in the plan/);
+  assert.match(r.out, /PUSH-COMMIT merge \w+ names U-99, a bolt not in the plan/);
   r = run(dir, ['check', '--ci']);
-  assert.match(r.out, /CI-MERGE merge \w+ names U-99, a unit not in the plan/);
+  assert.match(r.out, /CI-MERGE merge \w+ names U-99, a bolt not in the plan/);
 });

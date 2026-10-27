@@ -103,7 +103,7 @@
       "codes": {
         "PLAN-BOARD": {
           "level": "error",
-          "fix": "add the planned value to the unit's frontmatter, as the example shows"
+          "fix": "add the planned value to the bolt's frontmatter, as the example shows"
         }
       }
     },
@@ -111,7 +111,7 @@
       {
         "name": "sync",
         "usage": "sync",
-        "does": "project intents and units onto GitHub issues and a Project"
+        "does": "project intents and bolts onto GitHub issues and a Project"
       },
       {
         "name": "ci",

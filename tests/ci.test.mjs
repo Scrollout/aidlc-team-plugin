@@ -101,7 +101,7 @@ test('U71/AC-2 merges and reviews still come before the push', () => {
   assert.match(aidlc(ctx, 'next').out, /^review U-1/);
 });
 
-test('U71/AC-3 a red base comes first: a fix unit, then only fix units build or merge', () => {
+test('U71/AC-3 a red base comes first: a fix bolt, then only fix bolts build or merge', () => {
   const ctx = setup();
   write(ctx.dir, { 'docs/units/U-2-v.md': unitDoc({ scope: ['b/**'] }) });
   commit(ctx.dir, 'U-2');
@@ -111,7 +111,7 @@ test('U71/AC-3 a red base comes first: a fix unit, then only fix units build or 
   report(ctx.dir, 'U-2');
   setRecord(ctx, 'red');
   const next = aidlc(ctx, 'next');
-  assert.equal(next.out, 'CI is red on the base (ci-4): only a fix unit builds; read the logs (gh run view 4 --log-failed). A failure outside this repo (runner, registry, network): fix or wait for it, rerun with gh run rerun <id> --failed, then aidlc ci wait. Else draft a fix: aidlc fix "<what failed>" --scope <code globs> --scope "<test globs>"\n');
+  assert.equal(next.out, 'CI is red on the base (ci-4): only a fix bolt builds; read the logs (gh run view 4 --log-failed). A failure outside this repo (runner, registry, network): fix or wait for it, rerun with gh run rerun <id> --failed, then aidlc ci wait. Else draft a fix: aidlc fix "<what failed>" --scope <code globs> --scope "<test globs>"\n');
   assert.equal(next.code, 0, 'the lead drafts it');
 
   const fix = aidlc(ctx, 'fix', 'export breaks', '--scope', 'c/**', '--scope', 'c/**/*.test.mjs');

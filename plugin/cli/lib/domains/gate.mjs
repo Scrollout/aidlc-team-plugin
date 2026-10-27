@@ -216,7 +216,7 @@ function runGate(cwd, st, unit) {
   const tree = trialWorktree(cwd, base);
   if (tryGit(tree, 'merge', '-q', '--no-ff', '--no-commit', branchOf(unit.id)) === null) {
     tryGit(tree, 'merge', '--abort');
-    add('GATE-CONFLICT', 'gateConflict', { base });
+    add('GATE-CONFLICT', 'gateConflict', { base, branch: branchOf(unit.id) });
     return { findings: out, tree, tested: [], proof: null };
   }
 

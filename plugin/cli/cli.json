@@ -95,17 +95,17 @@
     },
     {
       "name": "lane",
-      "usage": "lane <unit>|--diff <range>",
+      "usage": "lane <bolt>|--diff <range>",
       "does": "print the computed lane and why"
     },
     {
       "name": "card",
-      "usage": "card <unit>",
-      "does": "render the unit card"
+      "usage": "card <bolt>",
+      "does": "render the bolt card"
     },
     {
       "name": "start",
-      "usage": "start <unit>",
+      "usage": "start <bolt>",
       "does": "name the worktree branch unit/U-<n> and check its base"
     },
     {
@@ -116,7 +116,7 @@
     {
       "name": "delegate",
       "usage": "delegate <class>…|off [--until <date>]",
-      "does": "let the lead approve re-approvals or quick-lane units (owner only)"
+      "does": "let the lead approve re-approvals or quick-lane bolts (owner only)"
     },
     {
       "name": "mode",
@@ -136,12 +136,12 @@
     },
     {
       "name": "review",
-      "usage": "review record <unit> <file|->",
+      "usage": "review record <bolt> <file|->",
       "does": "store a reviewer verdict keyed by diff hash"
     },
     {
       "name": "report",
-      "usage": "report <unit> [file]",
+      "usage": "report <bolt> [file]",
       "does": "store the builder's report (JSON from the file, or stdin)"
     },
     {
@@ -151,12 +151,12 @@
     },
     {
       "name": "priority",
-      "usage": "priority <unit> <n>",
+      "usage": "priority <bolt> <n>",
       "does": "record an owner priority in the plan"
     },
     {
       "name": "name",
-      "usage": "name <kind> [--domain d] [--role r] [--env e] [--verb v] [--stage s] [--action a] [--table t] [--object o] [--number n] [--metric m] [--unit u] [--section s] [--key k] [--date d] [--preview] [--tag t]",
+      "usage": "name <kind> [--domain d] [--role r] [--env e] [--verb v] [--stage s] [--action a] [--table t] [--object o] [--number n] [--metric m] [--bolt u] [--section s] [--key k] [--date d] [--preview] [--tag t]",
       "does": "print a name from the naming grammar and registry",
       "flags": ["--domain", "--role", "--env", "--verb", "--stage", "--action", "--table", "--object", "--number", "--metric", "--unit", "--section", "--key", "--date", "--preview", "--tag"]
     },
@@ -178,7 +178,7 @@
     {
       "name": "fix",
       "usage": "fix \"<title>\"|--from-issue <n> --scope <glob>… [--requirement R-<n>…] [--after <intent>]",
-      "does": "create a one-unit plan without an intent",
+      "does": "create a one-bolt plan without an intent",
       "flags": [
         "--scope",
         "--requirement",
@@ -198,7 +198,7 @@
     },
     {
       "name": "merge",
-      "usage": "merge <unit>",
+      "usage": "merge <bolt>",
       "does": "run the merge gate, then merge --no-ff with trailers"
     },
     {
@@ -291,7 +291,7 @@
     "stampOver": "{{size}} chars with its approval stamps, over the {{cap}} cap for {{type}}: trim {{trim}} or more before approve",
     "ruleUnknown": "docs.rules.{{code}}: unknown code",
     "namesShape": "names rule {{id}} needs id, files and pattern",
-    "archNoData": "the profile has modules but no data ownership (architecture.data): one slice could read another's data unseen",
+    "archNoData": "the profile has modules but no data ownership (architecture.data): one module could read another's data unseen",
     "archNoAcyclic": "the profile has modules but architecture.acyclic is off",
     "archNoApi": "modules without an api surface: {{modules}}",
     "nameUsage": "usage: aidlc name <kind>; kinds: {{kinds}}",
@@ -343,12 +343,12 @@
     "laneQuick": "every path is inside lanes.quick",
     "laneStandard": "{{item}} is outside lanes.quick and overlaps no full or focus glob",
     "laneEmpty": "nothing to match",
-    "laneUsage": "usage: lane <unit>|--diff <range>",
-    "unknownUnit": "no unit {{name}} in {{dir}}",
+    "laneUsage": "usage: lane <bolt>|--diff <range>",
+    "unknownUnit": "no bolt {{name}} in {{dir}}",
     "noEmail": "git config user.email is not set",
     "approveLint": "{{code}} {{message}} → {{fix}}",
     "approveSize": "{{doc}} would be {{size}} chars with its approval stamps, over its {{cap}} cap: trim it by {{trim}} or more, then approve again",
-    "notApprovable": "{{name}} is not an intent, unit or decision doc",
+    "notApprovable": "{{name}} is not an intent, bolt or decision doc",
     "approved": "approved {{doc}}\n",
     "noDoc": "no doc {{name}}",
     "nextContinueMerge": "finish the merge of {{unit}}: aidlc merge {{unit}}, or git merge --abort",
@@ -357,9 +357,11 @@
     "nextOpenDraft": "finish elaborating {{doc}} with the owner: {{points}} still open in {{file}}; then ask for approval",
     "nextOpenIntent": "finish elaborating {{doc}} with the owner: {{points}} still open in {{file}}; meanwhile draft the decisions it needs from .aidlc/templates/docs/decision.md, linked from it, so the owner sees the how with the what; then ask for approval",
     "nextApproveIntent": "ask the owner to approve {{intent}}: aidlc approve {{intent}} (the owner confirms the prompt or types: approve {{intent}})",
-    "nextFinishDecision": "finish {{doc}}, which {{intent}} links, with the owner before its units: {{points}}",
-    "nextApproveDecisions": "ask the owner to approve the decisions {{intent}} links before its units: aidlc approve {{docs}} (the owner confirms the prompt or types: approve {{docs}})",
-    "nextDraftUnits": "draft the units of {{intent}} in {{dir}}/U-<n>-<slug>.md, a walking skeleton first (the top-level test harness and the thinnest real path end to end), then slices that each prove what they add at the top level; then ask for the plan approval",
+    "nextFinishDecision": "finish {{doc}}, which {{intent}} links, with the owner before its bolts: {{points}}",
+    "nextApproveDecisions": "ask the owner to approve the decisions {{intent}} links before its bolts: aidlc approve {{docs}} (the owner confirms the prompt or types: approve {{docs}})",
+    "draftBoltFile": "{{dir}}/B-<n>-<slug>.md (aidlc new bolt \"<title>\")",
+    "draftUnitFile": "{{dir}}/U-<n>-<slug>.md",
+    "nextDraftUnits": "draft the bolts of {{intent}} as {{file}}, a walking skeleton first (the top-level test harness and the thinnest real path end to end), then increments that each prove what they add at the top level; then ask for the plan approval",
     "nextApprovePlan": "ask the owner to approve the plan: aidlc approve {{units}} (the owner confirms the prompt or types: approve {{units}})",
     "nextMerge": "merge {{unit}}: aidlc merge {{unit}}",
     "nextUntagged": "{{unit}} has no test tagged {{tags}} on its branch: send the builder back (card: aidlc card {{unit}})",
@@ -377,7 +379,7 @@
     "nextReleaseFailed": "{{intent}} release failed: {{command}} exited {{exit}}; the owner retries (the owner types: release {{intent}}), or the lead drafts a fix: aidlc fix \"<what failed>\" --after {{intent}} --scope <code globs> --scope \"{{tests}}\"",
     "releaseUsage": "usage: aidlc release <intent>, for a merged intent with deploy.run or release in the profile",
     "nextReleaseCiWait": "{{intent}} ships only a pushed base whose CI passed: aidlc ci wait",
-    "nextReleaseCiRed": "{{intent}} ships only a base whose CI passed: it is red, so its fix unit merges first",
+    "nextReleaseCiRed": "{{intent}} ships only a base whose CI passed: it is red, so its fix bolt merges first",
     "releaseCiNotGreen": "{{intent}} ships only a pushed base whose CI passed (now: {{ci}}): run aidlc push and aidlc ci wait first",
     "releaseNoCheck": "{{intent}} has no passing deploy check on this base: run aidlc deploy check {{intent}} first",
     "promptGo": "The owner typed {{command}}: run aidlc {{command}} now; the guard lets this one call through.",
@@ -391,8 +393,8 @@
     "deployNotMerged": "{{intent}} is {{state}}: deploy steps run on a merged intent",
     "deployNotOnBase": "check out {{base}} first: deploy steps run on the base",
     "nextCiPush": "the base has merges its remote lacks: push it before new builders: aidlc push",
-    "nextBaseFix": "the base fails its {{level}} level on its own (found merging {{unit}}): only a fix unit builds or merges. Draft one: aidlc fix \"<what failed>\" --scope <code globs> --scope \"{{tests}}\"",
-    "nextCiFix": "CI is red on the base ({{runs}}): only a fix unit builds; read the logs ({{logs}}). A failure outside this repo (runner, registry, network): fix or wait for it, rerun with gh run rerun <id> --failed, then aidlc ci wait. Else draft a fix: aidlc fix \"<what failed>\" --scope <code globs> --scope \"{{tests}}\"",
+    "nextBaseFix": "the base fails its {{level}} level on its own (found merging {{unit}}): only a fix bolt builds or merges. Draft one: aidlc fix \"<what failed>\" --scope <code globs> --scope \"{{tests}}\"",
+    "nextCiFix": "CI is red on the base ({{runs}}): only a fix bolt builds; read the logs ({{logs}}). A failure outside this repo (runner, registry, network): fix or wait for it, rerun with gh run rerun <id> --failed, then aidlc ci wait. Else draft a fix: aidlc fix \"<what failed>\" --scope <code globs> --scope \"{{tests}}\"",
     "deployPassed": "{{intent}} {{step}} passed\n",
     "deployFailed": "{{intent}} {{step}} failed: {{command}} exited {{exit}}\n{{output}}\n",
     "nextResearch": "research for {{doc}}: researcher on {{model}} (brief: aidlc research {{doc}})",
@@ -409,7 +411,7 @@
     "statusMore": "  … {{count}} more\n",
     "statusNext": "next: {{line}}\n",
     "cardRefused": "{{unit}} is {{state}}: the owner approves it before a card is rendered\n",
-    "cardTooLong": "card for {{unit}} is {{size}} lines, over {{max}}, {{rules}} of them project rules: shorten the unit doc or the rules\n",
+    "cardTooLong": "card for {{unit}} is {{size}} lines, over {{max}}, {{rules}} of them project rules: shorten the bolt doc or the rules\n",
     "noBase": "base branch {{base}} has no commits",
     "laneModel": "lane {{lane}}",
     "modelEscalated": "escalated: {{reason}}",
@@ -438,9 +440,9 @@
     "recordedEscalateFix": "recorded {{what}} for {{unit}}: a reviewer escalate is a fix round first (fix round {{round}} of {{limit}}); the builder fixes it or stops on its card's stop conditions\n",
     "recordedFix": "recorded {{what}} for {{unit}}: fix round {{round}} of {{limit}} in focus {{focus}}\n",
     "untaggedClaim": "{{tag}} has no tagged test on the branch",
-    "untaggedScenario": "the merge gate refuses the unit until a test carries the tag",
+    "untaggedScenario": "the merge gate refuses the bolt until a test carries the tag",
     "recordedEscalate": "recorded {{what}} for {{unit}}: fix round {{round}} in focus {{focus}} would pass the limit of {{limit}} since the owner's last approval, so the owner decides\n",
-    "reviewUsage": "usage: review record <unit> <file|->",
+    "reviewUsage": "usage: review record <bolt> <file|->",
     "cardFixes": "## Findings to fix\n{{list}}",
     "cardAnswered": "## Findings the owner answered by re-approving\nThe owner kept or changed the spec after these escalated; report each again only if it still holds against the spec as it is now.\n{{list}}",
     "cardFinding": "- {{focus}} {{confidence}} {{path}}:{{line}}: {{claim}} ({{scenario}})\n",
@@ -502,7 +504,7 @@
     "gateFocusPath": "{{path}} matches focus.{{focus}}",
     "gateFocusContent": "{{path}}:{{line}} matches security.content {{pattern}}",
     "gateOkf": "{{path}}:{{line}} {{code}} {{message}}",
-    "gateConflict": "unit/{{unit}} conflicts with {{base}}",
+    "gateConflict": "{{branch}} conflicts with {{base}}",
     "archEdge": "{{from}} -> {{to}}: {{reason}}",
     "archDataEdge": "{{from}} -> {{to}}: {{to}} belongs to {{owner}}; reach it through {{owner}}'s interface, an event or a shared service",
     "archDataNoOwner": "{{from}} -> {{to}}: no module owns {{to}}; add it to one module's data, or to architecture.data.shared",
@@ -523,14 +525,14 @@
     "gateLogEntry": "- **Update** {{unit}} {{title}} merged.",
     "ciTrailer": "merge {{sha}} lacks the {{trailer}} trailer",
     "ciScope": "merge {{sha}} of {{unit}} changes {{path}}, outside its scope",
-    "ciCommit": "commit {{sha}} changes {{path}} outside a unit",
+    "ciCommit": "commit {{sha}} changes {{path}} outside a bolt",
     "pushed": "pushed {{base}} to {{remote}}\n",
     "mutationBreaks": "{{tag}}'s mutation names no behaviour it breaks: add \"breaks\": \"<the AC's main behaviour it breaks>\"",
     "mutationMissing": "{{tag}} has no mutation",
     "mutationBad": "{{tag}}'s mutation of {{path}} needs a file outside the tests and the diff whose find text occurs once (found {{count}}), and a replace",
     "reportDeps": "{{unit}} changes {{files}}: list each dependency added or bumped as \"deps\": [{\"name\", \"version\", \"source\"}], the source being the registry URL or command that showed the version (docs: Current dependencies)",
-    "reportMutationsWired": "a unit that changes code and reports mutations is proved by them instead of by revert, so each AC needs one (docs: Proof for back-fill tests, wiring): {{problems}}",
-    "reportMutations": "a unit that changes only tests proves each AC with a mutation of the code it covers (docs: Proof for back-fill tests): {{problems}}",
+    "reportMutationsWired": "a bolt that changes code and reports mutations is proved by them instead of by revert, so each AC needs one (docs: Proof for back-fill tests, wiring): {{problems}}",
+    "reportMutations": "a bolt that changes only tests proves each AC with a mutation of the code it covers (docs: Proof for back-fill tests): {{problems}}",
     "cardMutations": "## Mutations to judge (the gate applies each; send back one that breaks nothing its AC names)\n{{list}}\n",
     "cardMutation": "- {{ac}}: in {{path}}, {{find}} → {{replace}}; breaks: {{breaks}}\n",
     "fixLint": "{{path}} does not pass plan lint yet: fix each finding below, then run aidlc check {{path}}\n",
@@ -549,7 +551,7 @@
     "guardAlias": "a git alias set on the command line",
     "guardHook": "running a hook by hand",
     "scopeState": "{{path}} is the CLI's state",
-    "gateIdentity": "{{path}}:{{line}} adds a static credential between components (trust auth, a password in a URL or a client secret)",
+    "gateIdentity": "{{path}}:{{line}} adds a static credential between runtimes (trust auth, a password in a URL or a client secret)",
     "gateSecret": "{{path}}:{{line}} adds what looks like a secret",
     "gateNamePath": "{{path}} does not match the {{rule}} rule {{pattern}} ({{why}})",
     "gateSynonym": "{{path}}:{{line}} says {{word}}, a synonym of {{term}} in the {{domain}} glossary",
@@ -559,12 +561,12 @@
     "glossaryBody": "\n**TL;DR:** One term, one meaning: each domain's words, the synonyms the gate refuses, and the meaning.\n\n# Terms\n| Term | Domain | Avoid | Meaning |\n|---|---|---|---|\n{{rows}}",
     "glossaryRow": "| **{{term}}** | {{domain}} | {{avoid}} | {{meaning}} |\n",
     "gateName": "{{path}}:{{line}} names {{name}}, which does not match the {{rule}} rule {{pattern}} ({{why}})",
-    "ciUnknownUnit": "merge {{sha}} names {{unit}}, a unit not in the plan",
+    "ciUnknownUnit": "merge {{sha}} names {{unit}}, a bolt not in the plan",
     "guardRelease": "{{what}} needs the owner",
     "scopeOut": "{{path}} is outside the scope of {{unit}}",
     "scopeShared": "{{path}} is written by merge",
     "planShared": "{{unit}} scope {{glob}} names a file only merge writes",
-    "planSkeleton": "{{unit}}'s first {{level}} AC waits on {{wait}} of its {{units}} product units: end to end comes last",
+    "planSkeleton": "{{unit}}'s first {{level}} AC waits on {{wait}} of its {{units}} product bolts: end to end comes last",
     "planRunbook": "{{unit}} links no runbook, and the profile deploys",
     "planPlatform": "{{unit}} ships, and the profile does not say where the deploy target is defined (deploy.platform)",
     "planIncrementsOff": "{{unit}} is on no increment line of {{intent}}'s # Increments",
@@ -613,7 +615,7 @@
     "cardNamesOf": "- names this bolt creates for {{module}} (aidlc name): {{names}}\n",
     "cardNamePath": "- {{id}}, paths under {{files}}: {{pattern}} ({{why}})\n",
     "cardDeps": "Your scope pins dependencies ({{manifests}}). Your training data is out of date: look up each version you add or bump from its registry or official release page, take the newest stable release that fixes every known advisory, pin it exactly, and list it in your report as \"deps\": [{\"name\", \"version\", \"source\"}] (the URL or command that showed it). The merge gate, CI and the daily run check currency and advisories live: {{checks}}; a test of yours never queries a registry, it proves a check on fixed inputs offline.\n",
-    "cardPlatform": "The deploy target is already defined in: {{refs}}\nBuild on its conventions (names, namespaces, registries, access); add nothing it already provides, and stop and report if the unit needs a change there.\n",
+    "cardPlatform": "The deploy target is already defined in: {{refs}}\nBuild on its conventions (names, namespaces, registries, access); add nothing it already provides, and stop and report if the bolt needs a change there.\n",
     "cardDataRest": "- shared, for any module: {{shared}}\nReach any other data only through its owning module's interface, an event or a shared service; the merge gate fails a direct read or write (ARCH-DATA).\n",
     "cardDesign": "the # {{sections}} section(s) of {{path}} at the base",
     "planIncrementWaiver": "{{unit}} reaches the product ({{glob}} overlaps {{area}}), but {{intent}} skips its end-to-end test with endToEnd:",
@@ -624,7 +626,7 @@
     "planDecisionBare": " (a bare name matches at any depth: write /{{glob}} for the root file)",
     "scopeApproval": "{{path}}: approvals and verified_hash are the owner's",
     "secretFound": "{{path}} contains what looks like a secret",
-    "modelUnit": "{{agent}} prompt names no unit",
+    "modelUnit": "{{agent}} prompt names no bolt",
     "modelMismatch": "{{agent}} for {{unit}} uses {{model}}, {{source}} says {{expected}}",
     "modelSourceCard": "the card's Model: line",
     "modelSourceReview": "the profile's models.review",
@@ -642,7 +644,7 @@
     "retroInterventions": "owner approvals and commands:\n",
     "retroDeploys": "deploy failures:\n",
     "retroDeploy": "  {{step}} failed at {{at}}: {{command}}\n",
-    "retroDeployFixes": "  fix units after {{intent}}: {{units}}\n",
+    "retroDeployFixes": "  fix bolts after {{intent}}: {{units}}\n",
     "retroApproval": "  {{at}} approve {{doc}} by {{by}}\n",
     "retroHostDenied": "  {{at}} auto mode refused: {{command}}\n",
     "retroIntervention": "  {{at}} {{command}}\n",
@@ -651,12 +653,12 @@
     "retroProposal": "  {{kind}}: {{text}}\n",
     "retroReset": "counters reset\n",
     "retroGlob": "{{key}} fired {{count}} times: add the folders where its tests live to profile.levels.<level>.paths",
-    "retroScope": "{{key}} fired {{count}} times: in .aidlc/rules/planning.md, scope each unit to its tests, fixtures and generated files",
+    "retroScope": "{{key}} fired {{count}} times: in .aidlc/rules/planning.md, scope each bolt to its tests, fixtures and generated files",
     "retroBuilder": "{{key}} fired {{count}} times: in .aidlc/rules/builder.md, run the card's checks and test runs before the report",
     "retroTemplate": "{{key}} fired {{count}} times: in .aidlc/templates/, give the doc template what {{key}} asks for",
     "retroLead": "{{key}} fired {{count}} times: in .aidlc/rules/lead.md, write down the command the lead should use instead",
     "retroMerge": "{{key}} fired {{count}} times: in .aidlc/rules/lead.md, run aidlc merge only when aidlc next offers it",
-    "retroStop": "builders stopped {{count}} times: in .aidlc/rules/planning.md, name the interfaces and folders a unit needs before approval",
+    "retroStop": "builders stopped {{count}} times: in .aidlc/rules/planning.md, name the interfaces and folders a bolt needs before approval",
     "retroReviewCheck": "reviews escalated {{count}} times: a profile check (modules[].check or architecture.checks) that catches what the reviewers found",
     "retroCheck": "{{key}} fired {{count}} times: a profile check (modules[].check or architecture.checks) that catches it before review",
     "docsRestamped": "generated.at {{from}} was not the current UTC time; the docs hook set it to {{to}}: re-read the file before editing it again\n",
@@ -676,8 +678,8 @@
     "mapWritten": "wrote {{files}}\n",
     "mapSame": "the codebase map is current\n",
     "nextMigrate": "elaborate the migration intent with the owner in {{dir}}/I-1-<slug>.md (adopted at {{commit}}): docs, always-on context, profile, architecture baseline, data owners, naming rules, module audit, cleanup; then ask for approval",
-    "nextStopped": "the builder of {{unit}} stopped ({{reason}}): if the unit doc is wrong, fix it and ask the owner to re-approve it; otherwise remove the cause and start its builder again (card: aidlc card {{unit}})",
-    "holdUsage": "usage: hold <unit> [off|<reason>]",
+    "nextStopped": "the builder of {{unit}} stopped ({{reason}}): if the bolt doc is wrong, fix it and ask the owner to re-approve it; otherwise remove the cause and start its builder again (card: aidlc card {{unit}})",
+    "holdUsage": "usage: hold <bolt> [off|<reason>]",
     "modeUsage": "usage: mode attended|unattended [--stop build|review|fix|merge|release] [--report <to>] | off",
     "modeSet": "run mode: {{run}}\n",
     "runLine": "{{mode}}{{#each stop}}, stop at {{this}}{{/each}}{{#each report}}, report to {{this}}{{/each}}",
@@ -685,7 +687,7 @@
     "statusPrompt": "owner prompt: {{command}} ({{state}} {{at}})\n",
     "notDelegatedAcs": "{{name}} changes its acceptance criteria: the owner approves it",
     "heldReason": "{{unit}} ({{reason}})",
-    "priorityUsage": "usage: priority <unit> <n>, a whole number; higher builds first",
+    "priorityUsage": "usage: priority <bolt> <n>, a whole number; higher builds first",
     "nextAutoApprove": "approve {{docs}}, delegated by the owner: aidlc approve --auto {{docs}}",
     "notDelegated": "{{name}} is not in a class the owner delegated (approvals.auto in .aidlc/local/profile.json): the owner approves it",
     "nextGated": "the gate refused {{unit}} ({{codes}}; aidlc merge {{unit}} lists them): fix what the lead can, ask the owner for the rest",
@@ -807,7 +809,7 @@
       },
       "PROFILE-ARCH": {
         "level": "error",
-        "fix": "give each module its data globs and set architecture.graph (printing data edges) and architecture.data; add architecture.acyclic and each module's api (docs: Slice architecture)"
+        "fix": "give each module its data globs and set architecture.graph (printing data edges) and architecture.data; add architecture.acyclic and each module's api (docs: Architecture model)"
       },
       "PROFILE-NAMES": {
         "level": "error",
@@ -861,11 +863,11 @@
     "codes": {
       "PLAN-DAG": {
         "level": "error",
-        "fix": "remove the cycle or point depends at an existing unit"
+        "fix": "remove the cycle or point depends at an existing bolt"
       },
       "PLAN-AC": {
         "level": "error",
-        "fix": "give each AC in the unit its own AC-<k>"
+        "fix": "give each AC in the bolt its own AC-<k>"
       },
       "PLAN-LEVEL": {
         "level": "error",
@@ -873,11 +875,11 @@
       },
       "PLAN-RESERVE": {
         "level": "error",
-        "fix": "use <kind> <area>/<n> with a kind from profile.reserve and a number no other unit holds"
+        "fix": "use <kind> <area>/<n> with a kind from profile.reserve and a number no other bolt holds"
       },
       "PLAN-SCOPE": {
         "level": "error",
-        "fix": "give the unit a scope, narrow the scopes, or add a depends between the units"
+        "fix": "give the bolt a scope, narrow the scopes, or add a depends between the bolts"
       },
       "PLAN-SHARED": {
         "level": "error",
@@ -885,11 +887,11 @@
       },
       "PLAN-REQ": {
         "level": "error",
-        "fix": "cite the requirements the intent or unit serves: requirements: [R-<n>]"
+        "fix": "cite the requirements the intent or bolt serves: requirements: [R-<n>]"
       },
       "PLAN-TEST": {
         "level": "error",
-        "fix": "add a scope glob where the level's tests live, give the AC a level whose paths the scope holds, or add /.aidlc/profile.json to the scope so the unit adds its test location to levels"
+        "fix": "add a scope glob where the level's tests live, give the AC a level whose paths the scope holds, or add /.aidlc/profile.json to the scope so the bolt adds its test location to levels"
       },
       "PLAN-MODULE": {
         "level": "error",
@@ -897,7 +899,7 @@
       },
       "PLAN-DEPENDS": {
         "level": "error",
-        "fix": "add the other unit to depends, or move the AC to that unit"
+        "fix": "add the other bolt to depends, or move the AC to that bolt"
       },
       "PLAN-RUN": {
         "level": "warning",
@@ -909,11 +911,11 @@
       },
       "PLAN-CARD": {
         "level": "warning",
-        "fix": "shorten the unit doc (ACs, Interfaces, Out of scope) or the project rules before the approval: card renders only an approved doc"
+        "fix": "shorten the bolt doc (ACs, Interfaces, Out of scope) or the project rules before the approval: card renders only an approved doc"
       },
       "PLAN-SKELETON": {
         "level": "warning",
-        "fix": "cut a walking skeleton first: an early unit that builds the top-level test harness and the thinnest real path through every stage, with a top-level AC; then each slice adds a top-level AC for what it adds"
+        "fix": "cut a walking skeleton first: an early bolt that builds the top-level test harness and the thinnest real path through every stage, with a top-level AC; then each increment adds a top-level AC for what it adds"
       },
       "PLAN-RUNBOOK": {
         "level": "error",
@@ -921,7 +923,7 @@
       },
       "PLAN-BOLT": {
         "level": "error",
-        "fix": "move the work item to bolts/ as B-<n> (aidlc new bolt \"<title>\"); units/ holds only the units a v1 plan approved (docs: Increments and bolts)"
+        "fix": "move the work item to bolts/ as B-<n> (aidlc new bolt \"<title>\"); units/ holds only the bolts a v1 plan approved (docs: Increments and bolts)"
       },
       "PATHWAY-SKIP": {
         "level": "error",
@@ -981,7 +983,7 @@
       },
       "PLAN-DESIGN": {
         "level": "error",
-        "fix": "write the section before approval: Domain names the entities, the one component owning each and how components interact; Logical the services, interfaces and data shapes this unit changes. Or set design: \"<why none>\" when the unit adds no component or logic"
+        "fix": "write the section before approval: Domain names the entities, the one domain owning each and how domains interact; Logical the services, interfaces and data shapes this bolt changes. Or set design: \"<why none>\" when the bolt adds no domain or logic"
       },
       "PLAN-GENERATED": {
         "level": "error",
@@ -989,7 +991,7 @@
       },
       "PLAN-DECISION": {
         "level": "error",
-        "fix": "link a Decision doc from the unit (template .aidlc/templates/docs/decision.md: options, choice, why), for the owner to approve with it, or set twoWay: \"<why it is easy to undo>\" in its frontmatter"
+        "fix": "link a Decision doc from the bolt (template .aidlc/templates/docs/decision.md: options, choice, why), for the owner to approve with it, or set twoWay: \"<why it is easy to undo>\" in its frontmatter"
       },
       "BOLT-BIND": { "level": "error", "fix": "bind the bolt to one domain in modules, or to one horizontal module with neededBy: B-<v> naming a bolt of the same increment that binds a domain (docs: Construction by proof)" },
       "BOLT-SPAN": { "level": "error", "fix": "split the bolt into one bolt per domain, or move it to increment 1, the walking skeleton (docs: Construction by proof)" },
@@ -1330,7 +1332,7 @@
     ],
     "codes": {
       "GATE-APPROVAL": {
-        "fix": "the owner approves the unit: they type approve <unit>"
+        "fix": "the owner approves the bolt: they type approve <bolt>"
       },
       "GATE-DEPS": {
         "fix": "merge its dependencies first"
@@ -1339,13 +1341,13 @@
         "fix": "move the change into scope, or the lead widens the scope and the owner re-approves"
       },
       "GATE-LANE": {
-        "fix": "the lead raises the unit's lane, re-renders the card and restarts the review"
+        "fix": "the lead raises the bolt's lane, re-renders the card and restarts the review"
       },
       "GATE-AC": {
         "fix": "add a test tagged with the AC"
       },
       "GATE-LEVEL": {
-        "fix": "move the test under the level's paths in profile.levels, or add the paths the level lacks, in this unit or in one merged before it"
+        "fix": "move the test under the level's paths in profile.levels, or add the paths the level lacks, in this bolt or in one merged before it"
       },
       "GATE-CHECK": {
         "fix": "fix the module until its check passes"
@@ -1360,7 +1362,7 @@
         "fix": "the builder fixes the code or tests until the level's run passes on the base merged in"
       },
       "GATE-BASE": {
-        "fix": "not this unit's to fix: draft a fix unit for the base (aidlc fix); this merge waits for it"
+        "fix": "not this bolt's to fix: draft a fix bolt for the base (aidlc fix); this merge waits for it"
       },
       "GATE-REVIEW": {
         "fix": "run the reviewer on the current diff and card: aidlc review record"
@@ -1381,7 +1383,7 @@
         "fix": "bump each flagged dependency to the newest stable release that fixes it, looked up from its registry, and report the source"
       },
       "ARCH-BOUNDARY": {
-        "fix": "remove the dependency, or the owner approves an exception decision; a unit that adds a boundary lists the edges the base already has in its except decision, or its own merge fails"
+        "fix": "remove the dependency, or the owner approves an exception decision; a bolt that adds a boundary lists the edges the base already has in its except decision, or its own merge fails"
       },
       "ARCH-CHECK": {
         "fix": "fix what the architecture check reports"
@@ -1396,37 +1398,37 @@
         "fix": "split the domain's client from its internals so a runtime that only calls it links only the client (its surfaces), or host the domain in the runtime"
       },
       "ARCH-API": {
-        "fix": "call the module through its public paths, move what is needed into them, or the owner approves the edge in the architecture.api.except decision with a fix unit"
+        "fix": "call the module through its public paths, move what is needed into them, or the owner approves the edge in the architecture.api.except decision with a fix bolt"
       },
       "ARCH-CYCLE": {
-        "fix": "break the circle: move the shared part into its own module, or let one side publish an event the other reads; or the owner approves a module edge in the architecture.acyclic.except decision with a fix unit"
+        "fix": "break the circle: move the shared part into its own module, or let one side publish an event the other reads; or the owner approves a module edge in the architecture.acyclic.except decision with a fix bolt"
       },
       "ARCH-DATA": {
-        "fix": "go through the owning module (interface, event or shared service), give the data one owner, or the owner approves the edge in the architecture.data.except decision with a fix unit"
+        "fix": "go through the owning module (interface, event or shared service), give the data one owner, or the owner approves the edge in the architecture.data.except decision with a fix bolt"
       },
       "GATE-SHARED": {
         "fix": "revert the change; merge writes indexes, logs and shared files"
       },
       "GATE-CONFLICT": {
-        "fix": "merge the base into the unit branch, resolve, and report again"
+        "fix": "merge the base into the bolt branch, resolve, and report again"
       },
       "CI-DEPENDENCY": {
-        "fix": "plan a fix unit (aidlc fix) that bumps each flagged dependency to the newest stable release, looked up from its registry"
+        "fix": "plan a fix bolt (aidlc fix) that bumps each flagged dependency to the newest stable release, looked up from its registry"
       },
       "CI-MERGE": {
-        "fix": "merge units only with aidlc merge"
+        "fix": "merge bolts only with aidlc merge"
       },
       "CI-COMMIT": {
-        "fix": "commit code only through units; direct commits may touch only docs and workflow files"
+        "fix": "commit code only through bolts; direct commits may touch only docs and workflow files"
       },
       "PUSH-COMMIT": {
-        "fix": "move the change into a unit; direct commits may touch only docs and workflow files"
+        "fix": "move the change into a bolt; direct commits may touch only docs and workflow files"
       },
       "GATE-SECRET": {
-        "fix": "remove the secret from the unit branch; read it from the environment"
+        "fix": "remove the secret from the bolt branch; read it from the environment"
       },
       "GATE-IDENTITY": {
-        "fix": "use the component's workload identity: mTLS or a token bound to it, a database role reached with short-lived certificates or tokens, federated credentials outside the cluster; a throwaway password belongs in a test path"
+        "fix": "use the runtime's workload identity: mTLS or a token bound to it, a database role reached with short-lived certificates or tokens, federated credentials outside the cluster; a throwaway password belongs in a test path"
       },
       "GATE-NAME": {
         "fix": "rename it to match the rule's pattern; if the rule is wrong, the owner changes its decision and the profile first"
@@ -1595,13 +1597,13 @@
         "fix": "commit with hooks; fix what they report"
       },
       "GUARD-BASE-COMMIT": {
-        "fix": "commit code only in a unit worktree; on the base commit only docs"
+        "fix": "commit code only in a bolt worktree; on the base commit only docs"
       },
       "GUARD-MERGING": {
         "fix": "wait for the merge to end, then commit; a merge that died leaves .git/aidlc/merging, which counts for two hours, or remove it"
       },
       "GUARD-MERGE": {
-        "fix": "merge units with aidlc merge"
+        "fix": "merge bolts with aidlc merge"
       },
       "GUARD-BASE-MOVE": {
         "fix": "the base moves only by aidlc merge and aidlc push"
@@ -1637,7 +1639,7 @@
         "fix": "keep secrets out of the repo; read them from the environment"
       },
       "MODEL-UNIT": {
-        "fix": "name the unit U-<n> in the prompt and start it from its card"
+        "fix": "name the bolt U-<n> in the prompt and start it from its card"
       },
       "MODEL-MISMATCH": {
         "fix": "pass the model the card names (aidlc card)"

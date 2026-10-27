@@ -12,9 +12,9 @@ generated: { by: tests/diagrams.mjs }
 | `GUARD-PUSH` | push the base with aidlc push |
 | `GUARD-BASE-DELETE` | the base branch is never deleted |
 | `GUARD-NOVERIFY` | commit with hooks; fix what they report |
-| `GUARD-BASE-COMMIT` | commit code only in a unit worktree; on the base commit only docs |
+| `GUARD-BASE-COMMIT` | commit code only in a bolt worktree; on the base commit only docs |
 | `GUARD-MERGING` | wait for the merge to end, then commit; a merge that died leaves .git/aidlc/merging, which counts for two hours, or remove it |
-| `GUARD-MERGE` | merge units with aidlc merge |
+| `GUARD-MERGE` | merge bolts with aidlc merge |
 | `GUARD-BASE-MOVE` | the base moves only by aidlc merge and aidlc push |
 | `GUARD-ALIAS` | run the git command by its own name |
 | `GUARD-HOOK` | Claude Code runs the hooks; the agent never runs aidlc hook |
@@ -25,5 +25,5 @@ generated: { by: tests/diagrams.mjs }
 | `GUARD-SCHEDULE` | only the owner approves: they type approve <doc> |
 | `SCOPE-APPROVAL` | only the owner approves: they type approve <doc> |
 | `SECRET` | keep secrets out of the repo; read them from the environment |
-| `MODEL-UNIT` | name the unit U-<n> in the prompt and start it from its card |
+| `MODEL-UNIT` | name the bolt U-<n> in the prompt and start it from its card |
 | `MODEL-MISMATCH` | pass the model the card names (aidlc card) |

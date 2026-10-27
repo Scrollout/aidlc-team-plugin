@@ -204,7 +204,7 @@ function gateOf(st, intent, scope) {
   const unfinished = linked.find((d) => openPoints(d.doc).length);
   if (unfinished) return gate('nextFinishDecision', [], { intent: intent.id, doc: relPath(st.cwd, unfinished.file), points: openPoints(unfinished.doc).join(', ') }, 'act');
   if (linked.length) return gate('nextApproveDecisions', [], { intent: intent.id, docs: linked.map((d) => relPath(st.cwd, d.file)).join(' ') });
-  if (intent && intent.state === 'approved' && !intent.units.length) return gate('nextDraftUnits', [], { intent: intent.id, dir: rel(config.grid.units) }, 'act');
+  if (intent && intent.state === 'approved' && !intent.units.length) return gate('nextDraftUnits', [], { intent: intent.id, file: st.profile.system ? msg('draftBoltFile', { dir: rel(config.grid.bolts) }) : msg('draftUnitFile', { dir: rel(config.grid.units) }) }, 'act'); // a v2 plan writes bolts
   const cited = new Set([...(intent?.requirements ?? []), ...scope.filter((u) => u.state !== 'merged').flatMap((u) => u.requirements)]);
   const draftReqs = st.requirements.filter((r) => r.state === 'draft' && cited.has(r.id));
   const drafts = scope.filter((u) => u.state === 'draft');

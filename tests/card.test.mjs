@@ -332,7 +332,7 @@ test('U27/AC-1 U27/AC-3 the card carries the project rules at the base, but a fo
   approve(dir, 'U-1');
   const long = run(dir, ['card', 'U-1']);
   assert.notEqual(long.code, 0);
-  assert.match(long.out, /^card for U-1 is \d+ lines, over 100, 122 of them project rules: shorten the unit doc or the rules$/m);
+  assert.match(long.out, /^card for U-1 is \d+ lines, over 100, 122 of them project rules: shorten the bolt doc or the rules$/m);
 });
 
 test('U29/AC-1 U29/AC-2 U29/AC-3 the card names requirements as their files do, keeps plain interface lines and names the proof levels', () => {

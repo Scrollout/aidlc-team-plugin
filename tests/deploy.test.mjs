@@ -117,7 +117,7 @@ test('U49/AC-1 after a passing release aidlc release runs deploy.smoke; a pass m
   assert.match(run(dir, ['status']).out, /^I-1 released /m);
 });
 
-test('U49/AC-2 a failed smoke is a stop before other work: the owner rolls back, then a fix unit after the intent, then the check again', () => {
+test('U49/AC-2 a failed smoke is a stop before other work: the owner rolls back, then a fix bolt after the intent, then the check again', () => {
   const smoke = 'node -e "require(\'fs\').existsSync(\'fixed.txt\') || (console.log(\'503 on /health\'), process.exit(4))"';
   const dir = merged({ deploy: { check: [OK], run: OK, smoke, rollback: mark('rolled.txt') } });
   commit(dir, 'next intent', { 'docs/intents/I-2-n.md': intentDoc('I-2', 'Next'), 'docs/units/U-2-n.md': unitDoc({ intent: 'I-2', scope: ['b/**'] }) });
@@ -148,7 +148,7 @@ test('U49/AC-2 a failed smoke is a stop before other work: the owner rolls back,
   assert.match(run(dir, ['status']).out, /^I-1 released /m);
 });
 
-test('U51/AC-1 the retro lists each failed deploy check, smoke and rollback of the intent, with the fix units they started', () => {
+test('U51/AC-1 the retro lists each failed deploy check, smoke and rollback of the intent, with the fix bolts they started', () => {
   const dir = merged({ deploy: { check: [FAIL], run: OK, smoke: FAIL, rollback: FAIL } });
   assert.equal(run(dir, ['retro', 'I-1']).code, 0, 'a first retro resets the counters');
   run(dir, ['deploy', 'check', 'I-1']);
@@ -166,9 +166,9 @@ test('U51/AC-1 the retro lists each failed deploy check, smoke and rollback of t
     `  check failed at <t>: ${FAIL}`,
     `  smoke failed at <t>: ${FAIL}`,
     `  rollback failed at <t>: ${FAIL}`,
-    '  fix units after I-1: U-2',
+    '  fix bolts after I-1: U-2',
   ]);
-  assert.match(run(dir, ['retro', 'I-1']).out, /^deploy failures:\n {2}fix units after I-1: U-2\n/m, 'the counters reset; the fix units stay in the plan');
+  assert.match(run(dir, ['retro', 'I-1']).out, /^deploy failures:\n {2}fix bolts after I-1: U-2\n/m, 'the counters reset; the fix bolts stay in the plan');
 });
 
 test('U57/AC-1 an intent whose units change only test paths needs no runbook, deploy check or release', () => {

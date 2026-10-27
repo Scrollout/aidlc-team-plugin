@@ -17,11 +17,11 @@ function backfill({ scope = ['tests/**'], extra = {}, profile = PROFILE } = {}) 
 }
 const report = (dir, mutations) => run(dir, ['report', 'U-1'], JSON.stringify({ status: 'done', summary: 's', tests: ['tests/calc.test.txt: U-1/AC-1'], ...(mutations ? { mutations } : {}) }));
 
-test('U55/AC-1 U61/AC-1 a unit that changes only tests reports one mutation per AC of a file outside the tests and the diff, found once', () => {
+test('U55/AC-1 U61/AC-1 a bolt that changes only tests reports one mutation per AC of a file outside the tests and the diff, found once', () => {
   const dir = backfill();
   let r = report(dir);
   assert.equal(r.code, 64);
-  assert.match(r.err, /a unit that changes only tests proves each AC with a mutation of the code it covers .*U-1\/AC-1 has no mutation/);
+  assert.match(r.err, /a bolt that changes only tests proves each AC with a mutation of the code it covers .*U-1\/AC-1 has no mutation/);
   r = report(dir, [{ ac: 'U-1/AC-1', path: 'src/calc.txt', find: 'a + b', replace: 'a - b' }]);
   assert.match(r.err, /U-1\/AC-1's mutation of src\/calc\.txt needs .* \(found 2\)/, 'the find text must point at one place');
   r = report(dir, [{ ac: 'U-1/AC-1', path: 'tests/calc.test.txt', find: 'total is', replace: 'x' }]);
@@ -33,7 +33,7 @@ test('U55/AC-1 U61/AC-1 a unit that changes only tests reports one mutation per 
   assert.equal(run(dir, ['report', 'U-1'], '{"status": "stopped", "stop": "x"}').code, 0, 'a stop needs none');
 });
 
-test('U55/AC-1 a unit that changes code, or one in the quick lane, needs no mutation', () => {
+test('U55/AC-1 a bolt that changes code, or one in the quick lane, needs no mutation', () => {
   assert.equal(report(backfill({ scope: ['tests/**', 'src/**'], extra: { 'src/calc.txt': 'total = a + b + 0\n' } })).code, 0);
   assert.equal(report(backfill({ profile: { ...PROFILE, lanes: { quick: ['tests/**'] } } })).code, 0);
 });
@@ -46,12 +46,12 @@ test('U79/AC-2 report reads its JSON from a file named after the unit', () => {
   assert.equal(JSON.parse(readFileSync(join(dir, '.git/aidlc/reports/U-1.json'), 'utf8')).summary, 'from a file');
 });
 
-test('U75/AC-4 a unit that changes code may report mutations; then each AC needs a valid one, which may edit its own diff', () => {
+test('U75/AC-4 a bolt that changes code may report mutations; then each AC needs a valid one, which may edit its own diff', () => {
   const wired = () => backfill({ scope: ['tests/**', 'src/**'], extra: { 'src/calc.txt': 'total = a + b + 0\n' } });
   assert.equal(report(wired(), [{ ac: 'U-1/AC-1', path: 'src/calc.txt', find: 'a + b + 0', replace: 'a - b', breaks: 'the total' }]).code, 0, 'its own diff');
   const partial = report(wired(), [{ ac: 'U-1/AC-9', path: 'src/calc.txt', find: 'a + b + 0', replace: 'a - b', breaks: 'x' }]);
   assert.equal(partial.code, 64, 'AC-1 still needs one');
-  assert.match(partial.err, /a unit that changes code and reports mutations is proved by them instead of by revert, so each AC needs one .*U-1\/AC-1 has no mutation/, 'U93/AC-2 in its own words');
+  assert.match(partial.err, /a bolt that changes code and reports mutations is proved by them instead of by revert, so each AC needs one .*U-1\/AC-1 has no mutation/, 'U93/AC-2 in its own words');
   assert.doesNotMatch(partial.err, /changes only tests/);
 });
 
