@@ -393,3 +393,17 @@ test('B237/AC-2 a Project field of the wrong type is refused before any write', 
   assert.match(r.err + r.out, /sync wrote nothing: field Effort is SINGLE_SELECT on the Project, not the template's NUMBER/);
   assert.equal(writes(ctx).length, 0);
 });
+
+test('the decisions a doc links label its issue as ADR-<NNNN>; a link removed takes its label', () => {
+  const adr = '---\ntype: Decision\ntitle: 0007 Store orders\ndescription: Orders in one database.\nstatus: proposed\ngenerated: { by: x/1, at: 2026-10-27T00:00:00Z }\n---\n\n# Store orders\n';
+  const ctx = setup({ u2: '' });
+  write(ctx.dir, { 'docs/decisions/0007-store-orders.md': adr, [U(2)]: unitDoc({ title: 'Currency', scope: ['src/b/**'], extra: 'Stored as [0007](../decisions/0007-store-orders.md) says.\n' }) });
+  commit(ctx.dir, 'U-2 links a decision');
+  assert.equal(aidlc(ctx, 'sync').code, 0);
+  assert.ok(byTitle(ctx, 'U-2').labels.includes('ADR-0007'), byTitle(ctx, 'U-2').labels.join(' '));
+  assert.ok(!byTitle(ctx, 'U-1').labels.includes('ADR-0007'), 'only the doc that links it');
+  write(ctx.dir, { [U(2)]: unitDoc({ title: 'Currency', scope: ['src/b/**'] }) });
+  commit(ctx.dir, 'U-2 drops the link');
+  assert.equal(aidlc(ctx, 'sync').code, 0);
+  assert.ok(!byTitle(ctx, 'U-2').labels.includes('ADR-0007'), 'the plugin removes the label it set');
+});

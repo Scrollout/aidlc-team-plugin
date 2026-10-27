@@ -4,8 +4,8 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
-import { aidlcDir, at, bindingName, ciFile, config, done, fieldPaths, git, isMap, list, msg, plug, readJson, readState, relPath, render, templateFile, tryGit, UsageError, writeJson } from '../../lib/index.mjs';
+import { basename, join, resolve } from 'node:path';
+import { aidlcDir, at, bindingName, ciFile, config, decisionsOf, done, fieldPaths, git, isMap, list, msg, plug, readJson, readState, relPath, render, templateFile, tryGit, UsageError, writeJson } from '../../lib/index.mjs';
 
 const ST = config.state.names; // the lifecycle states, by name
 
@@ -70,7 +70,9 @@ function wanted(cwd, st, gh) {
   const one = (d, kind, state) => {
     const K = T.kinds[kind === 'unit' && !d.fm.intent ? B.fix : kind];
     const derived = { [B.wave]: () => wave(d), [B.binding]: () => bindingName(d, st.profile) }; // a value in the doc wins
-    const own = { id: d.id, title: d.fm.title ?? '', requirements: d.requirements, lane: d.lane, modules: d.modules, depends: d.depends, status: state };
+    // The decisions the doc links, as labels: ADR-<NNNN> (docs/design/board.md#shape).
+    const decisions = decisionsOf(st, [d]).map((x) => render(B.decisionLabel, { n: basename(x.file).slice(0, config.ids.decisionDigits) }));
+    const own = { id: d.id, title: d.fm.title ?? '', requirements: d.requirements, lane: d.lane, modules: d.modules, depends: d.depends, decisions, status: state };
     const value = (path) => path && (at(own, path) ?? at(d.fm, path) ?? (kind === 'unit' && derived[path] ? derived[path]() : undefined));
     const done = B.done.includes(state);
     const acs = (d.acs ?? []).map((a) => ({ box: done ? B.box.done : B.box.open, text: d.doc.lines[a.line - 1].replace(/^\s*[-*]\s+/, '') }));

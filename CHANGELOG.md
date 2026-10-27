@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.185.0] - 2026-10-27
+### Added
+- The board labels each intent and bolt issue with the decisions its doc links, as `ADR-<NNNN>`; a label whose link is removed goes with it.
+
 ## [0.184.0] - 2026-10-27
 ### Added
 - Decisions in MADR 4.0, completed: approving a decision sets `decision-makers` to the approver when the decision names no one, and `DOC-SCHEMA` reports a draft decision whose status MADR does not name (proposed, rejected, accepted, deprecated, superseded by ADR-<NNNN>).
@@ -375,7 +379,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.184.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.185.0...HEAD
+[0.185.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.184.0...v0.185.0
 [0.184.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.183.2...v0.184.0
 [0.183.2]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.183.1...v0.183.2
 [0.183.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.183.0...v0.183.1
