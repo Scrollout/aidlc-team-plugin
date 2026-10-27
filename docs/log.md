@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Creation** [0025 The plugin ships the model format, not models](decisions/0025-the-plugin-ships-the-model-format-not-models.md), superseding 0020: a model lives with the project that uses it; the control-plane model moves to `examples/` ([Models](design/models.md), [Shipped layout](design/layout.md)). Release 0.186.0.
 - **Update** The [Board](design/board.md) labels each issue with the decisions its doc links, as `ADR-<NNNN>`. Release 0.185.0.
 - **Update** Decisions in MADR 4.0, completed: approval names the decision-makers when a decision names none, a draft's status is checked against MADR's, and applied model decisions are dated and carry their consequences ([Standard formats](design/standards.md#decisions-madr-40)). Release 0.184.0.
 - **Update** The control-plane model's Go reference keeps its values in data and reads operations through a query slice, held to the checks every project meets ([Models](design/models.md#the-first-model-control-plane)). Release 0.183.2.

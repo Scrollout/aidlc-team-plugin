@@ -30,7 +30,7 @@ jobs:
           go-version: stable # go.mod's 1.22 is the minimum; its macOS linker writes test binaries current macOS refuses (no LC_UUID)
           cache: false
       - name: Go reference
-        run: go version && (cd plugin/packs/go/reference && go vet ./... && go test ./...) && (cd plugin/models/control-plane/reference/go && go vet ./... && go test ./...) # the stack pack's reference and the control-plane model's, each with its own tests
+        run: go version && (cd plugin/packs/go/reference && go vet ./... && go test ./...) && (cd examples/models/control-plane/reference/go && go vet ./... && go test ./...) # the stack pack's reference and the example control-plane model's, each with its own tests
       - name: No temp folders left
         run: node -e "const l = require('fs').readdirSync(require('os').tmpdir()).filter((n) => n.startsWith('aidlc-test-')); if (l.length) { console.error(l.join('\\n')); process.exit(1); }"
       - name: Docs check

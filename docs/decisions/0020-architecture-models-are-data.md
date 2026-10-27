@@ -2,7 +2,7 @@
 type: Decision
 title: 0020 Architecture models are data
 description: A proven system is reverse-engineered from research into a vertical and horizontal architecture model, kept as data the CLI reads, shipped with the plugin or kept by a project, and applied to new and existing projects through the AI-DLC method; the plugin itself stays generic.
-status: accepted
+status: superseded by ADR-0025
 date: 2026-10-27
 decision-makers: the owner
 consulted: the lead

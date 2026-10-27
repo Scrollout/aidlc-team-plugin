@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.186.0] - 2026-10-27
+### Removed
+- The plugin ships no architecture model (decision 0025, superseding 0020). `aidlc models` lists a project's own models in `.aidlc/models/<name>/`; `init` and `upgrade` pin none. The control-plane model moves to `examples/models/control-plane/`, outside the package, with its Go reference still tested in CI; a project that fits it copies it into its models folder.
+
 ## [0.185.0] - 2026-10-27
 ### Added
 - The board labels each intent and bolt issue with the decisions its doc links, as `ADR-<NNNN>`; a label whose link is removed goes with it.
@@ -379,7 +383,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.185.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.186.0...HEAD
+[0.186.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.185.0...v0.186.0
 [0.185.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.184.0...v0.185.0
 [0.184.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.183.2...v0.184.0
 [0.183.2]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.183.1...v0.183.2

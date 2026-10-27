@@ -211,7 +211,7 @@ test('B164/AC-1 the card prints the names a bolt will create for each registered
 test('B165/AC-1 CONTRACT-NAME checks a published OpenAPI document against the API grammar', async () => {
   const { contractProblems } = await import('../plugin/cli/extensions/contracts/index.mjs');
   // The control-plane model's contract on top of the generic grammar, as a project that chose it gets (decision 0021).
-  const plane = { ...config.naming.contract, ...JSON.parse(read(join(import.meta.dirname, '..'), 'plugin/models/control-plane/model.json')).contract };
+  const plane = { ...config.naming.contract, ...JSON.parse(read(join(import.meta.dirname, '..'), 'examples/models/control-plane/model.json')).contract };
   const keys = (doc, C = plane) => contractProblems(doc, C).map(([k, d]) => `${k} ${Object.values(d).join(' ')}`);
   const good = {
     info: { version: '2026-10-27' },

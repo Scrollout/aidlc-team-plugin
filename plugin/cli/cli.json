@@ -55,7 +55,7 @@
   "packages": {
     "templates": { "dir": "templates", "override": ".aidlc/templates" },
     "personas": { "dir": "personas", "override": ".aidlc/personas" },
-    "models": { "dir": "models", "override": ".aidlc/models" },
+    "models": { "override": ".aidlc/models" },
     "packs": { "dir": "packs" }
   },
   "commands": [

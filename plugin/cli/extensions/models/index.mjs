@@ -3,17 +3,17 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
-import { bundleOf, CLI_DIR, config, docSlug, done, gitLines, globRegex, isMap, list, loadProfile, msg, parseDoc, parseYaml, plug, readJson, relPath, sectionOf, shippedDir, templateFile, UsageError, writeJson } from '../../lib/index.mjs';
+import { bundleOf, CLI_DIR, config, docSlug, done, gitLines, globRegex, isMap, list, loadProfile, msg, parseDoc, parseYaml, plug, readJson, relPath, sectionOf, templateFile, UsageError, writeJson } from '../../lib/index.mjs';
 
 const M = config.models, F = config.okf.bundle.folders;
 const sha16 = (text) => createHash('sha256').update(text).digest('hex').slice(0, config.text.digest);
 const folders = (dir) => (existsSync(dir) ? readdirSync(dir).filter((n) => statSync(join(dir, n)).isDirectory()).sort() : []);
 
-// Every model the project can see, by name: the shipped ones, then its own, which replace a shipped one of the same name.
+// Every model the project can see, by name: the plugin ships none, so they are the project's or its organisation's,
+// kept in its models folder (decision 0025).
 function modelsOf(root) {
-  const out = new Map();
-  for (const [source, dir] of [['shipped', shippedDir('models')], ['project', join(root, config.packages.models.override)]]) for (const name of folders(dir)) out.set(name, { name, source, dir: join(dir, name) });
-  return [...out.values()].map((m) => ({ ...m, ...read(m) }));
+  const dir = join(root, config.packages.models.override);
+  return folders(dir).map((name) => ({ name, source: 'project', dir: join(dir, name) })).map((m) => ({ ...m, ...read(m) }));
 }
 
 function read(m) {

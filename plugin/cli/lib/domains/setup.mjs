@@ -36,7 +36,7 @@ function vendor(root, version) {
   cpSync(CLI_DIR, bin, { recursive: true });
   writeFileSync(join(bin, I.version), version + '\n');
   // Each shipped package is pinned beside the CLI, replaced with it, and the old places go (docs/design/layout.md).
-  for (const { dir } of Object.values(config.packages)) if (existsSync(join(PLUGIN_DIR, dir))) cpSync(join(PLUGIN_DIR, dir), join(bin, dir), { recursive: true });
+  for (const { dir } of Object.values(config.packages)) if (dir && existsSync(join(PLUGIN_DIR, dir))) cpSync(join(PLUGIN_DIR, dir), join(bin, dir), { recursive: true });
   for (const old of config.init.retired) rmSync(join(root, old), { recursive: true, force: true });
   return msg('initVendored', { version, path: I.bin });
 }

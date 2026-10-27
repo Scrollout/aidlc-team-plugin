@@ -14,29 +14,27 @@ const model = (name, extra = {}) => ({
 });
 const decision = '---\ntype: Decision\ntitle: 0001 One gate\ndescription: d.\n---\n\n# Context and Problem Statement\nx\n';
 const formatLines = (dir) => run(dir, ['check', 'docs']).out.split('\n').filter((l) => /MODEL-FORMAT/.test(l)).map((l) => l.replace(/ → .*$/, ''));
-// The project's pinned CLI, whose shipped models sit beside it in .aidlc/bin/models/.
+// The project's pinned CLI.
 const pinnedRun = (dir, args) => spawnSync(process.execPath, [join(dir, '.aidlc/bin/aidlc.mjs'), ...args], { cwd: dir, encoding: 'utf8', env: CHILD_ENV }).stdout;
 
-test('B228/AC-1 a model folder loads from the project and the shipped models, the project\'s winning, and check reports one that breaks the format', () => {
+test('B228/AC-1 a model folder loads from the project, the plugin shipping none (decision 0025), and check reports one that breaks the format', () => {
   const dir = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n' });
-  assert.equal(run(dir, ['models']).out, 'control-plane (shipped): Control plane\n');
+  assert.match(run(dir, ['models']).out, /^no models: none ships with this CLI/);
   write(dir, { '.aidlc/models/minimal/model.json': model('minimal'), '.aidlc/models/minimal/decisions/0001-one-gate.md': decision });
-  assert.equal(run(dir, ['models']).out, 'control-plane (shipped): Control plane\nminimal (project): minimal shape\n');
+  assert.equal(run(dir, ['models']).out, 'minimal (project): minimal shape\n');
   assert.deepEqual(formatLines(dir), [], 'a model in the format');
 
   const broken = model('other', { extension: undefined, layers: [{ id: 'gate', kind: 'hub' }, { id: 'gate', kind: 'pipeline' }], rules: [{ type: 'magic' }], contracts: [{ from: 'gate', to: 'nowhere' }] });
   write(dir, { '.aidlc/models/broken/model.json': broken, '.aidlc/models/broken/decisions/notes.md': '# notes\n', '.aidlc/models/empty/README.md': 'x' });
-  assert.match(run(dir, ['models']).out, /\nbroken \(project\): other shape, 7 format problems: aidlc check\n/);
+  assert.match(run(dir, ['models']).out, /^broken \(project\): other shape, 7 format problems: aidlc check$/m);
   const lines = formatLines(dir).join('\n');
   for (const want of ['model broken lacks extension', 'model broken is named other inside', 'model broken: gate has kind hub', 'model broken: gate is named twice', 'model broken: rule type magic is not one of stageOrder', "model broken: a contract's to is nowhere", 'model broken: decisions/notes.md is not a Decision doc', 'model empty has no model.json']) {
     assert.ok(lines.includes(want), want);
   }
 
   const pinned = pinnedRepo();
-  write(pinned, { '.aidlc/bin/models/minimal/model.json': model('minimal', { title: 'shipped shape' }), '.aidlc/bin/models/second/model.json': model('second') });
-  assert.equal(pinnedRun(pinned, ['models']), 'control-plane (shipped): Control plane\nminimal (shipped): shipped shape\nsecond (shipped): second shape\n', 'the pinned copy carries the shipped models');
-  write(pinned, { '.aidlc/models/minimal/model.json': model('minimal', { title: 'project shape' }) });
-  assert.equal(pinnedRun(pinned, ['models']), 'control-plane (shipped): Control plane\nminimal (project): project shape\nsecond (shipped): second shape\n', 'the project\'s own wins');
+  write(pinned, { '.aidlc/bin/models/second/model.json': model('second'), '.aidlc/models/minimal/model.json': model('minimal', { title: 'project shape' }) });
+  assert.equal(pinnedRun(pinned, ['models']), 'minimal (project): project shape\n', 'the pinned CLI reads the project\'s models only');
 });
 
 const V2 = { system: { core: ['src/**'] }, naming: { tokens: { system: 'bak' } } };
@@ -166,15 +164,20 @@ test('B231/AC-2 gaps matches the modules to the chosen model\'s items and kinds,
   assert.match(run(makeRepo({}, V2), ['models', 'gaps']).err, /the profile chooses no model/);
 });
 
-test('B232/AC-1 the control-plane model ships in generic names (the neutral test scans it): in the format, its decisions valid MADR proposals once applied', () => {
-  const root = join(import.meta.dirname, '..'), dir = 'plugin/models/control-plane';
+// The example control-plane model, kept outside the plugin (decision 0025), as a project that adopts it holds it.
+const EXAMPLE = join(import.meta.dirname, '..', 'examples/models/control-plane');
+const adopt = (dir) => cpSync(EXAMPLE, join(dir, '.aidlc/models/control-plane'), { recursive: true });
+
+test('B232/AC-1 the example control-plane model is in generic names (the neutral test scans it): in the format, its decisions valid MADR proposals once applied', () => {
+  const root = join(import.meta.dirname, '..'), dir = 'examples/models/control-plane';
   const files = ['model.json', ...readdirSync(join(root, dir, 'decisions')).map((f) => `decisions/${f}`), ...readdirSync(join(root, dir, 'knowledge')).map((f) => `knowledge/${f}`)];
-  assert.ok(files.length > 6, 'model, decisions, knowledge'); // tests/neutral.test.mjs holds every file under plugin/ to naming no vendor
+  assert.ok(files.length > 6, 'model, decisions, knowledge'); // tests/neutral.test.mjs holds every file under examples/ to naming no vendor
   const cp = JSON.parse(read(root, `${dir}/model.json`));
   assert.deepEqual(cp.layers.map((l) => l.id), ['frontdoor', 'authenticate', 'authorize', 'policy', 'lock', 'throttle']);
   assert.deepEqual(cp.rules.map((r) => r.type), ['stageOrder', 'extensionContract', 'longRunning', 'idempotency', 'data', 'events']);
   const project = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n' }, V2);
-  assert.equal(run(project, ['models']).out, 'control-plane (shipped): Control plane\n', 'in the format');
+  adopt(project);
+  assert.equal(run(project, ['models']).out, 'control-plane (project): Control plane\n', 'in the format');
   const applied = run(project, ['models', 'apply', 'control-plane']).out;
   assert.equal((applied.match(/a proposal for the owner to approve/g) ?? []).length, 5);
   assert.deepEqual(run(project, ['check', 'docs']).out.split('\n').filter((l) => /DOC-SCHEMA|OKF-FM|MODEL-FORMAT/.test(l)), [], 'the decisions are MADR');
@@ -187,14 +190,15 @@ test('B232/AC-1 the control-plane model ships in generic names (the neutral test
 
 test('B232/AC-2 the model\'s contract applies only where a project chose it (decision 0021)', () => {
   const spec = 'openapi: 3.1.0\ninfo: { title: x, version: 2026-10-01 }\npaths: {}\ncomponents:\n  schemas:\n    Thing:\n      properties: { id: {}, name: {}, type: {} }\n';
-  const found = (profile) => run(makeRepo({ ...I1, 'api/things/openapi.yaml': spec }, profile), ['check']).out.split('\n').filter((l) => /CONTRACT-NAME/.test(l)).map((l) => l.replace(/ → .*$/, ''));
+  const found = (profile) => { const dir = makeRepo({ ...I1, 'api/things/openapi.yaml': spec }, profile); adopt(dir); return run(dir, ['check']).out.split('\n').filter((l) => /CONTRACT-NAME/.test(l)).map((l) => l.replace(/ → .*$/, '')); };
   assert.deepEqual(found(V2), [], 'the generic grammar asks no systemData');
   assert.deepEqual(found({ ...V2, model: { name: 'control-plane' } }), ["api/things/openapi.yaml:1 CONTRACT-NAME components.schemas.Thing: a resource without systemData, which its model's contract asks"]);
 });
 
 test('B233/AC-1 the control-plane model\'s Go reference meets the model\'s rules and contract, and covers its walking skeleton', () => {
   const dir = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n' }, {});
-  cpSync(join(import.meta.dirname, '..', 'plugin/models/control-plane/reference/go'), dir, { recursive: true });
+  cpSync(join(EXAMPLE, 'reference/go'), dir, { recursive: true });
+  adopt(dir);
   const profile = {
     ...V2, system: { core: ['internal/**', 'cmd/**'] },
     model: { name: 'control-plane', wiring: { file: 'cmd/frontdoor/frontdoor.go', pattern: 'stages\\.Stage(\\w+)' }, operations: { status: 'Operation-Status', result: 'Location', retry: 'Retry-After' }, events: { files: ['api/events/*.yaml'] } },
@@ -224,7 +228,7 @@ test('B234/AC-1 the architect persona reads how to model a reference and apply a
 test('the control-plane Go reference keeps its values in data and its code in vertical slices, as every project must', async () => {
   const { sliceFindings, valueFindings } = await import('../plugin/cli/extensions/stacks/index.mjs');
   const dir = makeRepo({}, {});
-  cpSync(join(import.meta.dirname, '..', 'plugin/models/control-plane/reference/go'), dir, { recursive: true });
+  cpSync(join(import.meta.dirname, '..', 'examples/models/control-plane/reference/go'), dir, { recursive: true });
   const profile = { system: { core: ['internal/**', 'cmd/**'] }, values: { data: ['internal/foundation/values/**'] },
     modules: [{ id: 'resources', kind: 'domain', paths: ['internal/domains/resources/**'] }, { id: 'operations', kind: 'domain', paths: ['internal/domains/operations/**'] }, { id: 'frontdoor', kind: 'runtime', paths: ['cmd/frontdoor/**'] }] };
   assert.deepEqual(sliceFindings(dir, profile).map((f) => `${f.code} ${f.path}`), []);

@@ -76,7 +76,7 @@ sequenceDiagram
 # Repo layout
 - `plugin/.claude-plugin/plugin.json`: `name` `aidlc-team` (never `aidlc`, which projects use for the CLI and `.aidlc/`), the only `version`.
 - `plugin/cli/aidlc.mjs`, `plugin/cli/lib/` (foundation, domains, the entry) and `plugin/cli/extensions/`: the CLI ([Library and extensions](library.md)).
-- `plugin/templates/`, `plugin/models/` (each model with its reference code) and `plugin/packs/`: the shipped packages ([Shipped layout](layout.md)).
+- `plugin/templates/`, `plugin/personas/` and `plugin/packs/`: the shipped packages ([Shipped layout](layout.md)); models stay outside ([0025](../decisions/0025-the-plugin-ships-the-model-format-not-models.md)).
 - `plugin/hooks/`: thin wrappers that call the CLI.
 - Who does the work, each where it must live:
 
