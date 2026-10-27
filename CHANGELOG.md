@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.172.1] - 2026-10-27
+### Fixed
+- Windows: the Agent hook still took 520-600 ms, over its 500 ms budget. It spawned git nine times; it now spawns it twice. The git common dir is asked once per folder in a process, and the card's freshness key reads the base and the bolt's branch from the repository's own files (`branchSha`).
+
 ## [0.172.0] - 2026-10-27
 ### Added
 - The architect persona's knowledge of models: reading a reference horizontally then vertically, every claim from a source, writing its rules as data with each rule type the CLI knows, and applying a model to a new or an existing project. M24 Models is built.
@@ -262,7 +266,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.172.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.172.1...HEAD
+[0.172.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.172.0...v0.172.1
 [0.172.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.171.0...v0.172.0
 [0.171.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.170.0...v0.171.0
 [0.170.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.169.0...v0.170.0

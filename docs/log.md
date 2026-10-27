@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** the Agent hook spawns git twice instead of nine times (the common dir once per folder, branch refs read from the repository's files), for the Windows hook budget. Release 0.172.1.
 - **Update** M24 B234: the architect persona knows how to model a reference and apply a model (`architect/models.md`, held to the rule types the CLI knows). M24 Models is built: its design and roadmap are stable. Release 0.172.0.
 - **Update** M24 B233: the control-plane model's walking skeleton in the Go pack ([Stack packs](design/stack-packs.md)), tested by `go test` in CI and held to the model's own rules. Release 0.171.0.
 - **Update** CI fixes for macOS and Windows: the trace compares the bundle's real path (macOS, red since M19), the diagrams and the self-check list the CLI's files as posix paths (Windows, red since M20), and the launch hook reuses a current card instead of rendering it again (the Windows hook budget). Release 0.170.0.

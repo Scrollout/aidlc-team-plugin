@@ -385,3 +385,19 @@ test('U128/AC-1 U128/AC-2 the card names its why and the docs its text names, wi
   assert.match(out, /^- rates \(https:\/\/rates\.example\/api\): daily rates$/m);
   assert.match(out, /^## References .*\n- 0003 docs\/decisions\/0003-money\.md\n- U-2 docs\/units\/U-2-b\.md\n- U-9: no such doc at the base\n/m);
 });
+
+test('0.172.1 branchSha reads a branch from the repository\'s files as git does: loose, packed, in a worktree, or absent', async () => {
+  const { branchSha } = await import('../plugin/cli/lib/index.mjs');
+  const dir = makeRepo();
+  const head = git(dir, 'rev-parse', 'HEAD');
+  git(dir, 'branch', 'bolt/B-1');
+  assert.equal(branchSha(dir, 'main'), head, 'a loose ref');
+  assert.equal(branchSha(dir, 'bolt/B-1'), head, 'a nested name');
+  assert.equal(branchSha(dir, 'bolt/B-9'), null, 'an absent branch');
+  git(dir, 'pack-refs', '--all');
+  assert.equal(branchSha(dir, 'bolt/B-1'), head, 'a packed ref');
+  const tree = join(tempDir('wt-'), 'w');
+  git(dir, 'worktree', 'add', '-q', '-b', 'bolt/B-2', tree);
+  assert.equal(branchSha(tree, 'bolt/B-2'), git(tree, 'rev-parse', 'HEAD'), 'from a worktree, through its gitdir and commondir');
+  assert.equal(branchSha(join(tree, 'sub'), 'main'), head, 'from below the top');
+});

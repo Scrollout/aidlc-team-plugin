@@ -8,7 +8,13 @@ import { git, gitLines, tryGit } from './git.mjs';
 
 const S = config.state;
 
-export const aidlcDir = (cwd) => join(resolve(cwd, git(cwd, 'rev-parse', '--git-common-dir')), S.dir);
+// Asked of git once per folder in a process: a hook reads several runtime files, and each spawn is slow on Windows.
+const commonDirs = new Map();
+export const aidlcDir = (cwd) => {
+  const at = resolve(cwd);
+  if (!commonDirs.has(at)) commonDirs.set(at, join(resolve(at, git(at, 'rev-parse', '--git-common-dir')), S.dir));
+  return commonDirs.get(at);
+};
 export const runtimeFile = (cwd, kind, unit) => join(aidlcDir(cwd), S[kind], `${unit}.json`);
 export const ciFile = (cwd) => join(aidlcDir(cwd), S.ci); // the base's last CI poll (docs/design/base-ci.md)
 export const baseRedFile = (cwd) => join(aidlcDir(cwd), S.baseRed); // a level the gate found red on the base alone

@@ -3,7 +3,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { bundleOf, CLI_DIR, config, QUICK, STANDARD, VERDICT, done, list, readJson, slug, UsageError, relPath } from '../foundation/data.mjs';
-import { git, gitLines, tryGit } from '../foundation/git.mjs';
+import { branchSha, git, gitLines, tryGit } from '../foundation/git.mjs';
 import { msg, render } from '../foundation/text.mjs';
 import { loadProfile, withDefaults } from '../foundation/profile.mjs';
 import { nameProblem, parseDoc, sectionOf, sizeCap, hashDoc } from './bundle.mjs';
@@ -170,12 +170,12 @@ function cardKey(cwd, unitId, baseSha) {
   const read = (f) => (existsSync(f) ? readFileSync(f, 'utf8') : '');
   const files = [...config.layers.filter((l) => l.from === 'project').map((l) => join(cwd, l.path)), runtimeFile(cwd, 'reviews', unitId), runtimeFile(cwd, 'reports', unitId),
     ...[C.template, C.quickTemplate].map((t) => templateFile(cwd, t)), join(CLI_DIR, config.init.version)];
-  return sha256(JSON.stringify([baseSha, tryGit(cwd, 'rev-parse', '-q', '--verify', branchOf(unitId)), ...files.map(read)]));
+  return sha256(JSON.stringify([baseSha, branchSha(cwd, branchOf(unitId)), ...files.map(read)]));
 }
 // The card `aidlc card` last rendered for a bolt, while nothing it is drawn from changed; else null.
 export function cachedCard(cwd, unitId) {
   const record = readJson(runtimeFile(cwd, 'cards', unitId)), { profile } = loadProfile(cwd);
-  return record?.text && record.key === cardKey(cwd, unitId, tryGit(cwd, 'rev-parse', '-q', '--verify', `${baseOf(profile)}^{commit}`)) ? record.text : null;
+  return record?.text && record.key === cardKey(cwd, unitId, branchSha(cwd, baseOf(profile))) ? record.text : null;
 }
 
 // PLAN-CARD: the card size in lines of each unit in `ids` over the cap, from the doc on disk; none without a base commit.
