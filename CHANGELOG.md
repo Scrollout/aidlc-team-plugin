@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.183.0] - 2026-10-27
+### Added
+- Structured answers (M26 B239). `status`, `next`, `lane`, `graph`, `models` and `check` return their values as `data`, and their text is rendered from it. `next` serves its action as `{ command, args }`, the `aidlc` command its line names, from `state.actions`; an agent's or the owner's own step serves none.
+- `--json` on any command prints the whole answer as one object, `{ code, findings, output, data }`, and an error with `error`; the exit code and the text form are unchanged.
+
 ## [0.182.1] - 2026-10-27
 ### Changed
 - The lifecycle states are named in `state.names`, and the core and the extensions refer to them by that map, never as literals. The values guard reports a state name written as a literal even where it is also some key, and no longer needs the board template's keys.
@@ -356,7 +361,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.182.1...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.183.0...HEAD
+[0.183.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.182.1...v0.183.0
 [0.182.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.182.0...v0.182.1
 [0.182.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.181.0...v0.182.0
 [0.181.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.180.0...v0.181.0

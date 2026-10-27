@@ -111,7 +111,7 @@ export const commands = {
   graph(args, { cwd }) {
     const edges = packGraph(cwd, loadProfile(cwd).profile);
     if (!edges) throw new UsageError(msg('packNone', { detect: readdirSync(packsDir()).join(', ') }));
-    return done(edges.map((e) => `${e.join(config.gate.edge)}\n`).join(''));
+    return done(edges.map((e) => `${e.join(config.gate.edge)}\n`).join(''), config.exit.ok, [], { edges });
   },
 
   // Writes a kind's templates at its folder with names from the registry; never overwrites (docs/design/stack-packs.md#scaffold).

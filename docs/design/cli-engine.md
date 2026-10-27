@@ -7,7 +7,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T10:28:02Z }
 ---
 
 # Engine and adapters
-- Every command handler returns `{ code, findings: [{ code, path, line, message, fix }], output }`. A hook rule returns the decision JSON its hook prints, as the `output` of the `hook` command. Handlers never print, write stdout or exit.
+- Every command handler returns `{ code, findings: [{ code, path, line, message, fix }], output }`, and a command that serves values adds them as `data`, from which its text is rendered: `status` (intents, bolts, uncovered requirements, next), `next` (the action's `kind`, `key`, `line`, and `command` and `args`, the `aidlc` command it names, or null), `lane`, `graph` (`edges`), `models` and `check` (`errors`, `warnings`). A hook rule returns the decision JSON its hook prints, as the `output` of the `hook` command. Handlers never print, write stdout or exit.
 - `aidlc.mjs` and `hook <name>` are adapters that render this data as the output and exit codes of the [CLI](cli.md). MCP, HTTP-hook and A2A adapters can reuse the same functions later; owner-only commands are never exposed on them ([0006](../decisions/0006-engine-behind-adapters.md)).
 
 # Implementation limits
@@ -17,6 +17,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T10:28:02Z }
 - Every module is tested with `node:test` against fixture repos created in a temp dir.
 
 # Output
+- `--json` on any command prints the whole answer as one JSON object, `{ code, findings, output, data }`, and an error as `{ code, findings, output, data, error }`; the exit code is unchanged. Without it the text form is printed.
 - Paths in output, cards and runtime files are relative and use `/` on every platform; the CLI resolves its working folder to its real long path first (Windows short names, symlinks), and reads docs with CRLF line ends as LF.
 - Findings: `path:line CODE message → fix (level)`, one per line, with the level as run (`docs.rules` and adoption change it). Codes are stable.
 - Advice: one line, imperative, naming the command or agent to run.

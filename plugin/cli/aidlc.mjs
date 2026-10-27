@@ -32,6 +32,7 @@ const combine = (...handlers) => async (args, ctx) => {
     code: Math.max(...results.map((r) => r.code)),
     findings: results.flatMap((r) => r.findings),
     output: results.map((r) => r.output).join(''),
+    data: Object.assign({}, ...results.map((r) => r.data ?? {})),
   };
 };
 
@@ -44,7 +45,10 @@ function help() {
 }
 
 async function main(argv, io = { out: process.stdout, err: process.stderr, cwd: process.cwd() }) {
-  const [name, ...args] = argv;
+  // --json on any command prints the whole answer as one object; the exit code stays (docs/design/cli-engine.md#output).
+  const json = argv.includes(config.jsonFlag);
+  const [name, ...args] = argv.filter((a) => a !== config.jsonFlag);
+  const answer = (r) => io.out.write(`${JSON.stringify({ code: r.code, findings: r.findings, output: r.output, data: r.data ?? null, ...(r.error ? { error: r.error } : {}) })}\n`);
   if (config.helpFlags.includes(name)) {
     io.out.write(help());
     return EXIT.ok;
@@ -54,18 +58,22 @@ async function main(argv, io = { out: process.stdout, err: process.stderr, cwd: 
     return EXIT.usage;
   }
   if (!config.commands.some((c) => c.name === name)) {
-    io.err.write(msg('unknownCommand', { name }));
+    if (json) answer({ code: EXIT.usage, findings: [], output: '', error: msg('unknownCommand', { name }).trim() });
+    else io.err.write(msg('unknownCommand', { name }));
     return EXIT.usage;
   }
   try {
     // The real long path, as git reports it: no Windows short names or symlinks (docs/design/cli.md).
     const result = await HANDLERS[name](args, { cwd: realpathSync.native(io.cwd ?? process.cwd()) });
-    io.out.write(result.output + result.findings.map((f) => msg('finding', f)).join(''));
+    if (json) answer(result);
+    else io.out.write(result.output + result.findings.map((f) => msg('finding', f)).join(''));
     return result.code;
   } catch (e) {
-    io.err.write(msg('failed', { name, error: e.message }));
+    const code = e instanceof UsageError ? EXIT.usage : EXIT.internal;
+    if (json) answer({ code, findings: [], output: '', error: e.message });
+    else io.err.write(msg('failed', { name, error: e.message }));
     if (config.hooks.owner.includes(name)) try { ownerRefused(realpathSync.native(io.cwd ?? process.cwd()), argv.join(' ')); } catch {} // outside a project there is no prompt
-    return e instanceof UsageError ? EXIT.usage : EXIT.internal;
+    return code;
   }
 }
 

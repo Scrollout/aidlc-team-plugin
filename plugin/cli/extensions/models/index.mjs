@@ -258,6 +258,7 @@ export const commands = {
     if (args.length) throw new UsageError(msg('modelsUsage', {}));
     const all = modelsOf(cwd);
     if (!all.length) return done(msg('modelNone', { dir: config.packages.models.override }));
-    return done(all.map((m) => msg('modelLine', { name: m.name, source: m.source, title: m.data?.title ?? '-', problems: m.problems.length ? msg('modelProblems', { count: m.problems.length }) : '' })).join(''));
+    const models = all.map((m) => ({ name: m.name, source: m.source, title: m.data?.title ?? '-', problems: m.problems.length }));
+    return done(models.map((m) => msg('modelLine', { ...m, problems: m.problems ? msg('modelProblems', { count: m.problems }) : '' })).join(''), config.exit.ok, [], { models });
   },
 };

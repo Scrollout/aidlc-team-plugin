@@ -9,6 +9,7 @@ export const PLUGIN_DIR = resolve(CLI_DIR, config.pluginRoot);
 export const VERDICT = config.state.verdicts; // a reviewer's verdicts, by name
 export const [QUICK, STANDARD, FULL] = config.gate.lanes; // the lanes, lowest first
 
+// A command's answer: its exit code, findings, text and, when it serves values, data (docs/design/cli-engine.md).
 // Bad usage: the CLI exits with config.exit.usage.
 export class UsageError extends Error {}
 
@@ -29,7 +30,7 @@ export const lapsed = (until) => until !== undefined && until !== null && isoDay
 export const slug = (text, words) => text.toLowerCase().split(new RegExp(config.okf.slugSplit)).filter(Boolean).slice(0, words).join('-');
 // A command's stdin: the test's, or the process's.
 export const readStdin = (ctx) => (ctx.stdin ? ctx.stdin() : readFileSync(0, 'utf8'));
-export const done = (output, code = config.exit.ok, findings = []) => ({ code, findings, output });
+export const done = (output, code = config.exit.ok, findings = [], data) => ({ code, findings, output, ...(data === undefined ? {} : { data }) });
 
 // A shipped package's folder: the pinned copy's, else the plugin's beside the CLI (docs/design/layout.md).
 export const shippedDir = (pkg) => [join(CLI_DIR, config.packages[pkg].dir), join(PLUGIN_DIR, config.packages[pkg].dir)].find(existsSync) ?? join(PLUGIN_DIR, config.packages[pkg].dir);

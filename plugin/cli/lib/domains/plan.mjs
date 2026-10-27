@@ -383,10 +383,11 @@ export const commands = {
   lane(args, { cwd }) {
     const { profile } = loadProfile(cwd);
     if (!args[0] || (args[0] === '--diff' && !args[1])) throw new UsageError(msg('laneUsage', {}));
-    if (args[0] === '--diff') return done(msg('laneLine', computeLane(git(cwd, 'diff', '--name-only', args[1]).split('\n').filter(Boolean), profile, { paths: true })));
+    const answer = (lane) => done(msg('laneLine', lane), config.exit.ok, [], lane);
+    if (args[0] === '--diff') return answer(computeLane(git(cwd, 'diff', '--name-only', args[1]).split('\n').filter(Boolean), profile, { paths: true }));
     const bundle = bundleOf(cwd, profile);
     const unit = readPlan(bundle).units.find((u) => u.id === args[0]);
     if (!unit) throw new UsageError(msg('unknownUnit', { name: args[0], dir: relPath(cwd, join(bundle, GRID.units)) }));
-    return done(msg('laneLine', computeLane(unit.scope, profile, { floor: unit.floor })));
+    return answer({ unit: unit.id, ...computeLane(unit.scope, profile, { floor: unit.floor }) });
   },
 };

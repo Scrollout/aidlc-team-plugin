@@ -148,7 +148,15 @@ const ids = (docs) => docs.map((u) => u.id).join(' ');
 const badgeOf = (kind, key) => (S.badges.stops.includes(key) ? S.badges.stop : kind === S.kinds.human ? S.badges.owner : '');
 // An elaborate step names the role the lead works in (decision 0019).
 const roleOf = (key) => config.personas.steps[key];
-const action = (kind, key, data = {}) => ({ kind, key, line: badgeOf(kind, key) + msg(key, data) + (roleOf(key) ? msg('personaLine', { role: roleOf(key) }) : '') });
+const action = (kind, key, data = {}) => ({ kind, key, data, line: badgeOf(kind, key) + msg(key, data) + (roleOf(key) ? msg('personaLine', { role: roleOf(key) }) : '') });
+// The `aidlc` command an action's line names, as { command, args } from state.actions; null for an agent's or the owner's own step.
+function commandOf(next) {
+  const spec = S.actions[next.key];
+  if (!spec) return { command: null, args: [] };
+  const [command, ...args] = spec.flatMap((t) => render(t, next.data ?? {}).split(/[\s,]+/)).filter(Boolean);
+  return { command, args };
+}
+const nextData = (next) => ({ kind: next.kind, key: next.key, line: next.line, ...commandOf(next) });
 const priorityOf = (u) => Number(u.fm.priority ?? 0);
 
 // Open points of a draft: frontmatter fields and sections still holding a template placeholder, or items under
@@ -388,16 +396,18 @@ function setField(cwd, name, key, value) {
 
 // The status lines `status` and the session-start hook show: owner lines, intents, the units not yet history
 // (merged units of a released intent are), the requirements not delivered, then the next action and `tail`.
-export function statusText(st, next, tail = '') {
-  const lines = [...st.intents.map((i) => msg('statusIntent', { id: i.id, state: i.state, title: i.fm.title ?? '' })),
-    ...st.units.filter((x) => x.state !== ST.merged || !st.intents.some((i) => i.state === ST.released && i.id === x.fm.intent))
-      .map((u) => msg('statusUnit', { id: u.id, state: u.state, title: u.fm.title ?? '' }))];
+function statusOf(st, next) {
+  const row = (d) => ({ id: d.id, state: d.state, title: d.fm.title ?? '' });
   // Delivered as a plugged rule says (construction: by released tests), else by a merged unit citing it.
   const proven = seam('delivered', st.profile).map((rule) => rule(st)).find(Boolean);
   const delivered = new Set(proven ?? st.units.filter((u) => u.state === ST.merged).flatMap((u) => u.requirements));
-  const open = st.requirements.filter((r) => !delivered.has(r.id));
+  return { intents: st.intents.map(row), units: st.units.filter((x) => x.state !== ST.merged || !st.intents.some((i) => i.state === ST.released && i.id === x.fm.intent)).map(row),
+    uncovered: st.requirements.filter((r) => !delivered.has(r.id)).map((r) => r.id), next: nextData(next) };
+}
+export function statusText(st, next, tail = '', data = statusOf(st, next)) {
+  const lines = [...data.intents.map((i) => msg('statusIntent', i)), ...data.units.map((u) => msg('statusUnit', u))];
   const extra = seam('statusLines', st.profile).map((line) => line(st)).join('');
-  const end = (open.length ? msg('statusUncovered', { reqs: ids(open) }) : '') + extra + msg('statusNext', { line: next.line }) + tail;
+  const end = (data.uncovered.length ? msg('statusUncovered', { reqs: data.uncovered.join(' ') }) : '') + extra + msg('statusNext', { line: next.line }) + tail;
   let out = ownerLines(st.cwd);
   for (let k = 0; k < lines.length; k++) {
     const more = msg('statusMore', { count: lines.length - k });
@@ -409,14 +419,14 @@ export function statusText(st, next, tail = '') {
 
 const usage = (key) => { throw new UsageError(msg(key, {})); };
 // `status` and `next` exit blocked when the next step is the owner's.
-const showNext = (cwd, text) => {
-  const st = readState(cwd), next = nextAction(st);
-  return done(text(st, next, seam('statusTail', st.profile).map((tail) => tail(st)).join('')), next.kind === S.kinds.human ? config.exit.blocked : config.exit.ok);
+const showNext = (cwd, text, dataOf) => {
+  const st = readState(cwd), next = nextAction(st), data = dataOf(st, next);
+  return done(text(st, next, seam('statusTail', st.profile).map((tail) => tail(st)).join(''), data), next.kind === S.kinds.human ? config.exit.blocked : config.exit.ok, [], data);
 };
 
 export const commands = {
-  status: (args, { cwd }) => showNext(cwd, statusText),
-  next: (args, { cwd }) => showNext(cwd, (st, next, tail) => msg('nextLine', next) + tail),
+  status: (args, { cwd }) => showNext(cwd, statusText, statusOf),
+  next: (args, { cwd }) => showNext(cwd, (st, next, tail, data) => msg('nextLine', data) + tail, (st, next) => nextData(next)),
 
   hold: ([unit, ...why], { cwd }) => (unit ? setField(cwd, unit, 'hold', why[0] === S.off ? null : why.length ? JSON.stringify(why.join(' ')) : true) : usage('holdUsage')),
   priority: ([unit, n], { cwd }) => (unit && /^-?\d+$/.test(n ?? '') ? setField(cwd, unit, 'priority', Number(n)) : usage('priorityUsage')),

@@ -26,7 +26,7 @@ A quick-lane bolt without an intent starts `approved`; its report makes it `revi
 Intents, requirements, bolts and one-way-door decisions carry the owner's approval; an edit stales it ([Approvals](approvals.md)).
 
 # next
-`aidlc next` prints one line: the next action and the command or agent for it. Badges (`state.badges`): 👉 an owner step, ⛔ a refusal or stop. It exits 2 when the owner acts. Order:
+`aidlc next` prints one line: the next action and the command or agent for it. Badges (`state.badges`): 👉 an owner step, ⛔ a refusal or stop. It exits 2 when the owner acts. Its answer's `data` also serves the action as `{ command, args }`, the `aidlc` command the line names, from `state.actions` (null for an agent's or the owner's own step). Order:
 1. A merge cut off → continue it. A failed release or smoke → ⛔ the owner retries or rolls back, then a fix bolt ([Deployment and operation](operations.md#details)). A red base CI → a fix bolt; only fix bolts build or merge ([CI on the base](base-ci.md)). Any doc held with `research: <question>` unanswered in `research/` → research it (`aidlc research <doc>`), or wait for its researcher ([0010](../decisions/0010-research-for-open-questions.md)); the digest ends that hold.
 2. Any `stale` approval, decisions included → re-approve, with the drafts the stale docs cite.
 3. A draft intent, requirement or bolt with open points (a template `<…>` placeholder outside plan fields, an `Open questions` item) → finish elaborating it with the owner, naming them; no approval or bolt work first. A draft intent that links no decision is also asked to draft the decisions it needs while the owner answers.

@@ -446,11 +446,12 @@ export const commands = {
 
 // `check --ci` on GitHub Actions: the result as the job summary, for the owner on the run page (docs/design/gate.md).
 export const withSummary = (handler) => async (args, ctx) => {
-  const r = await handler(args, ctx);
+  const found = await handler(args, ctx);
+  const [errors, warnings] = [config.okf.level.error, config.okf.level.warning].map((l) => found.findings.filter((f) => f.level === l).length);
+  const r = { ...found, data: { ...found.data, errors, warnings } };
   const file = process.env[G.summaryEnv];
   if (!args.includes('--ci') || !file) return r;
   const cell = (v) => String(v ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
-  const [errors, warnings] = ['error', 'warning'].map((l) => r.findings.filter((f) => f.level === l).length);
   const verdict = errors ? msg('summaryFailed', { errors, warnings }) : warnings ? msg('summaryWarned', { warnings }) : msg('summaryPassed', {});
   const shown = r.findings.slice(0, G.summaryMax).map((f) => msg('summaryRow', { mark: f.level === config.okf.level.error ? G.summaryMarks.error : G.summaryMarks.warning, code: f.code, path: f.path, line: f.line, message: cell(f.message), fix: cell(f.fix) }));
   const st = readState(ctx.cwd);

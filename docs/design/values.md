@@ -1,8 +1,8 @@
 ---
 type: Design
 title: Values as data
-description: Draft - nothing hard-coded, in the plugin and in every project it governs - values in data, several values as structured objects and answers served as JSON, code holding only logic, tool protocol and keys, a test for the plugin and a gate check for projects, and the board as a declarative JSON template.
-status: draft
+description: Nothing hard-coded, in the plugin and in every project it governs - values in data, several values as structured objects and answers served as JSON, code holding only logic, tool protocol and keys, a test for the plugin and a gate check for projects, and the board as a declarative JSON template.
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T23:00:00Z }
 ---
 
