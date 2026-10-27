@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { approve, commit, git, intentDoc, makeRepo, review, run, TMP, unitDoc } from './state-repo.mjs';
+import { config } from '../plugin/cli/lib/index.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 
@@ -31,4 +32,20 @@ test('U13/AC-1 a merge, passing or refused, leaves no trial worktree folder', ()
   review(dir, 'U-1', 'pass');
   assert.equal(run(dir, ['merge', 'U-1']).code, 0);
   assert.deepEqual(readdirSync(TMP).filter((n) => n.startsWith('gate-')), []);
+});
+
+// M20 B195: no dead code: every export is used outside its file, and the v1 aliases go when they expire.
+const all = (dir) => readdirSync(join(ROOT, dir), { recursive: true }).filter((f) => f.endsWith('.mjs')).map((f) => `${dir}/${f}`);
+const src = Object.fromEntries([...all('plugin/cli'), ...all('tests'), 'plugin/hooks/run.mjs'].map((f) => [f, readFileSync(join(ROOT, f), 'utf8')]));
+
+test('B195/AC-1 every export of the CLI is used by another module, the entry or a test', () => {
+  const unused = all('plugin/cli').flatMap((f) => [...src[f].matchAll(/^export (?:async )?(?:function|const|class) (\w+)/gm)].map((m) => m[1])
+    .filter((name) => !Object.entries(src).some(([g, t]) => g !== f && new RegExp(`\\b${name}\\b`).test(t))).map((name) => `${f}: ${name}`));
+  assert.deepEqual(unused, []);
+});
+
+test('B195/AC-1 the v1 aliases (units/, U-<n>) are gone once the milestone they expire with is built', () => {
+  const roadmap = join(ROOT, 'docs/roadmap', `${config.grid.legacyUntil.toLowerCase()}.md`);
+  const built = existsSync(roadmap) && /^Built on /m.test(readFileSync(roadmap, 'utf8'));
+  assert.ok(!built || !config.grid.units, `${config.grid.legacyUntil} is built: remove the units/ alias`);
 });

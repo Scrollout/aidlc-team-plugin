@@ -59,7 +59,7 @@ function docHatches(profile, intents, units, root) {
 }
 
 // The findings, through plan lint's `add(code, doc, line, key, data)`; `units` are the live ones, `all` every bolt.
-export function lintConstruction({ profile, live: intents, units, all, add, keyLine, bundleRel, base }) {
+function lintConstruction({ profile, live: intents, units, all, add, keyLine, bundleRel, base }) {
   if (!profile.system) return;
   const top = topLevel(profile), fresh = (u) => !u.fm.verified_hash;
   const kindOf = (id) => (profile.modules ?? []).find((m) => idOf(m) === id)?.kind;

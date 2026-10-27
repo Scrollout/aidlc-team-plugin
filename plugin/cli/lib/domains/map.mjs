@@ -16,7 +16,7 @@ const layersOf = (m) => Object.keys(m.layers ?? {}); // a module's layers, outer
 const rootOf = (glob) => { const parts = glob.replace(/^\.?\//, '').split('/'); const k = parts.findIndex((p) => /[*?[]/.test(p)); return parts.slice(0, k < 0 ? parts.length : k).join('/'); };
 
 // The map's pages, or null when the profile turns it off or has no modules.
-export function mapText(cwd, profile) {
+function mapText(cwd, profile) {
   const mods = (profile.modules ?? []).map((m) => ({ ...m, id: String(m.id ?? m.name) }));
   if (profile.map === false || !mods.length) return null;
   const of = (p) => mods.find((m) => list(m.paths).some((g) => globRegex('/' + g).test(p) || globRegex('/' + g).test(p + '/')));

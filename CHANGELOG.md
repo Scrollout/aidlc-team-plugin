@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.153.0] - 2026-10-27
+### Removed
+- Ten exports nothing outside their module used; a test keeps it so.
+### Added
+- The v1 aliases carry an expiry (`grid.legacyUntil`), checked by a test.
+
 ## [0.152.0] - 2026-10-27
 ### Added
 - An arc42 page for the plugin's architecture, with a generated C4 component view of the CLI.
@@ -152,7 +158,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.152.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.153.0...HEAD
+[0.153.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.152.0...v0.153.0
 [0.152.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.151.0...v0.152.0
 [0.151.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.150.0...v0.151.0
 [0.150.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.149.0...v0.150.0

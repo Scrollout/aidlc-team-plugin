@@ -176,7 +176,7 @@ export function writeIndexes(root) {
 
 const DATE = /^## (\d{4})-(\d{2})-(\d{2})\s*$/;
 const ENTRY = /^\* \[[^\]]+\]\([^)\s]+\)( - .*)?$/;
-export const MD_LINK = /\]\(([^)#\s]+\.md)(?:#[^)]*)?\)/g;
+const MD_LINK = /\]\(([^)#\s]+\.md)(?:#[^)]*)?\)/g;
 const LINK = /!?\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
 
 const validDate = (y, m, d) => {

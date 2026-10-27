@@ -47,7 +47,7 @@ export function contractProblems(doc) {
 }
 
 // The contract findings of a tree, as [file, message key, data]: none without a naming registry.
-export function contractFindings(root, profile) {
+function contractFindings(root, profile) {
   if (!isMap(profile.naming)) return [];
   const globs = (profile.naming.contracts ?? C.files).map((g) => globRegex(`/${g}`)); // anchored at the repo root
   const files = gitLines(root, 'ls-files', '--cached', '--others', '--exclude-standard').filter((f) => globs.some((g) => g.test(f)));

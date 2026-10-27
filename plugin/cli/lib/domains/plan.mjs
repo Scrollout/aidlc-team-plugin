@@ -25,7 +25,7 @@ export const testsOnly = (units, profile) => units.length > 0 && units.every((u)
 // The running product: module paths and one-way doors. A unit whose scope reaches none of it ships nothing (U76, U83).
 export const productGlobs = (profile) => [...(profile.modules ?? []).flatMap((m) => list(m.paths)), ...list(profile.decisions?.paths ?? profile.lanes?.full)];
 // Units that ship nothing: all tests, or, when the profile names modules, all outside the product (docs/design/operations.md).
-export const shipsNothing = (units, profile) => testsOnly(units, profile) || (units.length > 0 && (profile.modules ?? []).length > 0
+const shipsNothing = (units, profile) => testsOnly(units, profile) || (units.length > 0 && (profile.modules ?? []).length > 0
   && units.every((u) => u.scope.length && !u.scope.some((s) => productGlobs(profile).some((g) => overlaps(s, g)))));
 
 // A scope holding the project profile can add its own test location to `levels` (docs/design/grid.md).

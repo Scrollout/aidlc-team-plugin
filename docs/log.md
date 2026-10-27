@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M20 B195: no dead code: a test fails on an export nothing outside its file uses (ten became module-private) and on the v1 aliases once the milestone they expire with (`grid.legacyUntil`, M22) is built; unused messages were already caught. Release 0.153.0.
 - **Update** M20 B212: the system template follows arc42's twelve sections, and a draft system doc in a v2 project missing one is `DOC-SCHEMA`; the generated dependency and kind maps say they are C4 component views; the plugin's own architecture is laid out in [Architecture in arc42](design/arc42.md) with a generated C4 component view of the CLI. Standard formats are built. Release 0.152.0.
 - **Update** M20 B211: the plugin keeps `CHANGELOG.md` per Keep a Changelog 1.1.0 and SemVer, held by a test to `plugin.json`, and `init` writes one for each project ([Standard formats](design/standards.md)). Release 0.151.0.
 - **Update** M20 B209-B210 (method 5): acceptance criteria read Given/When/Then and requirements are stated in an EARS pattern under `# Requirement`; in a v2 project a draft that does not is `PLAN-AC` or `PLAN-REQ`, and the bolt, fix and requirement templates are written that way ([Standard formats](design/standards.md)). Release 0.150.0.

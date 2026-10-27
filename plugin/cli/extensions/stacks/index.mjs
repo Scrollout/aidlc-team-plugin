@@ -8,7 +8,7 @@ const K = config.packs;
 const packsDir = () => join(PLUGIN_DIR, K.dir);
 
 // The pack whose detect file the project has, as { stack, dir, manifest }, or null.
-export function packFor(root) {
+function packFor(root) {
   if (!existsSync(packsDir())) return null;
   for (const stack of readdirSync(packsDir()).sort()) {
     const file = join(packsDir(), stack, K.manifest);
@@ -81,7 +81,7 @@ export function packGraph(root, profile) {
 }
 
 // Event types in a domain's events surface that break the grammar, as [file, message key, data] (decision 0014).
-export function eventFindings(root, profile) {
+function eventFindings(root, profile) {
   const pack = packFor(root);
   if (!pack?.manifest.eventType || !profile.naming) return [];
   const grammar = new RegExp(config.naming.grammar.event.regex), past = Object.values(config.naming.pastTense), out = [];
@@ -98,7 +98,7 @@ export function eventFindings(root, profile) {
 }
 
 // The reference slices a card points a builder at, as paths from the project root.
-export const referenceOf = (root) => { const p = packFor(root); return p ? Object.fromEntries(Object.entries(p.manifest.reference ?? {}).map(([k, v]) => [k, posix(relative(root, join(p.dir, v)))])) : null; };
+const referenceOf = (root) => { const p = packFor(root); return p ? Object.fromEntries(Object.entries(p.manifest.reference ?? {}).map(([k, v]) => [k, posix(relative(root, join(p.dir, v)))])) : null; };
 
 export const commands = {
   graph(args, { cwd }) {
@@ -140,7 +140,7 @@ export const commands = {
 };
 
 // A project's own graph must hold every edge the pack reads from source (GRAPH-SELFTEST); none with no pack or no graph.
-export function selftestFindings(root, profile) {
+function selftestFindings(root, profile) {
   const command = profile.architecture?.graph, edges = command && packGraph(root, profile);
   if (!edges || /\baidlc(\.mjs)?\s+graph\b/.test(command)) return [];
   const own = new Set(graphOf(root, command).edges.map(([a, b]) => `${a}${config.gate.edge}${b}`));
