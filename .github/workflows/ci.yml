@@ -25,8 +25,12 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Tests
         run: node --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=tap --test-reporter-destination=tests.tap
+      - uses: actions/setup-go@v7 # macOS runners have no go on the PATH
+        with:
+          go-version-file: plugin/packs/go/reference/go.mod
+          cache: false
       - name: Go reference
-        run: go version && cd plugin/packs/go/reference && go vet ./... && go test ./... # the runners ship Go; the stack pack's reference, notes and the control plane, runs its own tests
+        run: go version && cd plugin/packs/go/reference && go vet ./... && go test ./... # the stack pack's reference, notes and the control plane, runs its own tests
       - name: No temp folders left
         run: node -e "const l = require('fs').readdirSync(require('os').tmpdir()).filter((n) => n.startsWith('aidlc-test-')); if (l.length) { console.error(l.join('\\n')); process.exit(1); }"
       - name: Docs check
