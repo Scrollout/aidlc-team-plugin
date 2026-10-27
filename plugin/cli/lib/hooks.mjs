@@ -16,7 +16,7 @@ const S = config.state;
 
 // ---- Shell parsing: argv per segment, enough for a deny list, not a shell model ----
 
-export function segments(command) {
+function segments(command) {
   const out = [[]];
   let word = null;
   let quote = null;
@@ -94,8 +94,7 @@ function recordPrompt(cwd, input, command) {
 
 // The CLI refused an owner command: its prompt is `refused`, so a call that still ends well is not counted as run.
 export function ownerRefused(cwd, command) {
-  if (!existsSync(promptsFile(cwd))) return;
-  const prompts = readJson(promptsFile(cwd));
+  const prompts = readJson(promptsFile(cwd)) ?? [];
   const asked = prompts.findLast((p) => p.command === command && !p.ran && !p.refused);
   if (!asked) return;
   const refused = new Date().toISOString();
@@ -213,11 +212,10 @@ function guard(input, cwd) {
   return allow();
 }
 
-// The text a Write or Edit would leave in the file.
-function resulting(input, file) {
+// The text a Write or Edit would leave.
+function resulting(input, current) {
   const t = input.tool_input ?? {};
   if (typeof t.content === 'string') return t.content;
-  const current = existsSync(file) ? readFileSync(file, 'utf8') : '';
   const edits = Array.isArray(t.edits) ? t.edits : [t];
   return edits.reduce((text, e) => (typeof e.old_string === 'string' ? (e.replace_all ? text.split(e.old_string).join(e.new_string ?? '') : text.replace(e.old_string, e.new_string ?? '')) : text), current);
 }
@@ -237,7 +235,7 @@ function scope(input, cwd) {
   const top = git(cwd, 'rev-parse', '--show-toplevel');
   const path = relPath(top, file);
   const before = existsSync(file) ? readFileSync(file, 'utf8') : '';
-  if (file.endsWith(config.okf.ext) && approvalPart(before) !== approvalPart(resulting(input, file))) return deny(cwd, input, 'SCOPE-APPROVAL', 'scopeApproval', { path });
+  if (file.endsWith(config.okf.ext) && approvalPart(before) !== approvalPart(resulting(input, before))) return deny(cwd, input, 'SCOPE-APPROVAL', 'scopeApproval', { path });
   // From any worktree: the main checkout's personal profile and the CLI's state under the git common dir.
   const common = real(resolve(cwd, git(cwd, 'rev-parse', '--git-common-dir')));
   if (path === personalProfile || file === join(dirname(common), personalProfile)) return deny(cwd, input, 'SCOPE-APPROVAL', 'scopeApproval', { path });
