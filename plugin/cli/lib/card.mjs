@@ -7,6 +7,7 @@ import { msg, render } from './template.mjs';
 import { loadProfile, withDefaults } from './profile.mjs';
 import { nameProblem, parseDoc, sectionOf, sizeCap } from './okf.mjs';
 import { generatedRules, nameOf, registry } from './naming.mjs';
+import { referenceOf } from './packs.mjs';
 import { computeLane, overlaps, readPlan, reqId, topLevel, unitFields } from './grid.mjs';
 import { aidlcDir, approval, baseOf, branchOf, diffHash, hashDoc, readReview, readState, heldDoc, researchOf, roundsOf, runtimeFile, sha256, worktrees, writeJson } from './state.mjs';
 
@@ -129,6 +130,8 @@ function renderCard(cwd, unitId, { preview = false } = {}) {
     names: [[...[profile.names ?? []].flat(), ...generatedRules(profile, bundle)].filter((r) => !nameProblem(r) && list(r.files).some((g) => atBase.scope.some((s) => overlaps(s, g))))
       // a rule shows what it finds too: a pattern nothing matches bans each found word (U127)
       .map((r) => msg(!r.find ? 'cardNamePath' : r.pattern === C.bannedPattern ? 'cardNameBanned' : 'cardName', { id: r.id, files: list(r.files).join(', '), find: r.find, pattern: r.pattern, why: r.why ?? '-' })).join('') + namesCreated(atBase, profile, bundle)].filter(Boolean),
+    // The stack pack's reference slices, for a bolt that names a domain (docs/design/stack-packs.md).
+    reference: (() => { const ref = referenceOf(top), named = (profile.modules ?? []).some((m) => m.kind === 'domain' && atBase.modules.includes(String(m.id ?? m.name))); return ref && named ? [msg('cardReference', ref)] : []; })(),
     // Versions from the registry, never from memory (docs/design/dependencies.md).
     deps: list(profile.deps?.manifests).some((g) => atBase.scope.some((s) => overlaps(s, g))) ? [msg('cardDeps', { manifests: list(profile.deps.manifests).join(', '), checks: list(profile.deps.check).join('; ') || '-' })] : [],
     // Where the deploy target is already defined, so a unit builds on it (docs/design/operations.md).

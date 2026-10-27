@@ -1,0 +1,2 @@
+// Package {{kit}} is a foundation kit: it owns no data and depends only on lower kits.
+package {{kit}}

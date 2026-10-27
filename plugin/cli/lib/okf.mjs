@@ -8,6 +8,7 @@ import { loadProfile } from './profile.mjs';
 import { kindProblems } from './vocab.mjs';
 import { moduleProblems, namingProblems } from './naming.mjs';
 import { contractFindings } from './contract.mjs';
+import { eventFindings, selftestFindings } from './packs.mjs';
 
 const OKF = config.okf;
 
@@ -634,7 +635,8 @@ export const commands = {
     for (const [key, data] of kindProblems(profile)) findings.push(finding('PROFILE-KIND', profile.system ? 'error' : 'warning', at, 1, key, data));
     for (const [key, data] of [...namingProblems(profile), ...moduleProblems(profile, bundle)]) findings.push(finding('PROFILE-NAMING', 'error', at, 1, key, data)); // the registry names everything (docs/design/naming.md)
     if (profile.system && !profile.naming?.tokens?.system) findings.push(finding('PROFILE-NAMING', 'error', at, 1, 'namingV2', {}));
-    for (const [file, key, data] of contractFindings(cwd, profile)) findings.push(finding('CONTRACT-NAME', 'error', file, 1, key, data)); // the published API speaks the grammar (decision 0014)
+    for (const [file, key, data] of [...contractFindings(cwd, profile), ...eventFindings(cwd, profile)]) findings.push(finding('CONTRACT-NAME', 'error', file, 1, key, data)); // the published API and events speak the grammar (decision 0014)
+    for (const [key, data] of selftestFindings(cwd, profile)) findings.push(finding('GRAPH-SELFTEST', 'error', at, 1, key, data)); // a project's graph sees what the pack sees (docs/design/stack-packs.md)
     if ((profile.modules ?? []).length && !profile.naming && ![profile.names ?? []].flat().length) findings.push(finding('PROFILE-NAMING', 'warning', at, 1, 'namesNone', {}));
     const given = args.filter((a) => !a.startsWith('--'));
     const paths = given.length ? given.map((a) => resolve(cwd, a)) : [bundle];

@@ -52,6 +52,13 @@ const pascal = (ws) => ws.map(cap).join('');
 const camel = (ws) => ws.map((w, k) => (k ? cap(w) : w)).join('');
 const singular = (ws) => [...ws.slice(0, -1), ws.at(-1).replace(/ies$/, 'y').replace(/([^s])s$/, '$1')];
 
+// A registered domain's word forms, from its registered name (or its code) and singular: the API's type in camel
+// and Pascal case, and the singular as one lower-case word, in camel and in Pascal case.
+export function domainForms(code, reg) {
+  const entry = reg.domains[code] ?? {}, ws = entry.name ? words(entry.name) : [code], one = entry.singular ? words(entry.singular) : singular(ws);
+  return { typeCamel: camel(ws), TypePascal: pascal(ws), singularCompact: one.join(''), singularCamel: camel(one), SingularPascal: pascal(one) };
+}
+
 // The name of `kind` for the given flags, checked against the registry and the kind's regex.
 export function nameOf(kind, flags, reg) {
   const spec = N.grammar[kind];
@@ -60,8 +67,7 @@ export function nameOf(kind, flags, reg) {
   const v = { ...reg.tokens, tag: flags.tag ?? '<semver>', previewSuffix: flags.preview ? '-preview' : '', date: flags.date, section: flags.section, unit: known('unit', flags.unit, N.metricUnits, 'naming.metricUnits') };
   if (flags.domain !== undefined) {
     known('domain', flags.domain, Object.keys(reg.domains), 'naming.domains or a domain doc');
-    const entry = reg.domains[flags.domain] ?? {}, ws = entry.name ? words(entry.name) : [flags.domain], one = entry.singular ? words(entry.singular) : singular(ws);
-    Object.assign(v, { domain: flags.domain, part: flags.domain, typeCamel: camel(ws), TypePascal: pascal(ws), singularCompact: one.join(''), singularCamel: camel(one), SingularPascal: pascal(one) });
+    Object.assign(v, { domain: flags.domain, part: flags.domain, ...domainForms(flags.domain, reg) });
   }
   if (flags.stage !== undefined) v.part = known('stage', flags.stage, reg.vocabularies.pipeline, 'naming.vocabularies.pipeline');
   if (flags.verb !== undefined) Object.assign(v, { verb: known('verb', flags.verb, reg.vocabularies.verb, 'naming.vocabularies.verb'), OperationVerb: N.operationVerbs[flags.verb] ?? cap(flags.verb), PastVerb: N.pastTense[flags.verb] ?? `${cap(flags.verb)}ed` });

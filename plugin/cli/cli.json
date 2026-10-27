@@ -161,6 +161,16 @@
       "flags": ["--domain", "--role", "--env", "--verb", "--stage", "--action", "--table", "--object", "--number", "--metric", "--unit", "--section", "--key", "--date", "--preview", "--tag"]
     },
     {
+      "name": "graph",
+      "usage": "graph",
+      "does": "print the dependency graph the stack pack reads from source: imports and data edges"
+    },
+    {
+      "name": "scaffold",
+      "usage": "scaffold <kind> <name> [--domain d]",
+      "does": "write a kind's templates from the stack pack, named from the registry; never overwrites"
+    },
+    {
       "name": "new",
       "usage": "new bolt \"<title>\"",
       "does": "write a draft bolt B-<n> under bolts/, the next free number, named from its title"
@@ -544,6 +554,13 @@
     "gateIdentity": "{{path}}:{{line}} adds a static credential between components (trust auth, a password in a URL or a client secret)",
     "gateSecret": "{{path}}:{{line}} adds what looks like a secret",
     "gateNamePath": "{{path}} does not match the {{rule}} rule {{pattern}} ({{why}})",
+    "contractEvent": "event type {{type}} is not <Org>.<Service>.<Noun><PastTenseVerb> with no version suffix",
+    "packNone": "no stack pack fits this project; the packs look for: {{detect}}",
+    "scaffoldUsage": "usage: aidlc scaffold <kind> <name> [--domain d]; kinds: {{kinds}}",
+    "scaffoldWrote": "wrote {{path}}\n",
+    "scaffoldKept": "kept {{path}}: it exists\n",
+    "graphSelftest": "the project's graph ({{command}}) lacks {{count}} edges the stack pack reads from source, e.g. {{edges}}",
+    "cardReference": "Copy the shape of the stack pack's reference domain ({{domain}}): the command slice {{command}} and the query slice {{query}}.\n",
     "contractVersion": "info.version {{version}} is no api-version (YYYY-MM-DD or YYYY-MM-DD-preview)",
     "contractParam": "{{path}}: parameter {{param}} is not a full lowerCamel name ending in Name or Id",
     "contractSegment": "{{path}}: segment {{segment}} is not {{rule}}",
@@ -810,6 +827,10 @@
       "PROFILE-RULE": {
         "level": "error",
         "fix": "set docs.rules entries to a HOUSE-* code and one of error, warning, off"
+      },
+      "GRAPH-SELFTEST": {
+        "level": "error",
+        "fix": "make the project's architecture.graph print every import and data edge, or set it to the plugin's: node .aidlc/bin/aidlc.mjs graph (docs: Stack packs)"
       },
       "CONTRACT-NAME": {
         "level": "error",
@@ -1640,6 +1661,15 @@
     "typedOwner": "Organization",
     "target": "board.target",
     "dueTime": "T00:00:00Z"
+  },
+  "packs": {
+    "dir": "packs",
+    "manifest": "manifest.json",
+    "templates": "templates",
+    "tests": "(_test\\.|\\.test\\.|\\.spec\\.)",
+    "skip": ["node_modules", "vendor", "dist", "build", "testdata", "coverage", "reference"],
+    "dataPrefix": "data/",
+    "vendored": ".aidlc/packs"
   },
   "method": {
     "version": 2,

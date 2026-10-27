@@ -13,6 +13,7 @@ import { writeGlossary, writeMap } from './map.mjs';
 import { generatedRules, glossaryOf } from './naming.mjs';
 import { contractFindings } from './contract.mjs';
 import { kindFindings, layerFindings, reachFindings } from './arch.mjs';
+import { eventFindings } from './packs.mjs';
 import { aidlcDir, approval, baseOf, baseRedFile, branchOf, bump, codeChanges, diffHash, keptPass, verdictCurrent, mergedUnits, mutationOf, readState, reviewFocuses, roundsOf, runtimeFile, unitPaths, worktrees, writeJson } from './state.mjs';
 
 const G = config.gate;
@@ -335,7 +336,7 @@ function runGate(cwd, st, unit) {
     out.push(finding('GATE-OKF', f.path, f.line, 'gateOkf', f));
   }
   // The published API on the merged tree speaks the grammar of decision 0014 (docs/design/naming.md#checks).
-  for (const [file, key, data] of contractFindings(tree, p)) out.push(finding('CONTRACT-NAME', file, 1, key, data));
+  for (const [file, key, data] of [...contractFindings(tree, p), ...eventFindings(tree, p)]) out.push(finding('CONTRACT-NAME', file, 1, key, data));
   return { findings: out, tree, tested: tested.map(([level]) => level), proof, card };
 }
 

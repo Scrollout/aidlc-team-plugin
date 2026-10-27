@@ -47,6 +47,10 @@ function vendor(root, version) {
   rmSync(bin, { recursive: true, force: true });
   cpSync(CLI_DIR, bin, { recursive: true });
   writeFileSync(join(bin, I.version), version + '\n');
+  // The stack packs are the plugin's data, replaced like the CLI (docs/design/stack-packs.md).
+  const packs = join(root, config.packs.vendored);
+  rmSync(packs, { recursive: true, force: true });
+  if (existsSync(join(PLUGIN_DIR, config.packs.dir))) cpSync(join(PLUGIN_DIR, config.packs.dir), packs, { recursive: true });
   return msg('initVendored', { version, path: I.bin });
 }
 

@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M17 B170-B172: stack packs for Go and TypeScript: `aidlc graph` reads imports and data edges from source with no toolchain, `GRAPH-SELFTEST` holds a project's own graph to it, `aidlc scaffold` writes every kind with registry names, a tested reference domain per pack is linked from the card, packs are vendored to `.aidlc/packs`, and event types in a domain's events surface are checked. M17 is built ([Stack packs](design/stack-packs.md)). Release 0.138.0.
 - **Update** M17 B166-B169: the architecture model's checks over the dependency graph: `ARCH-KIND` (an edge the kind table forbids), `ARCH-LAYER` (an outward layer edge, a model depending on more than foundation kits; v1 layer names read as the canonical four), surfaces in `ARCH-API` when an end has no kind, and `ARCH-REACH` (a runtime linking internals of a domain it does not host) ([Architecture model](design/architecture-model.md)). Release 0.137.0.
 - **Update** M16 B165: `CONTRACT-NAME` checks each published OpenAPI document against the reference API grammar in `check` and at the gate, once the profile has a naming registry; event types move to M17. M16 is built ([Naming](design/naming.md)). Release 0.136.0.
 - **Update** M16 B164: the card names what the bolt will create: for each registered domain module it names, its schema, database role, path, write permission and created event, printed from the grammar ([Naming](design/naming.md)). Release 0.135.0.

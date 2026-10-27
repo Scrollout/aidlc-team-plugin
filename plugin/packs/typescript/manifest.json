@@ -1,0 +1,20 @@
+{
+  "stack": "typescript",
+  "detect": ["tsconfig.json"],
+  "sources": "\\.(ts|tsx|mts)$",
+  "imports": "relative",
+  "folders": { "domain": "src/domains/{{domain}}", "pipeline": "src/pipeline/{{stage}}", "foundation": "src/foundation/{{kit}}", "adapter": "src/adapters/{{system}}", "runtime": "src/runtimes/{{deployable}}" },
+  "layers": { "interface": "interface", "application": "application", "model": "model", "infrastructure": "infrastructure" },
+  "surfaces": { "client": "client", "events": "events", "server": "interface" },
+  "migrations": "migrations/{{domain}}",
+  "scaffold": {
+    "domain": [["domain/model.ts", "{{dir}}/model/{{singular}}.ts"], ["domain/events.ts", "{{dir}}/events/events.ts"], ["domain/client.ts", "{{dir}}/client/client.ts"], ["domain/infrastructure.ts", "{{dir}}/infrastructure/infrastructure.ts"], ["domain/interface.ts", "{{dir}}/interface/interface.ts"], ["domain/migration.sql", "migrations/{{domain}}/0001_create_{{domain}}.sql"]],
+    "slice": [["slice/handler.ts", "{{dir}}/application/{{operation}}/handler.ts"], ["slice/handler.spec.ts", "{{dir}}/application/{{operation}}/handler.spec.ts"]],
+    "foundation": [["foundation.ts", "{{dir}}/{{kit}}.ts"]],
+    "pipeline": [["pipeline.ts", "{{dir}}/{{stage}}.ts"]],
+    "adapter": [["adapter.ts", "{{dir}}/{{system}}.ts"]],
+    "runtime": [["runtime.ts", "{{dir}}/main.ts"]]
+  },
+  "eventType": "Type\\s*=\\s*['\"]([^'\"]+)['\"]",
+  "reference": { "domain": "reference/src/domains/notes", "command": "reference/src/domains/notes/application/createnote", "query": "reference/src/domains/notes/application/getnote" }
+}

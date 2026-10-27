@@ -36,6 +36,7 @@ Write only inside:
 {{/each}}{{#each data}}## Data
 {{this}}{{/each}}{{#each names}}## Names
 The merge gate checks each name and path you add against these; use the naming decision's words for the rest, which the reviewer checks.
+{{this}}{{/each}}{{#each reference}}## Reference
 {{this}}{{/each}}{{#each deps}}## Dependencies
 {{this}}{{/each}}{{#each platform}}## Platform
 {{this}}{{/each}}## Test runs (each in full, as one plain command)

@@ -1,0 +1,21 @@
+{
+  "stack": "go",
+  "detect": ["go.mod"],
+  "module": { "file": "go.mod", "pattern": "^module\\s+(\\S+)" },
+  "sources": "\\.go$",
+  "imports": "go",
+  "folders": { "domain": "internal/domains/{{domain}}", "pipeline": "internal/pipeline/{{stage}}", "foundation": "internal/foundation/{{kit}}", "adapter": "internal/adapters/{{system}}", "runtime": "cmd/{{deployable}}" },
+  "layers": { "interface": "interface", "application": "application", "model": "model", "infrastructure": "infrastructure" },
+  "surfaces": { "client": "client", "events": "events", "server": "interface" },
+  "migrations": "migrations/{{domain}}",
+  "scaffold": {
+    "domain": [["domain/model.go", "{{dir}}/model/{{singular}}.go"], ["domain/events.go", "{{dir}}/events/events.go"], ["domain/client.go", "{{dir}}/client/client.go"], ["domain/infrastructure.go", "{{dir}}/infrastructure/infrastructure.go"], ["domain/interface.go", "{{dir}}/interface/interface.go"], ["domain/migration.sql", "migrations/{{domain}}/0001_create_{{domain}}.sql"]],
+    "slice": [["slice/handler.go", "{{dir}}/application/{{operation}}/handler.go"], ["slice/handler_test.go", "{{dir}}/application/{{operation}}/handler_test.go"]],
+    "foundation": [["foundation.go", "{{dir}}/{{kit}}.go"]],
+    "pipeline": [["pipeline.go", "{{dir}}/{{stage}}.go"]],
+    "adapter": [["adapter.go", "{{dir}}/{{system}}.go"]],
+    "runtime": [["runtime.go", "{{dir}}/main.go"]]
+  },
+  "eventType": "Type\\s*=\\s*\"([^\"]+)\"",
+  "reference": { "domain": "reference/internal/domains/notes", "command": "reference/internal/domains/notes/application/createnote", "query": "reference/internal/domains/notes/application/getnote" }
+}

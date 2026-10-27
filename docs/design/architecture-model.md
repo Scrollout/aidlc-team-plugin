@@ -1,8 +1,8 @@
 ---
 type: Design
 title: Architecture model
-description: Draft - the system's core and extensions, seven closed module kinds with what each may depend on, four inward-pointing layers, client, server and event surfaces, and data owned by one domain; boundaries are computed from these declarations, never written by hand.
-status: draft
+description: The system's core and extensions, seven closed module kinds with what each may depend on, four inward-pointing layers, client, server and event surfaces, and data owned by one domain; boundaries are computed from these declarations, never written by hand.
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T00:40:00Z }
 ---
 
@@ -71,4 +71,4 @@ With `modules` in the profile, `check` reports `PROFILE-ARCH`: an error when dat
 - The slice-architecture doc folded into this doc (B159). [Module surfaces](module-surface.md) and [Data ownership](data-ownership.md) stay as the detail docs of `ARCH-API`, `ARCH-CYCLE` and `ARCH-DATA`: folding them in would pass the doc's cap.
 - Hand-written `architecture.boundaries` remain only as `except` lists.
 
-Bolts: [M15](../roadmap/m15.md) B151, B155; [M17](../roadmap/m17.md) B166 to B169; still to build: B170 to B172.
+Bolts: [M15](../roadmap/m15.md) B151, B155; [M17](../roadmap/m17.md) B166 to B172 ([Stack packs](stack-packs.md)).

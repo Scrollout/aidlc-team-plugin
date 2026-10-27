@@ -1,0 +1,6 @@
+{
+  "name": "reference",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node --test \"src/**/*.spec.ts\"" }
+}
