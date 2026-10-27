@@ -26,7 +26,7 @@ A test scans every module of the CLI for string and regex literals. One passes o
 The rule holds in every project the plugin governs, not only in the plugin.
 - **The constitution** a project gets from `init` and `upgrade` holds the rule and names its check.
 - **The builder** keeps every value in the project's data files; **the reviewer** reports a literal value as a finding.
-- **`VALUE-LITERAL`** at the merge gate: a string literal on a line the bolt adds to a source file is a finding, unless the file is a test, lies under the profile's `values.data` globs (where the project keeps its values), or the literal matches the stack pack's protocol list or the profile's `values.allow`. Each stack pack names how its language writes a string literal. Only added lines count, so existing code is measured as it changes.
+- **`VALUE-LITERAL`** at the merge gate: a string literal on a line the bolt adds to a source file is a finding, unless the file is a test, lies under the profile's `values.data` globs (where the project keeps its values), the line is one the pack skips (imports, comments), or the literal has no letter or matches the pack's `values.allow` or the profile's. Each stack pack names how its language writes a string literal (`stringLiteral`); the profile's `values.literal` replaces it, and with neither there is no check. Only added lines count, so existing code is measured as it changes.
 
 # The board as a template
 `board.json`, the board extension's default, and a project's `.aidlc/templates/board.json` over it, describe the whole board:

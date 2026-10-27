@@ -10,6 +10,10 @@
       { "path": "^import\\s+(?:[\\w.]+\\s+)?\"([^\"]+)\"", "flags": "m" }
     ]
   },
+  "values": {
+    "skipLines": ["^\\s*(?:package|import)\\s", "^\\s*(?:[\\w.]+\\s+)?\"[^\"]+\"\\s*$", "^\\s*//"],
+    "allow": ["^(?:\\w+:\"[^\"]*\"\\s*)+$", "^(?:%[-+# 0-9.]*[a-zA-Z]|[^\\p{L}])*$"]
+  },
   "stringLiteral": "([\"'`])((?:\\\\.|(?!\\1)[^\\\\])*)\\1",
   "folders": { "domain": "internal/domains/{{domain}}", "pipeline": "internal/pipeline/{{stage}}", "foundation": "internal/foundation/{{kit}}", "adapter": "internal/adapters/{{system}}", "runtime": "cmd/{{deployable}}" },
   "layers": { "interface": "interface", "application": "application", "model": "model", "infrastructure": "infrastructure" },

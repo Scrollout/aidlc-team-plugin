@@ -11,7 +11,7 @@ A dependency graph the AI writes in the first unit can read error-message prose 
 
 # A pack
 `plugin/packs/<stack>/` holds data, not code:
-- `manifest.json`: how the stack is detected (`go.mod`, `tsconfig.json`), the folder of each kind and layer (`internal/domains/{{domain}}/model`, `cmd/{{deployable}}`), how imports are read (`imports`: patterns that find a path in a file or in a block it names, resolved inside the module or relative to the file), how the language writes a string literal (`stringLiteral`), and where event types sit.
+- `manifest.json`: how the stack is detected (`go.mod`, `tsconfig.json`), the folder of each kind and layer (`internal/domains/{{domain}}/model`, `cmd/{{deployable}}`), how imports are read (`imports`: patterns that find a path in a file or in a block it names, resolved inside the module or relative to the file), how the language writes a string literal (`stringLiteral`) and which lines and literals are its protocol (`values`), and where event types sit.
 - `templates/`: one file per scaffold kind, rendered with the names the registry composes ([Naming](naming.md)).
 - `reference/`: one domain (`notes`) with a command slice and a query slice, fully tested, in the pack's layout, passing every `ARCH-*` code on its own graph. Go's runs with `go test ./...`; TypeScript's with its `npm test` (`node --test` on `*.spec.ts`, type stripping), named so the plugin's own test run skips it.
 - A model's walking skeleton lives with the model, under its `reference/<stack>/` ([Models](models.md), [Shipped layout](layout.md)); CI runs its tests too.

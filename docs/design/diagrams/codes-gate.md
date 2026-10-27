@@ -46,6 +46,7 @@ generated: { by: tests/diagrams.mjs }
 | `PROOF-AC` | make the reverted tree compile (keep the interfaces, revert the behaviour), or report a mutation per AC (docs: Construction by proof) |
 | `REVIEW-SECURITY` | the owner disposes of each finding: aidlc dispose <B-n> F-<k> fixed\|accepted "<reason>" [--until <date>] (docs: Construction by proof) |
 | `INCR-DONE` | release increment 1 and pass its smoke on the target first (docs: Construction by proof) |
+| `VALUE-LITERAL` | move the value into the project's data files (the profile's values.data globs) and read it from there; list it in values.allow when it is the protocol of a tool the code calls (docs: Values as data) |
 | `SLICE-IMPORT` | move what both slices need into the domain's model, an event or a shared domain service; a slice never imports another (docs: Vertical slices checked) |
 | `SLICE-ENTRY` | enter the slice from its domain's interface layer or from the runtime that hosts it, and only from there (docs: Vertical slices checked) |
 | `SLICE-PLACE` | put each file of a domain in one of its layers, each file of its application layer in one slice folder, and leave no folder empty (docs: Vertical slices checked) |

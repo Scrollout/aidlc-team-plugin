@@ -31,6 +31,7 @@
       "sliceRouteUnknown": "operation id {{id}} maps to no domain and verb of the registry",
       "sliceNoRoute": "slice {{slice}} has no operation in the contracts, though its domain {{domain}} is served there",
       "sliceDeliverRoute": "the bolt adds slice {{slice}} but changes nothing in {{layers}} or a runtime that wires its route",
+      "valueLiteral": "{{path}}:{{line}} adds the literal {{value}} to code: values live in the project's data",
       "sliceDeliverDoc": "the bolt adds slice {{slice}} but does not change {{doc}}, which lists it"
     },
     "okf": {
@@ -39,6 +40,10 @@
           "level": "error",
           "fix": "make the project's architecture.graph print every import and data edge, or set it to the plugin's: node .aidlc/bin/aidlc.mjs graph (docs: Stack packs)"
         }
+      },
+      "profileKeys": {
+        "top": ["values"],
+        "values": ["data", "allow", "literal"]
       }
     },
     "packs": {
@@ -61,7 +66,8 @@
       "registered": { "foundation": "kit", "pipeline": "stage" },
       "adapterRule": "a lower-case word, not banned",
       "selfGraph": "\\baidlc(\\.mjs)?\\s+graph\\b",
-      "sample": 3
+      "sample": 3,
+      "valueText": "\\p{L}"
     },
     "commands": [
       {
@@ -77,6 +83,10 @@
     ],
     "gate": {
       "codes": {
+        "VALUE-LITERAL": {
+          "level": "error",
+          "fix": "move the value into the project's data files (the profile's values.data globs) and read it from there; list it in values.allow when it is the protocol of a tool the code calls (docs: Values as data)"
+        },
         "SLICE-IMPORT": {
           "level": "error",
           "fix": "move what both slices need into the domain's model, an event or a shared domain service; a slice never imports another (docs: Vertical slices checked)"

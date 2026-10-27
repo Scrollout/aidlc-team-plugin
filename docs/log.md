@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** M26 B238 built: `VALUE-LITERAL` at every project's merge gate, read by the stack pack's literal syntax, and the rule in the project constitution, the builder and the reviewer ([Values as data](design/values.md#in-projects), [Stack packs](design/stack-packs.md)). CI tests on Node 24 and 26. Release 0.182.0.
 - **Update** M26 B237 built: the [Board](design/board.md) renders a declarative template, `board.json`, with blocked-by links from `depends`, iteration fields, per-bolt assignees, label and assignee pruning, and field types checked before any write ([Values as data](design/values.md#the-board-as-a-template)). Release 0.181.0.
 - **Update** M26 B236 built: the extensions' values live in their `extension.json`, and each stack pack's manifest reads its language's imports and string literals ([Stack packs](design/stack-packs.md), [Values as data](design/values.md)). Release 0.180.0.
 - **Update** M26 B235 built: the core's values live in `cli.json`, held by a test that reads every literal ([Values as data](design/values.md)); B239 narrowed to structured answers, `--json` and `next`'s action as `{ command, args }`. Release 0.179.0.

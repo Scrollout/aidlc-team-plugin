@@ -4,6 +4,7 @@ import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statS
 import { join, relative, sep } from 'node:path';
 import { commit, git, makeRepo, run, tempDir, write } from './state-repo.mjs';
 import { directAllowed } from '../plugin/cli/lib/domains/gate.mjs';
+import { config } from '../plugin/cli/lib/index.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const PLUGIN = JSON.parse(readFileSync(join(ROOT, 'plugin/.claude-plugin/plugin.json'), 'utf8'));
@@ -258,8 +259,7 @@ test('U53/AC-1 U53/AC-2 init writes a constitution naming only checks the CLI de
   assert.match(text, /^type: Principles$/m);
   assert.match(text, /^title: How demo is built$/m);
   assert.match(text, /^# Project rules$/m);
-  const cli = JSON.parse(readFileSync(join(ROOT, 'plugin/cli/cli.json'), 'utf8'));
-  const known = new Set([cli.okf, cli.grid, cli.gate, cli.hooks].flatMap((s) => Object.keys(s.codes)));
+  const known = new Set([config.okf, config.grid, config.gate, config.hooks].flatMap((s) => Object.keys(s.codes))); // the core's and the extensions' codes
   const named = [...text.matchAll(/`([A-Z]+-[A-Z-]+)`/g)].map((m) => m[1]);
   assert.ok(named.length >= 10, named.join(' '));
   assert.deepEqual(named.filter((c) => !known.has(c)), [], 'every code it names exists');

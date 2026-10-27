@@ -6,6 +6,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { approve, branch, commit, git, intentDoc, makeRepo, review, run, tempDir, unitDoc } from './state-repo.mjs';
 import { DEFECTS, score, setup } from './evals/run.mjs';
+import { config } from '../plugin/cli/lib/index.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -168,7 +169,7 @@ test('U64/AC-1 the skill names the deploy steps and the typed go words, the buil
   for (const word of ['**deploy check**', '`aidlc fix`', '**release, rollback**: owner steps', '`release I-<n>`', '`rollback I-<n>`']) assert.ok(skill.includes(word), word);
   const builder = parse(BUILDER).body;
   assert.match(builder, /it reverts your code and reruns the levels of your tagged tests/);
-  assert.match(builder, /^- Code changed: the revert in step 3/m);
+  assert.match(builder, /^- Code changed: the revert in step 4/m);
   assert.match(builder, /^- Only tests changed \(a back-fill\): no code to revert, so it applies each of your report's `mutations`/m);
   assert.match(builder, /^- Quick lane: no tagged tests are needed and it proves nothing/m);
   assert.match(builder, /one per AC: .*`breaks`/);
@@ -182,7 +183,7 @@ test('U64/AC-1 the constitution template carries the quick-lane, back-fill and n
   assert.match(text, /back-fill.*proved by one mutation per AC/);
   assert.match(text, /When the profile deploys, a release counts once its deploy check and smoke pass/);
   assert.match(text, /back-fill intent ships no code: it needs no runbook/);
-  const known = new Set([CLI.okf, CLI.grid, CLI.gate, CLI.hooks].flatMap((s) => Object.keys(s.codes)));
+  const known = new Set([config.okf, config.grid, config.gate, config.hooks].flatMap((s) => Object.keys(s.codes))); // the core's and the extensions' codes
   const named = [...text.matchAll(/`([A-Z]+-[A-Z-]+)`/g)].map((m) => m[1]);
   assert.deepEqual(named.filter((c) => !known.has(c)), []);
 });

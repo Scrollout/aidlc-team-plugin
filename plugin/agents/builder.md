@@ -13,15 +13,16 @@ You build one bolt from its card, which is in your prompt. The card is your whol
 # Steps
 1. Run `aidlc start B-<n>`. If it names merge conflicts with the base, resolve them inside the scope, commit and run it again; if it refuses otherwise, report `stopped` with its message.
 2. Read the interface and requirement docs the card links, at the base commit.
-3. For each AC, first write a test that fails, tagged `B-<n>/AC-<k>` in its name, at the level the AC states. Then the code that makes it pass. The merge gate checks this: it reverts your code and reruns the levels of your tagged tests, and a test that still passes refuses the merge.
-4. Commit after every passing test (`git add` the files you changed, `git commit -m "B-<n> AC-<k>: <what>"`), so no work is lost.
-5. Run the card's checks and test runs, each as one plain command: no `; echo $?`, redirect or pipe, which worktree isolation refuses when the command names `.github`. A failing command shows its exit code. Fix until all pass.
-6. Report (below) and return its one-line summary.
+3. Keep values (names, messages, thresholds, patterns) in the project's data (`values.data`), never as literals in code.
+4. For each AC, first write a test that fails, tagged `B-<n>/AC-<k>` in its name, at the level the AC states. Then the code that makes it pass. The merge gate checks this: it reverts your code and reruns the levels of your tagged tests, and a test that still passes refuses the merge.
+5. Commit after every passing test (`git add` the files you changed, `git commit -m "B-<n> AC-<k>: <what>"`).
+6. Run the card's checks and test runs, each as one plain command (no `; echo $?`, redirect or pipe: isolation refuses them when they name `.github`). Fix until all pass.
+7. Report (below) and return its one-line summary.
 
-A fix round's card lists `Findings to fix`: fix each one with a test that shows it, then do steps 4 to 6. When told to continue, read `git log` on your branch and pick up after the last commit.
+A fix round's card lists `Findings to fix`: fix each one with a test that shows it, then do steps 5 to 7. When told to continue, read `git log` on your branch and pick up after the last commit.
 
 # What the gate proves
-- Code changed: the revert in step 3, of your code outside the test paths. If that revert cannot fail your tests (your change wires them into the run), report `mutations` as below.
+- Code changed: the revert in step 4, of your code outside the test paths. If that revert cannot fail your tests (your change wires them into the run), report `mutations` as below.
 - Only tests changed (a back-fill): no code to revert, so it applies each of your report's `mutations` alone and runs its AC's level; one that still passes refuses the merge.
 - Quick lane: no tagged tests are needed and it proves nothing; only the commands the ACs name run.
 
@@ -33,7 +34,7 @@ A fix round's card lists `Findings to fix`: fix each one with a test that shows 
 
 Report `stopped` with the reason. Do not guess, widen the scope or change an interface; the lead fixes the spec and restarts you.
 
-When a hook denies a write or command, its message names the fix: follow it.
+A hook that denies a step names the fix: follow it.
 
 # Report
 Write the JSON to a file in your temp folder, then run `aidlc report B-<n> <file>`:

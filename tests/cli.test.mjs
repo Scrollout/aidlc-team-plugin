@@ -70,7 +70,7 @@ test('U1/AC-5 CI runs the tests and the docs check on every branch push, not on 
   assert.match(yml, /run: node plugin\/cli\/aidlc\.mjs check docs\b/);
   assert.match(yml, /GITHUB_STEP_SUMMARY/, 'each run writes a job summary');
   for (const os of ['ubuntu-latest', 'macos-latest', 'windows-latest']) assert.match(yml, new RegExp(`os: \\[.*${os}`), os);
-  assert.match(yml, /node: \[22, 24, 26\]/);
+  assert.match(yml, /node: \[24, 26\]/);
 });
 
 test('U1/AC-6 marketplace entry points at ./plugin with the manifest name', () => {

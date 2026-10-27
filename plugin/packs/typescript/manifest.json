@@ -6,6 +6,10 @@
     "resolve": "relative",
     "patterns": [{ "path": "(?:from\\s+|require\\(\\s*|import\\(\\s*)['\"](\\.{1,2}\\/[^'\"]+)['\"]" }]
   },
+  "values": {
+    "skipLines": ["^\\s*(?:import|export)\\b.*\\bfrom\\s", "^\\s*import\\s+['\"]", "\\brequire\\(\\s*['\"]", "^\\s*(?://|/?\\*)"],
+    "allow": ["^use strict$"]
+  },
   "stringLiteral": "([\"'`])((?:\\\\.|(?!\\1)[^\\\\])*)\\1",
   "folders": { "domain": "src/domains/{{domain}}", "pipeline": "src/pipeline/{{stage}}", "foundation": "src/foundation/{{kit}}", "adapter": "src/adapters/{{system}}", "runtime": "src/runtimes/{{deployable}}" },
   "layers": { "interface": "interface", "application": "application", "model": "model", "infrastructure": "infrastructure" },

@@ -262,6 +262,19 @@ function deliverFindings(tree, profile, paths) {
 const touched = (paths) => (f) => paths.some((p) => p === f.path || p.startsWith(`${f.path}/`));
 plug('gateChecks', (tree, profile, paths = []) => [...sliceFindings(tree, profile).filter(touched(paths)), ...deliverFindings(tree, profile, paths)]);
 
+// VALUE-LITERAL: a string literal a bolt adds to a source file, outside its tests and the project's data, is a value
+// that belongs in data; the pack names how its language writes one and what is protocol (docs/design/values.md#in-projects).
+export function valueFindings(tree, profile, paths, added = []) {
+  const pack = packFor(tree), V = profile.values ?? {}, own = pack?.manifest.values ?? {}, literal = V.literal ?? pack?.manifest.stringLiteral;
+  if (!literal) return [];
+  const source = new RegExp(pack?.manifest.sources ?? ''), tests = new RegExp(K.tests), data = list(V.data).map((g) => globRegex(`/${g}`));
+  const skip = list(own.skipLines).map((x) => new RegExp(x, 'u')), allow = [...list(own.allow), ...list(V.allow)].map((x) => new RegExp(x, 'u')), word = new RegExp(K.valueText, 'u');
+  return added.filter(({ file, text }) => source.test(file) && !tests.test(file) && !data.some((g) => g.test(file)) && !skip.some((x) => x.test(text)))
+    .flatMap(({ file, line, text }) => [...text.matchAll(new RegExp(literal, 'gs'))].map((m) => m[2]).filter((value) => word.test(value) && !allow.some((x) => x.test(value)))
+      .map((value) => ({ code: 'VALUE-LITERAL', path: file, line, key: 'valueLiteral', data: { path: file, line, value } })));
+}
+plug('gateChecks', valueFindings);
+
 plug('docChecks', (root, profile) => [...events(root, profile), ...selftestFindings(root, profile).map(([key, data]) => ({ code: 'GRAPH-SELFTEST', key, data }))]);
 plug('gateChecks', events);
 plug('proofPatterns', (root) => packFor(root)?.manifest.compileError);

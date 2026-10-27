@@ -170,7 +170,8 @@ function runGate(cwd, st, unit) {
   const names = [...[profile.names ?? []].flat().filter((r) => !nameProblem(r)), ...generatedRules(profile, st.bundle)]; // the project's rules and the registry's (docs/design/naming.md)
   const synonyms = glossaryOf(st.bundle).flatMap((e) => e.synonyms.map((word) => ({ ...e, word, re: new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i') })));
   // Each added line, so a secret written from Bash, which the secrets hook never sees, stops the merge.
-  for (const { file, line, text } of addedLines(cwd, `${base}...${branchOf(unit.id)}`)) {
+  const added = addedLines(cwd, `${base}...${branchOf(unit.id)}`);
+  for (const { file, line, text } of added) {
     if (secretIn(text, profile)) add('GATE-SECRET', 'gateSecret', { path: file, line }, file);
     // A static credential between components, outside the tests: identities, not secrets (docs/design/workload-identity.md).
     else if (codeChanges([file], p.levels, bundleRel).length && config.hooks.identity.some((x) => new RegExp(x, 'i').test(text))) add('GATE-IDENTITY', 'gateIdentity', { path: file, line }, file);
@@ -274,7 +275,7 @@ function runGate(cwd, st, unit) {
     out.push(finding('GATE-OKF', f.path, f.line, 'gateOkf', f));
   }
   // The published API on the merged tree speaks the grammar of decision 0014 (docs/design/naming.md#checks).
-  for (const f of seam('gateChecks', p).flatMap((check) => check(tree, p, paths))) out.push(finding(f.code, f.path, 1, f.key, f.data)); // the extensions' checks on the merge result
+  for (const f of seam('gateChecks', p).flatMap((check) => check(tree, p, paths, added))) out.push(finding(f.code, f.path, f.line ?? 1, f.key, f.data)); // the extensions' checks on the merge result and the added lines
   return { findings: out, tree, tested: tested.map(([level]) => level), proof, card };
 }
 

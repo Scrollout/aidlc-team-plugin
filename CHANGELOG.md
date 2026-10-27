@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.182.0] - 2026-10-27
+### Added
+- No hard-coded data in projects (M26 B238). `VALUE-LITERAL` at the merge gate reports a string literal on a line a bolt adds to a source file, outside tests and the profile's `values.data` globs, with a letter in it, and neither on a line the stack pack skips nor allowed by the pack's or the profile's `values.allow`. Each stack pack names its string literal and its protocol; the profile's `values.literal` replaces the pattern.
+- The project constitution's rule 12, Values in data; the builder keeps values in the project's data and the reviewer reports a literal one.
+
+### Changed
+- The extensions' gate checks receive the lines a bolt adds, and may report a line.
+- CI tests on Node 24 and 26.
+
 ## [0.181.0] - 2026-10-27
 ### Added
 - The board is a declarative template (M26 B237). `plugin/cli/extensions/board/board.json`, with a project's `.aidlc/templates/board.json` merged over it, gives each item kind's title, body, labels, assignees, type, milestone, parent and blocked-by path, and each Project field's type, source path, value map and options; the profile's `github` maps still apply over it.
@@ -342,7 +351,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.181.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.182.0...HEAD
+[0.182.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.181.0...v0.182.0
 [0.181.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.180.0...v0.181.0
 [0.180.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.179.0...v0.180.0
 [0.179.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.178.1...v0.179.0
