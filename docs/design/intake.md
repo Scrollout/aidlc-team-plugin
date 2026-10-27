@@ -29,7 +29,7 @@ Intake proposes the pathway, stack and lane, and the owner confirms or changes t
 - **The intent records the outcome:** `request: Q-<n>`, `pathway`, and `lane`. An intent's `lane` is a floor for its bolts, which never run below it ([Grid](grid.md#lanes)).
 
 # Roles
-The lead elaborates as a role, with the role's knowledge (`plugin/personas/`, each persona within 3 KB, its knowledge files beside it):
+The lead elaborates in a role, with its knowledge (`plugin/cli/personas/`, so a project's pinned CLI carries them; each within 3 KB):
 - **Product analyst:** request to intent, requirements in EARS, stories and personas, the corner checklist.
 - **Architect:** domains, decisions in MADR, the increments and the bolt cut.
 `next` names the role for each elaborate step. No other agent runs, and nothing is decided without the owner.

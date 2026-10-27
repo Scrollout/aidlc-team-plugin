@@ -75,8 +75,13 @@ sequenceDiagram
 - `plugin/.claude-plugin/plugin.json`: `name` is `aidlc-team` (kebab-case, no reserved prefix, and never `aidlc`, which projects use for the CLI and `.aidlc/`), the only `version`; users stay on a version until it is bumped.
 - `plugin/cli/aidlc.mjs`, `plugin/cli/lib/` (foundation, domains, the entry) and `plugin/cli/extensions/`: the CLI ([Library and extensions](library.md)).
 - `plugin/hooks/`: thin wrappers that call the CLI.
-- `plugin/agents/`: `builder.md`, `reviewer.md`, `researcher.md`.
-- `plugin/skills/aidlc/SKILL.md`: the lead's loop.
+- Who does the work, each where it must live:
+
+| Where | What | Run as |
+|---|---|---|
+| `plugin/skills/aidlc/SKILL.md` | the lead's loop, the one skill | the main session |
+| `plugin/agents/` | builder, reviewer, researcher | subagents, each with its own context |
+| `plugin/cli/personas/` | product analyst, architect, each with its knowledge folder | roles the main session reads with `aidlc persona` while it elaborates with the owner ([0019](../decisions/0019-the-lead-works-in-role-personas.md)); under `cli/` so a project's pinned copy carries them |
 - `plugin/templates/`: everything `init` renders.
 - `.claude-plugin/marketplace.json`: marketplace `scrollout.net`, one entry `aidlc-team` with `source: "./plugin"`, so tests and docs never ship. Install id: `aidlc-team@scrollout.net`.
 

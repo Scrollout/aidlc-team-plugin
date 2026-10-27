@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-27
 
+- **Update** the [Overview](design/overview.md#repo-layout) says who does the work and where each lives: the lead's one skill, the three subagents, and the role personas under `plugin/cli/personas/` (the path M22 and Intake had wrong).
 - **Update** M22 B215: method 6, sources and coverage ([Intake](design/intake.md#sources-and-coverage)): an intent names its requests, every goal line, story and draft requirement statement cites a source the CLI resolves (`CLAIM-SOURCE`), and every request sentence is cited (`REQUEST-COVERAGE`); both block approval. An owner's document is kept as a request with `aidlc intake --file`. The plan lint code page splits in two, [Intent and bolt codes](design/diagrams/codes-intent.md) beside it, to stay under the cap. Release 0.159.0.
 - **Update** M22 B214: `aidlc intake` keeps the owner's request word for word, with sentence ids, as a doc only the CLI writes, and proposes its pathway, stack and lane from a band per factor, never one summed score ([Intake](design/intake.md)); an intent's `lane` is a floor for its bolts ([Grid](design/grid.md#lanes)). Release 0.158.0.
 - **Update** M22 B213: the lead works in role personas while it elaborates ([0019](decisions/0019-the-lead-works-in-role-personas.md)): a product analyst and an architect with their knowledge (corner checklist, EARS and stories, domains and decisions) under `plugin/cli/personas/`, `aidlc persona <role>`, and `next` naming the role on each elaborate step. Release 0.157.0.
