@@ -1,0 +1,6 @@
+{
+  "type": "{{namespace}}/{{typeCamel}}",
+  "route": "{{route}}",
+  "operation": "{{operation}}",
+  "properties": {}
+}

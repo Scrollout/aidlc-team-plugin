@@ -146,7 +146,7 @@ test('B250/AC-2 a # Surface line declares the slice\'s cuts and parts, required 
   assert.deepEqual(found('- Command placeorder (interface, application, model; entry shop-api): a customer orders a cake [I-1:US1.1]'), [], 'declared');
   assert.deepEqual(found('- Command placeorder: a customer orders a cake [I-1:US1.1]'), ['SLICE-SURFACE docs/domains/orders.md sliceNoCuts'], 'method 13 asks for the declaration');
   assert.deepEqual(found('- Command placeorder: a customer orders a cake [I-1:US1.1]', 12), [], 'method 12 does not');
-  assert.deepEqual(found('- Command placeorder (ui, interface; entry orders): a customer orders a cake [I-1:US1.1]', 12), ['SLICE-SURFACE docs/domains/orders.md sliceEntryRuntime', 'SLICE-SURFACE docs/domains/orders.md sliceUnknownCut'], 'a declaration is checked wherever it is');
+  assert.deepEqual(found('- Command placeorder (ui.web, interface; entry orders): a customer orders a cake [I-1:US1.1]', 12), ['SLICE-SURFACE docs/domains/orders.md sliceEntryRuntime', 'SLICE-SURFACE docs/domains/orders.md sliceUnknownCut'], 'a declaration is checked wherever it is');
   // The permission the registry composes for the slice's domains, and a ui unit of work's slice on a pack that has ui.
   const named = { ...ORDERS, naming: { tokens: { system: 'shop', org: 'contoso' }, domains: { orders: {} } } };
   const root = makeRepo({ 'tsconfig.json': '{}' }, named), bundle = join(root, 'docs'), ctx = { root, profile: named, bundle, slice: 'placeorder', domains: ['orders'] };
@@ -162,7 +162,7 @@ test('B250/AC-2 a # Surface line declares the slice\'s cuts and parts, required 
 test('B251/AC-1 each pack lists slicePaths, the route under interface/<slice> and ui where the stack has one; the surfaces sit beside the layers', () => {
   const read = (s) => JSON.parse(readFileSync(join(ROOT, `plugin/packs/${s}/manifest.json`), 'utf8'));
   for (const s of ['go', 'typescript']) assert.match(read(s).slicePaths.interface, /\/interface\/\{\{slice\}\}\./, s);
-  assert.ok(read('typescript').slicePaths.ui && !read('go').slicePaths.ui, 'ui only where the stack serves a front end');
+  assert.deepEqual([read('typescript'), read('go')].map((m) => Object.keys(m.slicePaths.ui)), [['web', 'cli'], ['cli', 'template']], 'the ui forms each stack serves');
   const dir = makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', [`${D}/application/placeorder/handler.go`]: go('placeorder', [`${D}/model`]), [`${D}/application/placeorder/handler_test.go`]: 'package placeorder\n',
     [`${D}/model/order.go`]: go('model'), [`${D}/interface/placeorder.go`]: go('iface', [`${D}/application/placeorder`]), [`${D}/client/client.go`]: go('client'), [`${D}/events/events.go`]: go('events') }, ORDERS);
   assert.deepEqual(lines(sliceFindings(dir, ORDERS)).filter((l) => /SLICE-PLACE/.test(l)), [], 'client and events beside the layers');
@@ -173,12 +173,12 @@ test('B251/AC-2 scaffold writes the own code of each cut a slice declares, and e
   const doc = (line) => `---\ntype: Domain\ntitle: Orders\ndescription: Orders.\ncode: orders\nkind: domain\n---\n\n# Surface\n${line}\n`;
   const ts = makeRepo({ 'tsconfig.json': '{}\n', 'docs/domains/orders.md': doc('- Command createorder (ui, interface, application; entry shop-api): a customer orders [I-1:US1.1]') }, { naming: { tokens: { system: 'shop' }, domains: { orders: {} } } });
   const wrote = run(ts, ['scaffold', 'slice', 'create', '--domain', 'orders']).out.split('\n').filter(Boolean);
-  assert.deepEqual(wrote, ['ui/createorder/screen.ts', 'ui/createorder/screen.spec.ts', 'interface/createorder.ts', 'interface/createorder.spec.ts', 'application/createorder/handler.ts', 'application/createorder/handler.spec.ts'].map((p) => `wrote src/domains/orders/${p}`));
+  assert.deepEqual(wrote, ['ui/web/createorder/screen.ts', 'ui/web/createorder/screen.spec.ts', 'ui/cli/createorder/command.ts', 'ui/cli/createorder/command.spec.ts', 'interface/createorder.ts', 'interface/createorder.spec.ts', 'application/createorder/handler.ts', 'application/createorder/handler.spec.ts'].map((p) => `wrote src/domains/orders/${p}`));
   const go2 = makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n' }, { naming: { tokens: { system: 'shop' }, domains: { orders: {} } } });
   assert.deepEqual(run(go2, ['scaffold', 'slice', 'get', '--domain', 'orders']).out.split('\n').filter(Boolean),
     ['interface/getorder.go', 'interface/getorder_test.go', 'application/getorder/handler.go', 'application/getorder/handler_test.go'].map((p) => `wrote internal/domains/orders/${p}`), 'with no declaration, the cuts with own code but ui');
   for (const [ref, files] of [['plugin/packs/go/reference', ['internal/domains/notes/interface/createnote.go', 'internal/domains/notes/interface/getnote.go']],
-    ['plugin/packs/typescript/reference', ['src/domains/notes/interface/createnote.ts', 'src/domains/notes/interface/getnote.ts', 'src/domains/notes/ui/createnote/screen.ts']],
+    ['plugin/packs/typescript/reference', ['src/domains/notes/interface/createnote.ts', 'src/domains/notes/interface/getnote.ts', 'src/domains/notes/ui/web/createnote/screen.ts']],
     ['examples/models/control-plane/reference/go', ['internal/domains/resources/interface/createresource.go', 'internal/domains/resources/interface/deleteresource.go', 'internal/domains/operations/interface/getoperation.go']]]) {
     for (const f of files) assert.ok(existsSync(join(ROOT, ref, f)), `${ref}: ${f}`);
   }
@@ -274,15 +274,25 @@ test('B260/AC-1 a pack maps each ui form it has to its path; a declaration cuts 
   const doc = (decl) => `---\ntype: Domain\ntitle: Notes\ndescription: Notes.\ncode: notes\nkind: domain\n---\n\n# Surface\n- Command createnote (${decl}): a writer keeps a note [I-1:US1.1]\n`;
   const dir = makeRepo({ 'tsconfig.json': '{}\n', 'docs/domains/notes.md': doc('ui, interface, application') }, notes);
   const [stacks] = seam('sliceDeclaration', notes), m = stacks.pack(dir).manifest;
-  assert.deepEqual(m.slicePaths.ui, { web: '{{dir}}/ui/{{slice}}' }, 'the TypeScript pack has the web form');
-  assert.deepEqual(stacks.declared(dir, notes, 'notes', 'createnote').cuts, ['ui.web', 'interface', 'application'], 'ui stands for every form the pack has');
-  assert.equal(stacks.path(m, 'notes', 'createnote', 'ui.web'), 'src/domains/notes/ui/createnote');
+  assert.deepEqual(m.slicePaths.ui, { web: '{{dir}}/ui/web/{{slice}}', cli: '{{dir}}/ui/cli/{{slice}}' }, 'the TypeScript pack has the web and cli forms');
+  assert.deepEqual(stacks.declared(dir, notes, 'notes', 'createnote').cuts, ['ui.web', 'ui.cli', 'interface', 'application'], 'ui stands for every form the pack has');
+  assert.equal(stacks.path(m, 'notes', 'createnote', 'ui.web'), 'src/domains/notes/ui/web/createnote');
   const problems = (decl, ui = false) => stacks.problems(stacks.parse(`(${decl})`), { root: dir, profile: notes, bundle: join(dir, 'docs'), slice: 'createnote', domains: ['notes'], ui }).map(([key, data]) => msg(key, data));
   assert.deepEqual(problems('ui.web, interface'), []);
   assert.deepEqual(problems('ui, interface'), []);
-  assert.equal(problems('ui.cli, interface').length, 1);
-  assert.match(problems('ui.cli, interface')[0], /ui\.cli/);
+  assert.equal(problems('ui.template, interface').length, 1);
+  assert.match(problems('ui.template, interface')[0], /ui\.template/);
   assert.deepEqual(problems('ui.web, interface', true), [], 'a ui unit of work\'s slice cuts a ui form');
   assert.equal(problems('interface', true).length, 1, 'or is reported');
   assert.ok(stacks.cuts().includes('ui.web') && stacks.cuts().includes('ui'), 'models may name a form or ui');
+});
+
+test('B260/AC-2 scaffold writes each ui form\'s own code and test; a template form names the slice\'s resource type and route in the template schema', async () => {
+  const { run } = await import('./state-repo.mjs');
+  const doc = '---\ntype: Domain\ntitle: Orders\ndescription: Orders.\ncode: orders\nkind: domain\n---\n\n# Surface\n- Command createorder (ui, interface, application; entry shop-api): a customer orders [I-1:US1.1]\n';
+  const dir = makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', 'docs/domains/orders.md': doc }, { naming: { tokens: { system: 'shop', org: 'acme' }, domains: { orders: {} } } });
+  assert.deepEqual(run(dir, ['scaffold', 'slice', 'create', '--domain', 'orders']).out.split('\n').filter(Boolean),
+    ['ui/cli/createorder/command.go', 'ui/cli/createorder/command_test.go', 'ui/template/createorder/schema.json', 'ui/template/createorder/template_test.go', 'interface/createorder.go', 'interface/createorder_test.go', 'application/createorder/handler.go', 'application/createorder/handler_test.go'].map((p) => `wrote ${D}/${p}`));
+  assert.deepEqual(JSON.parse(readFileSync(join(dir, D, 'ui/template/createorder/schema.json'), 'utf8')), { type: 'Acme.Shop/orders', route: '/providers/Acme.Shop/orders/{orderName}', operation: 'createorder', properties: {} });
+  assert.match(readFileSync(join(dir, D, 'ui/template/createorder/template_test.go'), 'utf8'), /deployment applying a template .* calls the slice's\n\/\/ route/);
 });

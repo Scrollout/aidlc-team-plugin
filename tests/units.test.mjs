@@ -94,9 +94,9 @@ const DECLARED = (orders, payments) => ({ 'go.mod': 'module example.com/shop\n\n
 test('B250/AC-2 from method 13 a Unit\'s slice declares its cuts, data, entry, events and calls, each one the profile, the pack and the domain docs know', () => {
   assert.deepEqual(foundWith(OWNED, DECLARED('Command createorder (interface, application, model, infrastructure, migration; data data/orders/orders, data/outbox; entry gateway; emits OrderCreated.v1) [US1.1]',
     'Command createpayment (interface, application; async; calls orders; consumes OrderCreated.v1) [US1.2]')), [], 'every part known');
-  assert.deepEqual(foundWith(OWNED, DECLARED('Command createorder [US1.1]', 'Command createpayment (ui, interface; data data/orders/orders; entry orders; calls billing; emits OrderTaken; consumes Nothing; bogus x) [US1.2]')), [
+  assert.deepEqual(foundWith(OWNED, DECLARED('Command createorder [US1.1]', 'Command createpayment (ui.web, interface; data data/orders/orders; entry orders; calls billing; emits OrderTaken; consumes Nothing; bogus x) [US1.2]')), [
     'I-1 unit of work orders: slice createorder does not say which layers it cuts: from method 13 it reads <Kind> <slice> (<cut>, …; data …; entry …)',
-    'I-1 unit of work payments: slice createpayment cuts ui, a layer the stack pack does not have (it has interface, application, model, infrastructure, migration)',
+    'I-1 unit of work payments: slice createpayment cuts ui.web, a layer the stack pack does not have (it has ui, interface, application, model, infrastructure, migration, ui.cli, ui.template)',
     'I-1 unit of work payments: slice createpayment declares bogus, which is no part of a slice\'s declaration (data, entry, permission, async, emits, consumes, calls)',
     'I-1 unit of work payments: slice createpayment uses data/orders/orders, which payments neither owns nor shares',
     'I-1 unit of work payments: slice createpayment is served by orders, which is no runtime module',

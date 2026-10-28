@@ -124,8 +124,9 @@ export const commands = {
     if (!pack.manifest.scaffold[kind] || !name) throw new UsageError(msg('scaffoldUsage', { kinds: Object.keys(pack.manifest.scaffold).join(', ') }));
     const domain = kind === 'domain' ? name : flag('domain');
     const v = { domain, stage: name, kit: name, system: name, deployable: name };
-    if (domain !== undefined) { const f = domainForms(nameOf('domain', { domain }, reg), reg); Object.assign(v, { domain, singular: f.singularCompact, Singular: f.SingularPascal }); }
+    if (domain !== undefined) { const f = domainForms(nameOf('domain', { domain }, reg), reg); Object.assign(v, f, { domain, singular: f.singularCompact, Singular: f.SingularPascal }); }
     if (kind === 'slice') v.operation = nameOf('slice', { domain, verb: name }, reg);
+    if (kind === 'slice') try { Object.assign(v, { namespace: nameOf('namespace-api', {}, reg), route: nameOf('path', { domain }, reg) }); } catch { /* a token unset: a form naming them fails to render */ }
     const what = K.registered[kind], known = reg.vocabularies[kind]; // registered, never invented
     if (what && !known.includes(name)) throw new UsageError(msg('nameUnregistered', { what, value: name, where: `naming.vocabularies.${kind}`, known: known.join(', ') }));
     if (kind === 'runtime') { // a deployable is <system>-<domain or stage>-<role>, composed, never invented

@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-28
 
+- **Update** M29 B260 built: each ui form under `ui/<form>/<slice>`, scaffolded with its own code and test; a template form names its resource type and route ([Stack packs](design/stack-packs.md#scaffold)). Release 0.203.0.
 - **Update** M29 B260, AC-1: `slicePaths.ui` maps each form a pack has to its path, and a declaration cuts `ui.<form>` or `ui` ([Stack packs](design/stack-packs.md)). Release 0.202.0.
 - **Update** M29 B252 built: `SLICE-GOVERN` from the chosen model's pipeline stages ([What a slice declares](design/slice-declares.md#governance)). Release 0.201.0.
 - **Update** M29 B252, AC-4 second part: `SLICE-INTEGRATE`, from the pack's graph ([Building a slice](design/slice-method.md#proved)). Release 0.200.0.
