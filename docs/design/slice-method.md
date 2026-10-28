@@ -16,7 +16,7 @@ One use case's cut of each horizontal layer it needs, scoped to it alone:
 - **Whole:** done when every cut it needs is; slices meet only through the shared domain model, domain events or a shared service.
 
 # Layers
-- The stack pack lists the layers a slice may cut and where its own code sits in each (`slicePaths`): `ui`, `interface`, `application`, `model`, `infrastructure`, `migration`. A pack names only the layers its stack has. `ui` takes forms, each with its path: `cli`, a command; `web`, a page; `template`, the slice's entry in the declarative template a deployment applies. A slice cuts `ui.<form>`, or `ui` for every form the pack has; a UI on another stack is its own unit of work, consuming the slice's API.
+- The stack pack maps each cut a slice makes to where its own code sits (`slicePaths`): `ui`, `interface`, `application`, `model`, `infrastructure`, `migration`. A pack names only the layers its stack has. `ui` takes forms, each a cut `ui.<form>` with its path: `cli`, a command; `web`, a page; `template`, the slice's entry in the declarative template a deployment applies. A slice cuts `ui.<form>`, or `ui` for every form the pack has; a UI on another stack is its own unit of work, consuming the slice's API.
 - **Own code** sits under the slice's name: each ui form in `ui/<form>/<slice>/`, its route, input and output types in `interface/<slice>`, its handler and validator in `application/<slice>/`. **Shared:** `model`, `infrastructure`, `migration` (the domain's migrations folder) and the router mounting every route, changed by the slice.
 - Surface folders `client/` and `events/` sit beside the layers; `SLICE-PLACE` accepts them.
 - Names come from the registry (`aidlc name slice`); paths and layer names are pack data.
@@ -46,6 +46,6 @@ From method 13 a slice carries the same declaration wherever it is written, `(<c
 - An increment's slices are whole; increment 1's first slice cuts every layer the system's pack has (`INCR-SKELETON`).
 
 # Reported
-`status` and the map's `-slices` page show each slice as planned, partial or done, layer by layer, with its hand-offs; an intent's trace lists each of its slices' permission and entry, the permission catalogue; the board's bolt carries each slice's cuts, data, entry and cuts done; the retro counts refusals by layer.
+`status` counts slices planned, partial and done; the map's `-slices` page shows each, layer by layer, with its hand-offs; an intent's trace lists each of its slices' permission and entry, the permission catalogue; the board's bolt carries each slice's cuts, data, entry and cuts done; the retro counts refusals by layer.
 
 Bolts: [M29](../roadmap/m29.md) B250 to B253.

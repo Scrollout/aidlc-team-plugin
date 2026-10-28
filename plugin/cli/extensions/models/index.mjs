@@ -172,10 +172,10 @@ function stageOrder(root, profile, m, r, out) {
   if (placed.some((k, n) => n && k < placed[n - 1])) out.push(['PIPELINE-ORDER', w.file, 'stageOrder', { found: found.join(', '), stages: list(r.stages).join(', ') }]);
 }
 
-function extensionContract(root, profile, m, r, out) {
+function extensionDeclaration(root, profile, m, r, out) {
   for (const mod of (profile.modules ?? []).filter((x) => x.kind === r.kind)) {
     const missing = list(r.declares).filter((k) => !isMap(mod.declares) || mod.declares[k] === undefined || mod.declares[k] === '');
-    if (missing.length) out.push(['PROVIDER-CONTRACT', PROFILE, 'declaresMissing', { module: mod.id ?? mod.name, kind: r.kind, fields: missing.join(', ') }]);
+    if (missing.length) out.push(['EXTENSION-DECLARATION', PROFILE, 'declaresMissing', { module: mod.id ?? mod.name, kind: r.kind, fields: missing.join(', ') }]);
   }
 }
 
@@ -203,7 +203,7 @@ function events(root, profile, m, r, out) {
   }
 }
 
-const CHECKS = { stageOrder, extensionContract, longRunning, events };
+const CHECKS = { stageOrder, extensionDeclaration, longRunning, events };
 // The chosen model's contract, which the contracts check adds to the generic grammar (decision 0021).
 plug('modelContract', (root, profile) => chosen(root, profile)?.data.contract ?? null);
 plug('modelLayers', (root, profile) => chosen(root, profile)?.data.layers ?? null);
@@ -281,9 +281,13 @@ function apply(cwd, name) {
   const file = join(cwd, PROFILE), own = readJson(file) ?? {};
   let next = own;
   if (own.model?.name !== name) { next = { ...next, model: { ...(isMap(own.model) ? own.model : {}), name } }; out.push(msg('applyChosen', { name, file: PROFILE })); }
-  // The names its API contract shapes, such as its path, over the plugin's generic grammar (decision 0021).
-  const grammar = isMap(m.data.contract?.grammar) ? m.data.contract.grammar : null, had = next.naming?.grammar ?? {}, merged = { ...had, ...grammar };
-  if (grammar && JSON.stringify(had) !== JSON.stringify(merged)) { next = { ...next, naming: { ...(isMap(next.naming) ? next.naming : {}), grammar: merged } }; out.push(msg('applyGrammar', { kinds: Object.keys(grammar).join(', '), file: PROFILE })); }
+  // The names its API contract shapes, such as its path, as the profile's model.grammar, replaced whole so no kind of
+  // an earlier architecture model stays; the project's naming.grammar overrides it (decision 0021).
+  const grammar = isMap(m.data.contract?.grammar) ? m.data.contract.grammar : undefined;
+  if (JSON.stringify(next.model.grammar) !== JSON.stringify(grammar)) {
+    next = { ...next, model: { ...next.model, grammar } }; // an undefined grammar is left out of the file
+    if (grammar) out.push(msg('applyGrammar', { kinds: Object.keys(grammar).join(', '), file: PROFILE }));
+  }
   if (next !== own) writeJson(file, next);
   // The system doc, when the bundle has none: the template with the model's building blocks.
   const sysDir = join(bundle, F.System), system = existsSync(sysDir) && readdirSync(sysDir).some((f) => f.endsWith(config.okf.ext) && f !== config.okf.index);

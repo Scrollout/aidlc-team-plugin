@@ -113,3 +113,12 @@ test('B255/AC-1 the docs, what ships and the CLI\'s messages and fixes use each 
   const found = allBareUses();
   assert.deepEqual(found, [], `${found.length} bare uses; node tests/senses.mjs lists them`);
 });
+
+test('B255/AC-1 one table holds every misreadable word: a phrase before or after the word names its sense, and a word marked in: shipped holds only in what ships', async () => {
+  const { bareUses } = await import('./senses.mjs');
+  const found = (text, shipped = true) => bareUses(text, { shipped }).map((u) => u.found);
+  assert.deepEqual(found('Each unit of work and its unit tests run at the unit level; the architecture model and the C4 component view.'), []);
+  assert.deepEqual(found('The unit merges; the model decides; a component and an internal layer.').sort(), ['The unit', 'a component', 'an internal layer', 'the model']);
+  assert.deepEqual(found('The unit merges; an internal layer.', false), [], 'outside what ships, only the words every tracked text keeps');
+  assert.deepEqual(found('Deployment and Operation, and `model` in code.'), [], 'the phase name and code spans');
+});

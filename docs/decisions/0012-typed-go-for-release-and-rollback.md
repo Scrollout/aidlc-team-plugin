@@ -2,7 +2,7 @@
 type: Decision
 title: 0012 Typed go for release and rollback
 description: The owner releases or rolls back by typing exactly release I-<n> or rollback I-<n>; the prompt hook records a go for that command at the current commit, and the guard lets the lead's one matching call through and uses the go up, since a deploy outlasts the hook's time limit.
-status: proposed
+status: accepted
 decision-makers: the owner
 date: 2026-10-24
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T14:00:00Z }

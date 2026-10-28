@@ -19,8 +19,10 @@ export function registry(profile, bundle) {
     const code = readFileSync(join(dir, f), 'utf8').match(/^code:\s*["']?([^"'\s]+)/m)?.[1];
     if (code && !domains[code]) domains[code] = {};
   }
-  // A kind the profile overrides keeps the plugin's spec for what the override leaves out (decision 0021).
-  const grammar = Object.fromEntries(Object.entries(N.grammar).map(([k, spec]) => [k, { ...spec, ...(isMap(own.grammar?.[k]) ? own.grammar[k] : {}) }]));
+  // Each kind field by field: the plugin's spec, then the chosen architecture model's (`model.grammar`, which only
+  // `aidlc models apply` writes), then the project's own override (decision 0021).
+  const layers = [profile.model?.grammar, own.grammar].map((g) => (isMap(g) ? g : {}));
+  const grammar = Object.fromEntries(Object.entries(N.grammar).map(([k, spec]) => [k, Object.assign({ ...spec }, ...layers.map((g) => (isMap(g[k]) ? g[k] : {})))]));
   return { tokens: { ...(own.tokens ?? {}) }, domains, vocabularies, grammar, banned: [...new Set([...N.banned, ...(own.banned ?? [])])] };
 }
 

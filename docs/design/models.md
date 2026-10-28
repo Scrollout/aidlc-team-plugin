@@ -37,14 +37,14 @@ The rules name roles and shapes, never a vendor's names; the project's API contr
 The `model` pathway, for an intent that names its `model:` and `research:` digests:
 1. **`research`:** the researcher's cited digests of the reference, filed under `research/`.
 2. **The draft:** the architect role persona writes `.aidlc/models/<name>/model.json`. Each layer, domain and rule carries `sources`: ids of the digests' sources. One with none, or with an id no digest has, is `MODEL-SOURCE`.
-3. **`modelDoc`:** `aidlc models doc <name>` writes the `Model` doc, `models/<name>.md`, from it: the layers, domains, extension, API contracts and rules, each with its sources as footnotes, and `digest`, the hash of `model.json`. Only the CLI writes it, so a stale or hand-edited doc fails the step.
-4. **The approval:** the owner approves the `Model` doc like any doc, and re-approves it after `model.json` changes; its one-way doors are approved one at a time when applied.
+3. **`modelDoc`:** `aidlc models doc <name>` writes the `Model` doc, `models/<name>.md`, from it: each part with its sources as footnotes, and `digest`, the hash of `model.json`. Only the CLI writes it, so a stale or hand-edited doc fails the step.
+4. **The approval:** the owner approves the `Model` doc like any doc, and re-approves it after `model.json` changes.
 
 A copied architecture model, like the example below, has no sources.
 
 # Applying a model
 - **Greenfield:** intake lists the architecture models whose `fit.words` appear in the owner's request, with their sentences. Once the owner picks one, `models apply <name>`:
-  - records it in the profile (`model.name`);
+  - records it in the profile (`model.name`), with its API contract's `grammar` as `model.grammar`, replaced each time ([Naming](naming.md#grammar));
   - writes the system doc, its layers and domains as building blocks, when the docs bundle has none;
   - copies its decisions as proposals, numbered on, for the owner to approve one at a time;
   - prints the increments, the skeleton first, serving the slice that cuts the most layers.
@@ -53,12 +53,12 @@ A copied architecture model, like the example below, has no sources.
 - **Brownfield:** each module names the item it plays (`modules[].layer`); `models gaps` lists the items played, missing, or played by a module of another kind, and a slice or the part of a declaration a domain doc lacks, as increments.
 
 # Rule types
-Only the rules of the architecture model in `model.name` run, with its parameters and the project's own names from the profile's `model`.
+Only the rules of the architecture model in `model.name` run, with its parameters and the project's names from the profile's `model`.
 
 | Type | Parameters | Project's `model` | Checks | Code |
 |---|---|---|---|---|
 | `stageOrder` | `stages` | `wiring: { file, pattern }` | the stage names the pattern finds in the file are in `stages` order, none missing | `PIPELINE-ORDER` |
-| `extensionContract` | `kind`, `declares` | each module's `declares` | every module of that kind declares each field | `PROVIDER-CONTRACT` |
+| `extensionDeclaration` | `kind`, `declares` | each module's `declares` | every module of that kind declares each field | `EXTENSION-DECLARATION` |
 | `longRunning` | `shapes` (`code`, `links`), `deleteAbsent` | `operations: { marker, status, result, retry }` | an API operation the marker flags answers in a shape with its link and retry headers; a delete answers `deleteAbsent` | `LONG-RUNNING` |
 | `idempotency` | `writes`, `repeat` | - | a bolt with an AC matching `writes` has one matching `repeat` | `IDEMPOTENCY-AC` |
 | `data` | `classes` | - | each table under a domain's `# Owns` declares `(partition: <key>, class: <class>)` | `DATA-PARTITION` |

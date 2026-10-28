@@ -13,9 +13,9 @@
           "level": "error",
           "fix": "wire the stages in the architecture model's order, or point model.wiring in the profile at the file and the pattern that name them (docs: Architecture models)"
         },
-        "PROVIDER-CONTRACT": {
+        "EXTENSION-DECLARATION": {
           "level": "error",
-          "fix": "declare each field the architecture model's extension asks under the module's `declares` in the profile (docs: Architecture models)"
+          "fix": "declare under the module's `declares` in the profile each field the architecture model's `extension` asks of a module of its kind (docs: Architecture models)"
         },
         "LONG-RUNNING": {
           "level": "error",
@@ -44,7 +44,7 @@
       {
         "name": "models",
         "usage": "models [doc <name> | apply <name> | gaps]",
-        "does": "list the architecture models this project can apply; doc writes a project model's Model doc, apply takes one on, gaps lists what the modules miss of it"
+        "does": "list the architecture models this project can apply; doc writes an architecture model's `Model` doc, apply takes one on, gaps lists what the modules miss of it"
       }
     ],
     "messages": {
@@ -120,7 +120,7 @@
       "gapKind": "  {{item}}: {{module}} is {{kind}}, the architecture model's {{item}} is {{want}}\n",
       "gapsMissing": "missing, for the brownfield intent's # Increments:\n",
       "gapsNone": "nothing missing\n",
-      "applyGrammar": "recorded the architecture model's names for {{kinds}} in {{file}} (naming.grammar)\n"
+      "applyGrammar": "recorded the architecture model's names for {{kinds}} in {{file}} (model.grammar; naming.grammar overrides them)\n"
     },
     "models": {
       "file": "model.json",
@@ -141,7 +141,7 @@
       "extensionId": "extension",
       "ruleTypes": [
         "stageOrder",
-        "extensionContract",
+        "extensionDeclaration",
         "longRunning",
         "idempotency",
         "data",

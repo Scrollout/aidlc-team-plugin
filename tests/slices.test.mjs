@@ -162,7 +162,7 @@ test('B250/AC-2 a # Surface line declares the slice\'s cuts and parts, required 
 test('B251/AC-1 each pack lists slicePaths, the route under interface/<slice> and ui where the stack has one; the surfaces sit beside the layers', () => {
   const read = (s) => JSON.parse(readFileSync(join(ROOT, `plugin/packs/${s}/manifest.json`), 'utf8'));
   for (const s of ['go', 'typescript']) assert.match(read(s).slicePaths.interface, /\/interface\/\{\{slice\}\}\./, s);
-  assert.deepEqual([read('typescript'), read('go')].map((m) => Object.keys(m.slicePaths.ui)), [['web', 'cli'], ['cli', 'template']], 'the ui forms each stack serves');
+  assert.deepEqual([read('typescript'), read('go')].map((m) => Object.keys(m.slicePaths).filter((k) => k.startsWith('ui.'))), [['ui.web', 'ui.cli'], ['ui.cli', 'ui.template']], 'the ui forms each stack serves, one flat key each');
   const dir = makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', [`${D}/application/placeorder/handler.go`]: go('placeorder', [`${D}/model`]), [`${D}/application/placeorder/handler_test.go`]: 'package placeorder\n',
     [`${D}/model/order.go`]: go('model'), [`${D}/interface/placeorder.go`]: go('iface', [`${D}/application/placeorder`]), [`${D}/client/client.go`]: go('client'), [`${D}/events/events.go`]: go('events') }, ORDERS);
   assert.deepEqual(lines(sliceFindings(dir, ORDERS)).filter((l) => /SLICE-PLACE/.test(l)), [], 'client and events beside the layers');
@@ -274,7 +274,7 @@ test('B260/AC-1 a pack maps each ui form it has to its path; a declaration cuts 
   const doc = (decl) => `---\ntype: Domain\ntitle: Notes\ndescription: Notes.\ncode: notes\nkind: domain\n---\n\n# Surface\n- Command createnote (${decl}): a writer keeps a note [I-1:US1.1]\n`;
   const dir = makeRepo({ 'tsconfig.json': '{}\n', 'docs/domains/notes.md': doc('ui, interface, application') }, notes);
   const [stacks] = seam('sliceDeclaration', notes), m = stacks.pack(dir).manifest;
-  assert.deepEqual(m.slicePaths.ui, { web: '{{dir}}/ui/web/{{slice}}', cli: '{{dir}}/ui/cli/{{slice}}' }, 'the TypeScript pack has the web and cli forms');
+  assert.deepEqual(Object.fromEntries(Object.entries(m.slicePaths).filter(([k]) => k.startsWith('ui.'))), { 'ui.web': '{{dir}}/ui/web/{{slice}}', 'ui.cli': '{{dir}}/ui/cli/{{slice}}' }, 'the TypeScript pack has the web and cli forms');
   assert.deepEqual(stacks.declared(dir, notes, 'notes', 'createnote').cuts, ['ui.web', 'ui.cli', 'interface', 'application'], 'ui stands for every form the pack has');
   assert.equal(stacks.path(m, 'notes', 'createnote', 'ui.web'), 'src/domains/notes/ui/web/createnote');
   const problems = (decl, ui = false) => stacks.problems(stacks.parse(`(${decl})`), { root: dir, profile: notes, bundle: join(dir, 'docs'), slice: 'createnote', domains: ['notes'], ui }).map(([key, data]) => msg(key, data));
@@ -329,7 +329,7 @@ test('B253/AC-2 INCR-SKELETON: from method 13, increment 1\'s first slice cuts e
   assert.deepEqual(skeleton('interface, application', 12), [], 'before method 13');
 });
 
-test('B253/AC-3 each slice reported planned, partial or done, layer by layer, with its hand-offs; the trace lists its permission; the retro reads a refusal\'s layer', () => {
+test('B253/AC-3 status counts the slices planned, partial and done; the map page reports each layer by layer, with its hand-offs; the trace lists its permission; the retro reads a refusal\'s layer', () => {
   const A = 'internal/domains/activity';
   const profile = { ...ORDERS, modules: [...ORDERS.modules, { id: 'activity', kind: 'domain', paths: [`${A}/**`] }, { id: 'billing', kind: 'domain', paths: ['internal/domains/billing/**'] }] };
   const dom = (code, lines) => `---\ntype: Domain\ntitle: ${code}\ndescription: ${code}.\ncode: ${code}\nkind: domain\n---\n\n# Surface\n${lines}\n`;
@@ -340,11 +340,11 @@ test('B253/AC-3 each slice reported planned, partial or done, layer by layer, wi
     'docs/bolts/B-1-take.md': '---\ntype: Bolt\ntitle: Take\ndescription: Take.\nintent: I-1\nmodules: [orders]\nslices: [createorder]\nscope: ["internal/**"]\n---\n\n# Why\nOrders.\n',
     [`${D}/application/createorder/handler.go`]: go('createorder'), [`${D}/interface/createorder.go`]: go('iface') }, profile);
   const status = seam('statusLines', profile).at(-1)({ cwd: dir, profile }); // the slices extension's, plugged last
-  assert.match(status, /orders\/createorder: partial; done interface, application; to do model\n {4}→ activity\/listactivity \(OrderPlaced\)\n {4}→ billing \(call\)\n/, status);
-  assert.match(status, /activity\/listactivity: planned; done -; to do interface, application\n/);
+  assert.equal(status, 'slices: 1 planned, 1 partial, 0 done\n', 'status counts, the table stays on the map page');
   const [page] = seam('mapPages', profile).flatMap((p) => p(dir, profile, 'architecture/map'));
   assert.equal(page.file, 'architecture/map-slices.md');
-  assert.match(page.body, /orders\/createorder: partial/);
+  assert.match(page.body, /orders\/createorder: partial; done interface, application; to do model\n {4}→ activity\/listactivity \(OrderPlaced\)\n {4}→ billing \(call\)\n/, page.body);
+  assert.match(page.body, /activity\/listactivity: planned; done -; to do interface, application\n/);
   const trace = seam('traceSections', profile).map((s) => s(dir, profile, { id: 'I-1' })).join('');
   assert.match(trace, /\| orders\/createorder \| orders\.write \| shop-api \|/);
   assert.doesNotMatch(trace, /listactivity/, 'only the slices the intent\'s bolts list');
@@ -358,8 +358,8 @@ test('a pack is found once its detect file appears; a hand-off is listed once; a
   assert.equal(stacks.pack(dir), null, 'no detect file yet');
   write(dir, { 'go.mod': 'module example.com/shop\n\ngo 1.22\n' });
   assert.equal(stacks.pack(dir)?.stack, 'go', 'found once the detect file appears');
-  const status = seam('statusLines', ORDERS).at(-1)({ cwd: dir, profile: ORDERS });
-  assert.equal(status.match(/→ orders\/listorders/g)?.length, 1, status);
+  const [page] = seam('mapPages', ORDERS).flatMap((p) => p(dir, ORDERS, 'architecture/map'));
+  assert.equal(page.body.match(/→ orders\/listorders/g)?.length, 1, page.body);
   const [layerOf] = seam('layerOf', ORDERS);
   assert.deepEqual([`${D}/model/order.go`, `${D}/modelview/x.go`].map((p) => layerOf(dir, ORDERS, p)), ['model', 'domain']);
 });

@@ -80,7 +80,7 @@ test('B229/AC-2 each layer, domain and rule of a project model cites a source of
 // A model with each rule type, and a project that chose it, with the names only it knows in its profile.
 const RULES = [
   { type: 'stageOrder', stages: ['authenticate', 'authorize', 'policy'] },
-  { type: 'extensionContract', kind: 'extension', declares: ['namespace', 'types'] },
+  { type: 'extensionDeclaration', kind: 'extension', declares: ['namespace', 'types'] },
   { type: 'longRunning', shapes: [{ code: 201, links: ['status'] }, { code: 202, links: ['result'] }], deleteAbsent: 204 },
   { type: 'idempotency', writes: '\\b(creates?|updates?)\\b', repeat: '\\b(again|repeated)\\b.*\\bunchanged\\b' },
   { type: 'data', classes: ['regional', 'shared', 'global'] },
@@ -89,7 +89,7 @@ const RULES = [
 const chosen = (declares) => ({ ...V2, model: { name: 'minimal', wiring: { file: 'src/gate/stages.txt', pattern: 'Stage(\\w+)' }, operations: { status: 'Op-Status', result: 'Op-Result', retry: 'Retry-After' }, events: { files: ['api/events/*.yaml'] } },
   modules: [{ id: 'gate', kind: 'pipeline', paths: ['src/gate/**'] }, { id: 'things', kind: 'extension', paths: ['src/things/**'], declares }] });
 const api = (put, del) => `openapi: 3.1.0\ninfo: { title: t, version: 2026-10-01 }\npaths:\n  /things/{thingName}:\n    put:\n${put}\n    delete:\n${del}\n`;
-const ruleLines = (dir) => run(dir, ['check', 'docs']).out.split('\n').filter((l) => /PIPELINE-ORDER|PROVIDER-CONTRACT|LONG-RUNNING|IDEMPOTENCY-AC|DATA-PARTITION|EVENT-COVERAGE/.test(l)).map((l) => l.replace(/ → .*$/, '')).join('\n');
+const ruleLines = (dir) => run(dir, ['check', 'docs']).out.split('\n').filter((l) => /PIPELINE-ORDER|EXTENSION-DECLARATION|LONG-RUNNING|IDEMPOTENCY-AC|DATA-PARTITION|EVENT-COVERAGE/.test(l)).map((l) => l.replace(/ → .*$/, '')).join('\n');
 
 test('B230/AC-1 B230/AC-2 only the chosen model\'s rules run, each reporting what breaks it, with the project\'s own names', () => {
   const broken = {
@@ -104,7 +104,7 @@ test('B230/AC-1 B230/AC-2 only the chosen model\'s rules run, each reporting wha
   const lines = ruleLines(dir);
   for (const want of [
     'src/gate/stages.txt:1 PIPELINE-ORDER architecture model minimal: the stages come as authenticate, policy, authorize, not in the architecture model\'s order authenticate, authorize, policy',
-    '.aidlc/profile.json:1 PROVIDER-CONTRACT architecture model minimal: module things (extension) declares no types under `declares`',
+    '.aidlc/profile.json:1 EXTENSION-DECLARATION architecture model minimal: module things (extension) declares no types under `declares`',
     'api/things/openapi.yaml:1 LONG-RUNNING architecture model minimal: PUT /things/{thingName} is flagged long-running but answers none of 201 with Op-Status and Retry-After, or 202 with Op-Result and Retry-After',
     'api/things/openapi.yaml:1 LONG-RUNNING architecture model minimal: DELETE /things/{thingName} declares no 204 answer for an absent resource',
     'api/things/openapi.yaml:1 EVENT-COVERAGE architecture model minimal: PUT /things/{thingName} emits things.written, which no integration events file defines',
@@ -175,7 +175,7 @@ test('B232/AC-1 the example control-plane model is in generic names (the neutral
   assert.ok(files.length > 6, 'model, decisions, knowledge'); // tests/neutral.test.mjs holds every file under examples/ to naming no vendor
   const cp = JSON.parse(read(root, `${dir}/model.json`));
   assert.deepEqual(cp.layers.map((l) => l.id), ['frontdoor', 'authenticate', 'authorize', 'policy', 'lock', 'throttle']);
-  assert.deepEqual(cp.rules.map((r) => r.type), ['stageOrder', 'extensionContract', 'longRunning', 'idempotency', 'data', 'events']);
+  assert.deepEqual(cp.rules.map((r) => r.type), ['stageOrder', 'extensionDeclaration', 'longRunning', 'idempotency', 'data', 'events']);
   const project = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n' }, V2);
   adopt(project);
   assert.equal(run(project, ['models']).out, 'control-plane (project): Control plane\n', 'in the format');
@@ -212,7 +212,7 @@ test('B233/AC-1 the control-plane model\'s Go reference meets the model\'s rules
     ],
   };
   write(dir, { '.aidlc/profile.json': profile });
-  const lines = run(dir, ['check']).out.split('\n').filter((l) => /PIPELINE-ORDER|PROVIDER-CONTRACT|LONG-RUNNING|EVENT-COVERAGE|CONTRACT-NAME/.test(l));
+  const lines = run(dir, ['check']).out.split('\n').filter((l) => /PIPELINE-ORDER|EXTENSION-DECLARATION|LONG-RUNNING|EVENT-COVERAGE|CONTRACT-NAME/.test(l));
   assert.deepEqual(lines, [], 'the reference meets the stage order, extension contract, long-running shapes, events and the model\'s contract');
   assert.match(run(dir, ['models', 'gaps']).out, /^architecture model control-plane: 8 of 10 items played by modules[\s\S]*missing, for the brownfield intent's # Increments:\n- I-<n>\.1 deployments \(domain\)[^\n]*\n- I-<n>\.2 activity \(domain\)/m, 'the walking skeleton: no deployments or activity yet');
 });
@@ -349,11 +349,25 @@ test('B250/AC-1 B250/AC-4 the glossary, the templates, the personas and the exam
   assert.deepEqual(formatLines(dir), [], 'the declared example is in the format');
 });
 
-test('decision 0021: models apply records the chosen architecture model\'s naming grammar in the profile, once', () => {
-  const model = readFileSync(join(import.meta.dirname, '../examples/models/control-plane/model.json'), 'utf8');
-  const dir = makeRepo({ '.aidlc/models/control-plane/model.json': model }, { naming: { tokens: { system: 'shop', org: 'acme' } } });
-  const first = run(dir, ['models', 'apply', 'control-plane']).out;
-  assert.match(first, /recorded the architecture model's names for path in \.aidlc\/profile\.json/);
-  assert.equal(JSON.parse(read(dir, '.aidlc/profile.json')).naming.grammar.path.template, JSON.parse(model).contract.grammar.path.template);
+test('decision 0021: models apply records the chosen architecture model\'s naming grammar as the profile\'s model.grammar, replacing it on each apply and leaving naming.grammar to the project', () => {
+  const model = JSON.parse(readFileSync(join(import.meta.dirname, '../examples/models/control-plane/model.json'), 'utf8'));
+  const own = { event: { template: '{{Namespace}}.{{TypePascal}}{{PastVerb}}' } }, path = (dir) => run(dir, ['name', 'path', '--domain', 'things']).out.trim();
+  const dir = makeRepo({ '.aidlc/models/control-plane/model.json': JSON.stringify(model) }, { naming: { tokens: { system: 'shop', org: 'acme' }, domains: { things: {} }, grammar: own } });
+  const profile = () => JSON.parse(read(dir, '.aidlc/profile.json'));
+  assert.match(run(dir, ['models', 'apply', 'control-plane']).out, /recorded the architecture model's names for path in \.aidlc\/profile\.json \(model\.grammar/);
+  assert.deepEqual(profile().model.grammar, model.contract.grammar, 'the model layer');
+  assert.deepEqual(profile().naming.grammar, own, 'the project\'s own grammar untouched');
+  assert.equal(path(dir), '/providers/Acme.Shop/things/{thingName}');
   assert.doesNotMatch(run(dir, ['models', 'apply', 'control-plane']).out, /recorded the architecture model's names/, 'once');
+  // The model edited: re-applying replaces the model layer whole, so a kind it no longer names goes with it.
+  write(dir, { '.aidlc/models/control-plane/model.json': JSON.stringify({ ...model, contract: { ...model.contract, grammar: { metric: { template: '{{system}}_{{metricSnake}}_{{unit}}' } } } }) });
+  assert.match(run(dir, ['models', 'apply', 'control-plane']).out, /names for metric in/);
+  assert.deepEqual(profile().model.grammar, { metric: { template: '{{system}}_{{metricSnake}}_{{unit}}' } });
+  assert.deepEqual(profile().naming.grammar, own);
+  assert.equal(path(dir), '/things/{thingName}', 'the old model\'s path is gone');
+  // A model with no grammar clears the layer.
+  write(dir, { '.aidlc/models/control-plane/model.json': JSON.stringify({ ...model, contract: { ...model.contract, grammar: undefined } }) });
+  run(dir, ['models', 'apply', 'control-plane']);
+  assert.equal(profile().model.grammar, undefined);
+  assert.deepEqual(profile().naming.grammar, own);
 });

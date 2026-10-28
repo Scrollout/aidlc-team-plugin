@@ -17,7 +17,7 @@
   "stringLiteral": "([\"'`])((?:\\\\.|(?!\\1)[^\\\\])*)\\1",
   "folders": { "domain": "internal/domains/{{domain}}", "pipeline": "internal/pipeline/{{stage}}", "foundation": "internal/foundation/{{kit}}", "adapter": "internal/adapters/{{system}}", "runtime": "cmd/{{deployable}}" },
   "layers": { "ui": "ui", "interface": "interface", "application": "application", "model": "model", "infrastructure": "infrastructure" },
-  "slicePaths": { "ui": { "cli": "{{dir}}/ui/cli/{{slice}}", "template": "{{dir}}/ui/template/{{slice}}" }, "interface": "{{dir}}/interface/{{slice}}.go", "application": "{{dir}}/application/{{slice}}", "model": "{{dir}}/model", "infrastructure": "{{dir}}/infrastructure", "migration": "migrations/{{domain}}" },
+  "slicePaths": { "ui.cli": "{{dir}}/ui/cli/{{slice}}", "ui.template": "{{dir}}/ui/template/{{slice}}", "interface": "{{dir}}/interface/{{slice}}.go", "application": "{{dir}}/application/{{slice}}", "model": "{{dir}}/model", "infrastructure": "{{dir}}/infrastructure", "migration": "migrations/{{domain}}" },
   "surfaces": { "client": "client", "events": "events", "server": "interface" },
   "migrations": "migrations/{{domain}}",
   "scaffold": {

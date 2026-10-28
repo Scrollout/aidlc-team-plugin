@@ -9,7 +9,7 @@ const under = (p, at) => p === at || p.startsWith(`${at}/`);
 // The stack pack the stacks extension finds, through its seam; null when the pack maps no slice paths.
 function packOf(root, profile) {
   const [stacks] = seam('sliceDeclaration', profile), m = stacks?.pack(root)?.manifest;
-  return m?.slicePaths ? { stacks, m, paths: stacks.paths(m) } : null;
+  return m?.slicePaths ? { stacks, m, paths: m.slicePaths } : null;
 }
 
 // What every view of a project's slices reads: the pack, the docs bundle, the domains, each declared slice with its
@@ -138,9 +138,9 @@ export function testFindings(root, profile, c = context(root, profile)) {
 // INCR-SKELETON, from method 13: increment 1's first bolt listing a slice has its first slice cut every layer the pack
 // has, any form of a layer with forms counting for it (docs/design/construction.md).
 plug('planRules', ({ profile, live = [], all = [], add, base }) => {
-  const pack = packOf(base, profile), D = config.slices.declaration;
+  const pack = packOf(base, profile);
   if (!pack) return;
-  const layerOf = (cut) => cut.split(D.form)[0], layers = [...new Set(Object.keys(pack.paths).map(layerOf))];
+  const layerOf = pack.stacks.layer, layers = [...new Set(Object.keys(pack.paths).map(layerOf))];
   for (const i of live.filter((x) => methodOf(x) >= config.method.since.sliceCuts)) {
     const own = all.filter((u) => u.fm.intent === i.id), [line] = incrementLines(i);
     const first = (line ? line.ids.map((x) => own.find((u) => u.id === x)).filter(Boolean) : own).find((u) => list(u.fm.slices).length), domains = first ? bindingOf(first, profile).domains : [];
@@ -169,7 +169,11 @@ function sliceReport(root, profile) {
 }
 const reportLines = (rows) => rows.map((r) => msg('sliceReportLine', { slice: r.name, state: r.state, done: r.cuts.filter((c) => c.done).map((c) => c.cut).join(', ') || '-', todo: r.cuts.filter((c) => !c.done).map((c) => c.cut).join(', ') || '-',
   handoffs: r.handoffs.map((h) => msg('sliceReportHandoff', h)).join('') })).join('');
-plug('statusLines', (st) => { const rows = sliceReport(st.cwd, st.profile); return rows.length ? msg('sliceReportHead', { lines: reportLines(rows) }) : ''; });
+// Status counts the slices in each state; the map's page holds the table, layer by layer.
+plug('statusLines', (st) => {
+  const rows = sliceReport(st.cwd, st.profile);
+  return rows.length ? msg('sliceCounts', Object.fromEntries(Object.entries(config.slices.states).map(([k, s]) => [k, rows.filter((r) => r.state === s).length]))) : '';
+});
 plug('mapPages', (root, profile, base) => {
   const rows = sliceReport(root, profile), P = config.slices.mapPage;
   return rows.length ? [{ ...P, file: `${base}${P.suffix}${config.okf.ext}`, body: msg('sliceReportHead', { lines: reportLines(rows) }) }] : [];

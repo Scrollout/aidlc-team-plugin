@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.210.0] - 2026-10-28
+### Changed
+- One encoding for the ui forms: a pack's `slicePaths` keys each form flat (`ui.cli`, `ui.web`, `ui.template`), as its scaffold rows name them; a cut's layer is the part before the dot, and a declared `ui` means every `ui.<form>` the pack has.
+- `status` counts the slices planned, partial and done in one line; the map's `-slices` page keeps each slice layer by layer with its hand-offs.
+- The architecture model's naming grammar is its own layer: `aidlc models apply` records it as the profile's `model.grammar`, replaced whole on each apply, and the registry merges the plugin's grammar, then the model's, then the project's own `naming.grammar`.
+- `PROVIDER-CONTRACT` is `EXTENSION-DECLARATION`, and the architecture model rule type `extensionContract` is `extensionDeclaration`: every extension module declares the fields its architecture model's `extension` asks.
+- One word checker reads one table: `vocabulary.senses` gives each word the phrases that name its sense, before or after it, and marks the words that hold only in what ships (*unit*, *internal layer*); `tests/senses.mjs` also reads the CLI's command help, and `tests/words.test.mjs` is gone.
+- Decisions 0012, 0027 and 0028 are accepted.
+
 ## [0.209.1] - 2026-10-28
 ### Fixed
 - A project without a pack's detect file is looked at again once one appears, as a merge may add it: only a found pack is kept for the run.
@@ -513,7 +522,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.209.1...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.210.0...HEAD
+[0.210.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.209.1...v0.210.0
 [0.209.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.209.0...v0.209.1
 [0.209.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.208.0...v0.209.0
 [0.208.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.207.0...v0.208.0

@@ -11,7 +11,7 @@ An architecture model is a proven system's vertical and horizontal shape, kept a
 ## Writing the rules as data
 Pick the rule types the shape needs, with parameters, never code:
 - `stageOrder`, the stages in order;
-- `extensionContract`, the fields an extension declares;
+- `extensionDeclaration`, the fields an extension declares;
 - `longRunning`, the answer shapes;
 - `idempotency`, the write and repeat patterns of an AC;
 - `data`, the classes a table may have;

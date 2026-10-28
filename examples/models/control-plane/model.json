@@ -26,7 +26,7 @@
   ],
   "rules": [
     { "type": "stageOrder", "stages": ["authenticate", "authorize", "policy", "lock", "throttle"] },
-    { "type": "extensionContract", "kind": "extension", "declares": ["namespace", "types", "longRunning"] },
+    { "type": "extensionDeclaration", "kind": "extension", "declares": ["namespace", "types", "longRunning"] },
     { "type": "longRunning", "shapes": [{ "code": 201, "links": ["status"] }, { "code": 202, "links": ["result"] }], "deleteAbsent": 204 },
     { "type": "idempotency", "writes": "\\b(creates?|updates?|replaces?)\\b", "repeat": "\\b(again|repeated|twice)\\b.*\\bunchanged\\b" },
     { "type": "data", "classes": ["regional", "shared", "global"] },

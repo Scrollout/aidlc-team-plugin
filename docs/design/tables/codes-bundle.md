@@ -17,7 +17,7 @@ generated: { by: tests/diagrams.mjs }
 | `HOUSE-DESC` (warning) | add title: and a one-sentence description: |
 | `HOUSE-GENERATED` (warning) | add generated: { by: <producer>/<version>, at: <ISO 8601> } |
 | `HOUSE-LINK` (warning) | point the link at an existing file or remove it |
-| `DOC-SCHEMA` | add the keys the type requires (okf.bundle.schemas), use a value its list allows, and keep the doc in its type's folder (docs: Bundle v2) |
+| `DOC-SCHEMA` | add the keys the type requires (okf.bundle.schemas), use a value its list allows, and keep the doc in its type's folder (docs: Docs bundle v2) |
 | `DOC-SLUG` | rename the file to its id and the slug of its title (lower case, hyphens, no apostrophes, at most 48 characters, cut at a word), keeping the id; aidlc new names new docs this way |
 | `DOC-GENERATED` | never edit a generated doc: change what it is drawn from and let the CLI write it again (aidlc map, aidlc index, or the next merge); an owner's request is never rewritten: restore it, and keep a changed one with a new aidlc intake |
 | `HOUSE-SIZE` (warning) | split the doc or move detail into linked docs |
@@ -31,7 +31,7 @@ generated: { by: tests/diagrams.mjs }
 | `PROFILE-KEY` (warning) | remove it, or use the key the profile doc names for what you meant |
 | `MODEL-FORMAT` | give the architecture model's folder a model.json with `name`, `title`, `description`, `layers` (its horizontal layers) and `extension` (the API contract each extension declares); layers and domains with unique ids and kinds from the vocabulary; rules of known types; API contracts between known ids; decisions as Decision docs (docs: Architecture models) |
 | `PIPELINE-ORDER` | wire the stages in the architecture model's order, or point model.wiring in the profile at the file and the pattern that name them (docs: Architecture models) |
-| `PROVIDER-CONTRACT` | declare each field the architecture model's extension asks under the module's `declares` in the profile (docs: Architecture models) |
+| `EXTENSION-DECLARATION` | declare under the module's `declares` in the profile each field the architecture model's `extension` asks of a module of its kind (docs: Architecture models) |
 | `LONG-RUNNING` | answer the flagged long-running operation in one of the architecture model's shapes, with its link and retry headers named in model.operations, and give a delete its no-content answer (docs: Architecture models) |
 | `EVENT-COVERAGE` | name the integration events each write API operation emits under model.events.marker, each defined in the model.events.files (docs: Architecture models) |
 | `GRAPH-SELFTEST` | make the project's architecture.graph print every import and data edge, or set it to the plugin's: node .aidlc/bin/aidlc.mjs graph (docs: Stack packs) |

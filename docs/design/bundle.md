@@ -1,6 +1,6 @@
 ---
 type: Design
-title: Bundle v2
+title: Docs bundle v2
 description: The project's OKF bundle as AI-DLC's context memory - one folder per closed doc type, authored and generated docs kept apart, a front-matter schema per type, typed references, decisions superseded never amended, CLI-made ids and slugs, and errors on the base.
 status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T00:40:00Z }

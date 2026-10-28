@@ -25,7 +25,7 @@
       {
         "name": "intake",
         "usage": "intake \"<prose>\" | --file <path> | Q-<n> [--ambiguity|--risk|--assumptions <band>:<ids>]…",
-        "does": "keep the owner's request word for word as requests/Q-<n>, and propose its pathway, stack and lane"
+        "does": "keep the owner's request word for word as `requests/Q-<n>`, and propose its pathway, stack and lane"
       }
     ],
     "messages": {

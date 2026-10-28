@@ -2,7 +2,7 @@
 type: Decision
 title: 0027 Integration event names stay in the plugin's grammar
 description: Decision 0021 superseded 0014 and moved only the API's resource hierarchy into the control-plane architecture model, saying nothing of integration events; the plugin's grammar keeps their names as <Namespace>.<Noun><PastTenseVerb>, sent as CloudEvents, for every project.
-status: proposed
+status: accepted
 date: 2026-10-28
 decision-makers: the owner
 consulted: the lead

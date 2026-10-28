@@ -255,10 +255,12 @@ test('B165/AC-1 check reports CONTRACT-NAME on the documents under api/ once the
   ]);
 });
 
-test('decision 0021: the default path grammar is generic, and a profile\'s naming.grammar shapes a kind, as a chosen architecture model\'s API contract does', () => {
+test('decision 0021: the path grammar is the generic default, then the chosen architecture model\'s model.grammar, then the project\'s naming.grammar, field by field', () => {
   const tokens = { system: 'shop', org: 'acme' }, domains = { roleassignments: { name: 'Role assignments' } };
-  const path = (naming) => run(makeRepo(I1, { naming }), ['name', 'path', '--domain', 'roleassignments']).out.trim();
-  assert.equal(path({ tokens, domains }), '/roleAssignments/{roleAssignmentName}');
+  const path = (profile) => run(makeRepo(I1, profile), ['name', 'path', '--domain', 'roleassignments']).out.trim();
+  assert.equal(path({ naming: { tokens, domains } }), '/roleAssignments/{roleAssignmentName}', 'the generic default');
   const grammar = JSON.parse(readFileSync(join(import.meta.dirname, '../examples/models/control-plane/model.json'), 'utf8')).contract.grammar;
-  assert.equal(path({ tokens, domains, grammar }), '/providers/Acme.Shop/roleAssignments/{roleAssignmentName}', 'the control-plane path');
+  assert.equal(path({ naming: { tokens, domains }, model: { grammar } }), '/providers/Acme.Shop/roleAssignments/{roleAssignmentName}', 'the control-plane path, from the model layer');
+  const own = { path: { template: '/v2/{{typeCamel}}/{{{singularCamel}}Name}', regex: '^/v2/[a-z][A-Za-z0-9]*/\\{[a-z][A-Za-z0-9]*Name\\}$' } };
+  assert.equal(path({ naming: { tokens, domains, grammar: own }, model: { grammar } }), '/v2/roleAssignments/{roleAssignmentName}', 'the project\'s override wins over the model\'s');
 });

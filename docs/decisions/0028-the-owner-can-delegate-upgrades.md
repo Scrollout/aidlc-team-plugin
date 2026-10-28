@@ -2,7 +2,7 @@
 type: Decision
 title: 0028 The owner can delegate upgrades
 description: A third delegated class, upgrade, lets the lead run the installed plugin's upgrade between bolts without an owner prompt; a downgrade or a dirty tree still asks the owner, who still chooses when the plugin itself is updated. It extends 0008.
-status: proposed
+status: accepted
 date: 2026-10-28
 decision-makers: the owner
 consulted: the lead

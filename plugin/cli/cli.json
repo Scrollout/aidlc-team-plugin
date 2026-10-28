@@ -86,8 +86,8 @@
     },
     {
       "name": "index",
-      "usage": "index [bundle]",
-      "does": "regenerate every index.md in the bundle"
+      "usage": "index [<docs bundle>]",
+      "does": "regenerate every index.md in the docs bundle"
     },
     {
       "name": "check",
@@ -203,7 +203,7 @@
     {
       "name": "map",
       "usage": "map",
-      "does": "write the codebase map in the bundle (merge also writes it)"
+      "does": "write the codebase map in the docs bundle (merge also writes it)"
     },
     {
       "name": "push",
@@ -781,7 +781,7 @@
       },
       "DOC-SCHEMA": {
         "level": "error",
-        "fix": "add the keys the type requires (okf.bundle.schemas), use a value its list allows, and keep the doc in its type's folder (docs: Bundle v2)"
+        "fix": "add the keys the type requires (okf.bundle.schemas), use a value its list allows, and keep the doc in its type's folder (docs: Docs bundle v2)"
       },
       "DOC-SLUG": {
         "level": "error",
@@ -1877,7 +1877,7 @@
     "steps": { "nextNoIntent": "product-analyst", "nextOpenIntent": "product-analyst", "nextOpenDraft": "product-analyst", "nextFinishDecision": "architect", "nextDraftUnits": "architect" }
   },
   "vocabulary": {
-    "senses": { "about": "The words a reader could misread, each kept to one sense in every tracked text by a word before it naming the sense, or a code span; a proper name (the Operation phase) stands alone (docs/design/canonical-model.md)", "model": ["architecture", "domain", "AI", "threat", "canonical", "read", "deployment"], "request": ["owner's"], "bundle": ["docs"], "contract": ["API"], "event": ["integration", "domain", "outcome"], "component": ["C4", "Design", "logical", "domain"], "capability": ["business"], "schema": ["database", "template", "API", "JSON", "doc"], "operation": ["API", "long-running"], "proper": ["Operation"] },
+    "senses": {"about": "The words a reader could misread, each with the phrases that name its one sense ({w} is the word, singular or plural); any other use outside a code span is reported, in every tracked text or, with `in: shipped`, in what the plugin ships and the CLI's own text. A proper name (the Operation phase) stands alone (docs/design/canonical-model.md)", "model": ["architecture {w}", "domain {w}", "AI {w}", "threat {w}", "canonical {w}", "read {w}", "deployment {w}"], "request": ["owner's {w}"], "bundle": ["docs {w}"], "contract": ["API {w}"], "event": ["integration {w}", "domain {w}", "outcome {w}"], "component": ["C4 {w}", "Design {w}", "logical {w}", "domain {w}"], "capability": ["business {w}"], "schema": ["database {w}", "template {w}", "API {w}", "JSON {w}", "doc {w}"], "operation": ["API {w}", "long-running {w}"], "unit": {"in": "shipped", "allow": ["# {w}", "{w} of work", "{w} test", "{w} level", "{w} and e2e", "({w})", "{w}=", "{w}/", "--{w}"]}, "internal layer": {"in": "shipped", "allow": []}, "proper": ["Operation"]},
     "words": [
       { "word": "horizontal layer", "scale": "System", "meaning": "code grouped by one technical concern, shared by every feature: the layers inside a domain, pointing inward, and the platform every call crosses", "method": "logical design", "declared": "the stack pack's layers; module `kind: runtime`, `pipeline`, `foundation` or `adapter`" },
       { "word": "core", "scale": "System", "meaning": "the platform layers and the shared domains every domain uses", "method": "the system", "declared": "profile `system.core`" },
