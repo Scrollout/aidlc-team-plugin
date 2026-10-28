@@ -1979,8 +1979,8 @@
       "extension": { "any": ["foundation"], "surface": ["domain"] },
       "delivery": { "any": ["domain", "pipeline", "foundation", "adapter", "runtime", "extension", "delivery"], "surface": [] }
     },
-    "layerAliases": { "api": "interface", "app": "application", "domain": "model", "store": "infrastructure" },
-    "layerRules": { "interface": ["application", "model"], "application": ["model"], "infrastructure": ["model"], "model": [] },
+    "layerAliases": { "web": "ui", "frontend": "ui", "api": "interface", "app": "application", "domain": "model", "store": "infrastructure" },
+    "layerRules": { "ui": [], "interface": ["application", "model"], "application": ["model"], "infrastructure": ["model"], "model": [] },
     "kindHints": [
       { "kind": "delivery", "match": "(^|/)(deploy|build|\\.github|tooling|toolchain|ci|scripts)(/|$)|^(toolchain|deploy|tooling)$" },
       { "kind": "runtime", "match": "(^|/)cmd(/|$)" },

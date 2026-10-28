@@ -13,7 +13,7 @@ A dependency graph the AI writes in the first unit can read error-message prose 
 `plugin/packs/<stack>/` holds data, not code:
 - `manifest.json`: how the stack is detected (`go.mod`, `tsconfig.json`), the folder of each kind and layer (`internal/domains/{{domain}}/model`, `cmd/{{deployable}}`), how imports are read (`imports`: patterns that find a path in a file or in a block it names, resolved inside the module or relative to the file), how the language writes a string literal (`stringLiteral`) and which lines and literals are its protocol (`values`), and where event types sit.
 - `templates/`: one file per scaffold kind, rendered with the names the registry composes ([Naming](naming.md)).
-- `reference/`: one domain (`notes`) with a command slice and a query slice, fully tested, in the pack's layout, passing every `ARCH-*` code on its own graph. Go's runs with `go test ./...`; TypeScript's with its `npm test` (`node --test` on `*.spec.ts`, type stripping), named so the plugin's own test run skips it.
+- `reference/`: one domain (`notes`) with a command slice and a query slice, each route under `interface/<slice>`, fully tested, in the pack's layout, passing every `ARCH-*` code on its own graph. Go's runs with `go test ./...`; TypeScript's with its `npm test` (`node --test` on `*.spec.ts`, type stripping), named so the plugin's own test run skips it.
 - A model's walking skeleton lives with the model, under its `reference/<stack>/` ([Models](models.md), [Shipped layout](layout.md)); CI runs its tests too.
 
 `init` and `upgrade` pin the packs in `.aidlc/bin/packs/` with the CLI, so the vendored CLI and the builder read the same files ([Shipped layout](layout.md)).
@@ -26,7 +26,7 @@ A dependency graph the AI writes in the first unit can read error-message prose 
 A schema-qualified table counts only inside a string literal, where SQL lives: `notes.save(x)` in code is a call. A project may keep its own `architecture.graph`; with a pack detected, `check` runs both and reports `GRAPH-SELFTEST` when the project's graph lacks an edge the pack reads, naming a few.
 
 # Scaffold
-`aidlc scaffold domain <code>`, `scaffold slice <verb> --domain <code>` (the slice folder is `aidlc name slice`), `scaffold foundation <kit>`, `scaffold pipeline <stage>`, `scaffold runtime <deployable>` and `scaffold adapter <system>` write the pack's templates at the kind's folder, with every name from the registry, and change nothing that exists. The card of a bolt that names a domain links the reference slice to copy.
+`aidlc scaffold domain <code>`, `scaffold slice <verb> --domain <code>` (the slice's name is `aidlc name slice`; it writes the own code and test of each layer the slice's `# Surface` line cuts, its route under `interface/<slice>`, or with none every such layer but `ui`), `scaffold foundation <kit>`, `scaffold pipeline <stage>`, `scaffold runtime <deployable>` and `scaffold adapter <system>` write the pack's templates at the kind's folder, with every name from the registry, and change nothing that exists. The card of a bolt that names a domain links the reference slice to copy.
 
 # Events
 A domain's `events` surface holds its event types. `CONTRACT-NAME` reports one that is not `<Org>.<Service>.<Noun><PastTenseVerb>` with no version suffix (decision 0014), from the pack's `eventType` pattern.

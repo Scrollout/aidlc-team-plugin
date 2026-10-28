@@ -115,6 +115,7 @@ export const commands = {
   },
 
   // Writes a kind's templates at its folder with names from the registry; never overwrites (docs/design/stack-packs.md#scaffold).
+  // A slice gets the own code of each layer it cuts (docs/design/slice-method.md#built).
   scaffold(args, { cwd }) {
     const [kind, name] = args.filter((a) => !a.startsWith('--')), flag = (f) => { const k = args.indexOf(`--${f}`); return k >= 0 ? args[k + 1] : undefined; };
     const pack = packFor(cwd);
@@ -134,8 +135,8 @@ export const commands = {
     }
     if (kind === 'adapter' && (!new RegExp(config.naming.word).test(name) || reg.banned.includes(name))) throw new UsageError(msg('nameUnregistered', { what: 'system', value: name, where: K.adapterRule, known: '-' }));
     v.dir = render(pack.manifest.folders[kind === 'slice' ? 'domain' : kind], v);
-    const out = [];
-    for (const [template, to] of pack.manifest.scaffold[kind]) {
+    const out = [], cuts = kind === 'slice' ? scaffoldCuts(cwd, profile, domain, v.operation, pack) : null;
+    for (const [template, to, cut] of pack.manifest.scaffold[kind].filter(([, , c]) => !cuts || !c || cuts.includes(c))) {
       const path = render(to, v), file = join(cwd, path);
       if (existsSync(file)) { out.push(msg('scaffoldKept', { path })); continue; }
       mkdirSync(dirname(file), { recursive: true });
@@ -169,6 +170,13 @@ export function declarationOf(text) {
     else out[part] = D.flags.includes(part) || (D.single.includes(part) ? v.join(' ') : split(v.join(' ')));
   }
   return out;
+}
+
+// The cuts a slice's # Surface line declares, or, with none, every cut the pack writes own code for but `ui`.
+function scaffoldCuts(root, profile, domain, slice, pack) {
+  const doc = join(bundleOf(root, profile), config.okf.bundle.folders.Domain, `${domain}${config.okf.ext}`);
+  const line = existsSync(doc) && sectionOf(parseDoc(readFileSync(doc, 'utf8')), config.slices.surface).map(([, t]) => t).find((t) => new RegExp(`^\\s*[-*]\\s+\\S+\\s+${slice}\\b`).test(t));
+  return declarationOf(line ? line.split(':')[0] : '')?.cuts ?? [...new Set(pack.manifest.scaffold.slice.map(([, , c]) => c).filter((c) => c && c !== config.slices.declaration.ui))];
 }
 
 // Each domain's events, from the Events line of its doc's # Surface.

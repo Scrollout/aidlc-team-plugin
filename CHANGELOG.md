@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.195.0] - 2026-10-28
+### Added
+- Packs and scaffold by cuts (M29 B251). A project may name its `ui` layer `web` or `frontend`. `scaffold slice` writes the own code and test of each layer the slice's `# Surface` line cuts, its route under `interface/<slice>`, or with no declaration every such layer but `ui`. The TypeScript pack has a `ui` layer, its screen under `ui/<slice>/`. Both packs' references and the example control-plane model's reference route each slice under `interface/<slice>`, the router or the front door mounting them; the example's front door keeps only what it applies to every slice, governance and the long-running operation, and an `answer` kit holds the error envelope.
+
 ## [0.194.0] - 2026-10-28
 ### Added
 - A complete canonical model (M30 B254). The vocabulary defines every concept the shipped text and the design docs use, 71 words across the system, domain, code, delivery and plugin scales: the module kinds, the architecture model, the stack pack, the naming registry and the profile; the aggregate, domain model, data node, contract, events, commands, queries, routes and handlers; the test level, acceptance criterion, proof-revert, mutation, scope and value; the request, requirement, persona, fact, decision, pathway, walking skeleton, method version and release; and the docs bundle, merge gate, review, verdict, focus, agents, worktree, base, trailer, stamp, board, retro and AI model. A word with several senses is split: model alone is the architecture model, the domain model and the AI model are their own words, and a call to an API is a call, not a request. Each scale's words, and the words to avoid, are a page drawn from `cli.json`.
@@ -432,7 +436,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.194.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.195.0...HEAD
+[0.195.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.194.0...v0.195.0
 [0.194.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.193.0...v0.194.0
 [0.193.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.192.0...v0.193.0
 [0.192.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.191.0...v0.192.0

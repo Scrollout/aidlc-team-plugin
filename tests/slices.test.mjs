@@ -2,7 +2,7 @@
 // domain doc and the tests (docs/design/vertical-slices.md).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cpSync } from 'node:fs';
+import { cpSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { seam } from '../plugin/cli/lib/index.mjs';
 import '../plugin/cli/extensions/intake/index.mjs'; // its stories seam, as the CLI loads every extension
@@ -153,4 +153,42 @@ test('B250/AC-2 a # Surface line declares the slice\'s cuts and parts, required 
   assert.deepEqual(declarationProblems(declarationOf('(interface, application; permission Orders/write)'), ctx).map(([k]) => k), ['slicePermission']);
   assert.deepEqual(declarationProblems(declarationOf('(interface, application)'), { ...ctx, ui: true }).map(([k]) => k), ['sliceUi']);
   assert.deepEqual(declarationProblems(declarationOf('(ui, interface, application)'), { ...ctx, ui: true }), []);
+});
+
+// M29 B251: each pack says where a slice's own code sits in each layer, and scaffolds the layers a slice cuts
+// (docs/design/slice-method.md#layers).
+test('B251/AC-1 each pack lists slicePaths, the route under interface/<slice> and ui where the stack has one; the surfaces sit beside the layers', () => {
+  const read = (s) => JSON.parse(readFileSync(join(ROOT, `plugin/packs/${s}/manifest.json`), 'utf8'));
+  for (const s of ['go', 'typescript']) assert.match(read(s).slicePaths.interface, /\/interface\/\{\{slice\}\}\./, s);
+  assert.ok(read('typescript').slicePaths.ui && !read('go').slicePaths.ui, 'ui only where the stack serves a front end');
+  const dir = makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', [`${D}/application/placeorder/handler.go`]: go('placeorder', [`${D}/model`]), [`${D}/application/placeorder/handler_test.go`]: 'package placeorder\n',
+    [`${D}/model/order.go`]: go('model'), [`${D}/interface/placeorder.go`]: go('iface', [`${D}/application/placeorder`]), [`${D}/client/client.go`]: go('client'), [`${D}/events/events.go`]: go('events') }, ORDERS);
+  assert.deepEqual(lines(sliceFindings(dir, ORDERS)).filter((l) => /SLICE-PLACE/.test(l)), [], 'client and events beside the layers');
+});
+
+test('B251/AC-2 scaffold writes the own code of each cut a slice declares, and every reference routes each slice under interface/<slice> and passes the slice checks', async () => {
+  const { run } = await import('./state-repo.mjs');
+  const doc = (line) => `---\ntype: Domain\ntitle: Orders\ndescription: Orders.\ncode: orders\nkind: domain\n---\n\n# Surface\n${line}\n`;
+  const ts = makeRepo({ 'tsconfig.json': '{}\n', 'docs/domains/orders.md': doc('- Command createorder (ui, interface, application; entry shop-api): a customer orders [I-1:US1.1]') }, { naming: { tokens: { system: 'shop' }, domains: { orders: {} } } });
+  const wrote = run(ts, ['scaffold', 'slice', 'create', '--domain', 'orders']).out.split('\n').filter(Boolean);
+  assert.deepEqual(wrote, ['ui/createorder/screen.ts', 'ui/createorder/screen.spec.ts', 'interface/createorder.ts', 'interface/createorder.spec.ts', 'application/createorder/handler.ts', 'application/createorder/handler.spec.ts'].map((p) => `wrote src/domains/orders/${p}`));
+  const go2 = makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n' }, { naming: { tokens: { system: 'shop' }, domains: { orders: {} } } });
+  assert.deepEqual(run(go2, ['scaffold', 'slice', 'get', '--domain', 'orders']).out.split('\n').filter(Boolean),
+    ['interface/getorder.go', 'interface/getorder_test.go', 'application/getorder/handler.go', 'application/getorder/handler_test.go'].map((p) => `wrote internal/domains/orders/${p}`), 'with no declaration, the cuts with own code but ui');
+  for (const [ref, files] of [['plugin/packs/go/reference', ['internal/domains/notes/interface/createnote.go', 'internal/domains/notes/interface/getnote.go']],
+    ['plugin/packs/typescript/reference', ['src/domains/notes/interface/createnote.ts', 'src/domains/notes/interface/getnote.ts', 'src/domains/notes/ui/createnote/screen.ts']],
+    ['examples/models/control-plane/reference/go', ['internal/domains/resources/interface/createresource.go', 'internal/domains/resources/interface/deleteresource.go', 'internal/domains/operations/interface/getoperation.go']]]) {
+    for (const f of files) assert.ok(existsSync(join(ROOT, ref, f)), `${ref}: ${f}`);
+  }
+  const notes = { system: { core: ['src/**'] }, modules: [{ id: 'notes', kind: 'domain', paths: ['src/domains/notes/**'] }, { id: 'notes-api', kind: 'runtime', paths: ['src/runtimes/notes-api/**'] }] };
+  const tsRef = makeRepo({}, notes);
+  cpSync(join(ROOT, 'plugin/packs/typescript/reference'), tsRef, { recursive: true });
+  assert.deepEqual(lines(sliceFindings(tsRef, notes)), [], 'the TypeScript reference passes every slice check');
+});
+
+test('B251/AC-1 a project\'s own name for the ui layer maps to it, as the other layers\' do', async () => {
+  const { config } = await import('../plugin/cli/lib/index.mjs');
+  const V = config.vocabulary;
+  for (const alias of ['web', 'frontend']) assert.equal(V.layerAliases[alias], 'ui');
+  assert.deepEqual(Object.values(V.layerAliases).filter((l) => !(l in V.layerRules)), [], 'every alias names a layer with its rule');
 });

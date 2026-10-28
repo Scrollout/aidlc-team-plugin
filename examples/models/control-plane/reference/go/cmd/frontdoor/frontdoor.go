@@ -2,16 +2,17 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"sync/atomic"
 
 	"example.com/controlplane/internal/domains/operations/application/getoperation"
+	opiface "example.com/controlplane/internal/domains/operations/interface"
 	opmodel "example.com/controlplane/internal/domains/operations/model"
 	"example.com/controlplane/internal/domains/resources/application/createresource"
 	"example.com/controlplane/internal/domains/resources/application/deleteresource"
-	"example.com/controlplane/internal/domains/resources/model"
+	iface "example.com/controlplane/internal/domains/resources/interface"
+	"example.com/controlplane/internal/foundation/answer"
 	"example.com/controlplane/internal/foundation/values"
 	"example.com/controlplane/internal/pipeline/stages"
 )
@@ -54,44 +55,22 @@ func governance(authorize func(context.Context, *stages.Request) *stages.Refusal
 	)
 }
 
-// errorBody is the error envelope every refusal answers with.
-type errorBody struct {
-	Error struct {
-		Code string `json:"code"`
-	} `json:"error"`
-}
-
-// operationBody is what the operation's status answers.
-type operationBody struct {
-	ID     string         `json:"id"`
-	Status opmodel.Status `json:"status"`
-}
-
-func fail(w http.ResponseWriter, status int, code string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	var body errorBody
-	body.Error.Code = code
-	_ = json.NewEncoder(w).Encode(body)
-}
-
-// Routes serves the resource API and the operations a long-running write leaves to follow.
+// Routes mounts each slice's route behind the governance stages, and runs a long-running type's write as an
+// operation to follow: what the front door applies to every slice it serves.
 func (f *FrontDoor) Routes() *http.ServeMux {
 	mux := http.NewServeMux()
 	get := getoperation.Handler{Operations: f.Ops}
 	mux.HandleFunc(http.MethodPut+" "+v.Routes.Resource, func(w http.ResponseWriter, r *http.Request) {
-		var body struct{ Properties map[string]any }
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			fail(w, http.StatusBadRequest, v.Errors.BadContent)
+		res, err := iface.ResourceOf(r)
+		if err != nil {
+			answer.Fail(w, http.StatusBadRequest, v.Errors.BadContent)
 			return
 		}
-		p, ok := f.admit(w, r, body.Properties)
+		p, ok := f.admit(w, r, res.Properties)
 		if !ok {
 			return
 		}
-		ns, typ := r.PathValue(v.Params.Namespace), r.PathValue(v.Params.Type)
-		res := model.Resource{ID: r.URL.Path, Type: ns + "/" + typ, Scope: v.ScopePrefix + r.PathValue(v.Params.Scope), Provider: ns, Properties: body.Properties}
-		if p.LongRunning[typ] {
+		if p.LongRunning[r.PathValue(v.Params.Type)] {
 			op := opmodel.Operation{ID: fmt.Sprintf(v.OperationID, f.ids.Add(1)), Resource: res.ID, Status: opmodel.Running}
 			_ = f.Ops.Save(r.Context(), op)
 			status := opmodel.Succeeded
@@ -105,49 +84,22 @@ func (f *FrontDoor) Routes() *http.ServeMux {
 			return
 		}
 		outcome, err := f.Put.Handle(r.Context(), res)
-		if err != nil {
-			fail(w, http.StatusBadRequest, v.Errors.BadResource)
-			return
-		}
-		if outcome == createresource.Created {
-			w.WriteHeader(http.StatusCreated)
-		}
-		_ = json.NewEncoder(w).Encode(res)
+		iface.AnswerCreate(w, res, outcome, err)
 	})
 	mux.HandleFunc(http.MethodDelete+" "+v.Routes.Resource, func(w http.ResponseWriter, r *http.Request) {
 		if _, ok := f.admit(w, r, nil); !ok {
 			return
 		}
 		was, err := f.Delete.Handle(r.Context(), r.URL.Path)
-		switch {
-		case err != nil:
-			fail(w, http.StatusInternalServerError, v.Errors.Internal)
-		case !was:
-			w.WriteHeader(http.StatusNoContent)
-		}
+		iface.AnswerDelete(w, was, err)
 	})
 	mux.HandleFunc(http.MethodGet+" "+v.Routes.Operation, func(w http.ResponseWriter, r *http.Request) {
 		op, ok := get.Handle(r.Context(), r.PathValue(v.Params.ID))
-		if !ok {
-			fail(w, http.StatusNotFound, v.Errors.NoOperation)
-			return
-		}
-		_ = json.NewEncoder(w).Encode(operationBody{ID: op.ID, Status: op.Status})
+		opiface.AnswerStatus(w, op, ok)
 	})
 	mux.HandleFunc(http.MethodGet+" "+v.Routes.Result, func(w http.ResponseWriter, r *http.Request) {
 		op, ok := get.Handle(r.Context(), r.PathValue(v.Params.ID))
-		switch {
-		case !ok:
-			fail(w, http.StatusNotFound, v.Errors.NoOperation)
-		case !op.Terminal():
-			w.Header().Set("Location", r.URL.Path)
-			w.Header().Set("Retry-After", v.RetryAfter)
-			w.WriteHeader(http.StatusAccepted)
-		case op.Status != opmodel.Succeeded:
-			fail(w, http.StatusConflict, v.Errors.OperationFailed)
-		default:
-			w.WriteHeader(http.StatusNoContent)
-		}
+		opiface.AnswerResult(w, r, op, ok)
 	})
 	return mux
 }
@@ -157,12 +109,12 @@ func (f *FrontDoor) Routes() *http.ServeMux {
 func (f *FrontDoor) admit(w http.ResponseWriter, r *http.Request, result map[string]any) (Provider, bool) {
 	req := &stages.Request{Method: r.Method, Path: r.URL.Path, Caller: r.Header.Get("Authorization"), Scope: v.ScopePrefix + r.PathValue(v.Params.Scope), Result: result}
 	if refusal := f.Govern(r.Context(), req); refusal != nil {
-		fail(w, refusal.Status, refusal.Code)
+		answer.Fail(w, refusal.Status, refusal.Code)
 		return Provider{}, false
 	}
 	p, ok := f.Providers[r.PathValue(v.Params.Namespace)]
 	if !ok {
-		fail(w, http.StatusNotFound, v.Errors.NoProvider)
+		answer.Fail(w, http.StatusNotFound, v.Errors.NoProvider)
 	}
 	return p, ok
 }
