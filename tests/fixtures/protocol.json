@@ -227,7 +227,10 @@
     "sliceDeclaration",
     "cardSlices",
     "boardSlices",
-    "modelLayers"
+    "modelLayers",
+    "mapPages",
+    "traceSections",
+    "layerOf"
   ],
   "yaml": [
     "True",

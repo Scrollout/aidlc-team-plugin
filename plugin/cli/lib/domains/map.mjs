@@ -10,6 +10,7 @@ import { digestOf, parseDoc, sectionOf } from './bundle.mjs';
 import { graphOf } from './architecture.mjs';
 import { globRegex } from '../foundation/glob.mjs';
 import { glossaryOf } from './naming.mjs';
+import { seam } from '../foundation/seams.mjs';
 
 const M = config.map;
 const layersOf = (m) => Object.keys(m.layers ?? {}); // a module's layers, outer to inner (U142)
@@ -58,7 +59,7 @@ function mapText(cwd, profile) {
   const base = (typeof profile.map === 'string' ? profile.map : profile.system ? M.fileV2 : M.file).replace(new RegExp(`${escapeRe(config.okf.ext)}$`), ''); // a v2 bundle keeps generated maps in architecture/
   const pages = M.pages.filter((pg) => !pg.needs || { pairs: pairs.length, kinds: shown.some((m) => m.kind) }[pg.needs]).map((pg) => ({ ...pg, file: `${base}${pg.suffix}${config.okf.ext}` }));
   const link = (pg) => msg('mapLink', { title: pg.title, file: pg.file.split('/').at(-1) });
-  return pages.map((pg) => ({ ...pg, body: msg(pg.body, { tree: lines.join('\n'), flow, table, bands, matrix, links: pages.filter((x) => x !== pg).map(link) }) }));
+  return [...pages.map((pg) => ({ ...pg, body: msg(pg.body, { tree: lines.join('\n'), flow, table, bands, matrix, links: pages.filter((x) => x !== pg).map(link) }) })), ...seam('mapPages', profile).flatMap((page) => page(cwd, profile, base))]; // an extension's pages
 }
 
 // Writes a generated page when its body changed, with its producer and digest; returns the files written. The map

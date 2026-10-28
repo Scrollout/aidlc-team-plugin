@@ -328,3 +328,26 @@ test('B253/AC-2 INCR-SKELETON: from method 13, increment 1\'s first slice cuts e
   assert.deepEqual(skeleton('ui.cli, interface, application, model, infrastructure, migration'), [], 'every layer, ui by one of its forms');
   assert.deepEqual(skeleton('interface, application', 12), [], 'before method 13');
 });
+
+test('B253/AC-3 each slice reported planned, partial or done, layer by layer, with its hand-offs; the trace lists its permission; the retro reads a refusal\'s layer', () => {
+  const A = 'internal/domains/activity';
+  const profile = { ...ORDERS, modules: [...ORDERS.modules, { id: 'activity', kind: 'domain', paths: [`${A}/**`] }, { id: 'billing', kind: 'domain', paths: ['internal/domains/billing/**'] }] };
+  const dom = (code, lines) => `---\ntype: Domain\ntitle: ${code}\ndescription: ${code}.\ncode: ${code}\nkind: domain\n---\n\n# Surface\n${lines}\n`;
+  const dir = makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n',
+    'docs/domains/orders.md': dom('orders', '- Command createorder (interface, application, model; entry shop-api; permission orders.write; emits OrderPlaced; calls billing): a customer orders [I-1:US1.1]\n- Events: OrderPlaced'),
+    'docs/domains/activity.md': dom('activity', '- Query listactivity (interface, application; consumes OrderPlaced): a customer reads the log [I-1:US1.1]'),
+    'docs/domains/billing.md': dom('billing', '- Events: PaymentTaken'),
+    'docs/bolts/B-1-take.md': '---\ntype: Bolt\ntitle: Take\ndescription: Take.\nintent: I-1\nmodules: [orders]\nslices: [createorder]\nscope: ["internal/**"]\n---\n\n# Why\nOrders.\n',
+    [`${D}/application/createorder/handler.go`]: go('createorder'), [`${D}/interface/createorder.go`]: go('iface') }, profile);
+  const status = seam('statusLines', profile).at(-1)({ cwd: dir, profile }); // the slices extension's, plugged last
+  assert.match(status, /orders\/createorder: partial; done interface, application; to do model\n {4}→ activity\/listactivity \(OrderPlaced\)\n {4}→ billing \(call\)\n/, status);
+  assert.match(status, /activity\/listactivity: planned; done -; to do interface, application\n/);
+  const [page] = seam('mapPages', profile).flatMap((p) => p(dir, profile, 'architecture/map'));
+  assert.equal(page.file, 'architecture/map-slices.md');
+  assert.match(page.body, /orders\/createorder: partial/);
+  const trace = seam('traceSections', profile).map((s) => s(dir, profile, { id: 'I-1' })).join('');
+  assert.match(trace, /\| orders\/createorder \| orders\.write \| shop-api \|/);
+  assert.doesNotMatch(trace, /listactivity/, 'only the slices the intent\'s bolts list');
+  const [layerOf] = seam('layerOf', profile);
+  assert.deepEqual([`${D}/application/createorder/handler.go`, `${D}/model`, 'cmd/shop-api/main.go', 'README.md'].map((p) => layerOf(dir, profile, p)), ['application', 'model', 'runtime', null]);
+});

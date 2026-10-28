@@ -7,7 +7,7 @@
 * [Board](board.md) - An optional one-way projection of derived state onto GitHub issues and a GitHub Project, written by deterministic code at zero model tokens.
 * [Bolt card](bolt-card.md) - The generated, read-only brief one builder works from and one reviewer checks against, for a bolt or a v1 unit.
 * [Build method from day one](method.md) - How a project gets the build method on its first init - level runs asked at init, a constitution that names the check behind each rule, and an upgrade that adds what an older project lacks.
-* [Building a slice](slice-method.md) - Draft - the vertical slice method from intake to merge - each slice declares its layers, entry, data and integrations in one grammar, and is planned, scaffolded, checked, proved and reported layer by layer.
+* [Building a slice](slice-method.md) - The vertical slice method from intake to merge - each slice declares its layers, entry, data and integrations in one grammar, and is planned, scaffolded, checked, proved and reported layer by layer.
 * [Bundle v2](bundle.md) - The project's OKF bundle as AI-DLC's context memory - one folder per closed doc type, authored and generated docs kept apart, a front-matter schema per type, typed references, decisions superseded never amended, CLI-made ids and slugs, and errors on the base.
 * [Canonical model](canonical-model.md) - One word per concept at each scale (system, domain, code, delivery), mapped to the method's Intent, Unit and Bolt; a word in another sense fails a check, and an approved intent keeps the method version it was approved under.
 * [CI check](ci-check.md) - What aidlc check --ci adds in CI - the base history since adoption, architecture on the checked-out tree, and a GitHub Actions job summary the owner reads on the run page.
@@ -60,7 +60,7 @@
 * [Vendoring](vendoring.md) - How init and upgrade copy the CLI into a project and pin it, and why only a release is copied.
 * [Verification](verification.md) - The inner loop (hooks), the merge gate, the reviewer's output contract and the CI mode.
 * [Vertical slices checked](vertical-slices.md) - Deterministic checks that a domain's code is grouped into vertical slices across its horizontal layers - no slice imports another, slices are entered only from the interface layer, every file sits in one layer and one slice, the slice folders match the domain doc's commands and queries, each slice cites the stories it serves and has its own test.
-* [What a slice declares](slice-declares.md) - Draft - what a vertical slice declares beyond its layers - the data of its domain it uses, the entry that serves it, how it integrates and the governance it needs - each checked at the gate and proved by a test.
+* [What a slice declares](slice-declares.md) - What a vertical slice declares beyond its layers - the data of its domain it uses, the entry that serves it, how it integrates and the governance it needs - each checked at the gate and proved by a test.
 * [Workload identity](workload-identity.md) - Runtimes, domains and data authenticate by workload identity with short-lived credentials, never by shared or static secrets; a merge check fails the common static forms on added lines.
 
 # Subdirectories

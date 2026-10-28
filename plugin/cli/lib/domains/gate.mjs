@@ -389,7 +389,7 @@ export const commands = {
       const codes = [...new Set(findings.map((f) => f.code))];
       writeJson(runtimeFile(cwd, 'gates', unit.id), { base: git(cwd, 'rev-parse', st.base), diffHash: diffHash(cwd, st.base, unit.id), codes, at: new Date().toISOString() });
       for (const code of codes) bump(cwd, 'codes', code);
-      if (st.profile.system) bump(cwd, config.retro.refusals, { unit: unit.id, binding: bindingName(unit, st.profile), codes: codes.join(', '), at: new Date().toISOString() }); // the retro counts them by binding
+      if (st.profile.system) bump(cwd, config.retro.refusals, { unit: unit.id, binding: bindingName(unit, st.profile), codes: codes.join(', '), paths: [...new Set(findings.map((f) => f.path))], at: new Date().toISOString() }); // the retro counts them by binding and layer
       const red = findings.find((f) => f.code === 'GATE-BASE');
       if (red) writeJson(baseRedFile(cwd), { sha: git(cwd, 'rev-parse', st.base), unit: unit.id, level: red.red, at: new Date().toISOString() });
       const log = join(aidlcDir(cwd), 'gates', `${unit.id}.log`); // the failed commands' last lines, beside the refusal (U147)

@@ -34,6 +34,7 @@ The plugin holds every project to kinds, layers and one-way dependencies. Its ow
 - `statusLines`, `delivered`, `statusTail`: lines, the delivered requirements and the closing line `status` shows (construction, board).
 - `cardSections`: sections a card adds (stacks).
 - `cardSlices`: each slice a bolt lists, its cuts as ordered steps (slices).
+- `statusLines`, `mapPages`, `traceSections`: each slice layer by layer, a map page, the trace's permission catalogue (slices); `layerOf`: the layer a path sits in, for the retro (slices).
 - `boardSlices`: each slice a bolt lists, its cuts, data and entry, and its cuts done (slices), for the board.
 - `sliceDeclaration`: the slice grammar, a declaration's problems, the packs' cuts, and a project's pack, graph, a slice's declaration, a cut's path, a domain's surface slices and its events (stacks), for intake, models and slices.
 - `proofPatterns`: compile-error patterns of the proof (stacks).

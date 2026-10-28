@@ -1,8 +1,8 @@
 // What a bolt's slices give its card and its board item, read through the stack pack the stacks extension finds
 // (docs/design/slice-method.md#built).
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { bindingOf, branchOf, bundleOf, config, gitLines, globRegex, incrementLines, list, methodOf, msg, nameOf, plug, registry, relPath, render, seam, tryGit, withDefaults } from '../../lib/index.mjs';
+import { bindingOf, branchOf, bundleOf, config, gitLines, globRegex, incrementLines, list, methodOf, msg, nameOf, plug, readPlan, registry, relPath, render, seam, tryGit, withDefaults } from '../../lib/index.mjs';
 
 // The slices a bolt lists in its one domain, each with its declaration and its cuts as paths, the pack's slicePaths read
 // from the bottom, the shared layers before the slice's own code; null for a bolt that binds no one domain.
@@ -132,6 +132,41 @@ plug('planRules', ({ profile, live = [], all = [], add, base }) => {
     const missing = layers.filter((l) => !cuts.some((c) => c.split(D.form)[0] === l));
     if (missing.length) add('INCR-SKELETON', i, 1, 'incrSkeletonSlice', { slice, bolt: first.id, missing: missing.join(', ') });
   }
+});
+
+// Each declared slice of each domain, layer by layer: planned while none of its own code is written, done once every cut
+// is, partial between; with its permission, entry and hand-offs to the slices and domains it reaches
+// (docs/design/slice-method.md#reported).
+function sliceReport(root, profile) {
+  const [stacks] = seam('sliceDeclaration', profile), m = stacks?.pack(root)?.manifest, S = config.slices.states;
+  if (!m?.slicePaths) return [];
+  const bundle = bundleOf(root, withDefaults(profile)), id = (x) => String(x.id ?? x.name), domains = (profile.modules ?? []).filter((x) => x.kind === 'domain').map(id);
+  const base = (e) => e.replace(new RegExp(config.packs.events.versioned), ''), own = (cut) => stacks.paths(m)[cut].includes('{{slice}}');
+  const rows = domains.flatMap((domain) => (stacks.listed(bundle, domain) ?? []).map((slice) => ({ domain, slice, name: `${domain}/${slice}`, decl: stacks.declared(root, profile, domain, slice) })).filter((r) => r.decl?.cuts.length));
+  return rows.map((r) => {
+    const cuts = r.decl.cuts.map((cut) => ({ cut, done: existsSync(join(root, stacks.path(m, r.domain, r.slice, cut))) })), written = cuts.filter((c) => c.done && own(c.cut));
+    const consumers = (e) => rows.filter((x) => list(x.decl.consumes).map(base).includes(base(e))).map((x) => x.name);
+    const handoffs = [...list(r.decl.emits).flatMap((e) => consumers(e).map((to) => ({ to, via: e }))), ...list(r.decl.calls).map((to) => ({ to, via: msg('sliceReportCall', {}) }))];
+    return { ...r, cuts, handoffs, state: !written.length ? S.planned : cuts.every((c) => c.done) ? S.done : S.partial };
+  });
+}
+const reportLines = (rows) => rows.map((r) => msg('sliceReportLine', { slice: r.name, state: r.state, done: r.cuts.filter((c) => c.done).map((c) => c.cut).join(', ') || '-', todo: r.cuts.filter((c) => !c.done).map((c) => c.cut).join(', ') || '-',
+  handoffs: r.handoffs.map((h) => msg('sliceReportHandoff', h)).join('') })).join('');
+plug('statusLines', (st) => { const rows = sliceReport(st.cwd, st.profile); return rows.length ? msg('sliceReportHead', { lines: reportLines(rows) }) : ''; });
+plug('mapPages', (root, profile, base) => { const rows = sliceReport(root, profile), P = config.slices.mapPage; return rows.length ? [{ ...P, file: `${base}${P.suffix}${config.okf.ext}`, body: msg('sliceReportHead', { lines: reportLines(rows) }) }] : []; });
+// The trace of an intent: the permission catalogue of the slices its bolts list.
+plug('traceSections', (root, profile, intent) => {
+  const listed = new Set(readPlan(bundleOf(root, withDefaults(profile))).units.filter((u) => u.fm.intent === intent.id).flatMap((u) => list(u.fm.slices)));
+  const rows = sliceReport(root, profile).filter((r) => listed.has(r.slice));
+  return rows.length ? msg('slicePermissions', { rows: rows.map((r) => msg('slicePermissionRow', { slice: r.name, permission: r.decl.permission || '-', entry: r.decl.entry || '-' })).join('') }) : '';
+});
+// The layer a path sits in: a layer of its domain, from the stack pack, else its module's kind; for the retro.
+plug('layerOf', (root, profile, path) => {
+  const [stacks] = seam('sliceDeclaration', profile), m = stacks?.pack(root)?.manifest, mods = profile.modules ?? [];
+  const mod = mods.find((x) => list(x.paths).some((g) => globRegex(g).test(path) || globRegex(g).test(`${path}/`)));
+  if (!mod) return null;
+  const dir = m && mod.kind === 'domain' ? render(m.folders.domain, { domain: String(mod.id ?? mod.name) }) : null;
+  return (dir && Object.keys(m.layers).find((l) => path.startsWith(`${dir}/${m.layers[l]}`))) || mod.kind || null;
 });
 
 // At the gate, as the stacks' slice checks: only findings where the bolt changed a file count.

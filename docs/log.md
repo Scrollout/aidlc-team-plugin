@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-28
 
+- **Update** M29 built: B253 AC-3 reports each slice layer by layer in `status` and the map, the trace's permission catalogue and the retro's refusals by layer; [Building a slice](design/slice-method.md) and [What a slice declares](design/slice-declares.md) are stable. Release 0.206.0.
 - **Update** M29 B253, AC-2: `INCR-SKELETON` holds increment 1's first slice to every layer of the pack ([Construction](design/construction.md)). Release 0.205.0.
 - **Update** M29 B253, AC-1: `levels.<name>.proves` and `SLICE-TEST` for each slice's route and hand-offs ([Building a slice](design/slice-method.md#proved)). Release 0.204.0.
 - **Update** M29 B260 built: each ui form under `ui/<form>/<slice>`, scaffolded with its own code and test; a template form names its resource type and route ([Stack packs](design/stack-packs.md#scaffold)). Release 0.203.0.

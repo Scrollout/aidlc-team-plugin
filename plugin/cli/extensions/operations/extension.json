@@ -4,7 +4,7 @@
   "when": null,
   "data": {
     "messages": {
-      "retroMeasures": "measures:\n  lead time, approval to passing smoke: {{lead}}\n  increments shipped: {{shipped}} of {{committed}}\n  merge refusals by binding: {{refusals}}\n  owner dwell per approval: {{dwell}}\n  escape hatches: {{hatches}}\n",
+      "retroMeasures": "measures:\n  lead time, approval to passing smoke: {{lead}}\n  increments shipped: {{shipped}} of {{committed}}\n  merge refusals by binding: {{refusals}}\n  merge refusals by layer: {{layers}}\n  owner dwell per approval: {{dwell}}\n  escape hatches: {{hatches}}\n",
       "releaseUsage": "usage: aidlc release <intent>, for a merged intent with deploy.run or release in the profile",
       "releaseCiNotGreen": "{{intent}} ships only a pushed base whose CI passed (now: {{ci}}): run aidlc push and aidlc ci wait first",
       "releaseNoCheck": "{{intent}} has no passing deploy check on this base: run aidlc deploy check {{intent}} first",

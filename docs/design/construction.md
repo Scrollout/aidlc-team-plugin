@@ -53,7 +53,7 @@ A hatch in a doc past its `until` is `HATCH-EXPIRED`, an error of `check`. A del
 `retro I-<n>` adds, per intent:
 - lead time from the intent's approval to its last passing smoke;
 - predictability: increments shipped of those committed;
-- merge refusals by binding, recorded at each refused merge;
+- merge refusals by binding, and by the layer each finding sits in, recorded at each refused merge;
 - the owner's dwell time per approval: from the doc's last commit before the stamp to the stamp;
 - the hatches used.
 

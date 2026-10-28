@@ -1,8 +1,8 @@
 ---
 type: Design
 title: Building a slice
-description: Draft - the vertical slice method from intake to merge - each slice declares its layers, entry, data and integrations in one grammar, and is planned, scaffolded, checked, proved and reported layer by layer.
-status: draft
+description: The vertical slice method from intake to merge - each slice declares its layers, entry, data and integrations in one grammar, and is planned, scaffolded, checked, proved and reported layer by layer.
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-28T06:21:35Z }
 ---
 
@@ -46,6 +46,6 @@ From method 13 a slice carries the same declaration wherever it is written, `(<c
 - An increment's slices are whole; increment 1's first slice cuts every layer the system's pack has (`INCR-SKELETON`).
 
 # Reported
-`status`, `next`, the codebase map and the trace show the hand-offs between slices across domains, and each slice of a domain as planned, partial or done, layer by layer, from story to file; the board's bolt carries each slice's cuts, data and entry, and a field counting its cuts done; the retro counts refusals by layer.
+`status` and the map's `-slices` page show each slice as planned, partial or done, layer by layer, with its hand-offs; an intent's trace lists each of its slices' permission and entry, the permission catalogue; the board's bolt carries each slice's cuts, data, entry and cuts done; the retro counts refusals by layer.
 
 Bolts: [M29](../roadmap/m29.md) B250 to B253.

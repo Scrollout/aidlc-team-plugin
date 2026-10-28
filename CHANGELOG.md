@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.206.0] - 2026-10-28
+### Added
+- Slices reported (M29 B253, AC-3; M29 done). `status` and a `-slices` map page show each declared slice as planned, partial or done, layer by layer, with its hand-offs to the slices that consume its events and the domains it calls. An intent's trace lists the permission and entry of each slice its bolts list, the permission catalogue. The gate records the paths of a refused merge and the retro counts refusals by the layer each sits in. `slice-method.md`, `slice-declares.md` and M29 are stable.
+### Fixed
+- `SLICE-DATA`, `SLICE-INTEGRATE` and `SLICE-GOVERN` are gate codes: their level and fix were outside the gate's table, so a refused merge could not report them; they are on the gate codes page.
+
 ## [0.205.0] - 2026-10-28
 ### Added
 - The walking skeleton cuts every layer (M29 B253, AC-2). From method 13, `INCR-SKELETON` refuses an intent whose increment 1 opens with a slice that misses a layer the stack pack has; any `ui` form counts as `ui`.
@@ -476,7 +482,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.205.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.206.0...HEAD
+[0.206.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.205.0...v0.206.0
 [0.205.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.204.0...v0.205.0
 [0.204.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.203.0...v0.204.0
 [0.203.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.202.0...v0.203.0

@@ -1,7 +1,7 @@
 // The retro: what fired, escalated and needed the owner during an intent, and at most three changes to propose
 // (docs/design/steering.md#3-across-intents-the-retro). Proposals and messages come from extension.json.
 import { basename } from 'node:path';
-import { config, decisionsOf, done, events, hatchesOf, hatchLine, incrementLines, msg, readJson, readState, runtimeFile, statsFile, tryGit, UsageError, VERDICT, writeJson } from '../../lib/index.mjs';
+import { config, decisionsOf, seam, done, events, hatchesOf, hatchLine, incrementLines, msg, readJson, readState, runtimeFile, statsFile, tryGit, UsageError, VERDICT, writeJson } from '../../lib/index.mjs';
 
 const R = config.retro;
 const human = (e) => String(e.by).startsWith(config.state.human);
@@ -15,12 +15,14 @@ function measures(st, intent, units, docs, stats) {
   const lines = incrementLines(intent), committed = lines.length ? lines : [{ ids: intent.units.map((u) => u.id) }];
   const mine = new Set(units.map((u) => u.id));
   const refusals = Object.entries(Object.groupBy((stats[R.refusals] ?? []).filter((r) => mine.has(r.unit)), (r) => r.binding)).map(([b, rs]) => `${b} ${rs.length}`);
+  // Each refusal once per layer its findings sit in, from the stack pack's layers (docs/design/slice-method.md#reported).
+  const layerOf = seam('layerOf', st.profile)[0], byLayer = layerOf ? Object.entries(Object.groupBy((stats[R.refusals] ?? []).filter((r) => mine.has(r.unit)).flatMap((r) => [...new Set((r.paths ?? []).map((p) => layerOf(st.cwd, st.profile, p)).filter(Boolean))]), (l) => l)).map(([l, ls]) => `${l} ${ls.length}`) : [];
   // From the doc's last commit before each stamp to the stamp.
   const dwell = docs.filter((d) => d.file).flatMap((d) => events(d.fm).filter(human).map((e) => [d.id, e.at, tryGit(st.cwd, 'log', '-1', '--format=%cI', `--before=${e.at}`, '--', d.file)]))
     .filter(([, , c]) => c).map(([id, at, c]) => `${id} ${hours(c, at)}`);
   const hatches = hatchesOf(st).filter((h) => h.id === intent.id || mine.has(String(h.id).split(' ')[0]));
   return msg('retroMeasures', { lead: approved && smoke ? hours(approved, smoke) : '-', shipped: committed.filter((l) => l.ids.length && intent.shipped(l.ids)).length, committed: committed.length,
-    refusals: refusals.join(', ') || '-', dwell: dwell.join(', ') || '-', hatches: hatchLine(hatches) || '-' });
+    refusals: refusals.join(', ') || '-', layers: byLayer.join(', ') || '-', dwell: dwell.join(', ') || '-', hatches: hatchLine(hatches) || '-' });
 }
 
 export const commands = {

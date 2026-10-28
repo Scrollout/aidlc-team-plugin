@@ -21,21 +21,13 @@
       "sliceTestHandoff": "slice {{slice}} declares {{name}}, which no test at a {{level}} level names",
       "sliceTestPublisher": "slice {{slice}}'s hand-off test of {{event}} never names its publisher {{publisher}}",
       "sliceTestAsync": "slice {{slice}} is async, but no hand-off test naming it follows the status to a terminal state ({{states}})",
-      "incrSkeletonSlice": "increment 1's first slice, {{slice}} of {{bolt}}, cuts no {{missing}}: the walking skeleton cuts every layer the stack pack has"
-    },
-    "codes": {
-      "SLICE-DATA": {
-        "level": "error",
-        "fix": "name each data node the slice's code reaches in its declaration's data part, or reach it through the domain's model (docs: Building a slice)"
-      },
-      "SLICE-INTEGRATE": {
-        "level": "error",
-        "fix": "name each client, adapter, extension and event the slice's code reaches in its declaration's calls, emits or consumes, and drop one its code does not reach (docs: Building a slice)"
-      },
-      "SLICE-GOVERN": {
-        "level": "error",
-        "fix": "declare the permission the slice needs, composed by aidlc name permission, and leave authentication and authorization to the stages its entry applies (docs: What a slice declares)"
-      }
+      "incrSkeletonSlice": "increment 1's first slice, {{slice}} of {{bolt}}, cuts no {{missing}}: the walking skeleton cuts every layer the stack pack has",
+      "sliceReportHead": "slices, layer by layer:\n{{lines}}",
+      "sliceReportLine": "  {{slice}}: {{state}}; done {{done}}; to do {{todo}}\n{{handoffs}}",
+      "sliceReportHandoff": "    → {{to}} ({{via}})\n",
+      "sliceReportCall": "call",
+      "slicePermissions": "\nPermissions:\n\n| Slice | Permission | Entry |\n|---|---|---|\n{{rows}}",
+      "slicePermissionRow": "| {{slice}} | {{permission}} | {{entry}} |\n"
     },
     "slices": {
       "proves": {
@@ -46,7 +38,33 @@
         "Succeeded",
         "Failed",
         "Canceled"
-      ]
+      ],
+      "states": {
+        "planned": "planned",
+        "partial": "partial",
+        "done": "done"
+      },
+      "mapPage": {
+        "suffix": "-slices",
+        "title": "Slices",
+        "description": "Each slice of each domain, layer by layer, planned, partial or done, with its hand-offs to other slices and domains; written at every merge, never by hand."
+      }
+    },
+    "gate": {
+      "codes": {
+        "SLICE-DATA": {
+          "level": "error",
+          "fix": "name each data node the slice's code reaches in its declaration's data part, or reach it through the domain's model (docs: Building a slice)"
+        },
+        "SLICE-INTEGRATE": {
+          "level": "error",
+          "fix": "name each client, adapter, extension and event the slice's code reaches in its declaration's calls, emits or consumes, and drop one its code does not reach (docs: Building a slice)"
+        },
+        "SLICE-GOVERN": {
+          "level": "error",
+          "fix": "declare the permission the slice needs, composed by aidlc name permission, and leave authentication and authorization to the stages its entry applies (docs: What a slice declares)"
+        }
+      }
     }
   }
 }

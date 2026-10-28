@@ -114,7 +114,7 @@ test('B189/AC-2 the retro measures lead time, increments shipped, refusals by bi
   const dir = built(V2);
   run(dir, ['merge', 'B-1']);
   const out = run(dir, ['retro', 'I-1']).out;
-  assert.match(out, /^measures:\n {2}lead time, approval to passing smoke: -\n {2}increments shipped: 0 of 1\n {2}merge refusals by binding: -\n {2}owner dwell per approval: I-1 \d+h, B-1 \d+h, R-1 \d+h\n {2}escape hatches: -$/m);
+  assert.match(out, /^measures:\n {2}lead time, approval to passing smoke: -\n {2}increments shipped: 0 of 1\n {2}merge refusals by binding: -\n {2}merge refusals by layer: -\n {2}owner dwell per approval: I-1 \d+h, B-1 \d+h, R-1 \d+h\n {2}escape hatches: -$/m);
 });
 
 test('B190/AC-1 the board derives a bolt binding: its domain, its horizontal kind, fix or span', async () => {

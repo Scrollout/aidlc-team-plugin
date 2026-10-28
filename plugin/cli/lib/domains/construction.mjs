@@ -12,7 +12,7 @@ import { overlaps } from '../foundation/glob.mjs';
 import { writePage } from './map.mjs';
 import { mergedUnits, runtimeFile } from '../foundation/store.mjs';
 import { delegation } from './approval.mjs';
-import { plug } from '../foundation/seams.mjs';
+import { plug, seam } from '../foundation/seams.mjs';
 
 const ST = config.state.names; // the lifecycle states, by name
 
@@ -128,7 +128,7 @@ export function writeTrace(cwd, profile) {
   return traceOf(cwd, profile).filter((t) => t.rows.length).flatMap((t) => {
     const rows = t.rows.map((r) => msg('traceRow', { reqs: r.reqs.join(', ') || '-', tag: r.tag, tests: r.tests.join(', ') || '-', merge: r.merge ?? '-', release: r.release ?? '-' })).join('');
     const file = join(bundleOf(cwd, profile), render(C.trace, { id: t.intent.id.toLowerCase() }));
-    return writePage(file, msg('traceBody', { rows, delivered: t.delivered.join(', ') || '-' }), 'traceDoc', { intent: t.intent.id });
+    return writePage(file, msg('traceBody', { rows, delivered: t.delivered.join(', ') || '-' }) + seam('traceSections', profile).map((section) => section(cwd, profile, t.intent)).join(''), 'traceDoc', { intent: t.intent.id });
   });
 }
 

@@ -1,8 +1,8 @@
 ---
 type: Design
 title: What a slice declares
-description: Draft - what a vertical slice declares beyond its layers - the data of its domain it uses, the entry that serves it, how it integrates and the governance it needs - each checked at the gate and proved by a test.
-status: draft
+description: What a vertical slice declares beyond its layers - the data of its domain it uses, the entry that serves it, how it integrates and the governance it needs - each checked at the gate and proved by a test.
+status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-28T07:16:35Z }
 ---
 
