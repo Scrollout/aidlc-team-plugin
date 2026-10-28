@@ -39,29 +39,39 @@ plug('boardSlices', (top, bolt, profile, { base, merged }) => {
   return { lines, done: of.slices.reduce((n, s) => n + s.cuts.filter(changed).length, 0) };
 });
 
-// What the pack's graph shows of each declared slice: SLICE-DATA, a data edge from its own code's folders to a node it
-// does not declare; SLICE-ROUTE, its entry not importing its domain's interface layer, or a runtime no slice of the
-// domain names importing it (docs/design/slice-method.md#proved). Returns [{ code, path, key, data }].
+// What the pack's graph shows of each declared slice (docs/design/slice-method.md#proved): SLICE-DATA, a data edge from
+// its own code's folders to a node it does not declare; SLICE-INTEGRATE, an import of another domain's client, an
+// adapter, an extension or a domain's events it does not declare, or a declared call or event it does not import;
+// SLICE-ROUTE, its entry not importing its domain's interface layer, or a runtime no slice of the domain names importing
+// it. Returns [{ code, path, key, data }].
 export function graphFindings(root, profile) {
   const [stacks] = seam('sliceDeclaration', profile), m = stacks?.pack(root)?.manifest;
   if (!m?.slicePaths) return [];
-  const edges = stacks.graph(root, profile) ?? [], bundle = bundleOf(root, withDefaults(profile)), out = [], mods = profile.modules ?? [];
-  const prefix = profile.architecture?.data?.prefix ?? config.packs.dataPrefix, under = (p, at) => p === at || p.startsWith(`${at}/`);
+  const D = config.slices.declaration, edges = stacks.graph(root, profile) ?? [], bundle = bundleOf(root, withDefaults(profile)), out = [], mods = profile.modules ?? [];
+  const prefix = profile.architecture?.data?.prefix ?? config.packs.dataPrefix, under = (p, at) => p === at || p.startsWith(`${at}/`), inside = (at) => (p) => under(p, at);
   const own = Object.entries(m.slicePaths).filter(([, p]) => p.includes('{{slice}}') && !new RegExp(m.sources).test(p)).map(([cut]) => cut);
-  const runtimes = mods.filter((x) => x.kind === config.slices.declaration.runtime), id = (x) => String(x.id ?? x.name);
-  const inRuntime = (rt, from) => list(rt.paths).some((g) => globRegex(g).test(`${from}/`));
-  for (const domain of mods.filter((x) => x.kind === 'domain').map(id)) {
-    const declared = (stacks.listed(bundle, domain) ?? []).map((slice) => ({ slice, decl: stacks.declared(root, profile, domain, slice) })).filter((s) => s.decl?.cuts.length);
-    for (const { slice, decl } of declared) {
-      const folders = own.filter((cut) => decl.cuts.includes(cut)).map((cut) => stacks.path(m, domain, slice, cut));
-      for (const [from, to] of edges.filter(([f, t]) => t.startsWith(prefix) && folders.some((at) => under(f, at)) && !list(decl.data).some((g) => globRegex(g).test(t)))) {
-        out.push({ code: 'SLICE-DATA', path: from, key: 'sliceDataEdge', data: { slice: `${domain}/${slice}`, node: to } });
-      }
+  const id = (x) => String(x.id ?? x.name), runtimes = mods.filter((x) => x.kind === D.runtime), domains = mods.filter((x) => x.kind === 'domain').map(id);
+  const inModule = (name) => (p) => list(mods.find((x) => id(x) === name)?.paths).some((g) => globRegex(g).test(`${p}/`));
+  const dirOf = (d) => render(m.folders.domain, { domain: d }), client = (d) => inside(`${dirOf(d)}/${m.surfaces.client}`), events = (d) => (d ? inside(`${dirOf(d)}/${m.surfaces.events}`) : () => false);
+  // A call reaches a domain's client or another module's paths; an event its publisher's events folder.
+  const callee = (name) => (domains.includes(name) ? client(name) : inModule(name));
+  const base = (e) => e.replace(new RegExp(config.packs.events.versioned), ''), published = stacks.events(bundle, domains);
+  const publisher = (e) => domains.find((d) => (published.get(d) ?? []).map(base).includes(base(e)));
+  const others = mods.filter((x) => x.kind !== 'domain' && D.callKinds.includes(x.kind)).map((x) => inModule(id(x)));
+  for (const domain of domains) {
+    const iface = `${dirOf(domain)}/${m.layers.interface}`, surfaces = [...domains.filter((d) => d !== domain).map(client), ...domains.map(events), ...others];
+    const slices = (stacks.listed(bundle, domain) ?? []).map((slice) => ({ slice, decl: stacks.declared(root, profile, domain, slice) })).filter((s) => s.decl?.cuts.length);
+    for (const { slice, decl } of slices) {
+      const at = { slice: `${domain}/${slice}` }, folders = own.filter((cut) => decl.cuts.includes(cut)).map((cut) => stacks.path(m, domain, slice, cut));
+      const reached = edges.filter(([f]) => folders.some((x) => under(f, x)));
+      for (const [from, to] of reached.filter(([, t]) => t.startsWith(prefix) && !list(decl.data).some((g) => globRegex(g).test(t)))) out.push({ code: 'SLICE-DATA', path: from, key: 'sliceDataEdge', data: { ...at, node: to } });
+      const wanted = [...list(decl.calls).map((t) => [t, callee(t)]), ...(list(decl.emits).length ? [[list(decl.emits).join(', '), events(domain)]] : []), ...list(decl.consumes).map((e) => [e, events(publisher(e))])];
+      for (const [name] of wanted.filter(([, target]) => !reached.some(([, t]) => target(t)))) out.push({ code: 'SLICE-INTEGRATE', path: folders[0] ?? iface, key: 'sliceIntegrateUnreached', data: { ...at, name } });
+      for (const [from, to] of reached.filter(([, t]) => surfaces.some((s) => s(t)) && !wanted.some(([, target]) => target(t)))) out.push({ code: 'SLICE-INTEGRATE', path: from, key: 'sliceIntegrateUndeclared', data: { ...at, to } });
     }
-    const iface = `${render(m.folders.domain, { domain })}/${m.layers.interface}`, entries = new Set(declared.map((s) => s.decl.entry).filter(Boolean));
-    const wires = (rt) => edges.filter(([f, t]) => inRuntime(rt, f) && under(t, iface));
+    const entries = new Set(slices.map((s) => s.decl.entry).filter(Boolean)), wires = (rt) => edges.filter(([f, t]) => inModule(id(rt))(f) && under(t, iface));
     for (const rt of runtimes) {
-      if (entries.has(id(rt)) && !wires(rt).length) out.push({ code: 'SLICE-ROUTE', path: iface, key: 'sliceEntryUnwired', data: { runtime: id(rt), domain, layer: iface, slices: declared.filter((s) => s.decl.entry === id(rt)).map((s) => s.slice).join(', ') } });
+      if (entries.has(id(rt)) && !wires(rt).length) out.push({ code: 'SLICE-ROUTE', path: iface, key: 'sliceEntryUnwired', data: { runtime: id(rt), domain, layer: iface, slices: slices.filter((s) => s.decl.entry === id(rt)).map((s) => s.slice).join(', ') } });
       if (entries.size && !entries.has(id(rt))) for (const [from] of wires(rt)) out.push({ code: 'SLICE-ROUTE', path: from, key: 'sliceEntryOther', data: { runtime: id(rt), domain, entries: [...entries].join(', ') } });
     }
   }

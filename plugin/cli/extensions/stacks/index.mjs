@@ -219,7 +219,7 @@ export function declarationProblems(decl, { root, profile, bundle, slice, domain
   return out;
 }
 const cutsOfPacks = () => (existsSync(packsDir()) ? [...new Set(readdirSync(packsDir()).flatMap((s) => { const f = join(packsDir(), s, K.manifest); return existsSync(f) ? Object.keys(JSON.parse(readFileSync(f, 'utf8')).slicePaths ?? {}) : []; }))] : []);
-plug('sliceDeclaration', { parse: declarationOf, problems: declarationProblems, cuts: cutsOfPacks, pack: packFor, declared: declarationAt, path: cutPath, graph: packGraph, listed: surfaceOf });
+plug('sliceDeclaration', { parse: declarationOf, problems: declarationProblems, cuts: cutsOfPacks, pack: packFor, declared: declarationAt, path: cutPath, graph: packGraph, listed: surfaceOf, events: eventsOf });
 
 // Vertical slices across a domain's layers: each slice is a folder of the application layer, met by no other slice,
 // entered from its domain's interface layer or a runtime, listed with its use case and stories in the domain doc, and

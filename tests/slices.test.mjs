@@ -235,3 +235,21 @@ test('B252/AC-4 SLICE-DATA refuses a data edge a slice does not declare; SLICE-R
     'SLICE-ROUTE cmd/admin-api runtime admin-api imports domain orders\'s interface layer, though its slices name shop-api as their entry',
   ]);
 });
+
+test('B252/AC-4 SLICE-INTEGRATE refuses a client, adapter or events import a slice does not declare, and a declared call or event its code never imports', () => {
+  const B = 'internal/domains/billing';
+  const profile = { ...ORDERS, modules: [...ORDERS.modules, { id: 'billing', kind: 'domain', paths: [`${B}/**`] }, { id: 'stripe', kind: 'adapter', paths: ['internal/adapters/stripe/**'] }] };
+  const surface = (decl) => `---\ntype: Domain\ntitle: Orders\ndescription: Orders.\ncode: orders\nkind: domain\n---\n\n# Surface\n- Command createorder (${decl}): a customer orders a cake [I-1:US1.1]\n- Events: OrderPlaced\n`;
+  const full = 'interface, application; entry shop-api; emits OrderPlaced; consumes PaymentTaken; calls billing';
+  const found = (decl, imports) => graphFindings(makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', 'docs/domains/orders.md': surface(decl),
+    'docs/domains/billing.md': '---\ntype: Domain\ntitle: Billing\ndescription: Billing.\ncode: billing\nkind: domain\n---\n\n# Surface\n- Events: PaymentTaken\n',
+    [`${D}/application/createorder/handler.go`]: go('createorder', imports), [`${D}/interface/createorder.go`]: go('iface', [`${D}/application/createorder`]),
+    [`${D}/events/events.go`]: go('events'), [`${B}/client/client.go`]: go('client'), [`${B}/events/events.go`]: go('events'), 'internal/adapters/stripe/stripe.go': go('stripe'),
+    'cmd/shop-api/main.go': go('main', [`${D}/interface`]) }, profile), profile).map((f) => `${f.code} ${msg(f.key, f.data)}`);
+  const all = [`${B}/client`, `${B}/events`, `${D}/events`];
+  assert.deepEqual(found(full, all), [], 'each import declared, each declared one imported');
+  assert.deepEqual(found(full, [...all, 'internal/adapters/stripe']), ['SLICE-INTEGRATE slice orders/createorder imports internal/adapters/stripe, which its declaration does not name']);
+  assert.deepEqual(found(full, [`${B}/events`, `${D}/events`]), ['SLICE-INTEGRATE slice orders/createorder declares billing, which its code never imports']);
+  assert.deepEqual(found('interface, application; entry shop-api', all), [`SLICE-INTEGRATE slice orders/createorder imports ${B}/client, which its declaration does not name`,
+    `SLICE-INTEGRATE slice orders/createorder imports ${B}/events, which its declaration does not name`, `SLICE-INTEGRATE slice orders/createorder imports ${D}/events, which its declaration does not name`]);
+});

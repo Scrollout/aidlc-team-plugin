@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.200.0] - 2026-10-28
+### Added
+- Integrations checked from the graph (M29 B252, AC-4, second part). `SLICE-INTEGRATE` refuses a slice whose own code imports another domain's client, an adapter, an extension or a domain's events its declaration does not name in `calls`, `emits` or `consumes`, and a declared call or event its code never imports.
+
 ## [0.199.0] - 2026-10-28
 ### Added
 - Data and entry checked from the graph (M29 B252, AC-4, first part). `SLICE-DATA` refuses a data edge from a folder of a slice's own code to a node its declaration does not name. `SLICE-ROUTE` also refuses a runtime a slice names as its entry that does not import its domain's interface layer, and a runtime none of the domain's slices names that does. Both count at the gate where a bolt changed the path.
@@ -452,7 +456,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.199.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.200.0...HEAD
+[0.200.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.199.0...v0.200.0
 [0.199.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.198.0...v0.199.0
 [0.198.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.197.0...v0.198.0
 [0.197.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.196.0...v0.197.0

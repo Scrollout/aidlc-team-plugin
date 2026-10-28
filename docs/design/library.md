@@ -35,7 +35,7 @@ The plugin holds every project to kinds, layers and one-way dependencies. Its ow
 - `cardSections`: sections a card adds (stacks).
 - `cardSlices`: each slice a bolt lists, its cuts as ordered steps (slices).
 - `boardSlices`: each slice a bolt lists, its cuts, data and entry, and its cuts done (slices), for the board.
-- `sliceDeclaration`: the slice grammar, a declaration's problems, the packs' cuts, and a project's pack, a slice's declared cuts and a cut's path (stacks), for intake, models and slices.
+- `sliceDeclaration`: the slice grammar, a declaration's problems, the packs' cuts, and a project's pack, graph, a slice's declaration, a cut's path, a domain's surface slices and its events (stacks), for intake, models and slices.
 - `proofPatterns`: compile-error patterns of the proof (stacks).
 - `afterMerge`: work after a merge lands (board).
 - `issueTitle`: the title of an issue `fix --from-issue` reads (board).
