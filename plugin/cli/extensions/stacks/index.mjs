@@ -176,13 +176,19 @@ export function declarationOf(text) {
 function declarationAt(root, profile, domain, slice) {
   const doc = join(bundleOf(root, withDefaults(profile)), config.okf.bundle.folders.Domain, `${domain}${config.okf.ext}`);
   const line = existsSync(doc) && sectionOf(parseDoc(readFileSync(doc, 'utf8')), config.slices.surface).map(([, t]) => t).find((t) => new RegExp(`^\\s*[-*]\\s+\\S+\\s+${slice}\\b`).test(t));
-  return declarationOf(line ? line.split(':')[0] : '');
+  const decl = declarationOf(line ? line.split(':')[0] : '');
+  return decl && { ...decl, cuts: expand(packFor(root)?.manifest, decl.cuts) };
 }
 const declaredCuts = (...at) => declarationAt(...at)?.cuts ?? null;
-// The cuts scaffold writes: the declared ones, or every cut the pack writes own code for but `ui`.
-const scaffoldCuts = (root, profile, domain, slice, pack) => declaredCuts(root, profile, domain, slice) ?? [...new Set(pack.manifest.scaffold.slice.map(([, , c]) => c).filter((c) => c && c !== config.slices.declaration.ui))];
+// A pack's cuts and the path of each; a cut with forms, `ui`, is one cut per form the pack has, `ui.<form>`.
+const cutPaths = (m) => Object.fromEntries(Object.entries(m?.slicePaths ?? {}).flatMap(([cut, p]) => (isMap(p) ? Object.entries(p).map(([form, q]) => [`${cut}${config.slices.declaration.form}${form}`, q]) : [[cut, p]])));
+// The cuts a declaration names, a cut with forms standing for each form the pack has.
+const expand = (m, cuts) => [...new Set(cuts.flatMap((c) => (isMap(m?.slicePaths?.[c]) ? Object.keys(cutPaths(m)).filter((k) => k.startsWith(`${c}${config.slices.declaration.form}`)) : [c])))];
+const isUi = (cut) => { const D = config.slices.declaration; return cut === D.ui || cut.startsWith(`${D.ui}${D.form}`); };
+// The cuts scaffold writes: the declared ones, or every cut the pack writes own code for but `ui`'s forms.
+const scaffoldCuts = (root, profile, domain, slice, pack) => declaredCuts(root, profile, domain, slice) ?? [...new Set(pack.manifest.scaffold.slice.map(([, , c]) => c).filter((c) => c && !isUi(c)))];
 // Where a cut of a slice sits, from the pack's slicePaths: a file or a folder a bolt that cuts it changes.
-const cutPath = (m, domain, slice, cut) => render(m.slicePaths[cut], { dir: render(m.folders.domain, { domain }), domain, slice });
+const cutPath = (m, domain, slice, cut) => render(cutPaths(m)[cut], { dir: render(m.folders.domain, { domain }), domain, slice });
 const changes = (paths, at) => paths.some((p) => p === at || p.startsWith(`${at}/`));
 
 // Each domain's events, from the Events line of its doc's # Surface.
@@ -202,7 +208,7 @@ function eventsOf(bundle, domains) {
 export function declarationProblems(decl, { root, profile, bundle, slice, domains, ui = false }) {
   const D = config.slices.declaration, at = { slice };
   if (!decl?.cuts.length) return [['sliceNoCuts', at]];
-  const out = [], cuts = Object.keys(packFor(root)?.manifest.slicePaths ?? {}), mods = profile.modules ?? [], kind = (id) => mods.find((m) => String(m.id ?? m.name) === id)?.kind;
+  const m = packFor(root)?.manifest, out = [], cuts = [...new Set([...Object.keys(m?.slicePaths ?? {}), ...Object.keys(cutPaths(m))])], mods = profile.modules ?? [], kind = (id) => mods.find((m) => String(m.id ?? m.name) === id)?.kind;
   if (cuts.length) for (const cut of decl.cuts.filter((c) => !cuts.includes(c))) out.push(['sliceUnknownCut', { ...at, cut, cuts: cuts.join(', ') }]);
   for (const part of decl.unknown) out.push(['slicePartUnknown', { ...at, part, parts: D.parts.join(', ') }]);
   const owned = mods.filter((m) => domains.includes(String(m.id ?? m.name))).flatMap((m) => list(m.data)), shared = list(profile.architecture?.data?.shared);
@@ -215,11 +221,11 @@ export function declarationProblems(decl, { root, profile, bundle, slice, domain
   for (const event of list(decl.emits).filter((e) => !domains.some((d) => (events.get(d) ?? []).map(base).includes(base(e))))) out.push(['sliceEmits', { ...at, event, domain: domains.join(', ') }]);
   for (const event of list(decl.consumes).filter((e) => ![...events.values()].flat().map(base).includes(base(e)))) out.push(['sliceConsumes', { ...at, event }]);
   for (const target of list(decl.calls).filter((t) => !D.callKinds.includes(kind(t)))) out.push(['sliceCalls', { ...at, target }]);
-  if (ui && cuts.includes(D.ui) && !decl.cuts.includes(D.ui)) out.push(['sliceUi', at]);
+  if (ui && cuts.some(isUi) && !decl.cuts.some(isUi)) out.push(['sliceUi', at]);
   return out;
 }
-const cutsOfPacks = () => (existsSync(packsDir()) ? [...new Set(readdirSync(packsDir()).flatMap((s) => { const f = join(packsDir(), s, K.manifest); return existsSync(f) ? Object.keys(JSON.parse(readFileSync(f, 'utf8')).slicePaths ?? {}) : []; }))] : []);
-plug('sliceDeclaration', { parse: declarationOf, problems: declarationProblems, cuts: cutsOfPacks, pack: packFor, declared: declarationAt, path: cutPath, graph: packGraph, listed: surfaceOf, events: eventsOf });
+const cutsOfPacks = () => (existsSync(packsDir()) ? [...new Set(readdirSync(packsDir()).flatMap((s) => { const f = join(packsDir(), s, K.manifest); const m = existsSync(f) && JSON.parse(readFileSync(f, 'utf8')); return m ? [...new Set([...Object.keys(m.slicePaths ?? {}), ...Object.keys(cutPaths(m))])] : []; }))] : []);
+plug('sliceDeclaration', { parse: declarationOf, problems: declarationProblems, cuts: cutsOfPacks, pack: packFor, declared: declarationAt, path: cutPath, graph: packGraph, listed: surfaceOf, events: eventsOf, paths: cutPaths });
 
 // Vertical slices across a domain's layers: each slice is a folder of the application layer, met by no other slice,
 // entered from its domain's interface layer or a runtime, listed with its use case and stories in the domain doc, and
@@ -326,7 +332,7 @@ plug('planRules', ({ bundle, units, merged, add, profile, base }) => {
     // Each cut a listed slice declares is a path the bolt's scope covers, so the builder may write it (docs/design/slice-method.md#one-grammar).
     const m = packFor(base)?.manifest;
     for (const slice of m?.slicePaths ? list(u.fm.slices).filter((s) => listed.includes(s)) : []) {
-      for (const cut of (declaredCuts(base, profile, domains[0], slice) ?? []).filter((c) => m.slicePaths[c])) {
+      for (const cut of (declaredCuts(base, profile, domains[0], slice) ?? []).filter((c) => cutPaths(m)[c])) {
         const at = cutPath(m, domains[0], slice, cut);
         if (!list(u.fm.scope).some((g) => globRegex(g).test(at) || globRegex(g).test(`${at}/`))) add('PLAN-SLICE', u, 1, 'planSliceScope', { unit: u.id, slice, cut, path: at });
       }
@@ -354,7 +360,7 @@ function deliverFindings(tree, profile, paths, unit) {
     const folder = `${render(m.folders.domain, { domain: domains[0] })}/${L.application}/${s}`;
     if (!paths.some((p) => p.startsWith(`${folder}/`))) out.push({ code: 'SLICE-DELIVER', path: folder, key: 'sliceDeliverListed', data: { slice: `${domains[0]}/${s}`, unit: unit.id } });
     // A slice is delivered whole: each layer it cuts changes, its own code under its name or the shared layer's folder.
-    for (const cut of m.slicePaths ? (declaredCuts(tree, profile, domains[0], s) ?? []).filter((c) => m.slicePaths[c] && c !== L.application) : []) {
+    for (const cut of m.slicePaths ? (declaredCuts(tree, profile, domains[0], s) ?? []).filter((c) => cutPaths(m)[c] && c !== L.application) : []) {
       const at = cutPath(m, domains[0], s, cut);
       if (!changes(paths, at)) out.push({ code: 'SLICE-DELIVER', path: at, key: 'sliceDeliverCut', data: { slice: `${domains[0]}/${s}`, cut, unit: unit.id } });
     }

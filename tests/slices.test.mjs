@@ -267,3 +267,22 @@ test('B252/AC-4 SLICE-GOVERN refuses a slice with no permission behind an entry 
   assert.deepEqual(found('interface, application; entry shop-api', [], { ...profile, model: undefined }), [], 'no chosen model, no stage the entry applies');
   assert.deepEqual(found('interface, application; entry shop-api; permission orders.write', ['internal/pipeline/authorize']), [`SLICE-GOVERN ${D}/application/createorder slice orders/createorder imports internal/pipeline/authorize, a pipeline stage its entry runs for every slice`]);
 });
+
+// M29 B260: the ui cut's forms (docs/design/slice-method.md#layers).
+test('B260/AC-1 a pack maps each ui form it has to its path; a declaration cuts ui.<form>, or ui for every form; a form the pack lacks is reported', () => {
+  const notes = { system: { core: ['src/**'] }, modules: [{ id: 'notes', kind: 'domain', paths: ['src/domains/notes/**'] }, { id: 'notes-api', kind: 'runtime', paths: ['src/runtimes/notes-api/**'] }] };
+  const doc = (decl) => `---\ntype: Domain\ntitle: Notes\ndescription: Notes.\ncode: notes\nkind: domain\n---\n\n# Surface\n- Command createnote (${decl}): a writer keeps a note [I-1:US1.1]\n`;
+  const dir = makeRepo({ 'tsconfig.json': '{}\n', 'docs/domains/notes.md': doc('ui, interface, application') }, notes);
+  const [stacks] = seam('sliceDeclaration', notes), m = stacks.pack(dir).manifest;
+  assert.deepEqual(m.slicePaths.ui, { web: '{{dir}}/ui/{{slice}}' }, 'the TypeScript pack has the web form');
+  assert.deepEqual(stacks.declared(dir, notes, 'notes', 'createnote').cuts, ['ui.web', 'interface', 'application'], 'ui stands for every form the pack has');
+  assert.equal(stacks.path(m, 'notes', 'createnote', 'ui.web'), 'src/domains/notes/ui/createnote');
+  const problems = (decl, ui = false) => stacks.problems(stacks.parse(`(${decl})`), { root: dir, profile: notes, bundle: join(dir, 'docs'), slice: 'createnote', domains: ['notes'], ui }).map(([key, data]) => msg(key, data));
+  assert.deepEqual(problems('ui.web, interface'), []);
+  assert.deepEqual(problems('ui, interface'), []);
+  assert.equal(problems('ui.cli, interface').length, 1);
+  assert.match(problems('ui.cli, interface')[0], /ui\.cli/);
+  assert.deepEqual(problems('ui.web, interface', true), [], 'a ui unit of work\'s slice cuts a ui form');
+  assert.equal(problems('interface', true).length, 1, 'or is reported');
+  assert.ok(stacks.cuts().includes('ui.web') && stacks.cuts().includes('ui'), 'models may name a form or ui');
+});

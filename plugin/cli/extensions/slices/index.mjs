@@ -8,7 +8,7 @@ import { bindingOf, branchOf, bundleOf, config, gitLines, globRegex, list, msg, 
 function slicesOf(top, bolt, profile) {
   const [stacks] = seam('sliceDeclaration', profile), m = stacks?.pack(top)?.manifest, { domains, horizontal } = bindingOf(bolt, profile);
   if (!m?.slicePaths || domains.length !== 1 || horizontal.length) return null;
-  const [domain] = domains, order = Object.keys(m.slicePaths).reverse();
+  const [domain] = domains, order = Object.keys(stacks.paths(m)).reverse();
   return { domain, slices: list(bolt.fm?.slices).map((slice) => {
     const decl = stacks.declared(top, profile, domain, slice) ?? { cuts: [] };
     return { slice, decl, cuts: order.filter((cut) => decl.cuts.includes(cut)).map((cut) => ({ cut, path: stacks.path(m, domain, slice, cut) })) };
@@ -51,7 +51,7 @@ export function graphFindings(root, profile) {
   if (!m?.slicePaths) return [];
   const D = config.slices.declaration, edges = stacks.graph(root, profile) ?? [], bundle = bundleOf(root, withDefaults(profile)), out = [], mods = profile.modules ?? [];
   const prefix = profile.architecture?.data?.prefix ?? config.packs.dataPrefix, under = (p, at) => p === at || p.startsWith(`${at}/`), inside = (at) => (p) => under(p, at);
-  const own = Object.entries(m.slicePaths).filter(([, p]) => p.includes('{{slice}}') && !new RegExp(m.sources).test(p)).map(([cut]) => cut);
+  const own = Object.entries(stacks.paths(m)).filter(([, p]) => p.includes('{{slice}}') && !new RegExp(m.sources).test(p)).map(([cut]) => cut);
   const id = (x) => String(x.id ?? x.name), runtimes = mods.filter((x) => x.kind === D.runtime), domains = mods.filter((x) => x.kind === 'domain').map(id);
   const inModule = (name) => (p) => list(mods.find((x) => id(x) === name)?.paths).some((g) => globRegex(g).test(`${p}/`));
   const dirOf = (d) => render(m.folders.domain, { domain: d }), client = (d) => inside(`${dirOf(d)}/${m.surfaces.client}`), events = (d) => (d ? inside(`${dirOf(d)}/${m.surfaces.events}`) : () => false);

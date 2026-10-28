@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.202.0] - 2026-10-28
+### Added
+- The ui cut's forms (M29 B260, AC-1). A pack's `slicePaths.ui` maps each form it has, `cli`, `web` or `template`, to its path; the TypeScript pack has `web`. A declaration cuts `ui.<form>`, or `ui` for every form the pack has; `UNIT-WORK` and `SLICE-SURFACE` report a form the pack lacks, and the card, the board, `PLAN-SLICE`, `SLICE-DELIVER` and `scaffold slice` hold each form as a cut.
+
 ## [0.201.0] - 2026-10-28
 ### Added
 - Governance checked (M29 B252, AC-4, last part; B252 done). `SLICE-GOVERN` refuses a slice that names no `permission` though its entry applies a `pipeline` layer of the chosen model, and a slice whose own code imports a `pipeline` module instead of leaving governance to its entry. The models extension gives the chosen model's layers through a new seam, `modelLayers`.
@@ -460,7 +464,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.201.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.202.0...HEAD
+[0.202.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.201.0...v0.202.0
 [0.201.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.200.0...v0.201.0
 [0.200.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.199.0...v0.200.0
 [0.199.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.198.0...v0.199.0
