@@ -140,7 +140,7 @@
         },
         "SLICE-ROUTE": {
           "level": "error",
-          "fix": "give each slice its operation, with the operation id aidlc name operation-id composes from the same domain and verb, once in the contracts (docs: Vertical slices checked)"
+          "fix": "give each slice its operation, with the operation id aidlc name operation-id composes from the same domain and verb, once in the contracts; mount the domain's routes in the runtime its slices name as their entry, and in no other (docs: Vertical slices checked)"
         },
         "SLICE-DELIVER": {
           "level": "error",

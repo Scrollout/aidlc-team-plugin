@@ -1,6 +1,6 @@
 {
   "name": "slices",
-  "description": "What a bolt's slices give its card and its board item: each slice's cuts as ordered steps, test first, and its cuts, data, entry and cuts done, from the stack pack's slice paths (docs/design/slice-method.md#built).",
+  "description": "What a bolt's slices give its card, its board item and its gate: each slice's cuts as ordered steps, its cuts, data, entry and cuts done, and what the pack's graph shows of its data and entry (docs/design/slice-method.md).",
   "when": null,
   "data": {
     "messages": {
@@ -8,7 +8,16 @@
       "cardSlice": "{{slice}}{{scaffold}}\n{{steps}}",
       "cardSliceScaffold": ": `aidlc scaffold slice {{verb}} --domain {{domain}}`",
       "cardSliceStep": "{{n}}. {{cut}}: {{path}}\n",
-      "boardSlice": "Slice {{slice}}: cuts {{cuts}} ({{done}} of {{total}} done); data {{data}}; entry {{entry}}"
+      "boardSlice": "Slice {{slice}}: cuts {{cuts}} ({{done}} of {{total}} done); data {{data}}; entry {{entry}}",
+      "sliceDataEdge": "slice {{slice}} reaches data node {{node}}, which its declaration does not name",
+      "sliceEntryUnwired": "runtime {{runtime}}, the entry of {{slices}} in domain {{domain}}, does not import {{layer}}",
+      "sliceEntryOther": "runtime {{runtime}} imports domain {{domain}}'s interface layer, though its slices name {{entries}} as their entry"
+    },
+    "codes": {
+      "SLICE-DATA": {
+        "level": "error",
+        "fix": "name each data node the slice's code reaches in its declaration's data part, or reach it through the domain's model (docs: Building a slice)"
+      }
     }
   }
 }

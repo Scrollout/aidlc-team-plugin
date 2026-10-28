@@ -38,8 +38,8 @@ From method 13 a slice carries the same declaration wherever it is written, `(<c
 
 # Proved
 - `SLICE-DELIVER`: the bolt's diff changes each cut: its own code under the slice's name, a shared layer's folder.
-- `SLICE-DATA`: a data edge from the slice's code to a node it does not declare, or a declared node its domain neither owns nor shares.
-- `SLICE-ROUTE`: the slice's route is wired in the runtime of its entry.
+- `SLICE-DATA`: a data edge from a folder of the slice's own code to a node it does not declare; a declared node its domain neither owns nor shares is `SLICE-SURFACE`'s.
+- `SLICE-ROUTE`: the runtime a slice names as its entry imports its domain's interface layer; a runtime none of the domain's slices names does not.
 - `SLICE-INTEGRATE`: the slice's code imports another domain's client, an adapter or an event type it does not declare, or a declared integration its code does not reach, from the pack's graph.
 - Each declared event and call has a test at a level whose `proves` holds `handoff` that names it; a consumer's test names the publisher; an `async` slice's test follows the status to a terminal state.
 - `SLICE-GOVERN`: no `permission` behind an entry that authorizes, or a slice authorizing itself ([declared](slice-declares.md#governance)).

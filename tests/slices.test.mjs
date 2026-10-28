@@ -4,10 +4,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { cpSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { seam } from '../plugin/cli/lib/index.mjs';
+import { msg, seam } from '../plugin/cli/lib/index.mjs';
 import '../plugin/cli/extensions/intake/index.mjs'; // its stories seam, as the CLI loads every extension
 import { sliceFindings } from '../plugin/cli/extensions/stacks/index.mjs';
-import '../plugin/cli/extensions/slices/index.mjs'; // the card's slice steps
+import { graphFindings } from '../plugin/cli/extensions/slices/index.mjs';
 import { makeRepo, write } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -219,4 +219,19 @@ test('B252/AC-2 the card lists each slice\'s cuts as ordered steps, test first, 
   assert.ok(text.includes(`createorder: \`aidlc scaffold slice create --domain orders\`\n1. migration: migrations/orders\n2. model: ${D}/model\n3. application: ${D}/application/createorder\n4. interface: ${D}/interface/createorder.go\n`), text);
   assert.equal(card({}), '', 'a bolt listing no slice');
   assert.equal(card({ slices: ['createorder'] }, ORDERS).includes('aidlc scaffold'), false, 'no registry, no scaffold command');
+});
+
+test('B252/AC-4 SLICE-DATA refuses a data edge a slice does not declare; SLICE-ROUTE refuses an entry that does not mount its domain\'s routes, and a runtime no slice names that does', () => {
+  const doc = '---\ntype: Domain\ntitle: Orders\ndescription: Orders.\ncode: orders\nkind: domain\n---\n\n# Surface\n- Command createorder (interface, application; data data/orders/orders; entry shop-api): a customer orders a cake [I-1:US1.1]\n';
+  const profile = { ...ORDERS, modules: [...ORDERS.modules, { id: 'admin-api', kind: 'runtime', paths: ['cmd/admin-api/**'] }] };
+  const handler = (sql) => `package createorder\n\nconst q = "${sql}"\n`;
+  const found = (files) => graphFindings(makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', 'docs/domains/orders.md': doc,
+    [`${D}/application/createorder/handler.go`]: handler('select id from orders.orders'), [`${D}/interface/createorder.go`]: go('iface', [`${D}/application/createorder`]),
+    'cmd/shop-api/main.go': go('main', [`${D}/interface`]), ...files }, profile), profile).map((f) => `${f.code} ${f.path} ${msg(f.key, f.data)}`);
+  assert.deepEqual(found({}), [], 'declared data, routes mounted by the entry');
+  assert.deepEqual(found({ [`${D}/application/createorder/handler.go`]: handler('select id from orders.carts') }), [`SLICE-DATA ${D}/application/createorder slice orders/createorder reaches data node data/orders/carts, which its declaration does not name`]);
+  assert.deepEqual(found({ 'cmd/shop-api/main.go': go('main'), 'cmd/admin-api/main.go': go('main', [`${D}/interface`]) }), [
+    `SLICE-ROUTE ${D}/interface runtime shop-api, the entry of createorder in domain orders, does not import ${D}/interface`,
+    'SLICE-ROUTE cmd/admin-api runtime admin-api imports domain orders\'s interface layer, though its slices name shop-api as their entry',
+  ]);
 });
