@@ -90,6 +90,7 @@
       },
       "wave": "board.wave",
       "binding": "board.binding",
+      "cutsDone": "board.cutsDone",
       "typedOwner": "Organization",
       "dueTime": "T00:00:00Z"
     },

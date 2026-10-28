@@ -17,7 +17,7 @@ The plugin holds every project to kinds, layers and one-way dependencies. Its ow
 | foundation | `lib/foundation/` | `data` (cli.json and extension data, values, paths), `git`, `text` (templates, messages, findings), `yaml`, `glob`, `profile`, `store` (`.git/aidlc` files), `seams` |
 | domains | `lib/domains/` | `bundle`, `method`, `plan`, `inception`, `construction`, `approval`, `lifecycle`, `flow`, `review`, `card`, `gate`, `architecture`, `map`, `naming`, `operations`, `retro`, `setup`, `host` (the guard rails the coding agent's hooks call) |
 | runtime | `aidlc.mjs`, `lib/index.mjs` | the command table and extension loader; the public entry, the core's published surface |
-| extension | `extensions/<name>/` | `board` (the Project board), `contracts` (the API and event grammar), `intake` (the owner's request and its proposal), `models` (architecture models as data), `operations` (deploy check, release, smoke, rollback and the retro), `slices` (what a bolt's slices give its card and gate, through the pack the stacks find), `stacks` (graph, scaffold and checks of the stack packs) |
+| extension | `extensions/<name>/` | `board` (the Project board), `contracts` (the API and event grammar), `intake` (the owner's request and its proposal), `models` (architecture models as data), `operations` (deploy check, release, smoke, rollback and the retro), `slices` (what a bolt's slices give its card, board and gate, through the pack the stacks find), `stacks` (graph, scaffold and checks of the stack packs) |
 
 # Rules
 - A layer imports only its own layer and those below it: foundation nothing but kits, domains foundation and other domains' exports, the runtime the core.
@@ -34,6 +34,7 @@ The plugin holds every project to kinds, layers and one-way dependencies. Its ow
 - `statusLines`, `delivered`, `statusTail`: lines, the delivered requirements and the closing line `status` shows (construction, board).
 - `cardSections`: sections a card adds (stacks).
 - `cardSlices`: each slice a bolt lists, its cuts as ordered steps (slices).
+- `boardSlices`: each slice a bolt lists, its cuts, data and entry, and its cuts done (slices), for the board.
 - `sliceDeclaration`: the slice grammar, a declaration's problems, the packs' cuts, and a project's pack, a slice's declared cuts and a cut's path (stacks), for intake, models and slices.
 - `proofPatterns`: compile-error patterns of the proof (stacks).
 - `afterMerge`: work after a merge lands (board).

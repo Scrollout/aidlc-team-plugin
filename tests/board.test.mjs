@@ -423,3 +423,27 @@ test('B249/AC-2 a bolt is labelled slice:<name> for each slice it lists, or laye
   assert.equal(aidlc(ctx, 'sync').code, 0);
   assert.deepEqual(byTitle(ctx, 'U-2').labels.filter((l) => l.startsWith('slice:')), ['slice:listcurrency']);
 });
+
+test('B252/AC-3 a bolt\'s item carries each slice\'s cuts, data and entry, and Cuts done counts the cuts its branch changed', () => {
+  const ctx = setup({ u2: 'slices: [exportcurrency]' });
+  const D = 'internal/domains/currency';
+  write(ctx.dir, { '.aidlc/profile.json': { ...JSON.parse(read(ctx.dir, '.aidlc/profile.json')), modules: [{ id: 'api', kind: 'runtime', paths: ['cmd/**'] }, { id: 'currency', kind: 'domain', paths: [`${D}/**`], data: ['rates'] }] },
+    'go.mod': 'module example.com/shop\n\ngo 1.22\n',
+    'docs/domains/currency.md': '---\ntype: Domain\ntitle: Currency\ndescription: Currency.\ncode: currency\nkind: domain\n---\n\n# Surface\n- Command exportcurrency (interface, application, migration; data rates; entry api): a buyer exports rates [I-1:US1.1]\n',
+    [U(2)]: withFm(unitDoc({ title: 'Currency', scope: [`${D}/**`, 'migrations/currency/**'], modules: ['currency'] }), 'slices: [exportcurrency]') });
+  commit(ctx.dir, 'U-2 lists a declared slice');
+  branch(ctx.dir, 'U-2', 'migrations/currency/0001_rates.sql');
+  const s = stub(ctx);
+  s.project.fields.push({ id: 'F_cuts', name: 'Cuts done', dataType: 'NUMBER' });
+  writeFileSync(ctx.state, JSON.stringify(s));
+  const r = aidlc(ctx, 'sync');
+  assert.equal(r.code, 0, r.err + r.out);
+  const u2 = byTitle(ctx, 'U-2');
+  assert.match(u2.body, /^- Slice exportcurrency: cuts migration, application, interface \(1 of 3 done\); data rates; entry api$/m, u2.body);
+  assert.equal(item(ctx, u2.number).values['Cuts done'], 1);
+  assert.equal(item(ctx, byTitle(ctx, 'U-1').number).values['Cuts done'], undefined, 'a bolt with no slice has no count');
+
+  merge(ctx.dir, 'U-2');
+  assert.equal(aidlc(ctx, 'sync').code, 0);
+  assert.equal(item(ctx, u2.number).values['Cuts done'], 3, 'every cut, once merged');
+});

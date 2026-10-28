@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
-import { aidlcDir, at, bindingName, bindingOf, ciFile, config, decisionsOf, done, fieldPaths, git, isMap, list, msg, plug, readJson, readState, relPath, render, templateFile, tryGit, UsageError, writeJson } from '../../lib/index.mjs';
+import { aidlcDir, at, bindingName, bindingOf, ciFile, config, decisionsOf, done, fieldPaths, git, isMap, list, msg, plug, readJson, readState, relPath, render, seam, templateFile, tryGit, UsageError, writeJson } from '../../lib/index.mjs';
 
 const ST = config.state.names; // the lifecycle states, by name
 
@@ -69,7 +69,8 @@ function wanted(cwd, st, gh) {
   };
   const one = (d, kind, state) => {
     const K = T.kinds[kind === 'unit' && !d.fm.intent ? B.fix : kind];
-    const derived = { [B.wave]: () => wave(d), [B.binding]: () => bindingName(d, st.profile) }; // a value in the doc wins
+    const done = B.done.includes(state), sliced = kind === 'unit' ? seam('boardSlices', st.profile).map((f) => f(top, d, st.profile, { base: st.base, merged: done })).find(Boolean) : null;
+    const derived = { [B.wave]: () => wave(d), [B.binding]: () => bindingName(d, st.profile), [B.cutsDone]: () => sliced?.done }; // a value in the doc wins
     // The decisions the doc links, as labels: ADR-<NNNN> (docs/design/board.md#shape).
     const decisions = decisionsOf(st, [d]).map((x) => render(B.decisionLabel, { n: basename(x.file).slice(0, config.ids.decisionDigits) }));
     // Vertical or horizontal, from the binding the plan checks: the slices a bolt lists, or the kind of the one horizontal
@@ -79,10 +80,9 @@ function wanted(cwd, st, gh) {
     const layer = !domains.length && horizontal.length === 1 ? [render(B.layerLabel, { kind: kinds.get(horizontal[0]) })] : [];
     const own = { id: d.id, title: d.fm.title ?? '', requirements: d.requirements, lane: d.lane, modules: d.modules, depends: d.depends, decisions, slices, layer, status: state };
     const value = (path) => path && (at(own, path) ?? at(d.fm, path) ?? (kind === 'unit' && derived[path] ? derived[path]() : undefined));
-    const done = B.done.includes(state);
     const acs = (d.acs ?? []).map((a) => ({ box: done ? B.box.done : B.box.open, text: d.doc.lines[a.line - 1].replace(/^\s*[-*]\s+/, '') }));
     const marker = msg('boardMarker', { kind, id: d.id });
-    const data = { description: String(d.fm.description ?? ''), link: msg('boardLink', { repo: gh.repo, base: st.base, path: relPath(top, d.file) }), marker };
+    const data = { description: String(d.fm.description ?? ''), slices: sliced?.lines ?? [], link: msg('boardLink', { repo: gh.repo, base: st.base, path: relPath(top, d.file) }), marker };
     const [template, file] = body(K.body);
     let text;
     do text = render(template, { ...data, acs }, file); while (text.length > B.maxBody && acs.pop());

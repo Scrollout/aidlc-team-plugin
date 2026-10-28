@@ -1,13 +1,14 @@
 {
   "name": "slices",
-  "description": "What a bolt's slices give its card: each slice's cuts as ordered steps, test first, from the stack pack's slice paths (docs/design/slice-method.md#built).",
+  "description": "What a bolt's slices give its card and its board item: each slice's cuts as ordered steps, test first, and its cuts, data, entry and cuts done, from the stack pack's slice paths (docs/design/slice-method.md#built).",
   "when": null,
   "data": {
     "messages": {
       "cardSlices": "Run each slice's scaffold command first: it writes each cut's own code and test and keeps what exists. Then build its cuts in order, each one's failing test before its code. The reviewer reports a cut the diff leaves missing, or hollow: a stub, or a test that passes without its code.\n{{slices}}",
       "cardSlice": "{{slice}}{{scaffold}}\n{{steps}}",
       "cardSliceScaffold": ": `aidlc scaffold slice {{verb}} --domain {{domain}}`",
-      "cardSliceStep": "{{n}}. {{cut}}: {{path}}\n"
+      "cardSliceStep": "{{n}}. {{cut}}: {{path}}\n",
+      "boardSlice": "Slice {{slice}}: cuts {{cuts}} ({{done}} of {{total}} done); data {{data}}; entry {{entry}}"
     }
   }
 }

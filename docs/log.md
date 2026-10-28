@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-28
 
+- **Update** M29 B252, AC-3: a bolt's board item lists each slice's cuts, data and entry, and `Cuts done` counts the cuts done ([Board](design/board.md#shape)). Release 0.198.0.
 - **Update** M29 B252, AC-2: the card lists each slice's cuts as ordered steps, test first, after its scaffold command ([Building a slice](design/slice-method.md#built), [Bolt card](design/bolt-card.md)); a `slices` extension renders them ([Library and extensions](design/library.md)). Release 0.197.0.
 - **Update** M29 B252, first part: each layer a listed slice cuts is in the bolt's scope (`PLAN-SLICE`) and changed by its diff (`SLICE-DELIVER`) ([Building a slice](design/slice-method.md#proved)); M30 adds B259, scale and concurrency, before the trial. Release 0.196.0.
 - **Update** M29 B251 built: `scaffold slice` writes each declared cut's own code, and every reference routes each slice under `interface/<slice>` ([Stack packs](design/stack-packs.md#scaffold)). Release 0.195.0.

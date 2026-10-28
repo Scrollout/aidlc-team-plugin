@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.198.0] - 2026-10-28
+### Added
+- Slices on the board (M29 B252, AC-3). A bolt's issue lists each slice it names with its cuts, data and entry and how many of its cuts are done; the shipped `Cuts done` Project field counts them from `board.cutsDone`: each cut its branch changed since the base, every one once merged.
+
 ## [0.197.0] - 2026-10-28
 ### Added
 - Slice steps on the card (M29 B252, AC-2). A bolt's card has a `Slices` section: for each slice it lists, the scaffold command, then each layer the slice's `# Surface` line cuts, as ordered steps from the bottom of the pack's `slicePaths` up, each with its path, its failing test before its code. The builder scaffolds, then follows them; the reviewer, reading the same card, reports a cut missing or hollow. A new `slices` extension renders it through the stack pack.
@@ -444,7 +448,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.197.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.198.0...HEAD
+[0.198.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.197.0...v0.198.0
 [0.197.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.196.0...v0.197.0
 [0.196.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.195.0...v0.196.0
 [0.195.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.194.0...v0.195.0

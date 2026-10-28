@@ -172,12 +172,13 @@ export function declarationOf(text) {
   return out;
 }
 
-// The cuts a slice's # Surface line declares, or null when the line declares none.
-function declaredCuts(root, profile, domain, slice) {
+// The declaration on a slice's # Surface line, or null when the line carries none; its cuts alone, with declaredCuts.
+function declarationAt(root, profile, domain, slice) {
   const doc = join(bundleOf(root, withDefaults(profile)), config.okf.bundle.folders.Domain, `${domain}${config.okf.ext}`);
   const line = existsSync(doc) && sectionOf(parseDoc(readFileSync(doc, 'utf8')), config.slices.surface).map(([, t]) => t).find((t) => new RegExp(`^\\s*[-*]\\s+\\S+\\s+${slice}\\b`).test(t));
-  return declarationOf(line ? line.split(':')[0] : '')?.cuts ?? null;
+  return declarationOf(line ? line.split(':')[0] : '');
 }
+const declaredCuts = (...at) => declarationAt(...at)?.cuts ?? null;
 // The cuts scaffold writes: the declared ones, or every cut the pack writes own code for but `ui`.
 const scaffoldCuts = (root, profile, domain, slice, pack) => declaredCuts(root, profile, domain, slice) ?? [...new Set(pack.manifest.scaffold.slice.map(([, , c]) => c).filter((c) => c && c !== config.slices.declaration.ui))];
 // Where a cut of a slice sits, from the pack's slicePaths: a file or a folder a bolt that cuts it changes.
@@ -218,7 +219,7 @@ export function declarationProblems(decl, { root, profile, bundle, slice, domain
   return out;
 }
 const cutsOfPacks = () => (existsSync(packsDir()) ? [...new Set(readdirSync(packsDir()).flatMap((s) => { const f = join(packsDir(), s, K.manifest); return existsSync(f) ? Object.keys(JSON.parse(readFileSync(f, 'utf8')).slicePaths ?? {}) : []; }))] : []);
-plug('sliceDeclaration', { parse: declarationOf, problems: declarationProblems, cuts: cutsOfPacks, pack: packFor, declared: declaredCuts, path: cutPath });
+plug('sliceDeclaration', { parse: declarationOf, problems: declarationProblems, cuts: cutsOfPacks, pack: packFor, declared: declarationAt, path: cutPath });
 
 // Vertical slices across a domain's layers: each slice is a folder of the application layer, met by no other slice,
 // entered from its domain's interface layer or a runtime, listed with its use case and stories in the domain doc, and

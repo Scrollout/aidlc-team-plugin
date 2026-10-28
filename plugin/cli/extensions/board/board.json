@@ -50,6 +50,7 @@
         "merged": "Done",
         "released": "Done"
       }
-    }
+    },
+    "Cuts done": { "type": "NUMBER", "from": "board.cutsDone" }
   }
 }
