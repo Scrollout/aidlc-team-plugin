@@ -15,7 +15,12 @@
       "sliceIntegrateUnreached": "slice {{slice}} declares {{name}}, which its code never imports",
       "sliceIntegrateUndeclared": "slice {{slice}} imports {{to}}, which its declaration does not name",
       "sliceGovernPermission": "slice {{slice}} names no permission, though its entry {{entry}} applies {{stages}}",
-      "sliceGovernSelf": "slice {{slice}} imports {{to}}, a pipeline stage its entry runs for every slice"
+      "sliceGovernSelf": "slice {{slice}} imports {{to}}, a pipeline stage its entry runs for every slice",
+      "sliceTestRoute": "slice {{slice}} has no test at a {{level}} level that names it, so nothing proves it through its entry",
+      "sliceTestPermission": "slice {{slice}}'s route tests never name its permission {{permission}}, so none sees a request without it refused",
+      "sliceTestHandoff": "slice {{slice}} declares {{name}}, which no test at a {{level}} level names",
+      "sliceTestPublisher": "slice {{slice}}'s hand-off test of {{event}} never names its publisher {{publisher}}",
+      "sliceTestAsync": "slice {{slice}} is async, but no hand-off test naming it follows the status to a terminal state ({{states}})"
     },
     "codes": {
       "SLICE-DATA": {
@@ -30,6 +35,17 @@
         "level": "error",
         "fix": "declare the permission the slice needs, composed by aidlc name permission, and leave authentication and authorization to the stages its entry applies (docs: What a slice declares)"
       }
+    },
+    "slices": {
+      "proves": {
+        "route": "route",
+        "handoff": "handoff"
+      },
+      "terminal": [
+        "Succeeded",
+        "Failed",
+        "Canceled"
+      ]
     }
   }
 }

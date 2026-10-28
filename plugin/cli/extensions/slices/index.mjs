@@ -1,5 +1,6 @@
 // What a bolt's slices give its card and its board item, read through the stack pack the stacks extension finds
 // (docs/design/slice-method.md#built).
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { bindingOf, branchOf, bundleOf, config, gitLines, globRegex, list, msg, nameOf, plug, registry, relPath, render, seam, tryGit, withDefaults } from '../../lib/index.mjs';
 
@@ -86,5 +87,36 @@ export function graphFindings(root, profile) {
   }
   return out;
 }
+
+// SLICE-TEST, once a level's `proves` holds route or handoff: a test at a route level names each declared slice and its
+// permission; one at a handoff level names each event and call it declares, a consumer's the publisher too, an async
+// slice's a terminal state (docs/design/slice-method.md#proved). Returns [{ code, path, key, data }].
+export function testFindings(root, profile) {
+  const [stacks] = seam('sliceDeclaration', profile), m = stacks?.pack(root)?.manifest, P = config.slices.proves;
+  const globs = (what) => Object.values(withDefaults(profile).levels ?? {}).filter((l) => list(l?.proves).includes(what)).flatMap((l) => list(l.paths));
+  const [route, handoff] = [globs(P.route), globs(P.handoff)];
+  if (!m?.slicePaths || (!route.length && !handoff.length)) return [];
+  const files = gitLines(root, 'ls-files', '--cached', '--others', '--exclude-standard'), bundle = bundleOf(root, withDefaults(profile)), out = [];
+  const texts = (g) => files.filter((f) => g.some((x) => globRegex(x).test(f))).map((f) => readFileSync(join(root, f), 'utf8'));
+  const [routeTests, handoffTests] = [texts(route), texts(handoff)], names = (tests, ...words) => tests.some((t) => words.every((w) => t.includes(w)));
+  const id = (x) => String(x.id ?? x.name), domains = (profile.modules ?? []).filter((x) => x.kind === 'domain').map(id);
+  const base = (e) => e.replace(new RegExp(config.packs.events.versioned), ''), published = stacks.events(bundle, domains);
+  const publisher = (e) => domains.find((d) => (published.get(d) ?? []).map(base).includes(base(e)));
+  const terminal = (t) => config.slices.terminal.some((x) => t.toLowerCase().includes(x.toLowerCase()));
+  for (const domain of domains) {
+    const doc = relPath(root, join(bundle, config.okf.bundle.folders.Domain, `${domain}${config.okf.ext}`));
+    for (const { slice, decl } of (stacks.listed(bundle, domain) ?? []).map((x) => ({ slice: x, decl: stacks.declared(root, profile, domain, x) })).filter((x) => x.decl?.cuts.length)) {
+      const at = { slice: `${domain}/${slice}` }, path = decl.cuts.includes(m.layers.application) ? stacks.path(m, domain, slice, m.layers.application) : doc, add = (key, data = {}) => out.push({ code: 'SLICE-TEST', path, key, data: { ...at, ...data } });
+      if (route.length && !names(routeTests, slice)) add('sliceTestRoute', { level: P.route });
+      else if (route.length && decl.permission && !names(routeTests, slice, decl.permission)) add('sliceTestPermission', { permission: decl.permission });
+      if (!handoff.length) continue;
+      for (const name of [...list(decl.emits), ...list(decl.consumes), ...list(decl.calls)].filter((n) => !names(handoffTests, base(n)))) add('sliceTestHandoff', { name, level: P.handoff });
+      for (const e of list(decl.consumes).filter((x) => publisher(x) && names(handoffTests, base(x)) && !names(handoffTests, base(x), publisher(x)))) add('sliceTestPublisher', { event: e, publisher: publisher(e) });
+      if (decl.async && !handoffTests.some((t) => t.includes(slice) && terminal(t))) add('sliceTestAsync', { states: config.slices.terminal.join(', ') });
+    }
+  }
+  return out;
+}
+
 // At the gate, as the stacks' slice checks: only findings where the bolt changed a file count.
-plug('gateChecks', (tree, profile, paths = []) => graphFindings(tree, profile).filter((f) => paths.some((p) => p === f.path || p.startsWith(`${f.path}/`))));
+plug('gateChecks', (tree, profile, paths = []) => [...graphFindings(tree, profile), ...testFindings(tree, profile)].filter((f) => paths.some((p) => p === f.path || p.startsWith(`${f.path}/`))));

@@ -24,7 +24,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T21:50:00Z }
   "reserve": { "migration": { "dir": "migrations/{area}", "pattern": "{n:4}_*.sql" } },
   "parallel": { "max": 3 },
   "architecture": { "graph": "make deps-graph", "boundaries": [{ "from": "internal/core/**", "deny": ["internal/providers/**"] }], "data": { "prefix": "data/", "shared": ["data/outbox"] }, "checks": ["make contract-check"] },
-  "adopted": "<commit where init --adopt ran>",
+  "adopted": "<init --adopt commit>",
   "deploy": { "check": ["make image"] },
   "release": "make release"
 }
@@ -59,17 +59,17 @@ Merge rules:
 
   It also adds `.aidlc/local/` and `.claude/worktrees/` to `.gitignore`, the worktree folder to every other ignore file (`init.ignoreFiles`), and `worktree.baseRef: "head"` to `.claude/settings.json`.
 - `security.content`: regexes for code that needs a security review wherever it sits (RLS, TLS skips); a line adding one requires the `security` focus ([Merge mechanics](gate.md)). `security.secrets` is for credentials: the write hook blocks them.
-- `check` warns `PROFILE-KEY` for a top-level or `security` key in a layer file that nothing reads, so a guessed key is not taken for a rule.
-- `levels.<name>.paths`: the test files (`**/*_test.go`), never a folder holding helpers, which are code the proof reverts.
+- `check` warns `PROFILE-KEY` for a top-level or `security` key in a layer file that nothing reads, so a guessed key is not taken for one.
+- `levels.<name>.paths`: the test files (`**/*_test.go`), never a folder holding helpers, which are code the proof reverts. `proves`: `route` or `handoff`, what its tests prove of a slice ([SLICE-TEST](slice-method.md#proved)).
 - `checks`: commands run on every merge (lint, static analysis), each safe to run beside builders and reviewers; an object entry is a gate stage ([Lifecycle](lifecycle.md#pipelines)).
 - `review.fixRounds`: fix rounds per focus before a `fix` escalates (default 3). `decisions.paths` and `generated`: [Plan lint](plan-lint.md#profile-keys-it-reads).
 - `names`: [Naming rules](naming.md); `deps`: [Current dependencies](dependencies.md); `deploy.platform`: [Operations](operations.md).
 - `research.sources` lists the sources the owner trusts, and `research.max` its source budget (default 8); `models.research` its model ([0010](../decisions/0010-research-for-open-questions.md)). `efforts`: each agent role's effort ([Intake](intake.md#agents-get-exactly-their-brief)).
-- A lint target (`make lint`, `npm run lint`, `just lint`; `grid.runners`, `init.lintTargets`) `init` only offers as a module check, for the owner to add to `modules[].check`.
+- `init` offers a lint target (`make lint`; `init.lintTargets`) only as a module check, `modules[].check`.
 - `init` takes its answers as flags (`--name`, `--base`, `--bundle`); the skill asks the owner first. It never overwrites: it lists an existing file and exits 2 until the owner reruns with `--overwrite <path>`.
 - `init --adopt` keeps an existing bundle (the folder whose `index.md` has `okf_version`), records `adopted: <HEAD>` and reports, without changing anything:
   - spec errors and house-rule warnings;
-  - leftovers of other tools: unknown top-level dot folders, and commit trailer keys other than the standard and our own.
+  - leftovers of other tools: unknown top-level dot folders and foreign commit trailer keys.
 - Neutral by construction: templates never name the plugin; a test checks it.
 
 # Vendoring

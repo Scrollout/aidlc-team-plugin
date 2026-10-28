@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { msg, seam } from '../plugin/cli/lib/index.mjs';
 import '../plugin/cli/extensions/intake/index.mjs'; // its stories seam, as the CLI loads every extension
 import { sliceFindings } from '../plugin/cli/extensions/stacks/index.mjs';
-import { graphFindings } from '../plugin/cli/extensions/slices/index.mjs';
+import { graphFindings, testFindings } from '../plugin/cli/extensions/slices/index.mjs';
 import '../plugin/cli/extensions/models/index.mjs'; // the chosen model's layers, for SLICE-GOVERN
 import { makeRepo, write } from './state-repo.mjs';
 
@@ -295,4 +295,25 @@ test('B260/AC-2 scaffold writes each ui form\'s own code and test; a template fo
     ['ui/cli/createorder/command.go', 'ui/cli/createorder/command_test.go', 'ui/template/createorder/schema.json', 'ui/template/createorder/template_test.go', 'interface/createorder.go', 'interface/createorder_test.go', 'application/createorder/handler.go', 'application/createorder/handler_test.go'].map((p) => `wrote ${D}/${p}`));
   assert.deepEqual(JSON.parse(readFileSync(join(dir, D, 'ui/template/createorder/schema.json'), 'utf8')), { type: 'Acme.Shop/orders', route: '/providers/Acme.Shop/orders/{orderName}', operation: 'createorder', properties: {} });
   assert.match(readFileSync(join(dir, D, 'ui/template/createorder/template_test.go'), 'utf8'), /deployment applying a template .* calls the slice's\n\/\/ route/);
+});
+
+// M29 B253: each slice proved through its entry and its hand-offs (docs/design/slice-method.md#proved).
+test('B253/AC-1 SLICE-TEST: a route test names each slice and its permission; a hand-off test names each event and call, a consumer\'s the publisher, an async slice\'s a terminal state', () => {
+  const B = 'internal/domains/billing';
+  const surface = '---\ntype: Domain\ntitle: Orders\ndescription: Orders.\ncode: orders\nkind: domain\n---\n\n# Surface\n- Command createorder (interface, application; entry shop-api; permission orders.write; async; emits OrderPlaced; consumes PaymentTaken; calls billing): a customer orders [I-1:US1.1]\n- Events: OrderPlaced\n';
+  const profile = { ...ORDERS, modules: [...ORDERS.modules, { id: 'billing', kind: 'domain', paths: [`${B}/**`] }],
+    levels: { unit: { paths: ['internal/**/*_test.go'], run: 'go test ./...', proves: ['route'] }, integration: { paths: ['tests/integration/**'], run: 'go test ./tests/...', proves: ['handoff'] } } };
+  const route = 'func TestRoute_createorder(t *testing.T) { /* refused without orders.write */ }\n', handoff = '// createorder emits OrderPlaced; consumes PaymentTaken from billing; calls billing; polls until Succeeded\n';
+  const found = (files, p = profile) => testFindings(makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', 'docs/domains/orders.md': surface,
+    'docs/domains/billing.md': '---\ntype: Domain\ntitle: Billing\ndescription: Billing.\ncode: billing\nkind: domain\n---\n\n# Surface\n- Events: PaymentTaken\n',
+    [`${D}/interface/createorder_test.go`]: route, 'tests/integration/orders_test.go': handoff, ...files }, p), p).map((f) => `${f.path} ${msg(f.key, f.data)}`);
+  assert.deepEqual(found({}), [], 'proved through its entry and each hand-off');
+  assert.deepEqual(found({}, { ...profile, levels: { unit: { paths: ['**/*_test.go'] } } }), [], 'no level proves anything: nothing is required');
+  const at = `${D}/application/createorder`;
+  assert.deepEqual(found({ [`${D}/interface/createorder_test.go`]: 'func TestRoute(t *testing.T) {}\n' }), [`${at} slice orders/createorder has no test at a route level that names it, so nothing proves it through its entry`]);
+  assert.deepEqual(found({ [`${D}/interface/createorder_test.go`]: 'func TestRoute_createorder(t *testing.T) {}\n' }), [`${at} slice orders/createorder's route tests never name its permission orders.write, so none sees a request without it refused`]);
+  assert.deepEqual(found({ 'tests/integration/orders_test.go': '// createorder emits OrderPlaced; consumes PaymentTaken; polls until failed\n' }), [
+    `${at} slice orders/createorder declares billing, which no test at a handoff level names`,
+    `${at} slice orders/createorder's hand-off test of PaymentTaken never names its publisher billing`]);
+  assert.deepEqual(found({ 'tests/integration/orders_test.go': '// createorder emits OrderPlaced; consumes PaymentTaken from billing; calls billing\n' }), [`${at} slice orders/createorder is async, but no hand-off test naming it follows the status to a terminal state (Succeeded, Failed, Canceled)`]);
 });

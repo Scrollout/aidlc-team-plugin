@@ -41,9 +41,8 @@ From method 13 a slice carries the same declaration wherever it is written, `(<c
 - `SLICE-DATA`: a data edge from a folder of the slice's own code to a node it does not declare; a declared node its domain neither owns nor shares is `SLICE-SURFACE`'s.
 - `SLICE-ROUTE`: the runtime a slice names as its entry imports its domain's interface layer; a runtime none of the domain's slices names does not.
 - `SLICE-INTEGRATE`: the slice's own code imports another domain's client, an adapter, an extension or a domain's events it does not declare, or a declared call or event its code does not reach, from the pack's graph.
-- Each declared event and call has a test at a level whose `proves` holds `handoff` that names it; a consumer's test names the publisher; an `async` slice's test follows the status to a terminal state.
 - `SLICE-GOVERN`: no `permission` behind an entry applying a pipeline stage, or a slice importing a stage ([declared](slice-declares.md#governance)).
-- `SLICE-TEST`: a test at a level whose `proves` holds `route` names the slice's route, so the slice is proved through its entry, not by its handler alone, and a request without its permission is refused there.
+- `SLICE-TEST`, once a level's `proves` holds `route` or `handoff`: a test at a `route` level names the slice and its `permission`, proving it through its entry and refusing a request without the permission; one at a `handoff` level names each event and call it declares, a consumer's the publisher too, an `async` slice's a terminal state. The reviewer checks a business rule's refusal test.
 - An increment's slices are whole; increment 1's first slice cuts every layer the system's pack has (`INCR-SKELETON`).
 
 # Reported

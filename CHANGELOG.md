@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.204.0] - 2026-10-28
+### Added
+- Each slice proved through its entry and its hand-offs (M29 B253, AC-1). A level's `proves` lists `route` or `handoff`. Once one does, `SLICE-TEST` refuses a declared slice that no test at a `route` level names, or whose route tests never name its `permission`; and at a `handoff` level, an event or call it declares that no test names, a consumed event's test that never names its publisher, and an `async` slice whose tests reach no terminal state. The reviewer checks a business rule's refusal test.
+
 ## [0.203.0] - 2026-10-28
 ### Added
 - Each ui form scaffolded (M29 B260, AC-2; B260 done). Each form sits under `ui/<form>/<slice>`. The Go pack has a `ui` layer with `cli` and `template`; the TypeScript pack has `web` and `cli`, its reference screen under `ui/web/`. `scaffold slice` writes each form's own code and test: a command, a screen, or the slice's entry in the template schema naming its resource type (`<Namespace>/<type>`) and its route, with a test that the deployment applying it calls the route.
@@ -468,7 +472,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.203.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.204.0...HEAD
+[0.204.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.203.0...v0.204.0
 [0.203.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.202.0...v0.203.0
 [0.202.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.201.0...v0.202.0
 [0.201.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.200.0...v0.201.0
