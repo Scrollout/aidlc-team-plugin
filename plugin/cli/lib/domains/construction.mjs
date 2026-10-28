@@ -2,7 +2,7 @@
 // traceability page that says which requirements are delivered (docs/design/construction.md).
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
-import { bundleOf, config, lapsed, list, readJson, relPath } from '../foundation/data.mjs';
+import { bundleOf, config, idOf, lapsed, list, readJson, relPath } from '../foundation/data.mjs';
 import { git, tryGit } from '../foundation/git.mjs';
 import { msg, render } from '../foundation/text.mjs';
 import { parseDoc } from './bundle.mjs';
@@ -17,7 +17,6 @@ import { plug, seam } from '../foundation/seams.mjs';
 const ST = config.state.names; // the lifecycle states, by name
 
 const C = config.construction, GRID = config.grid;
-const idOf = (m) => String(m.id ?? m.name);
 
 // A bolt's binding: the modules it names, split by kind into domains and horizontal modules.
 export function bindingOf(u, profile) {

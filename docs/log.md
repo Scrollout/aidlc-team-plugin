@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-28
 
+- **Update** Code review fixes in the slices and stacks CLI extensions. Release 0.209.1.
 - **Update** The slices CLI extension shares one context across its checks and views, and compares integration event names as the declaration check does ([Library and extensions](design/library.md)). Release 0.209.0.
 - **Update** Consistency pass: every tracked text keeps each misreadable word to one sense ([Canonical model](design/canonical-model.md)); docs match the code; generated tables move to [tables](design/tables/index.md); decisions 0027 and 0028 proposed. Release 0.208.0.
 - **Update** M30 B255 built: model, request, bundle, contract and event keep one sense in what agents read ([Canonical model](design/canonical-model.md)). Release 0.207.0.

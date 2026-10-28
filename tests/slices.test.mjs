@@ -351,3 +351,15 @@ test('B253/AC-3 each slice reported planned, partial or done, layer by layer, wi
   const [layerOf] = seam('layerOf', profile);
   assert.deepEqual([`${D}/application/createorder/handler.go`, `${D}/model`, 'cmd/shop-api/main.go', 'README.md'].map((p) => layerOf(dir, profile, p)), ['application', 'model', 'runtime', null]);
 });
+
+test('a pack is found once its detect file appears; a hand-off is listed once; a layer is a folder, not a prefix', () => {
+  const dir = makeRepo({ 'docs/domains/orders.md': '---\ntype: Domain\ntitle: Orders\ndescription: Orders.\ncode: orders\nkind: domain\n---\n\n# Surface\n- Command createorder (interface, application; emits OrderPlaced): a customer orders [I-1:US1.1]\n- Query listorders (interface, application; consumes OrderPlaced, OrderPlaced.V1): a customer lists orders [I-1:US1.1]\n- Events: OrderPlaced\n' }, ORDERS);
+  const [stacks] = seam('sliceDeclaration', ORDERS);
+  assert.equal(stacks.pack(dir), null, 'no detect file yet');
+  write(dir, { 'go.mod': 'module example.com/shop\n\ngo 1.22\n' });
+  assert.equal(stacks.pack(dir)?.stack, 'go', 'found once the detect file appears');
+  const status = seam('statusLines', ORDERS).at(-1)({ cwd: dir, profile: ORDERS });
+  assert.equal(status.match(/→ orders\/listorders/g)?.length, 1, status);
+  const [layerOf] = seam('layerOf', ORDERS);
+  assert.deepEqual([`${D}/model/order.go`, `${D}/modelview/x.go`].map((p) => layerOf(dir, ORDERS, p)), ['model', 'domain']);
+});

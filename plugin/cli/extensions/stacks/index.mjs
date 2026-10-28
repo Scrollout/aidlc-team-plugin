@@ -9,8 +9,9 @@ const ST = config.state.names; // the lifecycle states, by name
 const K = config.packs;
 const packsDir = () => shippedDir('packs');
 
-// The pack whose detect file the project has, as { stack, dir, manifest }, or null; read once per root and run.
-const packs = new Map(), packFor = (root) => (packs.has(root) ? packs.get(root) : packs.set(root, findPack(root)).get(root));
+// The pack whose detect file the project has, as { stack, dir, manifest }, or null; a found pack is read once per root
+// and run, none is looked for again, since a merge may add the detect file.
+const packs = new Map(), packFor = (root) => packs.get(root) ?? ((p) => (p ? packs.set(root, p).get(root) : null))(findPack(root));
 function findPack(root) {
   if (!existsSync(packsDir())) return null;
   for (const stack of readdirSync(packsDir()).sort()) {
@@ -223,9 +224,9 @@ export function declarationProblems(decl, { root, profile, bundle, slice, domain
   const reg = decl.permission && profile.naming && registry(profile, bundle);
   const names = reg ? domains.flatMap((domain) => config.naming.actions.map((action) => { try { return nameOf('permission', { domain, action }, reg); } catch { return null; } })).filter(Boolean) : [];
   if (reg && !names.includes(decl.permission)) out.push(['slicePermission', { ...at, permission: decl.permission, names: names.join(', ') || '-' }]);
-  const base = eventBase, events = eventsOf(bundle, mods.filter((m) => m.kind === 'domain').map((m) => String(m.id ?? m.name)));
-  for (const event of list(decl.emits).filter((e) => !domains.some((d) => (events.get(d) ?? []).map(base).includes(base(e))))) out.push(['sliceEmits', { ...at, event, domain: domains.join(', ') }]);
-  for (const event of list(decl.consumes).filter((e) => ![...events.values()].flat().map(base).includes(base(e)))) out.push(['sliceConsumes', { ...at, event }]);
+  const events = eventsOf(bundle, mods.filter((m) => m.kind === 'domain').map((m) => String(m.id ?? m.name)));
+  for (const event of list(decl.emits).filter((e) => !domains.some((d) => (events.get(d) ?? []).map(eventBase).includes(eventBase(e))))) out.push(['sliceEmits', { ...at, event, domain: domains.join(', ') }]);
+  for (const event of list(decl.consumes).filter((e) => ![...events.values()].flat().map(eventBase).includes(eventBase(e)))) out.push(['sliceConsumes', { ...at, event }]);
   for (const target of list(decl.calls).filter((t) => !D.callKinds.includes(kind(t)))) out.push(['sliceCalls', { ...at, target }]);
   if (ui && cuts.some(isUi) && !decl.cuts.some(isUi)) out.push(['sliceUi', at]);
   return out;

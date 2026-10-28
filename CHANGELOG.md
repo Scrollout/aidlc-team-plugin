@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.209.1] - 2026-10-28
+### Fixed
+- A project without a pack's detect file is looked at again once one appears, as a merge may add it: only a found pack is kept for the run.
+- A slice that consumes an integration event under two versions is listed once among the emitting slice's hand-offs.
+- The gate builds the slices context once for both slice checks; INCR-SKELETON reads the layers from the pack's expanded cuts; the retro finds a path's layer by its folder, not a name prefix, for any pack with layers, with each module's globs compiled once.
+- `nameOf` falls back to the plugin's grammar for a registry built by hand; the module-id rule is one core helper, `idOf`.
+
 ## [0.209.0] - 2026-10-28
 ### Changed
 - The slices CLI extension reads a project once per view: one context holds the pack, the docs bundle, the domains, each declared slice and each integration event's publisher, and its checks, report, card and board item share it. The pack is found once per project root; hand-offs come from a map, not a scan of every slice against every slice; module and data globs compile once; the board's branch diff reuses the core's and starts one git process fewer.
@@ -506,7 +513,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.209.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.209.1...HEAD
+[0.209.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.209.0...v0.209.1
 [0.209.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.208.0...v0.209.0
 [0.208.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.207.0...v0.208.0
 [0.207.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.206.0...v0.207.0

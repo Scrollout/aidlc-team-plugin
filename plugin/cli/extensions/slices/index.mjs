@@ -2,9 +2,9 @@
 // (docs/design/slice-method.md#built).
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { bindingOf, bundleOf, config, gitLines, globRegex, incrementLines, list, methodOf, msg, nameOf, plug, readPlan, registry, relPath, render, seam, unitPaths, withDefaults } from '../../lib/index.mjs';
+import { bindingOf, bundleOf, config, gitLines, globRegex, idOf, incrementLines, list, methodOf, msg, nameOf, plug, readPlan, registry, relPath, render, seam, unitPaths, withDefaults } from '../../lib/index.mjs';
 
-const idOf = (x) => String(x.id ?? x.name), under = (p, at) => p === at || p.startsWith(`${at}/`);
+const under = (p, at) => p === at || p.startsWith(`${at}/`);
 
 // The stack pack the stacks extension finds, through its seam; null when the pack maps no slice paths.
 function packOf(root, profile) {
@@ -70,8 +70,7 @@ plug('boardSlices', (top, bolt, profile, { base, merged }) => {
 // SLICE-ROUTE, its entry not importing its domain's interface layer, or a runtime no slice of the domain names importing
 // it; SLICE-GOVERN, no permission behind an entry applying a pipeline stage of the chosen model, or its own code importing
 // a pipeline module (docs/design/slice-declares.md#governance). Returns [{ code, path, key, data }].
-export function graphFindings(root, profile) {
-  const c = context(root, profile);
+export function graphFindings(root, profile, c = context(root, profile)) {
   if (!c) return [];
   const { stacks, m, mods, domains } = c, D = config.slices.declaration, edges = stacks.graph(root, profile) ?? [], out = [];
   const prefix = profile.architecture?.data?.prefix ?? config.packs.dataPrefix, inside = (at) => (p) => under(p, at);
@@ -114,11 +113,11 @@ export function graphFindings(root, profile) {
 // SLICE-TEST, once a level's `proves` holds route or handoff: a test at a route level names each declared slice and its
 // permission; one at a handoff level names each event and call it declares, a consumer's the publisher too, an async
 // slice's a terminal state (docs/design/slice-method.md#proved). Returns [{ code, path, key, data }].
-export function testFindings(root, profile) {
+export function testFindings(root, profile, c = context(root, profile)) {
   const P = config.slices.proves, levels = Object.values(withDefaults(profile).levels ?? {});
   const globs = (what) => levels.filter((l) => list(l?.proves).includes(what)).flatMap((l) => list(l.paths)).map((g) => globRegex(g));
-  const [route, handoff] = [globs(P.route), globs(P.handoff)], c = (route.length || handoff.length) && context(root, profile);
-  if (!c) return [];
+  const [route, handoff] = [globs(P.route), globs(P.handoff)];
+  if (!c || (!route.length && !handoff.length)) return [];
   const files = gitLines(root, 'ls-files', '--cached', '--others', '--exclude-standard'), read = new Map(), out = [];
   const texts = (g) => files.filter((f) => g.some((x) => x.test(f))).map((f) => (read.has(f) ? read.get(f) : read.set(f, readFileSync(join(root, f), 'utf8')).get(f)));
   const [routeTests, handoffTests] = [texts(route), texts(handoff)], names = (tests, ...words) => tests.some((t) => words.every((w) => t.includes(w)));
@@ -141,7 +140,7 @@ export function testFindings(root, profile) {
 plug('planRules', ({ profile, live = [], all = [], add, base }) => {
   const pack = packOf(base, profile), D = config.slices.declaration;
   if (!pack) return;
-  const layers = Object.keys(pack.m.slicePaths), layerOf = (cut) => cut.split(D.form)[0];
+  const layerOf = (cut) => cut.split(D.form)[0], layers = [...new Set(Object.keys(pack.paths).map(layerOf))];
   for (const i of live.filter((x) => methodOf(x) >= config.method.since.sliceCuts)) {
     const own = all.filter((u) => u.fm.intent === i.id), [line] = incrementLines(i);
     const first = (line ? line.ids.map((x) => own.find((u) => u.id === x)).filter(Boolean) : own).find((u) => list(u.fm.slices).length), domains = first ? bindingOf(first, profile).domains : [];
@@ -161,10 +160,10 @@ function sliceReport(root, profile) {
   const own = (cut) => c.paths[cut].includes('{{slice}}'), call = msg('sliceReportCall', {});
   // The slices consuming each integration event, found once.
   const consumers = new Map();
-  for (const s of c.slices) for (const e of list(s.decl.consumes)) consumers.set(c.stacks.event(e), [...(consumers.get(c.stacks.event(e)) ?? []), s.name]);
+  for (const s of c.slices) for (const e of list(s.decl.consumes)) consumers.set(c.stacks.event(e), new Set([...(consumers.get(c.stacks.event(e)) ?? []), s.name]));
   return c.slices.map((r) => {
     const cuts = r.decl.cuts.map((cut) => ({ cut, done: existsSync(join(root, c.stacks.path(c.m, r.domain, r.slice, cut))) })), written = cuts.filter((x) => x.done && own(x.cut));
-    const handoffs = [...list(r.decl.emits).flatMap((e) => (consumers.get(c.stacks.event(e)) ?? []).map((to) => ({ to, via: e }))), ...list(r.decl.calls).map((to) => ({ to, via: call }))];
+    const handoffs = [...list(r.decl.emits).flatMap((e) => [...(consumers.get(c.stacks.event(e)) ?? [])].map((to) => ({ to, via: e }))), ...list(r.decl.calls).map((to) => ({ to, via: call }))];
     return { ...r, cuts, handoffs, state: !written.length ? S.planned : cuts.every((x) => x.done) ? S.done : S.partial };
   });
 }
@@ -181,16 +180,19 @@ plug('traceSections', (root, profile, intent) => {
   const rows = listed.size ? sliceReport(root, profile).filter((r) => listed.has(r.slice)) : [];
   return rows.length ? msg('slicePermissions', { rows: rows.map((r) => msg('slicePermissionRow', { slice: r.name, permission: r.decl.permission || '-', entry: r.decl.entry || '-' })).join('') }) : '';
 });
-// The layer a path sits in: a layer of its domain, from the stack pack, else its module's kind; for the retro.
+// The layer a path sits in: a layer of its domain, from the stack pack, else its module's kind; for the retro. Each
+// profile's module globs compile once.
+const moduleGlobs = new WeakMap();
 plug('layerOf', (root, profile, path) => {
-  const m = packOf(root, profile)?.m, mod = (profile.modules ?? []).find((x) => list(x.paths).some((g) => globRegex(g).test(path) || globRegex(g).test(`${path}/`)));
+  if (!moduleGlobs.has(profile)) moduleGlobs.set(profile, (profile.modules ?? []).map((x) => ({ mod: x, globs: list(x.paths).map((g) => globRegex(g)) })));
+  const mod = moduleGlobs.get(profile).find((x) => x.globs.some((g) => g.test(path) || g.test(`${path}/`)))?.mod;
   if (!mod) return null;
-  const dir = m && mod.kind === 'domain' ? render(m.folders.domain, { domain: idOf(mod) }) : null;
-  return (dir && Object.keys(m.layers).find((l) => path.startsWith(`${dir}/${m.layers[l]}`))) || mod.kind || null;
+  const [stacks] = seam('sliceDeclaration', profile), m = stacks?.pack(root)?.manifest, dir = m && mod.kind === 'domain' ? render(m.folders.domain, { domain: idOf(mod) }) : null;
+  return (dir && Object.keys(m.layers).find((l) => under(path, `${dir}/${m.layers[l]}`))) || mod.kind || null;
 });
 
 // At the gate, as the stacks' slice checks: only findings where the bolt changed a file count.
 plug('gateChecks', (tree, profile, paths = []) => {
-  const pack = packOf(tree, profile);
-  return pack ? [...graphFindings(tree, profile), ...testFindings(tree, profile)].filter(pack.stacks.touched(paths)) : [];
+  const c = context(tree, profile);
+  return c ? [...graphFindings(tree, profile, c), ...testFindings(tree, profile, c)].filter(c.stacks.touched(paths)) : [];
 });

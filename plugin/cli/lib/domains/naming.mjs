@@ -63,7 +63,7 @@ export function domainForms(code, reg) {
 
 // The name of `kind` for the given flags, checked against the registry and the kind's regex.
 export function nameOf(kind, flags, reg) {
-  const spec = reg.grammar[kind];
+  const spec = (reg.grammar ?? N.grammar)[kind]; // a registry built by hand has the plugin's grammar
   if (!spec) throw new UsageError(msg('nameUsage', { kinds: Object.keys(N.grammar).join(', ') }));
   const known = (what, value, list, where) => { if (value !== undefined && !list.includes(value)) throw new UsageError(msg('nameUnregistered', { what, value, where, known: list.join(', ') || '-' })); return value; };
   const v = { ...reg.tokens, tag: flags.tag ?? N.tagPlaceholder, previewSuffix: flags.preview ? N.previewSuffix : '', date: flags.date, section: flags.section, unit: known('unit', flags.unit, N.metricUnits, N.where.unit) };

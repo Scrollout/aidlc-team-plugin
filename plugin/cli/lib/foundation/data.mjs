@@ -14,6 +14,8 @@ export const [QUICK, STANDARD, FULL] = config.gate.lanes; // the lanes, lowest f
 export class UsageError extends Error {}
 
 // Helpers every module shares.
+// A module's id: its `id`, or its `name` in an older profile.
+export const idOf = (m) => String(m.id ?? m.name);
 export const list = (v) => (v === undefined || v === null ? [] : Array.isArray(v) ? v : [v]).map(String);
 export const isMap = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 export const readJson = (file) => (existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null);
