@@ -26,7 +26,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T09:45:00Z }
 - Reserved files (`index.md`, `log.md`) are not listed.
 - Prose paragraphs already in an index are kept under the heading they sit under; prose under a heading the new index no longer has moves to the top, so none is lost.
 - House additions: an entry line that already reads the doc's description plus a hint (`… Load when …`) keeps the hint, and a subfolder's existing description line wins over the one-entry default, so a line written by hand for a new subfolder stays.
-- Subdirectory descriptions: the reference uses the child's description when a directory has one entry, otherwise an LLM. We do the same for one entry, otherwise keep the existing line, so generation stays deterministic.
+- Subdirectory descriptions: the reference uses the child's description when a directory has one entry, otherwise an LLM. We do the same for one entry, otherwise keep the existing line, so generation stays deterministic; `check` names an entry left without one (`HOUSE-INDEX-DESC`).
 - The docs hook and `aidlc merge` run it; a hand edit is overwritten. Golden test: the output is byte-identical to the indexes in the official `ga4`, `stackoverflow` and `crypto_bitcoin` docs bundles.
 
 # Log files

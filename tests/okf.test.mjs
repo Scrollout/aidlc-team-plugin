@@ -56,6 +56,23 @@ test('U2/AC-1 YAML subset reads what PyYAML reads', () => {
   }
 });
 
+test('B261/AC-1 an index entry without a description warns HOUSE-INDEX-DESC until its line is written once', () => {
+  const doc = (title) => `---\ntype: Note\ntitle: ${title}\ndescription: The ${title} note.\n---\n\n# Body\n`;
+  const dir = bundle({ 'kb/notes/a.md': doc('A'), 'kb/notes/b.md': doc('B'), 'kb/one/c.md': doc('C') });
+  writeIndexes(join(dir, 'kb'));
+  const desc = (found) => found.filter((f) => f.code === 'HOUSE-INDEX-DESC');
+  const first = desc(checkBundle(join(dir, 'kb'), { base: dir }));
+  assert.equal(first.length, 1, 'only the folder of several docs lacks one; a one-doc folder takes its doc\'s');
+  assert.equal(first[0].level, 'warning');
+  assert.match(first[0].path, /kb[\\/]index\.md$/);
+  assert.match(first[0].message, /notes/);
+  const root = join(dir, 'kb', 'index.md');
+  writeFileSync(root, readFileSync(root, 'utf8').replace('* [notes](notes/index.md)\n', '* [notes](notes/index.md) - The notes.\n'));
+  writeIndexes(join(dir, 'kb'));
+  assert.match(readFileSync(root, 'utf8'), /\* \[notes\]\(notes\/index\.md\) - The notes\./, 'the generator keeps the written line');
+  assert.deepEqual(desc(checkBundle(join(dir, 'kb'), { base: dir })), []);
+});
+
 test('U2/AC-2 house rules follow profile.docs.rules; a rule set to error exits 1', () => {
   const docs = { 'kb/a.md': '---\ntype: Note\ngenerated: { by: x/1, at: 2026-01-01T00:00:00Z }\n---\n' };
   const plain = bundle(docs);

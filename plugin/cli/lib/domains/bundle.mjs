@@ -175,7 +175,7 @@ export function writeIndexes(root) {
 // ---- Validation ----
 
 const DATE = /^## (\d{4})-(\d{2})-(\d{2})\s*$/;
-const ENTRY = /^\* \[[^\]]+\]\([^)\s]+\)( - .*)?$/;
+const ENTRY = /^\* \[([^\]]+)\]\(([^)\s]+)\)( - .*)?$/;
 const MD_LINK = new RegExp(render(config.okf.mdLink, { ext: escapeRe(config.okf.ext) }), 'g');
 const LINK = /!?\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
 
@@ -358,6 +358,9 @@ export function checkBundle(root, { rules = {}, caps, base = process.cwd(), v2 =
   for (const [dir, text] of buildIndexes(root)) {
     const file = join(dir, OKF.index);
     if (!existsSync(file) || read(file) !== text) add(file, 1, 'HOUSE-INDEX-STALE', 'indexStale');
+    // A subfolder of several docs takes no description from them: its line is written once and then kept.
+    // (A doc's own missing description is HOUSE-DESC on the doc.)
+    text.split('\n').forEach((line, k) => { const [, title, link, described] = line.match(ENTRY) ?? []; if (link?.endsWith(`/${OKF.index}`) && !described) add(file, k + 1, 'HOUSE-INDEX-DESC', 'indexDesc', { entry: title }); });
   }
   return findings;
 }

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.212.0] - 2026-10-28
+### Added
+- An index entry without a description (M30 B261). `check` warns `HOUSE-INDEX-DESC` for each subfolder entry the generated indexes would write without a description, naming the index and the entry: a subfolder of several docs takes no description from them, so its line in the parent index is written once, and `aidlc index` keeps it. The plugin's own docs bundle gains the line its generated tables folder lacked.
+
 ## [0.211.0] - 2026-10-28
 ### Added
 - Scale and concurrency (M30 B259). On a generated project of 200 intents and 2,000 bolts, `status` and `next` hold a 2 s budget and `check` a 10 s one, each a median of three runs, checked in CI with the other budgets. One merge runs at a time: its lock names the bolt and the process, a second merge is refused (`GATE-BUSY`), and a lock whose process is gone is taken over. A base that moved while the gate ran refuses the merge (`GATE-MOVED`), never half merging. Both run in `node --test` at zero AI model tokens.
@@ -531,6 +535,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
 [unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.211.0...HEAD
+[0.212.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.211.0...v0.212.0
 [0.211.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.210.0...v0.211.0
 [0.210.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.209.1...v0.210.0
 [0.209.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.209.0...v0.209.1

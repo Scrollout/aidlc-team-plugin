@@ -15,6 +15,7 @@ generated: { by: tests/diagrams.mjs }
 | `OKF-RUNTIME` | add runtime: (e.g. bigquery, python) |
 | `HOUSE-INDEX-STALE` (warning) | run aidlc index |
 | `HOUSE-DESC` (warning) | add title: and a one-sentence description: |
+| `HOUSE-INDEX-DESC` (warning) | write ' - <one-sentence description>' after that entry in this index once; aidlc index keeps it |
 | `HOUSE-GENERATED` (warning) | add generated: { by: <producer>/<version>, at: <ISO 8601> } |
 | `HOUSE-LINK` (warning) | point the link at an existing file or remove it |
 | `DOC-SCHEMA` | add the keys the type requires (okf.bundle.schemas), use a value its list allows, and keep the doc in its type's folder (docs: Docs bundle v2) |

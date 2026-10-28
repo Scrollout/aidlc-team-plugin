@@ -66,4 +66,4 @@
 # Subdirectories
 
 * [diagrams](diagrams/index.md) - Generated from the data the CLI enforces: words, workflow, states, kinds, bundle types, naming grammar, the CLI's components and every check code.
-* [tables](tables/index.md)
+* [tables](tables/index.md) - Tables drawn from cli.json and the extensions' data by tests/diagrams.mjs: the bundle's doc types, every check code with its fix, the naming grammar and the vocabulary by scale; never edited by hand.

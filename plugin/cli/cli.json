@@ -275,6 +275,7 @@
     "logFrontmatter": "log.md frontmatter is not a valid YAML mapping",
     "logHeading": "date heading is not YYYY-MM-DD",
     "indexStale": "index differs from what aidlc index generates",
+    "indexDesc": "entry {{entry}} has no description",
     "docSchemaPattern": "a draft {{type}}'s {{key}} is {{value}}, which {{standard}} does not name: {{says}}",
     "docSchemaSection": "a draft {{type}} lacks its {{section}} section ({{standard}})",
     "supersededStatus": "superseded by ADR-{{n}}",
@@ -770,6 +771,11 @@
         "level": "warning",
         "house": true,
         "fix": "add title: and a one-sentence description:"
+      },
+      "HOUSE-INDEX-DESC": {
+        "level": "warning",
+        "house": true,
+        "fix": "write ' - <one-sentence description>' after that entry in this index once; aidlc index keeps it"
       },
       "HOUSE-GENERATED": {
         "level": "warning",

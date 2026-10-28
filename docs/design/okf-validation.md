@@ -23,6 +23,7 @@ Errors (spec conformance):
 Warnings (house rules; `profile.docs.rules` sets each to `error`, `warning` or `off`; spec codes cannot be changed):
 - `HOUSE-INDEX-STALE` an index differs from what `aidlc index` would generate.
 - `HOUSE-DESC` missing `title` or `description`.
+- `HOUSE-INDEX-DESC` an index entry the generator writes without a description: a subfolder of several docs takes none from them, so its line in the parent index is written once by hand and the generator keeps it.
 - `HOUSE-GENERATED` a doc without `generated` (authorship is not detectable, so owner-written docs bundles set it `off`).
 - `HOUSE-LINK` a link that does not resolve (the spec says consumers must tolerate these).
 - `HOUSE-SIZE` a doc over its type's cap, counted in code points over the whole file: Unit, Bolt, Plan, Intent 12,000; Map 16,000; Design, Decision, Research, Principles 6,000 (the research brief states the project's cap) (a digest carries its question and sources before any finding); others 4,000 (`cli.json` `okf.sizeCaps`, `sizeCapDefault`). A project whose own docs check caps lower sets `docs.caps` by type, with `default` for every type it does not name (`{ "default": 4000 }`), so `check` and the gate count with its numbers.
