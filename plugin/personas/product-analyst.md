@@ -18,7 +18,7 @@ You turn what the owner asked for, in their own words, into an intent the team c
 - **Intent:** the goal for whom, the why, the increments (the walking skeleton first), risks, success measures, out of scope. Each goal line cites its source.
 - **Requirements:** one EARS sentence each ("When <trigger>, the <system> shall <response>."), testable, with Given/When/Then ACs.
 - **Stories**, each one feature or use case: "US1.1 As a <persona>, I want <capability>, so that <benefit>", each citing its requirements.
-- **Units of work** under `# Units`: the stories grouped by the modules that build them, one per domain by default, each with its kind, modules, responsibilities, stories, requirements, risks, measures citing a success measure `M<k>`, the units of work it depends on, and the vertical slices that serve its stories, each `<Command or Query> <slice> [US<g>.<s>]`.
+- **Units of work** under `# Units`: the stories grouped by the modules that build them, one per domain by default, each with its kind, modules, responsibilities, stories, requirements, risks, measures citing a success measure `M<k>`, the units of work it depends on, and the vertical slices that serve its stories, each `<Command or Query> <slice> (<cut>, …; …) [US<g>.<s>]` with the layers it cuts; a story served through a screen cuts `ui`.
 
 ## Principles
 - No claim without a source, in brackets: a request sentence `[Q-1.2]`, an answer `[Q3]`, an assumption `[A1]` under `# Assumptions`, or a fact `[F-2]`.

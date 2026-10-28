@@ -81,7 +81,7 @@ test('B248/AC-2 intake lists a fitting model\'s slices; the persona and the inte
   writeFileSync(join(dir, '.aidlc/models/shop/model.json'), JSON.stringify({ name: 'shop', title: 'Shop', description: 'A shop.', layers: [{ id: 'web', kind: 'runtime' }], domains: [{ id: 'orders', kind: 'domain', slices: [{ kind: 'Command', verb: 'create', useCase: 'a customer orders' }] }], extension: { declares: [] }, rules: [], fit: { words: ['cakes'] } }));
   assert.match(run(dir, ['intake', 'Customers order cakes online.']).out, /models that fit: shop \(Q-1\.1; its slices: Command createorder\)/);
   const root = join(import.meta.dirname, '..');
-  assert.match(readFileSync(join(root, 'plugin/templates/docs/intent.md'), 'utf8'), /^- Slices: <Command or Query> <slice> \[US<g>\.<s>\]/m);
+  assert.match(readFileSync(join(root, 'plugin/templates/docs/intent.md'), 'utf8'), /^- Slices: <Command or Query> <slice> (\(.*?\) )?\[US<g>\.<s>\]/m);
   assert.match(readFileSync(join(root, 'plugin/personas/product-analyst.md'), 'utf8'), /the vertical slices that serve its stories/);
 });
 

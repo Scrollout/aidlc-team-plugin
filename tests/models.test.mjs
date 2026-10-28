@@ -329,3 +329,22 @@ test('B250/AC-3 intake lists a fitting model\'s slices with their cuts and hand-
   write(dir, { '.aidlc/models/sliced/model.json': model('sliced', { ...DECLARED, fit: { words: ['records'] } }) });
   assert.match(run(dir, ['intake', 'Clients keep records online.']).out, /its slices: Query getrecord \(interface, application; entry front\), Command createrecord \(interface, application, model, infrastructure, migration; data data\/records\/records; entry front; async; emits RecordCreated\.v1\)/);
 });
+
+test('B250/AC-1 B250/AC-4 the glossary, the templates, the personas and the example model carry a slice\'s declaration', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { config } = await import('../plugin/cli/lib/index.mjs');
+  const V = config.vocabulary, root = join(import.meta.dirname, '..'), text = (p) => readFileSync(join(root, p), 'utf8');
+  for (const word of ['cut', 'entry', 'hand-off', 'permission']) assert.ok(V.words.some((w) => w.word === word), word);
+  assert.deepEqual(['schema', 'action', 'mode', 'part', 'contract'].map((w) => V.retired.find((r) => r.word === w)?.use), ['migration', 'permission', 'async', 'cut', 'declaration'], 'each clashing word sends to the one it means');
+  assert.match(text('plugin/templates/docs/domain.md'), /^- Command <slice> \(<cut>, …; data <node>; entry <runtime>; …\): /m);
+  assert.match(text('plugin/templates/docs/domain.md'), /^- Events: <Noun><PastTenseVerb>, the integration events other domains consume$/m);
+  assert.match(text('plugin/templates/docs/intent.md'), /^- Slices: <Command or Query> <slice> \(<cut>, …; data <node>; entry <runtime>;/m);
+  assert.match(text('plugin/personas/product-analyst.md'), /a story served through a screen cuts `ui`/);
+  assert.match(text('plugin/personas/architect.md'), /the layers it cuts, then the data, entry, permission and hand-offs it has/);
+  const m = JSON.parse(text('examples/models/control-plane/model.json'));
+  assert.ok(m.layers.find((l) => l.kind === 'runtime').applies.includes('statusContract'), 'the front door applies the status contract');
+  assert.deepEqual(m.domains.flatMap((d) => d.slices).filter((s) => !s.cuts?.length), [], 'every slice of the example declares its cuts');
+  const dir = makeRepo({}, {});
+  adopt(dir);
+  assert.deepEqual(formatLines(dir), [], 'the declared example is in the format');
+});

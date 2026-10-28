@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.193.0] - 2026-10-28
+### Added
+- The words of a declared slice (M29 B250, done). The glossary defines cut, entry, hand-off and permission, and sends schema, action, mode, part and contract, in their slice senses, to the word each means. The intent and domain templates carry a slice's declaration, the domain template's `Events:` line naming the integration events other domains consume; the product analyst and the architect write it. The example control-plane model declares each slice's cuts, data, entry and hand-offs, and its front door what it applies.
+### Changed
+- Laying out the reference code by `slicePaths`, each slice's route under `interface/<slice>`, moves to B251 with the packs' references.
+
 ## [0.192.0] - 2026-10-28
 ### Added
 - Declared slices in models (M29 B250, second part). A model's slice carries `cuts`, `data`, `entry`, `permission`, `async`, `emits`, `consumes` and `calls`, and a runtime layer what it `applies`: pipeline layers of the model, outcome events or a status contract. `MODEL-FORMAT` reports a declaration with no cuts, a cut no stack pack lists, an unknown key, an entry that is no runtime layer, a call to no domain, extension or adapter layer, and an applied item that is neither. `models apply` writes each slice's declaration into its domain doc's `# Surface` and starts the walking skeleton from the slice that cuts the most layers; `models gaps` lists the part of a declaration a domain doc's line lacks; intake lists each fitting model's slices with their declarations.
@@ -420,7 +426,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.192.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.193.0...HEAD
+[0.193.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.192.0...v0.193.0
 [0.192.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.191.0...v0.192.0
 [0.191.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.190.0...v0.191.0
 [0.190.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.189.2...v0.190.0

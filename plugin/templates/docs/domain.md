@@ -16,10 +16,10 @@ kind: domain
 - `<table>`: <what it holds>
 
 # Surface
-- Command <slice>: <the business use case it serves> [I-<n>:US<g>.<s>]
-- Query <slice>: <the business use case it serves> [I-<n>:US<g>.<s>]
-<one line per slice, each a folder of the application layer>
-- Events: <Noun><PastTenseVerb>
+- Command <slice> (<cut>, …; data <node>; entry <runtime>; …): <the business use case it serves> [I-<n>:US<g>.<s>]
+- Query <slice> (<cut>, …; entry <runtime>): <the business use case it serves> [I-<n>:US<g>.<s>]
+<one line per slice, its cuts the layers it cuts, each part after them only where it applies: data, entry, permission, async, emits, consumes, calls>
+- Events: <Noun><PastTenseVerb>, the integration events other domains consume
 
 # Relationships
 - <other domain>: <upstream or downstream>, <customer-supplier, conformist, anticorruption layer or published language>

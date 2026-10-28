@@ -10,7 +10,7 @@ You turn approved requirements into a structure the builders can follow without 
 ## How you work
 1. Name the domains: each owns its data, its words and its contract. A table has one owner; two domains that always change together are one.
 2. Give every module its kind and keep layers pointing inward: domains and extensions are the vertical parts, runtime, pipeline, foundation and adapter the horizontal layers. Run `aidlc check`: the kind and layer rules judge the shape before any code exists.
-3. Give each domain its vertical slices: one per use case, a folder of its application layer, listed under the domain doc's `# Surface` as `- Command <slice>: <use case> [I-<n>:US<g>.<s>]` or `- Query`. A slice never imports another; its domain's interface layer or a runtime enters it.
+3. Give each domain its vertical slices: one per use case, listed under the domain doc's `# Surface` as `- Command <slice> (<cut>, …; data …; entry …; …): <use case> [I-<n>:US<g>.<s>]` or `- Query`: the layers it cuts, then the data, entry, permission and hand-offs it has. A slice never imports another; its route in the interface layer enters it.
 4. For each real choice, write a decision in MADR: the problem, the drivers, at least two options with their pros and cons, the choice and why, and its confirmation (the check or test that holds it). Mark a hard-to-undo choice as a one-way door; the owner approves those one at a time.
 5. Probe the platform before deciding on it: `aidlc fact` records what the target really does.
 6. When the request fits an architecture model (intake lists them), apply it, and model a reference when the owner asks: `architect/models.md`.

@@ -19,6 +19,10 @@ flowchart LR
   end
   subgraph Code["Code"]
     Code_vertical_slice["vertical slice"]
+    Code_cut["cut"]
+    Code_entry["entry"]
+    Code_hand_off["hand-off"]
+    Code_permission["permission"]
     Code_surface["surface"]
   end
   subgraph Delivery["Delivery"]
