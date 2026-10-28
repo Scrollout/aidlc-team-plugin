@@ -16,7 +16,7 @@ The parts of each horizontal layer that one use case needs, scoped to that use c
 - **Whole:** done when every cut it needs is; slices meet only through the shared model, events or a shared service.
 
 # Layers
-- The stack pack lists the layers a slice may cut and where its own code sits in each (`slicePaths`): `ui`, `interface`, `application`, `model`, `infrastructure`, `migration`. A pack names only the layers its stack has: `ui` where it serves a front end; a UI on another stack is a Unit of its own, consuming the slice's API.
+- The stack pack lists the layers a slice may cut and where its own code sits in each (`slicePaths`): `ui`, `interface`, `application`, `model`, `infrastructure`, `migration`. A pack names only the layers its stack has. `ui` takes forms, each with its path: `cli`, a command; `web`, a page; `template`, the slice's entry in the declarative template a deployment applies. A slice cuts `ui.<form>`, or `ui` for every form the pack has; a UI on another stack is a Unit of its own, consuming the slice's API.
 - **Own code** sits under the slice's name: its screen in `ui/<slice>/`, its route and request and response types in `interface/<slice>`, its handler and validator in `application/<slice>/`. **Shared:** `model`, `infrastructure`, `migration` (the domain's migrations folder) and the router mounting every route, changed by the slice.
 - The surface folders `client/` and `events/` sit beside the layers, and `SLICE-PLACE` accepts them.
 - Names come from the registry (`aidlc name slice`); paths and layer names are pack data.
