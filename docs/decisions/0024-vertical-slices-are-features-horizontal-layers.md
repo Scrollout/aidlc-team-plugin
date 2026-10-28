@@ -17,8 +17,8 @@ sources:
     resource: https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/microservice-application-layer-implementation-web-api
     title: Implementing the microservice application layer using the Web API
   - id: layering
-    resource: https://martinfowler.com/bliki/PresentationDomainDataLayering.html
-    title: Presentation Domain Data Layering
+    resource: https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/ddd-oriented-microservice
+    title: Designing a DDD-oriented microservice
   - id: method
     resource: https://prod.d13rzhkk8cj2z0.amplifyapp.com/aidlc.pdf
     title: AI-DLC Method Definition
@@ -54,5 +54,5 @@ The glossary is generated from `cli.json`; a test fails on shipped text that use
 
 [^features]: Developing ASP.NET Core MVC apps, feature organization
 [^handlers]: Implementing the microservice application layer using the Web API
-[^layering]: Presentation Domain Data Layering
+[^layering]: Designing a DDD-oriented microservice
 [^method]: AI-DLC Method Definition

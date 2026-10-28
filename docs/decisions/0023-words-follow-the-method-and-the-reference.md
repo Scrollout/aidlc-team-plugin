@@ -13,8 +13,8 @@ sources:
     resource: https://prod.d13rzhkk8cj2z0.amplifyapp.com/aidlc.pdf
     title: AI-DLC Method Definition
   - id: layering
-    resource: https://martinfowler.com/bliki/PresentationDomainDataLayering.html
-    title: Presentation Domain Data Layering
+    resource: https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/ddd-oriented-microservice
+    title: Designing a DDD-oriented microservice
   - id: features
     resource: https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/develop-asp-net-core-mvc-apps
     title: Developing ASP.NET Core MVC apps, feature organization
@@ -48,5 +48,5 @@ Chosen option: "Take the words from the method and the reference architecture", 
 The glossary is generated from `cli.json`, and a test fails on shipped text that writes "slices" without "vertical".
 
 [^method]: AI-DLC Method Definition
-[^layering]: Presentation Domain Data Layering
+[^layering]: Designing a DDD-oriented microservice
 [^features]: Developing ASP.NET Core MVC apps, feature organization

@@ -3,24 +3,33 @@ type: Decision
 title: 0001 Derived state
 description: Progress is computed from git and the docs bundle; there is no ledger, event log or handoff file.
 status: accepted
+date: 2026-10-22
+decision-makers: the owner
+consulted: the lead
+informed: projects, through upgrade
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 ---
 
 # Derived state
 
 ## Context and Problem Statement
-State the model must remember to record drifts: a call it skips goes unaudited, a ledger grows without bound, and a handoff file turns into an append-only pile. The reference AI-DLC workflows keep `aidlc-state.md` and `audit.md` updated by the model.
+State the model must remember to record drifts: a call it skips goes unaudited, a ledger grows without bound, and a handoff file turns into an append-only pile. The reference AI-DLC workflows keep a state file and an audit file the model updates. Where does the plugin keep progress?
+
+## Decision Drivers
+* Nothing a forgotten call can leave out of date.
+* A new session or machine resumes from a clone alone.
 
 ## Considered Options
-1. Model-maintained state file (the reference workflows). Simple, but drifts whenever the model forgets.
-2. Event ledger audited later. Detects drift only after the fact; grows without bound.
-3. **Derive from git and docs.** Approvals in frontmatter, progress from branches and merge trailers.
+* A state file the model maintains, as the reference workflows do.
+* An event ledger audited later.
+* **Derive progress from git and the docs bundle.**
 
 ## Decision Outcome
-Option 3.
+Chosen option: "Derive progress from git and the docs bundle", because nothing recorded apart from the work can drift from it: approvals sit in front matter, progress in branches and merge trailers.
 
-Nothing can drift because nothing is recorded separately; resuming on another machine needs only a clone. Cost: the CLI re-reads git each call, which is milliseconds at this scale.
+### Consequences
+* Good, because resuming on another machine needs only a clone.
+* Bad, because the CLI re-reads git on each call, milliseconds at this scale.
 
 ## More Information
-Revisit when:
-`status` takes over 500 ms on a real project.
+Revisit when `status` takes over 500 ms on a real project.

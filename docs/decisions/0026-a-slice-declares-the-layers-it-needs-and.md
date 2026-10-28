@@ -16,8 +16,8 @@ sources:
     resource: https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/common-web-application-architectures
     title: Common web application architectures
   - id: layering
-    resource: https://martinfowler.com/bliki/PresentationDomainDataLayering.html
-    title: Presentation Domain Data Layering
+    resource: https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/ddd-oriented-microservice
+    title: Designing a DDD-oriented microservice
   - id: method
     resource: https://prod.d13rzhkk8cj2z0.amplifyapp.com/aidlc.pdf
     title: AI-DLC Method Definition
@@ -63,5 +63,5 @@ The checks of [Building a slice](../design/slice-method.md) and [What a slice de
 
 [^features]: Developing ASP.NET Core MVC apps, feature organization
 [^web]: Common web application architectures
-[^layering]: Presentation Domain Data Layering
+[^layering]: Designing a DDD-oriented microservice
 [^method]: AI-DLC Method Definition
