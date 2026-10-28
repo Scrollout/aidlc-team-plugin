@@ -9,9 +9,9 @@ consulted: the lead
 informed: projects, through upgrade
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-28T06:21:35Z }
 sources:
-  - id: vsa
-    resource: https://www.jimmybogard.com/vertical-slice-architecture/
-    title: Vertical Slice Architecture
+  - id: features
+    resource: https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/develop-asp-net-core-mvc-apps
+    title: Developing ASP.NET Core MVC apps, feature organization
   - id: layering
     resource: https://martinfowler.com/bliki/PresentationDomainDataLayering.html
     title: Presentation Domain Data Layering
@@ -23,7 +23,7 @@ sources:
 # A slice declares the layers it needs and delivers them whole
 
 ## Context and Problem Statement
-[0024](0024-vertical-slices-are-features-horizontal-layers.md) defines a vertical slice as one use case cutting through every horizontal layer it needs, built feature by feature, top to bottom.[^vsa] Nothing says which layers a use case needs, so a slice merges without the table or screen it needs, a handler's unit test passes as its proof, and the packs have no user interface layer. How is a slice planned, built and proved whole?
+[0024](0024-vertical-slices-are-features-horizontal-layers.md) defines a vertical slice as one use case cutting through every horizontal layer it needs, built feature by feature, top to bottom.[^features] Nothing says which layers a use case needs, so a slice merges without the table or screen it needs, a handler's unit test passes as its proof, and the packs have no user interface layer. How is a slice planned, built and proved whole?
 
 ## Decision Drivers
 * A slice is done only when every layer its use case needs is done: a half slice delivers no business value.
@@ -41,9 +41,9 @@ sources:
 ## Decision Outcome
 Chosen option: "Declare each slice's layers and deliver them whole", because it states what a whole slice is and keeps the shared layers the architecture checks rely on:
 - **Cuts declared:** a slice names the layers its use case cuts, from the stack pack's list: `ui`, `interface`, `application`, `model`, `infrastructure`, `migration`. A query on existing data may need only `interface` and `application`; a command behind a screen storing a new field needs all.
-- **Own code and shared layers:** the slice's own code sits under its name: its screen in `ui`, its route in `interface`, its handler in `application`, its `migration`, as a slice holds its endpoint.[^vsa] `model` and `infrastructure`, and the router that mounts every route, stay shared: the slice adds its rule, extends its adapter and mounts its route there.
-- **A user interface on another stack** is a Unit of its own, consuming the slice's published API; a slice declares `ui` only where its stack's pack has the layer, and a story served through a screen names it.
-- **Data stays the domain's:** the domain module owns its data, as [Data ownership](../design/data-ownership.md) has it. A slice declares the data nodes of its domain it reads or writes, and the migration it adds; its code reaches no other data.
+- **Own code and shared layers:** the slice's own code sits under its name: its screen in `ui`, its route in `interface`, its handler in `application`, its `migration`, as a feature's folder holds its endpoints.[^features] `model` and `infrastructure`, and the router that mounts every route, stay shared: the slice adds its rule, extends its adapter and mounts its route there.
+- **A user interface on another stack** is a Unit of its own, consuming the slice's API; a slice cuts `ui` only where its pack has it, and a story served through a screen names it.
+- **Data stays the domain's,** as [Data ownership](../design/data-ownership.md) has it. A slice declares the data nodes of its domain it reads or writes; its code reaches no other.
 - **Entry:** the `runtime` module serving the slice, such as a management front door or an instance endpoint; the plugin names none. A runtime lists what it `applies` to every slice it serves: outcome events, a status contract.
 - **Governance is no layer:** authentication, authorization, policy and audit run as `pipeline` stages on the entry, the same for every slice. A slice declares the `permission` the pipeline enforces; a rule on who may act stays in the slice or `model`.
 - **Integration:** a slice declares `async` when it answers later, the events it emits and consumes and the domains' clients or adapters it calls. The publishing domain owns an event's contract; each declared integration is proved by a test that names it.
@@ -59,6 +59,6 @@ Chosen option: "Declare each slice's layers and deliver them whole", because it 
 ### Confirmation
 The checks of [Building a slice](../design/slice-method.md) and [What a slice declares](../design/slice-declares.md) run at the gate; their tests fail on a slice that leaves a declared layer out.
 
-[^vsa]: Vertical Slice Architecture
+[^features]: Developing ASP.NET Core MVC apps, feature organization
 [^layering]: Presentation Domain Data Layering
 [^method]: AI-DLC Method Definition

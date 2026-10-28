@@ -15,9 +15,9 @@ sources:
   - id: layering
     resource: https://martinfowler.com/bliki/PresentationDomainDataLayering.html
     title: Presentation Domain Data Layering
-  - id: vsa
-    resource: https://www.jimmybogard.com/vertical-slice-architecture/
-    title: Vertical Slice Architecture
+  - id: features
+    resource: https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/develop-asp-net-core-mvc-apps
+    title: Developing ASP.NET Core MVC apps, feature organization
 ---
 
 # Words follow the method and the reference architecture
@@ -25,7 +25,7 @@ sources:
 ## Context and Problem Statement
 The reference architecture has two axes. Horizontal layers are built once and serve every request: the entry, the governance stages, the shared platform. Vertical slices are owned by one team each, own their state, and plug into the horizontal layers through a contract. The method forms its Units the same way, as independent, loosely coupled bounded contexts, each built by one team down its own column from domain design to deployment.[^method] Layering practice keeps layers inside domain-oriented modules, not at the top level.[^layering]
 
-[0013](0013-a-deterministic-ai-dlc.md) gave the plugin one word per concept but named neither axis. It used "slice" for one command or query, the sense of a code-organisation style,[^vsa] while the architecture and the method use the vertical slice for the whole bounded context. It also used "layer" only for the rings inside a module. A project's architecture could then not be stated in the plugin's words. This decision replaces 0013's architecture words; the rest of 0013 stands.
+[0013](0013-a-deterministic-ai-dlc.md) gave the plugin one word per concept but named neither axis. It used "slice" for one command or query, the sense of a code-organisation style,[^features] while the architecture and the method use the vertical slice for the whole bounded context. It also used "layer" only for the rings inside a module. A project's architecture could then not be stated in the plugin's words. This decision replaces 0013's architecture words; the rest of 0013 stands.
 
 ## Considered Options
 1. Keep 0013's words.
@@ -49,4 +49,4 @@ The glossary is generated from `cli.json`, and a test fails on shipped text that
 
 [^method]: AI-DLC Method Definition
 [^layering]: Presentation Domain Data Layering
-[^vsa]: Vertical Slice Architecture
+[^features]: Developing ASP.NET Core MVC apps, feature organization
