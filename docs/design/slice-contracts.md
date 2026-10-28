@@ -1,0 +1,32 @@
+---
+type: Design
+title: A slice's contracts
+description: Draft - what a vertical slice declares beyond its layers - the data of its domain it uses, the entry that serves it, how it integrates and the governance it needs - each checked at the gate and proved by a test.
+status: draft
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-28T07:16:35Z }
+---
+
+# Why
+A slice's layers say what it builds; its contracts say what it reaches: data it shares with its domain's other slices, the entry every request crosses, the slices of other domains it hands off to and the governance it must pass ([Building a slice](slice-method.md), [0026](../decisions/0026-a-slice-declares-the-layers-it-needs-and.md)).
+
+# Data and entry
+- **Data** stays the domain's ([Data ownership](data-ownership.md)): several slices use it. A slice declares the data nodes of its domain it reads or writes.
+- **Entry:** the runtime or endpoint serving the slice, one the profile or the model defines (`entries`, each with its runtime and what it applies). The plugin names none.
+
+# Integration
+- **Mode:** `sync` answers in the request; `async` accepts it and answers through a status contract that ends in a terminal state.
+- **Events:** `emits` names the business facts the slice publishes, past tense and versioned, in its domain's `events` surface; `consumes` names events it reacts to, each in its publisher's surface. The publisher owns the event's contract.
+- **Calls:** `calls` names the other domains' `client`s and the adapters it uses.
+- **From the entry:** an entry may define what it adds to every slice it serves (`entries[].adds`): an outcome event per operation, the status contract of `async`, the operation's name as its authorization action. A slice served by it gets them without declaring them.
+# Governance
+Governance is no layer of a slice: what every request must pass is the same for every slice, and a slice that brings its own check can forget it.
+- **Platform governance** (authentication, role-based authorization, policy, locks, audit, throttling) runs as `pipeline` stages on the entry, listed in its `entries[].adds`.
+- **The slice's governance contract:** `action` names the permission it needs, composed by the registry from its domain and verb as its route and events are; the pipeline enforces it, the audit record and the outcome events carry it.
+- **Business authorization**, such as only an order's owner cancelling it, is a domain rule: in the slice's handler or a rule in `model`.
+
+Checked and proved:
+- `SLICE-GOVERN`: a slice whose entry runs an authorization stage declares no `action`, or its code imports a pipeline stage's kit to authenticate or authorize itself.
+- A test at the `entry` level sends a request without the permission and sees it refused before the handler runs; a business rule has its own refusal test.
+- The trace lists each slice's `action`: the system's permission catalogue.
+
+Bolts: [M29](../roadmap/m29.md) B250, B252, B253.

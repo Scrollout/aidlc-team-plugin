@@ -1,5 +1,6 @@
 # Design
 
+* [A slice's contracts](slice-contracts.md) - Draft - what a vertical slice declares beyond its layers - the data of its domain it uses, the entry that serves it, how it integrates and the governance it needs - each checked at the gate and proved by a test.
 * [Agents in flight](in-flight.md) - How the CLI knows a builder, reviewer or researcher is still running - the marks the hooks touch and how long one stays fresh.
 * [Approvals](approvals.md) - How the owner approves intents, requirements, bolts and decisions, what makes an approval stale, what the lead may approve for them, and how owner prompts are recorded.
 * [Architecture in arc42](arc42.md) - The plugin's architecture in arc42's twelve sections, each pointing at the design doc or generated page that holds it, with a C4 component view of the CLI.

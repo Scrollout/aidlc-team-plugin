@@ -21,21 +21,14 @@ The parts of each horizontal layer that one use case needs, scoped to that use c
 - The surface folders `client/` and `events/` sit beside the layers, and `SLICE-PLACE` accepts them.
 - Names come from the registry (`aidlc name slice`); paths and layer names are pack data.
 
-# Data and entry
-- **Data** stays the domain's ([Data ownership](data-ownership.md)): several slices use it. A slice declares the data nodes of its domain it reads or writes.
-- **Entry:** the runtime or endpoint serving the slice, one the profile or the model defines (`entries`, each with its runtime and what it applies). The plugin names none.
-
-# Integration
-- **Mode:** `sync` answers in the request; `async` accepts it and answers through a status contract that ends in a terminal state.
-- **Events:** `emits` names the business facts the slice publishes, past tense and versioned, in its domain's `events` surface; `consumes` names events it reacts to, each in its publisher's surface. The publisher owns the event's contract.
-- **Calls:** `calls` names the other domains' `client`s and the adapters it uses.
-- **From the entry:** an entry may define what it adds to every slice it serves (`entries[].adds`): an outcome event per operation, the status contract of `async`, the operation's name as its authorization action. A slice served by it gets them without declaring them.
+# Contracts
+What a slice reaches beyond its layers, its data, entry, integrations and governance, is declared and checked as [its contracts](slice-contracts.md).
 
 # One grammar
-From method 13 a slice carries its layers, data and entry wherever it is written, as `(<layer>, …; data <node>, …; entry <entry>; mode <mode>; emits <event>, …; consumes <event>, …; calls <target>, …)`, the integration parts only where they apply:
+From method 13 a slice carries its layers, data and entry wherever it is written, as `(<layer>, …; data <node>, …; entry <entry>; action <permission>; mode <mode>; emits <event>, …; consumes <event>, …; calls <target>, …)`, the integration parts only where they apply:
 - **Domain doc** `# Surface`: `- Command <slice> (…): <use case> [I-<n>:US<g>.<s>]`.
 - **Unit of work** `Slices`: `<Kind> <slice> (…) [US<g>.<s>]`, a story served through a screen naming `ui`; `UNIT-WORK` checks the layers against the pack, the data against the domain's, the entry against `entries`, the events against the surfaces and the calls against the clients and adapters.
-- **Model**: `{ kind, verb, useCase, layers, data, entry, mode, emits, consumes, calls }`, and its `entries`, so intake shows the hand-offs between domains; `MODEL-FORMAT` checks them, `models apply` writes them into `# Surface`, `models gaps` lists a missing slice, layer, data, entry or integration.
+- **Model**: `{ kind, verb, useCase, layers, data, entry, action, mode, emits, consumes, calls }`, and its `entries`, so intake shows the hand-offs between domains; `MODEL-FORMAT` checks them, `models apply` writes them into `# Surface`, `models gaps` lists a missing slice, layer, data, entry or integration.
 - **Intake** lists each fitting model's slices with their layers, so a story is written per use case and per screen.
 - **Bolt**: the template's `slices:` names slices of its domain with their layers; `PLAN-SLICE` holds each to `# Surface` and the bolt's scope to every declared layer's path.
 
@@ -49,7 +42,8 @@ From method 13 a slice carries its layers, data and entry wherever it is written
 - `SLICE-ROUTE`: the slice's route is wired in the runtime of its entry.
 - `SLICE-INTEGRATE`: the slice's code imports another domain's client, an adapter or an event type it does not declare, or a declared integration its code does not reach, from the pack's graph.
 - Each declared event and call has a test at a level marked `integration` that names it; a consumer's test names the publisher; an `async` slice's test follows the status to a terminal state.
-- `SLICE-TEST`: a test at a level marked `entry` in the profile names the slice's route, so the slice is proved through its entry, not by its handler alone.
+- `SLICE-GOVERN`: no `action` behind an entry that authorizes, or a slice authorizing itself ([contracts](slice-contracts.md#governance)).
+- `SLICE-TEST`: a test at a level marked `entry` in the profile names the slice's route, so the slice is proved through its entry, not by its handler alone, and a request without its permission is refused there.
 - An increment's slices are whole; increment 1's first slice declares every layer the system's pack has (`INCR-SKELETON`).
 
 # Reported
