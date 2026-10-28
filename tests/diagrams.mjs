@@ -6,6 +6,9 @@ import { pathToFileURL } from 'node:url';
 import { config, render } from '../plugin/cli/lib/index.mjs';
 
 export const DIR = join(import.meta.dirname, '..', 'docs/design/diagrams');
+// A page with no drawing is a table: it sits in its own folder beside the diagrams.
+export const TABLES = join(import.meta.dirname, '..', 'docs/design/tables');
+export const dirOf = (text) => (text.includes('```mermaid') ? DIR : TABLES);
 const V = config.vocabulary, S = config.state;
 const page = (title, description, body) => `---\ntype: Design\ntitle: ${title}\ndescription: ${description}\nstatus: stable\ngenerated: { by: tests/diagrams.mjs }\n---\n\n${body}`;
 const mermaid = (lines) => ['```mermaid', ...lines, '```', ''].join('\n');
@@ -85,8 +88,8 @@ export const pages = () => ({
 });
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
-  mkdirSync(DIR, { recursive: true });
-  for (const [name, text] of Object.entries(pages())) writeFileSync(join(DIR, name), text);
+  for (const d of [DIR, TABLES]) mkdirSync(d, { recursive: true });
+  for (const [name, text] of Object.entries(pages())) writeFileSync(join(dirOf(text), name), text);
   const readme = join(ROOT, 'README.md'), [head, rest] = readFileSync(readme, 'utf8').split('<!-- generated: workflow -->\n');
   writeFileSync(readme, `${head}<!-- generated: workflow -->\n${workflow()}<!-- /generated -->${rest.split('<!-- /generated -->')[1]}`);
 }

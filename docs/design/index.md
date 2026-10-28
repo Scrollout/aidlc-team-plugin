@@ -66,3 +66,4 @@
 # Subdirectories
 
 * [diagrams](diagrams/index.md) - Generated from the data the CLI enforces: words, workflow, states, kinds, bundle types, naming grammar, the CLI's components and every check code.
+* [tables](tables/index.md)

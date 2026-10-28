@@ -56,8 +56,8 @@ test('U72/AC-2 the unit template carries both sections, the card names them and 
 test('B150/AC-2 B254/AC-3 the canonical model links a words page for each scale and the words to avoid, and the overview points to it', async () => {
   const { config } = await import('../plugin/cli/lib/index.mjs');
   const doc = readFileSync(join(ROOT, 'docs/design/canonical-model.md'), 'utf8');
-  for (const scale of new Set(config.vocabulary.words.map((w) => w.scale))) assert.match(doc, new RegExp(`\\(diagrams/words-${scale.toLowerCase()}\\.md\\)`), scale);
-  assert.match(doc, /\(diagrams\/words-avoid\.md\)/);
+  for (const scale of new Set(config.vocabulary.words.map((w) => w.scale))) assert.match(doc, new RegExp(`\\(tables/words-${scale.toLowerCase()}\\.md\\)`), scale);
+  assert.match(doc, /\(tables\/words-avoid\.md\)/);
   assert.match(readFileSync(join(ROOT, 'docs/design/overview.md'), 'utf8'), /# Glossary\n.*\[Canonical model\]\(canonical-model\.md#words\)/);
 });
 

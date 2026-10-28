@@ -26,7 +26,7 @@ The profile's `naming` is the one source. The CLI adds its defaults (`cli.json` 
 - `PROFILE-NAMING` reports a malformed token, a domain code that is not a lower-case word, a vocabulary word that is not one, and a domain or vocabulary word that is banned.
 
 # Grammar
-Every kind with its template and tokens, generated: [Naming grammar](diagrams/naming-grammar.md).
+Every kind with its template and tokens, generated: [Naming grammar](tables/naming-grammar.md).
 Each kind of name is a template over tokens in `cli.json` `naming.grammar`, with its regex and an example. `aidlc name <kind> --domain <code> --role <role> --env <env> …` prints the name, so a builder never composes one. The kinds: domain folder and package, slice folder, operation ID, API path, api-version, permission, event type, schema, database role, table, migration, deployable, image, namespace, host, metric and config key. The API and event kinds follow [0014](../decisions/0014-the-reference-clouds-api-and-event-conventions.md); the workload identity is never composed: it comes from a platform fact.
 
 # Checks

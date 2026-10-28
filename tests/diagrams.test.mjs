@@ -4,12 +4,12 @@ import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { config } from '../plugin/cli/lib/index.mjs';
-import { CODES, DIR, pages, workflow } from './diagrams.mjs';
+import { CODES, DIR, TABLES, dirOf, pages, workflow } from './diagrams.mjs';
 
 test('B191/AC-1 each generated diagram page matches the data it is drawn from (rewrite them with node tests/diagrams.mjs)', () => {
   const want = pages();
-  assert.deepEqual(readdirSync(DIR).filter((f) => f !== 'index.md').sort(), Object.keys(want).sort());
-  for (const [name, text] of Object.entries(want)) assert.equal(readFileSync(join(DIR, name), 'utf8'), text, `DOC-DIAGRAM ${name} differs from its data`);
+  assert.deepEqual([DIR, TABLES].flatMap((d) => readdirSync(d).filter((f) => f !== 'index.md')).sort(), Object.keys(want).sort());
+  for (const [name, text] of Object.entries(want)) assert.equal(readFileSync(join(dirOf(text), name), 'utf8'), text, `DOC-DIAGRAM ${name} differs from its data, or sits in the wrong folder`);
 });
 
 test('B191/AC-1 the state diagrams name the states the CLI derives', () => {
@@ -25,7 +25,7 @@ test('B191/AC-2 no hand-drawn diagram is left where a generated one replaced it'
 
 test('B192/AC-1 every check code is documented on exactly one page, and every code a design doc names exists (DOC-CODE)', () => {
   const tables = CODES.map(([, , table]) => config[table].codes), codes = tables.flatMap((t) => Object.keys(t));
-  const pagesOf = (code) => CODES.filter(([name]) => new RegExp(`\`${code}\``).test(readFileSync(join(DIR, `codes-${name}.md`), 'utf8')));
+  const pagesOf = (code) => CODES.filter(([name]) => new RegExp(`\`${code}\``).test(readFileSync(join(TABLES, `codes-${name}.md`), 'utf8')));
   assert.deepEqual(codes.filter((c) => pagesOf(c).length !== 1), [], 'a code on no page or on two');
   // A refusal the CLI prints with its code as the message's prefix counts as a code too.
   const known = new Set([...codes, ...Object.values(config.messages).map((m) => m.match(/^([A-Z]+(?:-[A-Z0-9]+)+): /)?.[1]).filter(Boolean)]);

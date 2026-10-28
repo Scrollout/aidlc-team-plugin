@@ -34,7 +34,7 @@ The docs bundle, naming, hooks and approvals: [OKF](okf.md), [Bundle v2](bundle.
 In MADR 4.0: [Decisions](../decisions/index.md).
 
 # Quality Requirements
-The budgets and the checks that hold every rule, each with its code: [Overview](overview.md#budgets-hard-limits), the generated code pages ([Docs check codes](diagrams/codes-bundle.md), [Plan lint codes](diagrams/codes-plan.md), [Intent and bolt codes](diagrams/codes-intent.md), [Gate codes](diagrams/codes-gate.md), [Hook codes](diagrams/codes-hooks.md)).
+The budgets and the checks that hold every rule, each with its code: [Overview](overview.md#budgets-hard-limits), the generated code pages ([Docs check codes](tables/codes-bundle.md), [Plan lint codes](tables/codes-plan.md), [Intent and bolt codes](tables/codes-intent.md), [Gate codes](tables/codes-gate.md), [Hook codes](tables/codes-hooks.md)).
 
 # Risks and Technical Debt
 Open ideas and known limits: [Later](../roadmap/later.md).

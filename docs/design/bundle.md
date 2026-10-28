@@ -41,7 +41,7 @@ The folder of each type is data (`okf.bundle.folders`), checked in a v2 project 
 Pictures of the structure exist only in `architecture/`, drawn from declarations.
 
 # Schemas
-Each type, its folder and required keys, generated: [Bundle types](diagrams/bundle-types.md).
+Each type, its folder and required keys, generated: [Bundle types](tables/bundle-types.md).
 Each type's required keys and allowed values live in `cli.json` (`okf.bundle.schemas`) and are checked as `DOC-SCHEMA`. Built so far (B156): Bolt `scope`; Domain `code` and `kind` (from the vocabulary's kinds); Fact `command`, `environment`, `digest`, `at`. The other keys arrive with the bolts that read them (M18, M19):
 
 | Type | Required keys |

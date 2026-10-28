@@ -4,7 +4,8 @@
   "skip": [
     "tests/fixtures/okf/",
     "tests/fixtures/history.json",
-    "docs/design/diagrams/"
+    "docs/design/diagrams/",
+    "docs/design/tables/"
   ],
   "extensions": [
     ".md",
