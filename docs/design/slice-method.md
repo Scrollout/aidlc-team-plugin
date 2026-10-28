@@ -12,41 +12,41 @@ A vertical slice is one use case cut through every layer it needs ([0024](../dec
 # What a slice is
 The parts of each horizontal layer that one use case needs, scoped to that use case alone:
 - **Scope:** one command or query, such as creating an order or reading its status; the capability holding many slices is the domain.
-- **Parts:** not whole layers but its cut of each: screen, route, handler, rule, data access, migration and test. What all slices share stays in the layers.
-- **Whole:** done when every part it needs is; slices meet only through the shared model, events or a shared service.
+- **Cuts:** not whole layers but its cut of each: screen, route, handler, rule, data access, migration and test. What all slices share stays in the layers.
+- **Whole:** done when every cut it needs is; slices meet only through the shared model, events or a shared service.
 
 # Layers
-- The stack pack lists the layers a slice may declare and where each one's part sits (`sliceLayers`): `ui`, `interface`, `application`, `model`, `infrastructure`, `schema`. A pack names only the layers its stack has: `ui` where it serves a front end; a UI on another stack is a Unit of its own, consuming the slice's API.
-- **Own parts** sit under the slice's name: `ui/<slice>/`, `interface/<slice>`, `application/<slice>/`, the migration `<n>_<slice>`. **Shared:** `model`, `infrastructure` and the router mounting every route, changed by the slice.
+- The stack pack lists the layers a slice may cut and where its own code sits in each (`slicePaths`): `ui`, `interface`, `application`, `model`, `infrastructure`, `migration`. A pack names only the layers its stack has: `ui` where it serves a front end; a UI on another stack is a Unit of its own, consuming the slice's API.
+- **Own code** sits under the slice's name: `ui/<slice>/`, `interface/<slice>`, `application/<slice>/`, the migration `<n>_<slice>`. **Shared:** `model`, `infrastructure` and the router mounting every route, changed by the slice.
 - The surface folders `client/` and `events/` sit beside the layers, and `SLICE-PLACE` accepts them.
 - Names come from the registry (`aidlc name slice`); paths and layer names are pack data.
 
-# Contracts
-What a slice reaches beyond its layers, its data, entry, integrations and governance, is declared and checked as [its contracts](slice-contracts.md).
+# Declared
+What a slice reaches beyond its cuts, its data, entry, integrations and permission, is in [What a slice declares](slice-declares.md).
 
 # One grammar
-From method 13 a slice carries its layers, data and entry wherever it is written, as `(<layer>, …; data <node>, …; entry <entry>; action <permission>; mode <mode>; emits <event>, …; consumes <event>, …; calls <target>, …)`, the integration parts only where they apply:
+From method 13 a slice carries the same declaration wherever it is written, `(<cut>, …; data <node>, …; entry <runtime>; permission <name>; async; emits <event>, …; consumes <event>, …; calls <target>, …)`, each part after the cuts only where it applies:
 - **Domain doc** `# Surface`: `- Command <slice> (…): <use case> [I-<n>:US<g>.<s>]`.
-- **Unit of work** `Slices`: `<Kind> <slice> (…) [US<g>.<s>]`, a story served through a screen naming `ui`; `UNIT-WORK` checks the layers against the pack, the data against the domain's, the entry against `entries`, the events against the surfaces and the calls against the clients and adapters.
-- **Model**: `{ kind, verb, useCase, layers, data, entry, action, mode, emits, consumes, calls }`, and its `entries`, so intake shows the hand-offs between domains; `MODEL-FORMAT` checks them, `models apply` writes them into `# Surface`, `models gaps` lists a missing slice, layer, data, entry or integration.
-- **Intake** lists each fitting model's slices with their layers, so a story is written per use case and per screen.
-- **Bolt**: the template's `slices:` names slices of its domain with their layers; `PLAN-SLICE` holds each to `# Surface` and the bolt's scope to every declared layer's path.
+- **Unit of work** `Slices`: `<Kind> <slice> (…) [US<g>.<s>]`, a story served through a screen naming `ui`; `UNIT-WORK` checks the cuts against the pack, the data against the domain's, the entry against the runtimes, the events against the surfaces and the calls against the clients and adapters.
+- **Model**: `{ kind, verb, useCase, cuts, data, entry, permission, async, emits, consumes, calls }`, its runtimes with what each `applies`, so intake shows the hand-offs between domains; `MODEL-FORMAT` checks them, `models apply` writes them into `# Surface`, `models gaps` lists a missing slice, cut, data, entry or integration.
+- **Intake** lists each fitting model's slices with their cuts, so a story is written per use case and per screen.
+- **Bolt**: the template's `slices:` names slices of its domain with their cuts; `PLAN-SLICE` holds each to `# Surface` and the bolt's scope to every cut's path.
 
 # Built
-- `aidlc scaffold slice` writes a file and a test for each declared own part, and nothing that exists.
-- The card lists the slice's layers as ordered steps, test first, from `schema` up to `ui`; the builder scaffolds, then follows them. The reviewer reports a declared layer missing or hollow.
+- `aidlc scaffold slice` writes a file and a test for each cut with own code, and nothing that exists.
+- The card lists the slice's cuts as ordered steps, test first, from `migration` up to `ui`; the builder scaffolds, then follows them. The reviewer reports a cut missing or hollow.
 
 # Proved
-- `SLICE-DELIVER`: the bolt's diff changes each declared layer: an own part under the slice's name, a shared layer's folder.
+- `SLICE-DELIVER`: the bolt's diff changes each cut: its own code under the slice's name, a shared layer's folder.
 - `SLICE-DATA`: a data edge from the slice's code to a node it does not declare, or a declared node its domain neither owns nor shares.
 - `SLICE-ROUTE`: the slice's route is wired in the runtime of its entry.
 - `SLICE-INTEGRATE`: the slice's code imports another domain's client, an adapter or an event type it does not declare, or a declared integration its code does not reach, from the pack's graph.
-- Each declared event and call has a test at a level marked `integration` that names it; a consumer's test names the publisher; an `async` slice's test follows the status to a terminal state.
-- `SLICE-GOVERN`: no `action` behind an entry that authorizes, or a slice authorizing itself ([contracts](slice-contracts.md#governance)).
-- `SLICE-TEST`: a test at a level marked `entry` in the profile names the slice's route, so the slice is proved through its entry, not by its handler alone, and a request without its permission is refused there.
-- An increment's slices are whole; increment 1's first slice declares every layer the system's pack has (`INCR-SKELETON`).
+- Each declared event and call has a test at a level whose `proves` holds `handoff` that names it; a consumer's test names the publisher; an `async` slice's test follows the status to a terminal state.
+- `SLICE-GOVERN`: no `permission` behind an entry that authorizes, or a slice authorizing itself ([declared](slice-declares.md#governance)).
+- `SLICE-TEST`: a test at a level whose `proves` holds `route` names the slice's route, so the slice is proved through its entry, not by its handler alone, and a request without its permission is refused there.
+- An increment's slices are whole; increment 1's first slice cuts every layer the system's pack has (`INCR-SKELETON`).
 
 # Reported
-`status`, `next`, the codebase map and the trace show the hand-offs between slices across domains, and each slice of a domain as planned, partial or done, layer by layer, from story to file; the board's bolt carries each slice's layers, data and entry, and a field counting its layers done; the retro counts refusals by layer.
+`status`, `next`, the codebase map and the trace show the hand-offs between slices across domains, and each slice of a domain as planned, partial or done, layer by layer, from story to file; the board's bolt carries each slice's cuts, data and entry, and a field counting its cuts done; the retro counts refusals by layer.
 
 Bolts: [M29](../roadmap/m29.md) B250 to B253.

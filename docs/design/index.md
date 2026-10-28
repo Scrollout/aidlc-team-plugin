@@ -1,6 +1,5 @@
 # Design
 
-* [A slice's contracts](slice-contracts.md) - Draft - what a vertical slice declares beyond its layers - the data of its domain it uses, the entry that serves it, how it integrates and the governance it needs - each checked at the gate and proved by a test.
 * [Agents in flight](in-flight.md) - How the CLI knows a builder, reviewer or researcher is still running - the marks the hooks touch and how long one stays fresh.
 * [Approvals](approvals.md) - How the owner approves intents, requirements, bolts and decisions, what makes an approval stale, what the lead may approve for them, and how owner prompts are recorded.
 * [Architecture in arc42](arc42.md) - The plugin's architecture in arc42's twelve sections, each pointing at the design doc or generated page that holds it, with a C4 component view of the CLI.
@@ -61,6 +60,7 @@
 * [Vendoring](vendoring.md) - How init and upgrade copy the CLI into a project and pin it, and why only a release is copied.
 * [Verification](verification.md) - The inner loop (hooks), the merge gate, the reviewer's output contract and the CI mode.
 * [Vertical slices checked](vertical-slices.md) - Deterministic checks that a domain's code is grouped into vertical slices across its horizontal layers - no slice imports another, slices are entered only from the interface layer, every file sits in one layer and one slice, the slice folders match the domain doc's commands and queries, each slice cites the stories it serves and has its own test.
+* [What a slice declares](slice-declares.md) - Draft - what a vertical slice declares beyond its layers - the data of its domain it uses, the entry that serves it, how it integrates and the governance it needs - each checked at the gate and proved by a test.
 * [Workload identity](workload-identity.md) - Runtimes, domains and data authenticate by workload identity with short-lived credentials, never by shared or static secrets; a merge check fails the common static forms on added lines.
 
 # Subdirectories

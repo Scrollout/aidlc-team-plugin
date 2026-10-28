@@ -1,7 +1,7 @@
 ---
 type: Decision
 title: 0026 A slice declares the layers it needs and delivers them whole
-description: A vertical slice names the horizontal layers its use case needs, from the user interface to the schema, the entry that serves it, the data of its domain it uses, how it integrates and the permission it needs; its own parts sit under its name, the shared layers stay shared and the data stays the domain's; it is planned, built, checked and reported layer by layer, and merges only whole.
+description: A vertical slice names the horizontal layers its use case needs, from the user interface to the migration, the entry that serves it, the data of its domain it uses, how it integrates and the permission it needs; its own parts sit under its name, the shared layers stay shared and the data stays the domain's; it is planned, built, checked and reported layer by layer, and merges only whole.
 status: accepted
 date: 2026-10-28
 decision-makers: the owner
@@ -40,14 +40,14 @@ sources:
 
 ## Decision Outcome
 Chosen option: "Declare each slice's layers and deliver them whole", because it states what a whole slice is and keeps the shared layers the architecture checks rely on:
-- **Layers declared:** a slice names the layers its use case needs, from the stack pack's list: `ui`, `interface`, `application`, `model`, `infrastructure`, `schema`. A query on existing data may need only `interface` and `application`; a command behind a screen storing a new field needs all.
-- **Own parts and shared layers:** the slice's own parts sit under its name: its screen in `ui`, its route in `interface`, its handler in `application`, its migration in `schema`, as a slice holds its endpoint.[^vsa] `model` and `infrastructure`, and the router that mounts every route, stay shared: the slice adds its rule, extends its adapter and mounts its route there.
+- **Cuts declared:** a slice names the layers its use case cuts, from the stack pack's list: `ui`, `interface`, `application`, `model`, `infrastructure`, `migration`. A query on existing data may need only `interface` and `application`; a command behind a screen storing a new field needs all.
+- **Own code and shared layers:** the slice's own code sits under its name: its screen in `ui`, its route in `interface`, its handler in `application`, its `migration`, as a slice holds its endpoint.[^vsa] `model` and `infrastructure`, and the router that mounts every route, stay shared: the slice adds its rule, extends its adapter and mounts its route there.
 - **A user interface on another stack** is a Unit of its own, consuming the slice's published API; a slice declares `ui` only where its stack's pack has the layer, and a story served through a screen names it.
 - **Data stays the domain's:** the domain module owns its data, as [Data ownership](../design/data-ownership.md) has it. A slice declares the data nodes of its domain it reads or writes, and the migration it adds; its code reaches no other data.
-- **Entry:** a slice names the entry that serves it, such as a management front door or an instance endpoint. Entries are data of the project or its model; the plugin names none. An entry may add to every slice it serves: outcome events, the status contract of a long-running request.
-- **Governance is no layer:** authentication, authorization, policy and audit run as `pipeline` stages on the entry, the same for every slice. A slice declares `action`, the permission the pipeline enforces; a rule on who may act stays in the slice or `model`.
-- **Integration:** a slice declares its response mode, `sync` or `async`, the events it emits and consumes and the domains' clients or adapters it calls. The publishing domain owns an event's contract; each declared integration is proved by a test that names it.
-- **One grammar:** intake, models, Units of work, the domain doc's `# Surface` and the bolt carry the same slice with the same layers, data, entry, permission and integrations.
+- **Entry:** the `runtime` module serving the slice, such as a management front door or an instance endpoint; the plugin names none. A runtime lists what it `applies` to every slice it serves: outcome events, a status contract.
+- **Governance is no layer:** authentication, authorization, policy and audit run as `pipeline` stages on the entry, the same for every slice. A slice declares the `permission` the pipeline enforces; a rule on who may act stays in the slice or `model`.
+- **Integration:** a slice declares `async` when it answers later, the events it emits and consumes and the domains' clients or adapters it calls. The publishing domain owns an event's contract; each declared integration is proved by a test that names it.
+- **One grammar:** intake, models, Units of work, the domain doc's `# Surface` and the bolt carry the same slice with the same cuts, data, entry, permission and integrations. Each word is one the vocabulary holds once.
 - **Whole:** a bolt delivers its slices whole; the gate refuses a declared layer the diff leaves out, and a slice is proved by a test that enters through its route.
 - **Delivered:** increment 1's first slice cuts through every layer the system has, as the walking skeleton.
 
@@ -57,7 +57,7 @@ Chosen option: "Declare each slice's layers and deliver them whole", because it 
 * Bad, because each slice line grows a layer list, and projects move to method 13 on upgrade.
 
 ### Confirmation
-The checks of [Building a slice](../design/slice-method.md) and [A slice's contracts](../design/slice-contracts.md) run at the gate; their tests fail on a slice that leaves a declared layer out.
+The checks of [Building a slice](../design/slice-method.md) and [What a slice declares](../design/slice-declares.md) run at the gate; their tests fail on a slice that leaves a declared layer out.
 
 [^vsa]: Vertical Slice Architecture
 [^layering]: Presentation Domain Data Layering
