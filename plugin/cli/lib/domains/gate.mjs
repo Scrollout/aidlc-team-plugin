@@ -3,10 +3,10 @@
 import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve, sep } from 'node:path';
-import { bundleOf, CLI_DIR, config, QUICK, VERDICT, done, isoDay, lapsed, list, packageFile, readJson, UsageError, relPath } from '../foundation/data.mjs';
+import { bundleOf, CLI_DIR, config, QUICK, VERDICT, done, isMap, isoDay, lapsed, list, packageFile, readJson, UsageError, relPath } from '../foundation/data.mjs';
 import { addedLines, git, gitLines, sh, tryGit } from '../foundation/git.mjs';
 import { finding as codeFinding, msg, render } from '../foundation/text.mjs';
-import { loadProfile, withDefaults } from '../foundation/profile.mjs';
+import { loadProfile, stageProblem, withDefaults } from '../foundation/profile.mjs';
 import { checkBundle, docSlug, nameProblem, parseDoc, writeIndexes } from './bundle.mjs';
 import { computeLane, finding as planFinding, incrementLines, lintPlan, noRun, readPlan, runTarget, spansOf, withIntents } from './plan.mjs';
 import { cardsOver } from './card.mjs';
@@ -151,53 +151,57 @@ function baseFails(cwd, base, level, l) {
   try { return runLevel(tree, level, l, () => {}) === false; } finally { dropWorktree(cwd, tree); }
 }
 
-// All gate conditions on a trial merge; returns { findings, tree } with the merged tree left for commit.
-function runGate(cwd, st, unit) {
-  const { profile, base } = st;
-  const p = withDefaults(profile);
-  const bundleRel = relPath(git(cwd, 'rev-parse', '--show-toplevel'), st.bundle);
-  const out = [];
-  const add = (code, key, data, path = relPath(cwd, unit.file)) => out.push(finding(code, path, 1, key, { unit: unit.id, ...data }));
-
-  if ([ST.draft, ST.stale].includes(unit.state)) add('GATE-APPROVAL', 'gateApproval', { state: unit.state });
-  for (const dep of unit.depends) if (st.units.find((u) => u.id === dep)?.state !== ST.merged) add('GATE-DEPS', 'gateDeps', { dep });
-  const card = readJson(runtimeFile(cwd, 'cards', unit.id));
-  if (!card) add('GATE-CARD', 'gateNoCard', {});
-
-  const paths = unitPaths(cwd, base, unit.id);
-  for (const path of paths) {
-    if (mergeWritten(path, bundleRel, profile)) add('GATE-SHARED', 'gateShared', { path }, path);
-    else if (!unit.scope.some((g) => matches(path, g))) add('SCOPE-OUT', 'gateScope', { path }, path);
-  }
-  const names = [...[profile.names ?? []].flat().filter((r) => !nameProblem(r)), ...generatedRules(profile, st.bundle)]; // the project's rules and the registry's (docs/design/naming.md)
-  const synonyms = glossaryOf(st.bundle).flatMap((e) => e.synonyms.map((word) => ({ ...e, word, re: new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i') })));
-  // Each added line, so a secret written from Bash, which the secrets hook never sees, stops the merge.
-  const added = addedLines(cwd, `${base}...${branchOf(unit.id)}`);
-  for (const { file, line, text } of added) {
-    if (secretIn(text, profile)) add('GATE-SECRET', 'gateSecret', { path: file, line }, file);
-    // A static credential between components, outside the tests: identities, not secrets (docs/design/workload-identity.md).
-    else if (codeChanges([file], p.levels, bundleRel).length && config.hooks.identity.some((x) => new RegExp(x, 'i').test(text))) add('GATE-IDENTITY', 'gateIdentity', { path: file, line }, file);
-    // A name the line adds where a naming rule looks, which its pattern does not match (docs/design/naming.md).
-    for (const r of names.filter((x) => x.find && list(x.files).some((g) => matches(file, g)))) {
-      for (const m of text.matchAll(new RegExp(r.find, 'g'))) {
-        const name = m[1] ?? m[0];
-        if (!new RegExp(`^(?:${r.pattern})$`).test(name)) add('GATE-NAME', 'gateName', { path: file, line, rule: r.id, name, pattern: r.pattern, why: r.why ?? '-' }, file);
-      }
+// The gate's stages, each a check over the context `c`; gate.stages orders them, and a stage that returns false
+// ends the walk (docs/design/lifecycle.md#pipelines).
+export const STAGES = {
+  approval(c) {
+    const { st, unit, add } = c;
+    if ([ST.draft, ST.stale].includes(unit.state)) add('GATE-APPROVAL', 'gateApproval', { state: unit.state });
+    for (const dep of unit.depends) if (st.units.find((u) => u.id === dep)?.state !== ST.merged) add('GATE-DEPS', 'gateDeps', { dep });
+    c.card = readJson(runtimeFile(c.cwd, 'cards', unit.id));
+    if (!c.card) add('GATE-CARD', 'gateNoCard', {});
+  },
+  scope(c) {
+    c.paths = unitPaths(c.cwd, c.base, c.unit.id);
+    for (const path of c.paths) {
+      if (mergeWritten(path, c.bundleRel, c.profile)) c.add('GATE-SHARED', 'gateShared', { path }, path);
+      else if (!c.unit.scope.some((g) => matches(path, g))) c.add('SCOPE-OUT', 'gateScope', { path }, path);
     }
-    // A synonym a domain's glossary says to avoid, on an added line outside the domain docs (docs/design/naming.md#checks).
-    if (!file.startsWith(`${bundleRel}/${config.okf.bundle.folders.Domain}/`)) for (const s of synonyms.filter((x) => x.re.test(text))) add('TERM-SYNONYM', 'gateSynonym', { path: file, line, word: s.word, term: s.term, domain: s.domain }, file);
-  }
-  // A path rule: each file the unit adds or renames under its files (docs/design/naming.md).
-  for (const path of gitLines(cwd, 'diff', '--name-only', '--diff-filter=AR', `${base}...${branchOf(unit.id)}`)) {
-    for (const r of names.filter((x) => !x.find && list(x.files).some((g) => matches(path, g)) && !new RegExp(`^(?:${x.pattern})$`).test(path))) add('GATE-NAME', 'gateNamePath', { path, rule: r.id, pattern: r.pattern, why: r.why ?? '-' }, path);
-  }
-  const diffLane = computeLane(paths, profile, { paths: true });
-  if (card && paths.length && G.lanes.indexOf(diffLane.lane) > G.lanes.indexOf(card.lane)) add('GATE-LANE', 'gateLane', { lane: diffLane.lane, reason: diffLane.reason, card: card.lane });
-
-  const hash = diffHash(cwd, base, unit.id);
+  },
+  lines(c) {
+    const { cwd, profile, p, base, unit, bundleRel, add } = c;
+    const names = [...[profile.names ?? []].flat().filter((r) => !nameProblem(r)), ...generatedRules(profile, c.st.bundle)]; // the project's rules and the registry's (docs/design/naming.md)
+    const synonyms = glossaryOf(c.st.bundle).flatMap((e) => e.synonyms.map((word) => ({ ...e, word, re: new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i') })));
+    // Each added line, so a secret written from Bash, which the secrets hook never sees, stops the merge.
+    c.added = addedLines(cwd, `${base}...${branchOf(unit.id)}`);
+    for (const { file, line, text } of c.added) {
+      if (secretIn(text, profile)) add('GATE-SECRET', 'gateSecret', { path: file, line }, file);
+      // A static credential between components, outside the tests: identities, not secrets (docs/design/workload-identity.md).
+      else if (codeChanges([file], p.levels, bundleRel).length && config.hooks.identity.some((x) => new RegExp(x, 'i').test(text))) add('GATE-IDENTITY', 'gateIdentity', { path: file, line }, file);
+      // A name the line adds where a naming rule looks, which its pattern does not match (docs/design/naming.md).
+      for (const r of names.filter((x) => x.find && list(x.files).some((g) => matches(file, g)))) {
+        for (const m of text.matchAll(new RegExp(r.find, 'g'))) {
+          const name = m[1] ?? m[0];
+          if (!new RegExp(`^(?:${r.pattern})$`).test(name)) add('GATE-NAME', 'gateName', { path: file, line, rule: r.id, name, pattern: r.pattern, why: r.why ?? '-' }, file);
+        }
+      }
+      // A synonym a domain's glossary says to avoid, on an added line outside the domain docs (docs/design/naming.md#checks).
+      if (!file.startsWith(`${bundleRel}/${config.okf.bundle.folders.Domain}/`)) for (const s of synonyms.filter((x) => x.re.test(text))) add('TERM-SYNONYM', 'gateSynonym', { path: file, line, word: s.word, term: s.term, domain: s.domain }, file);
+    }
+    // A path rule: each file the unit adds or renames under its files (docs/design/naming.md).
+    for (const path of gitLines(cwd, 'diff', '--name-only', '--diff-filter=AR', `${base}...${branchOf(unit.id)}`)) {
+      for (const r of names.filter((x) => !x.find && list(x.files).some((g) => matches(path, g)) && !new RegExp(`^(?:${x.pattern})$`).test(path))) add('GATE-NAME', 'gateNamePath', { path, rule: r.id, pattern: r.pattern, why: r.why ?? '-' }, path);
+    }
+  },
+  lane(c) {
+    const diffLane = computeLane(c.paths, c.profile, { paths: true });
+    if (c.card && c.paths.length && G.lanes.indexOf(diffLane.lane) > G.lanes.indexOf(c.card.lane)) c.add('GATE-LANE', 'gateLane', { lane: diffLane.lane, reason: diffLane.reason, card: c.card.lane });
+  },
   // Quick lane: no reviewer (docs/design/team.md#cost); the diff's own lane is checked above.
-  if (card?.lane !== QUICK) {
-    const general = roundsOf(unit.review).at(-1);
+  review(c) {
+    const { cwd, p, base, unit, card, add } = c;
+    if (card?.lane === QUICK) return;
+    const hash = diffHash(cwd, base, unit.id), general = roundsOf(unit.review).at(-1);
     if (general?.verdict !== VERDICT.pass || !verdictCurrent(general, hash, unit.report)) add('GATE-REVIEW', 'gateReview', {});
     else if (card && general.card !== card.hash) add('GATE-CARD', 'gateCardStale', { reviewed: general.card, card: card.hash });
     const needed = reviewFocuses(cwd, p, base, unit.id);
@@ -206,79 +210,113 @@ function runGate(cwd, st, unit) {
       const last = roundsOf(unit.review, focus).at(-1);
       if (!last || last.verdict !== VERDICT.pass || (!verdictCurrent(last, hash, unit.report) && !keptPass(cwd, p, unit.id, focus, last))) add('GATE-SPECIALIST', 'gateSpecialist', { focus, why });
     }
-  }
+  },
   // Every security finding, at any confidence, waits for the owner's disposition (docs/design/construction.md).
-  const security = p.system ? roundsOf(unit.review, config.state.contentFocus).at(-1) : null;
-  const unsettled = (security?.findings ?? []).map((f, k) => [f, render(config.ids.finding, { k: k + 1 })]).filter(([f]) => !f.disposition || lapsed(f.until));
-  if (unsettled.length) add('REVIEW-SECURITY', 'reviewSecurity', { findings: unsettled.map(([, id]) => id).join(', ') });
+  security(c) {
+    const security = c.p.system ? roundsOf(c.unit.review, config.state.contentFocus).at(-1) : null;
+    const unsettled = (security?.findings ?? []).map((f, k) => [f, render(config.ids.finding, { k: k + 1 })]).filter(([f]) => !f.disposition || lapsed(f.until));
+    if (unsettled.length) c.add('REVIEW-SECURITY', 'reviewSecurity', { findings: unsettled.map(([, id]) => id).join(', ') });
+  },
   // No later increment merges before increment 1 runs on its target.
-  const intent = p.system && (p.deploy || p.release) ? st.intents.find((i) => i.id === unit.fm.intent) : null;
-  const lines = intent ? incrementLines(intent) : [], slot = lines.findIndex((l) => l.ids.includes(unit.id));
-  if (slot > 0 && !intent.shipped(lines[0].ids)) add('INCR-DONE', 'incrDone', { increment: lines[slot].id ?? slot + 1, intent: intent.id });
-
-  const tree = trialWorktree(cwd, base);
-  if (tryGit(tree, 'merge', '-q', '--no-ff', '--no-commit', branchOf(unit.id)) === null) {
-    tryGit(tree, 'merge', '--abort');
-    add('GATE-CONFLICT', 'gateConflict', { base, branch: branchOf(unit.id) });
-    return { findings: out, tree, tested: [], proof: null };
-  }
-
-  // What merge writes comes first and is staged, so each check sees the tree that will be committed (docs/design/gate.md).
-  const treeBundle = join(tree, bundleRel);
-  for (const write of [writeMap, writeGlossary, writeContextMap, writeTrace]) write(tree, withDefaults(loadProfile(tree).profile)); // before the indexes, which list them
-  writeIndexes(treeBundle);
-  addLogEntry(treeBundle, msg('gateLogEntry', { unit: unit.id, title: String(unit.fm.title ?? '') }));
-  for (const command of list(p.regen)) shell(tree, command);
-  git(tree, 'add', '-A');
-
-  const merged = withDefaults(loadProfile(tree).profile); // from the merge result: a unit may add a test location
-  const { levels } = merged;
-  const levelPaths = (level) => list(levels?.[level]?.paths);
-  const tagged = new Set();
-  for (const ac of card?.lane === QUICK ? [] : unit.acs) { // a quick-lane card carries no ACs, so no AC tests
-    const tag = `${unit.id}/${ac.id}`;
-    const files = gitLines(tree, 'grep', '-l', '-F', tag).filter((f) => !f.startsWith(bundleRel + '/'));
-    files.forEach((f) => tagged.add(f));
-    if (!files.length) add('GATE-AC', 'gateAc', { tag });
-    else if (!levelPaths(ac.level).length && levels?.[ac.level]?.run) add('GATE-LEVEL', 'gateLevelNoPaths', { tag, level: ac.level }); // proof needs the paths
-    else if (levelPaths(ac.level).length && !files.some((f) => levelPaths(ac.level).some((g) => matches(f, g)))) {
-      add('GATE-LEVEL', 'gateLevel', { tag, files: files.join(', '), level: ac.level });
+  increment(c) {
+    const { p, unit } = c;
+    const intent = p.system && (p.deploy || p.release) ? c.st.intents.find((i) => i.id === unit.fm.intent) : null;
+    const lines = intent ? incrementLines(intent) : [], slot = lines.findIndex((l) => l.ids.includes(unit.id));
+    if (slot > 0 && !intent.shipped(lines[0].ids)) c.add('INCR-DONE', 'incrDone', { increment: lines[slot].id ?? slot + 1, intent: intent.id });
+  },
+  merge(c) {
+    const tree = c.tree = trialWorktree(c.cwd, c.base);
+    if (tryGit(tree, 'merge', '-q', '--no-ff', '--no-commit', branchOf(c.unit.id)) === null) {
+      tryGit(tree, 'merge', '--abort');
+      return c.add('GATE-CONFLICT', 'gateConflict', { base: c.base, branch: branchOf(c.unit.id) }), false;
     }
-  }
-
+    // What merge writes comes first and is staged, so each check sees the tree that will be committed (docs/design/gate.md).
+    c.treeBundle = join(tree, c.bundleRel);
+    for (const write of [writeMap, writeGlossary, writeContextMap, writeTrace]) write(tree, withDefaults(loadProfile(tree).profile)); // before the indexes, which list them
+    writeIndexes(c.treeBundle);
+    addLogEntry(c.treeBundle, msg('gateLogEntry', { unit: c.unit.id, title: String(c.unit.fm.title ?? '') }));
+    for (const command of list(c.p.regen)) shell(tree, command);
+    git(tree, 'add', '-A');
+    c.merged = withDefaults(loadProfile(tree).profile); // from the merge result: a unit may add a test location
+    c.levels = c.merged.levels;
+  },
+  acTests(c) {
+    const { levels, card, unit, bundleRel, add } = c;
+    const levelPaths = (level) => list(levels?.[level]?.paths);
+    for (const ac of card?.lane === QUICK ? [] : unit.acs) { // a quick-lane card carries no ACs, so no AC tests
+      const tag = `${unit.id}/${ac.id}`;
+      const files = gitLines(c.tree, 'grep', '-l', '-F', tag).filter((f) => !f.startsWith(bundleRel + '/'));
+      files.forEach((f) => c.tagged.add(f));
+      if (!files.length) add('GATE-AC', 'gateAc', { tag });
+      else if (!levelPaths(ac.level).length && levels?.[ac.level]?.run) add('GATE-LEVEL', 'gateLevelNoPaths', { tag, level: ac.level }); // proof needs the paths
+      else if (levelPaths(ac.level).length && !files.some((f) => levelPaths(ac.level).some((g) => matches(f, g)))) add('GATE-LEVEL', 'gateLevel', { tag, files: files.join(', '), level: ac.level });
+    }
+  },
   // Every level's run in full, as the owner's verification of each unit; a quick unit's ACs name
   // their own commands (U60), and the first level, as a quick change can break a test that reads it (U114).
-  const tested = Object.entries(levels ?? {}).filter(([, l]) => l?.run).slice(0, card?.lane === QUICK ? 1 : undefined);
-  for (const [level, l] of tested) {
-    if (runLevel(tree, level, l, add) !== false) continue;
-    if (!baseFails(cwd, base, level, l)) add('GATE-RUN', 'gateRun', { level, command: l.run });
-    else add('GATE-BASE', 'gateBase', { level, command: l.run }), (out.at(-1).red = level); // recorded by merge
-  }
-  for (const ac of card?.lane === QUICK ? unit.acs : []) {
-    for (const t of spansOf(unit.doc.lines[ac.line - 1]).map(runTarget).filter(Boolean)) {
-      const command = `${t.runner} ${t.name}`;
-      if (!shell(tree, command)) add('GATE-AC', 'gateAcCommand', { ac: ac.id, command });
+  levels(c) {
+    c.tested = Object.entries(c.levels ?? {}).filter(([, l]) => l?.run).slice(0, c.card?.lane === QUICK ? 1 : undefined);
+    for (const [level, l] of c.tested) {
+      if (runLevel(c.tree, level, l, c.add) !== false) continue;
+      if (!baseFails(c.cwd, c.base, level, l)) c.add('GATE-RUN', 'gateRun', { level, command: l.run });
+      else c.add('GATE-BASE', 'gateBase', { level, command: l.run }), (c.out.at(-1).red = level); // recorded by merge
     }
-  }
+  },
+  quickAcs(c) {
+    for (const ac of c.card?.lane === QUICK ? c.unit.acs : []) {
+      for (const t of spansOf(c.unit.doc.lines[ac.line - 1]).map(runTarget).filter(Boolean)) {
+        const command = `${t.runner} ${t.name}`;
+        if (!shell(c.tree, command)) c.add('GATE-AC', 'gateAcCommand', { ac: ac.id, command });
+      }
+    }
+  },
+  proof(c) {
+    const { tree, p } = c;
+    c.proof = c.out.length ? null : proofRevert(tree, c.card, c.paths, c.levels, c.tagged, c.bundleRel, c.add, c.unit, readJson(runtimeFile(c.cwd, 'reports', c.unit.id))?.mutations, p.system && ((l) => l.compileError ?? seam('proofPatterns', p).map((pattern) => pattern(tree)).find(Boolean))); // only on a green merge result
+  },
+  checks(c) {
+    const { tree, p } = c;
+    const touched = (p.modules ?? []).filter((m) => c.paths.some((x) => list(m.paths).some((g) => matches(x, g))));
+    for (const command of [...touched.filter((x) => x.check).map((m) => m.check), ...[p.checks ?? []].flat().filter((x) => !isMap(x))]) if (!shell(tree, command)) c.add('GATE-CHECK', 'gateCheck', { command }); // the touched modules', then the project's on every merge (U140)
+    for (const command of list(p.security?.check)) if (!shell(tree, command)) c.add('GATE-SECURITY', 'gateCheck', { command });
+    for (const command of list(p.deps?.check)) if (!shell(tree, command)) c.add('GATE-DEPENDENCY', 'depsCheck', { command }); // docs/design/dependencies.md
+  },
+  architecture(c) {
+    c.out.push(...architecture(c.tree, c.merged)); // the boundaries as merged
+    // An exception is approved on the base before the merge that needs it; one only on the unit branch cannot be (docs/design/architecture.md).
+    for (const d of new Set(exceptDocs(c.merged.architecture ?? {}))) {
+      if (tryGit(c.cwd, 'cat-file', '-e', `${c.base}:${d}`) === null && existsSync(join(c.tree, d))) c.add('ARCH-BOUNDARY', 'archExceptInUnit', { doc: d }, d);
+    }
+  },
+  docs(c) {
+    const { p } = c;
+    for (const f of checkBundle(c.treeBundle, { rules: p.docs?.rules ?? {}, caps: p.docs?.caps, base: c.tree, v2: Boolean(p.system), strict: true }).filter((x) => x.level === 'error')) {
+      c.out.push(finding('GATE-OKF', f.path, f.line, 'gateOkf', f));
+    }
+  },
+  // The extensions' checks on the merge result and the added lines, such as the published API's grammar (docs/design/naming.md#checks).
+  extensions(c) {
+    for (const f of seam('gateChecks', c.p).flatMap((check) => check(c.tree, c.p, c.paths, c.added, c.unit))) c.out.push(finding(f.code, f.path, f.line ?? 1, f.key, f.data));
+  },
+};
 
-  const proof = out.length ? null : proofRevert(tree, card, paths, levels, tagged, bundleRel, add, unit, readJson(runtimeFile(cwd, 'reports', unit.id))?.mutations, p.system && ((l) => l.compileError ?? seam('proofPatterns', p).map((pattern) => pattern(tree)).find(Boolean))); // only on a green merge result
+// A profile stage: its command on the merged tree, failing at its own level (docs/design/lifecycle.md#pipelines).
+const ownStage = (s) => (c) => {
+  if (!shell(c.tree, s.check)) c.add('GATE-CHECK', 'gateCheck', { command: s.check }), (c.out.at(-1).level = s.level ?? config.okf.level.error);
+};
 
-  const touched = (p.modules ?? []).filter((m) => paths.some((x) => list(m.paths).some((g) => matches(x, g))));
-  for (const command of [...touched.filter((x) => x.check).map((m) => m.check), ...list(p.checks)]) if (!shell(tree, command)) add('GATE-CHECK', 'gateCheck', { command }); // the touched modules', then the project's on every merge (U140)
-  for (const command of list(p.security?.check)) if (!shell(tree, command)) add('GATE-SECURITY', 'gateCheck', { command });
-  for (const command of list(p.deps?.check)) if (!shell(tree, command)) add('GATE-DEPENDENCY', 'depsCheck', { command }); // docs/design/dependencies.md
-  out.push(...architecture(tree, merged)); // the boundaries as merged
-  // An exception is approved on the base before the merge that needs it; one only on the unit branch cannot be (docs/design/architecture.md).
-  for (const d of new Set(exceptDocs(merged.architecture ?? {}))) {
-    if (tryGit(cwd, 'cat-file', '-e', `${base}:${d}`) === null && existsSync(join(tree, d))) add('ARCH-BOUNDARY', 'archExceptInUnit', { doc: d }, d);
-  }
+// The gate's stages in order: the core's from gate.stages, each profile stage after the one it names.
+export const stagesOf = (p) => G.stages.flatMap((id) => [STAGES[id], ...[p.checks ?? []].flat().filter((s) => isMap(s) && !stageProblem(s) && (s.after ?? G.stageAfter) === id).map(ownStage)]);
 
-  for (const f of checkBundle(treeBundle, { rules: p.docs?.rules ?? {}, caps: p.docs?.caps, base: tree, v2: Boolean(p.system), strict: true }).filter((x) => x.level === 'error')) {
-    out.push(finding('GATE-OKF', f.path, f.line, 'gateOkf', f));
-  }
-  // The published API on the merged tree speaks the grammar of decision 0014 (docs/design/naming.md#checks).
-  for (const f of seam('gateChecks', p).flatMap((check) => check(tree, p, paths, added, unit))) out.push(finding(f.code, f.path, f.line ?? 1, f.key, f.data)); // the extensions' checks on the merge result and the added lines
-  return { findings: out, tree, tested: tested.map(([level]) => level), proof, card };
+// All gate conditions on a trial merge; returns { findings, tree } with the merged tree left for commit.
+function runGate(cwd, st, unit) {
+  const { profile, base } = st;
+  const out = [];
+  const c = { cwd, st, unit, profile, base, p: withDefaults(profile), out, tagged: new Set(), tested: [], proof: null, paths: [], added: [],
+    bundleRel: relPath(git(cwd, 'rev-parse', '--show-toplevel'), st.bundle),
+    add: (code, key, data, path = relPath(cwd, unit.file)) => out.push(finding(code, path, 1, key, { unit: unit.id, ...data })) };
+  stagesOf(c.p).every((stage) => stage(c) !== false);
+  return { findings: out, tree: c.tree, tested: c.tested.map(([level]) => level), proof: c.proof, card: c.card };
 }
 
 // Base commits in `range` that are neither gate merges in scope nor direct commits on allowed paths.
@@ -343,7 +381,8 @@ export const commands = {
     const marker = join(aidlcDir(cwd), config.state.merging); // the guard refuses a commit on the base while the gate runs (U144)
     writeFileSync(marker, unit.id);
     const { findings, tree, tested, proof, card } = (() => { try { return runGate(cwd, st, unit); } finally { rmSync(marker, { force: true }); } })();
-    if (findings.length) {
+    const warned = findings.filter((f) => f.level === config.okf.level.warning); // a profile stage's warning does not refuse
+    if (findings.length > warned.length) {
       tryGit(tree, 'merge', '--abort');
       dropWorktree(cwd, tree);
       // Remembered so `next` stops offering this merge until the base or the diff changes.
@@ -372,7 +411,7 @@ export const commands = {
     }
     tryGit(cwd, 'branch', '-q', '-D', branchOf(unit.id));
     for (const after of seam('afterMerge', st.profile)) output += after(cwd, st); // the board follows a merge
-    return done(output);
+    return done(output, config.exit.ok, warned);
   },
 
   push(args, { cwd }) {

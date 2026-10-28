@@ -18,6 +18,7 @@ Nothing touches the base until every check passes, so a failed gate leaves no ha
 Every code the gate can refuse with, and its fix: [Gate codes](diagrams/codes-gate.md), generated from `cli.json`. Level runs add `gate.fresh` (no test cache). A builder launched after a refusal is a fix round.
 
 # Details
+- **Order:** the checks below run as the stages of `gate.stages`, in order; a project adds stages of its own ([Lifecycle as data](lifecycle.md#pipelines)).
 - **Scope:** every path in the bolt's diff matches its scope. A builder's diff touching an `index.md`, a `log.md` or a `profile.shared` glob is `GATE-SHARED`: merge writes those.
 - **Secrets:** no line the bolt's diff adds matches a secret pattern of the secrets hook (`GATE-SECRET`), so one written from Bash, which that hook never sees, stops the merge.
 - **Lane:** the lane of the diff's paths must not exceed the card's lane.

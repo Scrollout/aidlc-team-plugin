@@ -56,6 +56,16 @@ function layerFiles(root, cliDir = CLI_DIR) {
   return config.layers.map((l) => ({ name: l.name, path: l.path, from: l.from, file: join(l.from === 'cli' ? cliDir : root, l.path) }));
 }
 
+// A profile gate stage's problem, or null: it needs an id and a command, cannot replace a core stage, runs from the
+// trial merge on and fails at error or warning (docs/design/lifecycle.md#pipelines); the gate skips one with a problem.
+export function stageProblem(s) {
+  const G = config.gate, L = config.okf.level;
+  if (!s.id || !s.check) return 'stageShape';
+  if (G.stages.includes(s.id)) return 'stageCore';
+  if (G.stages.indexOf(s.after ?? G.stageAfter) < G.stages.indexOf(G.treeFrom)) return 'stageAfter';
+  return [undefined, L.error, L.warning].includes(s.level) ? null : 'stageLevel';
+}
+
 // The plugin defaults, beside the CLI so a project's pinned copy carries them.
 export const DEFAULTS = readJson(join(CLI_DIR, config.layers.find((l) => l.from === 'cli').path));
 export const withDefaults = (profile = {}) => mergeLayer(DEFAULTS, profile, config.text.defaultsLayer);

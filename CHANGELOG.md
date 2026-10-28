@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.190.0] - 2026-10-28
+### Added
+- The merge gate is an ordered stage list (M26 B240, done). `gate.stages` names the gate's stages in order, each a check in code; a conflict at the trial merge ends the walk. An object entry of `profile.checks`, `{ id, check, level, after }`, is a stage of its own: its command runs on the merged tree after the stage it names, refusing the merge at `error` (default) or reported at `warning`. `PROFILE-STAGE` refuses an entry that reuses a core stage's id, runs before the trial merge or sets another level, so a project extends the gate and never shortens it. The review keeps `general` and adds a focus for each `profile.focus` the diff touches; hooks stay with the host. Lifecycle as data and M26 are stable.
+
 ## [0.189.2] - 2026-10-28
 ### Changed
 - The next action is data (M26 B240, second part). `next.order` lists `{ when, action }` in order; `next` serves the first entry whose named guards hold, the context they read computed only as far as an entry asks. The actions `next` serves are unchanged.
@@ -406,7 +410,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.189.2...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.190.0...HEAD
+[0.190.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.189.2...v0.190.0
 [0.189.2]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.189.1...v0.189.2
 [0.189.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.189.0...v0.189.1
 [0.189.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.188.0...v0.189.0

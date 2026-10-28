@@ -4,7 +4,7 @@ import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from '
 import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { at as dataAt, bundleOf, config, done, isMap, list, slug, UsageError, relPath } from '../foundation/data.mjs';
 import { escapeRe, finding as codeFinding, msg, render } from '../foundation/text.mjs';
-import { loadProfile } from '../foundation/profile.mjs';
+import { loadProfile, stageProblem } from '../foundation/profile.mjs';
 import { parseYaml, YamlError } from '../foundation/yaml.mjs';
 import { kindProblems } from './method.mjs';
 import { moduleProblems, namingProblems } from './naming.mjs';
@@ -323,6 +323,8 @@ export function nameProblem(r) {
   try { new RegExp(r.find ?? ''); new RegExp(r.pattern); } catch { return 'namesRegex'; }
   return null;
 }
+const lintStages = (checks, file = PROFILE) => [checks ?? []].flat().filter(isMap)
+  .map((s) => [s, stageProblem(s)]).filter(([, key]) => key).map(([s, key]) => finding('PROFILE-STAGE', 'error', file, 1, key, { id: s.id ?? '-', after: s.after ?? '-' }));
 const lintNames = (names, file = PROFILE) => [names ?? []].flat()
   .map((r) => [r, nameProblem(r)]).filter(([, key]) => key).map(([r, key]) => finding('PROFILE-NAMES', 'error', file, 1, key, { id: r?.id ?? '-' }));
 
@@ -378,7 +380,7 @@ export const commands = {
     const { profile, sources } = loadProfile(cwd);
     const rules = profile.docs?.rules ?? {};
     const bundle = bundleOf(cwd, profile);
-    const findings = [...lintRules(rules), ...lintNames(profile.names), ...lintKeys(sources)];
+    const findings = [...lintRules(rules), ...lintNames(profile.names), ...lintStages(profile.checks), ...lintKeys(sources)];
     // A codebase in modules grows names from the first unit: without a rule nothing holds them (docs/design/naming.md).
     // Domains own their data: critical, so an error once the project is past adoption (docs/design/architecture-model.md).
     const arch = profile.architecture ?? {}, mods = profile.modules ?? [], at = PROFILE;

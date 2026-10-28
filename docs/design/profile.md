@@ -61,7 +61,7 @@ Merge rules:
 - `security.content`: regexes for code that needs a security review wherever it sits (RLS, TLS skips); a line adding one requires the `security` focus ([Merge mechanics](gate.md)). `security.secrets` is for credentials: the write hook blocks them.
 - `check` warns `PROFILE-KEY` for a top-level or `security` key in a layer file that nothing reads, so a guessed key is not taken for a rule.
 - `levels.<name>.paths`: the test files (`**/*_test.go`), never a folder holding helpers, which are code the proof reverts.
-- `checks`: commands run on every merge (lint, format, static analysis), each safe to run several at once: the gate, builders and reviewers run in parallel.
+- `checks`: commands run on every merge (lint, static analysis), each safe to run beside builders and reviewers; an object entry is a gate stage ([Lifecycle](lifecycle.md#pipelines)).
 - `review.fixRounds`: fix rounds per focus before a `fix` escalates (default 3). `decisions.paths` and `generated`: [Plan lint](plan-lint.md#profile-keys-it-reads).
 - `names`: [Naming rules](naming.md); `deps`: [Current dependencies](dependencies.md); `deploy.platform`: [Operations](operations.md).
 - `research.sources` lists the sources the owner trusts, and `research.max` its source budget (default 8); `models.research` its model ([0010](../decisions/0010-research-for-open-questions.md)). `efforts`: each agent role's effort ([Intake](intake.md#agents-get-exactly-their-brief)).
@@ -70,7 +70,7 @@ Merge rules:
 - `init --adopt` keeps an existing bundle (the folder whose `index.md` has `okf_version`), records `adopted: <HEAD>` and reports, without changing anything:
   - spec errors and house-rule warnings;
   - leftovers of other tools: unknown top-level dot folders, and commit trailer keys other than the standard and our own.
-- Neutral by construction: templates never name the plugin; a test greps rendered output.
+- Neutral by construction: templates never name the plugin; a test checks it.
 
 # Vendoring
 How `init` and `upgrade` copy and pin the CLI: [Vendoring](vendoring.md).

@@ -76,3 +76,35 @@ test('B240/AC-2 next walks next.order: each entry names guards and an action the
   assert.deepEqual(order.at(-1).when, [], 'the last entry always holds, so next always serves an action');
   assert.equal(order[0].action, 'continueMerge', 'a merge in progress comes first');
 });
+
+test('B240/AC-2 the gate walks gate.stages: each a stage in code, and a profile adds stages it cannot use to shorten the gate', async () => {
+  const { STAGES, stagesOf } = await import('../plugin/cli/lib/domains/gate.mjs');
+  const { stageProblem } = await import('../plugin/cli/lib/foundation/profile.mjs');
+  const G = config.gate, L = config.okf.level;
+  assert.deepEqual(G.stages.filter((id) => !STAGES[id]), [], 'every stage is in code');
+  assert.deepEqual(Object.keys(STAGES), G.stages, 'every stage in code is ordered by the data, in its order');
+  assert.ok(G.stages.includes(G.treeFrom) && G.stages.indexOf(G.stageAfter) > G.stages.indexOf(G.treeFrom));
+  const own = { id: 'contract', check: 'make contract' };
+  assert.equal(stageProblem(own), null);
+  assert.equal(stageProblem({ ...own, level: L.warning }), null);
+  assert.equal(stageProblem({ ...own, id: G.stages[0] }), 'stageCore', 'a core stage cannot be replaced');
+  assert.equal(stageProblem({ ...own, after: G.stages[0] }), 'stageAfter', 'a command runs on the merged tree');
+  assert.equal(stageProblem({ ...own, level: L.off }), 'stageLevel', 'a stage cannot be turned off');
+  assert.equal(stageProblem({ id: 'x' }), 'stageShape');
+  const walk = stagesOf({ checks: ['make lint', { ...own, after: G.treeFrom }, { ...own, id: G.stages[0] }] });
+  assert.equal(walk.length, G.stages.length + 1, 'a string runs in the checks stage, a valid object adds a stage, an invalid one none');
+  assert.equal(walk[G.stages.indexOf(G.treeFrom) + 1].name, '', 'the profile stage runs right after the stage it names');
+  assert.deepEqual(walk.filter((s) => s.name).map((s) => s.name), G.stages, 'no core stage is dropped or moved');
+});
+
+test('B240/AC-2 a profile stage fails the merge at error and is reported at warning', async () => {
+  const { codes, FAIL, merge, PROFILE, setup } = await import('./gate-repo.mjs');
+  const stage = { id: 'contract', check: FAIL };
+  const refused = merge(setup({ profile: { ...PROFILE, checks: [stage] } }));
+  assert.equal(refused.code, 1);
+  assert.ok(codes(refused).includes('GATE-CHECK'), refused.out);
+  const warned = merge(setup({ profile: { ...PROFILE, checks: [{ ...stage, level: config.okf.level.warning }] } }));
+  assert.equal(warned.code, 0, warned.out + warned.err);
+  assert.match(warned.out + warned.err, /GATE-CHECK/);
+  assert.match(warned.out, /^merged U-1 as /m);
+});

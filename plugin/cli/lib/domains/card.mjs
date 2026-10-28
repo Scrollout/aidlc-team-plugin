@@ -2,7 +2,7 @@
 // and the model hook (docs/design/bolt-card.md). Model routing follows docs/design/team.md.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { bundleOf, CLI_DIR, config, QUICK, STANDARD, VERDICT, done, list, packageFile, readJson, slug, UsageError, relPath } from '../foundation/data.mjs';
+import { bundleOf, CLI_DIR, config, QUICK, STANDARD, VERDICT, done, isMap, list, packageFile, readJson, slug, UsageError, relPath } from '../foundation/data.mjs';
 import { branchSha, git, gitLines, tryGit } from '../foundation/git.mjs';
 import { msg, render } from '../foundation/text.mjs';
 import { loadProfile, withDefaults } from '../foundation/profile.mjs';
@@ -128,7 +128,7 @@ function renderCard(cwd, unitId, { preview = false } = {}) {
     fixes: [fixes.length ? msg('cardFixes', { list: fixes.join('') }) : '', answered.length ? msg('cardAnswered', { list: answered.join('') }) : ''].join(''),
     proof: [Object.entries(withDefaults(profile).levels).filter(([, l]) => l?.run && list(l.paths).length).map(([level]) => level).join(', ')].filter(Boolean),
     runs: Object.entries(withDefaults(profile).levels).filter(([, l]) => l?.run).map(([level, l]) => ({ level, run: l.run })),
-    checks: [...(profile.modules ?? []).filter((m) => modules.has(m.id ?? m.name) && m.check).map((m) => ({ module: m.id ?? m.name, check: m.check })), ...list(profile.checks).map((check) => ({ module: C.everyMerge, check }))],
+    checks: [...(profile.modules ?? []).filter((m) => modules.has(m.id ?? m.name) && m.check).map((m) => ({ module: m.id ?? m.name, check: m.check })), ...[profile.checks ?? []].flat().map((check) => ({ module: C.everyMerge, check: isMap(check) ? check.check : check }))],
     // The data the unit's modules own; any other through its owner (docs/design/data-ownership.md).
     data: profile.architecture?.data?.prefix ? [(profile.modules ?? []).filter((m) => modules.has(m.id ?? m.name) && list(m.data).length).map((m) => msg('cardDataOwned', { module: m.id ?? m.name, data: list(m.data).join(', ') })).join('') + msg('cardDataRest', { shared: list(profile.architecture.data.shared).join(', ') || '-' })] : [],
     // The naming rules for the files the unit may write (docs/design/naming.md).

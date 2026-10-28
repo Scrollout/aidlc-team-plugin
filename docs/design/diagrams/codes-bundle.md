@@ -27,6 +27,7 @@ generated: { by: tests/diagrams.mjs }
 | `CONTRACT-NAME` | follow the API grammar: full lowerCamel names, Noun_Verb operation ids, a dated api-version, camelCase segments and properties, PascalCase enums, and what the chosen model's contract adds (aidlc name path\|operation-id\|api-version) (docs: Naming) |
 | `PROFILE-NAMING` | set naming.tokens (system: 2-6 lower-case letters or digits; org and zone: DNS labels), domains as lower-case plural nouns, vocabulary words as lower-case words, none of them banned (docs: Naming) |
 | `PROFILE-KIND` | give each module its kind (domain, pipeline, foundation, adapter, runtime, extension or delivery), surfaces from client, server and events, and system as core and extensions globs (docs: Architecture model) |
+| `PROFILE-STAGE` | give each object entry of checks an id no core gate stage has, a check command, an after naming merge or a stage after it, and a level of error or warning (docs: Lifecycle as data) |
 | `PROFILE-KEY` (warning) | remove it, or use the key the profile doc names for what you meant |
 | `MODEL-FORMAT` | give the model folder a model.json with `name`, `title`, `description`, `layers` (its horizontal layers) and `extension` (the contract each extension declares); layers and domains with unique ids and kinds from the vocabulary; rules of known types; contracts between known ids; decisions as Decision docs (docs: Models) |
 | `PIPELINE-ORDER` | wire the stages in the model's order, or point model.wiring in the profile at the file and the pattern that name them (docs: Models) |

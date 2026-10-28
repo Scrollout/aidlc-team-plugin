@@ -319,6 +319,10 @@
     "namingModule": "module {{module}} is a {{kind}}, and {{module}} is not in {{where}}",
     "namesRegex": "names rule {{id}}: find or pattern is no valid regex",
     "profileKey": "{{key}} is read by nothing in the plugin",
+    "stageShape": "checks entry {{id}}: an object entry needs an id and a check command",
+    "stageCore": "checks entry {{id}}: a core gate stage cannot be replaced",
+    "stageAfter": "checks entry {{id}}: after {{after}} is no gate stage from the trial merge on",
+    "stageLevel": "checks entry {{id}}: level must be error or warning",
     "ruleFixed": "docs.rules.{{code}}: spec codes cannot be changed",
     "ruleLevel": "docs.rules.{{code}}: level must be error, warning or off",
     "yamlTab": "line {{line}}: tab in indentation",
@@ -815,6 +819,10 @@
       "PROFILE-KIND": {
         "level": "error",
         "fix": "give each module its kind (domain, pipeline, foundation, adapter, runtime, extension or delivery), surfaces from client, server and events, and system as core and extensions globs (docs: Architecture model)"
+      },
+      "PROFILE-STAGE": {
+        "level": "error",
+        "fix": "give each object entry of checks an id no core gate stage has, a check command, an after naming merge or a stage after it, and a level of error or warning (docs: Lifecycle as data)"
       },
       "PROFILE-KEY": {
         "level": "warning",
@@ -1366,6 +1374,9 @@
   },
   "gate": {
     "tmpPrefix": "gate-",
+    "stages": ["approval", "scope", "lines", "lane", "review", "security", "increment", "merge", "acTests", "levels", "quickAcs", "proof", "checks", "architecture", "docs", "extensions"],
+    "treeFrom": "merge",
+    "stageAfter": "checks",
     "summaryMarks": { "error": "❌", "warning": "⚠️" },
     "exceptItem": "^\\s*[-*]\\s+|`",
     "summaryEnv": "GITHUB_STEP_SUMMARY",
