@@ -2,7 +2,7 @@
 
 Goal: {{goal}}
 Lane: {{lane}} ({{laneReason}})
-Model: {{model}} ({{modelReason}})
+AI model: {{model}} ({{modelReason}})
 Base: {{base}}
 Card: {{hash}}
 

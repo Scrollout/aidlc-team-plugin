@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.207.0] - 2026-10-28
+### Changed
+- One sense for the words agents could misread (M30 B255). The messages, fixes, templates, personas, the skill and the agents say model, request, bundle, contract and event only after a word naming the sense, from `vocabulary.senses`: architecture, domain or AI model; the owner's request, or a call; the docs bundle; the API contract; integration, domain or outcome event. A test reports any other bare use outside a code span. The card's and research brief's model line reads `AI model:`, and the design doc on models is titled Architecture models.
+
 ## [0.206.0] - 2026-10-28
 ### Added
 - Slices reported (M29 B253, AC-3; M29 done). `status` and a `-slices` map page show each declared slice as planned, partial or done, layer by layer, with its hand-offs to the slices that consume its events and the domains it calls. An intent's trace lists the permission and entry of each slice its bolts list, the permission catalogue. The gate records the paths of a refused merge and the retro counts refusals by the layer each sits in. `slice-method.md`, `slice-declares.md` and M29 are stable.
@@ -482,7 +486,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.206.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.207.0...HEAD
+[0.207.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.206.0...v0.207.0
 [0.206.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.205.0...v0.206.0
 [0.205.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.204.0...v0.205.0
 [0.204.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.203.0...v0.204.0

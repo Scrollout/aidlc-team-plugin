@@ -14,11 +14,11 @@ A refusal names its fix: apply it. On `escalate`, stop and tell the owner.
 
 # Doing each action
 - **elaborate, draft**: work as the role the line names (`aidlc persona <role>`). Copy the template in `.aidlc/templates/docs/`. Ask the owner one question at a time, 2-3 options and your pick; write each answer in the doc before the next. Open points: under `# Open questions`. Give each doc its why. Run `aidlc check <file>` and commit.
-- **build**: run `aidlc card B-<n>` per bolt, then every builder in one message: Agent, `subagent_type: aidlc-team:builder`, `model` the card's `Model:`, prompt `Build B-<n>.`
+- **build**: run `aidlc card B-<n>` per bolt, then every builder in one message: Agent, `subagent_type: aidlc-team:builder`, `model` the card's `AI model:`, prompt `Build B-<n>.`
 - **fix round, restart**: as build, prompt `Fix round for B-<n>.` or `Continue B-<n> from its last commit.`
 - **review**: per focus `next` names, in one message: Agent, `subagent_type: aidlc-team:reviewer`, `model` as `next` names it, prompt `Review B-<n>, focus <focus>.` or `Review I-<n>.`
-- **wait**: end the turn; notices wake you.
-- **merge**: run it.
+- **wait**: end the turn; notices wake you
+- **merge**: run it
 - **deploy check**: run it; on a failure fill in the `aidlc fix` line it prints and run it.
 - **release, rollback**: owner steps (3). If the owner types `release I-<n>` or `rollback I-<n>`, run that command.
 - **research**: one Agent, `subagent_type: aidlc-team:researcher`, `model` as `next` names it, prompt `Research <id>.` File the digest as it says, draft the decision, commit.

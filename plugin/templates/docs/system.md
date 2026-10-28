@@ -12,7 +12,7 @@ description: <what the system is for, in one sentence>
 <each further rule the shape sets, with its why: technical, organisational, legal>
 
 # Context and Scope
-<the system and what it talks to: users, extensions built elsewhere against published contracts and the contracts each uses, outside systems; the C4 context view>
+<the system and what it talks to: users, extensions built elsewhere against published API contracts and the API contracts each uses, outside systems; the C4 context view>
 
 # Solution Strategy
 <why the system is shaped as it is: what is core, what is left to extensions, the key technology choices and the decisions behind them>

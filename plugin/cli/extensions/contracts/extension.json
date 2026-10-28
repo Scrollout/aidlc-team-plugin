@@ -12,8 +12,8 @@
       "contractProperty": "{{at}}: property {{name}} is not lowerCamel",
       "contractBoolean": "{{at}}: boolean {{name}} starts with is; name the state",
       "contractEnum": "{{at}}: enum value {{value}} is not PascalCase",
-      "contractSystemData": "{{at}}: a resource without {{field}}, which its model's contract asks",
-      "contractNextLink": "{{at}}: a list without {{field}}, which its model's contract asks",
+      "contractSystemData": "{{at}}: a resource without {{field}}, which its architecture model's API contract asks",
+      "contractNextLink": "{{at}}: a list without {{field}}, which its architecture model's API contract asks",
       "contractUnreadable": "the document cannot be read: {{error}}"
     },
     "naming": {

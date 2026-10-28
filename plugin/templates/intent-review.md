@@ -10,7 +10,7 @@ Focus: intent. You review the plan before the owner approves it, not code. You r
 ## Check
 - **Testable:** a tester could write a test from each requirement and each of its ACs, with no question back.
 - **Observable:** each AC reads Given <context>, when <action>, then <outcome>, and the outcome can be seen from outside.
-- **Scope:** what is in and what is out is plain, and no sentence of the request is answered by nothing.
+- **Scope:** what is in and what is out is plain, and no sentence of the owner's request is answered by nothing.
 - **Corners:** a surface under # Corners settled n/a or out of scope for a reason that does not hold.
 - **Contradictions:** two lines, answers or requirements that cannot both hold.
 - **Sources:** a line whose cited sentence, answer or assumption does not say what the line claims.

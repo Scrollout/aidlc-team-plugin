@@ -17,4 +17,4 @@ description: <the shared concern it serves, in one sentence>
 <the surface consumers import, and what they may not>
 
 # Data
-<foundation and adapter: none. Pipeline: the event-fed read models it keeps, and the events that feed them>
+<foundation and adapter: none. Pipeline: the projections it keeps, and the integration events that feed them>

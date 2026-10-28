@@ -21,6 +21,7 @@ Every concept the plugin uses has one word, at one of five scales, drawn from `c
 # Rules
 - `cli.json` holds the vocabulary: words, retired words with their replacement, and the closed lists. Checks and the generated glossary read it, nothing else.
 - `TERM-SYNONYM` reports a retired word in its old sense, in a project's docs and code and in this repo.
+- What agents read (messages, fixes, templates, personas, the skill and the agents) uses model, request, bundle, contract and event only after a word naming its sense (`vocabulary.senses`: architecture, domain or AI model; the owner's request, else a call; the docs bundle; the API contract; integration, domain or outcome event) or in a code span; a test reports any other bare use.
 - **Pinned method.** Approving an intent writes `method: <version>`, a stamp outside the doc's hash, and the intent is judged by that method: one approved before pinning by method 1, a draft by the current one. `method.since` names the method each later rule starts at, by message key; `upgrade` lists the changes (`method.changes`).
 - An approved intent's `method/` pages stay at its version ([Bundle](bundle.md)).
 

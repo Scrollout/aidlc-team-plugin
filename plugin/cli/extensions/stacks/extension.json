@@ -4,13 +4,13 @@
   "when": null,
   "data": {
     "messages": {
-      "contractEvent": "event type {{type}} is not <Org>.<Service>.<Noun><PastTenseVerb> with no version suffix",
+      "contractEvent": "integration event type {{type}} is not <Org>.<Service>.<Noun><PastTenseVerb> with no version suffix",
       "packNone": "no stack pack fits this project; the packs look for: {{detect}}",
       "scaffoldUsage": "usage: aidlc scaffold <kind> <name> [--domain d]; kinds: {{kinds}}",
       "scaffoldWrote": "wrote {{path}}\n",
       "scaffoldKept": "kept {{path}}: it exists\n",
       "graphSelftest": "the project's graph ({{command}}) lacks {{count}} edges the stack pack reads from source, e.g. {{edges}}",
-      "sliceImport": "slice {{from}} imports slice {{to}}: slices meet only through interfaces, events or shared domain services",
+      "sliceImport": "slice {{from}} imports slice {{to}}: slices meet only through interfaces, integration events or shared domain services",
       "sliceEntry": "{{from}} imports slice {{slice}}, which only its domain's {{layers}} layer or a {{kinds}} module may enter",
       "sliceUnreached": "slice {{slice}} is entered from nowhere: no {{layers}} layer or {{kinds}} module imports it",
       "slicePlace": "{{file}} sits in no layer of domain {{domain}} ({{layers}})",
@@ -26,10 +26,10 @@
       "sliceTest": "slice {{slice}} has no test: none in its folder and none importing it",
       "cardReference": "Copy the shape of the stack pack's reference domain ({{domain}}): the command slice {{command}} and the query slice {{query}}.\n",
       "sliceName": "slice {{slice}} of domain {{domain}} is no name the registry composes from a verb and the domain's noun: {{names}}",
-      "sliceRouteTwice": "operation id {{id}} is used twice in the contracts",
+      "sliceRouteTwice": "operation id {{id}} is used twice in the API contracts",
       "sliceRouteNone": "operation id {{id}} maps to slice {{slice}} of {{domain}}, which has no folder",
       "sliceRouteUnknown": "operation id {{id}} maps to no domain and verb of the registry",
-      "sliceNoRoute": "slice {{slice}} has no operation in the contracts, though its domain {{domain}} is served there",
+      "sliceNoRoute": "slice {{slice}} has no operation in the API contracts, though its domain {{domain}} is served there",
       "sliceDeliverRoute": "the bolt adds slice {{slice}} but changes nothing in {{layers}} or a runtime that wires its route",
       "valueLiteral": "{{path}}:{{line}} adds the literal {{value}} to code: values live in the project's data",
       "sliceDeliverListed": "{{unit}} lists slice {{slice}} but changes nothing in its folder",
@@ -42,8 +42,8 @@
       "sliceDataOwner": "slice {{slice}} uses {{node}}, which {{domain}} neither owns nor shares",
       "sliceEntryRuntime": "slice {{slice}} is served by {{entry}}, which is no runtime module",
       "slicePermission": "slice {{slice}} needs permission {{permission}}, which the registry composes for none of its domains ({{names}})",
-      "sliceEmits": "slice {{slice}} emits {{event}}, which {{domain}}'s # Surface lists on no Events line",
-      "sliceConsumes": "slice {{slice}} consumes {{event}}, which no domain's # Surface lists on an Events line",
+      "sliceEmits": "slice {{slice}} emits {{event}}, which {{domain}}'s # Surface lists on no `- Events:` line",
+      "sliceConsumes": "slice {{slice}} consumes {{event}}, which no domain's # Surface lists on an `- Events:` line",
       "sliceCalls": "slice {{slice}} calls {{target}}, which is no domain, extension or adapter module",
       "sliceUi": "slice {{slice}} serves a ui unit of work but does not cut ui, which the stack pack has",
       "planSliceScope": "{{unit}} lists slice {{slice}}, which cuts {{cut}}, but its scope does not cover {{path}}",
@@ -112,7 +112,7 @@
         },
         "SLICE-IMPORT": {
           "level": "error",
-          "fix": "move what both slices need into the domain's model, an event or a shared domain service; a slice never imports another (docs: Vertical slices checked)"
+          "fix": "move what both slices need into the domain model, an integration event or a shared domain service; a slice never imports another (docs: Vertical slices checked)"
         },
         "SLICE-ENTRY": {
           "level": "error",
@@ -140,7 +140,7 @@
         },
         "SLICE-ROUTE": {
           "level": "error",
-          "fix": "give each slice its operation, with the operation id aidlc name operation-id composes from the same domain and verb, once in the contracts; mount the domain's routes in the runtime its slices name as their entry, and in no other (docs: Vertical slices checked)"
+          "fix": "give each slice its operation, with the operation id aidlc name operation-id composes from the same domain and verb, once in the API contracts; mount the domain's routes in the runtime its slices name as their entry, and in no other (docs: Vertical slices checked)"
         },
         "SLICE-DELIVER": {
           "level": "error",

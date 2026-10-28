@@ -43,7 +43,7 @@ test('U4/AC-6 a unit survives a clear, a lost builder and fix rounds with no dup
 
   review(dir, 'U-1', 'fix', [{ path: 'src/a.txt', line: 1, claim: 'x', scenario: 'y', confidence: 'CONFIRMED' }]);
   assert.match(next(dir), /^fix round for U-1/);
-  const model = run(dir, ['card', 'U-1']).out.match(/^Model: (\S+)/m)[1]; // the card names the fix round's model, and the launch hook holds it to it (B219)
+  const model = run(dir, ['card', 'U-1']).out.match(/^AI model: (\S+)/m)[1]; // the card names the fix round's model, and the launch hook holds it to it (B219)
   launch(dir, 'builder', 'Fix round for U-1.', model);
   assert.match(next(dir), /^wait/, 'a fix round in flight is not offered again');
   run(dir, ['report', 'U-1'], '{"status": "done", "summary": "the findings need no change"}');

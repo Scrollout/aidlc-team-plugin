@@ -40,11 +40,11 @@ test('B214/AC-2 intake proposes pathway, stack and lane from bands; the lead sco
   assert.match(r.out, /  ambiguity medium: the lead, citing Q-1\.1\n  assumptions high: the lead, citing Q-1\.4, Q-1\.5\n/);
   assert.match(read(dir, requestFile(dir)), /^bands: \{ verification: high, risk: high, ambiguity: medium, assumptions: high \}$/m);
   assert.deepEqual(docCodes(dir), [], 'scoring changes only the front matter');
-  assert.match(run(dir, ['intake', 'Q-1', '--risk', 'low']).err, /risk low is below what the request's words show \(high\)/);
+  assert.match(run(dir, ['intake', 'Q-1', '--risk', 'low']).err, /risk low is below what the owner's request's words show \(high\)/);
   assert.match(run(dir, ['intake', 'Q-1', '--ambiguity', 'high']).err, /ambiguity high cites no sentence/);
   assert.match(run(dir, ['intake', 'Q-1', '--ambiguity', 'high:Q-1.9']).err, /ambiguity cites Q-1\.9, not a sentence of Q-1/);
   assert.match(run(dir, ['intake', 'Q-1', '--ambiguity', 'huge:Q-1.1']).err, /ambiguity huge:Q-1\.1: write <band>:<ids>/);
-  assert.match(run(dir, ['intake', 'Q-7']).err, /no request Q-7 in docs\/requests/);
+  assert.match(run(dir, ['intake', 'Q-7']).err, /no owner's request Q-7 in docs\/requests/);
   r = run(dir, ['intake', 'Q-1', '--ambiguity', 'low']);
   assert.match(r.out, /assumptions high: the lead, citing Q-1\.4, Q-1\.5/, 'an earlier score stays');
 
@@ -72,7 +72,7 @@ test('B214/AC-3 an intent\'s lane is a floor for its bolts, and a lane outside t
 
 const V2 = { system: { core: ['src/**'] }, naming: { tokens: { system: 'bak' } } };
 // A method 7 intent: its questions end with a confirmed read-back, and every corner is settled.
-const READBACK = '- Q2 Read-back: cakes ordered online, paid by card, one shop.\n  - a) looks correct: write the docs\n  - b) request changes: read back again\n  - Answer: a';
+const READBACK = '- Q2 Read-back: cakes ordered online, paid by card, one shop.\n  - a) looks correct: write the docs\n  - b) changes needed: read back again\n  - Answer: a';
 const CORNERS = '# Corners\n- Input: [Q1]\n- Identity: [A1]\n- Data: n/a: no data beyond orders\n- Errors: R-1\n- Scale: out of scope: one shop, a few orders\n- Time: n/a: no dates in this intent\n- Money: [Q1]\n- Outside systems: [Q1]\n- Operations: n/a: one host, rolled back by hand\n- Change: n/a: nothing exists yet\n';
 const cakes = (fm, body, { questions = READBACK, corners = CORNERS } = {}) => `---\ntype: Intent\ntitle: Cake orders\ndescription: Online cake orders.\npathway: greenfield\n${fm}---\n\n# Goal\n${body}\n\n# Questions\n- Q1 Which card provider?\n  - a) one provider: simple\n  - Answer: a\n${questions}\n\n${corners}\n# Assumptions\n- A1 One bakery, one shop.\n\n# Out of scope\n- Logins for staff [Q-1.3]: later.\n`;
 const R1 = (statement) => `---\ntype: Requirement\ntitle: Order email\ndescription: The baker hears of each order.\n---\n\n# Requirement\n${statement}\n\n# Acceptance criteria\n- AC-1 (unit): Given an order, when it is placed, then the baker gets an email.\n`;
@@ -87,7 +87,7 @@ test('B215/AC-1 a method 6 intent names its requests, and its goal, stories and 
   write(dir, { 'docs/intents/I-1-cake-orders.md': cakes('request: [Q-1]\nrequirements: [R-1]\n', `${goal}\nFast checkout.\nCakes [Q-1.9], cards [Q7], shops [A2], ovens [F-3].`) });
   assert.deepEqual(claims(dir), [
     'intents/I-1-cake-orders.md:13 CLAIM-SOURCE I-1 Goal line has no source: Fast checkout.',
-    'intents/I-1-cake-orders.md:14 CLAIM-SOURCE I-1 cites Q-1.9, which is no sentence of its requests (Q-1)',
+    'intents/I-1-cake-orders.md:14 CLAIM-SOURCE I-1 cites Q-1.9, which is no sentence of its owner\'s requests (Q-1)',
     'intents/I-1-cake-orders.md:14 CLAIM-SOURCE I-1 cites Q7, which is no answered question of I-1',
     'intents/I-1-cake-orders.md:14 CLAIM-SOURCE I-1 cites A2, which I-1 does not list under # Assumptions',
     'intents/I-1-cake-orders.md:14 CLAIM-SOURCE I-1 cites F-3, which is no platform fact',
@@ -100,9 +100,9 @@ test('B215/AC-1 a method 6 intent names its requests, and its goal, stories and 
   commit(dir, 'plan');
   assert.match(run(dir, ['approve', 'R-1']).err, /CLAIM-SOURCE R-1 Requirement line has no source/, 'it blocks the approval');
   write(dir, { 'docs/intents/I-1-cake-orders.md': cakes('', goal) });
-  assert.deepEqual(claims(dir), ["intents/I-1-cake-orders.md:1 CLAIM-SOURCE I-1 names no request: keep the owner's words with aidlc intake and record request: [Q-<n>]"]);
+  assert.deepEqual(claims(dir), ["intents/I-1-cake-orders.md:1 CLAIM-SOURCE I-1 names no owner's request: keep the owner's words with aidlc intake and record `request: [Q-<n>]`"]);
   write(dir, { 'docs/intents/I-1-cake-orders.md': cakes('request: [Q-9]\n', goal) });
-  assert.match(claims(dir).join('\n'), /CLAIM-SOURCE I-1 names Q-9, which is no request in requests/);
+  assert.match(claims(dir).join('\n'), /CLAIM-SOURCE I-1 names Q-9, which is no owner's request in requests/);
   write(dir, { 'docs/intents/I-1-cake-orders.md': cakes('method: 5\n', 'Anything.') });
   assert.deepEqual(claims(dir), [], 'an intent of an earlier method keeps its rules');
 });
@@ -149,7 +149,7 @@ test('B216/AC-2 a vague answer is ELAB-VAGUE, "not decided" stays open, and a re
   intent(`${READBACK.replace('- Q2', '- Q3')}`.replace(/^/, '- Q2 Which oven?\n  - a) gas: cheap\n  - Answer: not decided yet\n'));
   assert.deepEqual(elab(dir), ['I-1:16 ELAB-OPEN I-1 Q2 is not decided yet: it stays open until the owner decides, or it becomes an assumption or out of scope']);
   intent('');
-  assert.deepEqual(elab(dir), ['I-1:13 ELAB-OPEN I-1 ends with no read-back: ask a last question, Q<k> Read-back: <the summary>, with a) looks correct and b) request changes']);
+  assert.deepEqual(elab(dir), ['I-1:13 ELAB-OPEN I-1 ends with no read-back: ask a last question, Q<k> Read-back: <the summary>, with a) looks correct and b) changes needed']);
   intent(READBACK.replace('Answer: a', 'Answer: b, the shop is two shops'));
   assert.deepEqual(elab(dir), ['I-1:16 ELAB-OPEN I-1 Q2: the owner asked for changes to the read-back; revise, then read back again']);
   intent(READBACK.replace('Answer: a', ''));

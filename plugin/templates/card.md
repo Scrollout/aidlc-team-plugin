@@ -2,8 +2,8 @@
 
 Goal: {{goal}}
 Lane: {{lane}} ({{laneReason}})
-Model: {{model}} ({{modelReason}})
-Review model: {{reviewModel}} (profile models.review)
+AI model: {{model}} ({{modelReason}})
+Review AI model: {{reviewModel}} (profile `models.review`)
 Base: {{base}}
 Card: {{hash}}
 

@@ -100,8 +100,8 @@ test('B250/AC-2 from method 13 a Unit\'s slice declares its cuts, data, entry, e
     'I-1 unit of work payments: slice createpayment declares bogus, which is no part of a slice\'s declaration (data, entry, permission, async, emits, consumes, calls)',
     'I-1 unit of work payments: slice createpayment uses data/orders/orders, which payments neither owns nor shares',
     'I-1 unit of work payments: slice createpayment is served by orders, which is no runtime module',
-    'I-1 unit of work payments: slice createpayment emits OrderTaken, which payments\'s # Surface lists on no Events line',
-    'I-1 unit of work payments: slice createpayment consumes Nothing, which no domain\'s # Surface lists on an Events line',
+    'I-1 unit of work payments: slice createpayment emits OrderTaken, which payments\'s # Surface lists on no `- Events:` line',
+    'I-1 unit of work payments: slice createpayment consumes Nothing, which no domain\'s # Surface lists on an `- Events:` line',
     'I-1 unit of work payments: slice createpayment calls billing, which is no domain, extension or adapter module',
   ]);
   assert.deepEqual(foundWith(OWNED, { ...DECLARED('Command createorder [US1.1]', 'Command createpayment [US1.2]'), 'docs/intents/I-1-cakes.md': SLICED('Command createorder [US1.1]', 'Command createpayment [US1.2]') }), [], 'an intent pinned to method 12 declares none');

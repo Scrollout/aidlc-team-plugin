@@ -17,7 +17,7 @@
       "sliceGovernPermission": "slice {{slice}} names no permission, though its entry {{entry}} applies {{stages}}",
       "sliceGovernSelf": "slice {{slice}} imports {{to}}, a pipeline stage its entry runs for every slice",
       "sliceTestRoute": "slice {{slice}} has no test at a {{level}} level that names it, so nothing proves it through its entry",
-      "sliceTestPermission": "slice {{slice}}'s route tests never name its permission {{permission}}, so none sees a request without it refused",
+      "sliceTestPermission": "slice {{slice}}'s route tests never name its permission {{permission}}, so none sees a call without it refused",
       "sliceTestHandoff": "slice {{slice}} declares {{name}}, which no test at a {{level}} level names",
       "sliceTestPublisher": "slice {{slice}}'s hand-off test of {{event}} never names its publisher {{publisher}}",
       "sliceTestAsync": "slice {{slice}} is async, but no hand-off test naming it follows the status to a terminal state ({{states}})",
@@ -54,11 +54,11 @@
       "codes": {
         "SLICE-DATA": {
           "level": "error",
-          "fix": "name each data node the slice's code reaches in its declaration's data part, or reach it through the domain's model (docs: Building a slice)"
+          "fix": "name each data node the slice's code reaches in its declaration's data part, or reach it through the domain model (docs: Building a slice)"
         },
         "SLICE-INTEGRATE": {
           "level": "error",
-          "fix": "name each client, adapter, extension and event the slice's code reaches in its declaration's calls, emits or consumes, and drop one its code does not reach (docs: Building a slice)"
+          "fix": "name each client, adapter, extension and integration event the slice's code reaches in its declaration's calls, emits or consumes, and drop one its code does not reach (docs: Building a slice)"
         },
         "SLICE-GOVERN": {
           "level": "error",

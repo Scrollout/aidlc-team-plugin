@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { lintPlan } from '../plugin/cli/lib/index.mjs';
 import { approve, intentDoc, makeRepo, read, run, unitDoc } from './state-repo.mjs';
@@ -105,4 +105,21 @@ test('B254/AC-1 B254/AC-2 the vocabulary defines every concept the plugin uses, 
   assert.deepEqual(words.filter((w, k) => words.indexOf(w) !== k), [], 'each word once');
   for (const w of V.words) assert.ok(w.meaning && w.scale && w.declared, w.word);
   assert.deepEqual(V.retired.filter((r) => r.word === 'model').map((r) => r.use).sort(), ['AI model', 'domain model'], 'model alone is the architecture model');
+});
+
+// M30 B255: the words agents could misread keep one sense in what agents read (docs/design/canonical-model.md).
+test('B255/AC-1 messages, fixes, templates, personas, the skill and the agents use model, request, bundle, contract and event only in an expression naming one sense', async () => {
+  const { config } = await import('../plugin/cli/lib/index.mjs');
+  const { about, ...senses } = config.vocabulary.senses, P = join(import.meta.dirname, '../plugin');
+  const walk = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(join(d, e.name)) : [join(d, e.name)]));
+  const texts = [...['templates', 'agents', 'personas', 'skills'].flatMap((d) => walk(join(P, d))).filter((f) => f.endsWith('.md')).map((f) => [f.slice(P.length + 1), readFileSync(f, 'utf8')]),
+    ...Object.entries(config.messages).map(([k, v]) => [`messages.${k}`, v]),
+    ...Object.entries(config).flatMap(([t, sec]) => Object.entries(sec?.codes ?? {}).map(([c, x]) => [`${t}.codes.${c}`, x.fix ?? '']))];
+  const word = new RegExp(`(?:(\\S+)\\s+)?(?<![.\\w])(${Object.keys(senses).join('|')})s?\\b(?![.\\w])`, 'gi');
+  const bare = texts.flatMap(([where, raw]) => {
+    // Syntax is no prose: front matter, headings, code spans, placeholders, the Events line and a command.
+    const t = raw.replace(/^---\n[\s\S]*?\n---\n/, '').replace(/^#+ .*$/gm, '').replace(/^\s*- Events:.*$/gm, '').replace(/```[\s\S]*?```/g, '').replace(/`[^`\n]*`/g, '').replace(/\{\{[^}]*\}\}/g, '').replace(/<[^>\n]*>/g, '').replace(/\baidlc [a-z]+/g, '');
+    return [...t.matchAll(word)].filter((m) => !senses[m[2].toLowerCase()].some((q) => (m[1] ?? '').replace(/[^\w']/g, '').toLowerCase() === q.toLowerCase())).map((m) => `${where}: ${m[0].trim()}`);
+  });
+  assert.deepEqual(bare, []);
 });

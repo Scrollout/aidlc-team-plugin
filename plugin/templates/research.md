@@ -2,7 +2,7 @@
 
 Question: {{question}}
 Asked in: {{file}}
-Model: {{model}}
+AI model: {{model}}
 
 ## Project context (read first)
 - The docs bundle: {{index}}
@@ -23,7 +23,7 @@ type: Research
 title: "<the question in a few words>"
 description: "<the answer in one line>"
 question: {{questionYaml}}
-generated: { by: claude-code/<your model id>, at: <the current UTC time> }
+generated: { by: claude-code/<your AI model id>, at: <the current UTC time> }
 sources:
   - id: <short id>
     resource: <url>

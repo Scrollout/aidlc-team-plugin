@@ -30,7 +30,7 @@ test('B166/AC-1 the kind table decides each edge: domains reach other domains on
     ['internal/domains/orders/application', 'internal/domains/orders/model'],
     ['vendor/x', 'internal/domains/orders/model'],
   ], PROFILE)), [
-    'ARCH-KIND internal/domains/orders/application -> internal/domains/billing/infrastructure: orders (domain) may not depend on billing (domain), only on its client or events (internal/domains/billing/client, internal/domains/billing/events)',
+    'ARCH-KIND internal/domains/orders/application -> internal/domains/billing/infrastructure: orders (domain) may not depend on billing (domain), only on its client or integration events (internal/domains/billing/client, internal/domains/billing/events)',
     'ARCH-KIND internal/foundation/database -> internal/domains/orders/model: database (foundation) may not depend on orders (domain)',
     'ARCH-KIND internal/domains/orders/model -> extensions/payments: orders (domain) may not depend on payments (extension)',
     'ARCH-KIND internal/domains/orders/application -> tools/archgraph: orders (domain) may not depend on deploy (delivery)',
@@ -50,7 +50,7 @@ test('B167/AC-1 layers point inward: interface to application and model, applica
   ], PROFILE)), [
     'ARCH-LAYER internal/domains/orders/model -> internal/domains/orders/infrastructure: model may not depend on infrastructure in orders',
     'ARCH-LAYER internal/domains/orders/application -> internal/domains/orders/interface: application may not depend on interface in orders',
-    'ARCH-LAYER internal/domains/orders/model -> internal/domains/billing/client: the model of orders depends on billing (domain); a model depends only on foundation kits',
+    'ARCH-LAYER internal/domains/orders/model -> internal/domains/billing/client: the domain model of orders depends on billing (domain); a domain model depends only on foundation kits',
   ]);
   const v1 = { modules: [{ id: 'registry', kind: 'domain', paths: ['internal/registry/**'], layers: { api: ['internal/registry/api/**'], app: ['internal/registry/app/**'], domain: ['internal/registry/domain/**'], store: ['internal/registry/store/**'] } }] };
   assert.deepEqual(lines(layerFindings([['internal/registry/domain', 'internal/registry/store'], ['internal/registry/api', 'internal/registry/app']], v1)), ['ARCH-LAYER internal/registry/domain -> internal/registry/store: model may not depend on infrastructure in registry'], 'v1 layer names read as the canonical four');
@@ -74,5 +74,5 @@ test('B168/AC-1 a module surface is its client and events; ARCH-API judges modul
   const edges = [['internal/frontdoor/app', 'internal/registry/api'], ['internal/frontdoor/app', 'internal/registry/client']];
   assert.deepEqual(lines(moduleFindings(edges, { modules: mods(false) })), ['ARCH-API internal/frontdoor/app -> internal/registry/api: internal/registry/api is inside registry; depend only on its public paths (internal/registry/client)'], 'the server surface is not public');
   assert.deepEqual(moduleFindings(edges, { modules: mods(true) }), [], 'with kinds ARCH-API steps aside');
-  assert.deepEqual(lines(kindFindings(edges, { modules: mods(true) })), ['ARCH-KIND internal/frontdoor/app -> internal/registry/api: frontdoor (pipeline) may not depend on registry (domain), only on its client or events (internal/registry/client)']);
+  assert.deepEqual(lines(kindFindings(edges, { modules: mods(true) })), ['ARCH-KIND internal/frontdoor/app -> internal/registry/api: frontdoor (pipeline) may not depend on registry (domain), only on its client or integration events (internal/registry/client)']);
 });

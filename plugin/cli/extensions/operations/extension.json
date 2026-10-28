@@ -15,7 +15,7 @@
       "deployPassed": "{{intent}} {{step}} passed\n",
       "deployFailed": "{{intent}} {{step}} failed: {{command}} exited {{exit}}\n{{output}}\n",
       "retroHours": "{{n}}h",
-      "retroUsage": "usage: retro I-<n> (an intent in the bundle)",
+      "retroUsage": "usage: retro I-<n> (an intent in the docs bundle)",
       "retroHead": "retro {{intent}}, counters since {{since}}\n",
       "retroNever": "the first run",
       "retroCodes": "codes fired 3 or more times:\n",

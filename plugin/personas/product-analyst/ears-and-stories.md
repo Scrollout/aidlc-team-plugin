@@ -2,7 +2,7 @@
 
 ## EARS: one sentence per requirement
 - Always: `The <system> shall <response>.`
-- On an event: `When <trigger>, the <system> shall <response>.`
+- On a trigger: `When <trigger>, the <system> shall <response>.`
 - In a state: `While <state>, the <system> shall <response>.`
 - Unwanted: `If <trigger>, then the <system> shall <response>.`
 - Optional feature: `Where <feature>, the <system> shall <response>.`

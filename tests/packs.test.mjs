@@ -64,8 +64,8 @@ test('B171/AC-3 an event type in a domain events surface that breaks the grammar
   const found = (text) => run(makeRepo({ ...I1, 'go.mod': 'module example.com/r\n\ngo 1.22\n', 'internal/domains/notes/events/events.go': text }, NOTES), ['check']).out.split('\n').filter((l) => /CONTRACT-NAME/.test(l)).map((l) => l.replace(/ → .*$/, ''));
   assert.deepEqual(found(ok), []);
   assert.deepEqual(found(bad), [
-    'internal/domains/notes/events/events.go:1 CONTRACT-NAME event type notes.created.v2 is not <Org>.<Service>.<Noun><PastTenseVerb> with no version suffix',
-    'internal/domains/notes/events/events.go:1 CONTRACT-NAME event type Example.Reference.NoteSave is not <Org>.<Service>.<Noun><PastTenseVerb> with no version suffix',
+    'internal/domains/notes/events/events.go:1 CONTRACT-NAME integration event type notes.created.v2 is not <Org>.<Service>.<Noun><PastTenseVerb> with no version suffix',
+    'internal/domains/notes/events/events.go:1 CONTRACT-NAME integration event type Example.Reference.NoteSave is not <Org>.<Service>.<Noun><PastTenseVerb> with no version suffix',
   ]);
 });
 

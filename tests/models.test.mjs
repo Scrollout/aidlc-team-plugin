@@ -19,7 +19,7 @@ const pinnedRun = (dir, args) => spawnSync(process.execPath, [join(dir, '.aidlc/
 
 test('B228/AC-1 a model folder loads from the project, the plugin shipping none (decision 0025), and check reports one that breaks the format', () => {
   const dir = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n' });
-  assert.match(run(dir, ['models']).out, /^no models: none ships with this CLI/);
+  assert.match(run(dir, ['models']).out, /^no architecture models: none ships with this CLI/);
   write(dir, { '.aidlc/models/minimal/model.json': model('minimal'), '.aidlc/models/minimal/decisions/0001-one-gate.md': decision });
   assert.equal(run(dir, ['models']).out, 'minimal (project): minimal shape\n');
   assert.deepEqual(formatLines(dir), [], 'a model in the format');
@@ -28,7 +28,7 @@ test('B228/AC-1 a model folder loads from the project, the plugin shipping none 
   write(dir, { '.aidlc/models/broken/model.json': broken, '.aidlc/models/broken/decisions/notes.md': '# notes\n', '.aidlc/models/empty/README.md': 'x' });
   assert.match(run(dir, ['models']).out, /^broken \(project\): other shape, 7 format problems: aidlc check$/m);
   const lines = formatLines(dir).join('\n');
-  for (const want of ['model broken lacks extension', 'model broken is named other inside', 'model broken: gate has kind hub', 'model broken: gate is named twice', 'model broken: rule type magic is not one of stageOrder', "model broken: a contract's to is nowhere", 'model broken: decisions/notes.md is not a Decision doc', 'model empty has no model.json']) {
+  for (const want of ['architecture model broken lacks extension', 'architecture model broken is named other inside', 'architecture model broken: gate has kind hub', 'architecture model broken: gate is named twice', 'architecture model broken: rule type magic is not one of stageOrder', "architecture model broken: an API contract's to is nowhere", 'architecture model broken: decisions/notes.md is not a Decision doc', 'model empty has no model.json']) {
     assert.ok(lines.includes(want), want);
   }
 
@@ -64,7 +64,7 @@ test('B229/AC-1 a model pathway intent needs its research digests and a current 
   commit(dir, 'model');
   assert.equal(run(dir, ['approve', 'docs/models/minimal.md']).code, 0, 'the owner approves the Model doc');
   assert.match(read(dir, 'docs/models/minimal.md'), /^verified_hash: /m);
-  assert.match(run(dir, ['models', 'doc', 'nothere']).err, /no project model nothere in \.aidlc\/models/);
+  assert.match(run(dir, ['models', 'doc', 'nothere']).err, /no project architecture model nothere in \.aidlc\/models/);
 });
 
 test('B229/AC-2 each layer, domain and rule of a project model cites a source of its research (MODEL-SOURCE)', () => {
@@ -72,8 +72,8 @@ test('B229/AC-2 each layer, domain and rule of a project model cites a source of
   write(dir, { 'docs/intents/I-1-model-the-reference.md': intent('research: [reference]\n'), 'docs/research/reference.md': research,
     '.aidlc/models/minimal/model.json': model('minimal', { layers: [{ id: 'gate', kind: 'pipeline', sources: ['s1'] }], domains: [{ id: 'records', kind: 'domain' }], rules: [{ type: 'stageOrder', sources: ['s9'] }] }) });
   assert.deepEqual(findings(dir, 'MODEL-SOURCE'), [
-    'MODEL-SOURCE I-1 model minimal: records cites no source',
-    'MODEL-SOURCE I-1 model minimal: stageOrder cites s9, no source of reference',
+    'MODEL-SOURCE I-1 architecture model minimal: records cites no source',
+    'MODEL-SOURCE I-1 architecture model minimal: stageOrder cites s9, no source of reference',
   ]);
 });
 
@@ -103,12 +103,12 @@ test('B230/AC-1 B230/AC-2 only the chosen model\'s rules run, each reporting wha
   const dir = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n', ...broken }, chosen({ namespace: 'Acme.Things' }));
   const lines = ruleLines(dir);
   for (const want of [
-    'src/gate/stages.txt:1 PIPELINE-ORDER model minimal: the stages come as authenticate, policy, authorize, not in the model\'s order authenticate, authorize, policy',
-    '.aidlc/profile.json:1 PROVIDER-CONTRACT model minimal: module things (extension) declares no types under `declares`',
-    'api/things/openapi.yaml:1 LONG-RUNNING model minimal: PUT /things/{thingName} is flagged long-running but answers none of 201 with Op-Status and Retry-After, or 202 with Op-Result and Retry-After',
-    'api/things/openapi.yaml:1 LONG-RUNNING model minimal: DELETE /things/{thingName} declares no 204 answer for an absent resource',
-    'api/things/openapi.yaml:1 EVENT-COVERAGE model minimal: PUT /things/{thingName} emits things.written, which no events file defines',
-    'api/things/openapi.yaml:1 EVENT-COVERAGE model minimal: DELETE /things/{thingName} names no events under x-events',
+    'src/gate/stages.txt:1 PIPELINE-ORDER architecture model minimal: the stages come as authenticate, policy, authorize, not in the architecture model\'s order authenticate, authorize, policy',
+    '.aidlc/profile.json:1 PROVIDER-CONTRACT architecture model minimal: module things (extension) declares no types under `declares`',
+    'api/things/openapi.yaml:1 LONG-RUNNING architecture model minimal: PUT /things/{thingName} is flagged long-running but answers none of 201 with Op-Status and Retry-After, or 202 with Op-Result and Retry-After',
+    'api/things/openapi.yaml:1 LONG-RUNNING architecture model minimal: DELETE /things/{thingName} declares no 204 answer for an absent resource',
+    'api/things/openapi.yaml:1 EVENT-COVERAGE architecture model minimal: PUT /things/{thingName} emits things.written, which no integration events file defines',
+    'api/things/openapi.yaml:1 EVENT-COVERAGE architecture model minimal: DELETE /things/{thingName} names no integration events under x-events',
     "docs/bolts/B-1-put-a-thing.md:8 IDEMPOTENCY-AC B-1 has a write AC but none that repeats it and finds status and state unchanged",
     'docs/domains/things.md:10 DATA-PARTITION things owns things.rows with no (partition: <key>, class: <class>)',
     'docs/domains/things.md:11 DATA-PARTITION things gives things.log class secret, not one of regional, shared, global',
@@ -130,16 +130,16 @@ test('B230/AC-1 B230/AC-2 only the chosen model\'s rules run, each reporting wha
 test('B231/AC-1 intake lists the models that fit the request; apply records the choice, writes the system doc, copies the decisions once and prints increments', () => {
   const dir = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n', 'docs/decisions/0003-earlier.md': '---\ntype: Decision\ntitle: 0003 Earlier\ndescription: d.\n---\n' }, V2);
   write(dir, { '.aidlc/models/minimal/model.json': model('minimal', { fit: { words: ['gate', 'records'] } }), '.aidlc/models/minimal/decisions/0001-one-gate.md': decision });
-  assert.match(run(dir, ['intake', 'Every request passes the gate. The records keep what exists. Nothing else.']).out, /\n  models that fit: minimal \(Q-1\.1, Q-1\.2\); once the owner picks one: aidlc models apply <name>\n/);
+  assert.match(run(dir, ['intake', 'Every request passes the gate. The records keep what exists. Nothing else.']).out, /\n  architecture models that fit: minimal \(Q-1\.1, Q-1\.2\); once the owner picks one: aidlc models apply <name>\n/);
   const r = run(dir, ['models', 'apply', 'minimal']);
   assert.equal(r.code, 0, r.err);
   assert.equal(r.out, [
     'chose minimal in .aidlc/profile.json',
-    'wrote docs/system/bak.md: its building blocks are the model\'s; fill the other sections with the owner',
+    'wrote docs/system/bak.md: its building blocks are the architecture model\'s; fill the other sections with the owner',
     'wrote docs/decisions/0004-one-gate.md, a proposal for the owner to approve (one-way doors one at a time)',
-    'wrote docs/domains/records.md: its # Surface lists the model\'s 0 slices; cite each one\'s stories as elaboration writes them',
+    'wrote docs/domains/records.md: its # Surface lists the architecture model\'s 0 slices; cite each one\'s stories as elaboration writes them',
     'increments along minimal\'s layers, for the intent\'s # Increments:',
-    '- I-<n>.1 Walking skeleton: one request through gate, end to end on the target',
+    '- I-<n>.1 Walking skeleton: one call through gate, end to end on the target',
     '- I-<n>.2 records: what exists',
     '- I-<n>.3 A first extension, declaring namespace',
     '',
@@ -148,21 +148,21 @@ test('B231/AC-1 intake lists the models that fit the request; apply records the 
   assert.match(read(dir, 'docs/system/bak.md'), /\n# Building Block View\n- \*\*gate\*\* \(pipeline\): checks each request\n- \*\*records\*\* \(domain\): what exists\n/);
   assert.match(read(dir, 'docs/decisions/0004-one-gate.md'), /^title: 0004 One gate\nmodel: minimal$/m);
   assert.doesNotMatch(run(dir, ['models', 'apply', 'minimal']).out, /^(chose|wrote)/m, 'applying again copies nothing twice');
-  assert.match(run(dir, ['models', 'apply', 'nothere']).err, /no model nothere in the format/);
+  assert.match(run(dir, ['models', 'apply', 'nothere']).err, /no architecture model nothere in the format/);
 });
 
 test('B231/AC-2 gaps matches the modules to the chosen model\'s items and kinds, and prints the missing ones as increments', () => {
   const profile = { ...V2, model: { name: 'minimal' }, modules: [{ id: 'gw', kind: 'pipeline', layer: 'gate', paths: ['src/gw/**'] }, { id: 'store', kind: 'foundation', layer: 'records', paths: ['src/store/**'] }] };
   const dir = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n', '.aidlc/models/minimal/model.json': model('minimal', { extension: { kind: 'extension', declares: ['namespace'] } }) }, profile);
   assert.equal(run(dir, ['models', 'gaps']).out, [
-    'model minimal: 2 of 2 items played by modules (modules[].layer)',
+    'architecture model minimal: 2 of 2 items played by modules (modules[].layer)',
     '  gate: gw (pipeline)',
-    '  records: store is foundation, the model\'s records is domain',
+    '  records: store is foundation, the architecture model\'s records is domain',
     'missing, for the brownfield intent\'s # Increments:',
     '- I-<n>.1 extension (extension): namespace',
     '',
   ].join('\n'));
-  assert.match(run(makeRepo({}, V2), ['models', 'gaps']).err, /the profile chooses no model/);
+  assert.match(run(makeRepo({}, V2), ['models', 'gaps']).err, /the profile chooses no architecture model/);
 });
 
 // The example control-plane model, kept outside the plugin (decision 0025), as a project that adopts it holds it.
@@ -193,7 +193,7 @@ test('B232/AC-2 the model\'s contract applies only where a project chose it (dec
   const spec = 'openapi: 3.1.0\ninfo: { title: x, version: 2026-10-01 }\npaths: {}\ncomponents:\n  schemas:\n    Thing:\n      properties: { id: {}, name: {}, type: {} }\n';
   const found = (profile) => { const dir = makeRepo({ ...I1, 'api/things/openapi.yaml': spec }, profile); adopt(dir); return run(dir, ['check']).out.split('\n').filter((l) => /CONTRACT-NAME/.test(l)).map((l) => l.replace(/ → .*$/, '')); };
   assert.deepEqual(found(V2), [], 'the generic grammar asks no systemData');
-  assert.deepEqual(found({ ...V2, model: { name: 'control-plane' } }), ["api/things/openapi.yaml:1 CONTRACT-NAME components.schemas.Thing: a resource without systemData, which its model's contract asks"]);
+  assert.deepEqual(found({ ...V2, model: { name: 'control-plane' } }), ["api/things/openapi.yaml:1 CONTRACT-NAME components.schemas.Thing: a resource without systemData, which its architecture model's API contract asks"]);
 });
 
 test('B233/AC-1 the control-plane model\'s Go reference meets the model\'s rules and contract, and covers its walking skeleton', () => {
@@ -214,7 +214,7 @@ test('B233/AC-1 the control-plane model\'s Go reference meets the model\'s rules
   write(dir, { '.aidlc/profile.json': profile });
   const lines = run(dir, ['check']).out.split('\n').filter((l) => /PIPELINE-ORDER|PROVIDER-CONTRACT|LONG-RUNNING|EVENT-COVERAGE|CONTRACT-NAME/.test(l));
   assert.deepEqual(lines, [], 'the reference meets the stage order, extension contract, long-running shapes, events and the model\'s contract');
-  assert.match(run(dir, ['models', 'gaps']).out, /^model control-plane: 8 of 10 items played by modules[\s\S]*missing, for the brownfield intent's # Increments:\n- I-<n>\.1 deployments \(domain\)[^\n]*\n- I-<n>\.2 activity \(domain\)/m, 'the walking skeleton: no deployments or activity yet');
+  assert.match(run(dir, ['models', 'gaps']).out, /^architecture model control-plane: 8 of 10 items played by modules[\s\S]*missing, for the brownfield intent's # Increments:\n- I-<n>\.1 deployments \(domain\)[^\n]*\n- I-<n>\.2 activity \(domain\)/m, 'the walking skeleton: no deployments or activity yet');
 });
 
 test('B234/AC-1 the architect persona reads how to model a reference and apply a model, naming every rule type the CLI knows', () => {
@@ -260,8 +260,8 @@ test('B247/AC-2 apply writes each model domain\'s doc with its # Surface, names 
   const dir = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n' }, V2);
   write(dir, { '.aidlc/models/sliced/model.json': model('sliced', SLICED) });
   const out = run(dir, ['models', 'apply', 'sliced']).out;
-  assert.match(out, /^wrote docs\/domains\/records\.md: its # Surface lists the model's 3 slices/m);
-  assert.match(out, /- I-<n>\.1 Walking skeleton: one request through gate, end to end on the target, serving Command createrecord\n- I-<n>\.2 records: Query getrecord, a client reads one record\n- I-<n>\.3 records: Query listrecord, a client lists the records\n- I-<n>\.4 A first extension, declaring namespace; Command delete: a client removes one\n/);
+  assert.match(out, /^wrote docs\/domains\/records\.md: its # Surface lists the architecture model's 3 slices/m);
+  assert.match(out, /- I-<n>\.1 Walking skeleton: one call through gate, end to end on the target, serving Command createrecord\n- I-<n>\.2 records: Query getrecord, a client reads one record\n- I-<n>\.3 records: Query listrecord, a client lists the records\n- I-<n>\.4 A first extension, declaring namespace; Command delete: a client removes one\n/);
   const doc = read(dir, 'docs/domains/records.md');
   assert.match(doc, /^code: records$/m);
   assert.match(doc, /^# Surface\n- Command createrecord: a client records what exists\n- Query getrecord: a client reads one record\n- Query listrecord: a client lists the records\n/m);
@@ -308,15 +308,15 @@ test('B250/AC-3 a model slice declares its cuts and what it reaches, MODEL-FORMA
   write(dir, { '.aidlc/models/sliced/model.json': model('sliced', bad) });
   const lines = formatLines(dir).join('\n');
   for (const want of ['the Query get slice of records says what it reaches but not which layers it cuts', 'the Command create slice of records cuts screen, a layer no stack pack has',
-    'the Command create slice of records is served by gate, which is no runtime layer of the model', 'the Command create slice of records calls billing, which is no domain, the extension or an adapter layer',
-    'the Command create slice of records has colour, which is no part of a slice', 'runtime front applies caching, which is neither a pipeline layer of the model nor one of outcomeEvents, statusContract']) assert.match(lines, new RegExp(want.replace(/[()]/g, '\\$&')), lines);
+    'the Command create slice of records is served by gate, which is no runtime layer of the architecture model', 'the Command create slice of records calls billing, which is no domain, the extension or an adapter layer',
+    'the Command create slice of records has colour, which is no part of a slice', 'runtime front applies caching, which is neither a pipeline layer of the architecture model nor one of outcomeEvents, statusContract']) assert.match(lines, new RegExp(want.replace(/[()]/g, '\\$&')), lines);
 });
 
 test('B250/AC-3 apply writes each slice\'s declaration into # Surface and starts the skeleton from the slice that cuts the most layers; gaps lists what a line lacks', () => {
   const dir = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n' }, V2);
   write(dir, { '.aidlc/models/sliced/model.json': model('sliced', DECLARED) });
   const out = run(dir, ['models', 'apply', 'sliced']).out;
-  assert.match(out, /- I-<n>\.1 Walking skeleton: one request through front → gate, end to end on the target, serving Command createrecord\n- I-<n>\.2 records: Query getrecord \(interface, application; entry front\), a client reads one record\n/, out);
+  assert.match(out, /- I-<n>\.1 Walking skeleton: one call through front → gate, end to end on the target, serving Command createrecord\n- I-<n>\.2 records: Query getrecord \(interface, application; entry front\), a client reads one record\n/, out);
   assert.match(read(dir, 'docs/domains/records.md'), /^- Query getrecord \(interface, application; entry front\): a client reads one record\n- Command createrecord \(interface, application, model, infrastructure, migration; data data\/records\/records; entry front; async; emits RecordCreated\.v1\): a client records what exists\n/m);
   const played = { ...V2, model: { name: 'sliced' }, modules: [{ id: 'front', kind: 'runtime', layer: 'front', paths: ['src/front/**'] }, { id: 'gate', kind: 'pipeline', layer: 'gate', paths: ['src/gate/**'] }, { id: 'records', kind: 'domain', layer: 'records', paths: ['src/records/**'] }, { id: 'ext', kind: 'extension', paths: ['src/ext/**'] }] };
   const gaps = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n', 'docs/domains/records.md': '---\ntype: Domain\ntitle: Records\ndescription: d.\ncode: records\nkind: domain\n---\n\n# Surface\n- Query getrecord (interface, application; entry front): reads [I-1:US1.1]\n- Command createrecord (interface, application; entry front): records [I-1:US1.2]\n' }, played);

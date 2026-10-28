@@ -242,7 +242,7 @@ test('U7/AC-8 a builder or reviewer with another model than the card\'s is denie
   const agent = (subagent_type, prompt, model) => hook('model', { cwd: dir, tool_name: 'Agent', tool_input: { subagent_type, prompt, description: 'x', model } });
   assert.equal(decision(agent('team:builder', 'Build U-1 from its card.', 'sonnet')), 'allow');
   assert.ok(Date.now() - statSync(join(dir, '.git/aidlc/heartbeats/U-1')).mtimeMs < 5000, 'a builder is in flight from its launch');
-  assert.match(reason(agent('team:builder', 'Build U-1 from its card.', 'opus')), /^MODEL-MISMATCH team:builder for U-1 uses opus, the card's Model: line says sonnet/);
+  assert.match(reason(agent('team:builder', 'Build U-1 from its card.', 'opus')), /^MODEL-MISMATCH team:builder for U-1 uses opus, the card's AI model: line says sonnet/);
   assert.match(reason(agent('team:builder', 'Build U-1.', undefined)), /uses none/);
   assert.match(reason(agent('team:builder', 'Build the pricing unit.', 'sonnet')), /^MODEL-UNIT/);
   assert.equal(decision(agent('team:reviewer', 'Review U-1.', 'opus')), 'allow');

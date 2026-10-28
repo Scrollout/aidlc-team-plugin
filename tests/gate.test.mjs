@@ -124,7 +124,7 @@ test('U86/AC-1 data: a module reaches only the data it owns or shared data; ever
     ['internal/registry', 'data/regional/scopes'], ['internal/scope', 'data/global/tenants'],
   ];
   assert.deepEqual(moduleFindings(edges, profile).map((f) => [f.code, f.message]), [
-    ['ARCH-DATA', "internal/registry -> data/regional/scopes: data/regional/scopes belongs to scope; reach it through scope's interface, an event or a shared service"],
+    ['ARCH-DATA', "internal/registry -> data/regional/scopes: data/regional/scopes belongs to scope; reach it through scope's interface, an integration event or a shared service"],
     ['ARCH-DATA', 'internal/scope -> data/global/tenants: no module owns data/global/tenants; add it to one module\'s data, or to architecture.data.shared'],
   ], 'own data, shared data and import edges pass');
   assert.deepEqual(moduleFindings([['internal/registry', 'data/regional/providers']], profile).map((f) => f.message),

@@ -4,7 +4,7 @@ Give every surface its line under the intent's `# Corners`, settled by a require
 
 - **Input:** empty, too long, wrong type or format, duplicates, characters from other languages, files too large.
 - **Identity:** who may do it, who may not, a session that expired, acting on behalf of someone else.
-- **Data:** what is kept, for how long, who may read it, personal data, deletion on request, the same record changed twice at once.
+- **Data:** what is kept, for how long, who may read it, personal data, deletion when asked, the same record changed twice at once.
 - **Errors:** what the user sees, what is logged, what is retried, what happens halfway through.
 - **Scale:** how many users, how much data, the busiest hour, what slows down first.
 - **Time:** time zones, dates at month and year ends, deadlines, things that expire.

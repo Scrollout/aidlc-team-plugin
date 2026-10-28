@@ -22,7 +22,7 @@ Set by the method and checked already: `I-<n>` intents, `B-<n>` bolts, `R-<n>` r
 <tables, columns, migrations, data nodes>
 
 # Interfaces
-<API paths and operation ids, events and their versions, environment variables, config keys>
+<API paths and operation ids, integration events and their versions, environment variables, config keys>
 
 # Deploy and operation
 <apps, images, tags, namespaces, hostnames, secrets, releases, dashboards, alerts>

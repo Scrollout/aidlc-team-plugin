@@ -9,14 +9,14 @@ requirements: [R-<n>]
 ---
 
 # Goal
-<what changes for whom, each line citing its source: [Q-<n>.<k>] a request sentence, [Q<k>] an answer, [A<k>] an assumption>
+<what changes for whom, each line citing its source: [Q-<n>.<k>] an owner's request sentence, [Q<k>] an answer, [A<k>] an assumption>
 
 # Why
 <the reason>
 
 # Personas
 - **<Name>**: <who they are and what they want> [Q-<n>.<k>]
-<one per kind of user the request names; remove both sections and set onePersona: "<why>" when there is one>
+<one per kind of user the owner's request names; remove both sections and set onePersona: "<why>" when there is one>
 
 # Stories
 - US1.1 As a <persona>, I want <capability>, so that <benefit>. R-<n> [Q-<n>.<k>]
@@ -33,7 +33,7 @@ requirements: [R-<n>]
 - Measures: <a measurable outcome> [M1]
 - Depends on: <the units of work its code needs, or none>
 - Slices: <Command or Query> <slice> (<cut>, …; data <node>; entry <runtime>; permission <name>; async; emits <event>; consumes <event>; calls <domain>) [US<g>.<s>], one per vertical slice that serves its stories, each part after the cuts only where it applies
-<optional: Integration (APIs, shared data, events), Deployment (standalone, shared or embedded), Complexity (S, M, L or XL), Bolts, PRFAQ>
+<optional: Integration (APIs, shared data, integration events), Deployment (standalone, shared or embedded), Complexity (S, M, L or XL), Bolts, PRFAQ>
 
 # Increments
 - I-<n>.1 <the walking skeleton, end to end on the target>: <its bolts, once cut>
@@ -53,7 +53,7 @@ requirements: [R-<n>]
   - Answer: <the letter the owner picked, then their words>
 - Q<k> Read-back: <a short summary of what was understood, asked last>
   - a) looks correct: the docs are written from it
-  - b) request changes: revise and read back again
+  - b) changes needed: revise and read back again
   - Answer: <a or b>
 
 # Corners
@@ -63,7 +63,7 @@ requirements: [R-<n>]
 - A1 <what the intent takes as given; the owner confirms it by approving; remove the section when there is none>
 
 # Out of scope
-- <what this intent does not do, citing the request sentence it answers>
+- <what this intent does not do, citing the owner's request sentence it answers>
 
 ## Open questions
 - <unanswered owner questions; remove when answered>

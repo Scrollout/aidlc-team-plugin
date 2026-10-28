@@ -311,7 +311,7 @@ test('B253/AC-1 SLICE-TEST: a route test names each slice and its permission; a 
   assert.deepEqual(found({}, { ...profile, levels: { unit: { paths: ['**/*_test.go'] } } }), [], 'no level proves anything: nothing is required');
   const at = `${D}/application/createorder`;
   assert.deepEqual(found({ [`${D}/interface/createorder_test.go`]: 'func TestRoute(t *testing.T) {}\n' }), [`${at} slice orders/createorder has no test at a route level that names it, so nothing proves it through its entry`]);
-  assert.deepEqual(found({ [`${D}/interface/createorder_test.go`]: 'func TestRoute_createorder(t *testing.T) {}\n' }), [`${at} slice orders/createorder's route tests never name its permission orders.write, so none sees a request without it refused`]);
+  assert.deepEqual(found({ [`${D}/interface/createorder_test.go`]: 'func TestRoute_createorder(t *testing.T) {}\n' }), [`${at} slice orders/createorder's route tests never name its permission orders.write, so none sees a call without it refused`]);
   assert.deepEqual(found({ 'tests/integration/orders_test.go': '// createorder emits OrderPlaced; consumes PaymentTaken; polls until failed\n' }), [
     `${at} slice orders/createorder declares billing, which no test at a handoff level names`,
     `${at} slice orders/createorder's hand-off test of PaymentTaken never names its publisher billing`]);

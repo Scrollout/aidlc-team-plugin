@@ -152,7 +152,7 @@ for (const [name, [expect, code, setup]] of Object.entries(SCENARIOS)) {
 
 test('U4/AC-2 next with no intent asks to elaborate one', () => {
   const r = run(makeRepo(), ['next']);
-  assert.match(r.out, /^👉 keep the owner's request word for word with aidlc intake "<their words>", then elaborate an intent with the owner in docs\/intents\/I-1-<slug>\.md that records its request, pathway and lane/, 'B214/AC-1 the first step keeps the request');
+  assert.match(r.out, /^👉 keep the owner's request word for word with aidlc intake "<their words>", then elaborate an intent with the owner in docs\/intents\/I-1-<slug>\.md that records the owner's request, pathway and lane/, 'B214/AC-1 the first step keeps the request');
   assert.equal(r.code, 2);
 });
 

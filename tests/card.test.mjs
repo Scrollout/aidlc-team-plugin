@@ -156,7 +156,7 @@ test('U4/AC-5 the card of a fix round carries the escalated model', () => {
   commit(dir, 'work', { 'src/pricing/a.txt': 'a\n' });
   git(dir, 'switch', '-q', 'main');
   review(dir, 'U-1', 'fix', [{ path: 'src/pricing/a.txt', line: 1, claim: 'x', scenario: 'y', confidence: 'CONFIRMED' }]);
-  assert.match(run(dir, ['card', 'U-1']).out, /^Model: opus \(fix round after a CONFIRMED finding\)$/m);
+  assert.match(run(dir, ['card', 'U-1']).out, /^AI model: opus \(fix round after a CONFIRMED finding\)$/m);
 });
 
 test('U4/AC-7 start renames the worktree branch to unit/U-<n> and refuses a different base', () => {
@@ -275,7 +275,7 @@ test('U86/AC-2 the card lists the data the unit\'s modules own and the shared da
   approve(dir, 'I-1', 'U-1');
   const r = run(dir, ['card', 'U-1']);
   assert.equal(r.code, 0, r.err);
-  assert.match(r.out, /## Data\n- sdk-go owns data\/keys\n- shared, for any module: data\/outbox\nReach any other data only through its owning module's interface, an event or a shared service; the merge gate fails a direct read or write \(ARCH-DATA\)\.\n## Test runs/);
+  assert.match(r.out, /## Data\n- sdk-go owns data\/keys\n- shared, for any module: data\/outbox\nReach any other data only through its owning module's interface, an integration event or a shared service; the merge gate fails a direct read or write \(ARCH-DATA\)\.\n## Test runs/);
   const off = makeRepo(files, { modules });
   approve(off, 'I-1', 'U-1');
   assert.doesNotMatch(run(off, ['card', 'U-1']).out, /## Data/);

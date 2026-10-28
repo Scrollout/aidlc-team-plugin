@@ -269,7 +269,7 @@
     "fmMapping": "frontmatter is not a mapping",
     "typeMissing": "type is missing or empty",
     "runtimeMissing": "{{type}} has no {{field}}",
-    "indexFrontmatter": "index.md may carry frontmatter only at the bundle root, with only {{keys}}",
+    "indexFrontmatter": "index.md may carry frontmatter only at the docs bundle root, with only {{keys}}",
     "indexLine": "list line is not a * [Title](url) - description entry",
     "indexUnheaded": "entry before any heading",
     "logFrontmatter": "log.md frontmatter is not a valid YAML mapping",
@@ -364,7 +364,7 @@
     "noDoc": "no doc {{name}}",
     "nextContinueMerge": "finish the merge of {{unit}}: aidlc merge {{unit}}, or git merge --abort",
     "nextReapprove": "re-approve {{docs}} after their edits: aidlc approve {{docs}} (the owner confirms the prompt or types: approve {{docs}})",
-    "nextNoIntent": "keep the owner's request word for word with aidlc intake \"<their words>\", then elaborate an intent with the owner in {{dir}}/I-1-<slug>.md that records its request, pathway and lane, then ask for approval",
+    "nextNoIntent": "keep the owner's request word for word with aidlc intake \"<their words>\", then elaborate an intent with the owner in {{dir}}/I-1-<slug>.md that records the owner's request, pathway and lane, then ask for approval",
     "nextOpenDraft": "finish elaborating {{doc}} with the owner: {{points}} still open in {{file}}; then ask for approval",
     "nextOpenIntent": "finish elaborating {{doc}} with the owner: {{points}} still open in {{file}}; meanwhile draft the decisions it needs from .aidlc/templates/docs/decision.md, linked from it, so the owner sees the how with the what; then ask for approval",
     "nextReviewIntent": "start a reviewer on the intent before the owner approves it, prompt Review {{intent}}. (a hook adds the brief aidlc review {{intent}} prints); it records with aidlc review record {{intent}} -",
@@ -467,10 +467,10 @@
     "initKept": "kept {{path}}: it exists; rerun with --overwrite {{path}} to replace it\n",
     "initAdded": "added {{what}} to {{path}}\n",
     "initSettingKept": "kept {{key}} in {{path}}: it is set to {{value}}\n",
-    "initAdopted": "adopted the bundle at {{bundle}} as of {{commit}}\n",
-    "initNoBundle": "no bundle with okf_version found: run init without --adopt",
+    "initAdopted": "adopted the docs bundle at {{bundle}} as of {{commit}}\n",
+    "initNoBundle": "no docs bundle with okf_version found: run init without --adopt",
     "upgradeOlder": "the installed plugin {{version}} is older than the pinned CLI {{pinned}} → update the plugin, or pass --downgrade to go back on purpose\n",
-    "initFindings": "bundle: {{errors}} spec errors, {{warnings}} house-rule warnings (aidlc check {{bundle}} lists them)\n",
+    "initFindings": "docs bundle: {{errors}} spec errors, {{warnings}} house-rule warnings (aidlc check {{bundle}} lists them)\n",
     "initLeftoverDir": "leftover: {{path}}/ is not a known folder; left untouched\n",
     "initLeftoverTrailer": "leftover: commit trailer {{key}} in {{count}} commits; history is left as is\n",
     "initVendored": "pinned the CLI {{version}} in {{path}}\n",
@@ -513,12 +513,12 @@
     "gateOkf": "{{path}}:{{line}} {{code}} {{message}}",
     "gateConflict": "{{branch}} conflicts with {{base}}",
     "archEdge": "{{from}} -> {{to}}: {{reason}}",
-    "archDataEdge": "{{from}} -> {{to}}: {{to}} belongs to {{owner}}; reach it through {{owner}}'s interface, an event or a shared service",
+    "archDataEdge": "{{from}} -> {{to}}: {{to}} belongs to {{owner}}; reach it through {{owner}}'s interface, an integration event or a shared service",
     "archDataNoOwner": "{{from}} -> {{to}}: no module owns {{to}}; add it to one module's data, or to architecture.data.shared",
     "archKind": "{{from}} -> {{to}}: {{a}} ({{fromKind}}) may not depend on {{b}} ({{toKind}}){{note}}",
-    "archKindSurface": ", only on its client or events ({{surface}})",
+    "archKindSurface": ", only on its client or integration events ({{surface}})",
     "archLayer": "{{from}} -> {{to}}: {{fromLayer}} may not depend on {{toLayer}} in {{module}}",
-    "archLayerModel": "{{from}} -> {{to}}: the model of {{module}} depends on {{b}} ({{toKind}}); a model depends only on foundation kits",
+    "archLayerModel": "{{from}} -> {{to}}: the domain model of {{module}} depends on {{b}} ({{toKind}}); a domain model depends only on foundation kits",
     "archReach": "runtime {{runtime}} reaches {{at}}, inside {{domain}}, which it does not host: {{path}}",
     "archApi": "{{from}} -> {{to}}: {{to}} is inside {{module}}; depend only on its public paths ({{api}})",
     "archCycle": "modules depend on each other in a circle: {{circle}}",
@@ -627,7 +627,7 @@
     "cardNamePath": "- {{id}}, paths under {{files}}: {{pattern}} ({{why}})\n",
     "cardDeps": "Your scope pins dependencies ({{manifests}}). Your training data is out of date: look up each version you add or bump from its registry or official release page, take the newest stable release that fixes every known advisory, pin it exactly, and list it in your report as \"deps\": [{\"name\", \"version\", \"source\"}] (the URL or command that showed it). The merge gate, CI and the daily run check currency and advisories live: {{checks}}; a test of yours never queries a registry, it proves a check on fixed inputs offline.\n",
     "cardPlatform": "The deploy target is already defined in: {{refs}}\nBuild on its conventions (names, namespaces, registries, access); add nothing it already provides, and stop and report if the bolt needs a change there.\n",
-    "cardDataRest": "- shared, for any module: {{shared}}\nReach any other data only through its owning module's interface, an event or a shared service; the merge gate fails a direct read or write (ARCH-DATA).\n",
+    "cardDataRest": "- shared, for any module: {{shared}}\nReach any other data only through its owning module's interface, an integration event or a shared service; the merge gate fails a direct read or write (ARCH-DATA).\n",
     "cardDesign": "the # {{sections}} section(s) of {{path}} at the base",
     "planIncrementWaiver": "{{unit}} reaches the product ({{glob}} overlaps {{area}}), but {{intent}} skips its end-to-end test with endToEnd:",
     "planIncrementUnit": "{{unit}} crosses modules {{modules}} but tests only at the {{level}} level",
@@ -643,7 +643,7 @@
     "launchBuild": "Build {{unit}}.\n\n",
     "launchReview": "Review {{unit}}, focus {{focus}}.\n\n",
     "modelMismatch": "{{agent}} for {{unit}} uses {{model}}, {{source}} says {{expected}}",
-    "modelSourceCard": "the card's Model: line",
+    "modelSourceCard": "the card's AI model: line",
     "modelSourceReview": "the profile's models.review",
     "docsRestamped": "generated.at {{from}} was not the current UTC time; the docs hook set it to {{to}}: re-read the file before editing it again\n",
     "docsErrors": "fix these OKF errors now:\n{{errors}}",
@@ -789,7 +789,7 @@
       },
       "DOC-GENERATED": {
         "level": "error",
-        "fix": "never edit a generated doc: change what it is drawn from and let the CLI write it again (aidlc map, aidlc index, or the next merge); a request is never rewritten: restore it, and keep a changed request with a new aidlc intake"
+        "fix": "never edit a generated doc: change what it is drawn from and let the CLI write it again (aidlc map, aidlc index, or the next merge); an owner's request is never rewritten: restore it, and keep a changed one with a new aidlc intake"
       },
       "HOUSE-SIZE": {
         "level": "warning",
@@ -810,7 +810,7 @@
       },
       "CONTRACT-NAME": {
         "level": "error",
-        "fix": "follow the API grammar: full lowerCamel names, Noun_Verb operation ids, a dated api-version, camelCase segments and properties, PascalCase enums, and what the chosen model's contract adds (aidlc name path|operation-id|api-version) (docs: Naming)"
+        "fix": "follow the API grammar: full lowerCamel names, Noun_Verb operation ids, a dated api-version, camelCase segments and properties, PascalCase enums, and what the chosen architecture model's API contract adds (aidlc name path|operation-id|api-version) (docs: Naming)"
       },
       "PROFILE-NAMING": {
         "level": "error",
@@ -818,7 +818,7 @@
       },
       "PROFILE-KIND": {
         "level": "error",
-        "fix": "give each module its kind (domain, pipeline, foundation, adapter, runtime, extension or delivery), surfaces from client, server and events, and system as core and extensions globs (docs: Architecture model)"
+        "fix": "give each module its kind (domain, pipeline, foundation, adapter, runtime, extension or delivery), surfaces from `client`, `server` and `events`, and system as core and extensions globs (docs: Architecture model)"
       },
       "PROFILE-STAGE": {
         "level": "error",
@@ -945,7 +945,7 @@
       },
       "DOMAIN-DATA": {
         "level": "error",
-        "fix": "give the table one owning domain; the others read it through that domain's client or events"
+        "fix": "give the table one owning domain; the others read it through that domain's client or integration events"
       },
       "DOMAIN-TERM": {
         "level": "error",
@@ -1462,10 +1462,10 @@
         "fix": "fix what the architecture check reports"
       },
       "ARCH-KIND": {
-        "fix": "depend only on what the kind table allows (docs: Architecture model): a domain on foundation kits and other domains' client or events, never the core on an extension or product code on delivery; move the code, or the owner approves the edge as an exception"
+        "fix": "depend only on what the kind table allows (docs: Architecture model): a domain on foundation kits and other domains' client or integration events, never the core on an extension or product code on delivery; move the code, or the owner approves the edge as an exception"
       },
       "ARCH-LAYER": {
-        "fix": "point layers inward: interface to application and model, application to model, infrastructure to model; model depends only on foundation kits"
+        "fix": "point layers inward: interface to application and domain model, application to domain model, infrastructure to domain model; the domain model depends only on foundation kits"
       },
       "ARCH-REACH": {
         "fix": "split the domain's client from its internals so a runtime that only calls it links only the client (its surfaces), or host the domain in the runtime"
@@ -1474,10 +1474,10 @@
         "fix": "call the module through its public paths, move what is needed into them, or the owner approves the edge in the architecture.api.except decision with a fix bolt"
       },
       "ARCH-CYCLE": {
-        "fix": "break the circle: move the shared part into its own module, or let one side publish an event the other reads; or the owner approves a module edge in the architecture.acyclic.except decision with a fix bolt"
+        "fix": "break the circle: move the shared part into its own module, or let one side publish an integration event the other reads; or the owner approves a module edge in the architecture.acyclic.except decision with a fix bolt"
       },
       "ARCH-DATA": {
-        "fix": "go through the owning module (interface, event or shared service), give the data one owner, or the owner approves the edge in the architecture.data.except decision with a fix bolt"
+        "fix": "go through the owning module (interface, integration event or shared service), give the data one owner, or the owner approves the edge in the architecture.data.except decision with a fix bolt"
       },
       "GATE-SHARED": {
         "fix": "revert the change; merge writes indexes, logs and shared files"
@@ -1507,7 +1507,7 @@
         "fix": "rename it to match the rule's pattern; if the rule is wrong, the owner changes its decision and the profile first"
       },
       "CONTRACT-NAME": {
-        "fix": "follow the API grammar and the chosen model's contract (decisions 0014, 0021; aidlc name path|operation-id|api-version), or change the naming decision first"
+        "fix": "follow the API grammar and the chosen architecture model's API contract (decisions 0014, 0021; aidlc name path|operation-id|api-version), or change the naming decision first"
       },
       "TERM-SYNONYM": {
         "fix": "use the glossary's term; if the domain's language changed, change its domain doc's glossary first (docs: Naming)"
@@ -1702,7 +1702,7 @@
         "fix": "name the bolt U-<n> in the prompt and start it from its card"
       },
       "MODEL-MISMATCH": {
-        "fix": "pass the model the card names (aidlc card)"
+        "fix": "pass the AI model the card names (aidlc card)"
       },
       "GUARD-SUBAGENT": {
         "fix": "leave it to the lead: a subagent runs only its role's aidlc commands (hooks.subagentCommands) and returns its result"
@@ -1877,6 +1877,7 @@
     "steps": { "nextNoIntent": "product-analyst", "nextOpenIntent": "product-analyst", "nextOpenDraft": "product-analyst", "nextFinishDecision": "architect", "nextDraftUnits": "architect" }
   },
   "vocabulary": {
+    "senses": { "about": "The words agents could misread, each kept to one sense in what agents read by a word before it naming the sense, or a code span (docs/design/canonical-model.md)", "model": ["architecture", "domain", "AI", "threat"], "request": ["owner's"], "bundle": ["docs"], "contract": ["API"], "event": ["integration", "domain", "outcome"] },
     "words": [
       { "word": "horizontal layer", "scale": "System", "meaning": "code grouped by one technical concern, shared by every feature: the layers inside a domain, pointing inward, and the platform every request crosses", "method": "logical design", "declared": "the stack pack's layers; module `kind: runtime`, `pipeline`, `foundation` or `adapter`" },
       { "word": "core", "scale": "System", "meaning": "the platform layers and the shared domains every domain uses", "method": "the system", "declared": "profile `system.core`" },

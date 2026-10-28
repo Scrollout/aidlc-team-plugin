@@ -27,12 +27,12 @@ generated: { by: tests/diagrams.mjs }
 | `GATE-DEPENDENCY` | bump each flagged dependency to the newest stable release that fixes it, looked up from its registry, and report the source |
 | `ARCH-BOUNDARY` | remove the dependency, or the owner approves an exception decision; a bolt that adds a boundary lists the edges the base already has in its except decision, or its own merge fails |
 | `ARCH-CHECK` | fix what the architecture check reports |
-| `ARCH-KIND` | depend only on what the kind table allows (docs: Architecture model): a domain on foundation kits and other domains' client or events, never the core on an extension or product code on delivery; move the code, or the owner approves the edge as an exception |
-| `ARCH-LAYER` | point layers inward: interface to application and model, application to model, infrastructure to model; model depends only on foundation kits |
+| `ARCH-KIND` | depend only on what the kind table allows (docs: Architecture model): a domain on foundation kits and other domains' client or integration events, never the core on an extension or product code on delivery; move the code, or the owner approves the edge as an exception |
+| `ARCH-LAYER` | point layers inward: interface to application and domain model, application to domain model, infrastructure to domain model; the domain model depends only on foundation kits |
 | `ARCH-REACH` | split the domain's client from its internals so a runtime that only calls it links only the client (its surfaces), or host the domain in the runtime |
 | `ARCH-API` | call the module through its public paths, move what is needed into them, or the owner approves the edge in the architecture.api.except decision with a fix bolt |
-| `ARCH-CYCLE` | break the circle: move the shared part into its own module, or let one side publish an event the other reads; or the owner approves a module edge in the architecture.acyclic.except decision with a fix bolt |
-| `ARCH-DATA` | go through the owning module (interface, event or shared service), give the data one owner, or the owner approves the edge in the architecture.data.except decision with a fix bolt |
+| `ARCH-CYCLE` | break the circle: move the shared part into its own module, or let one side publish an integration event the other reads; or the owner approves a module edge in the architecture.acyclic.except decision with a fix bolt |
+| `ARCH-DATA` | go through the owning module (interface, integration event or shared service), give the data one owner, or the owner approves the edge in the architecture.data.except decision with a fix bolt |
 | `GATE-SHARED` | revert the change; merge writes indexes, logs and shared files |
 | `GATE-CONFLICT` | merge the base into the bolt branch, resolve, and report again |
 | `CI-DEPENDENCY` | plan a fix bolt (aidlc fix) that bumps each flagged dependency to the newest stable release, looked up from its registry |
@@ -46,16 +46,16 @@ generated: { by: tests/diagrams.mjs }
 | `PROOF-AC` | make the reverted tree compile (keep the interfaces, revert the behaviour), or report a mutation per AC (docs: Construction by proof) |
 | `REVIEW-SECURITY` | the owner disposes of each finding: aidlc dispose <B-n> F-<k> fixed\|accepted "<reason>" [--until <date>] (docs: Construction by proof) |
 | `INCR-DONE` | release increment 1 and pass its smoke on the target first (docs: Construction by proof) |
-| `SLICE-DATA` | name each data node the slice's code reaches in its declaration's data part, or reach it through the domain's model (docs: Building a slice) |
-| `SLICE-INTEGRATE` | name each client, adapter, extension and event the slice's code reaches in its declaration's calls, emits or consumes, and drop one its code does not reach (docs: Building a slice) |
+| `SLICE-DATA` | name each data node the slice's code reaches in its declaration's data part, or reach it through the domain model (docs: Building a slice) |
+| `SLICE-INTEGRATE` | name each client, adapter, extension and integration event the slice's code reaches in its declaration's calls, emits or consumes, and drop one its code does not reach (docs: Building a slice) |
 | `SLICE-GOVERN` | declare the permission the slice needs, composed by aidlc name permission, and leave authentication and authorization to the stages its entry applies (docs: What a slice declares) |
 | `VALUE-LITERAL` | move the value into the project's data files (the profile's values.data globs) and read it from there; list it in values.allow when it is the protocol of a tool the code calls (docs: Values as data) |
-| `SLICE-IMPORT` | move what both slices need into the domain's model, an event or a shared domain service; a slice never imports another (docs: Vertical slices checked) |
+| `SLICE-IMPORT` | move what both slices need into the domain model, an integration event or a shared domain service; a slice never imports another (docs: Vertical slices checked) |
 | `SLICE-ENTRY` | enter the slice from its domain's interface layer or from the runtime that hosts it, and only from there (docs: Vertical slices checked) |
 | `SLICE-PLACE` | put each file of a domain in one of its layers, each file of its application layer in one slice folder, and leave no folder empty (docs: Vertical slices checked) |
 | `SLICE-SURFACE` | list each slice folder under the domain doc's # Surface as - Command <slice>: <the use case it serves> [I-<n>:US<g>.<s>], or - Query, and no other (docs: Vertical slices checked) |
 | `SLICE-STORY` | cite on each slice's surface line the stories it serves, as [I-<n>:US<g>.<s>], so every story of a unit of work that changes the domain has a slice (docs: Vertical slices checked) |
 | `SLICE-TEST` | give the slice a test in its folder, or a test that imports it (docs: Vertical slices checked) |
 | `SLICE-NAME` | name the slice as aidlc name slice composes it, from a verb of the registry and the domain's noun (docs: Vertical slices checked) |
-| `SLICE-ROUTE` | give each slice its operation, with the operation id aidlc name operation-id composes from the same domain and verb, once in the contracts; mount the domain's routes in the runtime its slices name as their entry, and in no other (docs: Vertical slices checked) |
+| `SLICE-ROUTE` | give each slice its operation, with the operation id aidlc name operation-id composes from the same domain and verb, once in the API contracts; mount the domain's routes in the runtime its slices name as their entry, and in no other (docs: Vertical slices checked) |
 | `SLICE-DELIVER` | deliver a new slice whole: its route in the domain's interface layer or a runtime, its test and its line under the domain doc's # Surface, in the same bolt (docs: Vertical slices checked) |

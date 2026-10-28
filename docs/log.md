@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-28
 
+- **Update** M30 B255 built: model, request, bundle, contract and event keep one sense in what agents read ([Canonical model](design/canonical-model.md)). Release 0.207.0.
 - **Update** M29 built: B253 AC-3 reports each slice layer by layer in `status` and the map, the trace's permission catalogue and the retro's refusals by layer; [Building a slice](design/slice-method.md) and [What a slice declares](design/slice-declares.md) are stable. Release 0.206.0.
 - **Update** M29 B253, AC-2: `INCR-SKELETON` holds increment 1's first slice to every layer of the pack ([Construction](design/construction.md)). Release 0.205.0.
 - **Update** M29 B253, AC-1: `levels.<name>.proves` and `SLICE-TEST` for each slice's route and hand-offs ([Building a slice](design/slice-method.md#proved)). Release 0.204.0.
