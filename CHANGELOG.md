@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.197.0] - 2026-10-28
+### Added
+- Slice steps on the card (M29 B252, AC-2). A bolt's card has a `Slices` section: for each slice it lists, the scaffold command, then each layer the slice's `# Surface` line cuts, as ordered steps from the bottom of the pack's `slicePaths` up, each with its path, its failing test before its code. The builder scaffolds, then follows them; the reviewer, reading the same card, reports a cut missing or hollow. A new `slices` extension renders it through the stack pack.
+
 ## [0.196.0] - 2026-10-28
 ### Added
 - Each cut in scope and delivered (M29 B252, first part). `PLAN-SLICE` reports a bolt whose scope does not cover a layer a slice it lists cuts, from the pack's `slicePaths`; `SLICE-DELIVER` refuses a bolt whose diff leaves such a layer unchanged, naming the cut. A `# Surface` line with a declaration counts as listing its slice.
@@ -440,7 +444,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.196.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.197.0...HEAD
+[0.197.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.196.0...v0.197.0
 [0.196.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.195.0...v0.196.0
 [0.195.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.194.0...v0.195.0
 [0.194.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.193.0...v0.194.0

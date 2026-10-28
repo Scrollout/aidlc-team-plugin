@@ -17,6 +17,7 @@ The cap counts lines (a line is what a reader scans; a char cap only squeezes wo
 - **Project rules:** each `.aidlc/rules/*.md` at the base commit, before the ACs, except a rule named after a `profile.focus` key, which only that focus's reviewer reads. Builders run without `CLAUDE.md`, so this is how a project's conventions reach them; the rules count toward the cap.
 - ACs with IDs; each becomes a test tagged `B-<n>/AC-<k>`.
 - **Scope:** globs the builder may write.
+- **Slices:** for each slice the bolt lists, the scaffold command, then its cuts as ordered steps, test first, from `migration` up to `ui` ([Building a slice](slice-method.md#built)).
 - **Interfaces:** each line of the bolt's `Interfaces` section as written, what it consumes or provides, each link followed by the path it resolves to at the base commit (a URL as written). An outside source, a web page or a database, is written there as a link or a name with its location.
 - **References:** each intent, bolt, requirement or decision (`0003`) the goal, why, ACs or out of scope name and the card lists nowhere else, with its path at the base, or `no such doc`, so a card never names "the suite of B-13" with no path.
 - **Requirements:** the requirement docs the bolt cites, named as their files are, which the builder meets and every review checks.

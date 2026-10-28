@@ -17,7 +17,8 @@ Write each as a test tagged {{id}}/AC-<k> at its level, before the code.
 ## Scope
 Write only inside:
 {{#each scope}}- {{this}}
-{{/each}}
+{{/each}}{{#each slices}}## Slices
+{{this}}{{/each}}
 {{#each design}}## Design (build to it; every review checks it)
 {{this}}
 

@@ -34,7 +34,7 @@ From method 13 a slice carries the same declaration wherever it is written, `(<c
 
 # Built
 - `aidlc scaffold slice` writes a file and a test for each cut with own code, and nothing that exists.
-- The card lists the slice's cuts as ordered steps, test first, from `migration` up to `ui`; the builder scaffolds, then follows them. The reviewer reports a cut missing or hollow.
+- The card lists each slice the bolt names: the scaffold command, then its cuts as ordered steps, test first, the pack's `slicePaths` read from the bottom, `migration` up to `ui`, each with its path. The builder scaffolds, then follows them; the reviewer, reading the same card, reports a cut missing or hollow.
 
 # Proved
 - `SLICE-DELIVER`: the bolt's diff changes each cut: its own code under the slice's name, a shared layer's folder.

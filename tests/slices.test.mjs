@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { seam } from '../plugin/cli/lib/index.mjs';
 import '../plugin/cli/extensions/intake/index.mjs'; // its stories seam, as the CLI loads every extension
 import { sliceFindings } from '../plugin/cli/extensions/stacks/index.mjs';
+import '../plugin/cli/extensions/slices/index.mjs'; // the card's slice steps
 import { makeRepo, write } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -206,4 +207,16 @@ test('B252/AC-1 B252/AC-3 a listed slice\'s cuts are in the bolt\'s scope, and t
   const gate = (paths) => seam('gateChecks', ORDERS).flatMap((check) => check(dir, ORDERS, paths, [], unit)).filter((f) => f.key === 'sliceDeliverCut').map((f) => `${f.data.cut} ${f.path}`);
   assert.deepEqual(gate([`${D}/application/createorder/handler.go`, `${D}/interface/createorder.go`]), [`model ${D}/model`, 'migration migrations/orders']);
   assert.deepEqual(gate([`${D}/application/createorder/handler.go`, `${D}/interface/createorder.go`, `${D}/model/order.go`, 'migrations/orders/0002_createorder.sql']), [], 'every cut changed');
+});
+
+test('B252/AC-2 the card lists each slice\'s cuts as ordered steps, test first, from the bottom layer up, after its scaffold command', () => {
+  const doc = '---\ntype: Domain\ntitle: Orders\ndescription: Orders.\ncode: orders\nkind: domain\n---\n\n# Surface\n- Command createorder (interface, application, model, migration; entry shop-api): a customer orders a cake [I-1:US1.1]\n';
+  const dir = makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', 'docs/domains/orders.md': doc }, NAMED);
+  const card = (fm, profile = NAMED) => seam('cardSlices', profile).flatMap((section) => section(dir, { id: 'B-1', modules: ['orders'], fm }, profile)).join('');
+  const text = card({ slices: ['createorder'] });
+  assert.match(text, /each one's failing test before its code/);
+  assert.match(text, /hollow/, 'the reviewer reads the same card');
+  assert.ok(text.includes(`createorder: \`aidlc scaffold slice create --domain orders\`\n1. migration: migrations/orders\n2. model: ${D}/model\n3. application: ${D}/application/createorder\n4. interface: ${D}/interface/createorder.go\n`), text);
+  assert.equal(card({}), '', 'a bolt listing no slice');
+  assert.equal(card({ slices: ['createorder'] }, ORDERS).includes('aidlc scaffold'), false, 'no registry, no scaffold command');
 });

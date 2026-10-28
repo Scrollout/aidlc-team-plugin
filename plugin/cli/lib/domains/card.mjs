@@ -136,6 +136,7 @@ function renderCard(cwd, unitId, { preview = false } = {}) {
       // a rule shows what it finds too: a pattern nothing matches bans each found word (U127)
       .map((r) => msg(!r.find ? 'cardNamePath' : r.pattern === C.bannedPattern ? 'cardNameBanned' : 'cardName', { id: r.id, files: list(r.files).join(', '), find: r.find, pattern: r.pattern, why: r.why ?? '-' })).join('') + namesCreated(atBase, profile, bundle)].filter(Boolean),
     // The stack pack's reference slices, for a bolt that names a domain (docs/design/stack-packs.md).
+    slices: seam('cardSlices', profile).flatMap((section) => section(top, atBase, profile)), // each slice's cuts as steps
     reference: seam('cardSections', profile).flatMap((section) => section(top, atBase, profile)), // the stack pack's reference slices
     // Versions from the registry, never from memory (docs/design/dependencies.md).
     deps: list(profile.deps?.manifests).some((g) => atBase.scope.some((s) => overlaps(s, g))) ? [msg('cardDeps', { manifests: list(profile.deps.manifests).join(', '), checks: list(profile.deps.check).join('; ') || '-' })] : [],

@@ -17,6 +17,7 @@ flowchart TB
     extensions_intake[intake]
     extensions_models[models]
     extensions_operations[operations]
+    extensions_slices[slices]
     extensions_stacks[stacks]
   end
   subgraph entry
