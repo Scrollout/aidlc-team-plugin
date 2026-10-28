@@ -24,7 +24,7 @@ generated: { by: tests/diagrams.mjs }
 | `DOC-REF` | point the key at an existing doc of the right type, or remove it |
 | `BOLT-BIND` | bind the bolt to one domain in modules, or to one horizontal module with neededBy: B-<v> naming a bolt of the same increment that binds a domain (docs: Construction by proof) |
 | `BOLT-SPAN` | split the bolt into one bolt per domain, or move it to increment 1, the walking skeleton (docs: Construction by proof) |
-| `INCR-SKELETON` | put on increment 1 a bolt with a top-level AC and a bolt binding the delivery module, so the skeleton runs end to end on its target (docs: Construction by proof) |
+| `INCR-SKELETON` | put on increment 1 a bolt with a top-level AC and a bolt binding the delivery module, its first slice cutting every layer of the stack pack, so the skeleton runs end to end on its target (docs: Construction by proof) |
 | `FIX-SHAPE` | give the fix bolt exactly one AC, a regression test that fails before the fix, and a scope outside the decisions and one-way doors; a design change goes through a decision and an increment (docs: Construction by proof) |
 | `HATCH-EXPIRED` | close the escape hatch (merge or drop the fix bolt, end the waiver, supersede the exception), or the owner sets a later until (docs: Construction by proof) |
 | `CLAIM-SOURCE` | name the requests the intent comes from (request: [Q-<n>]) and give each goal line, story and requirement statement a source in brackets: a request sentence [Q-<n>.<k>], an answered question [Q<k>], an assumption [A<k>] listed under # Assumptions, or a fact [F-<n>] (docs: Intake) |

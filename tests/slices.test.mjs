@@ -317,3 +317,14 @@ test('B253/AC-1 SLICE-TEST: a route test names each slice and its permission; a 
     `${at} slice orders/createorder's hand-off test of PaymentTaken never names its publisher billing`]);
   assert.deepEqual(found({ 'tests/integration/orders_test.go': '// createorder emits OrderPlaced; consumes PaymentTaken from billing; calls billing\n' }), [`${at} slice orders/createorder is async, but no hand-off test naming it follows the status to a terminal state (Succeeded, Failed, Canceled)`]);
 });
+
+test('B253/AC-2 INCR-SKELETON: from method 13, increment 1\'s first slice cuts every layer the pack has, any ui form counting for ui', async () => {
+  const { run } = await import('./state-repo.mjs');
+  const doc = (cuts) => `---\ntype: Domain\ntitle: Orders\ndescription: Orders.\ncode: orders\nkind: domain\n---\n\n# Surface\n- Command createorder (${cuts}; entry shop-api): a customer orders a cake [I-1:US1.1]\n`;
+  const bolt = '---\ntype: Bolt\ntitle: Take orders\ndescription: Take orders.\nintent: I-1\nmodules: [orders]\nslices: [createorder]\nscope: ["internal/**", "migrations/**"]\n---\n\n# Why\nOrders.\n';
+  const skeleton = (cuts, method = 13) => run(makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', 'docs/intents/I-1-orders.md': intent.replace('method: 12', `method: ${method}`), 'docs/domains/orders.md': doc(cuts), 'docs/bolts/B-1-take.md': bolt }, ORDERS), ['check'])
+    .out.split('\n').filter((l) => /INCR-SKELETON/.test(l)).map((l) => l.replace(/ → .*$/, '').replace(/^\S+:\d+ /, ''));
+  assert.deepEqual(skeleton('interface, application'), ['INCR-SKELETON increment 1\'s first slice, createorder of B-1, cuts no ui, model, infrastructure, migration: the walking skeleton cuts every layer the stack pack has']);
+  assert.deepEqual(skeleton('ui.cli, interface, application, model, infrastructure, migration'), [], 'every layer, ui by one of its forms');
+  assert.deepEqual(skeleton('interface, application', 12), [], 'before method 13');
+});

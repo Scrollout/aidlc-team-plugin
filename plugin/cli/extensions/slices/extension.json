@@ -20,7 +20,8 @@
       "sliceTestPermission": "slice {{slice}}'s route tests never name its permission {{permission}}, so none sees a request without it refused",
       "sliceTestHandoff": "slice {{slice}} declares {{name}}, which no test at a {{level}} level names",
       "sliceTestPublisher": "slice {{slice}}'s hand-off test of {{event}} never names its publisher {{publisher}}",
-      "sliceTestAsync": "slice {{slice}} is async, but no hand-off test naming it follows the status to a terminal state ({{states}})"
+      "sliceTestAsync": "slice {{slice}} is async, but no hand-off test naming it follows the status to a terminal state ({{states}})",
+      "incrSkeletonSlice": "increment 1's first slice, {{slice}} of {{bolt}}, cuts no {{missing}}: the walking skeleton cuts every layer the stack pack has"
     },
     "codes": {
       "SLICE-DATA": {

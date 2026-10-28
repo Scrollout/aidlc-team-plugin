@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.205.0] - 2026-10-28
+### Added
+- The walking skeleton cuts every layer (M29 B253, AC-2). From method 13, `INCR-SKELETON` refuses an intent whose increment 1 opens with a slice that misses a layer the stack pack has; any `ui` form counts as `ui`.
+
 ## [0.204.0] - 2026-10-28
 ### Added
 - Each slice proved through its entry and its hand-offs (M29 B253, AC-1). A level's `proves` lists `route` or `handoff`. Once one does, `SLICE-TEST` refuses a declared slice that no test at a `route` level names, or whose route tests never name its `permission`; and at a `handoff` level, an event or call it declares that no test names, a consumed event's test that never names its publisher, and an `async` slice whose tests reach no terminal state. The reviewer checks a business rule's refusal test.
@@ -472,7 +476,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.204.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.205.0...HEAD
+[0.205.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.204.0...v0.205.0
 [0.204.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.203.0...v0.204.0
 [0.203.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.202.0...v0.203.0
 [0.202.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.201.0...v0.202.0

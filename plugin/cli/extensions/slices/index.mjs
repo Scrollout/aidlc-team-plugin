@@ -2,7 +2,7 @@
 // (docs/design/slice-method.md#built).
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { bindingOf, branchOf, bundleOf, config, gitLines, globRegex, list, msg, nameOf, plug, registry, relPath, render, seam, tryGit, withDefaults } from '../../lib/index.mjs';
+import { bindingOf, branchOf, bundleOf, config, gitLines, globRegex, incrementLines, list, methodOf, msg, nameOf, plug, registry, relPath, render, seam, tryGit, withDefaults } from '../../lib/index.mjs';
 
 // The slices a bolt lists in its one domain, each with its declaration and its cuts as paths, the pack's slicePaths read
 // from the bottom, the shared layers before the slice's own code; null for a bolt that binds no one domain.
@@ -117,6 +117,22 @@ export function testFindings(root, profile) {
   }
   return out;
 }
+
+// INCR-SKELETON, from method 13: increment 1's first bolt listing a slice has its first slice cut every layer the pack
+// has, any form of a layer with forms counting for it (docs/design/construction.md).
+plug('planRules', ({ profile, live = [], all = [], add, base }) => {
+  const [stacks] = seam('sliceDeclaration', profile), m = stacks?.pack(base)?.manifest, D = config.slices.declaration;
+  if (!m?.slicePaths) return;
+  const layers = [...new Set(Object.keys(stacks.paths(m)).map((c) => c.split(D.form)[0]))];
+  for (const i of live.filter((x) => methodOf(x) >= config.method.since.sliceCuts)) {
+    const own = all.filter((u) => u.fm.intent === i.id), [line] = incrementLines(i);
+    const first = (line ? line.ids.map((x) => own.find((u) => u.id === x)).filter(Boolean) : own).find((u) => list(u.fm.slices).length), domains = first ? bindingOf(first, profile).domains : [];
+    if (domains.length !== 1) continue;
+    const slice = list(first.fm.slices)[0], cuts = stacks.declared(base, profile, domains[0], slice)?.cuts ?? [];
+    const missing = layers.filter((l) => !cuts.some((c) => c.split(D.form)[0] === l));
+    if (missing.length) add('INCR-SKELETON', i, 1, 'incrSkeletonSlice', { slice, bolt: first.id, missing: missing.join(', ') });
+  }
+});
 
 // At the gate, as the stacks' slice checks: only findings where the bolt changed a file count.
 plug('gateChecks', (tree, profile, paths = []) => [...graphFindings(tree, profile), ...testFindings(tree, profile)].filter((f) => paths.some((p) => p === f.path || p.startsWith(`${f.path}/`))));
