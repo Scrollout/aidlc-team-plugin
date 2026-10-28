@@ -43,7 +43,7 @@
       "intakeLine": "  {{factor}} {{band}}: {{why}}\n",
       "intakeUnscored": "  {{factors}} not scored: aidlc intake {{id}} --<factor> <band>:<sentence ids>\n",
       "intakeModel": "{{name}} ({{ids}}{{#each slices}}; its slices: {{this}}{{/each}})",
-      "intakeSlice": "{{kind}} {{name}}",
+      "intakeSlice": "{{kind}} {{name}}{{decl}}",
       "intakeModels": "  models that fit: {{models}}; once the owner picks one: aidlc models apply <name>\n",
       "intakeTell": "tell the owner in two or three plain sentences what kind of change this is and how much process it needs, then this proposal; they confirm or change it, and the intent records request: {{id}}, pathway and lane\n",
       "intakeVerification": "a test level that runs: {{tests}}; CI: {{ci}}",

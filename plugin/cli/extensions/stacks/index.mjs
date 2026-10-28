@@ -187,9 +187,9 @@ function eventsOf(bundle, domains) {
 // (docs/design/slice-declares.md).
 export function declarationProblems(decl, { root, profile, bundle, slice, domains, ui = false }) {
   const D = config.slices.declaration, at = { slice };
-  if (!decl?.cuts.length) return [['sliceDeclNone', at]];
+  if (!decl?.cuts.length) return [['sliceNoCuts', at]];
   const out = [], cuts = Object.keys(packFor(root)?.manifest.slicePaths ?? {}), mods = profile.modules ?? [], kind = (id) => mods.find((m) => String(m.id ?? m.name) === id)?.kind;
-  if (cuts.length) for (const cut of decl.cuts.filter((c) => !cuts.includes(c))) out.push(['sliceCut', { ...at, cut, cuts: cuts.join(', ') }]);
+  if (cuts.length) for (const cut of decl.cuts.filter((c) => !cuts.includes(c))) out.push(['sliceUnknownCut', { ...at, cut, cuts: cuts.join(', ') }]);
   for (const part of decl.unknown) out.push(['slicePartUnknown', { ...at, part, parts: D.parts.join(', ') }]);
   const owned = mods.filter((m) => domains.includes(String(m.id ?? m.name))).flatMap((m) => list(m.data)), shared = list(profile.architecture?.data?.shared);
   for (const node of list(decl.data).filter((n) => ![...owned, ...shared].some((g) => globRegex(g).test(n)))) out.push(['sliceDataOwner', { ...at, node, domain: domains.join(', ') }]);
@@ -204,7 +204,8 @@ export function declarationProblems(decl, { root, profile, bundle, slice, domain
   if (ui && cuts.includes(D.ui) && !decl.cuts.includes(D.ui)) out.push(['sliceUi', at]);
   return out;
 }
-plug('sliceDeclaration', { parse: declarationOf, problems: declarationProblems });
+const cutsOfPacks = () => (existsSync(packsDir()) ? [...new Set(readdirSync(packsDir()).flatMap((s) => { const f = join(packsDir(), s, K.manifest); return existsSync(f) ? Object.keys(JSON.parse(readFileSync(f, 'utf8')).slicePaths ?? {}) : []; }))] : []);
+plug('sliceDeclaration', { parse: declarationOf, problems: declarationProblems, cuts: cutsOfPacks });
 
 // Vertical slices across a domain's layers: each slice is a folder of the application layer, met by no other slice,
 // entered from its domain's interface layer or a runtime, listed with its use case and stories in the domain doc, and

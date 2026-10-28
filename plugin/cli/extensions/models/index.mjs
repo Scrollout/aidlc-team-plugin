@@ -3,7 +3,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
-import { bundleOf, CLI_DIR, config, docSlug, done, gitLines, globRegex, isMap, list, loadProfile, msg, nameOf, parseDoc, parseYaml, plug, readJson, registry, relPath, render, sectionOf, templateFile, UsageError, writeJson } from '../../lib/index.mjs';
+import { bundleOf, CLI_DIR, config, docSlug, done, gitLines, globRegex, isMap, list, loadProfile, msg, nameOf, parseDoc, parseYaml, plug, readJson, registry, relPath, render, seam, sectionOf, templateFile, UsageError, writeJson } from '../../lib/index.mjs';
 
 const M = config.models, F = config.okf.bundle.folders, SL = config.slices;
 const sha16 = (text) => createHash('sha256').update(text).digest('hex').slice(0, config.text.digest);
@@ -22,7 +22,14 @@ const verbsOf = (root) => { try { return registry(loadProfile(root).profile).voc
 // domains count as registered, since `models apply` writes their docs (docs/design/vertical-slices.md#planned-before-built).
 const slicesOf = (x) => (Array.isArray(x?.slices) ? x.slices : []);
 const named = (reg, ids) => ({ ...reg, domains: { ...Object.fromEntries(ids.map((id) => [id, {}])), ...reg.domains } });
-const sliceNames = (x, reg) => slicesOf(x).map((s) => ({ ...s, domain: x.id, name: nameOf(M.sliceKind, { domain: x.id, verb: s.verb }, reg) }));
+const sliceNames = (x, reg) => slicesOf(x).map((s) => ({ ...s, domain: x.id, name: nameOf(M.sliceKind, { domain: x.id, verb: s.verb }, reg), decl: declOf(s) }));
+// A model slice's declaration as its # Surface line carries it, or '' when it declares no cuts (docs/design/slice-method.md#one-grammar).
+function declOf(s) {
+  const D = SL.declaration, joined = (v) => list(v).join(`${D.list} `);
+  if (!list(s?.cuts).length) return '';
+  const parts = D.parts.filter((p) => s[p] !== undefined && s[p] !== false).map((p) => (D.flags.includes(p) ? p : msg('modelDeclPart', { part: p, value: joined(s[p]) })));
+  return msg('modelDecl', { cuts: joined(s.cuts), parts });
+}
 
 function read(m, verbs) {
   const file = join(m.dir, M.file);
@@ -37,6 +44,19 @@ function read(m, verbs) {
 
 // What breaks the format: missing keys, lists that are not, ids missing or twice, unknown kinds, rule types and
 // contract ends, and decisions that are not Decision docs.
+// A model slice's declaration: cuts a stack pack lists, known keys, an entry that is a runtime layer, calls to a domain,
+// the extension or an adapter layer (docs/design/slice-method.md#one-grammar).
+function declProblems(s, x, d, add) {
+  const D = SL.declaration, at = { id: x.id, kind: s?.kind ?? '-', verb: s?.verb ?? '-' }, keys = [...M.sliceKeys, ...D.parts], layers = d.layers ?? [];
+  for (const key of Object.keys(s ?? {}).filter((k) => !keys.includes(k))) add('modelSliceKey', { ...at, key, keys: keys.join(', ') });
+  if (!list(s?.cuts).length) { if (D.parts.some((p) => s?.[p] !== undefined)) add('modelSliceNoCuts', at); return; }
+  const cuts = seam('sliceDeclaration').flatMap((x) => x.cuts());
+  for (const cut of cuts.length ? list(s.cuts).filter((c) => !cuts.includes(c)) : []) add('modelSliceUnknownCut', { ...at, cut, cuts: cuts.join(', ') });
+  if (s.entry !== undefined && !layers.some((l) => l.id === s.entry && l.kind === D.runtime)) add('modelSliceEntry', { ...at, entry: s.entry });
+  const callable = [...(d.domains ?? []).map((y) => y.id), M.extensionId, ...layers.filter((l) => l.kind === M.adapterKind).map((l) => l.id)];
+  for (const target of list(s.calls).filter((t) => !callable.includes(t))) add('modelSliceCall', { ...at, target });
+}
+
 function problems(m, d, verbs) {
   const out = [], add = (key, data = {}) => out.push([key, { model: m.name, ...data }]);
   for (const key of M.required.filter((k) => d[k] === undefined || d[k] === '')) add('modelKey', { key });
@@ -61,7 +81,13 @@ function problems(m, d, verbs) {
       if (!String(s?.useCase ?? '').trim()) add('modelSliceUseCase', { id: x.id, verb: s?.verb ?? '-' });
       if (seen.has(`${s?.kind} ${s?.verb}`)) add('modelSliceTwice', { id: x.id, kind: s?.kind ?? '-', verb: s?.verb ?? '-' });
       seen.add(`${s?.kind} ${s?.verb}`);
+      declProblems(s, x, d, add);
     }
+  }
+  // What a runtime applies to every slice it serves: a pipeline layer of the model, or an outcome kind (docs/design/slice-declares.md).
+  for (const l of (Array.isArray(d.layers) ? d.layers : []).filter((y) => y?.applies !== undefined)) {
+    const stages = (d.layers ?? []).filter((y) => y?.kind === M.pipelineKind).map((y) => y.id);
+    for (const item of list(l.applies).filter((i) => !stages.includes(i) && !M.appliesKinds.includes(i))) add('modelApplies', { id: l.id, item, kinds: M.appliesKinds.join(', ') });
   }
   for (const r of Array.isArray(d.rules) ? d.rules : []) if (!M.ruleTypes.includes(r?.type)) add('modelRule', { type: r?.type ?? '-', types: M.ruleTypes.join(', ') });
   for (const c of Array.isArray(d.contracts) ? d.contracts : []) for (const end of ['from', 'to']) if (c?.[end] !== undefined && !ids.has(c[end]) && c[end] !== M.extensionId) add('modelContract', { end, id: c[end] });
@@ -223,7 +249,7 @@ plug('modelFit', (root, sentences) => modelsOf(root).filter((m) => m.data && !m.
 // The increments a model suggests, slice by slice: the walking skeleton through every layer serving the first slice,
 // then each further slice of each shared domain (a domain with none as one increment), then a first extension.
 function increments(d, reg) {
-  const shared = (d.domains ?? []).map((x) => ({ x, slices: sliceNames(x, reg) })), first = shared.flatMap((s) => s.slices)[0];
+  const shared = (d.domains ?? []).map((x) => ({ x, slices: sliceNames(x, reg) })), all = shared.flatMap((s) => s.slices), first = all.find((s) => list(s.cuts).length === Math.max(0, ...all.map((y) => list(y.cuts).length)));
   return [msg('incSkeleton', { layers: d.layers.map((l) => l.id).join(' → '), first: first ? [first] : [] }),
     ...shared.flatMap(({ x, slices }) => (slices.length ? slices.filter((s) => s !== first).map((s) => msg('incSlice', s)) : [msg('incDomain', { id: x.id, role: x.role ?? '' })])),
     msg('incExtension', { declares: list(d.extension?.declares).join(', ') || '-', slices: slicesOf(d.extension) })]
@@ -294,10 +320,11 @@ function gaps(cwd) {
   }
   // A played domain's slices its doc does not list (docs/design/vertical-slices.md#planned-before-built).
   const bundle = bundleOf(cwd, profile), reg = registry(profile, bundle), line = new RegExp(render(M.surfaceLine, { kinds: SL.kinds.join('|'), name: SL.name }));
-  const listed = (code) => { const file = join(bundle, F.Domain, `${code}${config.okf.ext}`), doc = existsSync(file) && parseDoc(readFileSync(file, 'utf8')); return new Set(doc ? sectionOf(doc, SL.surface).map(([n]) => doc.lines[n - 1].match(line)?.[1]).filter(Boolean) : []); };
-  const slices = (m.data.domains ?? []).flatMap((x) => mods.filter((mod) => mod.layer === x.id).flatMap((mod) => { const code = String(mod.id ?? mod.name), have = listed(code); return sliceNames({ ...x, id: code }, named(reg, [code])).filter((s) => !have.has(s.name)); }));
+  const listed = (code) => { const file = join(bundle, F.Domain, `${code}${config.okf.ext}`), doc = existsSync(file) && parseDoc(readFileSync(file, 'utf8')); return new Map(doc ? sectionOf(doc, SL.surface).map(([n]) => [doc.lines[n - 1].match(line)?.[1], doc.lines[n - 1].split(':')[0]]).filter(([k]) => k) : []); };
+  const parse = seam('sliceDeclaration')[0]?.parse ?? (() => null), lacks = (s, head) => { const got = parse(head) ?? { cuts: [] }; return ['cuts', ...SL.declaration.parts].filter((p) => list(s[p]).some((v) => !list(got[p]).includes(v)) || (s[p] === true && got[p] !== true)); };
+  const slices = (m.data.domains ?? []).flatMap((x) => mods.filter((mod) => mod.layer === x.id).flatMap((mod) => { const code = String(mod.id ?? mod.name), have = listed(code); return sliceNames({ ...x, id: code }, named(reg, [code])).filter((s) => !have.has(s.name) || lacks(s, have.get(s.name)).length).map((s) => ({ ...s, lacks: have.has(s.name) ? lacks(s, have.get(s.name)) : [] })); }));
   if (!mods.some((mod) => mod.kind === (m.data.extension?.kind ?? 'extension'))) missing.push({ id: M.extensionId, kind: m.data.extension?.kind ?? 'extension', role: list(m.data.extension?.declares).join(', ') });
-  const plan = [...missing.map((x) => msg('incGap', { id: x.id, kind: x.kind ?? '-', role: x.role ?? '' })), ...slices.map((s) => msg('incSlice', s))].map((text, k) => msg('incLine', { k: k + 1, text })).join('');
+  const plan = [...missing.map((x) => msg('incGap', { id: x.id, kind: x.kind ?? '-', role: x.role ?? '' })), ...slices.map((s) => msg(s.lacks.length ? 'incSliceGap' : 'incSlice', { ...s, parts: s.lacks.join(', ') }))].map((text, k) => msg('incLine', { k: k + 1, text })).join('');
   return done(msg('gapsHead', { name: m.name, played: lines.length, total: m.data.layers.length + (m.data.domains ?? []).length }) + lines.join('') + (missing.length || slices.length ? msg('gapsMissing', {}) + plan : msg('gapsNone', {})));
 }
 

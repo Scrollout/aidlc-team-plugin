@@ -142,9 +142,9 @@ test('B250/AC-2 a # Surface line declares the slice\'s cuts and parts, required 
   });
   const found = (surface, method = 13) => lines(sliceFindings(makeRepo(files(surface, method), ORDERS), ORDERS));
   assert.deepEqual(found('- Command placeorder (interface, application, model; entry shop-api): a customer orders a cake [I-1:US1.1]'), [], 'declared');
-  assert.deepEqual(found('- Command placeorder: a customer orders a cake [I-1:US1.1]'), ['SLICE-SURFACE docs/domains/orders.md sliceDeclNone'], 'method 13 asks for the declaration');
+  assert.deepEqual(found('- Command placeorder: a customer orders a cake [I-1:US1.1]'), ['SLICE-SURFACE docs/domains/orders.md sliceNoCuts'], 'method 13 asks for the declaration');
   assert.deepEqual(found('- Command placeorder: a customer orders a cake [I-1:US1.1]', 12), [], 'method 12 does not');
-  assert.deepEqual(found('- Command placeorder (ui, interface; entry orders): a customer orders a cake [I-1:US1.1]', 12), ['SLICE-SURFACE docs/domains/orders.md sliceCut', 'SLICE-SURFACE docs/domains/orders.md sliceEntryRuntime'], 'a declaration is checked wherever it is');
+  assert.deepEqual(found('- Command placeorder (ui, interface; entry orders): a customer orders a cake [I-1:US1.1]', 12), ['SLICE-SURFACE docs/domains/orders.md sliceEntryRuntime', 'SLICE-SURFACE docs/domains/orders.md sliceUnknownCut'], 'a declaration is checked wherever it is');
   // The permission the registry composes for the slice's domains, and a ui unit of work's slice on a pack that has ui.
   const named = { ...ORDERS, naming: { tokens: { system: 'shop', org: 'contoso' }, domains: { orders: {} } } };
   const root = makeRepo({ 'tsconfig.json': '{}' }, named), bundle = join(root, 'docs'), ctx = { root, profile: named, bundle, slice: 'placeorder', domains: ['orders'] };

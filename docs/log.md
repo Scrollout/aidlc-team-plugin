@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-28
 
+- **Update** M29 B250, second part: declared slices in models, checked by `MODEL-FORMAT`, applied to `# Surface`, reported by `models gaps` and listed at intake ([Models](design/models.md)); the slice docs follow the official sources on integration events, query reads and validation ([What a slice declares](design/slice-declares.md)). Release 0.192.0.
 - **Update** M29 B250, first part: method 13, a slice's declaration on its `# Surface` and `Slices` lines, checked by `SLICE-SURFACE` and `UNIT-WORK` ([Building a slice](design/slice-method.md#one-grammar)); migrations are a shared cut ([0026](decisions/0026-a-slice-declares-the-layers-it-needs-and.md)). Release 0.191.0.
 - **Create** [0026](decisions/0026-a-slice-declares-the-layers-it-needs-and.md) accepted: a slice declares the layers its use case needs, its entry, the data of its domain it uses and how it integrates, and merges only whole. [Building a slice](design/slice-method.md) and [M29](roadmap/m29.md) plan the method, drafts until built.
 - **Update** M26 B240 built: the merge gate as the ordered stages of `gate.stages`, a project's `checks` adding stages that never shorten it ([Lifecycle as data](design/lifecycle.md#pipelines)). Lifecycle as data and [M26](roadmap/m26.md) are stable. Release 0.190.0.

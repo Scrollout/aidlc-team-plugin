@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.192.0] - 2026-10-28
+### Added
+- Declared slices in models (M29 B250, second part). A model's slice carries `cuts`, `data`, `entry`, `permission`, `async`, `emits`, `consumes` and `calls`, and a runtime layer what it `applies`: pipeline layers of the model, outcome events or a status contract. `MODEL-FORMAT` reports a declaration with no cuts, a cut no stack pack lists, an unknown key, an entry that is no runtime layer, a call to no domain, extension or adapter layer, and an applied item that is neither. `models apply` writes each slice's declaration into its domain doc's `# Surface` and starts the walking skeleton from the slice that cuts the most layers; `models gaps` lists the part of a declaration a domain doc's line lacks; intake lists each fitting model's slices with their declarations.
+### Changed
+- The slice docs follow the official sources: `emits` and `consumes` name integration events between domains, a domain event between a domain's aggregates staying in its model; a query may read its domain's data straight into its view; a slice's validator sits beside its handler and runs in the pipeline.
+
 ## [0.191.0] - 2026-10-28
 ### Added
 - A slice's declaration (M29 B250, first part). From method 13 a slice's `# Surface` line and its Unit of work's `Slices` line read `<Kind> <slice> (<cut>, …; data …; entry …; permission …; async; emits …; consumes …; calls …)`: the layers it cuts, then what it reaches. `SLICE-SURFACE` and `UNIT-WORK` report a cut the stack pack has no path for, an unknown part, data its domains neither own nor share, an entry that is no runtime module, a permission the registry does not compose, an event no domain's `Events:` line lists, a call to no domain, extension or adapter, and a ui unit of work's slice that does not cut `ui`. Each pack lists `slicePaths`, where a slice's code sits in each layer it may cut; migrations are a shared cut, in the domain's migrations folder.
@@ -414,7 +420,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.191.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.192.0...HEAD
+[0.192.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.191.0...v0.192.0
 [0.191.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.190.0...v0.191.0
 [0.190.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.189.2...v0.190.0
 [0.189.2]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.189.1...v0.189.2

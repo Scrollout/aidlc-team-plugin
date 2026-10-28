@@ -17,17 +17,17 @@ A project starts from a proven shape, or is measured against one ([0020](../deci
 # A model
 A folder, `models/<name>/`:
 - `model.json`:
-  - `layers`: the horizontal layers, in order, each with its kind and its role;
-  - `domains`: the shared domains the others rely on, each with its `slices`;
-  - `extension`: what each extension declares and the slices it offers;
+  - `layers`: the horizontal layers, in order, each with its kind, its role and, for a runtime, what it `applies`;
+  - `domains`: the shared domains, each with its `slices`, declared as [a slice](slice-method.md#one-grammar);
+  - `extension`: what each extension declares and its slices;
   - `contracts`: what passes between layers and domains;
   - `rules`: rule types with their parameters;
   - `fit`: the signals intake matches;
   - `references`: the reference code per stack pack.
 - `knowledge/`: what the architect persona reads to apply the model.
-- `decisions/`: starter decisions in MADR, proposed until the owner approves each one.
+- `decisions/`: starter decisions in MADR, proposed until the owner approves them.
 
-A model's rules name roles and shapes, never one vendor's names; the project's own contract fills those in.
+A model's rules name roles and shapes, never a vendor's names; the project's contract fills those in.
 
 # Where models live
 - The plugin ships the format and the rule types, not models ([0025](../decisions/0025-the-plugin-ships-the-model-format-not-models.md)): a model lives with the project or organisation that uses it, in `.aidlc/models/<name>/`, its reference code with it.
@@ -43,17 +43,17 @@ The `model` pathway, for an intent that names its `model:` and its `research:` d
 A copied model, like the example below, carries no sources.
 
 # Applying a model
-- **Greenfield:** intake lists the models whose `fit.words` appear in the request, with their sentences. Once the owner picks one, `aidlc models apply <name>`:
+- **Greenfield:** intake lists the models whose `fit.words` appear in the request, with their sentences. Once the owner picks one, `models apply <name>`:
   - records it in the profile (`model.name`);
   - writes the system doc, its layers and domains as building blocks, when the bundle has none;
   - copies its decisions as proposals, numbered on, for the owner to approve one at a time;
-  - prints the increments along its layers, the walking skeleton through every layer first.
+  - prints the increments, the skeleton first, serving the slice that cuts the most layers.
 
   Applying again copies nothing twice.
-- **Brownfield:** each module names the item it plays (`modules[].layer`); `aidlc models gaps` lists the items played, missing, or played by a module of another kind, the missing ones as increments.
+- **Brownfield:** each module names the item it plays (`modules[].layer`); `models gaps` lists the items played, missing, or played by a module of another kind, and a slice or the part of a declaration a domain doc lacks, as increments.
 
 # Rule types
-A project chooses its model in the profile (`model.name`), and only that model's rules run, with its parameters and the project's own names from the profile's `model`, so no vendor's names live in the plugin.
+Only the chosen model's rules run (`model.name`), with its parameters and the project's own names from the profile's `model`.
 
 | Type | Model parameters | Project's `model` | Checks | Code |
 |---|---|---|---|---|

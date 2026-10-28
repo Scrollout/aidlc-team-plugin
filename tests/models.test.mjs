@@ -291,3 +291,41 @@ test('B247/AC-4 the example model lists its slices, and its Go reference names t
   for (const d of cp.domains) assert.ok(d.slices?.length, `${d.id} lists its slices`);
   assert.ok(cp.extension.slices?.length, 'the extension lists the slices a provider offers');
 });
+
+// M29 B250: a model's slices carry their declaration, and each runtime what it applies (docs/design/slice-method.md#one-grammar).
+const DECLARED = { layers: [{ id: 'front', kind: 'runtime', role: 'serves', applies: ['gate', 'outcomeEvents'] }, { id: 'gate', kind: 'pipeline', role: 'checks each request' }],
+  domains: [{ id: 'records', kind: 'domain', role: 'what exists', slices: [
+    { kind: 'Query', verb: 'get', useCase: 'a client reads one record', cuts: ['interface', 'application'], entry: 'front' },
+    { kind: 'Command', verb: 'create', useCase: 'a client records what exists', cuts: ['interface', 'application', 'model', 'infrastructure', 'migration'], data: ['data/records/records'], entry: 'front', async: true, emits: ['RecordCreated.v1'] }] }],
+  extension: { declares: ['namespace'] } };
+
+test('B250/AC-3 a model slice declares its cuts and what it reaches, MODEL-FORMAT checks them, and each runtime applies stages or outcomes', () => {
+  const dir = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n' }, V2);
+  write(dir, { '.aidlc/models/sliced/model.json': model('sliced', DECLARED) });
+  assert.deepEqual(formatLines(dir), [], 'a declared model in the format');
+  const bad = { ...DECLARED, layers: [{ ...DECLARED.layers[0], applies: ['gate', 'caching'] }, DECLARED.layers[1]], domains: [{ id: 'records', kind: 'domain', slices: [
+    { kind: 'Query', verb: 'get', useCase: 'x', entry: 'front' }, { kind: 'Command', verb: 'create', useCase: 'y', cuts: ['interface', 'screen'], entry: 'gate', calls: ['billing'], colour: 'red' }] }] };
+  write(dir, { '.aidlc/models/sliced/model.json': model('sliced', bad) });
+  const lines = formatLines(dir).join('\n');
+  for (const want of ['the Query get slice of records says what it reaches but not which layers it cuts', 'the Command create slice of records cuts screen, a layer no stack pack has',
+    'the Command create slice of records is served by gate, which is no runtime layer of the model', 'the Command create slice of records calls billing, which is no domain, the extension or an adapter layer',
+    'the Command create slice of records has colour, which is no part of a slice', 'runtime front applies caching, which is neither a pipeline layer of the model nor one of outcomeEvents, statusContract']) assert.match(lines, new RegExp(want.replace(/[()]/g, '\\$&')), lines);
+});
+
+test('B250/AC-3 apply writes each slice\'s declaration into # Surface and starts the skeleton from the slice that cuts the most layers; gaps lists what a line lacks', () => {
+  const dir = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n' }, V2);
+  write(dir, { '.aidlc/models/sliced/model.json': model('sliced', DECLARED) });
+  const out = run(dir, ['models', 'apply', 'sliced']).out;
+  assert.match(out, /- I-<n>\.1 Walking skeleton: one request through front → gate, end to end on the target, serving Command createrecord\n- I-<n>\.2 records: Query getrecord \(interface, application; entry front\), a client reads one record\n/, out);
+  assert.match(read(dir, 'docs/domains/records.md'), /^- Query getrecord \(interface, application; entry front\): a client reads one record\n- Command createrecord \(interface, application, model, infrastructure, migration; data data\/records\/records; entry front; async; emits RecordCreated\.v1\): a client records what exists\n/m);
+  const played = { ...V2, model: { name: 'sliced' }, modules: [{ id: 'front', kind: 'runtime', layer: 'front', paths: ['src/front/**'] }, { id: 'gate', kind: 'pipeline', layer: 'gate', paths: ['src/gate/**'] }, { id: 'records', kind: 'domain', layer: 'records', paths: ['src/records/**'] }, { id: 'ext', kind: 'extension', paths: ['src/ext/**'] }] };
+  const gaps = makeRepo({ 'docs/index.md': '---\nokf_version: 0.2\n---\n', 'docs/domains/records.md': '---\ntype: Domain\ntitle: Records\ndescription: d.\ncode: records\nkind: domain\n---\n\n# Surface\n- Query getrecord (interface, application; entry front): reads [I-1:US1.1]\n- Command createrecord (interface, application; entry front): records [I-1:US1.2]\n' }, played);
+  write(gaps, { '.aidlc/models/sliced/model.json': model('sliced', DECLARED) });
+  assert.match(run(gaps, ['models', 'gaps']).out, /- I-<n>\.1 records: Command createrecord on its # Surface line lacks cuts, data, async, emits\n$/);
+});
+
+test('B250/AC-3 intake lists a fitting model\'s slices with their cuts and hand-offs', () => {
+  const dir = makeRepo({}, V2);
+  write(dir, { '.aidlc/models/sliced/model.json': model('sliced', { ...DECLARED, fit: { words: ['records'] } }) });
+  assert.match(run(dir, ['intake', 'Clients keep records online.']).out, /its slices: Query getrecord \(interface, application; entry front\), Command createrecord \(interface, application, model, infrastructure, migration; data data\/records\/records; entry front; async; emits RecordCreated\.v1\)/);
+});
