@@ -10,7 +10,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T11:30:00Z }
 The board is a sensor, not a source of truth: progress stays derived from git and the docs (principle 2), and nothing the plugin decides reads the board, so it cannot become a second ledger that drifts.
 
 # Cost
-Zero model tokens: `aidlc sync` is CLI code calling `gh api` (REST for issues, GraphQL for the Project). No agent writes or reads issues; `next` and `status` do a scrum master's job deterministically. Bodies stay short.
+Zero AI model tokens: `aidlc sync` is CLI code calling `gh api` (REST for issues, GraphQL for the Project). No agent writes or reads issues; `next` and `status` do a scrum master's job deterministically. Bodies stay short.
 
 # Shape
 - Off unless the profile has a `github` section: `{ "repo": "owner/name", "project": "orgs/owner/projects/<n>" }`. `project` is optional; without it only issues are synced.

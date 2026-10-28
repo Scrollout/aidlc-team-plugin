@@ -175,7 +175,7 @@ function guard(input, cwd) {
     if (owner) {
       const command = argv.slice(argv.indexOf(owner)).join(' ');
       if (useGo(cwd, command)) return allow(); // the owner typed it (docs/design/operations.md#details)
-      // A delegated upgrade copies the installed release; a downgrade or a dirty checkout stays the owner's (decision 0008).
+      // A delegated upgrade copies the installed release; a downgrade or a dirty checkout stays the owner's (decisions 0008, 0028).
       if (owner === S.auto[2] && delegated(cwd).includes(owner) && !argv.some((a) => S.upgradeOwnerFlags.includes(a))) return allow();
       if (input.permission_mode === H.noPrompt) return deny(cwd, input, 'GUARD-OWNER', 'guardOwner', { command });
       recordPrompt(cwd, input, command);

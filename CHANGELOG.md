@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.208.0] - 2026-10-28
+### Changed
+- One sense per word, everywhere (M30 B255, extended). Every tracked text (the docs, decisions, roadmaps, README, AGENTS.md, templates, role personas, the skill, the agents, and the CLI's messages and fixes) says model, request, bundle, contract, event, component, capability, schema and operation only after a word naming the sense, from `vocabulary.senses`, or in a code span; the capitalized phase name Operation stands alone. `tests/senses.mjs` lists any other use and CI fails on it.
+- The canonical model is consistent with the code and the method: words for declaration, binding, grid, escape hatch, go, hold, seam and role persona; the words to avoid no longer clash with the grammar's own tokens; the vocabulary's paths match the code; a Unit is the method's independent functional block (its unit of work), a domain the bounded context.
+- The default `path` name is generic (`/{{typeCamel}}/{{{singularCamel}}Name}`), as decision 0021 decided. A profile's `naming.grammar` overrides any kind of name, and `aidlc models apply` records the chosen architecture model's API contract grammar there: the control-plane example keeps its `/providers/{{Namespace}}/…` path.
+- The constitution template's rule 9 follows decision 0026: a slice never imports another slice; a domain's slices share its data, another domain's data is reached through its client or integration events. Rule 3's title says every increment.
+- Generated pages that draw nothing move to `docs/design/tables/`. arc42 states its goal, the AI-DLC method as researched and vertical slices across horizontal layers, and each section's answer.
+- Docs match the code: layers, pathways, trailers, folders, caps, defaults, commands, owner commands, extensions, the codebase map's pages, Node 24+, the phase name Operation, the board's `unit` key, and decisions citing the decision that now holds each rule.
+### Added
+- Decision 0027 (proposed): integration event names stay in the plugin's grammar, the part of 0014 that 0021 left without a decision. Decision 0028 (proposed): the `upgrade` delegated class, moved out of an in-place amendment of 0008.
+### Fixed
+- `start`'s help, `name`'s `--unit` flag and `MODEL-UNIT`'s fix name the bolt forms in use; the legacy aliases expire with M30; the SessionStart injection budget is measured.
+
 ## [0.207.0] - 2026-10-28
 ### Changed
 - One sense for the words agents could misread (M30 B255). The messages, fixes, templates, personas, the skill and the agents say model, request, bundle, contract and event only after a word naming the sense, from `vocabulary.senses`: architecture, domain or AI model; the owner's request, or a call; the docs bundle; the API contract; integration, domain or outcome event. A test reports any other bare use outside a code span. The card's and research brief's model line reads `AI model:`, and the design doc on models is titled Architecture models.
@@ -486,7 +499,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.207.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.208.0...HEAD
+[0.208.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.207.0...v0.208.0
 [0.207.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.206.0...v0.207.0
 [0.206.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.205.0...v0.206.0
 [0.205.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.204.0...v0.205.0

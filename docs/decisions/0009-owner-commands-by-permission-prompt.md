@@ -31,8 +31,9 @@ Option 3.
   - `approve` (without `--auto`) stamps docs as the owner's;
   - `upgrade` replaces the vendored CLI;
   - `delegate <class>…|off` writes `approvals.auto` in the personal profile;
-  - `mode` sets the run mode in the personal profile (added later);
-  - `release I-<n>` and `rollback I-<n>` run the deploy steps (M6, [Deployment and operation](../design/operations.md)); the owner can also give them by a typed go ([0012](0012-typed-go-for-release-and-rollback.md)).
+  - `mode` sets the run mode in the personal profile;
+  - `dispose` records the owner's verdict on a security finding;
+  - `release I-<n>` and `rollback I-<n>` run the deploy steps (M6, [Deployment and Operation](../design/operations.md)); the owner can also give them by a typed go ([0012](0012-typed-go-for-release-and-rollback.md)).
 
   The lead runs them when `next` or the owner names them; the guard returns `permissionDecision: "ask"` with the command in the reason, so the owner sees a yes/no prompt.
 - A hook's `ask` forces a prompt even in auto mode; the classifier can deny but never approve silently.[^cc-hooks] Remote Control keeps permission prompts open until they are answered, and can push a notification for them.[^cc-rc]

@@ -7,14 +7,14 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T05:00:00Z }
 ---
 
 # Why
-A dependency graph the AI writes in the first unit can read error-message prose as table names, and a reviewer's finding against it can go unfixed. Left to the builder, the layout is improvised, and the method's launch talk warns that AI does domain-driven design badly in Go, advising to point it at reference code instead of describing it ([Architecture model](architecture-model.md)).
+A dependency graph the AI writes in the first bolt can read error-message prose as table names, and a reviewer's finding against it can go unfixed. Left to the builder, the layout is improvised, and the method's launch talk warns that AI does domain-driven design badly in Go, advising to point it at reference code instead of describing it ([Architecture model](architecture-model.md)).
 
 # A pack
 `plugin/packs/<stack>/` holds data, not code:
-- `manifest.json`: how the stack is detected (`go.mod`, `tsconfig.json`), the folder of each kind and layer (`internal/domains/{{domain}}/model`, `cmd/{{deployable}}`), how imports are read (`imports`: patterns that find a path in a file or in a block it names, resolved inside the module or relative to the file), where each cut of a slice sits (`slicePaths`; `ui` maps each form the pack has, `cli`, `web` or `template`, to `ui/<form>/<slice>`, and a declaration's `ui` means every one; Go has `cli` and `template`, TypeScript `web` and `cli`), how the language writes a string literal (`stringLiteral`) and which lines and literals are its protocol (`values`), and where event types sit.
+- `manifest.json`: how the stack is detected (`go.mod`, `tsconfig.json`), the folder of each kind and layer (`internal/domains/{{domain}}/model`, `cmd/{{deployable}}`), how imports are read (`imports`: patterns that find a path in a file or in a block it names, resolved inside the module or relative to the file), where each cut of a slice sits (`slicePaths`; `ui` maps each form the pack has, `cli`, `web` or `template`, to `ui/<form>/<slice>`, and a declaration's `ui` means every one; Go has `cli` and `template`, TypeScript `web` and `cli`), how the language writes a string literal (`stringLiteral`) and which lines and literals are its protocol (`values`), and where integration event types sit.
 - `templates/`: one file per scaffold kind, rendered with the names the registry composes ([Naming](naming.md)).
 - `reference/`: one domain (`notes`) with a command slice and a query slice, each route under `interface/<slice>`, fully tested, in the pack's layout, passing every `ARCH-*` code on its own graph. Go's runs with `go test ./...`; TypeScript's with its `npm test` (`node --test` on `*.spec.ts`, type stripping), named so the plugin's own test run skips it.
-- A model's walking skeleton lives with the model, under its `reference/<stack>/` ([Models](models.md), [Shipped layout](layout.md)); CI runs its tests too.
+- An architecture model's walking skeleton lives with the architecture model, under its `reference/<stack>/` ([Architecture models](models.md), [Shipped layout](layout.md)); CI runs its tests too.
 
 `init` and `upgrade` pin the packs in `.aidlc/bin/packs/` with the CLI, so the vendored CLI and the builder read the same files ([Shipped layout](layout.md)).
 
@@ -29,6 +29,6 @@ A schema-qualified table counts only inside a string literal, where SQL lives: `
 `aidlc scaffold domain <code>`, `scaffold slice <verb> --domain <code>` (the slice's name is `aidlc name slice`; it writes the own code and test of each layer the slice's `# Surface` line cuts, its route under `interface/<slice>`, or with none every such layer but `ui`; a `template` form is the slice's entry in the template schema, naming its resource type, with a test that the deployment applying it calls the slice's route), `scaffold foundation <kit>`, `scaffold pipeline <stage>`, `scaffold runtime <deployable>` and `scaffold adapter <system>` write the pack's templates at the kind's folder, with every name from the registry, and change nothing that exists. The card of a bolt that names a domain links the reference slice to copy.
 
 # Events
-A domain's `events` surface holds its event types. `CONTRACT-NAME` reports one that is not `<Org>.<Service>.<Noun><PastTenseVerb>` with no version suffix (decision 0014), from the pack's `eventType` pattern.
+A domain's `events` surface holds its integration event types. `CONTRACT-NAME` reports one that is not `<Org>.<Service>.<Noun><PastTenseVerb>` with no version suffix (a generic rule decision [0021](../decisions/0021-the-control-planes-api-conventions-belong-to-its.md) kept the plugin's when it superseded 0014), from the pack's `eventType` pattern.
 
 Bolts: [M17](../roadmap/m17.md) B170 to B172 (Go and TypeScript packs).

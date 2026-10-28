@@ -49,7 +49,11 @@ const CHECKS = {
   },
   'SessionStart status injection': {
     check: (items, limit) => sizes(items, limit, 'chars', (t) => t.length),
-    real: () => [], // U7 wires the hook output.
+    real: () => { // what the SessionStart hook adds on a project with an approved intent and bolt
+      const dir = pinnedRepo({ 'docs/intents/I-1-x.md': intentDoc('I-1'), 'docs/units/U-1-a.md': unitDoc({ scope: ['src/**'] }) });
+      approve(dir, 'I-1', 'U-1');
+      return [{ name: 'status', text: hook('status', { cwd: dir, hook_event_name: 'SessionStart' }).json.hookSpecificOutput?.additionalContext ?? '' }];
+    },
   },
   'Skill body / agent prompt': {
     check: (items, limit) => sizes(items, limit * 1024, 'bytes', (t) => Buffer.byteLength(t)),
@@ -59,7 +63,7 @@ const CHECKS = {
     check: (items, limit) => sizes(items.map((i) => ({ ...i, text: description(i.text) })), limit, 'chars', (t) => t.length),
     real: () => files('plugin/skills', /^SKILL\.md$/).concat(files('plugin/agents', /\.md$/)).map((f) => ({ name: f, text: read(f) })),
   },
-  'Unit card': {
+  'Bolt card': {
     check: (items, limit) => sizes(items, limit, 'lines', (t) => t.replace(/\n$/, '').split('\n').length),
     real: () => files('plugin/templates', /^card.*\.md$/).map((f) => ({ name: f, text: read(f) })), // templates; rendered cards are capped at runtime
   },
@@ -126,7 +130,7 @@ const OVER = {
   'SessionStart status injection': (n) => [{ name: 'status', text: 'x'.repeat(n + 1) }],
   'Skill body / agent prompt': (n) => [{ name: 'SKILL.md', text: 'x'.repeat(n * 1024 + 1) }],
   'Skill and agent descriptions': (n) => [{ name: 'builder.md', text: `---\nname: b\ndescription: ${'x'.repeat(n + 1)}\n---\n` }],
-  'Unit card': (n) => [{ name: 'card', text: 'x\n'.repeat(n + 1) }],
+  'Bolt card': (n) => [{ name: 'card', text: 'x\n'.repeat(n + 1) }],
   'CLI core (`plugin/cli/aidlc.mjs`, `plugin/cli/lib/`)': (n) => [{ name: 'a.mjs', text: 'x\n'.repeat(n) }, { name: 'b.mjs', text: 'y\n' }],
   'Each CLI extension (`plugin/cli/extensions/<name>/`)': (n) => [{ name: 'board', text: 'x\n'.repeat(n + 1) }],
   'Blocking hook run time': (n) => [{ name: 'guard', text: String(n + 1) }],

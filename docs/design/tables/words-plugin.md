@@ -8,6 +8,12 @@ generated: { by: tests/diagrams.mjs }
 
 | Word | Meaning | AI-DLC term | Declared in |
 |---|---|---|---|
+| grid | the rows a change passes, Intent to Operation, each with its output, check and owner step | the method's stages | `grid` in the plugin's data |
+| escape hatch | the owner's sanctioned way past a rule: a fix bolt, a waiver or a boundary exception, each with an `until` date | - | the doc that carries it |
+| go | the owner's typed go for a release or a rollback, which the guard requires | - | the owner's prompt, recorded by the hook |
+| hold | the owner's pause on an intent or a bolt; `next` skips it until lifted | - | `aidlc hold`, the doc's `hold` |
+| seam | a named point in the CLI's core where an extension plugs in a function | - | `plug` and `seam` in the core |
+| role persona | a role the lead works in, with its steps and checklists: product analyst, architect | - | `personas/<role>.md`, `aidlc persona <role>` |
 | lane | quick, standard or full; decides which grid rows run | - | the profile's `lanes` |
 | docs bundle | the docs folder in OKF, with its indexes and log | - | `docs/index.md` |
 | merge gate | every check `aidlc merge` runs on a trial merge before it merges | - | `aidlc merge` |
@@ -21,7 +27,7 @@ generated: { by: tests/diagrams.mjs }
 | base | the branch bolts merge into | - | profile `base` |
 | trailer | a line a merge commit carries: what was merged, reviewed, tested and proved | - | the merge commit |
 | stamp | a key the CLI writes outside a doc's hash, such as an approval | - | front matter |
-| board | the project board kept in step with the bundle | - | profile `board` |
+| board | the project board kept in step with the docs bundle | - | profile `board` |
 | retro | what the refusals and fix rounds say, by binding | - | `aidlc retro` |
 | AI model | the AI an agent runs on, with its effort | - | profile `models`, `efforts` |
 | card | the generated brief one builder works from and one reviewer checks against | - | `aidlc card` |

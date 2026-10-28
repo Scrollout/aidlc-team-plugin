@@ -10,7 +10,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T06:00:00Z }
 Without checks, dozens of decisions can be approved in seconds, contradict each other, be amended in place to match code, and assume a platform fact nobody probed. AI-DLC's safeguard is human validation of what the AI proposes; these rules make it real ([0015](../decisions/0015-one-way-doors-are-approved-one-at-a.md)).
 
 # Pathways
-An intent declares `pathway`: `greenfield`, `feature`, `brownfield`, `model` ([Models](models.md#modelling-a-reference)) or `defect` (`cli.json` `inception.pathways`). Each names the steps it requires before the intent is approved; a missing one is `PATHWAY-SKIP`, which blocks the approval:
+An intent declares `pathway`: `greenfield`, `feature` or `brownfield` (`cli.json` `inception.pathways`), or `model`, which the `models` CLI extension adds ([Architecture models](models.md#modelling-a-reference)). Each names the steps it requires before the intent is approved; a missing one is `PATHWAY-SKIP`, which blocks the approval:
 - `questions`: every question answered (below).
 - `domains`: a domain doc for each code in the intent's `domains`.
 - `facts`: each decision the intent cites with `affects.platform` cites a fact.
@@ -23,10 +23,10 @@ A defect is a fix bolt, never an intent.
 - `# Questions`: `- Q<k> <question>`, its options as `  - <letter>) <option>: <consequence>`, and `  - Answer: <letter> …`. A question with no answer, or answered "not decided", is `ELAB-OPEN`; an answer that names no option letter (a bare "yes") is `ELAB-BARE`.
 
 # Domains
-A domain doc's `# Owns` lists its tables and `# Relationships` its neighbours with their pattern ([Bundle v2](bundle.md)). `DOMAIN-DATA`: a table two domains own. `DOMAIN-TERM`: one glossary term with two meanings in two domains. `DOMAIN-REQ`: a requirement the intent cites that names no domain. The context map (`architecture/context-map.md`) is drawn from the relationships at every merge.
+A domain doc's `# Owns` lists its tables and `# Relationships` its neighbours with their pattern ([Docs bundle v2](bundle.md)). `DOMAIN-DATA`: a table two domains own. `DOMAIN-TERM`: one glossary term with two meanings in two domains. `DOMAIN-REQ`: a requirement the intent cites that names no domain. The context map (`architecture/context-map.md`) is drawn from the relationships at every merge.
 
 # Platform facts
-`aidlc fact "<title>" -- <command>` runs a read-only command on the target and writes `platform/F-<n>-<slug>.md` with the command, environment, output digest, date and the output. `FACT-MISSING`: a decision with `affects.platform` that cites no fact in `facts`. `FACT-STALE`: a cited fact older than `facts.maxAgeDays` (default 30).
+`aidlc fact "<title>" --env <environment> -- <command>` runs a read-only command on the target and writes `platform/F-<n>-<slug>.md` with the command, environment, output digest, date and the output. `FACT-MISSING`: a decision with `affects.platform` that cites no fact in `facts`. `FACT-STALE`: a cited fact older than `facts.maxAgeDays` (default 30).
 
 # Decisions
 - Front matter: `affects` (`domains`, `data`, `transactions`, `dependencies`, `platform`), `oneWayDoor`, `supersedes`, `facts`, `serves` (the increments it is for).

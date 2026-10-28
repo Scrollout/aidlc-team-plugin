@@ -55,7 +55,7 @@ function path(rows, from, to) {
 export const workflow = () => mermaid(['flowchart LR', '  subgraph Inception',
       ...Object.entries(config.inception.pathways).map(([name, steps]) => `    ${[name, ...steps, 'approved'].map((x) => (x === name ? `${id(name)}([${name}])` : id(x))).join(' --> ')}`),
       '  end', '  subgraph Construction', ...path(rows('bolt'), 'approved', 'merged').map(([a, b, why]) => `    b_${a}[${a}] -->|${why}| b_${b}[${b}]`), '  end',
-      '  subgraph Operations', ...path(rows('intent'), 'merged', 'checked').concat(path(rows('intent'), 'checked', 'released')).map(([a, b, why]) => `    i_${a}[${a}] -->|${why}| i_${b}[${b}]`), '  end',
+      '  subgraph Operation', ...path(rows('intent'), 'merged', 'checked').concat(path(rows('intent'), 'checked', 'released')).map(([a, b, why]) => `    i_${a}[${a}] -->|${why}| i_${b}[${b}]`), '  end',
       '  approved --> b_approved', '  b_merged --> i_merged']);
 
 // Each scale's words, and the words to avoid with the one each sense means (docs/design/canonical-model.md#words).
@@ -79,9 +79,9 @@ export const pages = () => ({
     + mermaid(['flowchart LR', ...Object.entries(V.layerRules).flatMap(([a, bs]) => bs.map((b) => `  ${a} --> ${b}`))])),
   'bundle-types.md': page('Bundle types', "The bundle's doc types, the folder each lives in and the keys its schema requires; drawn from the bundle settings in cli.json.",
     mdTable(['Type', 'Folder', 'Required keys'], [['Intent', config.grid.intents], ['Requirement', config.grid.requirements], ['Decision', config.grid.decisions], ...Object.entries(config.okf.bundle.folders)]
-      .map(([type, folder]) => [type, `\`${folder}/\``, (config.okf.bundle.schemas[type]?.required ?? []).map((k) => `\`${k}\``).join(', ') || '-']))),
+      .map(([type, folder]) => [`\`${type}\``, `\`${folder}/\``, (config.okf.bundle.schemas[type]?.required ?? []).map((k) => `\`${k}\``).join(', ') || '-']))),
   'naming-grammar.md': page('Naming grammar', 'Each kind of name, the template it is composed from and the tokens it needs; drawn from naming.grammar in cli.json.',
-    mdTable(['Kind', 'Template', 'Needs'], Object.entries(config.naming.grammar).map(([k, g]) => [k, `\`${g.template}\``, g.needs.join(', ')]))),
+    mdTable(['Kind', 'Template', 'Needs'], Object.entries(config.naming.grammar).map(([k, g]) => [`\`${k}\``, `\`${g.template}\``, g.needs.join(', ')]))),
   // Every check code, each on exactly one page, with its level and fix (DOC-CODE).
   ...Object.fromEntries(CODES.map(([name, title, table, who, match]) => [`codes-${name}.md`, page(title, `Every code ${who} reports, with its fix (a warning is marked); drawn from ${table}.codes in cli.json and the extensions' data.`,
     codeTable(table, match))])),

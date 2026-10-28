@@ -12,10 +12,10 @@ A vertical slice is the code of one business feature or use case ([0024](../deci
 # What a slice is, as data
 - The stack pack's `layers` name the folders of a domain's horizontal layers, and its `scaffold.slice` the slice folder: `<domain>/<application>/<slice>/`.
 - The domain doc's `# Surface` lists each slice on its own line: `- Command <slice>: <the use case it serves> [I-<n>:US<g>.<s>]`, or `- Query`. The story citation names the intent, since story ids are an intent's own.
-- The patterns, the folder names and the allowed shared folders are data in the pack and the extension; nothing is spelled in code ([Values as data](values.md)).
+- The patterns, the folder names and the allowed shared folders are data in the pack and the stacks CLI extension; nothing is spelled in code ([Values as data](values.md)).
 
 # Checks
-Each is static and reads the graph the pack already builds; which layers may enter a slice is data in the extension.
+Each is static and reads the graph the pack already builds; which layers may enter a slice is data in the stacks CLI extension.
 - `SLICE-IMPORT`: a file of one slice imports a file of another slice of any domain.
 - `SLICE-ENTRY`: a slice is imported from outside its domain's `interface` layer or a runtime that hosts it, or from nowhere.
 - `SLICE-PLACE`: a file of a layered domain sits in no declared layer, a file under `application` in no slice, or a declared layer or slice folder is empty.
@@ -25,14 +25,14 @@ Each is static and reads the graph the pack already builds; which layers may ent
 
 With a naming registry, the slice's name and its route:
 - `SLICE-NAME`: a slice folder that is no name the registry composes from one of its verbs and the domain's noun (`aidlc name slice`).
-- `SLICE-ROUTE`: an operation id used twice in the contracts, one that maps to no slice folder, or a slice of a domain the contracts serve that no operation maps to. An operation id maps to the slice the registry composes from the same domain and verb.
+- `SLICE-ROUTE`: an API operation id used twice in the API contracts, one that maps to no slice folder, or a slice of a domain the API contracts serve that no API operation maps to. An API operation id maps to the slice the registry composes from the same domain and verb.
 - `SLICE-DELIVER`: a bolt that adds a slice changes no file of its domain's interface layer or of a runtime, which wire its route, or not the domain doc, which lists it.
 
 # Planned before built
 The chain story → slice → folder → test starts where the story is written, in the same grammar as the checks above.
 - **Units of work** (method 12): each Unit names the slices it delivers under `Slices`, one `<Kind> <slice> [US<g>.<s>]` each, so every story of the Unit has a slice before any bolt is cut. `UNIT-WORK` reports a story no slice serves, a slice citing no story of the Unit, a kind other than Command or Query, and, with a naming registry, a name the registry does not compose from one of its verbs and a domain of the Unit's modules ([Units of work](units-of-work.md)).
-- **Models:** a model's domains and its extension list their slices as `{ kind, verb, useCase }`, the registry composing each name from the verb and the domain's noun. `models apply` writes each domain doc the bundle lacks with its `# Surface`, the stories left for elaboration to cite, and prints the increments slice by slice; `models gaps` lists a domain's model slices its doc does not list ([Models](models.md)).
-- **Intake** lists a fitting model's slices beside it, so stories are written per use case ([Intake](intake.md)).
+- **Architecture models:** an architecture model's domains and its extension module list their slices as `{ kind, verb, useCase }`, the registry composing each name from the verb and the domain's noun. `models apply` writes each domain doc the docs bundle lacks with its `# Surface`, the stories left for elaboration to cite, and prints the increments slice by slice; `models gaps` lists a domain's slices in the architecture model that its doc does not list ([Architecture models](models.md)).
+- **Intake** lists a fitting architecture model's slices beside it, so stories are written per use case ([Intake](intake.md)).
 - **Bolts** list the slices they deliver; `PLAN-SLICE` holds each to its domain doc and `SLICE-DELIVER` to the bolt's diff, and the board labels a bolt `slice:<name>`, or `layer:<kind>` when it binds a horizontal module ([Board](board.md#shape)).
 
 # Where they run

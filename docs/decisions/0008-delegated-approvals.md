@@ -1,7 +1,7 @@
 ---
 type: Decision
 title: 0008 Delegated approvals
-description: The owner can let the lead approve two classes of docs itself, re-approvals and quick-lane units, through an untracked personal setting; first approvals of intents, plans, requirements and one-way doors stay with the owner.
+description: The owner can let the lead approve two classes of docs itself, re-approvals and quick-lane bolts, through an untracked personal setting; first approvals of intents, plans, requirements and one-way doors stay with the owner.
 status: accepted
 decision-makers: the owner
 date: 2026-10-22
@@ -22,14 +22,11 @@ Most owner gates can be re-approvals of a doc the lead has just edited to carry 
 ## Decision Outcome
 Option 2.
 - `.aidlc/local/profile.json` (untracked) may set `"approvals": { "auto": ["reapprove", "quick"] }`, written by the owner command `aidlc delegate reapprove quick` (`off` clears it). Only this file counts, so a commit cannot delegate for the owner.
-- `reapprove`: a doc approved by a human before and edited since (`stale`). `quick`: a draft unit in the quick lane.
+- `reapprove`: a doc approved by a human before and edited since (`stale`). `quick`: a draft bolt in the quick lane.
 - When every doc a gate waits on is delegated, `next` prints an action instead of a gate: `aidlc approve --auto <docs>`. The CLI checks each doc's class and refuses the rest.
-- The stamp is `{ by: process:delegated, at }`, an OKF actor (§7) that marks it machine-confirmed, so history shows who approved. An approval counts with a `human:` or `process:` event, or an `agent:auto` one from before 0.14.
+- The stamp is `{ by: process:delegated, at }`, an OKF actor (§7) that marks it machine-confirmed, so history shows who approved. An approval counts with a `human:` or `process:` stamp, or an `agent:auto` one from before 0.14.
 - The guard still denies `aidlc approve` without `--auto`; the scope hook denies agent writes to the personal profile and to any `verified` entry.
 - First approvals of intents, plans, requirements and one-way-door decisions are never delegated.
-- A `reapprove` does not cover an edit that changes a unit's acceptance criteria: that changes what done means, so it goes back to the owner ([Approvals](../design/approvals.md#who-approves)).
+- A `reapprove` does not cover an edit that changes a bolt's acceptance criteria: that changes what done means, so it goes back to the owner ([Approvals](../design/approvals.md#who-approves)).
 
-### Amendment: upgrade
-A third class, `upgrade`, written by `aidlc delegate upgrade`. While the plugin releases often, each upgrade is an owner prompt with nothing to decide: the copy comes only from the installed release. With `upgrade` delegated, the guard lets the lead run the installed plugin's `upgrade` between units without a prompt; `--downgrade` and `--dirty` still ask the owner. The session-start status says which applies. The owner still chooses when the plugin itself is updated.
-
-Principle 5 keeps the decisions with the owner; a re-approval of an edit that carries out an owner answer is bookkeeping, not a decision. A quick-lane unit touches only paths the owner has already declared low risk.
+Principle 5 keeps the decisions with the owner; a re-approval of an edit that carries out an owner answer is bookkeeping, not a decision. A quick-lane bolt touches only paths the owner has already declared low risk.

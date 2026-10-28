@@ -1,5 +1,5 @@
 // CONTRACT-NAME: each published OpenAPI document against the API grammar: the plugin's generic rules, and the chosen
-// model's contract (decisions 0014, 0021; docs/design/naming.md#checks).
+// model's contract (decision 0021; docs/design/naming.md#checks).
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { config, gitLines, globRegex, isMap, list, parseYaml, plug, seam } from '../../lib/index.mjs';
@@ -62,7 +62,7 @@ function contractFindings(root, profile) {
   });
 }
 
-// The published API speaks the grammar (decisions 0014, 0021), in check and on the merge result.
+// The published API speaks the grammar (decision 0021), in check and on the merge result.
 const named = (root, profile) => contractFindings(root, profile).map(([path, key, data]) => ({ code: 'CONTRACT-NAME', path, key, data }));
 plug('docChecks', named);
 plug('gateChecks', named);

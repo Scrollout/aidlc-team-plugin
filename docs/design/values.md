@@ -30,7 +30,7 @@ The rule holds in every project the plugin governs, not only in the plugin.
 
 # The board as a template
 `board.json`, the board extension's default, and a project's `.aidlc/templates/board.json` over it, describe the whole board:
-- **Per item kind** (intent, bolt, fix):
+- **Per item kind** (`intent`; `unit`, a bolt, under the v1 key name kept until the legacy aliases retire; `fix`):
   - its title and body templates;
   - its labels, from front-matter paths, and the labels the plugin set that no longer apply are removed;
   - its type, milestone and parent;

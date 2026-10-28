@@ -7,7 +7,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T14:00:00Z }
 ---
 
 # States
-`readState` gives an intent one of five states: `draft`, `approved` and `stale` from its approval ([Approvals](approvals.md)), `merged` once every bolt of it merged, and `released`. While it is `merged`, `next` reads its release steps from the deploy record `.git/aidlc/deploys/I-<n>.json` and the base commit ([Deployment and operation](operations.md)); the diagram draws those steps as states of their own.
+`readState` gives an intent one of five states: `draft`, `approved` and `stale` from its approval ([Approvals](approvals.md)), `merged` once every bolt of it merged, and `released`. While it is `merged`, `next` reads its release steps from the deploy record `.git/aidlc/deploys/I-<n>.json` and the base commit ([Deployment and Operation](operations.md)); the diagram draws those steps as states of their own.
 
 The diagram, drawn from `state.machines.intent`: [Intent states](diagrams/intent-states.md).
 

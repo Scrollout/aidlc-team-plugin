@@ -15,11 +15,12 @@ generated: { by: tests/diagrams.mjs }
 | *bundle* | a piece of the architecture, not the docs bundle | domain |
 | *component* | a piece of the architecture | domain, or runtime for a deployable |
 | *capability* | a module | domain |
-| *schema* | a slice's layer | migration |
-| *action* | a slice's right | permission |
+| *schema* | a slice's migration cut | migration |
+| *action* | the right a slice needs, whole (the `action` token is one part of a permission name) | permission |
 | *mode* | how a slice answers | async |
-| *part* | a slice's layer | cut |
+| *part* | a layer a slice cuts (the `part` token is one part of a deployable name) | cut |
 | *contract* | what a slice reaches | declaration |
+| *persona* | a role the lead works in | role persona |
 | *model* | the AI an agent runs on | AI model |
 | *model* | a domain's entities and rules | domain model |
 | *request* | a call to an API | call |

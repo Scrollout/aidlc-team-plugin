@@ -19,7 +19,9 @@ export function registry(profile, bundle) {
     const code = readFileSync(join(dir, f), 'utf8').match(/^code:\s*["']?([^"'\s]+)/m)?.[1];
     if (code && !domains[code]) domains[code] = {};
   }
-  return { tokens: { ...(own.tokens ?? {}) }, domains, vocabularies, banned: [...new Set([...N.banned, ...(own.banned ?? [])])] };
+  // A kind the profile overrides keeps the plugin's spec for what the override leaves out (decision 0021).
+  const grammar = Object.fromEntries(Object.entries(N.grammar).map(([k, spec]) => [k, { ...spec, ...(isMap(own.grammar?.[k]) ? own.grammar[k] : {}) }]));
+  return { tokens: { ...(own.tokens ?? {}) }, domains, vocabularies, grammar, banned: [...new Set([...N.banned, ...(own.banned ?? [])])] };
 }
 
 // What the profile's naming gets wrong, as [message key, data] pairs.
@@ -61,7 +63,7 @@ export function domainForms(code, reg) {
 
 // The name of `kind` for the given flags, checked against the registry and the kind's regex.
 export function nameOf(kind, flags, reg) {
-  const spec = N.grammar[kind];
+  const spec = (reg.grammar ?? N.grammar)[kind];
   if (!spec) throw new UsageError(msg('nameUsage', { kinds: Object.keys(N.grammar).join(', ') }));
   const known = (what, value, list, where) => { if (value !== undefined && !list.includes(value)) throw new UsageError(msg('nameUnregistered', { what, value, where, known: list.join(', ') || '-' })); return value; };
   const v = { ...reg.tokens, tag: flags.tag ?? N.tagPlaceholder, previewSuffix: flags.preview ? N.previewSuffix : '', date: flags.date, section: flags.section, unit: known('unit', flags.unit, N.metricUnits, N.where.unit) };

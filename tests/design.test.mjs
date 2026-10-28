@@ -98,8 +98,8 @@ test('B254/AC-1 B254/AC-2 the vocabulary defines every concept the plugin uses, 
   const { config } = await import('../plugin/cli/lib/index.mjs');
   const V = config.vocabulary, words = V.words.map((w) => w.word);
   const concepts = ['module', 'runtime', 'pipeline', 'foundation', 'adapter', 'delivery', 'architecture model', 'stack pack', 'naming registry', 'profile',
-    'aggregate', 'domain model', 'data node', 'contract', 'integration event', 'domain event', 'command', 'query', 'route', 'handler',
-    'test level', 'acceptance criterion', 'proof-revert', 'mutation', 'scope', 'request', 'requirement', 'persona', 'fact', 'decision', 'pathway', 'walking skeleton', 'method version', 'release',
+    'aggregate', 'domain model', 'data node', 'API contract', 'integration event', 'domain event', 'command', 'query', 'route', 'handler',
+    'test level', 'acceptance criterion', 'proof-revert', 'mutation', 'scope', "owner's request", 'requirement', 'persona', 'fact', 'decision', 'pathway', 'walking skeleton', 'method version', 'release',
     'docs bundle', 'merge gate', 'review', 'verdict', 'focus', 'builder', 'reviewer', 'researcher', 'worktree', 'trailer', 'base', 'stamp', 'board', 'retro', 'AI model'];
   assert.deepEqual(concepts.filter((c) => !words.includes(c)), [], 'every concept has its word');
   assert.deepEqual(words.filter((w, k) => words.indexOf(w) !== k), [], 'each word once');
@@ -107,19 +107,9 @@ test('B254/AC-1 B254/AC-2 the vocabulary defines every concept the plugin uses, 
   assert.deepEqual(V.retired.filter((r) => r.word === 'model').map((r) => r.use).sort(), ['AI model', 'domain model'], 'model alone is the architecture model');
 });
 
-// M30 B255: the words agents could misread keep one sense in what agents read (docs/design/canonical-model.md).
-test('B255/AC-1 messages, fixes, templates, personas, the skill and the agents use model, request, bundle, contract and event only in an expression naming one sense', async () => {
-  const { config } = await import('../plugin/cli/lib/index.mjs');
-  const { about, ...senses } = config.vocabulary.senses, P = join(import.meta.dirname, '../plugin');
-  const walk = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(join(d, e.name)) : [join(d, e.name)]));
-  const texts = [...['templates', 'agents', 'personas', 'skills'].flatMap((d) => walk(join(P, d))).filter((f) => f.endsWith('.md')).map((f) => [f.slice(P.length + 1), readFileSync(f, 'utf8')]),
-    ...Object.entries(config.messages).map(([k, v]) => [`messages.${k}`, v]),
-    ...Object.entries(config).flatMap(([t, sec]) => Object.entries(sec?.codes ?? {}).map(([c, x]) => [`${t}.codes.${c}`, x.fix ?? '']))];
-  const word = new RegExp(`(?:(\\S+)\\s+)?(?<![.\\w])(${Object.keys(senses).join('|')})s?\\b(?![.\\w])`, 'gi');
-  const bare = texts.flatMap(([where, raw]) => {
-    // Syntax is no prose: front matter, headings, code spans, placeholders, the Events line and a command.
-    const t = raw.replace(/^---\n[\s\S]*?\n---\n/, '').replace(/^#+ .*$/gm, '').replace(/^\s*- Events:.*$/gm, '').replace(/```[\s\S]*?```/g, '').replace(/`[^`\n]*`/g, '').replace(/\{\{[^}]*\}\}/g, '').replace(/<[^>\n]*>/g, '').replace(/\baidlc [a-z]+/g, '');
-    return [...t.matchAll(word)].filter((m) => !senses[m[2].toLowerCase()].some((q) => (m[1] ?? '').replace(/[^\w']/g, '').toLowerCase() === q.toLowerCase())).map((m) => `${where}: ${m[0].trim()}`);
-  });
-  assert.deepEqual(bare, []);
+// M30 B255: the words a reader could misread keep one sense in every tracked text (docs/design/canonical-model.md).
+test('B255/AC-1 the docs, what ships and the CLI\'s messages and fixes use each misreadable word only in an expression naming one sense', async () => {
+  const { bareUses, covered, cliTexts } = await import('./senses.mjs');
+  const found = [...covered().flatMap((f) => bareUses(readFileSync(join(ROOT, f), 'utf8')).map((u) => `${f}:${u.line} ${u.found}`)), ...cliTexts().flatMap(([where, t]) => bareUses(t).map((u) => `${where} ${u.found}`))];
+  assert.deepEqual(found, [], `${found.length} bare uses; node tests/senses.mjs lists them`);
 });

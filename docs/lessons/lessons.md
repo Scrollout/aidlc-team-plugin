@@ -35,18 +35,19 @@ Each lesson names what goes wrong when nothing holds it, then what holds it now.
 - A skipped test counts as a pass → `GATE-SKIP`.
 - A run that checks `git diff` is fooled by the revert → the index goes back too ([Merge mechanics](../design/gate.md)).
 - A fix round never runs the project's lint → module and profile checks run at every merge (`GATE-CHECK`).
+- A reviewer passes a mutation that breaks only part of its AC → the reviewer's `Mutations to judge` check: one that breaks only an edge of its AC is a `fix` finding.
 
 # Owner
 - `aidlc approve` is typed as a sentence, and `!` commands do not run on mobile → typed words and permission prompts ([0009](../decisions/0009-owner-commands-by-permission-prompt.md), [0015](../decisions/0015-one-way-doors-are-approved-one-at-a.md)).
 - Auto mode refuses the lead's delegated approvals → `next` hands them to the owner ([Approvals](../design/approvals.md)).
 - A typed `release I-n` fails on a redirect or a full stop → the guard matches the words ([0012](../decisions/0012-typed-go-for-release-and-rollback.md)).
 - `upgrade` can downgrade the CLI, run from a dirty tree and bring no new templates → [Vendoring](../design/vendoring.md).
-- A missing pinned CLI makes the Stop hook block every turn → the hook passes non-tool events ([Hook mechanics](../design/hooks.md)).
+- A missing pinned CLI makes the Stop hook block every turn → every hook but PreToolUse passes ([Hook mechanics](../design/hooks.md)).
 - Run-mode instructions are lost on `/clear` → `aidlc mode`.
 - The lead's session is most of the cost → a clear per intent ([Resume](../design/resume.md)).
 
-# Operations and research
-- Adding `deploy` turns intents released by tag back into merged → a tag counts ([Deployment and operation](../design/operations.md)).
+# Operation and research
+- Adding `deploy` turns intents released by tag back into merged → a tag counts ([Deployment and Operation](../design/operations.md)).
 - A merged intent cannot be parked → `hold I-n`.
 - The retro misses stops, hand-run approvals, cited decisions and fix bolts → [Steering](../design/steering.md).
 - `next` asks again for a researcher still running, and a filed digest never releases its hold → in-flight researchers; an answered hold no longer holds ([0010](../decisions/0010-research-for-open-questions.md)).
@@ -55,7 +56,6 @@ Each lesson names what goes wrong when nothing holds it, then what holds it now.
 
 # Open
 On the [Later](../roadmap/later.md) list:
-- A reviewer can pass a mutation that breaks only part of its AC.
 - `next` serves one intent at a time.
 - Two reviewers can write test logs to the same file name.
 - A merge takes minutes on a real project.

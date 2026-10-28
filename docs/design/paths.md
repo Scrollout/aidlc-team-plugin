@@ -7,7 +7,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 ---
 
 # Fixes without an intent
-- `aidlc fix "<title>"|--from-issue <n> --scope <glob>… [--requirement R-<n>…] [--after <intent>]` creates a one-bolt plan, the next `bolts/B-<n>-<slug>.md`: no intent, one AC at the first level for a regression test that fails before the fix. `--from-issue` titles it like the issue and links it ([Board](board.md)); `--after` names the release it fixes ([Deployment and operation](operations.md)). It prints the plan lint findings of the bolt it wrote. A fix outside the quick lane needs the owner's approval, like any bolt.
+- `aidlc fix "<title>"|--from-issue <n> --scope <glob>… [--requirement R-<n>…] [--after <intent>]` creates a one-bolt plan, the next `bolts/B-<n>-<slug>.md`: no intent, one AC at the first level for a regression test that fails before the fix. `--from-issue` titles it like the issue and links it ([Board](board.md)); `--after` names the release it fixes ([Deployment and Operation](operations.md)). It prints the plan lint findings of the bolt it wrote. A fix outside the quick lane needs the owner's approval, like any bolt.
 - Quick lane: no approval. Standard lane: the owner approves the single bolt (one line). Full lane: the owner approves the single bolt too, and the full lane's reviews run.
 - Production incidents enter here, with the incident linked from the bolt.
 
@@ -18,18 +18,18 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T08:58:47Z }
 
 # Shared files (no catch-up merges)
 - Builders never edit `index.md`, `log.md` or files listed in `profile.shared` (lockfiles, generated code, `go.sum`).
-- `aidlc merge` updates the bundle index and log from the bolt doc, and runs `profile.regen` for shared files on the merged result.
+- `aidlc merge` updates the docs bundle index and log from the bolt doc, and runs `profile.regen` for shared files on the merged result.
 - This removes the hotspots that force repeated catch-up merges.
 
 # Pushing and base health
-- The lead commits on the base only the bundle, `.aidlc/**` and the files `init` writes; the guard denies a base commit with other files.
-- `aidlc push` lists the base commits the remote lacks; on a base never pushed, those after the commit that added `.aidlc/profile.json`, since history before the plugin follows no gate. Each must be a merge with the `Unit`, `Card` and `Review` trailers whose files are in the bolt's scope or merge-written (`PUSH-COMMIT` otherwise, also for a `Bolt:` trailer naming no bolt in the plan), or touch only allowed direct paths: the bundle, `.aidlc/**`, and the files `init` writes. Then it pushes the base. A raw push of the base is denied. Tags and releases always ask the owner.
+- The lead commits on the base only the docs bundle, `.aidlc/**` and the files `init` writes; the guard denies a base commit with other files.
+- `aidlc push` lists the base commits the remote lacks; on a base never pushed, those after the commit that added `.aidlc/profile.json`, since history before the plugin follows no gate. Each must be a merge with the `Unit`, `Card` and `Review` trailers whose files are in the bolt's scope or merge-written (`PUSH-COMMIT` otherwise, also for a `Unit:` trailer naming no bolt in the plan), or touch only allowed direct paths: the docs bundle, `.aidlc/**`, and the files `init` writes. Then it pushes the base. A raw push of the base is denied. Tags and releases always ask the owner.
 
 # Cleanup
 `aidlc merge` removes the bolt's worktree and branch after a successful merge. When a builder still holds a merged bolt's worktree, `next` names the `git worktree remove` and `git branch -D` to run. A `clean` command is [Later](../roadmap/later.md).
 
 # Adopting an existing project
-- `init --adopt` detects an existing bundle (the shallowest `index.md` with `okf_version`) and keeps its layout: it sets `docs.bundle` to that folder instead of moving files.
+- `init --adopt` detects an existing docs bundle (the shallowest `index.md` with `okf_version`) and keeps its layout: it sets `docs.bundle` to that folder instead of moving files.
 - Existing docs are validated with spec rules as errors and house rules as warnings, and only counted in the report, so adoption never starts with hundreds of errors.
 - It lists leftovers of other workflow tools (old state dirs, tool-named trailers or docs) as a report; it never deletes them.
 - It records the adoption commit as `profile.adopted`; `check --ci` judges only merges after it, so history made before adoption never fails CI.

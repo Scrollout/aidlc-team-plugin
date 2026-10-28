@@ -5,7 +5,6 @@ description: A typed approve may still name several docs, but never more than on
 status: accepted
 decision-makers: the owner
 date: 2026-10-26
-supersedes: "0011"
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T00:20:00Z }
 ---
 
@@ -20,7 +19,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T00:20:00Z }
 3. Require a written rationale per approval. That costs the owner on every doc, including the many that are not one-way doors.
 
 ## Decision Outcome
-Option 2, from plan decisions D1 and D7 and the v2 plan. Everything in 0011 stays except:
+Option 2. It extends 0011 rather than replacing it: everything in 0011 stays except:
 - `approve` with two or more docs marked `oneWayDoor: true` is refused (`APPROVE-BULK`), naming them. Other docs, such as requirements, plans and bolts, may still be approved together.
 - A doc with an unresolved CONFIRMED finding from the design review or a reviewer is refused (`APPROVE-OPEN`). The owner disposes of each finding first.
 - Before stamping a one-way door, the hook's context shows the lead its options, the review's findings and the platform facts it cites. The lead's next message repeats them to the owner, and the stamp follows the owner's next typed `approve`.

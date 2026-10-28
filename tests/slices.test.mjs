@@ -293,7 +293,7 @@ test('B260/AC-2 scaffold writes each ui form\'s own code and test; a template fo
   const dir = makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', 'docs/domains/orders.md': doc }, { naming: { tokens: { system: 'shop', org: 'acme' }, domains: { orders: {} } } });
   assert.deepEqual(run(dir, ['scaffold', 'slice', 'create', '--domain', 'orders']).out.split('\n').filter(Boolean),
     ['ui/cli/createorder/command.go', 'ui/cli/createorder/command_test.go', 'ui/template/createorder/schema.json', 'ui/template/createorder/template_test.go', 'interface/createorder.go', 'interface/createorder_test.go', 'application/createorder/handler.go', 'application/createorder/handler_test.go'].map((p) => `wrote ${D}/${p}`));
-  assert.deepEqual(JSON.parse(readFileSync(join(dir, D, 'ui/template/createorder/schema.json'), 'utf8')), { type: 'Acme.Shop/orders', route: '/providers/Acme.Shop/orders/{orderName}', operation: 'createorder', properties: {} });
+  assert.deepEqual(JSON.parse(readFileSync(join(dir, D, 'ui/template/createorder/schema.json'), 'utf8')), { type: 'Acme.Shop/orders', route: '/orders/{orderName}', operation: 'createorder', properties: {} });
   assert.match(readFileSync(join(dir, D, 'ui/template/createorder/template_test.go'), 'utf8'), /deployment applying a template .* calls the slice's\n\/\/ route/);
 });
 

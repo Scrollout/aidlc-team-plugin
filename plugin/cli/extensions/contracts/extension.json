@@ -1,6 +1,6 @@
 {
   "name": "contracts",
-  "description": "The API grammar of decision 0014, checked on the OpenAPI documents a project publishes (docs/design/naming.md).",
+  "description": "The API grammar of decision 0021, checked on the OpenAPI documents a project publishes (docs/design/naming.md).",
   "when": "naming",
   "data": {
     "messages": {

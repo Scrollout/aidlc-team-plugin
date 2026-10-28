@@ -18,7 +18,7 @@ The plugin's decisions, criteria, requirements, history and architecture docs ea
 ## Decision Drivers
 * A format people and tools already know.
 * Checkable by the CLI, as every other rule is (decision 0013).
-* No churn for what is already approved: an approved doc is never edited (decision 0015).
+* No churn for what is already approved: an approved decision is never edited (`DOC-AMEND`, [docs bundle](../design/bundle.md#decisions)).
 
 ## Considered Options
 * MADR 4.0, Given/When/Then, EARS, Keep a Changelog with SemVer, arc42 with C4.
@@ -30,7 +30,7 @@ Chosen option: "MADR 4.0, Given/When/Then, EARS, Keep a Changelog with SemVer, a
 
 ### Consequences
 * Good, because a decision, a criterion or a requirement reads the same as anywhere else these standards are used.
-* Good, because each format is a schema the CLI checks: the sections a decision or system doc needs, the shape of an AC line and of a requirement.
+* Good, because each format is a doc schema the CLI checks: the sections a decision or system doc needs, the shape of an AC line and of a requirement.
 * Bad, because docs approved before keep their old form; the rules judge only drafts and intents approved under method 5.
 
 ### Confirmation
@@ -51,4 +51,4 @@ Chosen option: "MADR 4.0, Given/When/Then, EARS, Keep a Changelog with SemVer, a
 * Bad, because every reader and tool must still learn the plugin's variants.
 
 ## More Information
-MADR 4.0 (adr.github.io/madr). Keep a Changelog 1.1.0. arc42 (arc42.org). C4 model (c4model.com). EARS: Mavin et al., RE'09.
+MADR 4.0 (adr.github.io/madr). Keep a Changelog 1.1.0. arc42 (arc42.org). C4 (c4model.com). EARS: Mavin et al., RE'09.

@@ -23,7 +23,7 @@ Method 11 adds `# Units` to an intent, after `# Stories`. Each Unit is a sub-hea
 | Measures | measurable outcomes, each citing a success measure `M<k>` of the intent | yes |
 | Depends on | the Units whose code its own needs, or `none` | yes |
 | Slices | the vertical slices that serve its stories, `<Kind> <slice> [US<g>.<s>]` each ([planned](vertical-slices.md#planned-before-built)); from method 13 each with its declaration, `<Kind> <slice> (<cut>, …; …) [US<g>.<s>]` ([Building a slice](slice-method.md#one-grammar)) | from method 12 |
-| Integration | APIs, shared data and events with other Units | no |
+| Integration | APIs, shared data and integration events with other Units | no |
 | Deployment | standalone, shared or embedded | no |
 | Complexity | S, M, L or XL | no |
 | Bolts | its bolts, once cut | no |
@@ -42,6 +42,6 @@ A story may belong to several Units when it crosses them; the domain-driven defa
 - a dependency on a Unit the intent does not list, or a cycle;
 - a live bolt of the intent whose modules are in no Unit.
 
-The headings, part labels, kinds and id patterns are data in the intake extension ([Values as data](values.md)).
+The headings, part labels, kinds and id patterns are data in the intake CLI extension ([Values as data](values.md)).
 
 Bolts: [M27](../roadmap/m27.md) B243; [M28](../roadmap/m28.md) B248.

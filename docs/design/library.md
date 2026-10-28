@@ -15,40 +15,40 @@ The plugin holds every project to kinds, layers and one-way dependencies. Its ow
 | Layer | Folder | Modules |
 |---|---|---|
 | foundation | `lib/foundation/` | `data` (cli.json and extension data, values, paths), `git`, `text` (templates, messages, findings), `yaml`, `glob`, `profile`, `store` (`.git/aidlc` files), `seams` |
-| domains | `lib/domains/` | `bundle`, `method`, `plan`, `inception`, `construction`, `approval`, `lifecycle`, `flow`, `review`, `card`, `gate`, `architecture`, `map`, `naming`, `operations`, `retro`, `setup`, `host` (the guard rails the coding agent's hooks call) |
+| domains | `lib/domains/` | `bundle`, `method`, `plan`, `inception`, `construction`, `approval`, `lifecycle`, `flow`, `review`, `card`, `gate`, `architecture`, `map`, `naming`, `setup`, `host` (the guard rails the coding agent's hooks call) |
 | runtime | `aidlc.mjs`, `lib/index.mjs` | the command table and extension loader; the public entry, the core's published surface |
-| extension | `extensions/<name>/` | `board` (the Project board), `contracts` (the API and event grammar), `intake` (the owner's request and its proposal), `models` (architecture models as data), `operations` (deploy check, release, smoke, rollback and the retro), `slices` (what a bolt's slices give its card, board and gate, through the pack the stacks find), `stacks` (graph, scaffold and checks of the stack packs) |
+| extension | `extensions/<name>/` | `board` (the Project board), `contracts` (the API and integration event grammar), `intake` (the owner's request and its proposal), `models` (architecture models as data), `operations` (deploy check, release, smoke, rollback and the retro), `slices` (what a bolt's slices give its card, board and gate, through the pack the stacks find), `stacks` (graph, scaffold and checks of the stack packs) |
 
 # Rules
 - A layer imports only its own layer and those below it: foundation nothing but kits, domains foundation and other domains' exports, the runtime the core.
-- An adapter, in the model's sense, speaks to an outside system and depends only on foundation kits. The CLI's one, the board's GitHub transport, lives in its extension. The host's hook rules call domains, so they are a domain.
+- An adapter, in the architecture model's sense, speaks to an outside system and depends only on foundation kits. The CLI's one, the board's GitHub transport, lives in its CLI extension. The host's hook rules call domains, so they are a domain.
 - A domain reaches another domain only through its exported functions. Seams, never imports, carry a call back up a dependency.
 - The core never imports an extension. An extension imports `lib/index.mjs` only.
 - No import cycles. A test gives each of the CLI's files a kind and runs `ARCH-KIND`, `ARCH-LAYER` and `ARCH-CYCLE` on its file graph, as `check` does on a project. An extension may use a domain's published surface, here `lib/index.mjs`.
 
 # Seams
 `foundation/seams` keeps a list per seam. A domain or an extension adds a function with `plug(<seam>, fn)` when it loads. A seam's caller gets only those whose extension the profile enables:
-- `planRules`: plan lint rules (inception, construction, board).
-- `docChecks`: findings for `check` (contracts, stacks).
-- `gateChecks`: findings on the merge result and the lines the bolt adds (contracts, stacks).
-- `statusLines`, `delivered`, `statusTail`: lines, the delivered requirements and the closing line `status` shows (construction, board).
-- `cardSections`: sections a card adds (stacks).
-- `cardSlices`: each slice a bolt lists, its cuts as ordered steps (slices).
-- `statusLines`, `mapPages`, `traceSections`: each slice layer by layer, a map page, the trace's permission catalogue (slices); `layerOf`: the layer a path sits in, for the retro (slices).
-- `boardSlices`: each slice a bolt lists, its cuts, data and entry, and its cuts done (slices), for the board.
-- `sliceDeclaration`: the slice grammar, a declaration's problems, the packs' cuts, and a project's pack, graph, a slice's declaration, a cut's path, a domain's surface slices and its events (stacks), for intake, models and slices.
-- `proofPatterns`: compile-error patterns of the proof (stacks).
-- `afterMerge`: work after a merge lands (board).
-- `issueTitle`: the title of an issue `fix --from-issue` reads (board).
-- `stack`: the stack pack a project's files match (stacks), for the intake proposal.
-- `pathwaySteps`: an intent's pathway steps an extension adds (models).
-- `modelFit`: the models whose fit words a request holds (models), for the intake proposal.
-- `modelContract`: the chosen model's contract (models), for the contract grammar.
-- `modelLayers`: the chosen model's layers (models), for the slices' governance.
+- `planRules`: plan lint rules (`inception`, `construction`, `board`).
+- `docChecks`: findings for `check` (`contracts`, `stacks`).
+- `gateChecks`: findings on the merge result and the lines the bolt adds (`contracts`, `stacks`).
+- `statusLines`, `delivered`, `statusTail`: lines, the delivered requirements and the closing line `status` shows (`construction`, `board`).
+- `cardSections`: sections a card adds (`stacks`).
+- `cardSlices`: each slice a bolt lists, its cuts as ordered steps (`slices`).
+- `statusLines`, `mapPages`, `traceSections`: each slice layer by layer, a map page, the trace's permission catalogue (`slices`); `layerOf`: the layer a path sits in, for the retro (`slices`).
+- `boardSlices`: each slice a bolt lists, its cuts, data and entry, and its cuts done (`slices`), for the board.
+- `sliceDeclaration`: the slice grammar, a declaration's problems, the packs' cuts, and a project's pack, graph, a slice's declaration, a cut's path, a domain's surface slices and its integration events (`stacks`), for `intake`, `models` and `slices`.
+- `proofPatterns`: compile-error patterns of the proof (`stacks`).
+- `afterMerge`: work after a merge lands (`board`).
+- `issueTitle`: the title of an issue `fix --from-issue` reads (`board`).
+- `stack`: the stack pack a project's files match (`stacks`), for the intake proposal.
+- `pathwaySteps`: an intent's pathway steps an extension adds (`models`).
+- `modelFit`: the architecture models whose fit words the owner's request holds (`models`), for the intake proposal.
+- `modelContract`: the chosen architecture model's `contract` (`models`), for the `contracts` grammar.
+- `modelLayers`: the chosen architecture model's layers (`models`), for the slices' governance.
 
 # Extensions
 An extension is `extensions/<name>/extension.json` plus `index.mjs`:
-- `when`: the profile key it serves (`github`, `naming`; none for the stacks and slices, which detect a pack, for operations, whose commands read the profile's `deploy`, or for intake and models, which every project uses). A plug that acts only with it says so.
+- `when`: the profile key it serves (`github`, `naming`; none for `stacks` and `slices`, which detect a pack, for `operations`, whose commands read the profile's `deploy`, or for `intake` and `models`, which every project uses). A plug that acts only with it says so.
 - `data`: its codes, messages, commands and values, merged into the core's data when the CLI starts, so `cli.json` keeps only the core's.
 - `index.mjs`: plugs its functions into seams and exports its commands.
 `data` merges into the core's data when `foundation/data` loads, and the runtime then imports every extension folder it finds, so a vendored copy carries them all. An extension's checks find nothing to report in a project that lacks what it serves.

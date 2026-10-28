@@ -13,7 +13,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T17:20:52Z }
 # One layout for shipped content
 
 ## Context and Problem Statement
-The CLI's folder holds the engine, card templates, a board template, the role personas and the architecture models. Doc templates sit elsewhere, and the stack packs elsewhere again. A model's reference code lives inside a stack pack. A project pins the CLI to `.aidlc/bin/` and the packs to `.aidlc/packs/`, and templates resolve through two different lookups. Where a file lives no longer follows from what it is. This decision replaces the "Where they live" point of [0020](0020-architecture-models-are-data.md).
+The CLI's folder holds the engine, card templates, a board template, the role personas and the architecture models. Doc templates sit elsewhere, and the stack packs elsewhere again. An architecture model's reference code lives inside a stack pack. A project pins the CLI to `.aidlc/bin/` and the packs to `.aidlc/packs/`, and templates resolve through two different lookups. Where a file lives no longer follows from what it is. This decision replaces the "Where they live" point of [0020](0020-architecture-models-are-data.md).
 
 ## Considered Options
 1. Keep the current places.
@@ -21,7 +21,7 @@ The CLI's folder holds the engine, card templates, a board template, the role pe
 3. Everything under the CLI's folder.
 
 ## Decision Outcome
-Chosen option: "One package per kind of content", because a file's place then follows from its kind, a model keeps its decisions, knowledge and reference code together, and one rule covers pinning and overriding ([Shipped layout](../design/layout.md)).
+Chosen option: "One package per kind of content", because a file's place then follows from its kind, an architecture model keeps its decisions, knowledge and reference code together, and one rule covers pinning and overriding ([Shipped layout](../design/layout.md)).
 
 ### Consequences
 - Good, because one resolver replaces the separate lookups.

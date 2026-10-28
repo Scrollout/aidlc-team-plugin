@@ -1,7 +1,7 @@
 ---
 type: Decision
 title: 0026 A slice declares the layers it needs and delivers them whole
-description: A vertical slice names the horizontal layers its use case needs, from the user interface to the migration, the entry that serves it, the data of its domain it uses, how it integrates and the permission it needs; its own parts sit under its name, the shared layers stay shared and the data stays the domain's; it is planned, built, checked and reported layer by layer, and merges only whole.
+description: A vertical slice names the horizontal layers its use case needs, the entry that serves it, the data of its domain it uses, how it integrates and the permission it needs; its own code sits under its name, the shared layers stay shared and the data stays the domain's; it is planned, built, checked and reported layer by layer, and merges only whole.
 status: accepted
 date: 2026-10-28
 decision-makers: the owner
@@ -31,7 +31,7 @@ sources:
 ## Decision Drivers
 * A slice is done only when every layer its use case needs is done: a half slice delivers no business value.
 * Several slices use the same data, one creating a store another writes into: the data cannot be one slice's.
-* A use case hands off to another by an event or a call; a hand-off nobody declares is one nobody tests.
+* A use case hands off to another by an integration event or a call; a hand-off nobody declares is one nobody tests.
 * Use-case code stays together; what every use case shares stays in the domain's layers, inside the domain module.[^layering]
 * The method plans and builds by Unit and bolt;[^method] one grammar carries a slice from intake to the merge.
 * Every rule is data a check reads, not a guess left to a prompt.
@@ -44,13 +44,13 @@ sources:
 ## Decision Outcome
 Chosen option: "Declare each slice's layers and deliver them whole", because it states what a whole slice is and keeps the shared layers the architecture checks rely on:
 - **Cuts declared:** a slice names the layers its use case cuts, from the stack pack's list: `ui`, `interface`, `application`, `model`, `infrastructure`, `migration`. A query may need only `interface` and `application`.
-- **Own code and shared layers:** the slice's own code sits under its name: its screen in `ui`, its route in `interface`, its handler in `application`, as a feature's folder holds its endpoints.[^features] `model`, `infrastructure`, `migration` and the router that mounts every route stay shared, as migrations sit with the infrastructure:[^web] the slice adds its rule, its adapter, its migration and its route there.
+- **Own code and shared layers:** the slice's own code sits under its name: its screen in `ui`, its route in `interface`, its handler in `application`, as a feature's folder holds its endpoints.[^features] `model`, `infrastructure`, `migration` and the router that mounts every route stay shared, as migrations sit with the infrastructure:[^web] the slice adds its rule, adapter, migration and route there.
 - **The `ui` cut takes forms** the pack declares: a command line, a web page, a template. A slice cuts `ui.cli`, `ui.web`, `ui.template`, or `ui` for all; a UI on another stack is its own Unit.
 - **Data stays the domain's,** as [Data ownership](../design/data-ownership.md) has it. A slice declares the data nodes of its domain it reads or writes; its code reaches no other.
-- **Entry:** the `runtime` module serving the slice, such as a management front door or an instance endpoint; the plugin names none. A runtime lists what it `applies` to every slice it serves: outcome events, a status contract.
+- **Entry:** the `runtime` module serving the slice, such as a front door; the plugin names none. A runtime lists what it `applies` to every slice it serves: outcome events, the long-running operation's status.
 - **Governance is no layer:** authentication, authorization, policy and audit run as `pipeline` stages on the entry, the same for every slice. A slice declares the `permission` the pipeline enforces; a rule on who may act stays in the slice or `model`.
-- **Integration:** a slice declares `async` when it answers later, the events it emits and consumes and the domains' clients or adapters it calls. The publishing domain owns an event's contract; each declared integration is proved by a test that names it.
-- **One grammar:** intake, models, Units of work, the domain doc's `# Surface` and the bolt carry the same slice with the same cuts, data, entry, permission and integrations. Each word is one the vocabulary holds once.
+- **Integration:** a slice declares `async` when it answers later, the integration events it emits and consumes and the domains' clients or adapters it calls. The publishing domain owns the integration events it publishes; each declared integration is proved by a test that names it.
+- **One grammar:** intake, architecture models, Units of work, the domain doc's `# Surface` and the bolt carry the same slice with the same cuts, data, entry, permission and integrations. Each word is one the vocabulary holds once.
 - **Whole:** a bolt delivers its slices whole; the gate refuses a declared layer the diff leaves out, and a slice is proved by a test that enters through its route.
 - **Delivered:** increment 1's first slice cuts through every layer the system has, as the walking skeleton.
 

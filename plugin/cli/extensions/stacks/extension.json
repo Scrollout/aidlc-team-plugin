@@ -26,10 +26,10 @@
       "sliceTest": "slice {{slice}} has no test: none in its folder and none importing it",
       "cardReference": "Copy the shape of the stack pack's reference domain ({{domain}}): the command slice {{command}} and the query slice {{query}}.\n",
       "sliceName": "slice {{slice}} of domain {{domain}} is no name the registry composes from a verb and the domain's noun: {{names}}",
-      "sliceRouteTwice": "operation id {{id}} is used twice in the API contracts",
-      "sliceRouteNone": "operation id {{id}} maps to slice {{slice}} of {{domain}}, which has no folder",
-      "sliceRouteUnknown": "operation id {{id}} maps to no domain and verb of the registry",
-      "sliceNoRoute": "slice {{slice}} has no operation in the API contracts, though its domain {{domain}} is served there",
+      "sliceRouteTwice": "API operation id {{id}} is used twice in the API contracts",
+      "sliceRouteNone": "API operation id {{id}} maps to slice {{slice}} of {{domain}}, which has no folder",
+      "sliceRouteUnknown": "API operation id {{id}} maps to no domain and verb of the registry",
+      "sliceNoRoute": "slice {{slice}} has no API operation in the API contracts, though its domain {{domain}} is served there",
       "sliceDeliverRoute": "the bolt adds slice {{slice}} but changes nothing in {{layers}} or a runtime that wires its route",
       "valueLiteral": "{{path}}:{{line}} adds the literal {{value}} to code: values live in the project's data",
       "sliceDeliverListed": "{{unit}} lists slice {{slice}} but changes nothing in its folder",
@@ -140,7 +140,7 @@
         },
         "SLICE-ROUTE": {
           "level": "error",
-          "fix": "give each slice its operation, with the operation id aidlc name operation-id composes from the same domain and verb, once in the API contracts; mount the domain's routes in the runtime its slices name as their entry, and in no other (docs: Vertical slices checked)"
+          "fix": "give each slice its API operation, with the API operation id `aidlc name operation-id` composes from the same domain and verb, once in the API contracts; mount the domain's routes in the runtime its slices name as their entry, and in no other (docs: Vertical slices checked)"
         },
         "SLICE-DELIVER": {
           "level": "error",

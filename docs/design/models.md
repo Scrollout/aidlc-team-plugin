@@ -1,7 +1,7 @@
 ---
 type: Design
 title: Architecture models
-description: architecture models as data - a proven system's vertical and horizontal shape distilled from research, shipped or kept by a project, applied to new and existing projects by the AI-DLC method, and held by generic rule types.
+description: architecture models as data - a proven system's vertical and horizontal shape distilled from research, shipped or kept by a project, applied to any project by the AI-DLC method, and held by generic rule types.
 status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T20:00:00Z }
 ---
@@ -11,8 +11,8 @@ A project starts from a proven shape, or is measured against one ([0020](../deci
 
 # The pipeline
 1. **Reverse-engineer a reference:** research a proven system, observing it where the sources are silent; the evidence stays with the owner.
-2. **Distil a model:** its horizontal layers and the domains that plug into them, as data.
-3. **Apply the model** to a project with the AI-DLC method: proposed at intake, seeded as decisions the owner approves, cut into increments, held by the checks.
+2. **Distil an architecture model:** its horizontal layers and the domains that plug into them, as data.
+3. **Apply it** to a project with the AI-DLC method: proposed at intake, seeded as decisions the owner approves, cut into increments, held by the checks.
 
 # A model
 A folder, `models/<name>/`:
@@ -24,28 +24,28 @@ A folder, `models/<name>/`:
   - `rules`: rule types with their parameters;
   - `fit`: the signals intake matches;
   - `references`: the reference code per stack pack.
-- `knowledge/`: what the architect persona reads to apply the model.
+- `knowledge/`: what the architect role persona reads to apply it.
 - `decisions/`: starter decisions in MADR, proposed until the owner approves them.
 
-A model's rules name roles and shapes, never a vendor's names; the project's contract fills those in.
+The rules name roles and shapes, never a vendor's names; the project's API contract fills those in.
 
 # Where models live
-- The plugin ships the format and the rule types, not models ([0025](../decisions/0025-the-plugin-ships-the-model-format-not-models.md)): a model lives with the project or organisation that uses it, in `.aidlc/models/<name>/`, its reference code with it.
-- `aidlc check` validates every model it can see.
+- The plugin ships the format and the rule types, not architecture models ([0025](../decisions/0025-the-plugin-ships-the-model-format-not-models.md)): each lives with the project or organisation using it, in `.aidlc/models/<name>/`, its reference code with it.
+- `aidlc check` validates each one it sees.
 
 # Modelling a reference
-The `model` pathway, for an intent that names its `model:` and its `research:` digests:
+The `model` pathway, for an intent that names its `model:` and `research:` digests:
 1. **`research`:** the researcher's cited digests of the reference, filed under `research/`.
-2. **The draft:** the architect persona writes `.aidlc/models/<name>/model.json`. Each layer, domain and rule carries `sources`: ids of the digests' sources. One with none, or with an id no digest has, is `MODEL-SOURCE`.
-3. **`modelDoc`:** `aidlc models doc <name>` writes the Model doc, `models/<name>.md`, from it: the layers, domains, extension, contracts and rules, each with its sources as footnotes, and `digest`, the hash of `model.json`. Only the CLI writes it, so a stale or hand-edited doc fails the step.
-4. **The approval:** the owner approves the Model doc like any doc, and re-approves it after the model changes. The model's one-way doors are approved one at a time when it is applied.
+2. **The draft:** the architect role persona writes `.aidlc/models/<name>/model.json`. Each layer, domain and rule carries `sources`: ids of the digests' sources. One with none, or with an id no digest has, is `MODEL-SOURCE`.
+3. **`modelDoc`:** `aidlc models doc <name>` writes the `Model` doc, `models/<name>.md`, from it: the layers, domains, extension, API contracts and rules, each with its sources as footnotes, and `digest`, the hash of `model.json`. Only the CLI writes it, so a stale or hand-edited doc fails the step.
+4. **The approval:** the owner approves the `Model` doc like any doc, and re-approves it after `model.json` changes; its one-way doors are approved one at a time when applied.
 
-A copied model, like the example below, carries no sources.
+A copied architecture model, like the example below, has no sources.
 
 # Applying a model
-- **Greenfield:** intake lists the models whose `fit.words` appear in the request, with their sentences. Once the owner picks one, `models apply <name>`:
+- **Greenfield:** intake lists the architecture models whose `fit.words` appear in the owner's request, with their sentences. Once the owner picks one, `models apply <name>`:
   - records it in the profile (`model.name`);
-  - writes the system doc, its layers and domains as building blocks, when the bundle has none;
+  - writes the system doc, its layers and domains as building blocks, when the docs bundle has none;
   - copies its decisions as proposals, numbered on, for the owner to approve one at a time;
   - prints the increments, the skeleton first, serving the slice that cuts the most layers.
 
@@ -53,25 +53,25 @@ A copied model, like the example below, carries no sources.
 - **Brownfield:** each module names the item it plays (`modules[].layer`); `models gaps` lists the items played, missing, or played by a module of another kind, and a slice or the part of a declaration a domain doc lacks, as increments.
 
 # Rule types
-Only the chosen model's rules run (`model.name`), with its parameters and the project's own names from the profile's `model`.
+Only the rules of the architecture model in `model.name` run, with its parameters and the project's own names from the profile's `model`.
 
-| Type | Model parameters | Project's `model` | Checks | Code |
+| Type | Parameters | Project's `model` | Checks | Code |
 |---|---|---|---|---|
-| `stageOrder` | `stages` | `wiring: { file, pattern }` | the stage names the pattern finds in the file come in the model's order, none missing | `PIPELINE-ORDER` |
+| `stageOrder` | `stages` | `wiring: { file, pattern }` | the stage names the pattern finds in the file are in `stages` order, none missing | `PIPELINE-ORDER` |
 | `extensionContract` | `kind`, `declares` | each module's `declares` | every module of that kind declares each field | `PROVIDER-CONTRACT` |
-| `longRunning` | `shapes` (`code`, `links`), `deleteAbsent` | `operations: { marker, status, result, retry }` | an OpenAPI operation the marker flags answers in a shape with its link and retry headers; a delete answers `deleteAbsent` | `LONG-RUNNING` |
+| `longRunning` | `shapes` (`code`, `links`), `deleteAbsent` | `operations: { marker, status, result, retry }` | an API operation the marker flags answers in a shape with its link and retry headers; a delete answers `deleteAbsent` | `LONG-RUNNING` |
 | `idempotency` | `writes`, `repeat` | - | a bolt with an AC matching `writes` has one matching `repeat` | `IDEMPOTENCY-AC` |
 | `data` | `classes` | - | each table under a domain's `# Owns` declares `(partition: <key>, class: <class>)` | `DATA-PARTITION` |
-| `events` | `verbs` | `events: { marker, files }` | each OpenAPI operation of those verbs names events by the marker, each found in the events files | `EVENT-COVERAGE` |
+| `events` | `verbs` | `events: { marker, files }` | each API operation of those verbs names integration events by the marker, each found in the `files` | `EVENT-COVERAGE` |
 
-The OpenAPI files are the contracts'.
+The OpenAPI files are the API contracts'.
 
 # The example model: control plane
-In `examples/models/control-plane/`, outside the package; a project that fits copies it.
-- **Layers:** a front door; governance (authenticate, authorize, policy, lock, throttle); resource metadata; operations; deployments; events and an activity log.
+In `examples/models/control-plane/`, outside the package; a fitting project copies it.
+- **Layers:** a front door; governance (authenticate, authorize, policy, lock, throttle); metadata; long-running operations; deployments; outcome events and an activity log.
 - **Extension:** a provider per namespace, its resource types, and whether each type's writes are long-running.
 - **Rules:** the stage order; long-running operations; idempotent writes; deployments that converge by re-applying, without compensation unless a project decides otherwise.
-- **Contract:** what it adds to the contract grammar: the `providers` segment and its namespace, `systemData` on a resource, `nextLink` on a list ([0021](../decisions/0021-the-control-planes-api-conventions-belong-to-its.md)).
+- **API contract:** what it adds to the grammar: the `providers` segment and its namespace, `systemData` on a resource, `nextLink` on a list ([0021](../decisions/0021-the-control-planes-api-conventions-belong-to-its.md)).
 - **Reference:** a Go walking skeleton, held to every project check; applied in M21.
 
-Bolts: [M24](../roadmap/m24.md) B228, B229, B230, B231, B232, B233, B234.
+Bolts: [M24](../roadmap/m24.md) B228 to B234.

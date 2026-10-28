@@ -32,7 +32,7 @@
     { "type": "data", "classes": ["regional", "shared", "global"] },
     { "type": "events", "verbs": ["put", "patch", "post", "delete"] }
   ],
-  "contract": { "segments": ["providers", "operations"], "providers": "providers", "resource": ["id", "name", "type"], "systemData": "systemData", "list": "value", "nextLink": "nextLink" },
+  "contract": { "grammar": { "path": { "template": "/providers/{{Namespace}}/{{typeCamel}}/{{{singularCamel}}Name}", "needs": ["org", "system", "domain"], "regex": "^/providers/[A-Z][A-Za-z0-9.]+/[a-z][A-Za-z0-9]*/\\{[a-z][A-Za-z0-9]*Name\\}$" } }, "segments": ["providers", "operations"], "providers": "providers", "resource": ["id", "name", "type"], "systemData": "systemData", "list": "value", "nextLink": "nextLink" },
   "fit": { "words": ["control plane", "resource provider", "resource providers", "providers", "deployments", "templates", "tenants", "scopes"] },
   "references": { "go": { "frontdoor": "reference/go/cmd/frontdoor", "stages": "reference/go/internal/pipeline/stages", "resources": "reference/go/internal/domains/resources", "operations": "reference/go/internal/domains/operations", "values": "reference/go/internal/foundation/values", "api": "reference/go/api" } }
 }

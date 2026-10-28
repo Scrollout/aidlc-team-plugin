@@ -348,3 +348,12 @@ test('B250/AC-1 B250/AC-4 the glossary, the templates, the personas and the exam
   adopt(dir);
   assert.deepEqual(formatLines(dir), [], 'the declared example is in the format');
 });
+
+test('decision 0021: models apply records the chosen architecture model\'s naming grammar in the profile, once', () => {
+  const model = readFileSync(join(import.meta.dirname, '../examples/models/control-plane/model.json'), 'utf8');
+  const dir = makeRepo({ '.aidlc/models/control-plane/model.json': model }, { naming: { tokens: { system: 'shop', org: 'acme' } } });
+  const first = run(dir, ['models', 'apply', 'control-plane']).out;
+  assert.match(first, /recorded the architecture model's names for path in \.aidlc\/profile\.json/);
+  assert.equal(JSON.parse(read(dir, '.aidlc/profile.json')).naming.grammar.path.template, JSON.parse(model).contract.grammar.path.template);
+  assert.doesNotMatch(run(dir, ['models', 'apply', 'control-plane']).out, /recorded the architecture model's names/, 'once');
+});

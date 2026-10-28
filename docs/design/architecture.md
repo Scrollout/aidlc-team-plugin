@@ -11,7 +11,7 @@ Bolts and their ACs are short-lived. A project's lasting constraints are not: se
 
 # Requirements
 - `requirements/R-<n>-<slug>.md`, `type: Requirement`, with acceptance criteria like a bolt. IDs compare by number, so `R-018` and `R-18` are the same.
-- Intents and bolts cite them: `requirements: [R-4, R-18]`. Plan lint `PLAN-REQ`: an intent or bolt that cites none, or cites one that does not exist. The rule applies once the bundle holds a requirement, so a project opts in by writing its first one.
+- Intents and bolts cite them: `requirements: [R-4, R-18]`. Plan lint `PLAN-REQ`: an intent or bolt that cites none, or cites one that does not exist. The rule applies once the docs bundle holds a requirement, so a project opts in by writing its first one.
 - A requirement is approved like an intent; editing it makes it `stale`, and `next` asks for re-approval before any build. Draft requirements an intent or the current plan cites are asked for in the same approval as that intent or plan.
 - `aidlc status` lists requirements that no merged bolt cites yet.
 
@@ -34,4 +34,4 @@ The profile describes the intended shape; the plugin enforces it without knowing
 - An exception is a decision doc the owner approves, listed under the boundary as `except: ["docs/decisions/0009-….md"]`. It covers the edges it lists, one `<from> -> <to>` per line, so a baseline of known violations does not open the boundary to new ones; a decision listing no edge covers the whole boundary. A bolt that adds a boundary lists the edges the base already has in its decision, or its own merge fails. The owner approves a decision on the base, so one the merge needs is a plan doc: the lead runs the graph, writes the decision on the base for the owner to approve, and the bolt only names it under `except`. A bolt that carries its own `except` decision is told so at merge: approval cannot reach a doc that lives only on the bolt branch.
 
 # Review
-Every review of a bolt reads the requirements the bolt cites and the interface docs it links (both are listed on its card) and checks the diff against them. The reference AI-DLC workflows work the same way: their code-generation reviewer always gets the shared contracts and the requirements. There is no separate `architecture` focus, because the boundaries and checks above already gate every merge ([Skill and agents](prompts.md#review)).
+Every review of a bolt reads the requirements the bolt cites and the interface docs it links (both are listed on its card) and checks the diff against them. The reference AI-DLC workflows work the same way: their code-generation reviewer always gets the shared API contracts and the requirements. There is no separate `architecture` focus, because the boundaries and checks above already gate every merge ([Skill and agents](prompts.md#review)).

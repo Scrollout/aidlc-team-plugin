@@ -280,6 +280,9 @@ function apply(cwd, name) {
   // The choice, in the project's profile.
   const file = join(cwd, PROFILE), own = readJson(file) ?? {};
   if (own.model?.name !== name) { writeJson(file, { ...own, model: { ...(isMap(own.model) ? own.model : {}), name } }); out.push(msg('applyChosen', { name, file: PROFILE })); }
+  // The names its API contract shapes, such as its path, over the plugin's generic grammar (decision 0021).
+  const grammar = isMap(m.data.contract?.grammar) ? m.data.contract.grammar : null, now = readJson(file);
+  if (grammar && JSON.stringify(now.naming?.grammar ?? {}) !== JSON.stringify({ ...(now.naming?.grammar ?? {}), ...grammar })) { writeJson(file, { ...now, naming: { ...(isMap(now.naming) ? now.naming : {}), grammar: { ...(now.naming?.grammar ?? {}), ...grammar } } }); out.push(msg('applyGrammar', { kinds: Object.keys(grammar).join(', '), file: PROFILE })); }
   // The system doc, when the bundle has none: the template with the model's building blocks.
   const sysDir = join(bundle, F.System), system = existsSync(sysDir) && readdirSync(sysDir).some((f) => f.endsWith(config.okf.ext) && f !== config.okf.index);
   if (!system) {

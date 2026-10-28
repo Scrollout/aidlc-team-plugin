@@ -7,7 +7,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-25T06:30:00Z }
 ---
 
 # Why
-A lockfile can carry open advisories from the day it is written, so the method's rule is: use the latest packages and security patches. A model's training data is months old, so a version it remembers is stale or vulnerable; the version has to come from the registry at the time, as a small piece of research.
+A lockfile can carry open advisories from the day it is written, so the method's rule is: use the latest packages and security patches. An AI model's training data is months old, so a version it remembers is stale or vulnerable; the version has to come from the registry at the time, as a small piece of research.
 
 # Shape
 ```json

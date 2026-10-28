@@ -11,7 +11,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T08:00:00Z }
 Before M6 the loop ended at a merged, tagged intent: the [Grid](grid.md)'s Deployment and Operation rows ran nothing, so the method stopped short of running software.
 
 # The reference stages
-Seven operation stages, every one conditional (`execution: CONDITIONAL`) and skipped when "no deployable target exists": deployment pipeline, environment provisioning, deployment execution, observability, performance validation, incident response, feedback. What the plugin takes without building pipelines:
+Seven Operation stages, every one conditional (`execution: CONDITIONAL`) and skipped when "no deployable target exists": deployment pipeline, environment provisioning, deployment execution, observability, performance validation, incident response, feedback. What the plugin takes without building pipelines:
 - **Verify:** "Deployment is not done until smoke passes"; deployment execution runs smoke tests and health checks.
 - **Rollback:** a rollback runbook, output by the pipeline stage; "Rollback is not optional".
 - **Gates:** "Bypassing a gate is an incident, not a shortcut"; each stage ends with the human's approve or request-changes.
@@ -48,4 +48,4 @@ Commands come from the profile; the plugin ships no pipeline ([Overview](overvie
 
 Bolts: [M6](../roadmap/m6.md).
 
-: Reference AI-DLC operation stages
+: Reference AI-DLC Operation stages

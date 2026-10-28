@@ -10,7 +10,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T13:00:00Z }
 A standard format is one a reader already knows and a tool can check ([0018](../decisions/0018-standard-formats-over-home-made-ones.md)). Each format below maps onto a doc type the plugin already has. Approved docs keep their form: an approved doc is never edited.
 
 # Decisions: MADR 4.0
-- The template is MADR's: `# <title>`, then `## Context and Problem Statement`, `## Decision Drivers`, `## Considered Options`, `## Decision Outcome` with `Chosen option: "<option>", because <why>`, `### Consequences` and `### Confirmation`, `## Pros and Cons of the Options` and `## More Information`. The bundle's keys (`type`, `title`, `description`) and the plugin's (`affects`, `oneWayDoor`, `supersedes`, `facts`, `serves`) sit beside MADR's front matter (`status`, `date`, `decision-makers`, `consulted`, `informed`).
+- The template is MADR's: `# <title>`, then `## Context and Problem Statement`, `## Decision Drivers`, `## Considered Options`, `## Decision Outcome` with `Chosen option: "<option>", because <why>`, `### Consequences` and `### Confirmation`, `## Pros and Cons of the Options` and `## More Information`. The docs bundle's keys (`type`, `title`, `description`) and the plugin's (`affects`, `oneWayDoor`, `supersedes`, `facts`, `serves`) sit beside MADR's front matter (`status`, `date`, `decision-makers`, `consulted`, `informed`).
 - Status: `proposed` while a draft; approving sets `accepted` and `date`, and `decision-makers` to the approver when the decision names no one; approving a successor sets the old one to `superseded by ADR-<NNNN>`. `models apply` dates each decision it copies.
 - `DOC-SCHEMA`: a draft decision in a v2 project lacking Context and Problem Statement, Considered Options or Decision Outcome, or with a status MADR does not name (proposed, rejected, accepted, deprecated, superseded by ADR-<NNNN>). A one-way door also needs Confirmation: how the decision is checked.
 
@@ -28,12 +28,12 @@ A requirement states what must hold in one of EARS's patterns under `# Requireme
 `PLAN-REQ` reports a draft requirement whose statement fits none.
 
 # Releases: Keep a Changelog and SemVer
-`init` writes `CHANGELOG.md` with an `## [Unreleased]` section, and the plugin keeps its own the same way: newest first, `## [<x.y.z>] - <YYYY-MM-DD>`, changes grouped under Added, Changed, Deprecated, Removed, Fixed and Security. A test holds the plugin's changelog to the version in `plugin.json`. The bundle's `log.md` stays the OKF log of the docs.
+`init` writes `CHANGELOG.md` with an `## [Unreleased]` section, and the plugin keeps its own the same way: newest first, `## [<x.y.z>] - <YYYY-MM-DD>`, changes grouped under Added, Changed, Deprecated, Removed, Fixed and Security. A test holds the plugin's changelog to the version in `plugin.json`. The docs bundle's `log.md` stays the OKF log of the docs.
 
 # Architecture: arc42 and C4
 - A system doc follows arc42's 12 sections, from 1 Introduction and Goals to 12 Glossary. Generated pages fill some: the building block view is the codebase map by kind, decisions are the decisions index, the glossary is the naming glossary. `DOC-SCHEMA` reports a draft system doc missing one.
-- Generated maps name their C4 level where one fits: the module dependency graph and the map by kind are component views. The context map is a domain-driven design context map, not a C4 context view.
-- The plugin's own architecture is laid out the same way in [Architecture in arc42](arc42.md), with a generated component view of the CLI.
+- Generated maps name their C4 level where one fits: the module dependency graph and the map by kind are C4 component views. The context map is a domain-driven design context map, not a C4 context view.
+- The plugin's own architecture is laid out the same way in [Architecture in arc42](arc42.md), with a generated C4 component view of the CLI.
 
 # Rationale
 Every doc states its rules and their reasons in general terms, so they hold for any project and any reader:

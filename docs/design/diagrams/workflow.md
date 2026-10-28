@@ -21,7 +21,7 @@ flowchart LR
     b_reviewing[reviewing] -->|pass in every focus| b_reviewed[reviewed]
     b_reviewed[reviewed] -->|aidlc merge| b_merged[merged]
   end
-  subgraph Operations
+  subgraph Operation
     i_merged[merged] -->|deploy check passes or none set| i_checked[checked]
     i_checked[checked] -->|release on a pushed green base passes, smoke too or none set| i_released[released]
   end

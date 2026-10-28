@@ -16,7 +16,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T01:10:00Z }
 The audit for B149 read all 39 incident citations in the design docs:
 - **31 are evidence:** a general rule that names the incident that showed it was needed, such as `PLAN-SKELETON`, `PLAN-CARD` and the base-CI holds. Deleting the citation saves no code, and deleting the rule loses a check a test pins.
 - **8 belong to the slice rules:** `slices.md`, the slice parts of `plan-lint.md` and `bolt-card.md`. Increments replace them almost line for line (B152, B159), so they free about 50 lines, not 300.
-- **Data is already outside the code:** check messages and templates already live in `cli.json` (75 KB) and the template files. What v2 adds as data (kind matrix, vocabularies, naming grammar, type schemas, stack packs) goes there too, so the new code is the checks themselves.
+- **Data is already outside the code:** check messages and templates already live in `cli.json` (75 KB) and the template files. What v2 adds as data (kind matrix, vocabularies, naming grammar, doc schemas, stack packs) goes there too, so the new code is the checks themselves.
 
 ## Considered Options
 1. Keep 4,000 and fit v2 by packing lines. That breaks the budget's intent, which is a small CLI anyone can read, not a short one.
@@ -30,4 +30,4 @@ The budget exists so the CLI stays readable and reviewable. 5,000 lines of plain
 
 ## More Information
 Revisit when:
-The CLI passes 4,750 lines before M19 is built: then the matrix and schema checks move further into data first.
+The CLI passes 4,750 lines before M19 is built: then the matrix and doc schema checks move further into data first.

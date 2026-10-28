@@ -1,7 +1,7 @@
 // B153: work items are bolts B-<n> under bolts/; a v1 plan's units under units/ read as bolts.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { config, lintPlan, readPlan, branchOf } from '../plugin/cli/lib/index.mjs';
 import { I1, U, approve, git, intentDoc, makeRepo, pinnedRepo, read, run, unitDoc } from './state-repo.mjs';
@@ -150,7 +150,7 @@ test('B161/AC-1 aidlc name prints each kind from the grammar and the registry, a
   const cases = [
     [['slice', '--domain', 'providers', '--verb', 'register'], 'registerprovider'],
     [['operation-id', '--domain', 'roleassignments', '--verb', 'create'], 'RoleAssignments_CreateOrUpdate'],
-    [['path', '--domain', 'roleassignments'], '/providers/Acme.Shop/roleAssignments/{roleAssignmentName}'],
+    [['path', '--domain', 'roleassignments'], '/roleAssignments/{roleAssignmentName}'], // generic; an architecture model's API contract may shape it (decision 0021)
     [['permission', '--domain', 'providers', '--action', 'write'], 'Acme.Shop/providers/write'],
     [['event', '--domain', 'providers', '--verb', 'register'], 'Acme.Shop.ProviderRegistered'],
     [['deployable', '--stage', 'ingress', '--role', 'gateway'], 'shop-ingress-gateway'],
@@ -204,7 +204,7 @@ test('B164/AC-1 the card prints the names a bolt will create for each registered
   const dir = makeRepo({ ...I1, [U(1)]: unitDoc({ scope: ['src/providers/**'], modules: ['providers', 'db'], acs: ['- AC-1 (integration): it works.'] }) }, { naming: { ...naming, vocabularies: { foundation: ['db'] } }, modules });
   approve(dir, 'I-1', 'U-1');
   const card = run(dir, ['card', 'U-1']).out;
-  assert.match(card, /^- names this bolt creates for providers \(aidlc name\): schema providers, database role shop_providers, path \/providers\/Acme\.Shop\/providers\/\{providerName\}, write permission Acme\.Shop\/providers\/write, created event Acme\.Shop\.ProviderCreated$/m);
+  assert.match(card, /^- names this bolt creates for providers \(aidlc name\): schema providers, database role shop_providers, path \/providers\/\{providerName\}, write permission Acme\.Shop\/providers\/write, created event Acme\.Shop\.ProviderCreated$/m);
   assert.doesNotMatch(card, /names this bolt creates for db/, 'only domains');
 });
 
@@ -253,4 +253,12 @@ test('B165/AC-1 check reports CONTRACT-NAME on the documents under api/ once the
     'api/frontdoor/openapi.yaml:1 CONTRACT-NAME /providers/{namespace}: parameter namespace is not a full lowerCamel name ending in Name or Id',
     'api/frontdoor/openapi.yaml:1 CONTRACT-NAME /providers/{namespace} get: operationId Providers_get is not Noun_Verb',
   ]);
+});
+
+test('decision 0021: the default path grammar is generic, and a profile\'s naming.grammar shapes a kind, as a chosen architecture model\'s API contract does', () => {
+  const tokens = { system: 'shop', org: 'acme' }, domains = { roleassignments: { name: 'Role assignments' } };
+  const path = (naming) => run(makeRepo(I1, { naming }), ['name', 'path', '--domain', 'roleassignments']).out.trim();
+  assert.equal(path({ tokens, domains }), '/roleAssignments/{roleAssignmentName}');
+  const grammar = JSON.parse(readFileSync(join(import.meta.dirname, '../examples/models/control-plane/model.json'), 'utf8')).contract.grammar;
+  assert.equal(path({ tokens, domains, grammar }), '/providers/Acme.Shop/roleAssignments/{roleAssignmentName}', 'the control-plane path');
 });

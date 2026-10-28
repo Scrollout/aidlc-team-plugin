@@ -23,9 +23,9 @@ A project may later run the agent in a sandbox and the plugin as a remote toolbo
 3. Build the servers now. Code against the budgets for a setup nobody runs yet.
 
 ## Decision Outcome
-Option 2. The servers are M3 work.
+Option 2. The servers wait until a project runs the plugin remotely; no milestone plans them.
 
-- Claude Code hooks can be `command`, `http` (POST the event JSON to a URL, same JSON decision back) or `mcp_tool`, and they fire on MCP tool calls too.[^cc-hooks] The same decision functions can therefore judge a local hook, a remote hook or a toolbox call.
+- Claude Code hooks can be `command`, `http` (POST the hook input JSON to a URL, same JSON decision back) or `mcp_tool`, and they fire on MCP tool calls too.[^cc-hooks] The same decision functions can therefore judge a local hook, a remote hook or a toolbox call.
 - Returning data keeps one implementation for every caller; the CLI's text output becomes one rendering of it.
 
 ### Consequences

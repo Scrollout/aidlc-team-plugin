@@ -7,7 +7,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T21:00:00Z }
 ---
 
 # Why
-Import boundaries ([Requirements and architecture checks](architecture.md)) stop one module from importing another's code, but two modules can still query the same table without importing each other. Then a schema change in one breaks the other, and the slices are no longer independent. The rule: one slice never calls another slice's database layer directly; slices talk through well-defined interfaces, events or shared domain services.
+Import boundaries ([Requirements and architecture checks](architecture.md)) stop one module from importing another's code, but two modules can still query the same table without importing each other. Then a database schema change in one breaks the other, and the slices are no longer independent. The rule: one slice never calls another slice's database layer directly; slices talk through well-defined interfaces, integration events or shared domain services.
 
 # Shape
 ```json
@@ -32,7 +32,7 @@ Checked with the import boundaries on every merge and in `check --ci` (`ARCH-DAT
 An exception is an approved decision under `architecture.data.except`, listing the `<from> -> <to>` edges it covers, the same as a boundary's `except`: a baseline of known crossings never opens the rule to new ones. Each listed crossing gets a fix bolt.
 
 # Card
-A bolt's card lists the data its modules own and the shared data, and says to reach any other data only through its owner's interface, an event or a shared service, so the builder knows the rule before writing code and every review checks it ([Bolt card](bolt-card.md)).
+A bolt's card lists the data its modules own and the shared data, and says to reach any other data only through its owner's interface, an integration event or a shared service, so the builder knows the rule before writing code and every review checks it ([Bolt card](bolt-card.md)).
 
 # Adoption
 The method's default architecture puts this first ([Architecture model](architecture-model.md)); `check` fails a profile with modules and no data ownership.

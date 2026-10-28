@@ -7,8 +7,8 @@ import { config } from '../plugin/cli/lib/index.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const files = (dir) => readdirSync(join(ROOT, dir), { recursive: true }).filter((f) => f.endsWith('.md')).map((f) => [`${dir}/${f}`, readFileSync(join(ROOT, dir, f), 'utf8')]);
-// What may stay: template variables, unit as a test level, the v1 aliases (units/, unit/, U-<n>), code and quoted words.
-const KEPT = /\b[Uu]nits? of work\b|# Units\b|\{\{[^}]*\}\}|\bunits?\/|\bunit=|\bunit and e2e\b|\bunit tests?\b|\(unit\)|\bunit\b(?= level)|U-<n>|`[^`]*`|"[^"]*"|\bC4 components? (view|level)\b/g;
+// What may stay: template variables, unit as a test level or a metric's unit of measure, the v1 aliases (units/, unit/, U-<n>), code and quoted words.
+const KEPT = /\b[Uu]nits? of work\b|# Units\b|\{\{[^}]*\}\}|\bunits?\/|\bunit=|\bunit and e2e\b|\bunit tests?\b|\(unit\)|\bunit\b(?= level)|U-<n>|`[^`]*`|"[^"]*"|\bC4 components? (view|level)\b|\[--unit u\]/g; // --unit: a metric's unit of measure
 // A slice is a vertical slice now (decision 0024); its retired senses read as other words. 0023's internal layer is a horizontal layer.
 const RETIRED = /\b(units?|components?|internal layers?)\b/gi;
 const found = ([where, text]) => [...text.replace(KEPT, '').matchAll(RETIRED)].map((m) => `${where}: ${m[0]}`);

@@ -57,7 +57,7 @@ function layerFiles(root, cliDir = CLI_DIR) {
 }
 
 // A profile gate stage's problem, or null: it needs an id and a command, cannot replace a core stage, runs from the
-// trial merge on and fails at error or warning (docs/design/lifecycle.md#pipelines); the gate skips one with a problem.
+// trial merge on and fails at error or warning (docs/design/lifecycle.md#gate-stages-and-review-focuses); the gate skips one with a problem.
 export function stageProblem(s) {
   const G = config.gate, L = config.okf.level;
   if (!s.id || !s.check) return 'stageShape';

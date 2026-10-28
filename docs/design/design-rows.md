@@ -11,7 +11,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T13:19:54Z }
 The [Grid](grid.md) has Domain and Logical rows between Bolts and Source, but nothing checked them: a bolt could go from ACs to code with no design, so work crossed domains the owner's diagram keeps apart. A project is built fully vertically, design cells included.
 
 # What the reference workflows do
-- **Domain design** names the logical building blocks: each entity has exactly one owning domain, and which domain calls which. It is conditional: run "when new components or logical building blocks are needed", skipped for changes to existing ones.
+- **Domain design** names the logical building blocks: each entity has exactly one owning domain, and which domain calls which. It is conditional: run when new Domain Design components or logical building blocks are needed, skipped for changes to existing ones.
 - **Functional design** runs per unit of work before code: entities, business rules and the functional spec. Also conditional: skipped for "simple logic changes with no new business logic".
 - Both are reviewed before code is generated.
 

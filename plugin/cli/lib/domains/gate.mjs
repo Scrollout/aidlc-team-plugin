@@ -152,7 +152,7 @@ function baseFails(cwd, base, level, l) {
 }
 
 // The gate's stages, each a check over the context `c`; gate.stages orders them, and a stage that returns false
-// ends the walk (docs/design/lifecycle.md#pipelines).
+// ends the walk (docs/design/lifecycle.md#gate-stages-and-review-focuses).
 export const STAGES = {
   approval(c) {
     const { st, unit, add } = c;
@@ -300,7 +300,7 @@ export const STAGES = {
   },
 };
 
-// A profile stage: its command on the merged tree, failing at its own level (docs/design/lifecycle.md#pipelines).
+// A profile stage: its command on the merged tree, failing at its own level (docs/design/lifecycle.md#gate-stages-and-review-focuses).
 const ownStage = (s) => (c) => {
   if (!shell(c.tree, s.check)) c.add('GATE-CHECK', 'gateCheck', { command: s.check }), (c.out.at(-1).level = s.level ?? config.okf.level.error);
 };

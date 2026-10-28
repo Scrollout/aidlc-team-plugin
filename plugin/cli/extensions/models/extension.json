@@ -5,18 +5,39 @@
   "data": {
     "okf": {
       "codes": {
-        "MODEL-FORMAT": { "level": "error", "fix": "give the architecture model's folder a model.json with `name`, `title`, `description`, `layers` (its horizontal layers) and `extension` (the API contract each extension declares); layers and domains with unique ids and kinds from the vocabulary; rules of known types; API contracts between known ids; decisions as Decision docs (docs: Architecture models)" },
-        "PIPELINE-ORDER": { "level": "error", "fix": "wire the stages in the architecture model's order, or point model.wiring in the profile at the file and the pattern that name them (docs: Architecture models)" },
-        "PROVIDER-CONTRACT": { "level": "error", "fix": "declare each field the architecture model's extension asks under the module's `declares` in the profile (docs: Architecture models)" },
-        "LONG-RUNNING": { "level": "error", "fix": "answer the flagged operation in one of the architecture model's shapes, with its link and retry headers named in model.operations, and give a delete its no-content answer (docs: Architecture models)" },
-        "EVENT-COVERAGE": { "level": "error", "fix": "name the integration events each write operation emits under model.events.marker, each defined in the model.events.files (docs: Architecture models)" }
+        "MODEL-FORMAT": {
+          "level": "error",
+          "fix": "give the architecture model's folder a model.json with `name`, `title`, `description`, `layers` (its horizontal layers) and `extension` (the API contract each extension declares); layers and domains with unique ids and kinds from the vocabulary; rules of known types; API contracts between known ids; decisions as Decision docs (docs: Architecture models)"
+        },
+        "PIPELINE-ORDER": {
+          "level": "error",
+          "fix": "wire the stages in the architecture model's order, or point model.wiring in the profile at the file and the pattern that name them (docs: Architecture models)"
+        },
+        "PROVIDER-CONTRACT": {
+          "level": "error",
+          "fix": "declare each field the architecture model's extension asks under the module's `declares` in the profile (docs: Architecture models)"
+        },
+        "LONG-RUNNING": {
+          "level": "error",
+          "fix": "answer the flagged long-running operation in one of the architecture model's shapes, with its link and retry headers named in model.operations, and give a delete its no-content answer (docs: Architecture models)"
+        },
+        "EVENT-COVERAGE": {
+          "level": "error",
+          "fix": "name the integration events each write API operation emits under model.events.marker, each defined in the model.events.files (docs: Architecture models)"
+        }
       },
       "bundle": {
-        "folders": { "Model": "models" },
-        "generated": ["Model"]
+        "folders": {
+          "Model": "models"
+        },
+        "generated": [
+          "Model"
+        ]
       },
       "profileKeys": {
-        "top": ["model"]
+        "top": [
+          "model"
+        ]
       }
     },
     "commands": [
@@ -98,15 +119,34 @@
       "gapPlayed": "  {{item}}: {{module}} ({{kind}})\n",
       "gapKind": "  {{item}}: {{module}} is {{kind}}, the architecture model's {{item}} is {{want}}\n",
       "gapsMissing": "missing, for the brownfield intent's # Increments:\n",
-      "gapsNone": "nothing missing\n"
+      "gapsNone": "nothing missing\n",
+      "applyGrammar": "recorded the architecture model's names for {{kinds}} in {{file}} (naming.grammar)\n"
     },
     "models": {
       "file": "model.json",
       "decisions": "decisions",
-      "required": ["name", "title", "description", "layers", "extension"],
-      "lists": ["layers", "domains", "contracts", "rules"],
+      "required": [
+        "name",
+        "title",
+        "description",
+        "layers",
+        "extension"
+      ],
+      "lists": [
+        "layers",
+        "domains",
+        "contracts",
+        "rules"
+      ],
       "extensionId": "extension",
-      "ruleTypes": ["stageOrder", "extensionContract", "longRunning", "idempotency", "data", "events"],
+      "ruleTypes": [
+        "stageOrder",
+        "extensionContract",
+        "longRunning",
+        "idempotency",
+        "data",
+        "events"
+      ],
       "docHeadings": {
         "layers": "Layers",
         "domains": "Domains",
@@ -117,30 +157,69 @@
       },
       "research": "research",
       "defaults": {
-        "operations": { "marker": "x-long-running" },
-        "events": { "marker": "x-events" }
+        "operations": {
+          "marker": "x-long-running"
+        },
+        "events": {
+          "marker": "x-events"
+        }
       },
-      "methods": ["get", "put", "post", "patch", "delete"],
+      "methods": [
+        "get",
+        "put",
+        "post",
+        "patch",
+        "delete"
+      ],
       "systemTemplate": "docs/system.md",
       "domainTemplate": "docs/domain.md",
       "sliceKind": "slice",
-      "sliceKeys": ["kind", "verb", "useCase", "cuts"],
-      "appliesKinds": ["outcomeEvents", "statusContract"],
+      "sliceKeys": [
+        "kind",
+        "verb",
+        "useCase",
+        "cuts"
+      ],
+      "appliesKinds": [
+        "outcomeEvents",
+        "statusContract"
+      ],
       "pipelineKind": "pipeline",
       "adapterKind": "adapter",
       "slicesKey": "slices",
       "surfaceSection": "(^# {{heading}}\\n)([\\s\\S]*?)(?=^# |(?![\\s\\S]))",
       "surfaceSlice": "^\\s*[-*]\\s+(?:{{kinds}})\\s",
       "surfaceLine": "^\\s*[-*]\\s+(?:{{kinds}})\\s+({{name}})\\b",
-      "fm": { "title": "^title: .*$", "description": "^description: .*$", "code": "^code: .*$" },
+      "fm": {
+        "title": "^title: .*$",
+        "description": "^description: .*$",
+        "code": "^code: .*$"
+      },
       "systemName": "system",
       "systemBlocks": "(# Building Block View\\n)<[^>\\n]*>",
       "partitionLine": "\\(partition:\\s*[^,)]+,\\s*class:\\s*([\\w-]+)\\)",
-      "lro": { "roles": ["status", "result", "retry"], "always": ["retry"], "join": { "headers": " and ", "shapes": ", or " } }
+      "lro": {
+        "roles": [
+          "status",
+          "result",
+          "retry"
+        ],
+        "always": [
+          "retry"
+        ],
+        "join": {
+          "headers": " and ",
+          "shapes": ", or "
+        }
+      }
     },
     "inception": {
       "pathways": {
-        "model": ["questions", "research", "modelDoc"]
+        "model": [
+          "questions",
+          "research",
+          "modelDoc"
+        ]
       },
       "steps": {
         "research": "a Research digest under research/ for each name in research:",
@@ -148,14 +227,29 @@
       }
     },
     "state": {
-      "approvable": ["Model"],
-      "approveBlocks": ["MODEL-SOURCE", "IDEMPOTENCY-AC", "DATA-PARTITION"]
+      "approvable": [
+        "Model"
+      ],
+      "approveBlocks": [
+        "MODEL-SOURCE",
+        "IDEMPOTENCY-AC",
+        "DATA-PARTITION"
+      ]
     },
     "grid": {
       "codes": {
-        "MODEL-SOURCE": { "level": "error", "fix": "give each layer, domain and rule of the architecture model sources: ids of the sources of the research: digests the intent names (docs: Architecture models)" },
-        "IDEMPOTENCY-AC": { "level": "error", "fix": "add an AC that repeating the write leaves its status and state unchanged (docs: Architecture models)" },
-        "DATA-PARTITION": { "level": "error", "fix": "write each owned table as `table` (partition: <key>, class: <class>), with a class the architecture model lists (docs: Architecture models)" }
+        "MODEL-SOURCE": {
+          "level": "error",
+          "fix": "give each layer, domain and rule of the architecture model sources: ids of the sources of the research: digests the intent names (docs: Architecture models)"
+        },
+        "IDEMPOTENCY-AC": {
+          "level": "error",
+          "fix": "add an AC that repeating the write leaves its status and state unchanged (docs: Architecture models)"
+        },
+        "DATA-PARTITION": {
+          "level": "error",
+          "fix": "write each owned table as `table` (partition: <key>, class: <class>), with a class the architecture model lists (docs: Architecture models)"
+        }
       }
     }
   }

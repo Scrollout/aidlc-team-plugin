@@ -1,7 +1,7 @@
 ---
 type: Decision
 title: 0007 Requirements and architecture as checks
-description: Lasting requirements become cited docs and architecture rules become gate checks, so a project cannot drift from its intended shape unit by unit.
+description: Lasting requirements become cited docs and architecture rules become gate checks, so a project cannot drift from its intended shape bolt by bolt.
 status: superseded by ADR-0013
 decision-makers: the owner
 date: 2026-10-22
@@ -11,7 +11,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-22T10:40:00Z }
 # Requirements and architecture as checks
 
 ## Context and Problem Statement
-The plugin is project agnostic, and a multi-service platform has dozens of lasting requirements and a split architecture. Unit gates alone let each change pass while the whole drifts, e.g. from a platform into a single app.
+The plugin is project agnostic, and a multi-service platform has dozens of lasting requirements and a split architecture. Bolt gates alone let each change pass while the whole drifts, e.g. from a platform into a single app.
 
 ## Considered Options
 1. Leave it to the reviewer. Judgment, not a guarantee; misses what the diff does not show.

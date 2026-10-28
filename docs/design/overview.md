@@ -14,16 +14,16 @@ sources:
 ---
 
 # Goals
-- Usable in any project: `init` renders a profile, AGENTS.md and an OKF bundle from templates.
+- Usable in any project: `init` renders a profile, AGENTS.md and an OKF docs bundle from templates.
 - Deterministic: the CLI computes the next allowed step; hooks block rule breaks at the action.
-- Cheap and fast: small always-on context, Sonnet builders, Opus only for review, lanes sized to risk.
+- Cheap and fast: small always-on context, Sonnet builders, Opus for the full lane, escalation and review, lanes sized to risk.
 - Autonomous: the owner approves intent, plan, one-way doors and release; agents do the rest.
 - Extensible: rule layers (plugin, project, personal) and overridable templates.
-- From plain prose: anyone's request, kept word for word, becomes an intent whose every line cites it ([Intake](intake.md)).
-- Proven shapes: an architecture model brings a reference system's layers and rules to a new or existing project ([Models](models.md)).
+- From plain prose: anyone's words, kept verbatim, become an intent whose every line cites them ([Intake](intake.md)).
+- Proven shapes: an architecture model brings a reference system's layers and rules to a new or existing project ([Architecture models](models.md)).
 
 # Diagrams
-The whole lifecycle and the plugin's parts are drawn in the [README](../../README.md); one bolt's path to release is below.
+The [README](../../README.md) draws the lifecycle and the plugin's parts; one bolt's path to release is below.
 
 # How a bolt flows
 ```mermaid
@@ -67,7 +67,7 @@ sequenceDiagram
 | SessionStart status injection | 1,000 chars |
 | Skill body / agent prompt | 3 KB each |
 | Skill and agent descriptions | 300 chars each |
-| Unit card | 100 lines |
+| Bolt card | 100 lines |
 | CLI core (`plugin/cli/aidlc.mjs`, `plugin/cli/lib/`) | 4,800 lines ([0017](../decisions/0017-the-cli-is-a-library-with-extensions.md)) |
 | Each CLI extension (`plugin/cli/extensions/<name>/`) | 400 lines ([0017](../decisions/0017-the-cli-is-a-library-with-extensions.md)) |
 | Hook timeout | 10 s explicit, `onFailure: "block"` on blocking hooks |
@@ -76,7 +76,7 @@ sequenceDiagram
 # Repo layout
 - `plugin/.claude-plugin/plugin.json`: `name` `aidlc-team` (never `aidlc`, which projects use for the CLI and `.aidlc/`), the only `version`.
 - `plugin/cli/aidlc.mjs`, `plugin/cli/lib/` (foundation, domains, the entry) and `plugin/cli/extensions/`: the CLI ([Library and extensions](library.md)).
-- `plugin/templates/`, `plugin/personas/` and `plugin/packs/`: the shipped packages ([Shipped layout](layout.md)); models stay outside ([0025](../decisions/0025-the-plugin-ships-the-model-format-not-models.md)).
+- `plugin/templates/`, `plugin/personas/` and `plugin/packs/`: the shipped packages ([Shipped layout](layout.md)); architecture models stay outside ([0025](../decisions/0025-the-plugin-ships-the-model-format-not-models.md)).
 - `plugin/hooks/`: thin wrappers that call the CLI.
 - Who does the work, each where it must live:
 
@@ -91,7 +91,7 @@ sequenceDiagram
 - `version` lives only in `plugin/.claude-plugin/plugin.json`, never in the marketplace entry. Users stay on a version until it changes.[^cc-host]
 - A release carries two annotated tags on the same commit, chosen by the owner:
   - `v<version>`, the standard semver tag for people and GitHub Releases.
-  - `aidlc-team--v<version>`, made by `claude plugin tag plugin --push`. The command first checks that the manifest and the marketplace entry agree and that the tree is clean.[^cc-tag] Plugin dependency ranges resolve against this form.
+  - `aidlc-team--v<version>`, made by `claude plugin tag plugin --push`. It first checks that the manifest and the marketplace entry agree and the tree is clean.[^cc-tag] Plugin dependency ranges resolve against this form.
 - The version always matches a tag. A commit that changes `plugin/` also bumps `version` (semver: new commands or rules are minor, fixes are patch), and is tagged once it is on `main`. A test fails when `plugin/` differs from the tag of the current version. CI checks on a tag push that either tag matches `plugin.json`. The owner approves each release (principle 5).
 - Users can pin a release with `/plugin marketplace add Scrollout/aidlc-team-plugin#v<version>`.[^cc-host]
 - The vendored CLI's `VERSION` file holds the same version, so a project records which release judges it.

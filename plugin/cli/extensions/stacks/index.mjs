@@ -87,7 +87,7 @@ export function packGraph(root, profile) {
   return [...importEdges(root, pack.manifest, files), ...dataEdges(root, pack.manifest, profile, files)].filter(([a, b]) => !seen.has(`${a} ${b}`) && seen.add(`${a} ${b}`));
 }
 
-// Event types in a domain's events surface that break the grammar, as [file, message key, data] (decision 0014).
+// Event types in a domain's events surface that break the grammar, as [file, message key, data] (decision 0027).
 function eventFindings(root, profile) {
   const pack = packFor(root);
   if (!pack?.manifest.eventType || !profile.naming) return [];

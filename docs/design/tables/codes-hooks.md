@@ -25,6 +25,6 @@ generated: { by: tests/diagrams.mjs }
 | `GUARD-SCHEDULE` | only the owner approves: they type approve <doc> |
 | `SCOPE-APPROVAL` | only the owner approves: they type approve <doc> |
 | `SECRET` | keep secrets out of the repo; read them from the environment |
-| `MODEL-UNIT` | name the bolt U-<n> in the prompt and start it from its card |
+| `MODEL-UNIT` | name the bolt B-<n> in the prompt and start it from its card |
 | `MODEL-MISMATCH` | pass the AI model the card names (aidlc card) |
 | `GUARD-SUBAGENT` | leave it to the lead: a subagent runs only its role's aidlc commands (hooks.subagentCommands) and returns its result |

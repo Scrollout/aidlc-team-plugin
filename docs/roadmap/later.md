@@ -7,16 +7,16 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-24T10:00:00Z }
 ---
 
 # Items
-Carried since [M2](m2.md) through [M7](m7.md); each comes back as a unit only when a project needs it.
-| Item | When it earns a unit |
+Carried since [M2](m2.md) through [M7](m7.md); each comes back as a bolt only when a project needs it.
+| Item | When it earns a bolt |
 |---|---|
 | Org rule packs (`profile.org`, a pinned git repo of rules) | another project wants the same rules |
 | CI evaluator agent | CI should judge a change beyond the deterministic checks |
 | Other agent hosts | the loop has to run outside Claude Code |
-| `check --staged` | checking the whole bundle before each commit gets slow |
+| `check --staged` | checking the whole docs bundle before each commit gets slow |
 | `reserve` and `clean` commands | reserved numbers (migrations) clash in practice |
 | `init` and `status` warn when Claude Code is older than `onFailure` needs (v2.1.295) | a project runs on an older Claude Code |
-| `status` reports a forced subagent model (`CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1`) | a project runs where routing is forced |
+| `status` reports a forced subagent AI model (`CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1`) | a project runs where routing is forced |
 | Reviewer sends back a mutation that breaks only part of its AC | a back-fill review accepts one ([Lessons](../lessons/lessons.md)) |
 | `next` serves more than one intent at a time | an owner step on one intent holds back another intent's builders |
 | Test logs named per bolt and focus | two reviewers' logs overwrite each other again ([Lessons](../lessons/lessons.md)) |

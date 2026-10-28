@@ -1,13 +1,13 @@
 ---
 type: Design
 title: Increments and bolts
-description: An intent ships in increments (increment 1 the walking skeleton on its target), each built by bolts B-<n> that the CLI allocates, with legacy units read as aliases only; replaces the intent's Slices section, the Spec labels and the slice cap.
+description: An intent ships in increments (increment 1 the walking skeleton on its target), each built by bolts B-<n> that the CLI allocates, with legacy U-<n> ids read as aliases only; replaces the intent's Slices section, the Spec labels and the slice cap.
 status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T00:40:00Z }
 ---
 
 # Why
-The intent's `# Slices` mixed delivery steps with code slices. The card's `Spec:` label, read from them, called a unit vertical or horizontal by its tests, not by what it builds. In AI-DLC a Unit is a bounded context and a Bolt is the build cycle. The plugin's "unit" was a Bolt by another name ([Canonical model](canonical-model.md)).
+The intent's `# Slices` mixed delivery steps with code slices. The card's `Spec:` label, read from them, called a bolt vertical or horizontal by its tests, not by what it builds. In AI-DLC a Unit is an independent functional block of an intent, analogous to a DDD subdomain or a Scrum epic (the plugin's unit of work; a bounded context is the plugin's domain), and a Bolt is the build cycle. The plugin's "unit" was a Bolt by another name ([one word per concept](canonical-model.md)).
 
 # Increments
 - An intent lists `# Increments`, one line each: `- I-<n>.<k> <name>: <outcome>, proven by <top-level AC>`.
@@ -23,11 +23,11 @@ The intent's `# Slices` mixed delivery steps with code slices. The card's `Spec:
 - **Needed.** A bolt with no top-level AC sits on an increment only if a bolt of it with one depends on it.
 
 # Shipping an increment
-An intent ships each increment when its bolts merge, not only at the end. While the newest merged increment is not in the last passing release, the intent runs the release steps (deploy check, the owner's `release I-<n>`, smoke) while its next increments build. `readState` marks it `incrementDue`, `deploy` and `release` accept it, and `next` names a due release step while builders run. The intent is released only by a release after its last merge. Only the intent's own bolts count: a line citing another intent's merged bolt ships nothing of this one. With `ci.wait` the release waits for a pushed base whose CI passed ([CI on the base](base-ci.md)), so `deploy.run` must be safe to run twice on one base ([Deployment and operation](operations.md#details)).
+An intent ships each increment when its bolts merge, not only at the end. While the newest merged increment is not in the last passing release, the intent runs the release steps (deploy check, the owner's `release I-<n>`, smoke) while its next increments build. `readState` marks it `incrementDue`, `deploy` and `release` accept it, and `next` names a due release step while builders run. The intent is released only by a release after its last merge. Only the intent's own bolts count: a line citing another intent's merged bolt ships nothing of this one. With `ci.wait` the release waits for a pushed base whose CI passed ([CI on the base](base-ci.md)), so `deploy.run` must be safe to run twice on one base ([Deployment and Operation](operations.md#details)).
 - `INTENT-SIZE` (M18): at most 5 increments, each with its own success measure.
 
 # Bolts
-- **IDs.** `B-<n>`, allocated by `aidlc new bolt "<title>"`, never typed: the next number over every bolt, legacy units included, the file named from the title (no apostrophes, at most 48 characters, cut at a word). `aidlc fix` writes a fix bolt the same way in a v2 project.
+- **IDs.** `B-<n>`, allocated by `aidlc new bolt "<title>"`, never typed: the next number over every bolt, legacy `U-<n>` included, the file named from the title (no apostrophes, at most 48 characters, cut at a word). `aidlc fix` writes a fix bolt the same way in a v2 project.
 - **Names.** Branch `bolt/B-<n>`; test tags `B-<n>/AC-<k>`, or `R-<n>/AC-<k>` for a requirement's ACs.
 - **Front matter.** `intent`, `increment`, `modules` (its binding), `neededBy`, `scope`, `acs`.
 - **Binding** (M19): one domain, or one horizontal module needed by a domain bolt of the same increment. Several domains only in increment 1 ([Construction by proof](construction.md)).
@@ -46,6 +46,6 @@ B152 removed the section, the `Spec:` line, `plan.sliceUnits` and `slices.md`, k
 - `U-<n>` and `units/` are read as aliases of bolts: cards, gates and history keep working.
 - In a v2 project (its profile has `system`), a doc under `units/` that no v1 plan approved is `PLAN-BOLT`.
 - Old test tags `U-<n>/AC-<k>` still count for their bolt.
-- The aliases expire one milestone after the last existing project migrates (M21): the migrations run last, so `grid.legacyUntil` names M25, and a test fails once it is built with the aliases still there.
+- The aliases expire one milestone after the last existing project migrates (M21): the migrations run last, so `grid.legacyUntil` names M30, the milestone that retires them ([M30](../roadmap/m30.md)), and a test fails once it is built with the aliases still there.
 
 Bolts: [M15](../roadmap/m15.md) B152, B153; [M19](../roadmap/m19.md) B182 (binding), B186 (`INCR-SKELETON`, `INCR-DONE`), B188 (`FIX-SHAPE`).

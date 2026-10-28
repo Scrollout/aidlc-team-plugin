@@ -34,7 +34,7 @@ In the gate's proof-revert, a level whose run fails with a compile error proves 
 At every merge, `architecture/traceability-i-<n>.md` is generated for each intent (with its digest): a row per bolt AC, linking requirement, AC tag, bolt, tagged test files, merge commit and release. A requirement is delivered only when each bolt citing it is merged and in the last passing release (or a tag, with no `deploy` or `release`), and each AC of those bolts has a tagged test at that commit. `status` lists the requirements not delivered; v1's count of citations stays for v1 projects only.
 
 # Fix bolts
-`FIX-SHAPE`: a bolt with no intent has exactly one AC, and its scope reaches neither the bundle's decisions nor a one-way door. The gate's proof is the regression test failing before the fix. It blocks approval.
+`FIX-SHAPE`: a bolt with no intent has exactly one AC, and its scope reaches neither the docs bundle's decisions nor a one-way door. The gate's proof is the regression test failing before the fix. It blocks approval.
 
 # Escape hatches
 Each hatch is the owner's (a stamp or an owner command), may carry `until: <date>`, and `status` lists the live ones:

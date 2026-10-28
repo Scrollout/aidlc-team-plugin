@@ -1,7 +1,7 @@
 ---
 type: Design
 title: Architecture model
-description: The system's core and extensions, seven closed module kinds with what each may depend on, four inward-pointing layers, client, server and event surfaces, and data owned by one domain; boundaries are computed from these declarations, never written by hand.
+description: The system's core and extensions, seven closed module kinds with what each may depend on, five horizontal layers pointing inward, client, server and event surfaces, and data owned by one domain; boundaries are computed from these declarations, never written by hand.
 status: stable
 generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T00:40:00Z }
 ---
@@ -29,12 +29,12 @@ A module without a kind, an unknown kind or surface, or a malformed `system` is 
 
 | Kind | Owns data | May depend on |
 |---|---|---|
-| `domain` | its schema | its own layers; `foundation`; other domains' `client` and `events` |
-| `pipeline` (request-path stage) | read models fed by events only | `foundation`; domains' `client` and `events` |
+| `domain` | its database schema | its own layers; `foundation`; other domains' `client` and `events` |
+| `pipeline` (a stage every call crosses) | read models fed by integration events only | `foundation`; domains' `client` and `events` |
 | `foundation` (shared kit) | nothing | lower `foundation` kits, acyclic |
 | `adapter` (anticorruption layer) | nothing | `foundation`; the external SDK |
 | `runtime` (composition root) | nothing | the core modules it hosts |
-| `extension` | its own | `foundation`; published contracts only: domains' `client` and `events` |
+| `extension` | its own | `foundation`; published API contracts only: domains' `client` and `events` |
 | `delivery` (build, deploy, tooling) | nothing | nothing in product code |
 
 **Always:**
@@ -43,7 +43,7 @@ A module without a kind, an unknown kind or surface, or a malformed `system` is 
 - nothing in product code imports `delivery`.
 
 # Layers
-Inside a domain that declares them, its horizontal layers point inward: `interface → application → model` and `infrastructure → model`. `model` imports only `foundation`. Each vertical slice has its folder in `application` and reaches the other layers through the domain's ports. A stack pack maps the four layers to folder names (M17).
+Inside a domain that declares them, its horizontal layers point inward (`vocabulary.layerRules`): `interface → application → model`, `interface → model` and `infrastructure → model`; `ui` and `model` import no other layer. `model` imports only `foundation`. A stack pack maps the five layers, `ui`, `interface`, `application`, `model` and `infrastructure`, to folder names (`layers`, M17), and its `slicePaths` place each vertical slice's own code in them, with the domain's `migration` folder as one more cut ([Building a slice](slice-method.md#layers)). A slice reaches the other layers through the domain's ports.
 
 # Surfaces and data
 - Another module may import only a module's `client` or `events`. `server` is for the runtime that hosts it.
@@ -55,7 +55,7 @@ Inside a domain that declares them, its horizontal layers point inward: `interfa
 |---|---|---|
 | `PROFILE-KIND` | M15 | a module without a kind, or an unknown one |
 | `ARCH-KIND` | M17 B166 | an edge the kind table forbids (`vocabulary.kindRules`) |
-| `ARCH-LAYER` | M17 B167 | an outward layer edge, or a model depending on anything but a foundation kit; v1 names `api`, `app`, `domain`, `store` read as the canonical four |
+| `ARCH-LAYER` | M17 B167 | an outward layer edge, or a domain model depending on anything but a foundation kit; v1 names read as the pack's layers (`vocabulary.layerAliases`: `web` and `frontend` as `ui`, `api`, `app`, `domain`, `store`) |
 | `ARCH-API` | M17 B168 | an import outside a module's surface (`client` and `events`, or a v1 `api`), when either end has no kind; with kinds on both ends `ARCH-KIND` decides |
 | `ARCH-REACH` | M17 B169 | a runtime reaching, through anything it links, internals of a domain it does not host (it hosts the domains it imports beyond their surfaces) |
 | `ARCH-DATA`, `ARCH-CYCLE` | existing | as today |
@@ -66,7 +66,7 @@ All of them run at every gate on the merged tree. A project writes only exceptio
 With `modules` in the profile, `check` reports `PROFILE-ARCH`: an error when data ownership is off (no `architecture.data`, so the gate cannot see a domain reaching another's data), a warning in an adopted project until the migration intent sets the owners ([Data ownership](data-ownership.md#adoption)); a warning when `architecture.acyclic` is off or a module has no `api`.
 
 # Constitution
-`init` writes rule 9: domains own their data, in the canonical words, with the owner's sentence quoted word for word and the checks that hold it.
+`init` writes rule 9, vertical slices across horizontal layers: code grouped by use case into slices cutting the layers they need, slices meeting only through published interfaces, integration events or shared domain services, each domain owning its data, language and API contract with its layers pointing inward, no dependency cycle, and the checks that hold it.
 
 # Replaces
 - The slice-architecture doc folded into this doc (B159). [Module surfaces](module-surface.md) and [Data ownership](data-ownership.md) stay as the detail docs of `ARCH-API`, `ARCH-CYCLE` and `ARCH-DATA`: folding them in would pass the doc's cap.

@@ -1,7 +1,7 @@
 ---
 type: Decision
 title: 0021 The control plane's API conventions belong to its model
-description: The resource-hierarchy part of decision 0014's grammar (scope segments, the providers segment and its namespace, the resource envelope's systemData, value and nextLink lists) moves from the plugin's defaults into the control-plane model's contract, applied only where a project chose that model; the generic casing and format rules stay the plugin's.
+description: The resource-hierarchy part of decision 0014's grammar (scope segments, the providers segment and its namespace, the resource envelope's systemData, value and nextLink lists) moves from the plugin's defaults into the control-plane architecture model's API contract, applied only where a project chose that architecture model; the generic casing and format rules stay the plugin's.
 status: accepted
 date: 2026-10-27
 decision-makers: the owner
@@ -18,20 +18,20 @@ Decision 0014 shipped one control plane's API conventions as the default grammar
 
 ## Decision Drivers
 * The plugin works for any project: no one system's shape in its defaults.
-* A project that chose the control-plane model keeps every rule it had.
+* A project that chose the control-plane architecture model keeps every rule it had.
 
 ## Considered Options
-* Split: generic rules stay the plugin's; the resource hierarchy moves to the control-plane model's `contract`.
+* Split: generic rules stay the plugin's; the resource hierarchy moves to the control-plane architecture model's `contract`.
 * Leave decision 0014's defaults as they are.
 
 ## Decision Outcome
-Chosen option: "Split", because the generic rules then serve every project and the control plane's shape applies only where its model is chosen.
-* **The plugin's grammar:** a dated `info.version`, camelCase path segments, full parameter names ending in `Name` or `Id`, an even segment count on a PUT path, `Noun_Verb` operation ids, lowerCamel properties, no `is` booleans, PascalCase enums.
-* **The control-plane model's `contract`:** the scope segments, the `providers` segment and its dotted PascalCase namespace, the resource envelope that carries `systemData`, and lists of `value` with `nextLink`. The contracts check reads them from the chosen model.
+Chosen option: "Split", because the generic rules then serve every project and the control plane's shape applies only where its architecture model is chosen.
+* **The plugin's grammar:** a dated `info.version`, camelCase path segments, full parameter names ending in `Name` or `Id`, an even segment count on a PUT path, `Noun_Verb` API operation ids, lowerCamel properties, no `is` booleans, PascalCase enums.
+* **The control-plane architecture model's `contract`:** the scope segments, the `providers` segment and its dotted PascalCase namespace, the resource envelope that carries `systemData`, and lists of `value` with `nextLink`. The API contracts check reads them from the chosen architecture model.
 
 ### Consequences
-* Good, because a project with no model, or another model, gets only the generic rules.
-* Bad, because a project that relied on the old defaults without choosing a model loses those checks until it chooses the control-plane model.
+* Good, because a project with no architecture model, or another one, gets only the generic rules.
+* Bad, because a project that relied on the old defaults without choosing an architecture model loses those checks until it chooses the control-plane architecture model.
 
 ### Confirmation
-A contracts test without a chosen model finds no resource-hierarchy finding; with the control-plane model chosen, the same document gets them.
+An API contracts test without a chosen architecture model finds no resource-hierarchy finding; with the control-plane architecture model chosen, the same document gets them.
