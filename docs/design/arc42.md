@@ -7,13 +7,13 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-28T14:00:00Z }
 ---
 
 # 1 Introduction and goals
-Coding agents build software by the AI-DLC method, the owner deciding only what is theirs. Every rule that matters is enforced by code, not left to an agent's memory.
+**The goal:** agents, driven by the plugin, deliver reliable, high-quality software built as whole vertical slices, each use case cut through every horizontal layer it needs, graded at every level and from every angle against a real reference system, with no gaps and no drift.
 
-Quality goals, in order:
-1. **Deterministic:** the same docs and git history always give the same next step and the same verdict.
-2. **The owner decides:** an intent, a plan, a one-way door and a release each need the owner's approval; agents do the rest.
-3. **Cheap:** little always-on context, smaller AI models for building, the larger one for review.
-4. **Any project:** nothing in the plugin is specific to one stack or product.
+It follows two sources, which win over its own words and designs:
+1. **The AI-DLC method** as researched: intent, units of work, bolts, with the owner in the loop ([Method](method.md)).
+2. **Vertical slices across horizontal layers**, as the hyperscalers' official architecture guidance defines them ([0024](../decisions/0024-vertical-slices-are-features-horizontal-layers.md), [Building a slice](slice-method.md)).
+
+Quality goals, in order: whole, correct slices; the same docs and history always give the same next step and verdict; the owner decides intent, plan, one-way doors and release; cheap context and AI models; nothing tied to one stack or product.
 
 # 2 Constraints
 - Node 24 or later, no dependencies, plain ES modules.
@@ -24,7 +24,7 @@ Quality goals, in order:
 | Who or what | What passes |
 |---|---|
 | Owner | Their request in plain words in; approvals and release decisions in; status out |
-| Lead (the main agent session) | Asks the CLI for the next step and does it, in a role persona for analysis and design |
+| Lead (the main agent session) | Asks the CLI for the next step and does it |
 | Builder, reviewer and researcher agents | Each gets one card or brief; builds in its own git worktree, reviews, or researches |
 | Git repository and CI | Docs and code in; merges, tags and CI runs out |
 | Coding agent's hooks | Every tool call an agent makes passes the plugin's hooks first |
@@ -35,18 +35,16 @@ The project owns its code, docs bundle and profile.
 - **One CLI holds every rule.** Hooks, agents and the lead all call it; no rule lives only in a prompt.
 - **State is derived, never stored:** from the docs and git history ([0001](../decisions/0001-derived-state.md), [0013](../decisions/0013-a-deterministic-ai-dlc.md)).
 - **Declared once, the rest generated:** indexes, maps, traces and cards.
-- **Proven shapes as data:** an architecture model gives a project a reference system's layers and rules, which the checks read ([0020](../decisions/0020-architecture-models-are-data.md)).
-- **Vertical slices:** each use case is built through every layer it needs and checked whole ([Building a slice](slice-method.md)).
+- **Proven shapes as data:** an architecture model brings a reference system's layers and rules ([0020](../decisions/0020-architecture-models-are-data.md)).
 
 # 5 Building block view
 | Block | Does |
 |---|---|
-| CLI core: foundation kits | Data, git, text, YAML, globs, the profile, runtime files |
+| CLI core: foundation kits | Data, git, text, YAML, globs, the profile |
 | CLI core: domains | The docs bundle, the plan, cards, the gate, reviews, approvals, the hooks' rules |
 | CLI extensions | Optional parts that plug into the core: board, API contracts, intake, architecture models, operations, slices, stack packs |
-| Hooks | Thin wrappers calling the CLI on each tool call |
-| Agents and skill | Builder, reviewer and researcher prompts; the lead's skill |
-| Templates, personas, packs | What `init` and `scaffold` write, how the lead works in a role, each stack's layout |
+| Hooks, agents, skill | Hooks call the CLI on each tool call; builder, reviewer and researcher prompts; the lead's skill |
+| Templates, personas, stack packs | What `init` and `scaffold` write; the lead's roles; each stack's layout |
 
 The core never imports an extension; an extension uses only the core's public entry ([Library and extensions](library.md), [CLI components](diagrams/cli-components.md)).
 
@@ -63,14 +61,10 @@ One change, start to end:
 [Workflow](diagrams/workflow.md), [Bolt states](diagrams/bolt-states.md), [Merge mechanics](gate.md).
 
 # 7 Deployment view
-The plugin installs from a marketplace. `init` copies a pinned CLI into the project (`.aidlc/`), so every machine and CI run uses the same version ([Vendoring](vendoring.md), [0004](../decisions/0004-vendored-cli.md)).
+Installed from a marketplace; `init` pins a copy of the CLI in the project (`.aidlc/`), so every machine and CI run uses one version ([Vendoring](vendoring.md), [0004](../decisions/0004-vendored-cli.md)).
 
 # 8 Crosscutting concepts
-- **Docs bundle:** the project's docs folder in OKF, with generated indexes ([OKF](okf.md), [Bundle v2](bundle.md)).
-- **Names from a registry:** every name composed from a grammar, never invented ([Naming](naming.md)).
-- **Approvals:** stamps only the owner's typed command writes ([Approvals](approvals.md)).
-- **Hooks block at the action:** a rule break is refused when it happens, not found later ([Hook checks](hook-checks.md)).
-- **One word per concept:** [Canonical model](canonical-model.md).
+- Docs bundle in OKF ([Bundle v2](bundle.md)); names composed from a registry ([Naming](naming.md)); approvals only the owner's command stamps ([Approvals](approvals.md)); hooks refusing a rule break as it happens ([Hook checks](hook-checks.md)); one word per concept ([Canonical model](canonical-model.md)).
 
 # 9 Architecture decisions
 Each one-way choice is a decision in MADR 4.0, approved by the owner: [Decisions](../decisions/index.md).
@@ -78,13 +72,14 @@ Each one-way choice is a decision in MADR 4.0, approved by the owner: [Decisions
 # 10 Quality requirements
 | Goal | Held by |
 |---|---|
+| Whole, correct slices | Each slice declares its cuts; the gate refuses a missing cut, an undeclared data, call or event, an unproved route |
 | Deterministic | The same inputs give the same `next`, card hash and gate verdict; tests check it |
 | The owner decides | Owner steps exit with code 2; only the owner's typed command stamps an approval |
 | Cheap | Context, prompt and card budgets, checked in CI |
 | Fast | A blocking hook adds at most 500 ms |
 | Correct merges | The gate reruns tests on the merge result, and again with the bolt's code reverted, where its tests must fail |
 
-Every check has a code and a fix: [Gate codes](tables/codes-gate.md), [Plan lint codes](tables/codes-plan.md), [Docs check codes](tables/codes-bundle.md), [Intent and bolt codes](tables/codes-intent.md), [Hook codes](tables/codes-hooks.md).
+Each check's code and fix: [Gate codes](tables/codes-gate.md), [Plan lint codes](tables/codes-plan.md), [Docs check codes](tables/codes-bundle.md), [Intent and bolt codes](tables/codes-intent.md), [Hook codes](tables/codes-hooks.md).
 
 # 11 Risks and technical debt
 - The guard stops mistakes, not attackers: the shell is not sandboxed.
