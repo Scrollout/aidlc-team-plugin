@@ -14,9 +14,11 @@ function measures(st, intent, units, docs, stats) {
   const smoke = intent.deploy.smoke?.ok ? intent.deploy.smoke.at : intent.deploy.release?.ok ? intent.deploy.release.at : null;
   const lines = incrementLines(intent), committed = lines.length ? lines : [{ ids: intent.units.map((u) => u.id) }];
   const mine = new Set(units.map((u) => u.id));
-  const refusals = Object.entries(Object.groupBy((stats[R.refusals] ?? []).filter((r) => mine.has(r.unit)), (r) => r.binding)).map(([b, rs]) => `${b} ${rs.length}`);
+  const refused = (stats[R.refusals] ?? []).filter((r) => mine.has(r.unit)), tally = (xs) => Object.entries(Object.groupBy(xs, (x) => x)).map(([k, v]) => `${k} ${v.length}`);
+  const refusals = tally(refused.map((r) => r.binding));
   // Each refusal once per layer its findings sit in, from the stack pack's layers (docs/design/slice-method.md#reported).
-  const layerOf = seam('layerOf', st.profile)[0], byLayer = layerOf ? Object.entries(Object.groupBy((stats[R.refusals] ?? []).filter((r) => mine.has(r.unit)).flatMap((r) => [...new Set((r.paths ?? []).map((p) => layerOf(st.cwd, st.profile, p)).filter(Boolean))]), (l) => l)).map(([l, ls]) => `${l} ${ls.length}`) : [];
+  const [layerOf] = seam('layerOf', st.profile);
+  const byLayer = layerOf ? tally(refused.flatMap((r) => [...new Set((r.paths ?? []).map((p) => layerOf(st.cwd, st.profile, p)).filter(Boolean))])) : [];
   // From the doc's last commit before each stamp to the stamp.
   const dwell = docs.filter((d) => d.file).flatMap((d) => events(d.fm).filter(human).map((e) => [d.id, e.at, tryGit(st.cwd, 'log', '-1', '--format=%cI', `--before=${e.at}`, '--', d.file)]))
     .filter(([, , c]) => c).map(([id, at, c]) => `${id} ${hours(c, at)}`);

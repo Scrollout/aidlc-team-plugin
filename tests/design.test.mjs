@@ -109,7 +109,7 @@ test('B254/AC-1 B254/AC-2 the vocabulary defines every concept the plugin uses, 
 
 // M30 B255: the words a reader could misread keep one sense in every tracked text (docs/design/canonical-model.md).
 test('B255/AC-1 the docs, what ships and the CLI\'s messages and fixes use each misreadable word only in an expression naming one sense', async () => {
-  const { bareUses, covered, cliTexts } = await import('./senses.mjs');
-  const found = [...covered().flatMap((f) => bareUses(readFileSync(join(ROOT, f), 'utf8')).map((u) => `${f}:${u.line} ${u.found}`)), ...cliTexts().flatMap(([where, t]) => bareUses(t).map((u) => `${where} ${u.found}`))];
+  const { allBareUses } = await import('./senses.mjs');
+  const found = allBareUses();
   assert.deepEqual(found, [], `${found.length} bare uses; node tests/senses.mjs lists them`);
 });

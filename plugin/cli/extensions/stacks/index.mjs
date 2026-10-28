@@ -9,8 +9,9 @@ const ST = config.state.names; // the lifecycle states, by name
 const K = config.packs;
 const packsDir = () => shippedDir('packs');
 
-// The pack whose detect file the project has, as { stack, dir, manifest }, or null.
-function packFor(root) {
+// The pack whose detect file the project has, as { stack, dir, manifest }, or null; read once per root and run.
+const packs = new Map(), packFor = (root) => (packs.has(root) ? packs.get(root) : packs.set(root, findPack(root)).get(root));
+function findPack(root) {
   if (!existsSync(packsDir())) return null;
   for (const stack of readdirSync(packsDir()).sort()) {
     const file = join(packsDir(), stack, K.manifest);
@@ -91,7 +92,7 @@ export function packGraph(root, profile) {
 function eventFindings(root, profile) {
   const pack = packFor(root);
   if (!pack?.manifest.eventType || !profile.naming) return [];
-  const grammar = new RegExp(config.naming.grammar.event.regex), past = Object.values(config.naming.pastTense), out = [];
+  const grammar = new RegExp(registry(profile).grammar.event.regex), past = Object.values(config.naming.pastTense), out = [];
   for (const m of (profile.modules ?? []).filter((x) => x.kind === 'domain')) {
     const dir = `${render(pack.manifest.folders.domain, { domain: String(m.id ?? m.name) })}/${pack.manifest.surfaces.events}`;
     for (const f of existsSync(join(root, dir)) ? readdirSync(join(root, dir)).filter((x) => new RegExp(pack.manifest.sources).test(x)) : []) {
@@ -183,14 +184,18 @@ function declarationAt(root, profile, domain, slice) {
 const declaredCuts = (...at) => declarationAt(...at)?.cuts ?? null;
 // A pack's cuts and the path of each; a cut with forms, `ui`, is one cut per form the pack has, `ui.<form>`.
 const cutPaths = (m) => Object.fromEntries(Object.entries(m?.slicePaths ?? {}).flatMap(([cut, p]) => (isMap(p) ? Object.entries(p).map(([form, q]) => [`${cut}${config.slices.declaration.form}${form}`, q]) : [[cut, p]])));
+// Every cut name a declaration may use: a cut with forms by itself and as each `<cut>.<form>`.
+const cutNames = (m) => [...new Set([...Object.keys(m?.slicePaths ?? {}), ...Object.keys(cutPaths(m))])];
 // The cuts a declaration names, a cut with forms standing for each form the pack has.
-const expand = (m, cuts) => [...new Set(cuts.flatMap((c) => (isMap(m?.slicePaths?.[c]) ? Object.keys(cutPaths(m)).filter((k) => k.startsWith(`${c}${config.slices.declaration.form}`)) : [c])))];
+const expand = (m, cuts) => [...new Set(cuts.flatMap((c) => (isMap(m?.slicePaths?.[c]) ? Object.keys(m.slicePaths[c]).map((f) => `${c}${config.slices.declaration.form}${f}`) : [c])))];
 const isUi = (cut) => { const D = config.slices.declaration; return cut === D.ui || cut.startsWith(`${D.ui}${D.form}`); };
 // The cuts scaffold writes: the declared ones, or every cut the pack writes own code for but `ui`'s forms.
 const scaffoldCuts = (root, profile, domain, slice, pack) => declaredCuts(root, profile, domain, slice) ?? [...new Set(pack.manifest.scaffold.slice.map(([, , c]) => c).filter((c) => c && !isUi(c)))];
 // Where a cut of a slice sits, from the pack's slicePaths: a file or a folder a bolt that cuts it changes.
 const cutPath = (m, domain, slice, cut) => render(cutPaths(m)[cut], { dir: render(m.folders.domain, { domain }), domain, slice });
-const changes = (paths, at) => paths.some((p) => p === at || p.startsWith(`${at}/`));
+const changes = (paths, at) => paths.some((p) => p === at || p.startsWith(`${at}/`)), touched = (paths) => (f) => changes(paths, f.path);
+// An integration event's name without its version, as each Events line and declaration is compared.
+const eventBase = (e) => e.replace(new RegExp(K.events.versioned), '').replace(/\.$/, '');
 
 // Each domain's events, from the Events line of its doc's # Surface.
 function eventsOf(bundle, domains) {
@@ -209,7 +214,7 @@ function eventsOf(bundle, domains) {
 export function declarationProblems(decl, { root, profile, bundle, slice, domains, ui = false }) {
   const D = config.slices.declaration, at = { slice };
   if (!decl?.cuts.length) return [['sliceNoCuts', at]];
-  const m = packFor(root)?.manifest, out = [], cuts = [...new Set([...Object.keys(m?.slicePaths ?? {}), ...Object.keys(cutPaths(m))])], mods = profile.modules ?? [], kind = (id) => mods.find((m) => String(m.id ?? m.name) === id)?.kind;
+  const m = packFor(root)?.manifest, out = [], cuts = cutNames(m), mods = profile.modules ?? [], kind = (id) => mods.find((m) => String(m.id ?? m.name) === id)?.kind;
   if (cuts.length) for (const cut of decl.cuts.filter((c) => !cuts.includes(c))) out.push(['sliceUnknownCut', { ...at, cut, cuts: cuts.join(', ') }]);
   for (const part of decl.unknown) out.push(['slicePartUnknown', { ...at, part, parts: D.parts.join(', ') }]);
   const owned = mods.filter((m) => domains.includes(String(m.id ?? m.name))).flatMap((m) => list(m.data)), shared = list(profile.architecture?.data?.shared);
@@ -218,15 +223,15 @@ export function declarationProblems(decl, { root, profile, bundle, slice, domain
   const reg = decl.permission && profile.naming && registry(profile, bundle);
   const names = reg ? domains.flatMap((domain) => config.naming.actions.map((action) => { try { return nameOf('permission', { domain, action }, reg); } catch { return null; } })).filter(Boolean) : [];
   if (reg && !names.includes(decl.permission)) out.push(['slicePermission', { ...at, permission: decl.permission, names: names.join(', ') || '-' }]);
-  const base = (e) => e.replace(new RegExp(K.events.versioned), '').replace(/\.$/, ''), events = eventsOf(bundle, mods.filter((m) => m.kind === 'domain').map((m) => String(m.id ?? m.name)));
+  const base = eventBase, events = eventsOf(bundle, mods.filter((m) => m.kind === 'domain').map((m) => String(m.id ?? m.name)));
   for (const event of list(decl.emits).filter((e) => !domains.some((d) => (events.get(d) ?? []).map(base).includes(base(e))))) out.push(['sliceEmits', { ...at, event, domain: domains.join(', ') }]);
   for (const event of list(decl.consumes).filter((e) => ![...events.values()].flat().map(base).includes(base(e)))) out.push(['sliceConsumes', { ...at, event }]);
   for (const target of list(decl.calls).filter((t) => !D.callKinds.includes(kind(t)))) out.push(['sliceCalls', { ...at, target }]);
   if (ui && cuts.some(isUi) && !decl.cuts.some(isUi)) out.push(['sliceUi', at]);
   return out;
 }
-const cutsOfPacks = () => (existsSync(packsDir()) ? [...new Set(readdirSync(packsDir()).flatMap((s) => { const f = join(packsDir(), s, K.manifest); const m = existsSync(f) && JSON.parse(readFileSync(f, 'utf8')); return m ? [...new Set([...Object.keys(m.slicePaths ?? {}), ...Object.keys(cutPaths(m))])] : []; }))] : []);
-plug('sliceDeclaration', { parse: declarationOf, problems: declarationProblems, cuts: cutsOfPacks, pack: packFor, declared: declarationAt, path: cutPath, graph: packGraph, listed: surfaceOf, events: eventsOf, paths: cutPaths });
+const cutsOfPacks = () => (existsSync(packsDir()) ? [...new Set(readdirSync(packsDir()).flatMap((s) => { const f = join(packsDir(), s, K.manifest); return existsSync(f) ? cutNames(JSON.parse(readFileSync(f, 'utf8'))) : []; }))] : []);
+plug('sliceDeclaration', { parse: declarationOf, problems: declarationProblems, cuts: cutsOfPacks, pack: packFor, declared: declarationAt, path: cutPath, graph: packGraph, listed: surfaceOf, events: eventsOf, paths: cutPaths, event: eventBase, touched });
 
 // Vertical slices across a domain's layers: each slice is a folder of the application layer, met by no other slice,
 // entered from its domain's interface layer or a runtime, listed with its use case and stories in the domain doc, and
@@ -369,7 +374,6 @@ function deliverFindings(tree, profile, paths, unit) {
   return out;
 }
 // At the gate, a project's existing code is measured as it changes: only findings where the bolt changed a file count.
-const touched = (paths) => (f) => paths.some((p) => p === f.path || p.startsWith(`${f.path}/`));
 plug('gateChecks', (tree, profile, paths = [], added, unit) => [...sliceFindings(tree, profile).filter(touched(paths)), ...deliverFindings(tree, profile, paths, unit)]);
 
 // VALUE-LITERAL: a string literal a bolt adds to a source file, outside its tests and the project's data, is a value

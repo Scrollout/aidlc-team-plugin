@@ -36,10 +36,12 @@ export const covered = () => execFileSync('git', ['ls-files'], { cwd: ROOT, enco
 export const cliTexts = () => [...Object.entries(config.messages).map(([k, v]) => [`messages.${k}`, v]),
   ...Object.entries(config).flatMap(([t, sec]) => Object.entries(sec?.codes ?? {}).map(([c, x]) => [`${t}.codes.${c}`, x.fix ?? '']))];
 
+// Each bare use in the files, or in every covered file and the CLI's own text, as `<where> <found>`.
+export const allBareUses = (files = null) => [...(files ?? covered()).flatMap((f) => bareUses(readFileSync(join(ROOT, f), 'utf8')).map((u) => `${f}:${u.line} ${u.found}`)),
+  ...(files ? [] : cliTexts().flatMap(([where, t]) => bareUses(t).map((u) => `${where} ${u.found}`)))];
+
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const files = process.argv.slice(2).length ? process.argv.slice(2) : covered();
-  const found = [...files.flatMap((f) => bareUses(readFileSync(join(ROOT, f), 'utf8')).map((u) => `${f}:${u.line} ${u.found}`)),
-    ...(process.argv.slice(2).length ? [] : cliTexts().flatMap(([where, t]) => bareUses(t).map((u) => `${where} ${u.found}`)))];
+  const args = process.argv.slice(2), found = allBareUses(args.length ? args : null);
   console.log(found.join('\n'));
   console.error(`${found.length} bare uses`);
   process.exitCode = found.length ? 1 : 0;

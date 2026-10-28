@@ -13,7 +13,7 @@ export { computeLane, inForce, incrementLines, lintPlan, methodOf, readPlan } fr
 export { lintInception, questionsOf } from './domains/inception.mjs';
 export { bindingName, bindingOf, hatchesOf, hatchLine, traceOf } from './domains/construction.mjs';
 export { ciGreen, decisionsOf, readState } from './domains/flow.mjs';
-export { branchOf } from './foundation/store.mjs';
+export { branchOf, unitPaths } from './foundation/store.mjs';
 export { approval, events } from './domains/approval.mjs';
 export { boundaryFindings, graphOf, kindFindings, layerFindings, moduleFindings, reachFindings } from './domains/architecture.mjs';
 export { domainForms, generatedRules, nameOf, registry } from './domains/naming.mjs';

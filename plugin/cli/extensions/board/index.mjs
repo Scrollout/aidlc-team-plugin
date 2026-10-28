@@ -69,7 +69,8 @@ function wanted(cwd, st, gh) {
   };
   const one = (d, kind, state) => {
     const K = T.kinds[kind === 'unit' && !d.fm.intent ? B.fix : kind];
-    const done = B.done.includes(state), sliced = kind === 'unit' ? seam('boardSlices', st.profile).map((f) => f(top, d, st.profile, { base: st.base, merged: done })).find(Boolean) : null;
+    const done = B.done.includes(state);
+    const sliced = kind === 'unit' ? seam('boardSlices', st.profile).map((f) => f(top, d, st.profile, { base: st.base, merged: done })).find(Boolean) : null;
     const derived = { [B.wave]: () => wave(d), [B.binding]: () => bindingName(d, st.profile), [B.cutsDone]: () => sliced?.done }; // a value in the doc wins
     // The decisions the doc links, as labels: ADR-<NNNN> (docs/design/board.md#shape).
     const decisions = decisionsOf(st, [d]).map((x) => render(B.decisionLabel, { n: basename(x.file).slice(0, config.ids.decisionDigits) }));
