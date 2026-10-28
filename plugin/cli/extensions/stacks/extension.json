@@ -45,7 +45,9 @@
       "sliceEmits": "slice {{slice}} emits {{event}}, which {{domain}}'s # Surface lists on no Events line",
       "sliceConsumes": "slice {{slice}} consumes {{event}}, which no domain's # Surface lists on an Events line",
       "sliceCalls": "slice {{slice}} calls {{target}}, which is no domain, extension or adapter module",
-      "sliceUi": "slice {{slice}} serves a ui unit of work but does not cut ui, which the stack pack has"
+      "sliceUi": "slice {{slice}} serves a ui unit of work but does not cut ui, which the stack pack has",
+      "planSliceScope": "{{unit}} lists slice {{slice}}, which cuts {{cut}}, but its scope does not cover {{path}}",
+      "sliceDeliverCut": "{{unit}} lists slice {{slice}}, which cuts {{cut}}, but changes nothing there"
     },
     "okf": {
       "codes": {

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.196.0] - 2026-10-28
+### Added
+- Each cut in scope and delivered (M29 B252, first part). `PLAN-SLICE` reports a bolt whose scope does not cover a layer a slice it lists cuts, from the pack's `slicePaths`; `SLICE-DELIVER` refuses a bolt whose diff leaves such a layer unchanged, naming the cut. A `# Surface` line with a declaration counts as listing its slice.
+
 ## [0.195.0] - 2026-10-28
 ### Added
 - Packs and scaffold by cuts (M29 B251). A project may name its `ui` layer `web` or `frontend`. `scaffold slice` writes the own code and test of each layer the slice's `# Surface` line cuts, its route under `interface/<slice>`, or with no declaration every such layer but `ui`. The TypeScript pack has a `ui` layer, its screen under `ui/<slice>/`. Both packs' references and the example control-plane model's reference route each slice under `interface/<slice>`, the router or the front door mounting them; the example's front door keeps only what it applies to every slice, governance and the long-running operation, and an `answer` kit holds the error envelope.
@@ -436,7 +440,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.195.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.196.0...HEAD
+[0.196.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.195.0...v0.196.0
 [0.195.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.194.0...v0.195.0
 [0.194.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.193.0...v0.194.0
 [0.193.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.192.0...v0.193.0

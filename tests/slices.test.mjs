@@ -192,3 +192,18 @@ test('B251/AC-1 a project\'s own name for the ui layer maps to it, as the other 
   for (const alias of ['web', 'frontend']) assert.equal(V.layerAliases[alias], 'ui');
   assert.deepEqual(Object.values(V.layerAliases).filter((l) => !(l in V.layerRules)), [], 'every alias names a layer with its rule');
 });
+
+// M29 B252: a bolt's scope covers each layer its slices cut, and its diff changes each one (docs/design/slice-method.md#proved).
+test('B252/AC-1 B252/AC-3 a listed slice\'s cuts are in the bolt\'s scope, and the gate refuses a cut the diff leaves unchanged', async () => {
+  const { run } = await import('./state-repo.mjs');
+  const doc = '---\ntype: Domain\ntitle: Orders\ndescription: Orders.\ncode: orders\nkind: domain\n---\n\n# Surface\n- Command createorder (interface, application, model, migration; entry shop-api): a customer orders a cake [I-1:US1.1]\n';
+  const boltDoc = (scope) => `---\ntype: Bolt\ntitle: Take orders\ndescription: Take orders.\nintent: I-1\nmodules: [orders]\nslices: [createorder]\nscope: [${scope.map((s) => `"${s}"`).join(', ')}]\n---\n\n# Why\nOrders.\n`;
+  const plan = (scope) => run(makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', 'docs/intents/I-1-orders.md': intent, 'docs/domains/orders.md': doc, 'docs/bolts/B-1-take.md': boltDoc(scope) }, ORDERS), ['check']).out.split('\n').filter((l) => /PLAN-SLICE/.test(l)).map((l) => l.replace(/ → .*$/, '').replace(/^\S+:\d+ /, ''));
+  assert.deepEqual(plan([`${D}/**`, 'migrations/orders/**']), [], 'every cut in scope');
+  assert.deepEqual(plan([`${D}/**`]), ['PLAN-SLICE B-1 lists slice createorder, which cuts migration, but its scope does not cover migrations/orders']);
+  const dir = makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', 'docs/domains/orders.md': doc }, ORDERS);
+  const unit = { id: 'B-1', modules: ['orders'], fm: { intent: 'I-1', slices: ['createorder'] } };
+  const gate = (paths) => seam('gateChecks', ORDERS).flatMap((check) => check(dir, ORDERS, paths, [], unit)).filter((f) => f.key === 'sliceDeliverCut').map((f) => `${f.data.cut} ${f.path}`);
+  assert.deepEqual(gate([`${D}/application/createorder/handler.go`, `${D}/interface/createorder.go`]), [`model ${D}/model`, 'migration migrations/orders']);
+  assert.deepEqual(gate([`${D}/application/createorder/handler.go`, `${D}/interface/createorder.go`, `${D}/model/order.go`, 'migrations/orders/0002_createorder.sql']), [], 'every cut changed');
+});
