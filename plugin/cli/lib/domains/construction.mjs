@@ -3,7 +3,7 @@
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { bundleOf, config, idOf, lapsed, list, readJson, relPath } from '../foundation/data.mjs';
-import { git, tryGit } from '../foundation/git.mjs';
+import { git, gitLines, tryGit } from '../foundation/git.mjs';
 import { msg, render } from '../foundation/text.mjs';
 import { parseDoc } from './bundle.mjs';
 import { exceptDocs } from './architecture.mjs';
@@ -109,16 +109,30 @@ export function traceOf(cwd, profile) {
     const release = deploy.release?.ok && smoked ? deploy.release.base : null;
     const shippedAt = (sha) => (!sha ? null : release ? (tryGit(cwd, 'merge-base', '--is-ancestor', sha, release) !== null ? release : null)
       : (tryGit(cwd, 'tag', '--contains', sha) ?? '').split('\n')[0] || null);
-    const rows = plan.units.filter((u) => u.fm.intent === i.id).flatMap((u) => u.acs.map((a) => {
-      const tag = `${u.id}/${a.id}`, sha = merged.get(u.id), ref = shippedAt(sha);
-      // At the commit that shipped or merged it, else in the tree as it stands (the gate's merge result).
-      const at = ref ?? sha, found = tryGit(cwd, 'grep', '-l', '-F', tag, ...(at ? [at] : []), '--', '.', `:(exclude)${bundleRel}/**`) ?? '';
-      const files = found.split('\n').filter(Boolean).map((f) => (at ? f.slice(at.length + 1) : f));
+    // Each AC at the commit that shipped or merged it, else in the tree as it stands (the gate's merge result).
+    const acs = plan.units.filter((u) => u.fm.intent === i.id).flatMap((u) => u.acs.map((a) => { const sha = merged.get(u.id), ref = shippedAt(sha); return { u, tag: `${u.id}/${a.id}`, sha, ref, at: ref ?? sha ?? '' }; }));
+    const tests = testsNaming(cwd, bundleRel, acs);
+    const rows = acs.map(({ u, tag, sha, ref, at }) => {
+      const files = tests.get(`${at} ${tag}`) ?? [];
       return { reqs: u.requirements, tag, tests: files, merge: sha?.slice(0, config.text.sha.short), release: ref && files.length ? ref.slice(0, config.text.sha.long) : null };
-    }));
+    });
     const cited = [...new Set(rows.flatMap((r) => r.reqs))];
     return { intent: i, rows, delivered: cited.filter((r) => rows.filter((x) => x.reqs.includes(r)).every((x) => x.release)) };
   });
+}
+
+// The test files naming each AC's tag, keyed `<at> <tag>`: one `git grep` per commit for all of its tags, and one for the
+// tree as it stands; grep reports the longest tag at each place, so `B-1/AC-1` never counts a test of `B-1/AC-10`.
+function testsNaming(cwd, bundleRel, acs) {
+  const out = new Map();
+  for (const [at, group] of Map.groupBy(acs, (x) => x.at)) {
+    const found = gitLines(cwd, 'grep', '-o', '-F', ...group.flatMap((x) => ['-e', x.tag]), ...(at ? [at] : []), '--', '.', `:(exclude)${bundleRel}/**`);
+    for (const line of found) {
+      const rest = at ? line.slice(at.length + 1) : line, cut = rest.lastIndexOf(':'), key = `${at} ${rest.slice(cut + 1)}`, file = rest.slice(0, cut);
+      if (!(out.get(key) ?? []).includes(file)) out.set(key, [...(out.get(key) ?? []), file]);
+    }
+  }
+  return out;
 }
 
 // One traceability page per intent with bolts, at every merge of a v2 project.
@@ -133,5 +147,5 @@ export function writeTrace(cwd, profile) {
 
 plug('planRules', lintConstruction);
 // A v2 requirement is delivered by released tests; status lists the live escape hatches.
-plug('delivered', (st) => (st.profile.system ? traceOf(st.cwd, st.profile).flatMap((t) => t.delivered) : null));
+plug('delivered', (st) => (!st.profile.system ? null : st.requirements.length ? traceOf(st.cwd, st.profile).flatMap((t) => t.delivered) : []));
 plug('statusLines', (st) => { const hatches = st.profile.system ? hatchesOf(st) : []; return hatches.length ? msg('statusHatches', { hatches: hatchLine(hatches) }) : ''; });

@@ -18,6 +18,8 @@ generated: { by: tests/diagrams.mjs }
 | `GATE-PROOF` | make each tagged test fail without the change, then report again |
 | `GATE-SKIP` | run the level where its tests can run (set what it needs), or make the skipped test run; a skipped test proves nothing |
 | `GATE-RUN` | the builder fixes the code or tests until the level's run passes on the base merged in |
+| `GATE-BUSY` | merge it again once the running merge ends; one merge runs at a time |
+| `GATE-MOVED` | merge it again: the gate reruns on the base as it is now |
 | `GATE-BASE` | not this bolt's to fix: draft a fix bolt for the base (aidlc fix); this merge waits for it |
 | `GATE-REVIEW` | run the reviewer on the current diff and card: aidlc review record |
 | `GATE-CARD` | render the card (aidlc card) and review against it |

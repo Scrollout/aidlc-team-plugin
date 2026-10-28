@@ -371,6 +371,15 @@ export async function planCheck(args, { cwd }) {
   return done('', findings.some((f) => f.level === 'error') ? config.exit.findings : config.exit.ok, findings); // a warning does not fail
 }
 
+// Takes the merge lock when no file holds it, in one step, so two merges never both take it.
+const takeLock = (marker, lock) => { try { writeFileSync(marker, lock, { flag: 'wx' }); return true; } catch (e) { if (e.code === 'EEXIST') return false; throw e; } };
+// The merge that holds the lock, as { unit, pid }, or null when none does or its process is gone.
+function mergeHolder(marker) {
+  const [unit, pid] = existsSync(marker) ? readFileSync(marker, 'utf8').split('\n') : [];
+  if (!unit || !Number(pid)) return null;
+  try { process.kill(Number(pid), 0); return { unit, pid: Number(pid) }; } catch (e) { return e.code === 'EPERM' ? { unit, pid: Number(pid) } : null; }
+}
+
 export const commands = {
   merge(args, { cwd }) {
     const st = readState(cwd);
@@ -378,8 +387,14 @@ export const commands = {
     if (!unit) throw new UsageError(msg('unknownUnit', { name: args[0] ?? '', dir: relPath(cwd, join(st.bundle, config.grid.units)) }));
     if (git(cwd, 'rev-parse', '--abbrev-ref', 'HEAD') !== st.base) throw new UsageError(msg('gateNotBase', { base: st.base }));
     if (!tryGit(cwd, 'rev-parse', '-q', '--verify', branchOf(unit.id))) throw new UsageError(msg('noBranch', { branch: branchOf(unit.id) }));
-    const marker = join(aidlcDir(cwd), config.state.merging); // the guard refuses a commit on the base while the gate runs (U144)
-    writeFileSync(marker, unit.id);
+    // One merge at a time: the marker holds the bolt and the process, and the guard refuses a commit on the base while
+    // it stands; a marker whose process is gone is taken over (docs/design/gate.md).
+    const marker = join(aidlcDir(cwd), config.state.merging), lock = `${unit.id}\n${process.pid}\n`;
+    if (!takeLock(marker, lock)) {
+      const held = mergeHolder(marker);
+      if (held) return done(msg('gateBusy', { unit: unit.id, held: held.unit }), config.exit.findings, [finding('GATE-BUSY', marker, 1, 'gateBusy', { unit: unit.id, held: held.unit })]);
+      writeFileSync(marker, lock);
+    }
     const { findings, tree, tested, proof, card } = (() => { try { return runGate(cwd, st, unit); } finally { rmSync(marker, { force: true }); } })();
     const warned = findings.filter((f) => f.level === config.okf.level.warning); // a profile stage's warning does not refuse
     if (findings.length > warned.length) {
@@ -400,7 +415,8 @@ export const commands = {
       '-m', `${G.trailers.unit}: ${unit.id}\n${G.trailers.card}: ${card.hash}\n${G.trailers.review}: ${card.lane === QUICK ? G.noReview : VERDICT.pass}\n${G.tested}: ${tested.join(', ') || G.noReview}\n${G.proof}: ${proof?.levels.join(', ') || G.noReview}`);
     const sha = git(tree, 'rev-parse', 'HEAD');
     dropWorktree(cwd, tree);
-    git(cwd, 'merge', '-q', '--ff-only', sha);
+    // A base that moved while the gate ran is not this merge's to overwrite: refused, never half merged.
+    if (tryGit(cwd, 'merge', '-q', '--ff-only', sha) === null) return done(msg('gateMoved', { unit: unit.id, base: st.base }), config.exit.findings, [finding('GATE-MOVED', st.base, 1, 'gateMoved', { unit: unit.id, base: st.base })]);
     let output = msg('gateMerged', { unit: unit.id, sha }) + (proof?.note ?? '');
     const path = worktrees(cwd).get(branchOf(unit.id));
     if (path) {

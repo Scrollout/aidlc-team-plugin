@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.211.0] - 2026-10-28
+### Added
+- Scale and concurrency (M30 B259). On a generated project of 200 intents and 2,000 bolts, `status` and `next` hold a 2 s budget and `check` a 10 s one, each a median of three runs, checked in CI with the other budgets. One merge runs at a time: its lock names the bolt and the process, a second merge is refused (`GATE-BUSY`), and a lock whose process is gone is taken over. A base that moved while the gate ran refuses the merge (`GATE-MOVED`), never half merging. Both run in `node --test` at zero AI model tokens.
+### Changed
+- `status` reads the trace only when the docs bundle holds a requirement, and the trace finds every AC's tests with one `git grep` per commit: at 2,000 bolts, `status` goes from 5.6 s to 0.27 s. `check` renders its card previews from one read of the plan, the base tree and the rules: from 115 s to 1.3 s.
+### Fixed
+- The trace counts a test for an AC only by its own tag: a test of `B-1/AC-10` no longer counts for `B-1/AC-1`.
+
 ## [0.210.0] - 2026-10-28
 ### Changed
 - One encoding for the ui forms: a pack's `slicePaths` keys each form flat (`ui.cli`, `ui.web`, `ui.template`), as its scaffold rows name them; a cut's layer is the part before the dot, and a declared `ui` means every `ui.<form>` the pack has.
@@ -522,7 +530,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.210.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.211.0...HEAD
+[0.211.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.210.0...v0.211.0
 [0.210.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.209.1...v0.210.0
 [0.209.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.209.0...v0.209.1
 [0.209.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.208.0...v0.209.0

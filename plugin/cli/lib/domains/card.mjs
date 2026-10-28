@@ -65,9 +65,7 @@ function namesCreated(unit, profile, bundle) {
 }
 
 // Each intent, unit, requirement or decision the text names, with its path, but those the card lists already.
-function referencesOf(texts, plan, cwd, sha, top, shown) {
-  const docs = new Map([...plan.intents, ...plan.units, ...plan.requirements].map((d) => [d.id, relPath(top, d.file)]));
-  const files = gitLines(cwd, 'ls-tree', '-r', '--name-only', sha);
+function referencesOf(texts, docs, files, shown) {
   const ids = [...new Set(texts.flatMap((t) => [...t.matchAll(new RegExp(C.refs, 'g'))].map((m) => m[1])))];
   return ids.map((id) => [id, docs.get(id) ?? (/^0/.test(id) ? files.find((f) => f.split('/').pop().startsWith(id + '-') && f.endsWith(config.okf.ext)) : undefined)])
     .filter(([id, path]) => !shown.some((x) => x === id || (path && x.includes(path))))
@@ -78,19 +76,26 @@ function referencesOf(texts, plan, cwd, sha, top, shown) {
 const resolveLinks = (line, file, bundle, top) => line.replace(/\[([^\]]*)\]\(([^)\s]+)\)/g, (all, text, href) =>
   /^[a-z][a-z0-9+.-]*:/i.test(href) ? `${text} (${href})` : `${text} (${relPath(top, href.startsWith('/') ? join(bundle, href) : resolve(dirname(file), href))})`);
 
+// What every card of one run reads alike, read once: the profile, the base, the plan, the tree at the base, the rules.
+function sharedOf(cwd) {
+  const { profile } = loadProfile(cwd), baseSha = tryGit(cwd, 'rev-parse', '-q', '--verify', `${baseOf(profile)}^{commit}`), bundle = bundleOf(cwd, profile);
+  if (!baseSha) return { profile, baseSha, bundle }; // no base commit: no card to render
+  const ruleNames = baseSha ? gitLines(cwd, 'ls-tree', '--name-only', `${baseSha}:${config.rules.dir}`) : [];
+  const plan = readPlan(bundle), top = git(cwd, 'rev-parse', '--show-toplevel'), docs = new Map([...plan.intents, ...plan.units, ...plan.requirements].map((d) => [d.id, relPath(top, d.file)]));
+  return { profile, baseSha, bundle, plan, top, docs, files: baseSha ? gitLines(cwd, 'ls-tree', '-r', '--name-only', baseSha) : [],
+    rules: projectRules(ruleNames, profile, (p) => git(cwd, 'show', `${baseSha}:${p}`)) };
+}
+
 // Renders the card for `unitId` from the base commit, or a refusal; `preview` renders the doc on disk, whatever its
-// approval, and returns only the size `card` would count (PLAN-CARD, docs/design/bolt-card.md).
-function renderCard(cwd, unitId, { preview = false } = {}) {
-  const { profile } = loadProfile(cwd);
+// approval, and returns only the size `card` would count (PLAN-CARD, docs/design/bolt-card.md). `shared` is read once
+// for every card of a run.
+function renderCard(cwd, unitId, { preview = false, shared = sharedOf(cwd) } = {}) {
+  const { profile, baseSha, bundle, plan, top } = shared;
   const base = baseOf(profile);
-  const baseSha = tryGit(cwd, 'rev-parse', '-q', '--verify', `${base}^{commit}`);
   if (!baseSha) throw new UsageError(msg('noBase', { base }));
-  const bundle = bundleOf(cwd, profile);
-  const plan = readPlan(bundle);
   const unit = plan.units.find((u) => u.id === unitId);
   if (!unit) throw new UsageError(msg('unknownUnit', { name: unitId, dir: relPath(cwd, join(bundle, config.grid.units)) }));
 
-  const top = git(cwd, 'rev-parse', '--show-toplevel');
   const docText = preview ? readFileSync(unit.file, 'utf8') : tryGit(cwd, 'show', `${baseSha}:${relPath(top, unit.file)}`);
   const doc = docText === null ? null : parseDoc(docText + '\n');
   const atBase = doc && !doc.error && doc.fm ? { ...unit, ...unitFields(doc) } : null; // as written at the base commit
@@ -147,10 +152,10 @@ function renderCard(cwd, unitId, { preview = false } = {}) {
     // The design rows the builder builds to and every review checks (docs/design/design-rows.md).
     design: [Object.values(config.grid.designRows).flat().filter((h, k, all) => all.indexOf(h) === k && section(doc, h).length).join(', ')]
       .filter(Boolean).map((sections) => msg('cardDesign', { sections, path: relPath(top, unit.file) })),
-    rules: projectRules(gitLines(cwd, 'ls-tree', '--name-only', `${baseSha}:${config.rules.dir}`), profile, (p) => git(cwd, 'show', `${baseSha}:${p}`)),
+    rules: shared.rules,
   };
   const shown = [unitId, ...data.requirements, ...data.interfaces];
-  data.references = [referencesOf([data.goal, ...data.why, ...data.acs, ...data.outOfScope], plan, cwd, baseSha, top, shown)].filter(Boolean);
+  data.references = [referencesOf([data.goal, ...data.why, ...data.acs, ...data.outOfScope], shared.docs, shared.files, shown)].filter(Boolean);
   const file = templateFile(cwd, lane.lane === QUICK ? C.quickTemplate : C.template);
   const template = readFileSync(file, 'utf8');
   // The base is left out, so a base that moved for other units does not make a recorded review stale.
@@ -183,9 +188,9 @@ export function cachedCard(cwd, unitId) {
 
 // PLAN-CARD: the card size in lines of each unit in `ids` over the cap, from the doc on disk; none without a base commit.
 export function cardsOver(cwd, ids) {
-  const { profile } = loadProfile(cwd);
-  if (!tryGit(cwd, 'rev-parse', '-q', '--verify', `${baseOf(profile)}^{commit}`)) return [];
-  return ids.map((id) => ({ id, ...renderCard(cwd, id, { preview: true }) })).filter((c) => c.size > c.max);
+  const shared = sharedOf(cwd);
+  if (!shared.baseSha) return [];
+  return ids.map((id) => ({ id, ...renderCard(cwd, id, { preview: true, shared }) })).filter((c) => c.size > c.max);
 }
 
 // The researcher's brief: the held question and the project's own context, never a plugin source list (decision 0010).

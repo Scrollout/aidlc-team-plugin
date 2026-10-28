@@ -18,12 +18,9 @@ sources:
 - Deterministic: the CLI computes the next allowed step; hooks block rule breaks at the action.
 - Cheap and fast: small always-on context, Sonnet builders, Opus for the full lane, escalation and review, lanes sized to risk.
 - Autonomous: the owner approves intent, plan, one-way doors and release; agents do the rest.
-- Extensible: rule layers (plugin, project, personal) and overridable templates.
+- Extensible: rule layers (plugin, project, personal), overridable templates.
 - From plain prose: anyone's words, kept verbatim, become an intent whose every line cites them ([Intake](intake.md)).
 - Proven shapes: an architecture model brings a reference system's layers and rules to a new or existing project ([Architecture models](models.md)).
-
-# Diagrams
-The [README](../../README.md) draws the lifecycle and the plugin's parts; one bolt's path to release is below.
 
 # How a bolt flows
 ```mermaid
@@ -72,6 +69,8 @@ sequenceDiagram
 | Each CLI extension (`plugin/cli/extensions/<name>/`) | 400 lines ([0017](../decisions/0017-the-cli-is-a-library-with-extensions.md)) |
 | Hook timeout | 10 s explicit, `onFailure: "block"` on blocking hooks |
 | Blocking hook run time | 500 ms beyond a bare `node` start timed beside it, median of 5 calls on a small project |
+| `status`, `next`, 200 intents, 2,000 bolts | 2 s each, median of 3 |
+| `check`, 200 intents, 2,000 bolts | 10 s, median of 3 |
 
 # Repo layout
 - `plugin/.claude-plugin/plugin.json`: `name` `aidlc-team` (never `aidlc`, which projects use for the CLI and `.aidlc/`), the only `version`.

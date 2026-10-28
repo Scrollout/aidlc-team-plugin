@@ -180,6 +180,9 @@
     "DELETE"
   ],
   "node": [
+    "wx",
+    "EEXIST",
+    "EPERM",
     "utf8",
     "sha256",
     "hex",

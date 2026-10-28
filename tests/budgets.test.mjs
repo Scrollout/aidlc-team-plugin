@@ -5,6 +5,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { approve, hook, intentDoc, pinnedRepo, run, unitDoc } from './state-repo.mjs';
+import { medianMs, scaleRepo } from './scale.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -124,6 +125,13 @@ function hookTimes() {
   });
 }
 
+// One generated project of 200 intents and 2,000 bolts for the time budgets, made once (M30 B259).
+let scaled;
+const scale = () => (scaled ??= scaleRepo());
+const seconds = (items, limit) => items.filter((i) => Number(i.text) > limit * 1000).map((i) => `${i.name}: ${i.text} ms > ${limit} s`);
+CHECKS['`status`, `next`, 200 intents, 2,000 bolts'] = { check: seconds, real: () => ['status', 'next'].map((c) => ({ name: c, text: String(medianMs(scale(), [c])) })) };
+CHECKS['`check`, 200 intents, 2,000 bolts'] = { check: seconds, real: () => [{ name: 'check', text: String(medianMs(scale(), ['check'])) }] };
+
 const OVER = {
   'Always-on context added to a project session': (n) => [{ name: 'AGENTS.md', text: 'x'.repeat(n * 4 + 1) }],
   'Generated AGENTS.md': (n) => [{ name: 'AGENTS.md', text: 'line\n'.repeat(n) }],
@@ -134,6 +142,8 @@ const OVER = {
   'CLI core (`plugin/cli/aidlc.mjs`, `plugin/cli/lib/`)': (n) => [{ name: 'a.mjs', text: 'x\n'.repeat(n) }, { name: 'b.mjs', text: 'y\n' }],
   'Each CLI extension (`plugin/cli/extensions/<name>/`)': (n) => [{ name: 'board', text: 'x\n'.repeat(n + 1) }],
   'Blocking hook run time': (n) => [{ name: 'guard', text: String(n + 1) }],
+  '`status`, `next`, 200 intents, 2,000 bolts': (n) => [{ name: 'status', text: String(n * 1000 + 1) }],
+  '`check`, 200 intents, 2,000 bolts': (n) => [{ name: 'check', text: String(n * 1000 + 1) }],
   'Hook timeout': (n) => [
     { name: 'hooks.json', text: JSON.stringify({ hooks: { PreToolUse: [{ hooks: [{ type: 'command', command: 'guard', timeout: n + 1, onFailure: 'block' }] }] } }) },
   ],

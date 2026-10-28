@@ -527,6 +527,8 @@
     "archCheckCi": "{{command}} failed in CI; if it passes locally, the aidlc job lacks what it needs: add its toolchain setup to .github/workflows/aidlc.yml",
     "archExceptInUnit": "{{doc}} comes with {{unit}}, so the owner cannot approve it before this merge: the lead commits it on the base as a plan doc for the owner to approve, and {{unit}} merges the base and drops its copy",
     "gateMerged": "merged {{unit}} as {{sha}}\n",
+    "gateBusy": "{{unit}} was not merged: the merge of {{held}} is running",
+    "gateMoved": "{{unit}} was not merged: {{base}} moved while its gate ran",
     "gateKept": "kept {{path}}: {{error}}\n",
     "gateKeptDirty": "it has uncommitted changes to tracked files",
     "gateLogEntry": "- **Update** {{unit}} {{title}} merged.",
@@ -1433,6 +1435,12 @@
       },
       "GATE-RUN": {
         "fix": "the builder fixes the code or tests until the level's run passes on the base merged in"
+      },
+      "GATE-BUSY": {
+        "fix": "merge it again once the running merge ends; one merge runs at a time"
+      },
+      "GATE-MOVED": {
+        "fix": "merge it again: the gate reruns on the base as it is now"
       },
       "GATE-BASE": {
         "fix": "not this bolt's to fix: draft a fix bolt for the base (aidlc fix); this merge waits for it"

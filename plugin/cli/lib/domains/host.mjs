@@ -214,7 +214,7 @@ function guard(input, cwd) {
       const bad = branch === base && committed(cwd, args).find((p) => !directAllowed(p, bundleRel));
       if (bad) return deny(cwd, input, 'GUARD-BASE-COMMIT', 'guardBaseCommit', { base, path: bad });
       const merging = branch === base && statSync(join(aidlcDir(cwd), S.merging), { throwIfNoEntry: false }); // a commit would stop its fast-forward (U144)
-      if (merging && Date.now() - merging.mtimeMs < S.mergingMs) return deny(cwd, input, 'GUARD-MERGING', 'guardMerging', { base, unit: readFileSync(join(aidlcDir(cwd), S.merging), 'utf8') });
+      if (merging && Date.now() - merging.mtimeMs < S.mergingMs) return deny(cwd, input, 'GUARD-MERGING', 'guardMerging', { base, unit: readFileSync(join(aidlcDir(cwd), S.merging), 'utf8').split('\n')[0] }); // the bolt, before the merge's process
     }
     // A merge shape: merge or pull anywhere; on the base also cherry-pick, rebase or reset onto a unit branch.
     const unitBranch = (H.git.mergeLike.includes(sub) || (branch === base && H.git.onBase.includes(sub))) && refs.find(unitRef);

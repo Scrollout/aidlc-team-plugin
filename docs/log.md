@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-28
 
+- **Update** M30 B259 built: time budgets at 200 intents and 2,000 bolts ([Overview](design/overview.md#budgets-hard-limits)), one merge at a time and a moved base refused ([Merge mechanics](design/gate.md)). Release 0.211.0.
 - **Update** Flat ui form keys ([Stack packs](design/stack-packs.md)), slice counts in `status`, the architecture model's naming grammar as its own layer ([Naming](design/naming.md)), `EXTENSION-DECLARATION`, one word table ([Canonical model](design/canonical-model.md)); decisions 0012, 0027 and 0028 accepted. Release 0.210.0.
 - **Update** Code review fixes in the slices and stacks CLI extensions. Release 0.209.1.
 - **Update** The slices CLI extension shares one context across its checks and views, and compares integration event names as the declaration check does ([Library and extensions](design/library.md)). Release 0.209.0.
