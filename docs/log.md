@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-28
 
+- **Update** M30 planned and B254 built: the [Canonical model](design/canonical-model.md) defines every concept the plugin uses, one word per sense, each scale's words on its own page. Release 0.194.0.
 - **Update** M29 B250 built: the glossary's slice words, the templates and personas carry a slice's declaration, and the example model declares its slices ([Canonical model](design/canonical-model.md), [Building a slice](design/slice-method.md)). Release 0.193.0.
 - **Update** M29 B250, second part: declared slices in models, checked by `MODEL-FORMAT`, applied to `# Surface`, reported by `models gaps` and listed at intake ([Models](design/models.md)); the slice docs follow the official sources on integration events, query reads and validation ([What a slice declares](design/slice-declares.md)). Release 0.192.0.
 - **Update** M29 B250, first part: method 13, a slice's declaration on its `# Surface` and `Slices` lines, checked by `SLICE-SURFACE` and `UNIT-WORK` ([Building a slice](design/slice-method.md#one-grammar)); migrations are a shared cut ([0026](decisions/0026-a-slice-declares-the-layers-it-needs-and.md)). Release 0.191.0.

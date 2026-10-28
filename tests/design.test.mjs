@@ -53,10 +53,11 @@ test('U72/AC-2 the unit template carries both sections, the card names them and 
   assert.doesNotMatch(run(dir, ['card', 'U-2']).out, /## Design/, 'a waived unit has no design section');
 });
 
-test('B150/AC-2 the canonical model words table is the block generated from cli.json, and the overview points to it', async () => {
-  const { glossary, withBlock } = await import('../plugin/cli/lib/index.mjs');
+test('B150/AC-2 B254/AC-3 the canonical model links a words page for each scale and the words to avoid, and the overview points to it', async () => {
+  const { config } = await import('../plugin/cli/lib/index.mjs');
   const doc = readFileSync(join(ROOT, 'docs/design/canonical-model.md'), 'utf8');
-  assert.equal(withBlock(doc, 'glossary', glossary()), doc);
+  for (const scale of new Set(config.vocabulary.words.map((w) => w.scale))) assert.match(doc, new RegExp(`\\(diagrams/words-${scale.toLowerCase()}\\.md\\)`), scale);
+  assert.match(doc, /\(diagrams\/words-avoid\.md\)/);
   assert.match(readFileSync(join(ROOT, 'docs/design/overview.md'), 'utf8'), /# Glossary\n.*\[Canonical model\]\(canonical-model\.md#words\)/);
 });
 
@@ -91,4 +92,17 @@ test('B158/AC-1 on the base (check --ci) a stale index or a broken link is an er
   assert.deepEqual(levels({}, []), ['HOUSE-INDEX-STALE warning', 'HOUSE-INDEX-STALE warning', 'HOUSE-LINK warning']);
   assert.deepEqual(levels({}, ['--ci']), ['HOUSE-INDEX-STALE error', 'HOUSE-INDEX-STALE error', 'HOUSE-LINK error']);
   assert.deepEqual(levels({ docs: { rules: { 'HOUSE-LINK': 'warning' } } }, ['--ci']), ['HOUSE-INDEX-STALE error', 'HOUSE-INDEX-STALE error', 'HOUSE-LINK warning'], "the profile's level wins");
+});
+
+test('B254/AC-1 B254/AC-2 the vocabulary defines every concept the plugin uses, once, and sends each other sense of a word to its own', async () => {
+  const { config } = await import('../plugin/cli/lib/index.mjs');
+  const V = config.vocabulary, words = V.words.map((w) => w.word);
+  const concepts = ['module', 'runtime', 'pipeline', 'foundation', 'adapter', 'delivery', 'architecture model', 'stack pack', 'naming registry', 'profile',
+    'aggregate', 'domain model', 'data node', 'contract', 'integration event', 'domain event', 'command', 'query', 'route', 'handler',
+    'test level', 'acceptance criterion', 'proof-revert', 'mutation', 'scope', 'request', 'requirement', 'persona', 'fact', 'decision', 'pathway', 'walking skeleton', 'method version', 'release',
+    'docs bundle', 'merge gate', 'review', 'verdict', 'focus', 'builder', 'reviewer', 'researcher', 'worktree', 'trailer', 'base', 'stamp', 'board', 'retro', 'AI model'];
+  assert.deepEqual(concepts.filter((c) => !words.includes(c)), [], 'every concept has its word');
+  assert.deepEqual(words.filter((w, k) => words.indexOf(w) !== k), [], 'each word once');
+  for (const w of V.words) assert.ok(w.meaning && w.scale && w.declared, w.word);
+  assert.deepEqual(V.retired.filter((r) => r.word === 'model').map((r) => r.use).sort(), ['AI model', 'domain model'], 'model alone is the architecture model');
 });

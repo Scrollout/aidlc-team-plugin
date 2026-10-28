@@ -9,7 +9,6 @@ export { parseYaml } from './foundation/yaml.mjs';
 export { plug, seam } from './foundation/seams.mjs';
 export { aidlcDir, bump, ciFile, runtimeFile, statsFile, writeJson } from './foundation/store.mjs';
 export { buildIndexes, checkBundle, docSlug, hashDoc, parseDoc, sectionOf, writeIndexes } from './domains/bundle.mjs';
-export { glossary, withBlock } from './domains/method.mjs';
 export { computeLane, inForce, incrementLines, lintPlan, methodOf, readPlan } from './domains/plan.mjs';
 export { lintInception, questionsOf } from './domains/inception.mjs';
 export { bindingName, bindingOf, hatchesOf, hatchLine, traceOf } from './domains/construction.mjs';

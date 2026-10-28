@@ -3,7 +3,7 @@
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { config } from '../plugin/cli/lib/index.mjs';
+import { config, render } from '../plugin/cli/lib/index.mjs';
 
 export const DIR = join(import.meta.dirname, '..', 'docs/design/diagrams');
 const V = config.vocabulary, S = config.state;
@@ -55,7 +55,15 @@ export const workflow = () => mermaid(['flowchart LR', '  subgraph Inception',
       '  subgraph Operations', ...path(rows('intent'), 'merged', 'checked').concat(path(rows('intent'), 'checked', 'released')).map(([a, b, why]) => `    i_${a}[${a}] -->|${why}| i_${b}[${b}]`), '  end',
       '  approved --> b_approved', '  b_merged --> i_merged']);
 
+// Each scale's words, and the words to avoid with the one each sense means (docs/design/canonical-model.md#words).
+const SCALES = [...new Set(V.words.map((w) => w.scale))];
+const words = () => Object.fromEntries([...SCALES.map((scale) => [`words-${scale.toLowerCase()}.md`, page(`${scale} words`, `The canonical words at the ${scale.toLowerCase()} scale, each with its one meaning, the AI-DLC term it maps to and where it is declared; drawn from the vocabulary in cli.json.`,
+  [V.heading, ...V.words.filter((w) => w.scale === scale).map((w) => render(V.row, w)), ''].join('\n'))]),
+  ['words-avoid.md', page('Words to avoid', 'Each word in a sense the canonical model gives another word, and the word to use instead; drawn from the vocabulary in cli.json.',
+    mdTable(['Word', 'In the sense of', 'Use'], V.retired.map((r) => [`*${r.word}*`, r.sense, r.use])))]]);
+
 export const pages = () => ({
+  ...words(),
   'canonical-model.md': page('Words by scale', 'The canonical words, one per concept, grouped by the scale they name; drawn from the vocabulary in cli.json.',
     mermaid(['flowchart LR', ...Object.entries(Object.groupBy(V.words, (w) => w.scale)).flatMap(([scale, words]) => [`  subgraph ${id(scale)}["${scale}"]`, ...words.map((w) => `    ${id(`${scale}_${w.word}`)}["${w.word}"]`), '  end'])])),
   'workflow.md': page('Workflow', 'The pathways into an approved intent with the steps each requires, then a bolt from approval to merge and an intent from merge to release; drawn from the pathways and state transitions in cli.json.',
