@@ -149,7 +149,7 @@
       }
     },
     "slices": {
-      "declaration": { "pattern": "\\(([^)]*)\\)", "sep": ";", "list": ",", "parts": ["data", "entry", "permission", "async", "emits", "consumes", "calls"], "flags": ["async"], "single": ["entry", "permission"], "ui": "ui", "runtime": "runtime", "callKinds": ["domain", "extension", "adapter"], "eventsLine": "^\\s*[-*]\\s+Events:\\s*(.*)$" },
+      "declaration": { "pattern": "\\(([^)]*)\\)", "sep": ";", "list": ",", "parts": ["data", "entry", "permission", "async", "emits", "consumes", "calls"], "flags": ["async"], "single": ["entry", "permission"], "ui": "ui", "runtime": "runtime", "pipeline": "pipeline", "callKinds": ["domain", "extension", "adapter"], "eventsLine": "^\\s*[-*]\\s+Events:\\s*(.*)$" },
       "surface": "Surface",
       "kinds": [
         "Command",

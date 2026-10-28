@@ -43,6 +43,7 @@ The plugin holds every project to kinds, layers and one-way dependencies. Its ow
 - `pathwaySteps`: an intent's pathway steps an extension adds (models).
 - `modelFit`: the models whose fit words a request holds (models), for the intake proposal.
 - `modelContract`: the chosen model's contract (models), for the contract grammar.
+- `modelLayers`: the chosen model's layers (models), for the slices' governance.
 
 # Extensions
 An extension is `extensions/<name>/extension.json` plus `index.mjs`:

@@ -8,6 +8,7 @@ import { msg, seam } from '../plugin/cli/lib/index.mjs';
 import '../plugin/cli/extensions/intake/index.mjs'; // its stories seam, as the CLI loads every extension
 import { sliceFindings } from '../plugin/cli/extensions/stacks/index.mjs';
 import { graphFindings } from '../plugin/cli/extensions/slices/index.mjs';
+import '../plugin/cli/extensions/models/index.mjs'; // the chosen model's layers, for SLICE-GOVERN
 import { makeRepo, write } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -252,4 +253,17 @@ test('B252/AC-4 SLICE-INTEGRATE refuses a client, adapter or events import a sli
   assert.deepEqual(found(full, [`${B}/events`, `${D}/events`]), ['SLICE-INTEGRATE slice orders/createorder declares billing, which its code never imports']);
   assert.deepEqual(found('interface, application; entry shop-api', all), [`SLICE-INTEGRATE slice orders/createorder imports ${B}/client, which its declaration does not name`,
     `SLICE-INTEGRATE slice orders/createorder imports ${B}/events, which its declaration does not name`, `SLICE-INTEGRATE slice orders/createorder imports ${D}/events, which its declaration does not name`]);
+});
+
+test('B252/AC-4 SLICE-GOVERN refuses a slice with no permission behind an entry applying a pipeline stage, and one importing a stage itself', () => {
+  const model = { name: 'shop', title: 'Shop', description: 'A shop.', layers: [{ id: 'shop-api', kind: 'runtime', role: 'the entry', applies: ['authorize'] }, { id: 'authorize', kind: 'pipeline', role: 'whether the caller may' }] };
+  const profile = { ...ORDERS, model: { name: 'shop' }, modules: [...ORDERS.modules, { id: 'authorize', kind: 'pipeline', paths: ['internal/pipeline/authorize/**'] }] };
+  const surface = (decl) => `---\ntype: Domain\ntitle: Orders\ndescription: Orders.\ncode: orders\nkind: domain\n---\n\n# Surface\n- Command createorder (${decl}): a customer orders a cake [I-1:US1.1]\n`;
+  const found = (decl, imports = [], p = profile) => graphFindings(makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', 'docs/domains/orders.md': surface(decl), '.aidlc/models/shop/model.json': JSON.stringify(model),
+    [`${D}/application/createorder/handler.go`]: go('createorder', imports), [`${D}/interface/createorder.go`]: go('iface', [`${D}/application/createorder`]),
+    'internal/pipeline/authorize/authorize.go': go('authorize'), 'cmd/shop-api/main.go': go('main', [`${D}/interface`]) }, p), p).map((f) => `${f.code} ${f.path} ${msg(f.key, f.data)}`);
+  assert.deepEqual(found('interface, application; entry shop-api; permission orders.write'), [], 'its permission declared, its governance left to the entry');
+  assert.deepEqual(found('interface, application; entry shop-api'), ['SLICE-GOVERN docs/domains/orders.md slice orders/createorder names no permission, though its entry shop-api applies authorize']);
+  assert.deepEqual(found('interface, application; entry shop-api', [], { ...profile, model: undefined }), [], 'no chosen model, no stage the entry applies');
+  assert.deepEqual(found('interface, application; entry shop-api; permission orders.write', ['internal/pipeline/authorize']), [`SLICE-GOVERN ${D}/application/createorder slice orders/createorder imports internal/pipeline/authorize, a pipeline stage its entry runs for every slice`]);
 });

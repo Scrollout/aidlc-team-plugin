@@ -226,7 +226,8 @@
     "intentStories",
     "sliceDeclaration",
     "cardSlices",
-    "boardSlices"
+    "boardSlices",
+    "modelLayers"
   ],
   "yaml": [
     "True",

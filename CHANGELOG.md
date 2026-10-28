@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.201.0] - 2026-10-28
+### Added
+- Governance checked (M29 B252, AC-4, last part; B252 done). `SLICE-GOVERN` refuses a slice that names no `permission` though its entry applies a `pipeline` layer of the chosen model, and a slice whose own code imports a `pipeline` module instead of leaving governance to its entry. The models extension gives the chosen model's layers through a new seam, `modelLayers`.
+
 ## [0.200.0] - 2026-10-28
 ### Added
 - Integrations checked from the graph (M29 B252, AC-4, second part). `SLICE-INTEGRATE` refuses a slice whose own code imports another domain's client, an adapter, an extension or a domain's events its declaration does not name in `calls`, `emits` or `consumes`, and a declared call or event its code never imports.
@@ -456,7 +460,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.200.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.201.0...HEAD
+[0.201.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.200.0...v0.201.0
 [0.200.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.199.0...v0.200.0
 [0.199.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.198.0...v0.199.0
 [0.198.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.197.0...v0.198.0

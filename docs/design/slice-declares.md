@@ -27,7 +27,7 @@ Governance is no layer of a slice: what every request must pass is the same for 
 - **Business authorization**, such as only an order's owner cancelling it, is a domain rule: in the slice's handler or a rule in `model`.
 
 Checked and proved:
-- `SLICE-GOVERN`: a slice whose entry runs an authorization stage declares no `permission`, or its code imports a pipeline stage's kit to authenticate or authorize itself.
+- `SLICE-GOVERN`: a slice whose entry `applies` a `pipeline` layer of the chosen model declares no `permission`, or its own code imports a `pipeline` module, to authenticate or authorize itself. The stages are governance, so an entry running any of them makes the slice name what it needs.
 - A test at a level whose `proves` holds `route` sends a request without the permission and sees it refused before the handler runs; a business rule has its own refusal test.
 - The trace lists each slice's `permission`: the system's permission catalogue.
 

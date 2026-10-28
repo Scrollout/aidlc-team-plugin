@@ -206,6 +206,7 @@ function events(root, profile, m, r, out) {
 const CHECKS = { stageOrder, extensionContract, longRunning, events };
 // The chosen model's contract, which the contracts check adds to the generic grammar (decision 0021).
 plug('modelContract', (root, profile) => chosen(root, profile)?.data.contract ?? null);
+plug('modelLayers', (root, profile) => chosen(root, profile)?.data.layers ?? null);
 plug('docChecks', (root, profile) => {
   const m = chosen(root, profile), out = [];
   for (const [type, check] of Object.entries(CHECKS)) for (const r of rulesOf(m, type)) check(root, profile, m, r, out);

@@ -13,7 +13,9 @@
       "sliceEntryUnwired": "runtime {{runtime}}, the entry of {{slices}} in domain {{domain}}, does not import {{layer}}",
       "sliceEntryOther": "runtime {{runtime}} imports domain {{domain}}'s interface layer, though its slices name {{entries}} as their entry",
       "sliceIntegrateUnreached": "slice {{slice}} declares {{name}}, which its code never imports",
-      "sliceIntegrateUndeclared": "slice {{slice}} imports {{to}}, which its declaration does not name"
+      "sliceIntegrateUndeclared": "slice {{slice}} imports {{to}}, which its declaration does not name",
+      "sliceGovernPermission": "slice {{slice}} names no permission, though its entry {{entry}} applies {{stages}}",
+      "sliceGovernSelf": "slice {{slice}} imports {{to}}, a pipeline stage its entry runs for every slice"
     },
     "codes": {
       "SLICE-DATA": {
@@ -23,6 +25,10 @@
       "SLICE-INTEGRATE": {
         "level": "error",
         "fix": "name each client, adapter, extension and event the slice's code reaches in its declaration's calls, emits or consumes, and drop one its code does not reach (docs: Building a slice)"
+      },
+      "SLICE-GOVERN": {
+        "level": "error",
+        "fix": "declare the permission the slice needs, composed by aidlc name permission, and leave authentication and authorization to the stages its entry applies (docs: What a slice declares)"
       }
     }
   }

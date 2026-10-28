@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-28
 
+- **Update** M29 B252 built: `SLICE-GOVERN` from the chosen model's pipeline stages ([What a slice declares](design/slice-declares.md#governance)). Release 0.201.0.
 - **Update** M29 B252, AC-4 second part: `SLICE-INTEGRATE`, from the pack's graph ([Building a slice](design/slice-method.md#proved)). Release 0.200.0.
 - **Update** M29 B252, AC-4 first part: `SLICE-DATA` and the entry half of `SLICE-ROUTE`, from the pack's graph ([Building a slice](design/slice-method.md#proved)). Release 0.199.0.
 - **Update** M29 B252, AC-3: a bolt's board item lists each slice's cuts, data and entry, and `Cuts done` counts the cuts done ([Board](design/board.md#shape)). Release 0.198.0.
