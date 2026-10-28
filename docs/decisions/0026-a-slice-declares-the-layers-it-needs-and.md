@@ -12,6 +12,9 @@ sources:
   - id: features
     resource: https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/develop-asp-net-core-mvc-apps
     title: Developing ASP.NET Core MVC apps, feature organization
+  - id: web
+    resource: https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/common-web-application-architectures
+    title: Common web application architectures
   - id: layering
     resource: https://martinfowler.com/bliki/PresentationDomainDataLayering.html
     title: Presentation Domain Data Layering
@@ -23,12 +26,12 @@ sources:
 # A slice declares the layers it needs and delivers them whole
 
 ## Context and Problem Statement
-[0024](0024-vertical-slices-are-features-horizontal-layers.md) defines a vertical slice as one use case cutting through every horizontal layer it needs, built feature by feature, top to bottom.[^features] Nothing says which layers a use case needs, so a slice merges without the table or screen it needs, a handler's unit test passes as its proof, and the packs have no user interface layer. How is a slice planned, built and proved whole?
+[0024](0024-vertical-slices-are-features-horizontal-layers.md) defines a vertical slice as one use case cutting through every horizontal layer it needs, built feature by feature, top to bottom.[^features] Nothing says which layers a use case needs, so a slice merges without its table or screen, and a handler's unit test passes as its proof. How is a slice planned, built and proved whole?
 
 ## Decision Drivers
 * A slice is done only when every layer its use case needs is done: a half slice delivers no business value.
-* Several slices use the same data: one creates a store, another writes into it, through a different entry with its own authorization. The data cannot be one slice's.
-* A use case ends where another begins: it answers its caller at once or later, and it hands off by an event or a call. A hand-off nobody declares is one nobody tests.
+* Several slices use the same data, one creating a store another writes into: the data cannot be one slice's.
+* A use case hands off to another by an event or a call; a hand-off nobody declares is one nobody tests.
 * Use-case code stays together; what every use case shares stays in the domain's layers, inside the domain module.[^layering]
 * The method plans and builds by Unit and bolt;[^method] one grammar carries a slice from intake to the merge.
 * Every rule is data a check reads, not a guess left to a prompt.
@@ -40,8 +43,8 @@ sources:
 
 ## Decision Outcome
 Chosen option: "Declare each slice's layers and deliver them whole", because it states what a whole slice is and keeps the shared layers the architecture checks rely on:
-- **Cuts declared:** a slice names the layers its use case cuts, from the stack pack's list: `ui`, `interface`, `application`, `model`, `infrastructure`, `migration`. A query on existing data may need only `interface` and `application`; a command behind a screen storing a new field needs all.
-- **Own code and shared layers:** the slice's own code sits under its name: its screen in `ui`, its route in `interface`, its handler in `application`, its `migration`, as a feature's folder holds its endpoints.[^features] `model` and `infrastructure`, and the router that mounts every route, stay shared: the slice adds its rule, extends its adapter and mounts its route there.
+- **Cuts declared:** a slice names the layers its use case cuts, from the stack pack's list: `ui`, `interface`, `application`, `model`, `infrastructure`, `migration`. A query may need only `interface` and `application`.
+- **Own code and shared layers:** the slice's own code sits under its name: its screen in `ui`, its route in `interface`, its handler in `application`, as a feature's folder holds its endpoints.[^features] `model`, `infrastructure`, `migration` and the router that mounts every route stay shared, as migrations sit with the infrastructure:[^web] the slice adds its rule, its adapter, its migration and its route there.
 - **A user interface on another stack** is a Unit of its own, consuming the slice's API; a slice cuts `ui` only where its pack has it, and a story served through a screen names it.
 - **Data stays the domain's,** as [Data ownership](../design/data-ownership.md) has it. A slice declares the data nodes of its domain it reads or writes; its code reaches no other.
 - **Entry:** the `runtime` module serving the slice, such as a management front door or an instance endpoint; the plugin names none. A runtime lists what it `applies` to every slice it serves: outcome events, a status contract.
@@ -53,12 +56,12 @@ Chosen option: "Declare each slice's layers and deliver them whole", because it 
 
 ### Consequences
 * Good, because "done" for a slice is checkable: a missing screen or migration is a refusal.
-* Good, because the board, `status` and the trace show each slice layer by layer, with its data and entry.
 * Bad, because each slice line grows a layer list, and projects move to method 13 on upgrade.
 
 ### Confirmation
 The checks of [Building a slice](../design/slice-method.md) and [What a slice declares](../design/slice-declares.md) run at the gate; their tests fail on a slice that leaves a declared layer out.
 
 [^features]: Developing ASP.NET Core MVC apps, feature organization
+[^web]: Common web application architectures
 [^layering]: Presentation Domain Data Layering
 [^method]: AI-DLC Method Definition

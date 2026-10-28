@@ -223,7 +223,8 @@
     "pathwaySteps",
     "modelFit",
     "modelContract",
-    "intentStories"
+    "intentStories",
+    "sliceDeclaration"
   ],
   "yaml": [
     "True",

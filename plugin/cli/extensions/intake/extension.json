@@ -82,6 +82,7 @@
       "unitStory": "{{unit}} unit of work {{name}} lists {{story}}, which is no story of the intent",
       "unitStorySlice": "{{unit}} unit of work {{name}}: story {{story}} has no slice under Slices: name the vertical slice that serves it, <Kind> <slice> [{{story}}]",
       "unitSliceKind": "{{unit}} unit of work {{name}}: slice {{slice}} has kind {{kind}}, not one of {{kinds}}",
+      "unitSliceDecl": "{{unit}} unit of work {{name}}: {{problem}}",
       "unitSliceNoStory": "{{unit}} unit of work {{name}}: slice {{slice}} cites no story of the unit of work in brackets",
       "unitSliceStory": "{{unit}} unit of work {{name}}: slice {{slice}} cites {{story}}, which is no story of the unit of work",
       "unitSliceName": "{{unit}} unit of work {{name}}: slice {{slice}} is no name the naming registry composes from its verbs and the domains of the unit of work ({{names}})",
@@ -110,7 +111,7 @@
         "none": "none",
         "parts": { "kind": "Kind", "modules": "Modules", "responsibilities": "Responsibilities", "stories": "Stories", "requirements": "Requirements", "risks": "Risks", "measures": "Measures", "depends": "Depends on" },
         "kinds": ["service", "spec", "ui", "packaging", "library"],
-        "slices": { "part": "Slices", "entry": "(\\S+)\\s+([^\\s\\[,]+)\\s*\\[([^\\]]*)\\]", "domainKind": "domain", "grammar": "slice" }
+        "slices": { "part": "Slices", "entry": "(\\S+)\\s+([^\\s\\[,(]+)\\s*(\\([^)]*\\))?\\s*\\[([^\\]]*)\\]", "domainKind": "domain", "grammar": "slice", "ui": "ui" }
       },
       "waivers": ["n/a", "out of scope"],
       "corners": [

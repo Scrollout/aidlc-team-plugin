@@ -84,3 +84,25 @@ test('B248/AC-2 intake lists a fitting model\'s slices; the persona and the inte
   assert.match(readFileSync(join(root, 'plugin/templates/docs/intent.md'), 'utf8'), /^- Slices: <Command or Query> <slice> \[US<g>\.<s>\]/m);
   assert.match(readFileSync(join(root, 'plugin/personas/product-analyst.md'), 'utf8'), /the vertical slices that serve its stories/);
 });
+
+// M29 B250: from method 13 a slice declares the layers it cuts and what it reaches (docs/design/slice-method.md#one-grammar).
+const OWNED = { ...V2, modules: [{ id: 'orders', kind: 'domain', paths: ['src/orders/**'], data: ['data/orders/*'] }, { id: 'payments', kind: 'domain', paths: ['src/payments/**'], data: ['data/payments/*'] }, { id: 'gateway', kind: 'runtime', paths: ['src/gateway/**'] }], architecture: { data: { prefix: 'data/', shared: ['data/outbox'] } } };
+const DOMAIN = (code, events) => `---\ntype: Domain\ntitle: ${code}\ndescription: ${code}.\ncode: ${code}\nkind: domain\n---\n\n# Surface\n- Events: ${events}\n`;
+const DECLARED = (orders, payments) => ({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', 'docs/domains/orders.md': DOMAIN('orders', 'OrderCreated'), 'docs/domains/payments.md': DOMAIN('payments', 'PaymentTaken'),
+  'docs/intents/I-1-cakes.md': intent(unit('orders', { ...ORDERS, Slices: orders }) + unit('payments', { ...PAYMENTS, Slices: payments }), undefined, 13) });
+
+test('B250/AC-2 from method 13 a Unit\'s slice declares its cuts, data, entry, events and calls, each one the profile, the pack and the domain docs know', () => {
+  assert.deepEqual(foundWith(OWNED, DECLARED('Command createorder (interface, application, model, infrastructure, migration; data data/orders/orders, data/outbox; entry gateway; emits OrderCreated.v1) [US1.1]',
+    'Command createpayment (interface, application; async; calls orders; consumes OrderCreated.v1) [US1.2]')), [], 'every part known');
+  assert.deepEqual(foundWith(OWNED, DECLARED('Command createorder [US1.1]', 'Command createpayment (ui, interface; data data/orders/orders; entry orders; calls billing; emits OrderTaken; consumes Nothing; bogus x) [US1.2]')), [
+    'I-1 unit of work orders: slice createorder declares no cuts: from method 13 it reads <Kind> <slice> (<cut>, …; data …; entry …) with the layers its use case cuts',
+    'I-1 unit of work payments: slice createpayment cuts ui, which the stack pack lists no path for (interface, application, model, infrastructure, migration)',
+    'I-1 unit of work payments: slice createpayment declares bogus, which is no part of a slice\'s declaration (data, entry, permission, async, emits, consumes, calls)',
+    'I-1 unit of work payments: slice createpayment uses data/orders/orders, which payments neither owns nor shares',
+    'I-1 unit of work payments: slice createpayment is served by orders, which is no runtime module',
+    'I-1 unit of work payments: slice createpayment emits OrderTaken, which payments\'s # Surface lists on no Events line',
+    'I-1 unit of work payments: slice createpayment consumes Nothing, which no domain\'s # Surface lists on an Events line',
+    'I-1 unit of work payments: slice createpayment calls billing, which is no domain, extension or adapter module',
+  ]);
+  assert.deepEqual(foundWith(OWNED, { ...DECLARED('Command createorder [US1.1]', 'Command createpayment [US1.2]'), 'docs/intents/I-1-cakes.md': SLICED('Command createorder [US1.1]', 'Command createpayment [US1.2]') }), [], 'an intent pinned to method 12 declares none');
+});

@@ -22,7 +22,7 @@ Method 11 adds `# Units` to an intent, after `# Stories`. Each Unit is a sub-hea
 | Risks | what could sink the Unit | yes |
 | Measures | measurable outcomes, each citing a success measure `M<k>` of the intent | yes |
 | Depends on | the Units whose code its own needs, or `none` | yes |
-| Slices | the vertical slices that serve its stories, `<Kind> <slice> [US<g>.<s>]` each ([planned](vertical-slices.md#planned-before-built)) | from method 12 |
+| Slices | the vertical slices that serve its stories, `<Kind> <slice> [US<g>.<s>]` each ([planned](vertical-slices.md#planned-before-built)); from method 13 each with its declaration, `<Kind> <slice> (<cut>, …; …) [US<g>.<s>]` ([Building a slice](slice-method.md#one-grammar)) | from method 12 |
 | Integration | APIs, shared data and events with other Units | no |
 | Deployment | standalone, shared or embedded | no |
 | Complexity | S, M, L or XL | no |

@@ -157,6 +157,55 @@ function selftestFindings(root, profile) {
 
 // Event types speak the grammar; a project's graph sees what its pack sees (docs/design/stack-packs.md).
 const events = (root, profile) => eventFindings(root, profile).map(([path, key, data]) => ({ code: 'CONTRACT-NAME', path, key, data }));
+// A slice's declaration, `(<cut>, …; <part> <value>, …)`: the layers it cuts first, then each part by its keyword, a flag
+// standing alone (docs/design/slice-method.md#one-grammar). Null when the line carries none.
+export function declarationOf(text) {
+  const D = config.slices.declaration, m = String(text ?? '').match(new RegExp(D.pattern));
+  if (!m) return null;
+  const split = (v) => v.split(D.list).map((x) => x.trim()).filter(Boolean), [first, ...rest] = m[1].split(D.sep).map((x) => x.trim());
+  const out = { cuts: split(first ?? ''), unknown: [] };
+  for (const [part, ...v] of rest.filter(Boolean).map((x) => x.split(/\s+/))) {
+    if (!D.parts.includes(part)) out.unknown.push(part);
+    else out[part] = D.flags.includes(part) || (D.single.includes(part) ? v.join(' ') : split(v.join(' ')));
+  }
+  return out;
+}
+
+// Each domain's events, from the Events line of its doc's # Surface.
+function eventsOf(bundle, domains) {
+  const D = config.slices.declaration, ev = new RegExp(D.eventsLine);
+  return new Map(domains.map((d) => {
+    const doc = join(bundle, config.okf.bundle.folders.Domain, `${d}${config.okf.ext}`);
+    const lines = existsSync(doc) ? sectionOf(parseDoc(readFileSync(doc, 'utf8')), config.slices.surface).map(([, t]) => t.match(ev)?.[1]).filter(Boolean) : [];
+    return [d, lines.flatMap((l) => l.split(D.list).map((x) => x.trim()).filter(Boolean))];
+  }));
+}
+
+// What a slice's declaration gets wrong, as [key, data]: a cut the pack has no path for, a part it does not know, data its
+// domains neither own nor share, an entry that is no runtime, a permission the registry does not compose, an event no
+// Events line lists, a call to no domain or adapter, and a ui unit of work's slice that does not cut ui
+// (docs/design/slice-declares.md).
+export function declarationProblems(decl, { root, profile, bundle, slice, domains, ui = false }) {
+  const D = config.slices.declaration, at = { slice };
+  if (!decl?.cuts.length) return [['sliceDeclNone', at]];
+  const out = [], cuts = Object.keys(packFor(root)?.manifest.slicePaths ?? {}), mods = profile.modules ?? [], kind = (id) => mods.find((m) => String(m.id ?? m.name) === id)?.kind;
+  if (cuts.length) for (const cut of decl.cuts.filter((c) => !cuts.includes(c))) out.push(['sliceCut', { ...at, cut, cuts: cuts.join(', ') }]);
+  for (const part of decl.unknown) out.push(['slicePartUnknown', { ...at, part, parts: D.parts.join(', ') }]);
+  const owned = mods.filter((m) => domains.includes(String(m.id ?? m.name))).flatMap((m) => list(m.data)), shared = list(profile.architecture?.data?.shared);
+  for (const node of list(decl.data).filter((n) => ![...owned, ...shared].some((g) => globRegex(g).test(n)))) out.push(['sliceDataOwner', { ...at, node, domain: domains.join(', ') }]);
+  if (decl.entry && kind(decl.entry) !== D.runtime) out.push(['sliceEntryRuntime', { ...at, entry: decl.entry }]);
+  const reg = decl.permission && profile.naming && registry(profile, bundle);
+  const names = reg ? domains.flatMap((domain) => config.naming.actions.map((action) => { try { return nameOf('permission', { domain, action }, reg); } catch { return null; } })).filter(Boolean) : [];
+  if (reg && !names.includes(decl.permission)) out.push(['slicePermission', { ...at, permission: decl.permission, names: names.join(', ') || '-' }]);
+  const base = (e) => e.replace(new RegExp(K.events.versioned), '').replace(/\.$/, ''), events = eventsOf(bundle, mods.filter((m) => m.kind === 'domain').map((m) => String(m.id ?? m.name)));
+  for (const event of list(decl.emits).filter((e) => !domains.some((d) => (events.get(d) ?? []).map(base).includes(base(e))))) out.push(['sliceEmits', { ...at, event, domain: domains.join(', ') }]);
+  for (const event of list(decl.consumes).filter((e) => ![...events.values()].flat().map(base).includes(base(e)))) out.push(['sliceConsumes', { ...at, event }]);
+  for (const target of list(decl.calls).filter((t) => !D.callKinds.includes(kind(t)))) out.push(['sliceCalls', { ...at, target }]);
+  if (ui && cuts.includes(D.ui) && !decl.cuts.includes(D.ui)) out.push(['sliceUi', at]);
+  return out;
+}
+plug('sliceDeclaration', { parse: declarationOf, problems: declarationProblems });
+
 // Vertical slices across a domain's layers: each slice is a folder of the application layer, met by no other slice,
 // entered from its domain's interface layer or a runtime, listed with its use case and stories in the domain doc, and
 // tested (docs/design/vertical-slices.md). Returns [{ code, path, key, data }].
@@ -169,7 +218,7 @@ export function sliceFindings(root, profile) {
   const entryLayers = V.entryLayers.map((l) => L[l]), hosts = V.entryKinds.map((k) => m.folders[k].split('{{')[0]);
   const placed = [...Object.values(L), ...Object.values(m.surfaces)];
   // Each intent's stories and the modules of their units of work, from the elaboration checks' seam.
-  const bundle = bundleOf(root, withDefaults(profile)), plan = readPlan(bundle), held = new Set(), owed = new Map();
+  const bundle = bundleOf(root, withDefaults(profile)), plan = readPlan(bundle), held = new Set(), owed = new Map(), methods = new Map(plan.intents.map((i) => [i.id, methodOf(i)]));
   for (const i of plan.intents) {
     const due = approval(i.doc) !== ST.draft && methodOf(i) >= config.method.since.unitsOfWork;
     for (const s of seam('intentStories', profile).flatMap((f) => f(i))) {
@@ -189,17 +238,19 @@ export function sliceFindings(root, profile) {
     for (const folder of [...folders.map((n) => `${app}/${n}`), ...Object.values(L).map((l) => `${dir}/${l}`).filter((p) => existsSync(join(root, p)))]) if (!files.some((f) => f.startsWith(`${folder}/`))) add('SLICE-PLACE', folder, 'sliceEmpty', { folder });
     const doc = join(bundle, config.okf.bundle.folders.Domain, `${d}${config.okf.ext}`);
     if (!existsSync(doc)) continue;
-    const line = new RegExp(`^\\s*[-*]\\s+(?:${V.kinds.join('|')})\\s+(${V.name}):\\s*(.*)$`), rel = posix(relative(root, doc));
+    const line = new RegExp(`^\\s*[-*]\\s+(?:${V.kinds.join('|')})\\s+(${V.name})\\s*(\\([^)]*\\))?:\\s*(.*)$`), rel = posix(relative(root, doc));
     const listed = sectionOf(parseDoc(readFileSync(doc, 'utf8')), V.surface).map(([, t]) => t.match(line)).filter(Boolean);
     for (const name of folders.filter((n) => !listed.some((l) => l[1] === n))) add('SLICE-SURFACE', rel, 'sliceSurface', { domain: d, slice: name, where: msg('sliceSurfaceFolder', {}) });
-    for (const [, name, text] of listed) {
+    for (const [, name, decl, text] of listed) {
       const cited = [...text.matchAll(new RegExp(V.story, 'g'))].map((x) => x[0]), useCase = text.replace(/\[[^\]]*\]/g, '').trim();
       if (!folders.includes(name)) add('SLICE-SURFACE', rel, 'sliceSurface', { domain: d, slice: name, where: msg('sliceSurfaceDoc', {}) });
       if (!useCase) add('SLICE-SURFACE', rel, 'sliceUseCase', { domain: d, slice: name, text });
       if (!cited.length) add('SLICE-STORY', rel, 'sliceNoStory', { domain: d, slice: name });
+      // From method 13 a slice declares its cuts; a declaration is checked whenever a line carries one (docs/design/slice-method.md).
+      if (decl || cited.some((c) => (methods.get(c.split(':')[0]) ?? 0) >= config.method.since.sliceCuts)) for (const [key, data] of declarationProblems(declarationOf(decl), { root, profile, bundle, slice: name, domains: [d] })) add('SLICE-SURFACE', rel, key, data);
       for (const story of cited.filter((s) => !held.has(s))) add('SLICE-STORY', rel, 'sliceBadStory', { domain: d, slice: name, story });
     }
-    const covered = new Set(listed.flatMap(([, , t]) => [...t.matchAll(new RegExp(V.story, 'g'))].map((x) => x[0])));
+    const covered = new Set(listed.flatMap(([, , , t]) => [...t.matchAll(new RegExp(V.story, 'g'))].map((x) => x[0])));
     for (const [key, intent] of owed) { const [mod, story] = key.split(' '); if (mod === d && !covered.has(story)) add('SLICE-STORY', rel, 'sliceUncovered', { domain: d, story, intent }); }
   }
   const sliceOf = (p) => slices.find((s) => p === s.dir || p.startsWith(`${s.dir}/`));

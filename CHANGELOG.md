@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.191.0] - 2026-10-28
+### Added
+- A slice's declaration (M29 B250, first part). From method 13 a slice's `# Surface` line and its Unit of work's `Slices` line read `<Kind> <slice> (<cut>, …; data …; entry …; permission …; async; emits …; consumes …; calls …)`: the layers it cuts, then what it reaches. `SLICE-SURFACE` and `UNIT-WORK` report a cut the stack pack has no path for, an unknown part, data its domains neither own nor share, an entry that is no runtime module, a permission the registry does not compose, an event no domain's `Events:` line lists, a call to no domain, extension or adapter, and a ui unit of work's slice that does not cut `ui`. Each pack lists `slicePaths`, where a slice's code sits in each layer it may cut; migrations are a shared cut, in the domain's migrations folder.
+
 ## [0.190.0] - 2026-10-28
 ### Added
 - The merge gate is an ordered stage list (M26 B240, done). `gate.stages` names the gate's stages in order, each a check in code; a conflict at the trial merge ends the walk. An object entry of `profile.checks`, `{ id, check, level, after }`, is a stage of its own: its command runs on the merged tree after the stage it names, refusing the merge at `error` (default) or reported at `warning`. `PROFILE-STAGE` refuses an entry that reuses a core stage's id, runs before the trial merge or sets another level, so a project extends the gate and never shortens it. The review keeps `general` and adds a focus for each `profile.focus` the diff touches; hooks stay with the host. Lifecycle as data and M26 are stable.
@@ -410,7 +414,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.190.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.191.0...HEAD
+[0.191.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.190.0...v0.191.0
 [0.190.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.189.2...v0.190.0
 [0.189.2]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.189.1...v0.189.2
 [0.189.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.189.0...v0.189.1

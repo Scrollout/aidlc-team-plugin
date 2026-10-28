@@ -13,6 +13,7 @@
   "stringLiteral": "([\"'`])((?:\\\\.|(?!\\1)[^\\\\])*)\\1",
   "folders": { "domain": "src/domains/{{domain}}", "pipeline": "src/pipeline/{{stage}}", "foundation": "src/foundation/{{kit}}", "adapter": "src/adapters/{{system}}", "runtime": "src/runtimes/{{deployable}}" },
   "layers": { "interface": "interface", "application": "application", "model": "model", "infrastructure": "infrastructure" },
+  "slicePaths": { "ui": "{{dir}}/ui/{{slice}}", "interface": "{{dir}}/interface/{{slice}}.ts", "application": "{{dir}}/application/{{slice}}", "model": "{{dir}}/model", "infrastructure": "{{dir}}/infrastructure", "migration": "migrations/{{domain}}" },
   "surfaces": { "client": "client", "events": "events", "server": "interface" },
   "migrations": "migrations/{{domain}}",
   "scaffold": {

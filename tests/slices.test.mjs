@@ -15,7 +15,7 @@ const lines = (fs) => fs.map((f) => `${f.code} ${f.path} ${f.key}`).sort();
 const go = (pkg, imports = []) => `package ${pkg}\n\nimport (\n${imports.map((i) => `\t"example.com/shop/${i}"`).join('\n')}\n)\n`;
 const D = 'internal/domains/orders';
 const ORDERS = { system: { core: ['internal/**', 'cmd/**'] }, modules: [{ id: 'orders', kind: 'domain', paths: [`${D}/**`] }, { id: 'shop-api', kind: 'runtime', paths: ['cmd/shop-api/**'] }] };
-const intent = '---\ntype: Intent\ntitle: Orders\ndescription: Orders.\npathway: feature\n---\n\n# Stories\n- US1.1 As a customer, I want to order, so that I get a cake. [Q-1.1]\n';
+const intent = '---\ntype: Intent\ntitle: Orders\ndescription: Orders.\npathway: feature\nmethod: 12\n---\n\n# Stories\n- US1.1 As a customer, I want to order, so that I get a cake. [Q-1.1]\n';
 
 test('B245/AC-1 the pack\'s reference keeps its slices apart, entered from its interface layer, each placed and tested', () => {
   const dir = makeRepo({}, NOTES);
@@ -124,4 +124,33 @@ test('B249/AC-1 a bolt\'s slices are on its bound domain\'s surface, a horizonta
   const gate = (paths) => seam('gateChecks', ORDERS).flatMap((check) => check(dir, ORDERS, paths, [], unit)).filter((f) => f.key === 'sliceDeliverListed').map((f) => f.path);
   assert.deepEqual(gate([`${D}/model/order.go`]), [`${D}/application/createorder`], 'a listed slice the bolt does not touch');
   assert.deepEqual(gate([`${D}/application/createorder/handler.go`]), []);
+});
+
+// M29 B250: a slice's declaration, the same on its # Surface line as on its Unit of work's (docs/design/slice-method.md#one-grammar).
+test('B250/AC-2 a # Surface line declares the slice\'s cuts and parts, required from method 13 and checked wherever a line carries one', async () => {
+  const { declarationOf, declarationProblems } = await import('../plugin/cli/extensions/stacks/index.mjs');
+  const { nameOf, registry } = await import('../plugin/cli/lib/index.mjs');
+  assert.deepEqual(declarationOf('(ui, interface; data data/orders/orders; entry shop-api; permission P; async; emits OrderCreated.v1; calls stock; bogus x)'),
+    { cuts: ['ui', 'interface'], unknown: ['bogus'], data: ['data/orders/orders'], entry: 'shop-api', permission: 'P', async: true, emits: ['OrderCreated.v1'], calls: ['stock'] });
+  assert.equal(declarationOf('- Command placeorder: no declaration'), null);
+  const doc = (surface) => `---\ntype: Domain\ntitle: Orders\ndescription: Orders.\ncode: orders\nkind: domain\n---\n\n# Surface\n${surface}\n`;
+  const files = (surface, method) => ({
+    'go.mod': 'module example.com/shop\n\ngo 1.22\n',
+    [`${D}/application/placeorder/handler.go`]: go('placeorder', [`${D}/model`]), [`${D}/application/placeorder/handler_test.go`]: 'package placeorder\n',
+    [`${D}/model/order.go`]: go('model'), [`${D}/interface/http.go`]: go('iface', [`${D}/application/placeorder`]),
+    'docs/intents/I-1-orders.md': intent.replace('method: 12', `method: ${method}`), 'docs/domains/orders.md': doc(surface),
+  });
+  const found = (surface, method = 13) => lines(sliceFindings(makeRepo(files(surface, method), ORDERS), ORDERS));
+  assert.deepEqual(found('- Command placeorder (interface, application, model; entry shop-api): a customer orders a cake [I-1:US1.1]'), [], 'declared');
+  assert.deepEqual(found('- Command placeorder: a customer orders a cake [I-1:US1.1]'), ['SLICE-SURFACE docs/domains/orders.md sliceDeclNone'], 'method 13 asks for the declaration');
+  assert.deepEqual(found('- Command placeorder: a customer orders a cake [I-1:US1.1]', 12), [], 'method 12 does not');
+  assert.deepEqual(found('- Command placeorder (ui, interface; entry orders): a customer orders a cake [I-1:US1.1]', 12), ['SLICE-SURFACE docs/domains/orders.md sliceCut', 'SLICE-SURFACE docs/domains/orders.md sliceEntryRuntime'], 'a declaration is checked wherever it is');
+  // The permission the registry composes for the slice's domains, and a ui unit of work's slice on a pack that has ui.
+  const named = { ...ORDERS, naming: { tokens: { system: 'shop', org: 'contoso' }, domains: { orders: {} } } };
+  const root = makeRepo({ 'tsconfig.json': '{}' }, named), bundle = join(root, 'docs'), ctx = { root, profile: named, bundle, slice: 'placeorder', domains: ['orders'] };
+  const good = nameOf('permission', { domain: 'orders', action: 'write' }, registry(named, bundle));
+  assert.deepEqual(declarationProblems(declarationOf(`(interface, application; permission ${good})`), ctx), []);
+  assert.deepEqual(declarationProblems(declarationOf('(interface, application; permission Orders/write)'), ctx).map(([k]) => k), ['slicePermission']);
+  assert.deepEqual(declarationProblems(declarationOf('(interface, application)'), { ...ctx, ui: true }).map(([k]) => k), ['sliceUi']);
+  assert.deepEqual(declarationProblems(declarationOf('(ui, interface, application)'), { ...ctx, ui: true }), []);
 });

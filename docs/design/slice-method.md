@@ -17,7 +17,7 @@ The parts of each horizontal layer that one use case needs, scoped to that use c
 
 # Layers
 - The stack pack lists the layers a slice may cut and where its own code sits in each (`slicePaths`): `ui`, `interface`, `application`, `model`, `infrastructure`, `migration`. A pack names only the layers its stack has: `ui` where it serves a front end; a UI on another stack is a Unit of its own, consuming the slice's API.
-- **Own code** sits under the slice's name: `ui/<slice>/`, `interface/<slice>`, `application/<slice>/`, the migration `<n>_<slice>`. **Shared:** `model`, `infrastructure` and the router mounting every route, changed by the slice.
+- **Own code** sits under the slice's name: `ui/<slice>/`, `interface/<slice>`, `application/<slice>/`. **Shared:** `model`, `infrastructure`, `migration` (the domain's migrations folder) and the router mounting every route, changed by the slice.
 - The surface folders `client/` and `events/` sit beside the layers, and `SLICE-PLACE` accepts them.
 - Names come from the registry (`aidlc name slice`); paths and layer names are pack data.
 
@@ -26,7 +26,7 @@ What a slice reaches beyond its cuts, its data, entry, integrations and permissi
 
 # One grammar
 From method 13 a slice carries the same declaration wherever it is written, `(<cut>, …; data <node>, …; entry <runtime>; permission <name>; async; emits <event>, …; consumes <event>, …; calls <target>, …)`, each part after the cuts only where it applies:
-- **Domain doc** `# Surface`: `- Command <slice> (…): <use case> [I-<n>:US<g>.<s>]`.
+- **Domain doc** `# Surface`: `- Command <slice> (…): <use case> [I-<n>:US<g>.<s>]`; `SLICE-SURFACE` checks a line's declaration, and asks for one when a story it cites is of a method 13 intent. An `- Events:` line lists the domain's events.
 - **Unit of work** `Slices`: `<Kind> <slice> (…) [US<g>.<s>]`, a story served through a screen naming `ui`; `UNIT-WORK` checks the cuts against the pack, the data against the domain's, the entry against the runtimes, the events against the surfaces and the calls against the clients and adapters.
 - **Model**: `{ kind, verb, useCase, cuts, data, entry, permission, async, emits, consumes, calls }`, its runtimes with what each `applies`, so intake shows the hand-offs between domains; `MODEL-FORMAT` checks them, `models apply` writes them into `# Surface`, `models gaps` lists a missing slice, cut, data, entry or integration.
 - **Intake** lists each fitting model's slices with their cuts, so a story is written per use case and per screen.

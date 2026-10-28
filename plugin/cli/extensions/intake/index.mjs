@@ -135,13 +135,13 @@ const docsIn = (dir, pattern) => (existsSync(dir) ? readdirSync(dir).filter((f) 
 // A section's lines as written, blank ones and sub-headings left out.
 const linesOf = (doc, heading) => sectionOf(doc, heading).map(([n]) => [n, doc.lines[n - 1]]).filter(([, t]) => t.trim() && !/^#/.test(t));
 
-function lintSources({ bundle, profile, intents, units, requirements, add, inForce, keyLine }) {
+function lintSources({ bundle, profile, intents, units, requirements, add, inForce, keyLine, base }) {
   if (!profile.system) return;
   const dir = join(bundle, F.Request), requests = new Map(docsIn(dir, new RegExp(K.ids.requestFile)).map((f) => [f.match(new RegExp(K.ids.requestFile))[1], sentencesOf(parseDoc(readFileSync(join(dir, f), 'utf8')))]));
   const facts = new Set(docsIn(join(bundle, F.Fact), new RegExp(K.ids.factFile)).map((f) => f.match(new RegExp(K.ids.factFile))[1]));
   for (const i of intents.filter((x) => x.fm.status !== config.grid.dropped && inForce(x, 'claimSource'))) {
     if (inForce(i, 'elabCorner')) { corners(i, add); readBack(i, add); }
-    if (inForce(i, 'unitsOfWork')) unitsOfWork(i, profile, units.filter((b) => b.fm.intent === i.id && b.fm.status !== config.grid.dropped), add, inForce(i, 'unitSlices'), bundle);
+    if (inForce(i, 'unitsOfWork')) unitsOfWork(i, profile, units.filter((b) => b.fm.intent === i.id && b.fm.status !== config.grid.dropped), add, inForce(i, 'unitSlices'), bundle, inForce(i, 'sliceCuts'), base);
     const named = list(i.fm.request);
     if (!named.length) { add('CLAIM-SOURCE', i, 1, 'claimNoRequest', {}); continue; }
     for (const ref of named.filter((r) => !requests.has(r))) add('CLAIM-SOURCE', i, keyLine(i, 'request'), 'claimNoSuchRequest', { ref, dir: relPath(bundle, dir) });
@@ -241,10 +241,10 @@ function cycleOf(deps) {
 }
 // Method 12: the slices that serve a Unit's stories, in the slice checks' grammar; with a naming registry, each a name it
 // composes from one of its verbs and a domain of the Unit's modules (docs/design/vertical-slices.md#planned-before-built).
-function unitSlices(i, u, listed, profile, bundle, add) {
+function unitSlices(i, u, listed, profile, bundle, add, declared, root) {
   const value = u.parts[U.slices.part.toLowerCase()];
   if (value === undefined) return add('UNIT-WORK', i, u.n, 'unitPart', { name: u.name, part: U.slices.part });
-  const slices = [...value.matchAll(new RegExp(U.slices.entry, 'g'))].map((m) => ({ kind: m[1], slice: m[2], stories: idsOf(m[3], U.story) }));
+  const slices = [...value.matchAll(new RegExp(U.slices.entry, 'g'))].map((m) => ({ kind: m[1], slice: m[2], decl: m[3], stories: idsOf(m[4], U.story) }));
   const reg = profile.naming && registry(profile, bundle), domains = namesIn(u.parts[U.parts.modules.toLowerCase()]).filter((d) => (profile.modules ?? []).some((m) => String(m.id ?? m.name) === d && m.kind === U.slices.domainKind));
   const names = reg && domains.flatMap((d) => reg.vocabularies.verb.map((verb) => nameOf(U.slices.grammar, { domain: d, verb }, { ...reg, domains: { [d]: {}, ...reg.domains } })));
   for (const s of slices) {
@@ -253,11 +253,13 @@ function unitSlices(i, u, listed, profile, bundle, add) {
     if (!s.stories.length) add('UNIT-WORK', i, u.n, 'unitSliceNoStory', at);
     for (const story of s.stories.filter((x) => !listed.includes(x))) add('UNIT-WORK', i, u.n, 'unitSliceStory', { ...at, story });
     if (names && !names.includes(s.slice)) add('UNIT-WORK', i, u.n, 'unitSliceName', { ...at, names: names.join(', ') || '-' });
+    // Method 13: the slice declares the layers it cuts and what it reaches, checked as its # Surface line is (docs/design/slice-method.md).
+    for (const d of declared ? seam('sliceDeclaration', profile) : []) for (const [key, data] of d.problems(d.parse(s.decl), { root, profile, bundle, slice: s.slice, domains, ui: u.parts[U.parts.kind.toLowerCase()] === U.slices.ui })) add('UNIT-WORK', i, u.n, 'unitSliceDecl', { name: u.name, problem: msg(key, data) });
   }
   for (const story of listed.filter((x) => !slices.some((s) => s.stories.includes(x)))) add('UNIT-WORK', i, u.n, 'unitStorySlice', { name: u.name, story });
 }
 
-function unitsOfWork(i, profile, bolts, add, sliced, bundle) {
+function unitsOfWork(i, profile, bolts, add, sliced, bundle, declared, root) {
   const units = unitBlocks(i.doc), P = U.parts, of = (u, k) => u.parts[P[k].toLowerCase()];
   if (!units.length) return add('UNIT-WORK', i, 1, 'unitsNone', {});
   const modules = new Set((profile.modules ?? []).map((m) => String(m.id ?? m.name))), names = units.map((u) => u.name), seen = new Set();
@@ -277,7 +279,7 @@ function unitsOfWork(i, profile, bolts, add, sliced, bundle) {
     const listed = idsOf(of(u, 'stories'), U.story);
     if (of(u, 'stories') !== undefined && !listed.length) add('UNIT-WORK', i, n, 'unitNoStory', { name });
     for (const story of listed.filter((s) => !stories.some(([, , id]) => id === s))) add('UNIT-WORK', i, n, 'unitStory', { name, story });
-    if (sliced) unitSlices(i, u, listed, profile, bundle, add);
+    if (sliced) unitSlices(i, u, listed, profile, bundle, add, declared, root);
     for (const other of namesIn(of(u, 'depends')).filter((d) => d !== U.none && !names.includes(d))) add('UNIT-WORK', i, n, 'unitDepends', { name, other });
   }
   const inUnits = new Set(units.flatMap((u) => idsOf(of(u, 'stories'), U.story)));

@@ -17,6 +17,7 @@
   "stringLiteral": "([\"'`])((?:\\\\.|(?!\\1)[^\\\\])*)\\1",
   "folders": { "domain": "internal/domains/{{domain}}", "pipeline": "internal/pipeline/{{stage}}", "foundation": "internal/foundation/{{kit}}", "adapter": "internal/adapters/{{system}}", "runtime": "cmd/{{deployable}}" },
   "layers": { "interface": "interface", "application": "application", "model": "model", "infrastructure": "infrastructure" },
+  "slicePaths": { "interface": "{{dir}}/interface/{{slice}}.go", "application": "{{dir}}/application/{{slice}}", "model": "{{dir}}/model", "infrastructure": "{{dir}}/infrastructure", "migration": "migrations/{{domain}}" },
   "surfaces": { "client": "client", "events": "events", "server": "interface" },
   "migrations": "migrations/{{domain}}",
   "scaffold": {
