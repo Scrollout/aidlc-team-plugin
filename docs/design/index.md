@@ -2,7 +2,7 @@
 
 * [Agents in flight](in-flight.md) - How the CLI knows a builder, reviewer or researcher is still running - the marks the hooks touch and how long one stays fresh.
 * [Approvals](approvals.md) - How the owner approves intents, requirements, bolts and decisions, what makes an approval stale, what the lead may approve for them, and how owner prompts are recorded.
-* [Architecture in arc42](arc42.md) - The plugin's architecture in arc42's twelve sections, each pointing at the design doc or generated page that holds it, with a C4 component view of the CLI.
+* [Architecture in arc42](arc42.md) - The plugin's architecture in arc42's twelve sections - what it is for, what limits it, who it talks to, what it is made of, how work flows through it, and what it risks - each section stated here, with links to the detail.
 * [Architecture model](architecture-model.md) - The system's core and extensions, seven closed module kinds with what each may depend on, four inward-pointing layers, client, server and event surfaces, and data owned by one domain; boundaries are computed from these declarations, never written by hand.
 * [Architecture models](models.md) - architecture models as data - a proven system's vertical and horizontal shape distilled from research, shipped or kept by a project, applied to new and existing projects by the AI-DLC method, and held by generic rule types.
 * [Board](board.md) - An optional one-way projection of derived state onto GitHub issues and a GitHub Project, written by deterministic code at zero model tokens.
