@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-28
 
+- **Create** [0026](decisions/0026-a-slice-declares-the-layers-it-needs-and.md) accepted: a slice declares the layers its use case needs, its entry, the data of its domain it uses and how it integrates, and merges only whole. [Building a slice](design/slice-method.md) and [M29](roadmap/m29.md) plan the method, drafts until built.
 - **Update** M26 B240 built: the merge gate as the ordered stages of `gate.stages`, a project's `checks` adding stages that never shorten it ([Lifecycle as data](design/lifecycle.md#pipelines)). Lifecycle as data and [M26](roadmap/m26.md) are stable. Release 0.190.0.
 - **Update** M26 B240, second part: the next action chosen from `next.order` in data ([Lifecycle as data](design/lifecycle.md#the-next-action)). Release 0.189.2.
 - **Update** M26 B240, first part: the bolt and intent lifecycles as data, states derived from ordered rules over named guards ([Lifecycle as data](design/lifecycle.md)). Release 0.189.1.

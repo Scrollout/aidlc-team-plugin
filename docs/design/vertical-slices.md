@@ -38,4 +38,6 @@ The chain story → slice → folder → test starts where the story is written,
 # Where they run
 At the merge gate, on the merge result. A project's existing code is measured as it changes: a finding counts only where the bolt changed a file, the slice folder or the domain doc it names, so debt from before adoption waits for the bolt that touches it.
 
+How a slice is built whole, layer by layer: [Building a slice](slice-method.md).
+
 Bolts: [M27](../roadmap/m27.md) B245, B246; [M28](../roadmap/m28.md) B247, B248, B249.
