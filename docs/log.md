@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-29
 
+- **Update** A decision's `supersedes` read as written, not as a YAML 1.1 octal number ([Inception](design/inception.md)). Release 0.213.1.
 - **Update** M30 B262 built: `check --tree` runs the path naming rules and the slice checks over every tracked path ([Naming](design/naming.md#checks), [CLI](design/cli.md)). Release 0.213.0.
 
 ## 2026-10-28

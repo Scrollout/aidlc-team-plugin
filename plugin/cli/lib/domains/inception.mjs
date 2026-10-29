@@ -7,7 +7,7 @@ import { bundleOf, CLI_DIR, config, done, isMap, list, readJson, relPath, UsageE
 import { sh } from '../foundation/git.mjs';
 import { msg, render } from '../foundation/text.mjs';
 import { loadProfile, withDefaults } from '../foundation/profile.mjs';
-import { docSlug, hashDoc, parseDoc, sectionOf } from './bundle.mjs';
+import { docSlug, hashDoc, parseDoc, sectionOf, supersededId } from './bundle.mjs';
 import { glossaryOf } from './naming.mjs';
 import { reqId } from './plan.mjs';
 import { plug, seam } from '../foundation/seams.mjs';
@@ -54,7 +54,8 @@ export function lintInception({ bundle, profile, intents, requirements, merged, 
   const factProblems = (d) => (isMap(d.fm.affects) && d.fm.affects.platform && !list(d.fm.facts).length ? ['factMissing'] : []);
   for (const d of decisions) {
     for (const ref of list(d.fm.facts).filter((r) => !facts.has(r))) add('DOC-REF', d, keyLine(d, 'facts'), 'docRef', { ref, key: 'facts', type: 'Fact' });
-    if (d.fm.supersedes !== undefined && !decisions.some((x) => x.id === String(d.fm.supersedes).padStart(config.ids.decisionDigits, '0'))) add('DOC-REF', d, keyLine(d, FD.supersedes), 'docRef', { ref: String(d.fm.supersedes), key: FD.supersedes, type: config.grid.decisionType });
+    const sup = supersededId(d.doc);
+    if (sup && !decisions.some((x) => x.id === sup)) add('DOC-REF', d, keyLine(d, FD.supersedes), 'docRef', { ref: sup, key: FD.supersedes, type: config.grid.decisionType });
     if (!v2) continue;
     if (factProblems(d).length) add('FACT-MISSING', d, keyLine(d, FD.affects), 'factMissing', {});
     for (const ref of list(d.fm.facts).filter((r) => facts.has(r) && stale(facts.get(r)))) add('FACT-STALE', d, keyLine(d, 'facts'), 'factStale', { fact: ref, days: profile.facts?.maxAgeDays ?? P.maxAgeDays });
@@ -115,7 +116,7 @@ function coherence(decisions, domains, profile, add, keyLine) {
     for (const [table, who] of Object.entries(isMap(a.data) ? a.data : {})) {
       if (kinds.get(who) && kinds.get(who) !== 'domain') add('DESIGN-COHERENCE', d, at, 'coherenceHorizontal', { table, owner: who, kind: kinds.get(who) });
       const prior = owner.get(table);
-      if (prior && prior[0] !== who && !(prior[1].fm?.supersedes !== undefined && String(prior[1].fm.supersedes).padStart(config.ids.decisionDigits, '0') === d.id) && String(d.fm.supersedes ?? '').padStart(config.ids.decisionDigits, '0') !== prior[1].id) add('DESIGN-COHERENCE', d, at, 'coherenceTwice', { table, owners: `${prior[0]}, ${who}`, other: prior[1].id ?? prior[1].code });
+      if (prior && prior[0] !== who && supersededId(prior[1].doc) !== d.id && supersededId(d.doc) !== prior[1].id) add('DESIGN-COHERENCE', d, at, 'coherenceTwice', { table, owners: `${prior[0]}, ${who}`, other: prior[1].id ?? prior[1].code });
       else owner.set(table, [who, d]);
     }
   }

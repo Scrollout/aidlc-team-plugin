@@ -39,6 +39,6 @@ A domain doc's `# Owns` lists its tables and `# Relationships` its neighbours wi
 - `APPROVE-BULK`: `approve` naming two or more one-way doors.
 
 # References
-A decision's `facts` and `supersedes` must resolve to a doc of the right type (`DOC-REF`); an intent's requirements and a bolt's depends keep `PLAN-REQ` and `PLAN-DAG`. The intent rules hold in a v2 project for intents judged by method 3 (`method.since`), so an intent approved before keeps its rules.
+A decision's `facts` and `supersedes` must resolve to a doc of the right type (`DOC-REF`), `supersedes` read as written, so an unquoted `0022` is 0022, not YAML 1.1's octal 18; an intent's requirements and a bolt's depends keep `PLAN-REQ` and `PLAN-DAG`. The intent rules hold in a v2 project for intents judged by method 3 (`method.since`), so an intent approved before keeps its rules.
 
 Bolts: [M18](../roadmap/m18.md) B173 to B181.

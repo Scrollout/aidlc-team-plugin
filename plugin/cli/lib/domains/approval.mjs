@@ -6,7 +6,7 @@ import { bundleOf, config, QUICK, done, isMap, isoDay, lapsed, list, readJson, U
 import { git, gitLines, tryGit } from '../foundation/git.mjs';
 import { escapeRe, finding as codeFinding, msg } from '../foundation/text.mjs';
 import { loadProfile, withDefaults } from '../foundation/profile.mjs';
-import { hashDoc, parseDoc, sizeCap } from './bundle.mjs';
+import { hashDoc, parseDoc, sizeCap, supersededId } from './bundle.mjs';
 import { acsOf, computeLane, inForce, lintPlan, readPlan, reqId as reqIdOf, withIntents } from './plan.mjs';
 import { aidlcDir, mergedUnits, runtimeFile, sha256, writeJson } from '../foundation/store.mjs';
 
@@ -188,7 +188,7 @@ export const commands = {
       writeFileSync(file, stamped);
       out += msg('approvedDoc', { doc: relPath(cwd, file) });
       // Approving a decision that supersedes another marks the older one superseded, never edits its content (decision 0013).
-      const sup = parseDoc(stamped).fm?.supersedes, old = sup !== undefined && readdirSync(dirname(file)).find((f) => f.startsWith(`${String(sup).padStart(config.ids.decisionDigits, '0')}-`));
+      const sup = supersededId(parseDoc(stamped)), old = sup && readdirSync(dirname(file)).find((f) => f.startsWith(`${sup}-`));
       if (old) {
         const path = join(dirname(file), old);
         writeFileSync(path, readFileSync(path, 'utf8').replace(/^status: .*$/m, `status: ${msg('supersededStatus', { n: basename(file).slice(0, config.ids.decisionDigits) })}`));

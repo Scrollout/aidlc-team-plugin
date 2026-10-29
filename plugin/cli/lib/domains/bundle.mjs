@@ -319,6 +319,13 @@ function lintRules(rules = {}, file = PROFILE) {
   return out;
 }
 
+// The decision a doc's `supersedes` names, as its zero-padded id, or null; read from the raw line, since YAML 1.1
+// reads an unquoted 0022 as the octal 18 (docs/design/inception.md).
+export function supersededId(doc) {
+  const key = config.fields.supersedes, at = (doc?.lines ?? []).slice(1, Math.max(1, (doc?.body ?? 1) - 1)).map((l) => l.match(new RegExp(`^${key}:\\s*(.*?)\\s*(?:#.*)?$`))).find(Boolean);
+  return at && at[1] ? at[1].replace(/^(["'])(.*)\1$/, '$2').padStart(config.ids.decisionDigits, '0') : null;
+}
+
 // A naming rule's problem, or null (docs/design/naming.md); the gate skips a rule with one.
 export function nameProblem(r) {
   if (!isMap(r) || !r.id || !list(r.files).length || !r.pattern) return 'namesShape';

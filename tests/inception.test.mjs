@@ -77,7 +77,7 @@ test('B177/AC-1 an approved decision edited is DOC-AMEND; approving one that sup
   assert.deepEqual(codes(dir).sort(), [
     'DECISION-HORIZON 0004 serves only I-1.4, beyond the next 2 increments from 1',
     'DOC-AMEND 0003 is approved and was edited: supersede it, never amend it',
-    'DOC-REF 0005 supersedes: 9 is no Decision',
+    'DOC-REF 0005 supersedes: 0009 is no Decision',
   ]);
   commit(dir, 'restore 0003', { 'docs/decisions/0003-decision-3.md': read(dir, 'docs/decisions/0003-decision-3.md').replace('y\n', 'x\n'), 'docs/decisions/0006-decision-6.md': decision(6, 'supersedes: 3\n')[1] });
   const r = run(dir, ['approve', '0006']);
@@ -85,6 +85,10 @@ test('B177/AC-1 an approved decision edited is DOC-AMEND; approving one that sup
   assert.match(r.out, /docs\/decisions\/0003-decision-3\.md is superseded by docs\/decisions\/0006-decision-6\.md/);
   assert.match(read(dir, 'docs/decisions/0003-decision-3.md'), /^status: superseded by ADR-0006$/m); // as MADR writes it
   assert.ok(!codes(dir).some((l) => /DOC-AMEND 0003/.test(l)), 'superseding is no amendment');
+  // An unquoted 0012 is the decision 0012, though YAML 1.1 reads it as the octal 10.
+  commit(dir, 'octal', Object.fromEntries([decision(10, ''), decision(12, ''), decision(13, 'supersedes: 0012\n')]));
+  assert.match(run(dir, ['approve', '0013']).out, /0012-decision-12\.md is superseded/);
+  assert.doesNotMatch(read(dir, 'docs/decisions/0010-decision-10.md'), /superseded/);
 });
 
 test('B178/AC-2 contradicting designs are DESIGN-COHERENCE: a quota transaction across domains, operations data given to a horizontal module', () => {

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.213.1] - 2026-10-29
+### Fixed
+- A decision's `supersedes` is read as written: an unquoted `0022` named decision 0018, since YAML 1.1 reads it as octal, so approving the new decision marked the wrong one superseded. `approve`, `DOC-REF` and `DESIGN-COHERENCE` read the number from the front matter line.
+
 ## [0.213.0] - 2026-10-29
 ### Added
 - Whole-tree checks (M30 B262). `check --tree` runs the path naming rules, the generated banned-word rule among them, and the slice checks over every tracked path, so a path from before a rule is reported, not only one a bolt adds; the gate still counts only a bolt's changes. A `treeChecks` seam carries the extensions' whole-tree findings.
@@ -538,7 +542,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.213.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.213.1...HEAD
+[0.213.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.213.0...v0.213.1
 [0.213.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.212.0...v0.213.0
 [0.212.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.211.0...v0.212.0
 [0.211.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.210.0...v0.211.0
