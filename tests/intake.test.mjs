@@ -208,6 +208,11 @@ test('B218/AC-1 a method 9 intent is reviewed before approval: next names review
   assert.match(run(dir, ['next']).out, /ask the owner to approve I-1 R-1, with the intent review's findings for them to weigh \(F-1 no limit on cake size\)/);
   writeFileSync(join(dir, 'docs/requirements/R-1-order-email.md'), R1('When a customer orders, the bakery system shall email the baker at once [Q-1.4, Q-1.5].'));
   assert.match(run(dir, ['approve', 'I-1']).err, /APPROVE-REVIEW/, 'a requirement changed since the review');
+  // The next review reads the change since and answers the earlier findings by id, so rounds converge.
+  const again = run(dir, ['review', 'I-1']).out;
+  assert.match(again, /^## Re-review\nAn earlier review read these docs at commit \w+; `git diff \w+ -- docs\/intents\/I-1-cake-orders\.md docs\/requirements\/R-1-order-email\.md` shows what changed since/m);
+  assert.match(again, /^- F-1: no limit on cake size$/m);
+  assert.doesNotMatch(brief, /Re-review/, 'a first review reads it all');
   run(dir, ['review', 'record', 'I-1', '-'], JSON.stringify({ ...verdict, verdict: 'pass', findings: [] }));
   commit(dir, 'reviewed');
   const r = run(dir, ['approve', 'I-1', 'R-1']);

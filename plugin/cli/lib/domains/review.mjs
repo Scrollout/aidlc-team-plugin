@@ -125,11 +125,11 @@ export function intentBrief(cwd, id) {
   const { profile } = loadProfile(cwd), bundle = bundleOf(cwd, profile), plan = readPlan(bundle), intent = plan.intents.find((i) => i.id === id);
   if (!intent) throw new UsageError(msg('reviewNoIntent', { intent: id }));
   const dir = join(bundle, config.okf.bundle.folders.Request ?? ''), requests = existsSync(dir) ? readdirSync(dir).filter((f) => list(intent.fm.request).some((q) => f.startsWith(`${q}-`))) : [];
-  const file = packageFile(cwd, 'templates', S.intentReviewTemplate);
-  return render(readFileSync(file, 'utf8'), {
-    intent: id, file: relPath(cwd, intent.file), requests: requests.map((f) => relPath(cwd, join(dir, f))),
-    requirements: plan.requirements.filter((r) => intent.requirements.includes(r.id)).map((r) => relPath(cwd, r.file)),
-  }, file);
+  const file = packageFile(cwd, 'templates', S.intentReviewTemplate), reqs = plan.requirements.filter((r) => intent.requirements.includes(r.id)).map((r) => relPath(cwd, r.file));
+  // After an earlier review, the next one reads what changed since and answers its findings, so rounds converge.
+  const last = readJson(runtimeFile(cwd, 'intentReview', id));
+  const again = last?.commit && last.hash !== reviewedHash(intent, plan.requirements) ? [{ since: last.commit, files: [relPath(cwd, intent.file), ...reqs].join(' '), prior: last.findings.map((f) => ({ id: f.id, claim: f.claim ?? '' })) }] : [];
+  return render(readFileSync(file, 'utf8'), { intent: id, file: relPath(cwd, intent.file), requests: requests.map((f) => relPath(cwd, join(dir, f))), requirements: reqs, again }, file);
 }
 
 export const commands = {
@@ -180,7 +180,7 @@ export const commands = {
       const plan = readPlan(bundleOf(cwd, loadProfile(cwd).profile)), intent = plan.intents.find((i) => i.id === unit);
       if (!intent) throw new UsageError(msg('reviewNoIntent', { intent: unit }));
       const findings = (data.findings ?? []).map((f, k) => ({ ...f, id: render(config.ids.finding, { k: k + 1 }) }));
-      writeJson(runtimeFile(cwd, 'intentReview', unit), { intent: unit, verdict: data.verdict, findings, hash: reviewedHash(intent, plan.requirements), at: new Date().toISOString() });
+      writeJson(runtimeFile(cwd, 'intentReview', unit), { intent: unit, verdict: data.verdict, findings, hash: reviewedHash(intent, plan.requirements), commit: tryGit(cwd, 'rev-parse', '--short', 'HEAD'), at: new Date().toISOString() });
       return done(msg('recordedIntentReview', { intent: unit, count: findings.length }));
     }
     // An intent's design review: the architecture pass over its decision set, each finding numbered (docs/design/inception.md#approval).

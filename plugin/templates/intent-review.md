@@ -7,7 +7,13 @@ Focus: intent. You review the plan before the owner approves it, not code. You r
 {{/each}}- The intent: {{file}}
 {{#each requirements}}- A requirement it cites: {{this}}
 {{/each}}
-## Check
+{{#each again}}
+## Re-review
+An earlier review read these docs at commit {{since}}; `git diff {{since}} -- {{files}}` shows what changed since. Answer each of its findings by id: listed again with its id while it still holds, or left out when fixed.
+{{#each prior}}- {{id}}: {{claim}}
+{{/each}}Report a new finding only on a changed line, or on a line a change contradicts: the unchanged text was reviewed already. When every earlier finding is fixed and the changes add none, the verdict is pass.
+
+{{/each}}## Check
 - **Testable:** a tester could write a test from each requirement and each of its ACs, with no question back.
 - **Observable:** each AC reads Given <context>, when <action>, then <outcome>, and the outcome can be seen from outside.
 - **Scope:** what is in and what is out is plain, and no sentence of the owner's request is answered by nothing.

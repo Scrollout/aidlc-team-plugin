@@ -40,8 +40,8 @@ Sources, coverage, corners and answers: [Elaboration checks](elaboration.md).
 
 # Review before approval
 Method 9, for intents in a v2 project:
-- **The review:** before it offers the approval, `next` asks for an advisory review of the intent. `aidlc review I-<n>` prints the reviewer's brief: the owner's request, the intent and its requirements, and what to check (testable requirements, ACs a tester could write tests from, scope, corners, contradictions, sources that do not say what is claimed).
-- **The record:** the reviewer pipes its findings to `aidlc review record I-<n> -` with focus `intent`. The record keeps the hash of the intent and its requirements as reviewed.
+- **The review:** before it offers the approval, `next` asks for an advisory review of the intent. `aidlc review I-<n>` prints the reviewer's brief: the owner's request, the intent and its requirements, and what to check.
+- **The record:** the reviewer pipes its findings to `aidlc review record I-<n> -` with focus `intent`. The record keeps the hash of the intent and its requirements as reviewed. A re-review reads the diff since the last review and answers its findings by id.
 - **The approval:** it refuses when no review matches the docs as they are now (`APPROVE-REVIEW`): hard on the review having happened.
 - **The findings:** they stay advice. `next` lists them for the owner to weigh at the approval, and they block nothing: soft on the verdict.
 
