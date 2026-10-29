@@ -5,7 +5,6 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { approval, bindingOf, bundleOf, config, domainForms, done, gitLines, globRegex, graphOf, isMap, list, loadProfile, methodOf, msg, nameOf, parseDoc, parseYaml, plug, posix, readPlan, registry, render, sectionOf, seam, shippedDir, tryGit, UsageError, withDefaults } from '../../lib/index.mjs';
 
 const ST = config.state.names; // the lifecycle states, by name
-
 const K = config.packs;
 const packsDir = () => shippedDir('packs');
 
@@ -231,7 +230,6 @@ export function declarationProblems(decl, { root, profile, bundle, slice, domain
 // Every cut an architecture model may name, of any pack: each cut, and the layer of each cut with a form.
 const cutsOfPacks = () => (existsSync(packsDir()) ? [...new Set(readdirSync(packsDir()).flatMap((s) => { const f = join(packsDir(), s, K.manifest); return existsSync(f) ? Object.keys(JSON.parse(readFileSync(f, 'utf8')).slicePaths ?? {}).flatMap((c) => [layerOf(c), c]) : []; }))] : []);
 plug('sliceDeclaration', { parse: declarationOf, problems: declarationProblems, cuts: cutsOfPacks, pack: packFor, declared: declarationAt, path: cutPath, graph: packGraph, listed: surfaceOf, events: eventsOf, layer: layerOf, event: eventBase, touched });
-
 // Vertical slices across a domain's layers: each slice is a folder of the application layer, met by no other slice,
 // entered from its domain's interface layer or a runtime, listed with its use case and stories in the domain doc, and
 // tested (docs/design/vertical-slices.md). Returns [{ code, path, key, data }].
@@ -239,6 +237,8 @@ const V = config.slices;
 // A domain's layout (decision 0029): shared parts (slicePaths outside a slice, surfaces) beside slices, each with its layers.
 const layersOf = (m) => Object.values(m.slicePaths).filter((p) => !p.includes('{{slice}}') && p.startsWith('{{dir}}/')).map((p) => p.split('/')[1]), sharedOf = (m) => [...layersOf(m), ...Object.values(m.surfaces)];
 const ownOf = (m) => [...new Set(Object.values(m.slicePaths).filter((p) => p.includes('{{slice}}')).map((p) => p.slice(m.sliceFolder.length + 1).split('/')[0]))];
+// The pack's naming layer: where its language writes names (docs/design/naming-coordinates.md); slice folders are SLICE-NAME's.
+plug('namingLayer', (root) => packFor(root)?.manifest?.naming ?? null);
 const slicesIn = (root, dir, shared, own) => (existsSync(join(root, dir)) ? readdirSync(join(root, dir)).filter((n) => !shared.includes(n) && own.some((l) => existsSync(join(root, dir, n, l)))) : []);
 export function sliceFindings(root, profile) {
   const pack = packFor(root);

@@ -37,6 +37,7 @@
 * [Merge mechanics](gate.md) - How aidlc merge and check --ci carry out the gate in Verification - the trial merge, the codes, shared files, test runs, proof-revert and the CI history check.
 * [Module surfaces and cycles](module-surface.md) - A module other modules may reach only through the public paths it declares, and modules that never depend on each other in a circle, both checked at merge.
 * [Naming](naming.md) - Names composed from a registry, never invented - tokens, domains, closed vocabularies and banned words in the profile, a generic grammar per kind of name a project may override, names printed by the CLI, and rules generated from the registry and checked on code, contracts and docs.
+* [Naming coordinates](naming-coordinates.md) - Every name of a slice composed from one set of coordinates - system, domain, resource, verb and cut - and checked by a rule the registry generates for each kind of name that says where its names appear, with the kind's length, character class and uniqueness scope.
 * [OKF](okf.md) - How the plugin writes, indexes and validates OKF v0.2 bundles, following the official spec and its reference implementation.
 * [OKF validation](okf-validation.md) - The OKF errors and house-rule warnings the validator reports, and the YAML subset it reads frontmatter with.
 * [Overview](overview.md) - Goals, non-goals, budgets, repo layout and glossary of the plugin.

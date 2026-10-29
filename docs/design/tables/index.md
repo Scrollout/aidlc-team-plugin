@@ -8,7 +8,7 @@
 * [Gate codes](codes-gate.md) - Every code the merge gate reports, with its fix (a warning is marked); drawn from gate.codes in cli.json and the extensions' data.
 * [Hook codes](codes-hooks.md) - Every code the hooks reports, with its fix (a warning is marked); drawn from hooks.codes in cli.json and the extensions' data.
 * [Intent and bolt codes](codes-intent.md) - Every code plan lint on intents, decisions and bolts reports, with its fix (a warning is marked); drawn from grid.codes in cli.json and the extensions' data.
-* [Naming grammar](naming-grammar.md) - Each kind of name, the template it is composed from and the tokens it needs; drawn from naming.grammar in cli.json.
+* [Naming grammar](naming-grammar.md) - Each kind of name, the template it is composed from, the tokens it needs, its bounds and where a stack-neutral rule looks for it; drawn from naming.grammar in cli.json.
 * [Plan lint codes](codes-plan.md) - Every code plan lint reports, with its fix (a warning is marked); drawn from grid.codes in cli.json and the extensions' data.
 * [Plugin words](words-plugin.md) - The canonical words at the plugin scale, each with its one meaning, the AI-DLC term it maps to and where it is declared; drawn from the vocabulary in cli.json.
 * [System words](words-system.md) - The canonical words at the system scale, each with its one meaning, the AI-DLC term it maps to and where it is declared; drawn from the vocabulary in cli.json.

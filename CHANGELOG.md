@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.218.0] - 2026-10-29
+### Added
+- Names derived from one set of coordinates (M30 B267). The naming registry merges every kind the plugin's grammar, the stack pack's `naming` block, the architecture model's `model.grammar` and the project's `naming.grammar` name, so a kind any of them adds is printed by `aidlc name`; one without `template` and `regex` is `PROFILE-NAMING`.
+- A kind with `files` (and `find` or a path) generates its `GATE-NAME` rule: the alternation of every name the registry composes when each token it needs is closed, else the kind's regex. `table` finds `create table <name>` in `migrations/**/*.sql`; the Go and TypeScript packs say where their language writes integration event and permission names; slice folder names stay `SLICE-NAME`'s. A project no longer hand-writes these rules.
+- A kind's `max`, `class` (from `naming.classes`) and `scope`: `aidlc name` refuses a name over its max or outside its class; `PROFILE-NAMING` warns of a global kind no project token makes unique and reports an unknown class or scope.
+### Changed
+- `check --tree` runs the find rules on every tracked file's lines too, not only the path rules on its paths.
+
 ## [0.217.1] - 2026-10-29
 ### Fixed
 - A delegated re-approval accepted a v2 bolt whose acceptance criteria had changed: the guard, and the quick-lane delegation, checked only the v1 unit type. Both now read bolts and units, so what done means stays the owner's.
@@ -576,7 +584,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.217.1...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.218.0...HEAD
+[0.218.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.217.1...v0.218.0
 [0.217.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.217.0...v0.217.1
 [0.217.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.216.3...v0.217.0
 [0.216.3]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.216.2...v0.216.3

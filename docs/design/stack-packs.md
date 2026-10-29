@@ -3,7 +3,7 @@ type: Design
 title: Stack packs
 description: A stack pack per language (Go first, then TypeScript) holds the layout of every module kind, the scaffold templates, a tested reference domain and the dependency-graph extractor the plugin trusts, all as data the CLI reads.
 status: stable
-generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T05:00:00Z }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-10-29T15:00:00Z }
 ---
 
 # Why
@@ -11,7 +11,7 @@ A dependency graph the AI writes in the first bolt can read error-message prose 
 
 # A pack
 `plugin/packs/<stack>/` holds data, not code:
-- `manifest.json`: how the stack is detected (`go.mod`, `tsconfig.json`), the folder of each kind and layer (`internal/domains/{{domain}}/model`, `cmd/{{deployable}}`), how imports are read (`imports`: patterns that find a path in a file or in a block it names, resolved inside the module or relative to the file), the slice's folder (`sliceFolder`, `{{dir}}/{{slice}}`) and where each cut of a slice sits (`slicePaths`, one flat key per cut, a slice's own cuts inside its folder; a layer with forms has a key per form, `ui.cli`, `ui.web` or `ui.template`, each at `<slice>/ui/<form>`, a cut's layer being the part before the `.`, and a declaration's `ui` means every `ui.<form>` key the pack has; Go has `ui.cli` and `ui.template`, TypeScript `ui.web` and `ui.cli`), how the language writes a string literal (`stringLiteral`) and which lines and literals are its protocol (`values`), and where integration event types sit.
+- `manifest.json`: how the stack is detected (`go.mod`, `tsconfig.json`), the folder of each kind and layer (`internal/domains/{{domain}}/model`, `cmd/{{deployable}}`), how imports are read (`imports`: patterns that find a path in a file or in a block it names, resolved inside the module or relative to the file), the slice's folder (`sliceFolder`, `{{dir}}/{{slice}}`) and where each cut of a slice sits (`slicePaths`, one flat key per cut, a slice's own cuts inside its folder; a layer with forms has a key per form, `ui.cli`, `ui.web` or `ui.template`, each at `<slice>/ui/<form>`, a cut's layer being the part before the `.`, and a declaration's `ui` means every `ui.<form>` key the pack has; Go has `ui.cli` and `ui.template`, TypeScript `ui.web` and `ui.cli`), how the language writes a string literal (`stringLiteral`) and which lines and literals are its protocol (`values`), where integration event types sit, and `naming`, a grammar layer saying where the language writes integration event and permission names ([Naming coordinates](naming-coordinates.md#generated-rules)).
 - `templates/`: one file per scaffold kind, rendered with the names the registry composes ([Naming](naming.md)).
 - `reference/`: one domain (`notes`) with a command slice and a query slice, each slice one folder with its route under `<slice>/interface`, fully tested, in the pack's layout, passing every `ARCH-*` code on its own graph. Go's runs with `go test ./...`; TypeScript's with its `npm test` (`node --test` on `*.spec.ts`, type stripping), named so the plugin's own test run skips it.
 - An architecture model's walking skeleton lives with the architecture model, under its `reference/<stack>/` ([Architecture models](models.md), [Shipped layout](layout.md)); CI runs its tests too.

@@ -140,7 +140,7 @@ function renderCard(cwd, unitId, { preview = false, shared = sharedOf(cwd) } = {
     // The data the unit's modules own; any other through its owner (docs/design/data-ownership.md).
     data: profile.architecture?.data?.prefix ? [(profile.modules ?? []).filter((m) => modules.has(m.id ?? m.name) && list(m.data).length).map((m) => msg('cardDataOwned', { module: m.id ?? m.name, data: list(m.data).join(', ') })).join('') + msg('cardDataRest', { shared: list(profile.architecture.data.shared).join(', ') || '-' })] : [],
     // The naming rules for the files the unit may write (docs/design/naming.md).
-    names: [[...[profile.names ?? []].flat(), ...generatedRules(profile, bundle)].filter((r) => !nameProblem(r) && list(r.files).some((g) => atBase.scope.some((s) => overlaps(s, g))))
+    names: [[...[profile.names ?? []].flat(), ...generatedRules(profile, bundle, top)].filter((r) => !nameProblem(r) && list(r.files).some((g) => atBase.scope.some((s) => overlaps(s, g))))
       // a rule shows what it finds too: a pattern nothing matches bans each found word (U127)
       .map((r) => msg(!r.find ? 'cardNamePath' : r.pattern === C.bannedPattern ? 'cardNameBanned' : 'cardName', { id: r.id, files: list(r.files).join(', '), find: r.find, pattern: r.pattern, why: r.why ?? '-' })).join('') + namesCreated(atBase, profile, bundle)].filter(Boolean),
     // Each slice the bolt lists, its cuts as steps (docs/design/slice-method.md#built).

@@ -29,6 +29,10 @@
     "adapter": [["adapter.go", "{{dir}}/{{system}}.go"]],
     "runtime": [["runtime.go", "{{dir}}/main.go"]]
   },
+  "naming": { "grammar": {
+    "event": { "files": ["cmd/**/*.go", "internal/**/*.go"], "find": "[\"`]({{Namespace}}\\.[A-Za-z0-9.]+)[\"`]" },
+    "permission": { "files": ["cmd/**/*.go", "internal/**/*.go"], "find": "[\"`]({{Namespace}}/[^\"`\\s]+)[\"`]" }
+  } },
   "compileError": "\\[(build|setup) failed\\]",
   "eventType": "Type\\s*=\\s*\"([^\"]+)\"",
   "reference": { "domain": "reference/internal/domains/notes", "command": "reference/internal/domains/notes/createnote", "query": "reference/internal/domains/notes/getnote" }

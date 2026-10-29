@@ -80,8 +80,9 @@ export const pages = () => ({
   'bundle-types.md': page('Bundle types', "The bundle's doc types, the folder each lives in and the keys its schema requires; drawn from the bundle settings in cli.json.",
     mdTable(['Type', 'Folder', 'Required keys'], [['Intent', config.grid.intents], ['Requirement', config.grid.requirements], ['Decision', config.grid.decisions], ...Object.entries(config.okf.bundle.folders)]
       .map(([type, folder]) => [`\`${type}\``, `\`${folder}/\``, (config.okf.bundle.schemas[type]?.required ?? []).map((k) => `\`${k}\``).join(', ') || '-']))),
-  'naming-grammar.md': page('Naming grammar', 'Each kind of name, the template it is composed from and the tokens it needs; drawn from naming.grammar in cli.json.',
-    mdTable(['Kind', 'Template', 'Needs'], Object.entries(config.naming.grammar).map(([k, g]) => [`\`${k}\``, `\`${g.template}\``, g.needs.join(', ')]))),
+  'naming-grammar.md': page('Naming grammar', 'Each kind of name, the template it is composed from, the tokens it needs, its bounds and where a stack-neutral rule looks for it; drawn from naming.grammar in cli.json.',
+    mdTable(['Kind', 'Template', 'Needs', 'Bounds', 'Checked in'], Object.entries(config.naming.grammar).map(([k, g]) => [`\`${k}\``, `\`${g.template}\``, g.needs.join(', '),
+      [g.max && `max ${g.max}`, g.class && `class ${g.class}`, g.scope && `${g.scope} scope`].filter(Boolean).join(', ') || '-', (g.files ?? []).map((f) => `\`${f}\``).join(', ') || '-']))),
   // Every check code, each on exactly one page, with its level and fix (DOC-CODE).
   ...Object.fromEntries(CODES.map(([name, title, table, who, match]) => [`codes-${name}.md`, page(title, `Every code ${who} reports, with its fix (a warning is marked); drawn from ${table}.codes in cli.json and the extensions' data.`,
     codeTable(table, match))])),

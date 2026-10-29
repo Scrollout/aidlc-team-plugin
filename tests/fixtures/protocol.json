@@ -235,7 +235,8 @@
     "modelLayers",
     "mapPages",
     "traceSections",
-    "layerOf"
+    "layerOf",
+    "namingLayer"
   ],
   "yaml": [
     "True",

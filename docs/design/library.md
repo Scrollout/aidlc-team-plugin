@@ -7,7 +7,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-27T12:00:00Z }
 ---
 
 # Why
-The plugin holds every project to kinds, layers and one-way dependencies. Its own CLI was one folder of 21 modules with five import cycles and an 850-line hub ([0017](../decisions/0017-the-cli-is-a-library-with-extensions.md)).
+The plugin holds every project to kinds, layers and one-way dependencies; its own CLI was one folder with import cycles and a hub ([0017](../decisions/0017-the-cli-is-a-library-with-extensions.md)).
 
 # Layout
 `plugin/cli/` is still what `init` and `upgrade` copy to `.aidlc/bin/` ([Vendoring](vendoring.md)), so hooks, CI and the pinned copy keep working. The stack packs' data stays in `plugin/packs/`.
@@ -41,7 +41,7 @@ The plugin holds every project to kinds, layers and one-way dependencies. Its ow
 - `proofPatterns`: compile-error patterns of the proof (`stacks`).
 - `afterMerge`: work after a merge lands (`board`).
 - `issueTitle`: the title of an issue `fix --from-issue` reads (`board`).
-- `stack`: the stack pack a project's files match (`stacks`), for the intake proposal.
+- `stack`, `namingLayer`: the stack pack a project's files match, for the intake proposal, and its naming layer (`stacks`).
 - `pathwaySteps`: an intent's pathway steps an extension adds (`models`).
 - `modelFit`: the architecture models whose fit words the owner's request holds (`models`), for the intake proposal.
 - `modelContract`: the chosen architecture model's `contract` (`models`), for the `contracts` grammar.

@@ -7,7 +7,7 @@ import { bundleOf, CLI_DIR, config, QUICK, VERDICT, done, isMap, isoDay, lapsed,
 import { addedLines, git, gitLines, sh, tryGit } from '../foundation/git.mjs';
 import { finding as codeFinding, msg, render } from '../foundation/text.mjs';
 import { loadProfile, stageProblem, withDefaults } from '../foundation/profile.mjs';
-import { checkBundle, docSlug, misnamedPaths, nameRules, parseDoc, writeIndexes } from './bundle.mjs';
+import { checkBundle, docSlug, misnamedLines, misnamedPaths, nameRules, parseDoc, writeIndexes } from './bundle.mjs';
 import { computeLane, finding as planFinding, incrementLines, lintPlan, noRun, readPlan, runTarget, spansOf, withIntents } from './plan.mjs';
 import { cardsOver } from './card.mjs';
 import { inside } from '../foundation/glob.mjs';
@@ -170,7 +170,7 @@ export const STAGES = {
   },
   lines(c) {
     const { cwd, profile, p, base, unit, bundleRel, add } = c;
-    const names = nameRules(profile, c.st.bundle); // the project's rules and the registry's (docs/design/naming.md)
+    const names = nameRules(profile, c.st.bundle, cwd); // the project's rules and the registry's (docs/design/naming.md)
     const synonyms = glossaryOf(c.st.bundle).flatMap((e) => e.synonyms.map((word) => ({ ...e, word, re: new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i') })));
     // Each added line, so a secret written from Bash, which the secrets hook never sees, stops the merge.
     c.added = addedLines(cwd, `${base}...${branchOf(unit.id)}`);
@@ -178,16 +178,11 @@ export const STAGES = {
       if (secretIn(text, profile)) add('GATE-SECRET', 'gateSecret', { path: file, line }, file);
       // A static credential between components, outside the tests: identities, not secrets (docs/design/workload-identity.md).
       else if (codeChanges([file], p.levels, bundleRel).length && config.hooks.identity.some((x) => new RegExp(x, 'i').test(text))) add('GATE-IDENTITY', 'gateIdentity', { path: file, line }, file);
-      // A name the line adds where a naming rule looks, which its pattern does not match (docs/design/naming.md).
-      for (const r of names.filter((x) => x.find && list(x.files).some((g) => matches(file, g)))) {
-        for (const m of text.matchAll(new RegExp(r.find, 'g'))) {
-          const name = m[1] ?? m[0];
-          if (!new RegExp(`^(?:${r.pattern})$`).test(name)) add('GATE-NAME', 'gateName', { path: file, line, rule: r.id, name, pattern: r.pattern, why: r.why ?? '-' }, file);
-        }
-      }
       // A synonym a domain's glossary says to avoid, on an added line outside the domain docs (docs/design/naming.md#checks).
       if (!file.startsWith(`${bundleRel}/${config.okf.bundle.folders.Domain}/`)) for (const s of synonyms.filter((x) => x.re.test(text))) add('TERM-SYNONYM', 'gateSynonym', { path: file, line, word: s.word, term: s.term, domain: s.domain }, file);
     }
+    // A name an added line holds where a naming rule looks, which its pattern does not match (docs/design/naming.md).
+    for (const f of misnamedLines(names, c.added)) add('GATE-NAME', 'gateName', f, f.path);
     // A path rule: each file the unit adds or renames under its files (docs/design/naming.md).
     for (const { path, rule: r } of misnamedPaths(names, gitLines(cwd, 'diff', '--name-only', '--diff-filter=AR', `${base}...${branchOf(unit.id)}`))) add('GATE-NAME', 'gateNamePath', { path, rule: r.id, pattern: r.pattern, why: r.why ?? '-' }, path);
   },
