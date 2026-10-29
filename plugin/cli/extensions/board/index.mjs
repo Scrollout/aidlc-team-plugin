@@ -1,6 +1,6 @@
 // Board: a one-way projection of derived state onto GitHub issues and a Project, through `gh api` only
-// (docs/design/board.md). No other command reads the board; it writes only what differs. Also reads the base's
-// CI runs (docs/design/base-ci.md).
+// (docs/design/board.md); it serves the same items to another board's extension (docs/design/board-jira.md). No
+// other command reads the board; it writes only what differs. Also reads the base's CI runs (docs/design/base-ci.md).
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -10,6 +10,7 @@ import { aidlcDir, at, bindingName, bindingOf, ciFile, config, decisionsOf, done
 const ST = config.state.names; // the lifecycle states, by name
 
 const B = config.board;
+const KEY = Object.keys(B.boards)[0]; // GitHub's profile section: the board this extension writes
 let ghCommand = [B.gh]; // `github.gh` overrides it (docs/design/board.md)
 
 function api(args, body) {
@@ -42,22 +43,24 @@ const github = (profile) => {
   return profile.github;
 };
 
-// The board template: the shipped one, a project's merged over it, and the profile's github maps over both
-// (docs/design/board.md#shape). A map merges key by key; any other value replaces.
+// The board template: the shipped one, a project's merged over it, the map named like the board's profile section over
+// that, and the section's maps over all (docs/design/board.md#shape). A map merges key by key; any other value replaces.
 const over = (a, b) => (isMap(a) && isMap(b) ? Object.fromEntries([...new Set([...Object.keys(a), ...Object.keys(b)])].map((k) => [k, k in b ? over(a[k], b[k]) : a[k]])) : b);
-function templateOf(cwd, gh) {
+function templateOf(cwd, gh, key) {
   const own = readJson(join(cwd, config.packages.templates.override, B.file)) ?? {};
   const legacy = { kinds: Object.fromEntries(Object.entries(gh.types ?? {}).map(([k, type]) => [k, { type }])),
     fields: { [B.statusField]: { map: gh.status ?? {} }, ...Object.fromEntries(Object.entries(gh.fields ?? {}).map(([n, s]) => [n, typeof s === 'string' ? { from: s } : s])) } };
-  const t = over(over(readJson(join(import.meta.dirname, B.file)), own), legacy);
+  const base = over(readJson(join(import.meta.dirname, B.file)), own);
+  const t = over(over(base, base[key] ?? {}), legacy);
   if (gh.statusField) { t.fields[gh.statusField] = over(t.fields[B.statusField], t.fields[gh.statusField] ?? {}); delete t.fields[B.statusField]; }
   return t;
 }
 
-// The issue each intent and unit should have, rendered from the template: title, body, labels, assignees, type,
-// milestone, parent, blockers, open or closed, and Project fields.
-function wanted(cwd, st, gh) {
-  const top = git(cwd, 'rev-parse', '--show-toplevel'), T = templateOf(cwd, gh), bodies = new Map();
+// The issue each intent and unit should have on the board of the profile's `key` section, rendered from the template:
+// title, body, labels, assignees, type, milestone, parent, blockers, open or closed, and Project fields.
+function wanted(cwd, st, key) {
+  const gh = st.profile[key], repo = gh.repo ?? st.profile.github?.repo; // the doc's link points at GitHub when the code is there
+  const top = git(cwd, 'rev-parse', '--show-toplevel'), T = templateOf(cwd, gh, key), bodies = new Map();
   const body = (name) => { const file = templateFile(cwd, name, import.meta.dirname); if (!bodies.has(file)) bodies.set(file, readFileSync(file, 'utf8')); return [bodies.get(file), file]; };
   const waves = new Map();
   const wave = (u) => { // 1 + the highest wave among its dependencies in its intent
@@ -83,7 +86,8 @@ function wanted(cwd, st, gh) {
     const value = (path) => path && (at(own, path) ?? at(d.fm, path) ?? (kind === 'unit' && derived[path] ? derived[path]() : undefined));
     const acs = (d.acs ?? []).map((a) => ({ box: done ? B.box.done : B.box.open, text: d.doc.lines[a.line - 1].replace(/^\s*[-*]\s+/, '') }));
     const marker = msg('boardMarker', { kind, id: d.id });
-    const data = { description: String(d.fm.description ?? ''), slices: sliced?.lines ?? [], link: msg('boardLink', { repo: gh.repo, base: st.base, path: relPath(top, d.file) }), marker };
+    const path = relPath(top, d.file), link = repo ? msg('boardLink', { repo, base: st.base, path }) : path;
+    const data = { description: String(d.fm.description ?? ''), slices: sliced?.lines ?? [], link, marker };
     const [template, file] = body(K.body);
     let text;
     do text = render(template, { ...data, acs }, file); while (text.length > B.maxBody && acs.pop());
@@ -279,17 +283,20 @@ function project(gh, docs, out, backoff, read) {
 }
 
 // What sync last wrote, as a hash of the issues it wanted: `next` and `status` name sync once the plan moved past it.
-const boardFile = (cwd) => join(aidlcDir(cwd), config.state.board);
+// Each board keeps its own file; one line names sync for all of them.
+const boardFile = (cwd, key = KEY) => join(aidlcDir(cwd), B.boards[key].file ?? config.state.board);
 const hashOf = (docs) => createHash('sha256').update(JSON.stringify(docs)).digest('hex');
+const boards = (profile) => Object.keys(B.boards).filter((key) => profile[key]?.[B.boards[key].on]);
 function boardBehind(st) { // a board that cannot be planned offline is sync's error to report, not next's
-  try { return st.profile.github?.repo && readJson(boardFile(st.cwd))?.hash !== hashOf(wanted(st.cwd, st, st.profile.github).docs) ? msg('boardBehind', {}) : ''; } catch { return ''; }
+  try { return boards(st.profile).some((key) => readJson(boardFile(st.cwd, key))?.hash !== hashOf(wanted(st.cwd, st, key).docs)) ? msg('boardBehind', {}) : ''; } catch { return ''; }
 }
+// The items another board's extension writes, from the same derivation (docs/design/board-jira.md#structure).
+plug('boardItems', (cwd, st, key) => { const w = wanted(cwd, st, key); return { ...w, hash: hashOf(w.docs), file: boardFile(cwd, key) }; }, (profile) => boards(profile).length > 0);
 
 // Syncs every intent and live unit; returns the writes it made, one line each.
-export function sync(cwd) {
-  const st = readState(cwd);
+export function sync(cwd, st = readState(cwd)) {
   const gh = github(st.profile);
-  const { T, docs } = wanted(cwd, st, gh);
+  const { T, docs } = wanted(cwd, st, KEY);
   const hash = hashOf(docs);
   const out = [];
   const read = gh.project && projectReader(gh);
@@ -336,8 +343,9 @@ function ciWait(cwd) {
 }
 
 export const commands = {
-  sync(args, { cwd }) {
-    return done(sync(cwd));
+  sync(args, { cwd }) { // each board the profile sets: GitHub's here, the others through their extensions
+    const st = readState(cwd), others = seam('boardSync', st.profile);
+    return done((st.profile.github || !others.length ? sync(cwd, st) : '') + others.map((f) => f(cwd, st)).join(''));
   },
   ci([sub, ...more], { cwd }) {
     if (sub !== 'wait' || more.length) throw new UsageError(msg('ciUsage', {}));

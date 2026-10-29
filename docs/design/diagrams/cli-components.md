@@ -15,6 +15,7 @@ flowchart TB
     extensions_board[board]
     extensions_contracts[contracts]
     extensions_intake[intake]
+    extensions_jira[jira]
     extensions_models[models]
     extensions_operations[operations]
     extensions_slices[slices]

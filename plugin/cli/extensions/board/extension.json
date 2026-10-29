@@ -1,6 +1,6 @@
 {
   "name": "board",
-  "description": "The owner's Project board: issues, fields and milestones synced from the plan, and the PLAN-BOARD rule (docs/design/board.md).",
+  "description": "The owner's Project board: issues, fields and milestones synced from the plan, the same items for another board's extension, and the PLAN-BOARD rule (docs/design/board.md).",
   "when": "github",
   "data": {
     "messages": {
@@ -43,6 +43,7 @@
     },
     "board": {
       "gh": "gh",
+      "boards": { "github": { "on": "repo" } },
       "perPage": 100,
       "maxBody": 1500,
       "errorArgs": 3,
@@ -106,7 +107,7 @@
       {
         "name": "sync",
         "usage": "sync",
-        "does": "project intents and bolts onto GitHub issues and a Project"
+        "does": "project intents and bolts onto GitHub issues and a Project, or a Jira project"
       },
       {
         "name": "ci",

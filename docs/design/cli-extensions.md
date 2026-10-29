@@ -16,7 +16,7 @@ Each comes with its extension ([Library and extensions](library.md#extensions));
 | `intake "<prose>"\|--file <path>\|Q-<n> [--<factor> <band>:<ids>]…` | keeps the owner's request word for word as `requests/Q-<n>` and proposes pathway, stack and lane; with `Q-<n>`, records the lead's bands ([Intake](intake.md)) | lead |
 | `graph` | the dependency graph the stack pack reads from source, imports and data ([Stack packs](stack-packs.md)) | gate, lead |
 | `scaffold <kind> <name> [--domain d]` | a kind's templates from the stack pack, named from the registry; never overwrites | lead, builder |
-| `sync` | projects intents and bolts onto GitHub issues and a Project ([Board](board.md)) | lead, merge |
+| `sync` | projects intents and bolts onto GitHub issues and a Project, or a Jira project ([Board](board.md), [Board on Jira](board-jira.md)) | lead, merge |
 | `ci wait` | waits for the pushed base's CI runs and records the result ([CI on the base](base-ci.md)) | lead |
 | `deploy check <intent>` | runs `deploy.check` on the base and records it ([Deployment and Operation](operations.md)) | lead |
 | `release <intent>` | runs `deploy.run` and `release` on the base, then `deploy.smoke` when they passed, and records each | owner (prompt or the words `release I-<n>`) |

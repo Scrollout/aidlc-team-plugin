@@ -5,7 +5,8 @@
 * [Architecture in arc42](arc42.md) - The plugin's architecture in arc42's twelve sections, each stated here, with links to the detail.
 * [Architecture model](architecture-model.md) - The system's core and extensions, seven closed module kinds with what each may depend on, five horizontal layers pointing inward, client, server and event surfaces, and data owned by one domain; boundaries are computed from these declarations, never written by hand.
 * [Architecture models](models.md) - architecture models as data - a proven system's vertical and horizontal shape distilled from research, shipped or kept by a project, applied to any project by the AI-DLC method, and held by generic rule types.
-* [Board](board.md) - An optional one-way projection of derived state onto GitHub issues and a GitHub Project, written by deterministic code at zero model tokens.
+* [Board](board.md) - An optional one-way projection of derived state onto GitHub issues and a GitHub Project, or a Jira project, written by deterministic code at zero model tokens.
+* [Board on Jira](board-jira.md) - The board's one-way projection onto a Jira project through acli, which owns the login - the same template, items and status map as on GitHub, written by deterministic code at zero model tokens.
 * [Bolt card](bolt-card.md) - The generated, read-only brief one builder works from and one reviewer checks against, for a bolt (`U-<n>` in a v1 project).
 * [Build method from day one](method.md) - How a project gets the build method on its first init - level runs asked at init, a constitution that names the check behind each rule, and an upgrade that adds what an older project lacks.
 * [Building a slice](slice-method.md) - The vertical slice method from intake to merge - each slice declares its layers, entry, data and integrations in one grammar, and is planned, scaffolded, checked, proved and reported layer by layer.

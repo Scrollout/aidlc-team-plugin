@@ -38,6 +38,7 @@ The rule holds in every project the plugin governs, not only in the plugin.
   - its relationships: `depends` as blocked-by links, added and removed to match the plan.
 - **The Project:** each field with its type (single select and its options, number, date, text, iteration). `sync` creates a missing field or option, refuses a field of the wrong type, and writes an iteration by its title or start date.
 - **Values:** each field's value from a front-matter path or a derived value, with a value map, as `github.fields` did.
+- **Per board:** a map named like the profile's section (`jira`) merges over the kinds and fields for that board ([Board on Jira](board-jira.md)).
 
 `sync` renders the template; the code that wrote the issue shape is gone.
 

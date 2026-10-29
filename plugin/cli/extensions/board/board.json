@@ -52,5 +52,35 @@
       }
     },
     "Cuts done": { "type": "NUMBER", "from": "board.cutsDone" }
+  },
+  "jira": {
+    "kinds": {
+      "intent": { "type": "Epic", "body": "workitem.md" },
+      "unit": { "type": "Story", "body": "workitem.md" },
+      "fix": { "type": "Task", "body": "workitem.md" }
+    },
+    "fields": {
+      "Status": {
+        "options": ["To Do", "In Progress", "Done"],
+        "map": {
+          "draft": "To Do",
+          "approved": "To Do",
+          "stale": "To Do",
+          "blocked": "To Do",
+          "held": "To Do",
+          "building": "In Progress",
+          "fix": "In Progress",
+          "started": "In Progress",
+          "reported": "In Progress",
+          "reviewing": "In Progress",
+          "reviewed": "In Progress",
+          "gated": "In Progress",
+          "stopped": "In Progress",
+          "escalated": "In Progress",
+          "merged": "Done",
+          "released": "Done"
+        }
+      }
+    }
   }
 }

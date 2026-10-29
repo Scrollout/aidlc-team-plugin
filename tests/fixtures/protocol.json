@@ -1,5 +1,5 @@
 {
-  "about": "Tool protocol the CLI's code may spell: the commands, flags and words of the tools it calls, and text mechanics. Every other literal is a value and lives in data (principle 11, docs/design/values.md). `numbers` are arithmetic (an index, a step, a pair, milliseconds per second, per hour and per day); any other number is a threshold or a size and lives in data. `host` is the coding agent's hook protocol, `cli` the CLI's own command and flag names, `mermaid` the diagram syntax, `github` the workflow keys it reads, `githubApi` the REST and GraphQL paths, flags and field types of the API the board calls, `openapi` the OpenAPI and JSON Schema words the contract checks read.",
+  "about": "Tool protocol the CLI's code may spell: the commands, flags and words of the tools it calls, and text mechanics. Every other literal is a value and lives in data (principle 11, docs/design/values.md). `numbers` are arithmetic (an index, a step, a pair, milliseconds per second, per hour and per day); any other number is a threshold or a size and lives in data. `host` is the coding agent's hook protocol, `cli` the CLI's own command and flag names, `mermaid` the diagram syntax, `github` the workflow keys it reads, `githubApi` the REST and GraphQL paths, flags and field types of the API the board calls, `acli` the commands and flags of the Jira CLI the Jira board calls and the ADF node types of its descriptions, `openapi` the OpenAPI and JSON Schema words the contract checks read.",
   "git": [
     "rev-parse",
     "rev-list",
@@ -236,7 +236,9 @@
     "mapPages",
     "traceSections",
     "layerOf",
-    "namingLayer"
+    "namingLayer",
+    "boardItems",
+    "boardSync"
   ],
   "yaml": [
     "True",
@@ -364,6 +366,41 @@
     "NUMBER",
     "DATE",
     "/dependencies/blocked_by"
+  ],
+  "acli": [
+    "jira",
+    "workitem",
+    "search",
+    "view",
+    "create",
+    "edit",
+    "transition",
+    "link",
+    "--jql",
+    "--limit",
+    "--paginate",
+    "--json",
+    "--fields",
+    "--project",
+    "--type",
+    "--summary",
+    "--description-file",
+    "--label",
+    "--parent",
+    "--key",
+    "--labels",
+    "--remove-labels",
+    "--yes",
+    "--status",
+    "issues",
+    "doc",
+    "paragraph",
+    "text",
+    "hardBreak",
+    "taskList",
+    "taskItem",
+    "bulletList",
+    "listItem"
   ],
   "openapi": [
     "put",

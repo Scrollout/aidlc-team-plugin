@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.220.0] - 2026-10-29
+### Added
+- The board on a Jira project (M30 B268). A `jira` section in the profile (`site`, `project`, an optional `board`; `jira.acli` names another acli) makes `aidlc sync` project the board's items onto the Jira project through acli, which owns the login: an intent is an Epic, a bolt a Story under it, a fix a Task, `depends` are "Blocks" links, labels as on GitHub plus a marker label (`aidlc-<id>`), the ACs as an ADF checklist, and the template's status map applied by a transition. `board.issue` may name a Jira key. Sync reads first and writes only differences; `merge` runs it afterwards, a failure is a warning; `next` and `status` name sync while either board is behind.
+- The board template takes a map named like a board's profile section (`jira`) over its kinds and fields; the shipped one maps the kinds to Epic, Story and Task, the body to `workitem.md`, and the status onto To Do, In Progress and Done.
+- Checked live on a Jira project: a search returns neither parent nor links and a view leaves out labels, parent and links unless named, so links are read from a view with its fields; `Blocks` is created with the blocker as `--in` and the blocked item as `--out`, as Jira records it.
+### Changed
+- The board extension serves its items to another board's extension through the `boardItems` seam, and its `sync` command runs each board the profile sets (`boardSync`).
+
 ## [0.219.2] - 2026-10-29
 ### Fixed
 - An event in another namespace than the project's must end in a past participle (the kind's `other` shape), so an extension's `WidgetCreate` is refused and `WidgetCreated` accepted.
@@ -606,7 +614,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.219.2...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.0...HEAD
+[0.220.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.219.2...v0.220.0
+
 [0.219.2]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.219.1...v0.219.2
 [0.219.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.219.0...v0.219.1
 [0.219.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.218.2...v0.219.0

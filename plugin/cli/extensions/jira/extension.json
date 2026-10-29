@@ -1,0 +1,39 @@
+{
+  "name": "jira",
+  "description": "The board on a Jira project: the board's items written through acli, which owns the login (docs/design/board-jira.md).",
+  "when": "jira",
+  "data": {
+    "okf": { "profileKeys": { "top": ["jira"] } },
+    "messages": {
+      "jiraCreated": "created {{key}} {{title}}\n",
+      "jiraUpdated": "updated {{key}}: {{what}}\n",
+      "jiraMoved": "moved {{key}} to {{status}}\n",
+      "jiraBlocked": "{{key}} is blocked by {{by}}\n",
+      "jiraInSync": "the board on {{project}} is in sync\n",
+      "jiraFailed": "warning: the board on {{project}} did not sync, run aidlc sync: {{error}}\n"
+    },
+    "board": {
+      "boards": { "jira": { "on": "project", "file": "jira.json" } }
+    },
+    "jira": {
+      "acli": "acli",
+      "limit": 100,
+      "errorArgs": 2,
+      "fields": "summary,status,labels,issuetype,description",
+      "viewFields": "summary,status,labels,parent,issuetype,description,issuelinks",
+      "jql": "project = \"{{project}}\" AND labels in ({{labels}})",
+      "jqlLabel": "\"{{name}}\"",
+      "marker": "aidlc-{{id}}",
+      "key": "^[A-Z][A-Z0-9_]*-\\d+$",
+      "label": { "pattern": "\\s+", "with": "-" },
+      "statusField": "Status",
+      "link": { "type": "Blocks", "blocker": "--in", "blocked": "--out", "side": "inwardIssue" },
+      "tmp": "workitem-",
+      "descriptionFile": "description.json",
+      "task": "^- \\[([x ])\\] (.*)$",
+      "bullet": "^- (.*)$",
+      "taskState": { "x": "DONE", " ": "TODO" },
+      "what": { "--summary": "summary", "--description-file": "description", "--labels": "labels", "--remove-labels": "labels" }
+    }
+  }
+}
