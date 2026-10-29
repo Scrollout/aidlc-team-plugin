@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-29
 
+- **Update** Git output uncapped; git cut off is an error, never an empty diff ([CLI engine](design/cli-engine.md)). Release 0.220.5.
 - **Update** `start` leaves a live builder's worktree alone ([Agents in flight](design/in-flight.md), [Prompts](design/prompts.md)). Release 0.220.4.
 - **Update** Third-party images pass the image rule only pinned by digest ([Naming](design/naming.md)). Release 0.220.3.
 - **Update** The banned-word rule judges only the new part of a path ([Naming](design/naming.md)). Release 0.220.2.

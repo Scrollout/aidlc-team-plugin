@@ -16,7 +16,7 @@ let ghCommand = [B.gh]; // `github.gh` overrides it (docs/design/board.md)
 function api(args, body) {
   let out;
   try {
-    const opts = { input: body ? JSON.stringify(body) : '', encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] };
+    const opts = { input: body ? JSON.stringify(body) : '', encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'], maxBuffer: Infinity };
     out = execFileSync(ghCommand[0], [...ghCommand.slice(1), 'api', ...args, ...(body ? ['--input', '-'] : [])], opts);
   } catch (e) {
     // gh's own message (stderr, or the API's error body) says what failed; the command line does not.

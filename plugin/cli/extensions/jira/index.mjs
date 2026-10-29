@@ -14,7 +14,7 @@ let acliCommand = [J.acli]; // `jira.acli` overrides it
 function acli(args) {
   let out;
   try {
-    out = execFileSync(acliCommand[0], [...acliCommand.slice(1), 'jira', 'workitem', ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+    out = execFileSync(acliCommand[0], [...acliCommand.slice(1), 'jira', 'workitem', ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: Infinity });
   } catch (e) {
     // acli's own message says what failed; the command line does not.
     throw new Error(`${args.slice(0, J.errorArgs).join(' ')}: ${(e.stderr || e.stdout || e.message).trim().split('\n').join(' ')}`);

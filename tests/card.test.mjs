@@ -432,3 +432,13 @@ test('0.172.1 branchSha reads a branch from the repository\'s files as git does:
   assert.equal(branchSha(tree, 'bolt/B-2'), git(tree, 'rev-parse', 'HEAD'), 'from a worktree, through its gitdir and commondir');
   assert.equal(branchSha(join(tree, 'sub'), 'main'), head, 'from below the top');
 });
+
+test('0.220.5 git reads a branch diff of megabytes whole, and a missing folder still answers nothing', async () => {
+  const { addedLines, tryGit } = await import('../plugin/cli/lib/foundation/git.mjs');
+  const dir = makeRepo();
+  git(dir, 'switch', '-q', '-c', 'unit/U-1');
+  const lines = Array.from({ length: 60_000 }, (_, k) => `"field${k}": "a value long enough to pass a megabyte"`);
+  commit(dir, 'a schema', { 'schemas/v1.json': lines.join('\n') + '\n' });
+  assert.equal(addedLines(dir, 'main...unit/U-1').length, lines.length);
+  assert.equal(tryGit(join(dir, 'gone'), 'status', '--porcelain'), null);
+});

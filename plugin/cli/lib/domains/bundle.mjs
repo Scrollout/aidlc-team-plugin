@@ -289,7 +289,7 @@ export function approvedText(file, hash) {
   const cwd = dirname(file), log = (...from) => gitLines(cwd, 'log', ...from, '--follow', '--format=%H', '--name-only', '--', basename(file)).filter(Boolean);
   const head = log(), lines = head.length ? head : log('--all');
   for (let k = 0; k + 1 < lines.length; k += 2) {
-    const text = execFileSync('git', ['show', `${lines[k]}:${lines[k + 1]}`], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }); // untrimmed: the hash covers the last newline
+    const text = execFileSync('git', ['show', `${lines[k]}:${lines[k + 1]}`], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: Infinity }); // untrimmed: the hash covers the last newline
     const doc = parseDoc(text);
     if (FORMS.some((f) => hashDoc(doc, f) === hash)) return text;
   }
