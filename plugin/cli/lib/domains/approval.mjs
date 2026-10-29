@@ -47,7 +47,7 @@ export function ownerLines(cwd) {
     + (prompt ? msg('statusPrompt', { command: prompt.command, state: config.hooks.promptStates[prompt.ran ? 1 : prompt.refused ? 2 : 0], at: prompt.ran ?? prompt.refused ?? prompt.at }) : '');
 }
 
-const acLines = (doc) => acsOf(doc).map((a) => a.text.trim()).join('\n');
+const acLines = (doc) => acsOf(doc).map((a) => doc.lines[a.line - 1].trim()).join('\n'); // as written: a value in a code span is part of what done means
 // A stale unit's ACs read as last approved: a delegated re-approval keeps them, as what done means is the owner's.
 export const acsKept = (cwd, file, doc) => { const before = approvedText(file, doc.fm.verified_hash); return before !== null && acLines(parseDoc(before)) === acLines(doc); };
 

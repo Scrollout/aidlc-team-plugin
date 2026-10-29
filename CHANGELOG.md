@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.218.2] - 2026-10-29
+### Fixed
+- The acceptance-criteria guard compared prose with code spans stripped, so an AC changed only inside backticks (a namespace, a command) read as unchanged and a delegated re-approval passed it; the guard compares each AC as written.
+
 ## [0.218.1] - 2026-10-29
 ### Fixed
 - A delegated re-approval refuses a requirement whose acceptance criteria changed, as it refuses a bolt's, and `next` names the owner's approval for it instead of the delegated one.
@@ -588,7 +592,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.218.1...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.218.2...HEAD
+[0.218.2]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.218.1...v0.218.2
 [0.218.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.218.0...v0.218.1
 [0.218.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.217.1...v0.218.0
 [0.217.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.217.0...v0.217.1
