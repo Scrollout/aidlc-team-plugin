@@ -62,6 +62,7 @@ const cap = (w) => w.charAt(0).toUpperCase() + w.slice(1);
 const pascal = (ws) => ws.map(cap).join('');
 const camel = (ws) => ws.map((w, k) => (k ? cap(w) : w)).join('');
 const namespaceOf = (t) => (t.org && t.system ? `${pascal(words(t.org))}.${pascal(words(t.system))}` : undefined);
+const pastOf = (verb, rule = N.pastRules.find(([from]) => new RegExp(from).test(verb))) => N.pastTense[verb] ?? cap(rule ? verb.replace(new RegExp(rule[0]), rule[1]) : verb + N.pastSuffix); // irregular, a spelling rule, the suffix
 const singular = (ws) => [...ws.slice(0, -1), N.singular.reduce((w, [from, to]) => w.replace(new RegExp(from), to), ws.at(-1))];
 
 // A registered domain's word forms, from its registered name (or its code) and singular: the API's type in camel
@@ -82,7 +83,7 @@ export function nameOf(kind, flags, reg) {
     Object.assign(v, { domain: flags.domain, part: flags.domain, ...domainForms(flags.domain, reg) });
   }
   if (flags.stage !== undefined) v.part = known('stage', flags.stage, reg.vocabularies.pipeline, N.where.pipeline);
-  if (flags.verb !== undefined) Object.assign(v, { verb: known('verb', flags.verb, reg.vocabularies.verb, N.where.verb), OperationVerb: N.operationVerbs[flags.verb] ?? cap(flags.verb), PastVerb: N.pastTense[flags.verb] ?? cap(flags.verb) + N.pastSuffix });
+  if (flags.verb !== undefined) Object.assign(v, { verb: known('verb', flags.verb, reg.vocabularies.verb, N.where.verb), OperationVerb: N.operationVerbs[flags.verb] ?? cap(flags.verb), PastVerb: pastOf(flags.verb) });
   v.role = known('role', flags.role, reg.vocabularies.role, N.where.role);
   v.roleSuffix = flags.role ? `-${flags.role}` : '';
   v.env = known('env', flags.env, reg.vocabularies.env, N.where.env);
@@ -96,8 +97,7 @@ export function nameOf(kind, flags, reg) {
   const name = render(spec.template, v, N.grammarSource + kind);
   if (!new RegExp(spec.regex).test(name)) throw new UsageError(msg('nameMissing', { kind, missing: name, flags: spec.regex }));
   if (spec.max && name.length > spec.max) throw new UsageError(msg('nameMax', { kind, name, length: name.length, max: spec.max }));
-  const cls = (reg.classes ?? N.classes)[spec.class];
-  if (cls && !new RegExp(cls).test(name)) throw new UsageError(msg('nameClass', { kind, name, class: spec.class, pattern: cls }));
+  const cls = (reg.classes ?? N.classes)[spec.class]; if (cls && !new RegExp(cls).test(name)) throw new UsageError(msg('nameClass', { kind, name, class: spec.class, pattern: cls }));
   return name;
 }
 
@@ -150,8 +150,11 @@ export function generatedRules(profile, bundle, root) {
     const names = composed(kind, spec, reg, lists), at = new Map(); // a path rule: each path, with the names it takes
     try {
       for (const n of spec.path ? names : []) { const p = render(spec.path, { ...esc(t), ...esc(n.flags), name: '\0' }); at.set(p, [...(at.get(p) ?? []), n.name]); }
-      const pattern = spec.path ? [...at].map(([p, ns]) => p.replace('\0', `(?:${alt(ns)})`)).join('|') : names.length ? alt(names.map((n) => n.name)) : spec.regex.replace(/^\^|\$$/g, '');
-      if (pattern) out.push({ id: kind, files: list(spec.files), ...(spec.find && { find: render(spec.find, esc({ ...t, Namespace: namespaceOf(t) })) }), pattern, why: spec.why ?? N.ruleWhy });
+      // A kind's `nest` lets child segments in before its last `at`; another namespace is judged by the kind's regex.
+      const shape = spec.regex.replace(/^\^|\$$/g, ''), own = namespaceOf(t), nested = (n) => (spec.nest ? alt([n.slice(0, n.lastIndexOf(spec.nest.at))]) + spec.nest.pattern + alt([n.slice(n.lastIndexOf(spec.nest.at))]) : alt([n]));
+      const exact = names.map((n) => nested(n.name)).join('|'), ns = `{{${N.namespaceToken}}}`, others = spec.find?.includes(ns) && own ? `|${render(N.patterns.otherNamespace, { own: alt([own]), shape })}` : '';
+      const pattern = spec.path ? [...at].map(([p, ns]) => p.replace('\0', `(?:${alt(ns)})`)).join('|') : names.length ? exact + others : shape;
+      if (pattern) out.push({ id: kind, files: list(spec.files), ...(spec.find && { find: render(spec.find.replaceAll(ns, '\0'), esc(t), N.grammarSource + kind).replaceAll('\0', N.patterns.anyNamespace) }), pattern, why: spec.why ?? N.ruleWhy });
     } catch (e) { if (!(e instanceof TemplateError)) throw e; } // a token the registry lacks: no rule yet
   }
   return out;

@@ -41,18 +41,24 @@ test('B267/AC-2 the registry generates the event, permission and table rules: ea
   for (const action of config.naming.actions) assert.ok(full(rules.permission, nameOf('permission', { domain: 'orders', action }, reg)), action);
   assert.ok(!full(rules.event, 'Acme.Shop.OrderPlaced') && !full(rules.event, 'Acme.Shop.OrderCreatedV2'), 'a verb the registry lacks, a version suffix');
   assert.ok(!full(rules.permission, 'Acme.Shop/order/write') && !full(rules.permission, 'Acme.Shop/orders/approve'));
-  // find looks only at the project's own names: its namespace, in a string literal of the stack.
-  assert.deepEqual(found(rules.event, 'const T = "Acme.Shop.OrderPlaced"; x := "Other.Ns.Thing"; p := "Acme.Shop/orders/read"'), ['Acme.Shop.OrderPlaced']);
-  assert.deepEqual(found(rules.permission, 'p := "Acme.Shop/orders/read"; q := "Other.Ns/things/write"'), ['Acme.Shop/orders/read']);
+  // A nested type under a registered one; another namespace (an extension's) by the kind's shape, the project's own exactly.
+  assert.ok(full(rules.permission, 'Acme.Shop/orders/lines/write'), 'a nested type');
+  assert.ok(full(rules.permission, 'Sample.Things/widgets/read') && !full(rules.permission, 'Sample.Things/Widgets/read'), 'an extension, by shape');
+  assert.ok(full(rules.event, 'Sample.Things.WidgetMade') && !full(rules.event, 'Acme.Shop.WidgetMade'), 'the project namespace stays exact');
+  assert.deepEqual(found(rules.permission, 'p := "Sample.Things/widgets/read"'), ['Sample.Things/widgets/read'], 'found in any namespace');
+  // find looks at every namespace's names in a string literal of the stack; the pattern judges each.
+  assert.deepEqual(found(rules.event, 'const T = "Acme.Shop.OrderPlaced"; x := "Other.Ns.Thing"; p := "Acme.Shop/orders/read"'), ['Acme.Shop.OrderPlaced', 'Other.Ns.Thing']);
+  assert.deepEqual(found(rules.permission, 'p := "Acme.Shop/orders/read"; q := "Other.Ns/things/write"'), ['Acme.Shop/orders/read', 'Other.Ns/things/write']);
   assert.deepEqual(rules.event.files, ['cmd/**/*.go', 'internal/**/*.go'], 'the Go pack says where');
   // table: stack-neutral, an open token, so the kind's regex.
   assert.deepEqual(found(rules.table, 'CREATE TABLE IF NOT EXISTS orders.order_lines (\ncreate unlogged table Orders.Lines(id int);'), ['orders.order_lines', 'Orders.Lines']);
-  assert.ok(full(rules.table, 'orders.order_lines') && !full(rules.table, 'Orders.Lines'));
+  assert.ok(full(rules.table, 'orders.order_lines') && !full(rules.table, 'Orders.Lines') && !full(rules.table, 'orders.lines_') && !full(rules.table, 'orders.order__lines'));
   // TypeScript says its own files; without a pack, only the stack-neutral kinds.
   const ts = Object.fromEntries(generatedRules({ naming: NAMING }, null, makeRepo({ 'tsconfig.json': '{}\n' }, { naming: NAMING })).map((r) => [r.id, r]));
   assert.deepEqual(ts.event.files, ['src/**/*.ts', 'src/**/*.tsx', 'src/**/*.mts']);
   assert.deepEqual(generatedRules({ naming: NAMING }).map((r) => r.id), ['migration', 'namespace', 'banned', 'table']);
-  assert.ok(!generatedRules({ naming: { tokens: { system: 'shop' }, domains: { orders: {} } } }, null, dir).some((r) => r.id === 'event'), 'no org, no namespace to find');
+  const shaped = generatedRules({ naming: { tokens: { system: 'shop' }, domains: { orders: {} } } }, null, dir).find((r) => r.id === 'event');
+  assert.ok(full(shaped, 'Any.Ns.ThingMade') && !full(shaped, 'any.ns.thing'), 'no org, no project namespace: every event by the kind\'s shape');
 });
 
 const BOLT = {
@@ -93,4 +99,10 @@ test('B267/AC-3 a kind\'s max and class bound the names aidlc name prints; a glo
     'naming kind odd has scope planet, not one of global, region, account, group, namespace (error)',
   ]);
   assert.ok(!lines(run(makeRepo(I1, { naming: NAMING }), ['check']).out, 'PROFILE-NAMING').length, 'the plugin\'s own kinds hold');
+});
+
+test('B267/AC-2 an integration event takes the verb\'s past participle: a spelling rule, else an irregular form from the table', () => {
+  const reg = registry({ naming: { tokens: { system: 'shop', org: 'acme' }, domains: { orders: {}, quotas: {} }, vocabularies: { verb: ['resolve', 'set', 'build', 'apply', 'archive'] } } });
+  assert.deepEqual(['resolve', 'set', 'build', 'apply', 'archive'].map((verb) => nameOf('event', { domain: 'orders', verb }, reg)),
+    ['Acme.Shop.OrderResolved', 'Acme.Shop.OrderSet', 'Acme.Shop.OrderBuilt', 'Acme.Shop.OrderApplied', 'Acme.Shop.OrderArchived']);
 });

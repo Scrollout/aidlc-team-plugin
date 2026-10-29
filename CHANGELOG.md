@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.219.0] - 2026-10-29
+### Changed
+- Generated naming rules match what projects name: an integration event takes the verb's past participle by a spelling rule (`resolve` → `Resolved`, `apply` → `Applied`) or an irregular form from the table (`Set`, `Built`, `Run`, `Found`); a permission may nest child types under a registered type (`<Namespace>/<types>/<children>/<action>`, the kind's `nest`); a name in another namespace than the project's, such as an extension's, is found and judged by the kind's regex, the project's own by the names the registry composes; a table name has no trailing or doubled underscore.
+
 ## [0.218.2] - 2026-10-29
 ### Fixed
 - The acceptance-criteria guard compared prose with code spans stripped, so an AC changed only inside backticks (a namespace, a command) read as unchanged and a delegated re-approval passed it; the guard compares each AC as written.
@@ -592,7 +596,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.218.2...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.219.0...HEAD
+[0.219.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.218.2...v0.219.0
 [0.218.2]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.218.1...v0.218.2
 [0.218.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.218.0...v0.218.1
 [0.218.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.217.1...v0.218.0
