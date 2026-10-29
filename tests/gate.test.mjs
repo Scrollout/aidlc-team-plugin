@@ -338,3 +338,13 @@ test('0.220.6 a merge commit may change what merge itself writes: codebase map p
   const r = run(dir, ['check', '--ci']);
   assert.doesNotMatch(r.out, /outside its scope/, r.out);
 });
+
+test('0.220.7 the history check reads a merged bolt\'s card under the name it had then, so a later rename keeps its scope', () => {
+  const dir = setup();
+  assert.equal(merge(dir).code, 0);
+  const file = git(dir, 'ls-files', 'docs/units').split('\n').find((f) => /\/U-1-/.test(f));
+  git(dir, 'mv', file, file.replace(/U-1-[^/]*\.md$/, 'U-1-renamed-later.md'));
+  git(dir, 'commit', '-q', '-m', 'rename the card');
+  const r = run(dir, ['check', '--ci']);
+  assert.doesNotMatch(r.out, /outside its scope/, r.out);
+});

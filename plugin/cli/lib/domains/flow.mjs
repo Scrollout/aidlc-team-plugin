@@ -323,7 +323,7 @@ function nextFacts(st) {
     ops: () => f.unreleased && releaseStep(st, f.unreleased),
     fixLive: () => st.units.some((u) => !u.fm.intent && u.state !== ST.merged),
     asked: () => [...st.requirements, ...st.intents, ...st.units, ...st.decisions].find((d) => researchOf(d) && !st.answered.has(researchOf(d))),
-    intent: () => st.intents.find((i) => ![ST.released, ST.merged].includes(i.state)) ?? f.unreleased,
+    intent: () => st.intents.find((i) => ![ST.released, ST.merged].includes(i.state) && !i.fm.hold) ?? f.unreleased, // a held intent waits for the owner
     scope: () => st.units.filter((u) => !u.fm.intent || u.fm.intent === f.intent?.id),
     gate: () => gateOf(st, f.intent, f.scope),
     work: () => unitWork(st, f.scope),

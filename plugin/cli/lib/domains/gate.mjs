@@ -99,8 +99,8 @@ function runLevel(tree, level, l, add) {
 
 // Paths only `merge` writes: bundle indexes and logs, the codebase map, traceability, glossary and context map, and the profile's shared files.
 export function mergeWritten(path, bundleRel, profile) {
-  const name = basename(path), map = (typeof profile.map === 'string' ? profile.map : profile.system ? config.map.fileV2 : config.map.file).slice(0, -config.okf.ext.length); // as map.mjs names it
-  const written = [config.naming.glossary.file, config.naming.glossary.contextMap, render(config.construction.trace, { id: '*' }), ...config.map.pages.map((pg) => `${map}${pg.suffix}${config.okf.ext}`)];
+  const name = basename(path), maps = (typeof profile.map === 'string' ? [profile.map] : [config.map.file, config.map.fileV2]).map((m) => m.slice(0, -config.okf.ext.length)); // as map.mjs names it, before and after a v2 migration
+  const written = [config.naming.glossary.file, config.naming.glossary.contextMap, render(config.construction.trace, { id: '*' }), ...maps.flatMap((m) => config.map.pages.map((pg) => `${m}${pg.suffix}${config.okf.ext}`))];
   return ((name === config.okf.index || name === config.okf.log) && matches(path, `/${bundleRel}/**`)) || written.some((g) => matches(path, `/${bundleRel}/${g}`)) || list(profile.shared).some((g) => matches(path, g));
 }
 
@@ -329,7 +329,7 @@ function historyFindings(cwd, range, st, codes) {
       const unitId = value(G.trailers.unit);
       const unit = unitId && st.units.find((u) => u.id === unitId);
       if (unitId && !unit) out.push(finding(codes.merge, '.', 1, 'ciUnknownUnit', { sha: short, unit: unitId }));
-      const doc = unit && tryGit(cwd, 'show', `${sha}:${relPath(top, unit.file)}`);
+      const doc = unit && (tryGit(cwd, 'show', `${sha}:${relPath(top, unit.file)}`) ?? tryGit(cwd, 'show', `${sha}:${gitLines(cwd, 'ls-tree', '-r', '--name-only', sha, '--', bundleRel).find((p) => basename(p).startsWith(`${unitId}-`))}`)); // the card as it was, under its name then
       const scope = doc ? list(parseDoc(doc + '\n').fm?.scope) : [];
       for (const path of changed) if (unit && !mergeWritten(path, bundleRel, st.profile) && !scope.some((g) => matches(path, g))) out.push(finding(codes.merge, path, 1, 'ciScope', { sha: short, unit: unitId, path }));
     } else for (const path of changed.filter((x) => !directAllowed(x, bundleRel))) out.push(finding(codes.commit, path, 1, 'ciCommit', { sha: short, path }));

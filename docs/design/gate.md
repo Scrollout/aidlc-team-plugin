@@ -20,7 +20,7 @@ Every code the gate can refuse with, and its fix: [Gate codes](tables/codes-gate
 
 # Details
 - **Order:** the checks below run as the stages of `gate.stages`, in order; a project adds stages of its own ([Lifecycle as data](lifecycle.md#gate-stages-and-review-focuses)).
-- **Scope:** every path in the bolt's diff matches its scope. A builder's diff touching an `index.md`, a `log.md`, a codebase map page, a traceability page, the glossary, the context map or a `profile.shared` glob is `GATE-SHARED`: merge writes those, so the history check in `push` and `check --ci` admits them in a bolt's merge commit too.
+- **Scope:** every path in the bolt's diff matches its scope. A builder's diff touching an `index.md`, a `log.md`, a codebase map page, a traceability page, the glossary, the context map or a `profile.shared` glob is `GATE-SHARED`: merge writes those, so the history check in `push` and `check --ci` admits them in a bolt's merge commit too, the map under its name before and after a v2 migration. It judges a merge by its bolt's card as that merge committed it, found by the bolt's ID when the card was renamed since.
 - **Secrets:** no line the bolt's diff adds matches a secret pattern of the secrets hook (`GATE-SECRET`), so one written from Bash, which that hook never sees, stops the merge.
 - **Lane:** the lane of the diff's paths must not exceed the card's lane.
 - **AC tests:** a file in the merged tree, outside the docs bundle, contains `B-<n>/AC-<k>` for each AC. With `profile.levels.<level>.paths` set, the file must match them, read from the merged tree's profile: a bolt whose scope holds the profile can add a test location, and its reviewers see that change.

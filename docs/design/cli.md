@@ -24,7 +24,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 | `research <doc>` | prints the researcher's brief for the doc's held question ([0010](../decisions/0010-research-for-open-questions.md)) | lead |
 | `review I-<n>\|record <bolt\|intent> <file\|->` | prints an intent reviewer's brief; `record` stores a verdict (by diff hash) or an intent review (by its docs' hash, [Intake](intake.md)); `-` reads stdin | lead, reviewer |
 | `report <bolt> [file]` | stores the builder's report (JSON from the file, or stdin) | builder |
-| `hold <doc> [off\|<reason>]` | records an owner hold in the plan: `hold: true` or a reason; `off` removes it. The lead also holds a doc while it parks a question, and a merged intent to park its release | lead |
+| `hold <doc> [off\|<reason>]` | records an owner hold in the plan: `hold: true` or a reason; `off` removes it. The lead also holds a doc while it parks a question, and a merged intent to park its release. A held intent is passed over: `next` serves the next one | lead |
 | `priority <bolt> <n>` | records `priority: <n>` in the plan, higher first | lead |
 | `name <kind> [--<flag> <value>]…` | a name from the grammar and registry; the flags each kind needs are in `cli.json` ([Naming](naming.md)) | lead, builder |
 | `persona <role>` | prints a role persona and its knowledge ([Intake](intake.md)) | lead |

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { approve, branch, commit, hook as hookCall, I1, pinnedRepo, read, review, run, U, unitDoc, write } from './state-repo.mjs';
+import { approve, branch, commit, hook as hookCall, I1, intentDoc, pinnedRepo, read, review, run, U, unitDoc, write } from './state-repo.mjs';
 
 const project = (docs, profile) => pinnedRepo({ ...I1, ...docs, '.gitignore': '.aidlc/local/\n' }, profile); // as init writes it
 const hook = (name, input) => hookCall(name, input).json;
@@ -128,4 +128,13 @@ test('U15/AC-7 MODEL-MISMATCH names where the expected model comes from; the car
   assert.match(reviewer.hookSpecificOutput.permissionDecisionReason, /uses sonnet, the profile's models\.review says opus/);
   for (let k = 0; k < 2; k++) hook('model', { cwd: dir, tool_name: 'Agent', tool_input: { subagent_type: 'team:reviewer', prompt: 'Review U-1.', model: 'opus' } });
   assert.equal(read(dir, '.git/aidlc/reviewing/U-1'), 'reviewer\nreviewer\n', 'U125/AC-1 one line per reviewer launched');
+});
+
+test('0.220.7 a held intent holds nothing else back: next serves the next intent', () => {
+  const dir = project({ 'docs/intents/I-2-next.md': intentDoc('I-2', 'Next'), [U(1)]: unitDoc({ scope: ['a/**'] }), [U(2)]: unitDoc({ intent: 'I-2', scope: ['c/**'] }) });
+  approve(dir, 'I-1', 'I-2', 'U-1', 'U-2');
+  assert.match(run(dir, ['next']).out, /^build U-1 /);
+  run(dir, ['hold', 'I-1', 'waits for the owner']);
+  commit(dir, 'park I-1');
+  assert.match(run(dir, ['next']).out, /^build U-2 /, 'I-2 comes up past the held I-1');
 });

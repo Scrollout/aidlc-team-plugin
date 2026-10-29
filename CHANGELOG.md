@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.220.7] - 2026-10-29
+### Fixed
+- `check --ci` judges a merge by its bolt's card as that merge committed it, found by ID when the card was renamed since, and admits the codebase map under its name before a v2 migration too, so history merged before a migration passes.
+- `next` passes over a held intent and serves the next one, so a held intent no longer starves a later intent's release or work.
+
 ## [0.220.6] - 2026-10-29
 ### Fixed
 - `push` and `check --ci` admit in a bolt's merge commit every file the merge writes itself: the codebase map pages where a v2 bundle keeps them, the traceability pages, the glossary and the context map, so a base of gate merges pushes.
@@ -644,7 +649,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.6...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.7...HEAD
+[0.220.7]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.6...v0.220.7
 [0.220.6]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.5...v0.220.6
 [0.220.5]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.4...v0.220.5
 [0.220.4]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.3...v0.220.4
