@@ -13,7 +13,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-29T13:30:00Z }
 # A slice holds its own layers
 
 ## Context and Problem Statement
-The stack packs lay a domain out layer first: `<domain>/ui/cli/<slice>`, `<domain>/interface/<slice>`, `<domain>/application/<slice>`. One operation is spread over three or four folders, a bolt's scope needs a glob per layer, and deleting a slice means finding its pieces in each. A vertical slice is one operation end to end; its code should be where it is read, changed and removed together. Which layout do the packs give a domain?
+The stack packs lay a domain out layer first: `<domain>/ui/cli/<slice>`, `<domain>/interface/<slice>`, `<domain>/application/<slice>`. One slice's code is spread over three or four folders, a bolt's scope needs a glob per layer, and deleting a slice means finding its pieces in each. A vertical slice is one command or query end to end; its code should be where it is read, changed and removed together. Which layout do the packs give a domain?
 
 ## Decision Drivers
 * A slice is added, reviewed and removed as one unit.
@@ -42,7 +42,7 @@ The packs' reference domains and scaffold use the layout; the slice tests pass o
 
 ### Layer first
 * Good, because each layer is one folder per domain.
-* Bad, because one operation is spread over several folders.
+* Bad, because one slice is spread over several folders.
 
 ### Slice first, a file per layer
 * Good, because the flattest tree.
@@ -53,4 +53,4 @@ The packs' reference domains and scaffold use the layout; the slice tests pass o
 * Bad, because one level deeper.
 
 ## More Information
-Vertical slices and horizontal layers stay the architecture of [0026](0026-a-slice-declares-the-layers-it-needs-and.md) and rule 9; this decision changes where a slice's layers sit, not which layers a slice declares. Deriving every name of a slice from one set of coordinates (system, domain, resource, operation, cut) is a separate change to the naming registry.
+Vertical slices and horizontal layers stay the architecture of [0026](0026-a-slice-declares-the-layers-it-needs-and.md) and rule 9; this decision changes where a slice's layers sit, not which layers a slice declares. Deriving every name of a slice from one set of coordinates (system, domain, resource, verb, cut) is a separate change to the naming registry.
