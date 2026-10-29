@@ -400,7 +400,9 @@ export const commands = {
       dropWorktree(cwd, tree);
       // Remembered so `next` stops offering this merge until the base or the diff changes.
       const codes = [...new Set(findings.map((f) => f.code))];
-      writeJson(runtimeFile(cwd, 'gates', unit.id), { base: git(cwd, 'rev-parse', st.base), diffHash: diffHash(cwd, st.base, unit.id), codes, at: new Date().toISOString() });
+      // And what refused it, for the fix round's card.
+      const refused = findings.filter((f) => f.level !== config.okf.level.warning).map((f) => ({ code: f.code, path: f.path, line: f.line, message: f.message }));
+      writeJson(runtimeFile(cwd, 'gates', unit.id), { base: git(cwd, 'rev-parse', st.base), diffHash: diffHash(cwd, st.base, unit.id), codes, findings: refused, at: new Date().toISOString() });
       for (const code of codes) bump(cwd, 'codes', code);
       if (st.profile.system) bump(cwd, config.retro.refusals, { unit: unit.id, binding: bindingName(unit, st.profile), codes: codes.join(', '), paths: [...new Set(findings.map((f) => f.path))], at: new Date().toISOString() }); // the retro counts them by binding and layer
       const red = findings.find((f) => f.code === 'GATE-BASE');

@@ -270,6 +270,8 @@ test('U93/AC-1 the gate counts a verdict only when newer than the last report, a
   report(dir, 'U-1'); // a new report, the diff unchanged
   assert.match(run(dir, ['next']).out, /^review U-1, focus general/);
   assert.match(run(dir, ['merge', 'U-1']).out, /GATE-REVIEW no pass verdict for the current diff and last report of U-1/);
+  // The fix round's card lists what the gate refused on this diff.
+  assert.match(run(dir, ['card', 'U-1']).out, /^## What the merge gate refused\n[^]*^- GATE-REVIEW [^\n]*: no pass verdict for the current diff/m);
   review(dir, 'U-1', 'pass');
   assert.doesNotMatch(run(dir, ['merge', 'U-1']).out, /GATE-REVIEW/);
 });

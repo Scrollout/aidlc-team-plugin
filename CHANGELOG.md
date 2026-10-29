@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.216.3] - 2026-10-29
+### Fixed
+- A fix round after the merge gate refused a bolt gave a card with no findings, so the builder had nothing to fix: the gate keeps what refused it, and the card lists those findings for the current diff.
+
 ## [0.216.2] - 2026-10-29
 ### Fixed
 - In the gate's merge result, which is not yet committed, a renamed doc's approved text was not found, so a link-only edit was `DOC-AMEND` there; the history lookup searches every branch when HEAD's lacks the doc.
@@ -563,7 +567,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.216.2...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.216.3...HEAD
+[0.216.3]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.216.2...v0.216.3
 [0.216.2]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.216.1...v0.216.2
 [0.216.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.216.0...v0.216.1
 [0.216.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.215.0...v0.216.0

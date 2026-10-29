@@ -113,6 +113,9 @@ function renderCard(cwd, unitId, { preview = false, shared = sharedOf(cwd) } = {
     .flatMap((r) => (r.findings ?? []).map((f) => msg('cardFinding', { id: '-', path: '', line: '', claim: '', scenario: '', confidence: '', ...f, focus: r.focus ?? config.state.focus })));
   const fixes = listed(VERDICT.fix);
   const answered = listed(config.state.answered); // an escalation the owner's re-approval answered
+  // A merge the gate refused on this diff: its findings are the fix round's too.
+  const gate = hashNow !== null && readJson(runtimeFile(cwd, 'gates', unitId));
+  const refused = gate?.diffHash === hashNow ? (gate.findings ?? []).map((f) => msg('cardGateFinding', { line: 1, ...f })) : [];
   const modules = new Set(atBase.modules);
   const data = {
     id: unitId, title: String(atBase.fm.title ?? ''), goal: String(atBase.fm.description ?? ''),
@@ -130,7 +133,7 @@ function renderCard(cwd, unitId, { preview = false, shared = sharedOf(cwd) } = {
     // A back-fill unit's reported mutations, for the reviewer to judge (docs/design/backfill.md).
     mutations: [[readJson(runtimeFile(cwd, 'reports', unitId))?.mutations ?? []].flat().filter((m) => m?.ac).map((m) => msg('cardMutation', { path: '', breaks: '', ...m, find: JSON.stringify(m.find), replace: JSON.stringify(m.replace) })).join('')]
       .map((l) => (l ? msg('cardMutations', { list: l }) : '')).join(''),
-    fixes: [fixes.length ? msg('cardFixes', { list: fixes.join('') }) : '', answered.length ? msg('cardAnswered', { list: answered.join('') }) : ''].join(''),
+    fixes: [fixes.length ? msg('cardFixes', { list: fixes.join('') }) : '', refused.length ? msg('cardGateFixes', { list: refused.join('') }) : '', answered.length ? msg('cardAnswered', { list: answered.join('') }) : ''].join(''),
     proof: [Object.entries(withDefaults(profile).levels).filter(([, l]) => l?.run && list(l.paths).length).map(([level]) => level).join(', ')].filter(Boolean),
     runs: Object.entries(withDefaults(profile).levels).filter(([, l]) => l?.run).map(([level, l]) => ({ level, run: l.run })),
     checks: [...(profile.modules ?? []).filter((m) => modules.has(m.id ?? m.name) && m.check).map((m) => ({ module: m.id ?? m.name, check: m.check })), ...[profile.checks ?? []].flat().map((check) => ({ module: C.everyMerge, check: isMap(check) ? check.check : check }))],

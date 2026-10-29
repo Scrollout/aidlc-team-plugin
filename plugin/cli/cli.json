@@ -454,6 +454,8 @@
     "recordedIntentReview": "recorded the intent review of {{intent}}: {{count}} findings, advice for the owner at the approval\n",
     "cardFixes": "## Findings to fix\nThe next review answers each by its id: listed again with the id while it holds, or named in \"fixed\": [\"F-<k>\"] in its JSON.\n{{list}}",
     "cardAnswered": "## Findings the owner answered by re-approving\nThe owner kept or changed the spec after these escalated; report each again only if it still holds against the spec as it is now.\n{{list}}",
+    "cardGateFixes": "## What the merge gate refused\nThe gate refused this diff; fix each, then report again.\n{{list}}",
+    "cardGateFinding": "- {{code}} {{path}}:{{line}}: {{message}}\n",
     "cardFinding": "- {{id}} {{focus}} {{confidence}} {{path}}:{{line}}: {{claim}} ({{scenario}})\n",
     "cardRequirement": "{{id}} {{path}}",
     "reqNone": "{{doc}} cites no requirement",
