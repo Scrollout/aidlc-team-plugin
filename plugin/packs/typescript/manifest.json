@@ -8,7 +8,7 @@
   },
   "values": {
     "skipLines": ["^\\s*(?:import|export)\\b.*\\bfrom\\s", "^\\s*import\\s+['\"]", "\\brequire\\(\\s*['\"]", "^\\s*(?://|/?\\*)"],
-    "allow": ["^use strict$", "^(?:Accept|Authorization|Content-Type|ETag|If-Match|If-None-Match|Location|Retry-After|application/json)$"]
+    "allow": ["^use strict$", "^(?:Accept|Authorization|Content-Type|ETag|If-Match|If-None-Match|Location|Retry-After|application/json)$", "^(?:https?|Bearer )$"]
   },
   "stringLiteral": "([\"'`])((?:\\\\.|(?!\\1)[^\\\\])*)\\1",
   "folders": { "domain": "src/domains/{{domain}}", "pipeline": "src/pipeline/{{stage}}", "foundation": "src/foundation/{{kit}}", "adapter": "src/adapters/{{system}}", "runtime": "src/runtimes/{{deployable}}" },
@@ -27,7 +27,7 @@
   },
   "naming": { "grammar": {
     "event": { "files": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.mts"], "find": "['\"`]({{Namespace}}\\.[A-Za-z0-9.]+)['\"`]" },
-    "permission": { "files": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.mts"], "find": "['\"`]({{Namespace}}/[^'\"`\\s]+)['\"`]" }
+    "permission": { "files": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.mts"], "find": "['\"`]({{Namespace}}/[^'\"`\\s]+/(?:{{actions}}))['\"`]" }
   } },
   "compileError": "ERR_MODULE_NOT_FOUND|SyntaxError: |does not provide an export named",
   "eventType": "Type\\s*=\\s*['\"]([^'\"]+)['\"]",

@@ -46,6 +46,9 @@ test('B267/AC-2 the registry generates the event, permission and table rules: ea
   assert.ok(full(rules.permission, 'Sample.Things/widgets/read') && !full(rules.permission, 'Sample.Things/Widgets/read'), 'an extension, by shape');
   assert.ok(full(rules.event, 'Sample.Things.WidgetMade') && !full(rules.event, 'Acme.Shop.WidgetMade'), 'the project namespace stays exact');
   assert.deepEqual(found(rules.permission, 'p := "Sample.Things/widgets/read"'), ['Sample.Things/widgets/read'], 'found in any namespace');
+  // Another namespace's event ends in a past participle; a resource type is no permission.
+  assert.ok(full(rules.event, 'Sample.Things.WidgetCreated') && full(rules.event, 'Sample.Things.WidgetRead') && !full(rules.event, 'Sample.Things.WidgetCreate'));
+  assert.deepEqual(found(rules.permission, 'a := "Sample.Resources/samples"; b := "Sample.Resources/samples/parts/bits"; c := "Sample.Resources/samples/read"'), ['Sample.Resources/samples/read']);
   // find looks at every namespace's names in a string literal of the stack; the pattern judges each.
   assert.deepEqual(found(rules.event, 'const T = "Acme.Shop.OrderPlaced"; x := "Other.Ns.Thing"; p := "Acme.Shop/orders/read"'), ['Acme.Shop.OrderPlaced', 'Other.Ns.Thing']);
   assert.deepEqual(found(rules.permission, 'p := "Acme.Shop/orders/read"; q := "Other.Ns/things/write"'), ['Acme.Shop/orders/read', 'Other.Ns/things/write']);

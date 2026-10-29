@@ -12,7 +12,7 @@
   },
   "values": {
     "skipLines": ["^\\s*(?:package|import)\\s", "^\\s*(?:[\\w.]+\\s+)?\"[^\"]+\"\\s*$", "^\\s*//"],
-    "allow": ["^(?:\\w+:\"[^\"]*\"\\s*)+$", "^(?:%[-+# 0-9.]*[a-zA-Z]|[^\\p{L}])*$", "^(?:Accept|Authorization|Content-Type|ETag|If-Match|If-None-Match|Location|Retry-After|application/json)$"]
+    "allow": ["^(?:\\w+:\"[^\"]*\"\\s*)+$", "^(?:%[-+# 0-9.]*[a-zA-Z]|[^\\p{L}])*$", "^(?:Accept|Authorization|Content-Type|ETag|If-Match|If-None-Match|Location|Retry-After|application/json)$", "^(?:https?|Bearer )$"]
   },
   "stringLiteral": "([\"'`])((?:\\\\.|(?!\\1)[^\\\\])*)\\1",
   "folders": { "domain": "internal/domains/{{domain}}", "pipeline": "internal/pipeline/{{stage}}", "foundation": "internal/foundation/{{kit}}", "adapter": "internal/adapters/{{system}}", "runtime": "cmd/{{deployable}}" },
@@ -31,7 +31,7 @@
   },
   "naming": { "grammar": {
     "event": { "files": ["cmd/**/*.go", "internal/**/*.go"], "find": "[\"`]({{Namespace}}\\.[A-Za-z0-9.]+)[\"`]" },
-    "permission": { "files": ["cmd/**/*.go", "internal/**/*.go"], "find": "[\"`]({{Namespace}}/[^\"`\\s]+)[\"`]" }
+    "permission": { "files": ["cmd/**/*.go", "internal/**/*.go"], "find": "[\"`]({{Namespace}}/[^\"`\\s]+/(?:{{actions}}))[\"`]" }
   } },
   "compileError": "\\[(build|setup) failed\\]",
   "eventType": "Type\\s*=\\s*\"([^\"]+)\"",

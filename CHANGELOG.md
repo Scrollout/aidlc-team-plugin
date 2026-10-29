@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.219.2] - 2026-10-29
+### Fixed
+- An event in another namespace than the project's must end in a past participle (the kind's `other` shape), so an extension's `WidgetCreate` is refused and `WidgetCreated` accepted.
+- A permission is found only with its trailing action, so a resource type such as `Sample.Resources/samples` is no longer read as a permission.
+- The Go and TypeScript packs allow the protocol words `http`, `https` and `Bearer ` as literals.
+
 ## [0.219.1] - 2026-10-29
 ### Fixed
 - An extension module is an image part: `aidlc name image --extension <module>` composes its image, and the generated image rule accepts it, so an extension's deployable has a registered name.
@@ -600,7 +606,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.219.1...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.219.2...HEAD
+[0.219.2]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.219.1...v0.219.2
 [0.219.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.219.0...v0.219.1
 [0.219.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.218.2...v0.219.0
 [0.218.2]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.218.1...v0.218.2

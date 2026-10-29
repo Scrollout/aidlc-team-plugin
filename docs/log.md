@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-29
 
+- **Update** Another namespace's event ends in a past participle; a permission needs its action; protocol words allowed as literals ([Naming coordinates](design/naming-coordinates.md), [Values](design/values.md)). Release 0.219.2.
 - **Update** An extension module is an image part ([Naming](design/naming.md)). Release 0.219.1.
 - **Update** Generated naming rules: past participles by rule and table, nested permission types, other namespaces by shape, stricter table names ([Naming coordinates](design/naming-coordinates.md)). Release 0.219.0.
 - **Update** The acceptance-criteria guard reads each AC as written, code spans included ([Approvals](design/approvals.md)). Release 0.218.2.
