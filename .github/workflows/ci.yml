@@ -1,7 +1,7 @@
 name: ci
 on:
   push:
-    branches: ['**'] # branch pushes only: release tags point at commits CI already tested
+    branches: ['**'] # branch pushes only: a release is tagged at its push, after the full local suite, and this run guards it on every OS; a red run is fixed forward in the next patch
   pull_request:
 permissions:
   contents: read
