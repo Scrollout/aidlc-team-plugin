@@ -374,8 +374,8 @@ export function nameProblem(r) {
 export const nameRules = (profile, bundle, root) => [...[profile.names ?? []].flat().filter((r) => !nameProblem(r)), ...generatedRules(profile, bundle, root)];
 // Each name a rule with `find` finds on the lines ({ file, line, text }) whose pattern it breaks; the gate's added lines, check's tracked ones.
 export const misnamedLines = (rules, lines) => lines.flatMap(({ file, line, text }) => rules.filter((r) => r.find && list(r.files).some((g) => inGlob('/' + file, g))).flatMap((r) => [...text.matchAll(new RegExp(r.find, 'g'))].map((m) => m[1] ?? m[0]).filter((name) => !new RegExp(`^(?:${r.pattern})$`).test(name)).map((name) => ({ path: file, line, rule: r.id, name, pattern: r.pattern, why: r.why ?? '-' }))));
-// Each path a rule without `find` covers whose pattern it breaks, as { path, rule }; for the gate's added paths and check's tracked ones.
-export const misnamedPaths = (rules, paths) => paths.flatMap((path) => rules.filter((r) => !r.find && list(r.files).some((g) => inGlob('/' + path, g)) && !new RegExp(`^(?:${r.pattern})$`).test(path)).map((rule) => ({ path, rule })));
+// Each path a rule without `find` covers whose pattern it breaks, as { path, rule }; a `fresh` rule judges only what `fresh` says the path adds.
+export const misnamedPaths = (rules, paths, fresh = (p) => p) => paths.flatMap((path) => rules.filter((r) => !r.find && list(r.files).some((g) => inGlob('/' + path, g)) && !new RegExp(`^(?:${r.pattern})$`).test(r.fresh ? fresh(path) : path)).map((rule) => ({ path, rule })));
 const lintStages = (checks, file = PROFILE) => [checks ?? []].flat().filter(isMap)
   .map((s) => [s, stageProblem(s)]).filter(([, key]) => key).map(([s, key]) => finding('PROFILE-STAGE', 'error', file, 1, key, { id: s.id ?? '-', after: s.after ?? '-' }));
 const lintNames = (names, file = PROFILE) => [names ?? []].flat()

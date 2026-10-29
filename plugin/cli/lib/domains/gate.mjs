@@ -184,7 +184,7 @@ export const STAGES = {
     // A name an added line holds where a naming rule looks, which its pattern does not match (docs/design/naming.md).
     for (const f of misnamedLines(names, c.added)) add('GATE-NAME', 'gateName', f, f.path);
     // A path rule: each file the unit adds or renames under its files (docs/design/naming.md).
-    for (const { path, rule: r } of misnamedPaths(names, gitLines(cwd, 'diff', '--name-only', '--diff-filter=AR', `${base}...${branchOf(unit.id)}`))) add('GATE-NAME', 'gateNamePath', { path, rule: r.id, pattern: r.pattern, why: r.why ?? '-' }, path);
+    for (const { path, rule: r } of misnamedPaths(names, gitLines(cwd, 'diff', '--name-only', '--diff-filter=AR', `${base}...${branchOf(unit.id)}`), (path, parts = path.split('/'), k = parts.findLastIndex((_, i) => i && tryGit(cwd, 'cat-file', '-e', `${base}:${parts.slice(0, i).join('/')}`) !== null)) => parts.slice(Math.max(k, 0)).join('/'))) add('GATE-NAME', 'gateNamePath', { path, rule: r.id, pattern: r.pattern, why: r.why ?? '-' }, path);
   },
   lane(c) {
     const diffLane = computeLane(c.paths, c.profile, { paths: true });

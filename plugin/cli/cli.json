@@ -1870,7 +1870,7 @@
       "migration": { "files": ["migrations/**"], "why": "docs/design/naming.md" },
       "image": { "files": ["deploy/**/*.yaml", "deploy/**/*.yml"], "find": "image:\\s*[\"']?([^\"'\\s]+)", "why": "docs/design/naming.md" },
       "namespace": { "files": ["deploy/**/*.yaml", "deploy/**/*.yml"], "find": "namespace:\\s*[\"']?([^\"'\\s]+)", "why": "docs/design/naming.md" },
-      "banned": { "files": ["**"], "why": "docs/design/naming.md" }
+      "banned": { "files": ["**"], "fresh": true, "why": "docs/design/naming.md" }
     },
     "grammar": {
       "domain": { "template": "{{domain}}", "needs": ["domain"], "regex": "^[a-z][a-z0-9]*$" },

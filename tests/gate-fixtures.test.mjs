@@ -103,6 +103,11 @@ test('B162/AC-2 with a naming registry the gate refuses a new path with a banned
   assert.match(r.out, /GATE-NAME src\/utils\/x\.mjs does not match the banned rule/);
   assert.doesNotMatch(r.out, /GATE-NAME src\/add\.mjs/, 'a plain name passes');
   assert.ok(!codes(merge(setup({ profile: PROFILE, files: { ...CODE, ...TEST, 'src/utils/x.mjs': 'export const x = 1;\n' } }))).includes('GATE-NAME'), 'no registry, no generated rule');
+  // A new file in a folder the base already holds adds no new banned segment: the folder is known debt, judged where it moves.
+  const debt = merge(setup({ profile: { ...PROFILE, naming }, files: { ...CODE, ...TEST, 'src/utils/x.mjs': 'export const x = 1;\n' }, beforeReview: (d) => commit(d, 'the folder exists', { 'src/utils/old.mjs': 'export const o = 1;\n' }) }));
+  assert.doesNotMatch(debt.out, /GATE-NAME src\/utils\/x\.mjs/);
+  const named = merge(setup({ profile: { ...PROFILE, naming }, files: { ...CODE, ...TEST, 'src/utils/helpers.mjs': 'export const h = 1;\n' }, beforeReview: (d) => commit(d, 'the folder exists', { 'src/utils/old.mjs': 'export const o = 1;\n' }) }));
+  assert.match(named.out, /GATE-NAME src\/utils\/helpers\.mjs does not match the banned rule/, 'a new file name with a banned word still fails');
 });
 
 test('B163/AC-2 a synonym a domain glossary says to avoid, on an added line outside the domain docs, is TERM-SYNONYM', () => {
