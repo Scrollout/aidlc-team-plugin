@@ -42,3 +42,4 @@ A kind that says where its names appear gets a rule `GATE-NAME` reads beside the
 `aidlc name` refuses a composed name over `max` or outside its class. `PROFILE-NAMING` reports an unknown class or scope, and warns of a `global` kind whose template and needs hold none of `naming.scope.unique` (`system`, `org`, `instance`): two projects could compose the same name.
 
 Bolts: [M30](../roadmap/m30.md) B267.
+- The generated image rule takes an image of another registry or org only pinned by digest; the project's own images follow the grammar.

@@ -142,7 +142,7 @@ export function generatedRules(profile, bundle, root) {
   if (!isMap(profile.naming)) return [];
   const reg = registry(profile, bundle, root), t = reg.tokens, G = N.generated, domains = Object.keys(reg.domains), out = [];
   if (domains.length) out.push({ id: 'migration', ...G.migration, pattern: render(N.patterns.migration, { domains: alt(domains) }) });
-  if (t.registry && t.org && t.system) out.push({ id: 'image', ...G.image, pattern: render(N.patterns.image, { registry: alt([t.registry]), org: alt([t.org]), system: alt([t.system]), parts: alt([...domains, ...reg.vocabularies.pipeline, ...reg.extensions]), roles: alt(reg.vocabularies.role) }) });
+  if (t.registry && t.org && t.system) out.push({ id: 'image', ...G.image, pattern: render(`${N.patterns.image}|${N.patterns.imageOther}`, { registry: alt([t.registry]), org: alt([t.org]), system: alt([t.system]), parts: alt([...domains, ...reg.vocabularies.pipeline, ...reg.extensions]), roles: alt(reg.vocabularies.role) }) }); // another registry's image: pinned by digest
   if (t.system) out.push({ id: 'namespace', ...G.namespace, pattern: render(N.patterns.namespace, { system: alt([t.system]), envs: alt(reg.vocabularies.env) }) });
   out.push({ id: 'banned', ...G.banned, pattern: render(N.patterns.banned, { banned: alt(reg.banned) }) });
   const lists = { domain: domains, action: N.actions, unit: N.metricUnits, ...reg.vocabularies }, esc = (o) => Object.fromEntries(Object.entries(o).filter(([, x]) => x !== undefined).map(([k, x]) => [k, alt([x])]));

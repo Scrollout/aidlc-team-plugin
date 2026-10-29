@@ -1841,7 +1841,7 @@
     "partFlags": "domain, --stage or --extension",
     "where": { "domain": "naming.domains or a domain doc", "pipeline": "naming.vocabularies.pipeline", "extension": "the profile's modules of kind extension", "foundation": "naming.vocabularies.foundation", "verb": "naming.vocabularies.verb", "role": "naming.vocabularies.role", "env": "naming.vocabularies.env", "unit": "naming.metricUnits", "action": "naming.actions", "token": "naming.tokens." },
     "forms": { "table": "tableSnake", "object": "objectSnake", "metric": "metricSnake", "key": "keyCamel", "number": "number4" },
-    "patterns": { "migration": "migrations/(?:{{domains}})/\\d{4}_[a-z]+_[a-z0-9_]+\\.sql", "image": "{{registry}}/{{org}}/{{system}}-(?:{{parts}})-(?:{{roles}}):[A-Za-z0-9._-]+", "namespace": "{{system}}-(?:{{envs}})", "banned": "(?!(?:.*/)?(?:{{banned}})(?:[./_-][^/]*)?(?:/|$)).*", "anyNamespace": "[A-Z][A-Za-z0-9]*(?:\\.[A-Z][A-Za-z0-9]*)+", "otherNamespace": "(?!{{own}}[^A-Za-z0-9]){{shape}}" },
+    "patterns": { "migration": "migrations/(?:{{domains}})/\\d{4}_[a-z]+_[a-z0-9_]+\\.sql", "image": "{{registry}}/{{org}}/{{system}}-(?:{{parts}})-(?:{{roles}}):[A-Za-z0-9._-]+", "imageOther": "(?!(?:{{registry}})/(?:{{org}})/)[^\\s@]+@sha256:[0-9a-f]{64}", "namespace": "{{system}}-(?:{{envs}})", "banned": "(?!(?:.*/)?(?:{{banned}})(?:[./_-][^/]*)?(?:/|$)).*", "anyNamespace": "[A-Z][A-Za-z0-9]*(?:\\.[A-Z][A-Za-z0-9]*)+", "otherNamespace": "(?!{{own}}[^A-Za-z0-9]){{shape}}" },
     "tokens": {
       "system": { "pattern": "^[a-z][a-z0-9]{1,5}$", "rule": "2-6 lower-case letters or digits" },
       "org": { "pattern": "^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$", "rule": "a DNS label" },

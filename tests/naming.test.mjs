@@ -124,3 +124,11 @@ test('B267/AC-2 an extension module is an image part: aidlc name image --extensi
   const rule = generatedRules(profile, null, dir).find((r) => r.id === 'image');
   assert.ok(full(rule, 'ghcr.io/acme/shop-payments-api:sha-1') && !full(rule, 'ghcr.io/acme/shop-billing-api:sha-1'));
 });
+
+test('B267/AC-2 the image rule names the project\'s own images by the grammar and takes another registry\'s only pinned by digest', () => {
+  const profile = { naming: { tokens: { system: 'shop', org: 'acme', registry: 'ghcr.io' }, domains: { orders: {} } } };
+  const rule = generatedRules(profile, null, makeRepo(I1, profile)).find((r) => r.id === 'image'), d = 'a'.repeat(64);
+  assert.ok(full(rule, 'ghcr.io/acme/shop-orders-api:sha-1'), 'the project\'s own image');
+  assert.ok(full(rule, `ghcr.io/spiffe/spiffe-helper@sha256:${d}`), 'a third-party image pinned by digest');
+  assert.ok(!full(rule, 'ghcr.io/spiffe/spiffe-helper:0.8.0') && !full(rule, `ghcr.io/acme/other@sha256:${d}`), 'a tag only, or the project\'s registry and org outside the grammar');
+});

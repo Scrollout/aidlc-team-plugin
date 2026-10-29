@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.220.3] - 2026-10-29
+### Fixed
+- The image rule names the project's own images by the grammar and takes an image from another registry or org only pinned by digest (`@sha256:`), so a third-party sidecar or platform image needs no exception and no floating tag gets in.
+
 ## [0.220.2] - 2026-10-29
 ### Fixed
 - The banned-word rule judges only what a path adds: a new file in a folder the base already holds (known debt, renamed where it moves) is no new banned segment, while a new folder or file name with a banned word still fails.
@@ -626,7 +630,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.2...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.3...HEAD
+[0.220.3]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.2...v0.220.3
 [0.220.2]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.1...v0.220.2
 [0.220.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.0...v0.220.1
 [0.220.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.219.2...v0.220.0

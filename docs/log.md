@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-29
 
+- **Update** Third-party images pass the image rule only pinned by digest ([Naming](design/naming.md)). Release 0.220.3.
 - **Update** The banned-word rule judges only the new part of a path ([Naming](design/naming.md)). Release 0.220.2.
 - **Update** Bad permission actions found and refused; names found in the API contracts; another namespace's event needs a noun ([Naming coordinates](design/naming-coordinates.md)). Release 0.220.1.
 - **Update** M30 B268 built: the board on a Jira project, through acli, from the board's own items ([Board on Jira](design/board-jira.md), [Board](design/board.md), [Library and extensions](design/library.md)). Release 0.220.0.
