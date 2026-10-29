@@ -12,7 +12,7 @@ import { seam } from '../foundation/seams.mjs';
 import { computeLane, readPlan, reqId, unitFields } from './plan.mjs';
 import { overlaps } from '../foundation/glob.mjs';
 import { readState, heldDoc, researchOf } from './flow.mjs';
-import { baseOf, branchOf, worktrees, aidlcDir, runtimeFile, sha256, writeJson } from '../foundation/store.mjs';
+import { baseOf, branchOf, heartbeatAt, heartbeatFresh, worktrees, aidlcDir, runtimeFile, sha256, writeJson } from '../foundation/store.mjs';
 import { diffHash, readReview, roundsOf } from './review.mjs';
 import { approval } from './approval.mjs';
 
@@ -234,8 +234,8 @@ export const commands = {
       if (head !== record.base) return done(msg('baseMismatch', { unit, head, base: record.base }), config.exit.findings);
       if (tryGit(cwd, 'rev-parse', '-q', '--verify', `refs/heads/${branch}`)) {
         const path = worktrees(cwd).get(branch);
-        if (path) { // an earlier builder's worktree is taken over only when it is clean; next never runs two builders for a unit
-          if (tryGit(path, 'status', '--porcelain') !== '') return done(msg('branchTaken', { branch, path }), config.exit.findings);
+        if (path) { // an earlier builder's worktree is taken over only when it is clean and quiet since this builder's launch (docs/design/in-flight.md)
+          if ((heartbeatFresh(cwd, unit) && heartbeatAt(cwd, unit) > (heartbeatAt(cwd, unit, config.state.launches) || Infinity)) || tryGit(path, 'status', '--porcelain') !== '') return done(msg('branchTaken', { branch, path }), config.exit.findings);
           git(cwd, 'worktree', 'remove', '--force', '--force', path); // the host's lock lasts as long as the lead session
         }
         git(cwd, 'switch', '-q', branch);

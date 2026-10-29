@@ -216,6 +216,37 @@ test('U8/AC-7 U74/AC-4 start takes over the branch from a clean earlier worktree
   assert.ok(!existsSync(wt1));
 });
 
+test('0.220.4 start refuses the branch while its earlier builder still calls after this builder was launched', () => {
+  const dir = repo();
+  approve(dir, 'I-1', 'U-1');
+  run(dir, ['card', 'U-1']);
+  const worktree = (n) => {
+    const wt = join(tempDir('wt-'), 'w');
+    git(dir, 'worktree', 'add', '-q', '-b', `worktree-agent-${n}`, wt, 'main');
+    return wt;
+  };
+  const wt1 = worktree(1);
+  assert.equal(run(wt1, ['start', 'U-1']).code, 0);
+  commit(wt1, 'wip', { 'src/pricing/a.txt': 'a\n' });
+  const mark = (kind, at) => {
+    const file = join(dir, '.git/aidlc', kind, 'U-1');
+    mkdirSync(join(file, '..'), { recursive: true });
+    writeFileSync(file, '');
+    utimesSync(file, at, at);
+  };
+  const now = Date.now();
+  mark('launches', new Date(now - 60_000)); // the new builder's launch
+  mark('heartbeats', new Date(now - 5_000)); // the earlier builder's call since
+  const wt2 = worktree(2);
+  const live = run(wt2, ['start', 'U-1']);
+  assert.equal(live.code, 1, live.out);
+  assert.match(live.out, /unit\/U-1 is checked out in .*live builder/);
+  assert.ok(existsSync(wt1), 'the live builder keeps its worktree');
+  mark('heartbeats', new Date(now - 120_000)); // its last call came before the launch: it is gone
+  assert.equal(run(wt2, ['start', 'U-1']).code, 0);
+  assert.ok(!existsSync(wt1));
+});
+
 test('U4/AC-4 the card hash ignores a base that moved for other units', () => {
   const dir = repo();
   approve(dir, 'I-1', 'U-1');

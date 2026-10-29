@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.220.4] - 2026-10-29
+### Fixed
+- `start` no longer takes over a worktree whose builder is still at work: a call on the branch after this builder's launch refuses the takeover and names the worktree, so a restart started while the earlier builder runs never deletes its worktree.
+
 ## [0.220.3] - 2026-10-29
 ### Fixed
 - The image rule names the project's own images by the grammar and takes an image from another registry or org only pinned by digest (`@sha256:`), so a third-party sidecar or platform image needs no exception and no floating tag gets in.
@@ -630,7 +634,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.3...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.4...HEAD
+[0.220.4]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.3...v0.220.4
 [0.220.3]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.2...v0.220.3
 [0.220.2]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.1...v0.220.2
 [0.220.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.0...v0.220.1
