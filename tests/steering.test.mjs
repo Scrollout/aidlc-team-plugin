@@ -97,7 +97,12 @@ test('U15/AC-6 a delegated re-approval refuses a change to the acceptance criter
   assert.equal(r.code, 64);
   assert.match(r.err, /U-1 changes its acceptance criteria: the owner approves it/);
   commit(dir, 'restore AC-1, edit the goal', { [U(1)]: read(dir, U(1)).replace('it works offline.', 'it works.').replace('Unit goal.', 'Unit goal, sharper.') });
-  assert.equal(run(dir, ['approve', '--auto', 'U-1']).code, 0);
+  assert.equal(run(dir, ['approve', '--auto', 'U-1']).code, 0);  // A bolt, the same: what done means stays the owner's.
+  const bolt = project({ [U(1)]: unitDoc({ scope: ['a/**'] }).replace('type: Unit', 'type: Bolt') });
+  approve(bolt, 'I-1', 'U-1');
+  write(bolt, { '.aidlc/local/profile.json': { approvals: { auto: ['reapprove'] } } });
+  commit(bolt, 'add AC-2', { [U(1)]: read(bolt, U(1)).replace('it works.', 'it works.\n- AC-2 (unit): it also works offline.') });
+  assert.match(run(bolt, ['approve', '--auto', 'U-1']).err, /changes its acceptance criteria: the owner approves it/);
 });
 
 test('U15/AC-7 MODEL-MISMATCH names where the expected model comes from; the card prints the reviewer model', () => {

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.217.1] - 2026-10-29
+### Fixed
+- A delegated re-approval accepted a v2 bolt whose acceptance criteria had changed: the guard, and the quick-lane delegation, checked only the v1 unit type. Both now read bolts and units, so what done means stays the owner's.
+
 ## [0.217.0] - 2026-10-29
 ### Changed
 - A slice holds its own layers (M30 B266, decision 0029). The stack packs lay a domain out slice first: each slice one folder, `<domain>/<slice>/<layer>/` (`ui/<form>`, `interface`, `application`), beside the domain's shared `model`, `infrastructure`, `client`, `events` and the router in `interface/`. `sliceFolder` and `slicePaths` say it as data; scaffold writes it; the Go, TypeScript and control-plane references follow it; the slice checks read a slice from its folder and a layer from the next segment. A project with slices laid out layer first moves them once, through a superseding decision of its own.
@@ -572,7 +576,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.217.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.217.1...HEAD
+[0.217.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.217.0...v0.217.1
 [0.217.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.216.3...v0.217.0
 [0.216.3]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.216.2...v0.216.3
 [0.216.2]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.216.1...v0.216.2

@@ -164,10 +164,10 @@ export const commands = {
       if (writes.has(file)) continue;
       if (!S.approvable.includes(String(doc.fm?.type))) throw new UsageError(msg('notApprovable', { name }));
       const floor = readPlan(bundle).units.find((u) => u.file === file)?.floor;
-      const quick = doc.fm.type === S.unitType && approval(doc) === ST.draft && computeLane(list(doc.fm.scope), profile, { floor }).lane === QUICK;
+      const quick = S.workTypes.includes(doc.fm.type) && approval(doc) === ST.draft && computeLane(list(doc.fm.scope), profile, { floor }).lane === QUICK;
       const cls = approval(doc) === ST.stale ? S.auto[0] : quick ? S.auto[1] : null;
       if (auto && !auto.includes(cls)) throw new UsageError(msg('notDelegated', { name }));
-      if (auto && cls === S.auto[0] && doc.fm.type === S.unitType && !acsKept(cwd, file, doc)) throw new UsageError(msg('notDelegatedAcs', { name }));
+      if (auto && cls === S.auto[0] && S.workTypes.includes(doc.fm.type) && !acsKept(cwd, file, doc)) throw new UsageError(msg('notDelegatedAcs', { name })); // a bolt, or a v1 unit
       // The stamps count toward the doc's cap: an approved doc must still pass the docs check (docs/design/approvals.md).
       const stamped = stamp(text, auto ? S.agent : S.human + by, at);
       const over = stampOver(stamped, doc, profile);

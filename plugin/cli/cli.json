@@ -1112,7 +1112,7 @@
       "upgrade"
     ],
     "upgradeOwnerFlags": ["--downgrade", "--dirty"],
-    "unitType": "Unit",
+    "workTypes": ["Unit", "Bolt"],
     "actions": { "nextContinueMerge": ["merge", "{{unit}}"], "nextMerge": ["merge", "{{unit}}"], "nextReapprove": ["approve", "{{docs}}"], "nextReviewIntent": ["review", "{{intent}}"], "nextApproveReviewed": ["approve", "{{intent}}"], "nextApproveIntent": ["approve", "{{intent}}"], "nextApproveDecisions": ["approve", "{{docs}}"], "nextApprovePlan": ["approve", "{{units}}"], "nextApproveRequirements": ["approve", "{{reqs}}"], "nextAutoApprove": ["approve", "--auto", "{{docs}}"], "nextEscalated": ["approve", "{{unit}}"], "nextUntagged": ["card", "{{unit}}"], "nextFixRound": ["card", "{{unit}}"], "nextReview": ["card", "{{unit}}"], "nextRestart": ["card", "{{unit}}"], "nextDeployRelease": ["release", "{{intent}}"], "nextReleaseCiWait": ["ci", "wait"], "nextCiPush": ["push"], "nextSmokeFailed": ["rollback", "{{intent}}"], "nextReleaseHeld": ["hold", "{{intent}}", "off"], "nextDeployCheck": ["deploy", "check", "{{intent}}"], "nextResearch": ["research", "{{doc}}"], "nextHostDenied": ["{{command}}"] },
     "names": { "draft": "draft", "approved": "approved", "stale": "stale", "blocked": "blocked", "building": "building", "stopped": "stopped", "reported": "reported", "reviewing": "reviewing", "fix": "fix", "escalated": "escalated", "reviewed": "reviewed", "gated": "gated", "merged": "merged", "released": "released", "held": "held", "checkFailed": "checkFailed", "checked": "checked", "releaseFailed": "releaseFailed", "smokeFailed": "smokeFailed", "rolledBack": "rolledBack" },
     "machines": {

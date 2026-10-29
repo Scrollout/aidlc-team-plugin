@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-29
 
+- **Update** A delegated re-approval refuses a bolt's changed acceptance criteria, as a unit's ([Approvals](design/approvals.md)). Release 0.217.1.
 - **Update** M30 B266 built: decision 0029 accepted, a slice holds its own layers ([Vertical slices](design/vertical-slices.md), [Stack packs](design/stack-packs.md), [Building a slice](design/slice-method.md)); `INCR-SKELETON` spares an intent with a baseline ([Construction](design/construction.md)). Release 0.217.0.
 - **Update** A fix round's card lists what the merge gate refused ([Bolt card](design/bolt-card.md)). Release 0.216.3.
 - **Update** A renamed doc's approval found in the gate's uncommitted merge; `architecture.kinds.except` for `ARCH-KIND` and `ARCH-REACH` ([Architecture model](design/architecture-model.md)). Release 0.216.2.
