@@ -41,7 +41,7 @@ function readDocs(bundle, dir, pattern) {
     const m = name.match(re);
     if (!m) return [];
     const file = join(d, name);
-    const doc = parseDoc(readFileSync(file, 'utf8'));
+    const doc = { ...parseDoc(readFileSync(file, 'utf8')), file }; // its file, where git holds its approved text
     return doc.error || !doc.fm ? [] : [{ id: m[1], file, fm: doc.fm, doc, requirements: list(doc.fm.requirements).map(reqId) }];
   });
 }

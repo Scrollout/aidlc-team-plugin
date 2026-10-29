@@ -53,6 +53,7 @@
     "--show-toplevel",
     "--verify",
     "--name-only",
+    "--follow",
     "--porcelain",
     "--force",
     "--abbrev-ref",

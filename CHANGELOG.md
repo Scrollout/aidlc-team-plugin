@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.216.1] - 2026-10-29
+### Fixed
+- A link-only edit kept a doc's approval only for `DOC-AMEND`: `status` and `next` still called it stale, the approved text was not found through a rename, and the provenance the docs hook restamps on every edit (`generated`) counted. The approval holds in every view, through renames, and `generated` is left out of the hash; stamps of every earlier form still hold.
+
 ## [0.216.0] - 2026-10-29
 ### Changed
 - A rename keeps approvals (M30 B265). The approval hash leaves out link targets, so the links rewritten after a doc is renamed to its title slug stale nothing and are no `DOC-AMEND`; a doc stamped by an earlier version keeps its approval through a link-only edit, checked against its approved text in git.
@@ -554,7 +558,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.216.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.216.1...HEAD
+[0.216.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.216.0...v0.216.1
 [0.216.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.215.0...v0.216.0
 [0.215.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.214.0...v0.215.0
 [0.214.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.213.1...v0.214.0

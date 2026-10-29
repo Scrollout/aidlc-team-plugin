@@ -258,27 +258,43 @@ export function docSlug(title) {
 
 // A doc's approval hash: its front matter without the stamp and plan fields, keys sorted, and its body (docs/design/approvals.md).
 const sortKeys = (v) => (Array.isArray(v) ? v.map(sortKeys) : isMap(v) ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, sortKeys(v[k])])) : v);
-// The approval hash leaves out link targets, so a doc renamed and its links rewritten keeps every approval; `raw`
-// keeps them, as approvals made before did and reviews and cards still do.
+// The approval hash: front matter without the stamp, plan and provenance fields (`generated`, which the docs hook
+// restamps on every edit), and the body without link targets, so a doc renamed and its links rewritten keeps every
+// approval. Earlier stamps used other forms, still accepted: `links` (0.216.0, provenance kept) and `raw` (before
+// it, link targets kept too), which reviews and cards still use.
 const linkBlind = (body) => body.replace(/\]\([^)\s]*\)/g, ']()');
-export function hashDoc(doc, raw = false) {
-  const fm = Object.fromEntries(Object.entries(doc.fm ?? {}).filter(([k]) => !config.state.hashExclude.includes(k))), body = doc.lines.slice(doc.body).join('\n');
-  return createHash('sha256').update(JSON.stringify(sortKeys(fm)) + '\n' + (raw ? body : linkBlind(body))).digest('hex');
+const FORMS = config.state.hashForms;
+export const RAW = FORMS.at(-1);
+export function hashDoc(doc, form = FORMS[0]) {
+  const skip = form === FORMS[0] ? [...config.state.hashExclude, ...config.state.hashProvenance] : config.state.hashExclude;
+  const fm = Object.fromEntries(Object.entries(doc.fm ?? {}).filter(([k]) => !skip.includes(k))), body = doc.lines.slice(doc.body).join('\n');
+  return createHash('sha256').update(JSON.stringify(sortKeys(fm)) + '\n' + (form === RAW ? body : linkBlind(body))).digest('hex');
 }
-// Whether a doc's approval still holds: its hash, or one made before link targets were left out.
-export const hashHolds = (doc) => [hashDoc(doc), hashDoc(doc, true)].includes(doc.fm?.verified_hash);
+// Whether a doc's approval still holds: its hash in any form a stamp was written in, or, for a doc in git, an
+// approved text that differs from it only in link targets and provenance.
+const held = new Map();
+export function hashHolds(doc, file = doc?.file) {
+  const hash = doc.fm?.verified_hash;
+  if (FORMS.some((f) => hashDoc(doc, f) === hash)) return true;
+  if (!file || !hash) return false;
+  const key = `${file}\n${hash}\n${hashDoc(doc)}`;
+  if (!held.has(key)) held.set(key, linksOnly(file, doc));
+  return held.get(key);
+}
+
 // The text of a doc as last approved: the newest commit of it whose content matches its verified_hash.
 export function approvedText(file, hash) {
-  const cwd = dirname(file), name = basename(file); // paths from the doc's own folder, whatever links lead to it
-  for (const sha of gitLines(cwd, 'log', '--format=%H', '--', name)) {
-    const text = execFileSync('git', ['show', `${sha}:./${name}`], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }); // untrimmed: the hash covers the last newline
+  // Through renames: each commit with the path the doc had then, from the repository's root.
+  const cwd = dirname(file), lines = gitLines(cwd, 'log', '--follow', '--format=%H', '--name-only', '--', basename(file)).filter(Boolean);
+  for (let k = 0; k + 1 < lines.length; k += 2) {
+    const text = execFileSync('git', ['show', `${lines[k]}:${lines[k + 1]}`], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }); // untrimmed: the hash covers the last newline
     const doc = parseDoc(text);
-    if (hashDoc(doc) === hash || hashDoc(doc, true) === hash) return text;
+    if (FORMS.some((f) => hashDoc(doc, f) === hash)) return text;
   }
   return null;
 }
 // A doc approved before link targets were left out, changed since in link targets only: still approved, as nothing it says changed.
-export const linksOnly = (file, doc) => { const before = doc.fm?.verified_hash && approvedText(file, doc.fm.verified_hash); return Boolean(before) && hashDoc(parseDoc(before)) === hashDoc(doc); };
+const linksOnly = (file, doc) => { const before = doc.fm?.verified_hash && approvedText(file, doc.fm.verified_hash); return Boolean(before) && hashDoc(parseDoc(before)) === hashDoc(doc); };
 
 // A generated doc's digest: its body's, so a hand edit shows (docs/design/bundle.md).
 export const digestOf = (body) => createHash('sha256').update(body).digest('hex').slice(0, config.text.digest);

@@ -181,7 +181,7 @@ function openPoints(doc) {
 export function decisionsOf(st, docs) {
   const out = new Map();
   for (const file of docs.flatMap((u) => linksOf(u, st.bundle))) {
-    const doc = existsSync(file) ? parseDoc(readFileSync(file, 'utf8')) : null;
+    const doc = existsSync(file) ? { ...parseDoc(readFileSync(file, 'utf8')), file } : null;
     if (doc?.fm?.type === config.grid.decisionType) out.set(file, { file, doc });
   }
   return [...out.values()];
@@ -306,7 +306,7 @@ const bundleHeld = (bundle) => (existsSync(bundle) ? readdirSync(bundle, { recur
   .filter(({ fm }) => fm.type === config.grid.decisionType || researchOf({ fm }))
   .map(({ f, fm }) => ({ f, fm, num: fm.type === config.grid.decisionType ? basename(f).match(/^(\d+)-/)?.[1] : null }))
   // A decision by its number, as the owner types it, unless another shares it: then by its file name (U113).
-  .map(({ f, fm, num }, k, all) => ({ id: num && all.filter((d) => d.num === num).length === 1 ? num : basename(f, config.okf.ext), file: join(bundle, f), fm, doc: parseDoc(readFileSync(join(bundle, f), 'utf8')) }));
+  .map(({ f, fm, num }, k, all) => ({ id: num && all.filter((d) => d.num === num).length === 1 ? num : basename(f, config.okf.ext), file: join(bundle, f), fm, doc: { ...parseDoc(readFileSync(join(bundle, f), 'utf8')), file: join(bundle, f) } }));
 // The doc a research question is held on, named as `hold` takes it.
 export const heldDoc = (st, name) => { const file = findDoc(st.cwd, st.bundle, String(name)); return [...st.requirements, ...st.intents, ...st.units, ...st.decisions].find((d) => d.file === file); };
 function researched(bundle) {

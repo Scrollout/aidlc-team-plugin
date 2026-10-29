@@ -1051,6 +1051,8 @@
     "boltBranch": "bolt/",
     "human": "human:",
     "stable": "stable",
+    "hashProvenance": ["generated"],
+    "hashForms": ["current", "links", "raw"],
     "hashExclude": [
       "verified",
       "verified_hash",

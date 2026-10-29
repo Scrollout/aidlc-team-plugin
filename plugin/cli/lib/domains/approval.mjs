@@ -5,7 +5,7 @@ import { bundleOf, config, QUICK, done, isMap, isoDay, lapsed, list, readJson, U
 import { tryGit } from '../foundation/git.mjs';
 import { escapeRe, finding as codeFinding, msg } from '../foundation/text.mjs';
 import { loadProfile, withDefaults } from '../foundation/profile.mjs';
-import { approvedText, hashDoc, hashHolds, parseDoc, sizeCap, supersededId } from './bundle.mjs';
+import { approvedText, hashDoc, hashHolds, parseDoc, RAW, sizeCap, supersededId } from './bundle.mjs';
 import { acsOf, computeLane, inForce, lintPlan, readPlan, reqId as reqIdOf, withIntents } from './plan.mjs';
 import { aidlcDir, mergedUnits, runtimeFile, sha256, writeJson } from '../foundation/store.mjs';
 
@@ -26,7 +26,7 @@ export function approval(doc) {
 
 // The docs an intent review reads, as one hash: the intent and the requirements it cites (docs/design/intake.md#review-before-approval).
 export function reviewedHash(intent, requirements) {
-  return sha256([intent, ...requirements.filter((r) => intent.requirements.includes(r.id))].map((d) => hashDoc(d.doc, true)).join('\n'));
+  return sha256([intent, ...requirements.filter((r) => intent.requirements.includes(r.id))].map((d) => hashDoc(d.doc, RAW)).join('\n'));
 }
 // A v2 intent judged by method 9 whose current docs no intent review has read.
 export function reviewDue(cwd, profile, plan, intent) {
