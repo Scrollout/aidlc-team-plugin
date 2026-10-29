@@ -46,22 +46,13 @@ The project owns its code, docs bundle and profile.
 | Hooks, agents, skill | Hooks call the CLI on each tool call; builder, reviewer and researcher prompts; the lead's skill |
 | Templates, role personas, stack packs | What `init` and `scaffold` write; the lead's roles; each stack's layout |
 
-The core never imports an extension; an extension uses only the core's public entry ([Library and extensions](library.md), [C4 components](diagrams/cli-components.md)).
+The core never imports an extension; an extension uses only the core's public entry ([Library and extensions](library.md), [C4 components](diagrams/cli-components.md)). [Logical view](views/logical.md).
 
 # Runtime View
-One change, start to end:
-1. `aidlc intake` keeps the owner's request word for word.
-2. The lead elaborates an intent with the owner; the owner approves it.
-3. The lead plans bolts; the owner approves the plan.
-4. Each builder takes its card, writes tests first, then code, in its worktree.
-5. A reviewer with a fresh context checks the bolt against the same card.
-6. `aidlc merge` runs the gate on the merge result, and merges only if it passes.
-7. CI runs on the pushed base; the owner types `release`, the CLI releases and runs the smoke test.
-
-[Workflow](diagrams/workflow.md), [Bolt states](diagrams/bolt-states.md), [Merge mechanics](gate.md).
+One bolt from approval to release, as a sequence: [Runtime view](views/runtime.md). The steps and states: [Workflow](diagrams/workflow.md), [Bolt states](diagrams/bolt-states.md), [Merge mechanics](gate.md).
 
 # Deployment View
-Installed from a marketplace; `init` pins a copy of the CLI in the project (`.aidlc/`), so every machine and CI run uses one version ([Vendoring](vendoring.md), [0004](../decisions/0004-vendored-cli.md)).
+Installed from a marketplace; `init` pins a copy of the CLI in the project (`.aidlc/`), so every machine and CI run uses one version ([Vendoring](vendoring.md), [0004](../decisions/0004-vendored-cli.md)). [Technical view](views/technical.md).
 
 # Crosscutting Concepts
 - [Docs bundle v2](bundle.md) in OKF; names composed from a registry ([Naming](naming.md)); approvals only the owner's command stamps ([Approvals](approvals.md)); hooks refusing a rule break as it happens ([Hook checks](hook-checks.md)); [one word per concept](canonical-model.md).
