@@ -24,13 +24,14 @@ The plugin holds every project to kinds, layers and one-way dependencies. Its ow
 - An adapter, in the architecture model's sense, speaks to an outside system and depends only on foundation kits. The CLI's one, the board's GitHub transport, lives in its CLI extension. The host's hook rules call domains, so they are a domain.
 - A domain reaches another domain only through its exported functions. Seams, never imports, carry a call back up a dependency.
 - The core never imports an extension. An extension imports `lib/index.mjs` only.
-- No import cycles. A test gives each of the CLI's files a kind and runs `ARCH-KIND`, `ARCH-LAYER` and `ARCH-CYCLE` on its file graph, as `check` does on a project. An extension may use a domain's published surface, here `lib/index.mjs`.
+- No import cycles. A test gives each CLI file a kind and runs `ARCH-KIND`, `ARCH-LAYER` and `ARCH-CYCLE` on its file graph, as `check` does on a project. An extension may use a domain's published surface, here `lib/index.mjs`.
 
 # Seams
 `foundation/seams` keeps a list per seam. A domain or an extension adds a function with `plug(<seam>, fn)` when it loads. A seam's caller gets only those whose extension the profile enables:
 - `planRules`: plan lint rules (`inception`, `construction`, `board`).
 - `docChecks`: findings for `check` (`contracts`, `stacks`).
-- `gateChecks`: findings on the merge result and the lines the bolt adds (`contracts`, `stacks`).
+- `gateChecks`: findings on the merge result and the bolt's added lines (`contracts`, `stacks`).
+- `treeChecks`: findings for `check --tree` (`stacks`, `slices`).
 - `statusLines`, `delivered`, `statusTail`: lines, the delivered requirements and the closing line `status` shows (`construction`, `board`).
 - `cardSections`: sections a card adds (`stacks`).
 - `cardSlices`: each slice a bolt lists, its cuts as ordered steps (`slices`).

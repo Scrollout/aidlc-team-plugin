@@ -7,7 +7,9 @@ import { escapeRe, finding as codeFinding, msg, render } from '../foundation/tex
 import { loadProfile, stageProblem } from '../foundation/profile.mjs';
 import { parseYaml, YamlError } from '../foundation/yaml.mjs';
 import { kindProblems } from './method.mjs';
-import { moduleProblems, namingProblems } from './naming.mjs';
+import { generatedRules, moduleProblems, namingProblems } from './naming.mjs';
+import { inside as inGlob } from '../foundation/glob.mjs';
+import { gitLines } from '../foundation/git.mjs';
 import { seam } from '../foundation/seams.mjs';
 
 const OKF = config.okf;
@@ -323,6 +325,10 @@ export function nameProblem(r) {
   try { new RegExp(r.find ?? ''); new RegExp(r.pattern); } catch { return 'namesRegex'; }
   return null;
 }
+// The rules that name paths: the project's sound ones and the registry's generated ones (docs/design/naming.md).
+export const nameRules = (profile, bundle) => [...[profile.names ?? []].flat().filter((r) => !nameProblem(r)), ...generatedRules(profile, bundle)];
+// Each path a rule without `find` covers whose pattern it breaks, as { path, rule }; for the gate's added paths and check's tracked ones.
+export const misnamedPaths = (rules, paths) => paths.flatMap((path) => rules.filter((r) => !r.find && list(r.files).some((g) => inGlob('/' + path, g)) && !new RegExp(`^(?:${r.pattern})$`).test(path)).map((rule) => ({ path, rule })));
 const lintStages = (checks, file = PROFILE) => [checks ?? []].flat().filter(isMap)
   .map((s) => [s, stageProblem(s)]).filter(([, key]) => key).map(([s, key]) => finding('PROFILE-STAGE', 'error', file, 1, key, { id: s.id ?? '-', after: s.after ?? '-' }));
 const lintNames = (names, file = PROFILE) => [names ?? []].flat()
@@ -398,6 +404,13 @@ export const commands = {
     // The extensions' checks: the published API and events speak the grammar, a project's graph sees what its pack sees.
     for (const f of seam('docChecks', profile).flatMap((check) => check(cwd, profile))) findings.push(finding(f.code, 'error', f.path ?? at, 1, f.key, f.data));
     if (mods.length && !profile.naming && ![profile.names ?? []].flat().length) findings.push(finding('PROFILE-NAMING', 'warning', at, 1, 'namesNone', {}));
+    // --tree: the gate's path names and the extensions' whole-tree checks over every tracked path, so a path left from
+    // before a rule is reported, not only one a bolt adds (docs/design/naming.md#checks).
+    if (args.includes('--tree')) {
+      const gate = (code, path, line, key, data) => codeFinding(config.gate.codes, code, path, line, key, data, 'error'); // the gate's codes
+      for (const { path, rule: r } of misnamedPaths(nameRules(profile, bundle), gitLines(cwd, 'ls-files'))) findings.push(gate('GATE-NAME', path, 1, 'gateNamePath', { path, rule: r.id, pattern: r.pattern, why: r.why ?? '-' }));
+      for (const f of seam('treeChecks', profile).flatMap((check) => check(cwd, profile))) findings.push(gate(f.code, f.path ?? at, f.line ?? 1, f.key, f.data));
+    }
     const given = args.filter((a) => !a.startsWith('--'));
     const paths = given.length ? given.map((a) => resolve(cwd, a)) : [bundle];
     const opts = { rules, caps: profile.docs?.caps, base: cwd, v2: Boolean(profile.system), strict: args.includes('--ci') };

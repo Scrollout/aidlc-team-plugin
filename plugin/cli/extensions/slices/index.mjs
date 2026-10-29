@@ -195,8 +195,8 @@ plug('layerOf', (root, profile, path) => {
   return (dir && Object.keys(m.layers).find((l) => under(path, `${dir}/${m.layers[l]}`))) || mod.kind || null;
 });
 
-// At the gate, as the stacks' slice checks: only findings where the bolt changed a file count.
-plug('gateChecks', (tree, profile, paths = []) => {
-  const c = context(tree, profile);
-  return c ? [...graphFindings(tree, profile, c), ...testFindings(tree, profile, c)].filter(c.stacks.touched(paths)) : [];
-});
+// The slice checks over the whole tree, for check --tree; at the gate, as the stacks' slice checks, only findings
+// where the bolt changed a file count.
+const whole = (tree, profile, c = context(tree, profile)) => (c ? [...graphFindings(tree, profile, c), ...testFindings(tree, profile, c)] : []);
+plug('treeChecks', whole);
+plug('gateChecks', (tree, profile, paths = []) => { const c = context(tree, profile); return c ? whole(tree, profile, c).filter(c.stacks.touched(paths)) : []; });

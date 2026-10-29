@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.213.0] - 2026-10-29
+### Added
+- Whole-tree checks (M30 B262). `check --tree` runs the path naming rules, the generated banned-word rule among them, and the slice checks over every tracked path, so a path from before a rule is reported, not only one a bolt adds; the gate still counts only a bolt's changes. A `treeChecks` seam carries the extensions' whole-tree findings.
+
 ## [0.212.0] - 2026-10-28
 ### Added
 - An index entry without a description (M30 B261). `check` warns `HOUSE-INDEX-DESC` for each subfolder entry the generated indexes would write without a description, naming the index and the entry: a subfolder of several docs takes no description from them, so its line in the parent index is written once, and `aidlc index` keeps it. The plugin's own docs bundle gains the line its generated tables folder lacked.
@@ -534,7 +538,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.211.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.213.0...HEAD
+[0.213.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.212.0...v0.213.0
 [0.212.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.211.0...v0.212.0
 [0.211.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.210.0...v0.211.0
 [0.210.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.209.1...v0.210.0

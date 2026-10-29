@@ -9,7 +9,7 @@ import '../plugin/cli/extensions/intake/index.mjs'; // its stories seam, as the 
 import { sliceFindings } from '../plugin/cli/extensions/stacks/index.mjs';
 import { graphFindings, testFindings } from '../plugin/cli/extensions/slices/index.mjs';
 import '../plugin/cli/extensions/models/index.mjs'; // the chosen model's layers, for SLICE-GOVERN
-import { makeRepo, write } from './state-repo.mjs';
+import { makeRepo, run, write } from './state-repo.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const NOTES = { system: { core: ['internal/**', 'cmd/**'] }, modules: [{ id: 'notes', kind: 'domain', paths: ['internal/domains/notes/**'] }, { id: 'notes-api', kind: 'runtime', paths: ['cmd/notes-api/**'] }] };
@@ -74,6 +74,13 @@ test('B245/AC-2 the slice folders equal the domain doc\'s commands and queries, 
   const gate = (paths) => seam('gateChecks', ORDERS).flatMap((check) => check(dir, ORDERS, paths)).filter((f) => f.code.startsWith('SLICE-'));
   assert.deepEqual(gate([`${D}/model/order.go`]), [], 'existing debt is not the bolt\'s');
   assert.deepEqual(lines(gate(['docs/domains/orders.md'])), ['SLICE-SURFACE docs/domains/orders.md sliceUseCase'], 'a bolt that changes the doc answers for it');
+  // check --tree reports the debt the gate leaves: the slice checks over the whole tree.
+  const tree = (d, args = ['--tree']) => run(d, ['check', ...args]).out.split('\n').filter((l) => /SLICE-|GATE-NAME/.test(l));
+  assert.equal(tree(dir, []).length, 0, 'without --tree, check leaves slices to the gate');
+  assert.match(tree(dir).join('\n'), /docs\/domains\/orders\.md:1 SLICE-SURFACE/);
+  // and the path names over every tracked path: a banned word left from before the registry.
+  const named = makeRepo({ ...files('- Command placeorder: a customer orders a cake [I-1:US1.1]'), 'internal/store/x.go': go('store') }, { ...ORDERS, naming: { tokens: { system: 'shop' }, domains: { orders: {} } } });
+  assert.deepEqual(tree(named).filter((l) => /GATE-NAME/.test(l)).map((l) => l.split(' ')[0]), ['internal/store/x.go:1']);
 });
 
 // B246: with a naming registry, slices named and routed by it, and a new slice delivered whole.

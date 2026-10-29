@@ -215,6 +215,7 @@
     "planRules",
     "docChecks",
     "gateChecks",
+    "treeChecks",
     "statusLines",
     "delivered",
     "statusTail",

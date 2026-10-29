@@ -5,6 +5,10 @@ title: aidlc-team-plugin docs history
 
 # Bundle history
 
+## 2026-10-29
+
+- **Update** M30 B262 built: `check --tree` runs the path naming rules and the slice checks over every tracked path ([Naming](design/naming.md#checks), [CLI](design/cli.md)). Release 0.213.0.
+
 ## 2026-10-28
 
 - **Update** M30 B261 built: an index entry without a description warns `HOUSE-INDEX-DESC` ([OKF validation](design/okf-validation.md)); the generated tables folder described. Release 0.212.0.

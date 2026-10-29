@@ -373,6 +373,7 @@ function deliverFindings(tree, profile, paths, unit) {
   return out;
 }
 // At the gate, a project's existing code is measured as it changes: only findings where the bolt changed a file count.
+plug('treeChecks', sliceFindings);
 plug('gateChecks', (tree, profile, paths = [], added, unit) => [...sliceFindings(tree, profile).filter(touched(paths)), ...deliverFindings(tree, profile, paths, unit)]);
 
 // VALUE-LITERAL: a string literal a bolt adds to a source file, outside its tests and the project's data, is a value

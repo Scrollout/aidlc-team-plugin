@@ -7,13 +7,13 @@ import { bundleOf, CLI_DIR, config, QUICK, VERDICT, done, isMap, isoDay, lapsed,
 import { addedLines, git, gitLines, sh, tryGit } from '../foundation/git.mjs';
 import { finding as codeFinding, msg, render } from '../foundation/text.mjs';
 import { loadProfile, stageProblem, withDefaults } from '../foundation/profile.mjs';
-import { checkBundle, docSlug, nameProblem, parseDoc, writeIndexes } from './bundle.mjs';
+import { checkBundle, docSlug, misnamedPaths, nameRules, parseDoc, writeIndexes } from './bundle.mjs';
 import { computeLane, finding as planFinding, incrementLines, lintPlan, noRun, readPlan, runTarget, spansOf, withIntents } from './plan.mjs';
 import { cardsOver } from './card.mjs';
 import { inside } from '../foundation/glob.mjs';
 import { bindingName, writeTrace } from './construction.mjs';
 import { writeContextMap, writeGlossary, writeMap } from './map.mjs';
-import { generatedRules, glossaryOf, parseFlags } from './naming.mjs';
+import { glossaryOf, parseFlags } from './naming.mjs';
 import { boundaryFindings, exceptDocs, graphOf, kindFindings, layerFindings, moduleFindings, reachFindings } from './architecture.mjs';
 import { seam } from '../foundation/seams.mjs';
 import { readState } from './flow.mjs';
@@ -170,7 +170,7 @@ export const STAGES = {
   },
   lines(c) {
     const { cwd, profile, p, base, unit, bundleRel, add } = c;
-    const names = [...[profile.names ?? []].flat().filter((r) => !nameProblem(r)), ...generatedRules(profile, c.st.bundle)]; // the project's rules and the registry's (docs/design/naming.md)
+    const names = nameRules(profile, c.st.bundle); // the project's rules and the registry's (docs/design/naming.md)
     const synonyms = glossaryOf(c.st.bundle).flatMap((e) => e.synonyms.map((word) => ({ ...e, word, re: new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i') })));
     // Each added line, so a secret written from Bash, which the secrets hook never sees, stops the merge.
     c.added = addedLines(cwd, `${base}...${branchOf(unit.id)}`);
@@ -189,9 +189,7 @@ export const STAGES = {
       if (!file.startsWith(`${bundleRel}/${config.okf.bundle.folders.Domain}/`)) for (const s of synonyms.filter((x) => x.re.test(text))) add('TERM-SYNONYM', 'gateSynonym', { path: file, line, word: s.word, term: s.term, domain: s.domain }, file);
     }
     // A path rule: each file the unit adds or renames under its files (docs/design/naming.md).
-    for (const path of gitLines(cwd, 'diff', '--name-only', '--diff-filter=AR', `${base}...${branchOf(unit.id)}`)) {
-      for (const r of names.filter((x) => !x.find && list(x.files).some((g) => matches(path, g)) && !new RegExp(`^(?:${x.pattern})$`).test(path))) add('GATE-NAME', 'gateNamePath', { path, rule: r.id, pattern: r.pattern, why: r.why ?? '-' }, path);
-    }
+    for (const { path, rule: r } of misnamedPaths(names, gitLines(cwd, 'diff', '--name-only', '--diff-filter=AR', `${base}...${branchOf(unit.id)}`))) add('GATE-NAME', 'gateNamePath', { path, rule: r.id, pattern: r.pattern, why: r.why ?? '-' }, path);
   },
   lane(c) {
     const diffLane = computeLane(c.paths, c.profile, { paths: true });

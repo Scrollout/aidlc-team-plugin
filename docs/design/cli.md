@@ -12,7 +12,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 | `init [--adopt] [--name n] [--base b] [--bundle dir] [--run level=command]… [--overwrite path]… [--system-code c] [--org o] [--zone z]` | writes a v2 profile, templates and the pinned CLI; `--adopt` keeps a docs bundle ([Profile and templates](profile.md)) | owner via the skill |
 | `upgrade [--downgrade] [--dirty]` | re-vendors the CLI from the installed plugin and adds missing templates; refuses an older release or uncommitted changes unless told; names the release | owner (prompt or `!`) |
 | `index [bundle]` | regenerates every `index.md` in the docs bundle, as OKF's reference does | docs hook, merge, anyone |
-| `check [--ci] [path…]` | OKF validation, plan lint, profile lint; `--ci` adds the base history and architecture checks. A directory is checked as a docs bundle (or within the profile's docs bundle below its root), a file for its own findings | hooks, CI, anyone |
+| `check [--ci] [--tree] [path…]` | OKF validation, plan lint, profile lint; `--ci` adds the base history and architecture checks; `--tree` runs the path naming rules and the slice checks over every tracked path, as the gate does over a bolt's changes. A directory is checked as a docs bundle (or within the profile's docs bundle below its root), a file for its own findings | hooks, CI, anyone |
 | `status` | the state table | SessionStart hook, anyone |
 | `next` | the single next action | lead |
 | `lane <bolt>\|--diff <range>` | the computed lane and why | lead, gate |

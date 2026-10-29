@@ -91,10 +91,11 @@
     },
     {
       "name": "check",
-      "usage": "check [--ci] [path…]",
+      "usage": "check [--ci] [--tree] [path…]",
       "does": "OKF validation, plan lint, profile lint",
       "flags": [
-        "--ci"
+        "--ci",
+        "--tree"
       ]
     },
     {
