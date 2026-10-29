@@ -77,7 +77,7 @@ flowchart LR
 | `run.mjs` | Installed plugin | Finds the project, runs the pinned CLI's hook; without one, denies a tool call and lets the other hooks pass |
 | Pinned CLI | `.aidlc/bin` in the project, committed | The only place rules run, so every machine and CI use one version ([Vendoring](../vendoring.md)) |
 | CLI runtime | `aidlc.mjs` | Parses the command, calls the library, renders data as text or JSON |
-| Library | `lib/`: foundation kits, domains, public entry | State, plan, cards, gate, reviews, approvals, hooks' rules; values in `cli.json` ([C4 components](../diagrams/cli-components.md)) |
+| Library | `lib/`: foundation kits, domains, public entry | State, plan, cards, gate, reviews, approvals, hooks' rules; values in `cli.json` ([C4 components](cli-components.md)) |
 | Extensions | `extensions/`, each with its `extension.json` | the board, API contracts, intake, Jira, architecture models, Deployment and Operation, slices, stack packs; plug into named seams, never imported by the core ([Library and extensions](../library.md)) |
 | Runtime store | `.git/aidlc`, never committed | Cards, reports, reviews, gate results, deploy records, CI record, heartbeat and launch marks, owner prompts, stats |
 | Project CI | GitHub Actions | `aidlc check --ci`: the base history since adoption, architecture, the docs |

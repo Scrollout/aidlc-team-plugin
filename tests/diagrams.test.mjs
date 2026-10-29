@@ -8,7 +8,8 @@ import { CODES, DIR, TABLES, dirOf, pages, workflow } from './diagrams.mjs';
 
 test('B191/AC-1 each generated diagram page matches the data it is drawn from (rewrite them with node tests/diagrams.mjs)', () => {
   const want = pages();
-  assert.deepEqual([DIR, TABLES].flatMap((d) => readdirSync(d).filter((f) => f !== 'index.md')).sort(), Object.keys(want).sort());
+  const generated = (d, f) => readFileSync(join(d, f), 'utf8').includes('generated: { by: tests/diagrams.mjs }'); // hand-drawn views sit beside them
+  assert.deepEqual([DIR, TABLES].flatMap((d) => readdirSync(d).filter((f) => f !== 'index.md' && generated(d, f))).sort(), Object.keys(want).sort());
   for (const [name, text] of Object.entries(want)) assert.equal(readFileSync(join(dirOf(text), name), 'utf8'), text, `DOC-DIAGRAM ${name} differs from its data, or sits in the wrong folder`);
 });
 

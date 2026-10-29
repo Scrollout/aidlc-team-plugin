@@ -67,6 +67,5 @@
 
 # Subdirectories
 
-* [diagrams](diagrams/index.md) - Generated from the data the CLI enforces: words, workflow, states, kinds, bundle types, naming grammar, the CLI's components and every check code.
+* [diagrams](diagrams/index.md) - The plugin's logical, technical and runtime views, drawn by hand, and the diagrams generated from the data the CLI enforces: words, workflow, states, kinds, bundle types, naming grammar, the CLI's components and every check code.
 * [tables](tables/index.md) - Tables drawn from cli.json and the extensions' data by tests/diagrams.mjs: the bundle's doc types, every check code with its fix, the naming grammar and the vocabulary by scale; never edited by hand.
-* [views](views/index.md) - The plugin drawn by hand in three views: logical blocks and data, technical parts and connections, and one bolt at runtime.

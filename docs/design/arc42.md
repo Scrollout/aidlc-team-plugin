@@ -46,13 +46,13 @@ The project owns its code, docs bundle and profile.
 | Hooks, agents, skill | Hooks call the CLI on each tool call; builder, reviewer and researcher prompts; the lead's skill |
 | Templates, role personas, stack packs | What `init` and `scaffold` write; the lead's roles; each stack's layout |
 
-The core never imports an extension; an extension uses only the core's public entry ([Library and extensions](library.md), [C4 components](diagrams/cli-components.md)). [Logical view](views/logical.md).
+The core never imports an extension; an extension uses only the core's public entry ([Library and extensions](library.md), [C4 components](diagrams/cli-components.md)). [Logical view](diagrams/logical.md).
 
 # Runtime View
-One bolt from approval to release, as a sequence: [Runtime view](views/runtime.md). The steps and states: [Workflow](diagrams/workflow.md), [Bolt states](diagrams/bolt-states.md), [Merge mechanics](gate.md).
+One bolt from approval to release, as a sequence: [Runtime view](diagrams/runtime.md). The steps and states: [Workflow](diagrams/workflow.md), [Bolt states](diagrams/bolt-states.md), [Merge mechanics](gate.md).
 
 # Deployment View
-Installed from a marketplace; `init` pins a copy of the CLI in the project (`.aidlc/`), so every machine and CI run uses one version ([Vendoring](vendoring.md), [0004](../decisions/0004-vendored-cli.md)). [Technical view](views/technical.md).
+Installed from a marketplace; `init` pins a copy of the CLI in the project (`.aidlc/`), so every machine and CI run uses one version ([Vendoring](vendoring.md), [0004](../decisions/0004-vendored-cli.md)). [Technical view](diagrams/technical.md).
 
 # Crosscutting Concepts
 - [Docs bundle v2](bundle.md) in OKF; names composed from a registry ([Naming](naming.md)); approvals only the owner's command stamps ([Approvals](approvals.md)); hooks refusing a rule break as it happens ([Hook checks](hook-checks.md)); [one word per concept](canonical-model.md).
