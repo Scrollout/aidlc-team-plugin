@@ -336,6 +336,7 @@ export const NEXT = {
   ciRed: (st, f) => Boolean(st.ci?.red) && !f.fixLive, // a red base comes next: a fix unit, unless one is live (docs/design/base-ci.md)
   baseRed: (st, f) => Boolean(st.red) && !f.fixLive,
   researchAsked: (st, f) => Boolean(f.asked),
+  workFinishes: (st, f) => config.next.finish.includes(f.work?.key) && config.next.finishBefore.includes(f.gate?.action.key), // built bolts are reviewed, fixed and merged before new ones are drafted
   gateActs: (st, f) => f.gate?.action.kind === S.kinds.act,
   gatePending: (st, f) => Boolean(f.gate),
   workReady: (st, f) => Boolean(f.work) && !(f.work.kind === S.kinds.wait && f.ops), // a due release step beats waiting (U121)
@@ -354,8 +355,7 @@ export const ACTIONS = {
   gateAction: (st, f) => f.gate.action,
   // Units that do not wait on the gate's docs go first, so builders run while the owner answers.
   gateOrWork: (st, f) => {
-    const waits = (u) => [u.id, u.fm.intent, ...u.requirements, ...u.depends].some((d) => f.gate.docs.has(d));
-    const work = unitWork(st, f.gate.docs.size ? f.scope.filter((u) => !waits(u)) : []);
+    const waits = (u) => [u.id, u.fm.intent, ...u.requirements, ...u.depends].some((d) => f.gate.docs.has(d)), work = unitWork(st, f.gate.docs.size ? f.scope.filter((u) => !waits(u)) : []);
     return work?.kind === S.kinds.act ? work : f.gate.action;
   },
   unitWork: (st, f) => f.work,

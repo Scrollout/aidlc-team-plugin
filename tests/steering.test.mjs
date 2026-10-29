@@ -138,3 +138,13 @@ test('0.220.7 a held intent holds nothing else back: next serves the next intent
   commit(dir, 'park I-1');
   assert.match(run(dir, ['next']).out, /^build U-2 /, 'I-2 comes up past the held I-1');
 });
+
+test('0.220.8 a built fix bolt is reviewed before the lead drafts the next intent\'s bolts', () => {
+  const dir = project({ [U(1)]: unitDoc({ intent: '', scope: ['a/**'], title: 'Fix' }) });
+  approve(dir, 'I-1');
+  approve(dir, 'U-1');
+  branch(dir, 'U-1', 'a/x.txt');
+  run(dir, ['report', 'U-1'], '{"status": "done", "summary": "ok"}');
+  rmSync(join(dir, '.git/aidlc/heartbeats/U-1'), { force: true });
+  assert.match(run(dir, ['next']).out, /^review U-1/);
+});

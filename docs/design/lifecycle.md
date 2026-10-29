@@ -16,7 +16,7 @@ The transitions in `cli.json` only draw the diagrams. The states and the next ac
 - `when` names a guard, such as `dependencyPending`, `readyToMerge` or `checkPassed`. A guard is a small predicate in code, with its own test. Data names and orders guards; it never holds an expression.
 
 # The next action
-`next.order` is an ordered list of `{ "when", "action" }`, the last holding always. `next` serves the first entry whose guards all hold: its action builds the line from its message, and serves the `aidlc` command it names as `{ "command", "args" }` ([State](state.md#next)). The context its guards read is computed only as far as an entry asks.
+`next.order` is an ordered list of `{ "when", "action" }`, the last holding always. `next` serves the first entry whose guards all hold: its action builds the line from its message, and serves the `aidlc` command it names as `{ "command", "args" }` ([State](state.md#next)). The context its guards read is computed only as far as an entry asks. `workFinishes` puts a built bolt's merge, fix round or review (the keys in `next.finish`) before the lead's own plan work (`next.finishBefore`).
 
 # Gate stages and review focuses
 A project extends the gate and the review; it never shortens them.

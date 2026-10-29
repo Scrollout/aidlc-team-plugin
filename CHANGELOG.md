@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.220.8] - 2026-10-29
+### Fixed
+- `next` serves a built bolt's merge, fix round or review before the lead's own plan work (drafting bolts, an intent review, finishing a decision), so finished work never waits behind drafting; elaborating with the owner still comes first. The keys are `next.finish` and `next.finishBefore` in data.
+
 ## [0.220.7] - 2026-10-29
 ### Fixed
 - `check --ci` judges a merge by its bolt's card as that merge committed it, found by ID when the card was renamed since, and admits the codebase map under its name before a v2 migration too, so history merged before a migration passes.
@@ -649,7 +653,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.7...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.8...HEAD
+[0.220.8]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.7...v0.220.8
 [0.220.7]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.6...v0.220.7
 [0.220.6]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.5...v0.220.6
 [0.220.5]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.4...v0.220.5

@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-29
 
+- **Update** Built bolts are merged, fixed and reviewed before the plan is drafted further ([State](design/state.md), [Lifecycle](design/lifecycle.md)). Release 0.220.8.
 - **Update** History check reads a renamed card as merged; a held intent is passed over ([Merge gate](design/gate.md), [CLI](design/cli.md), [Agents in flight](design/in-flight.md)). Release 0.220.7.
 - **Update** The history check admits every merge-written file; `mode --stop push` holds the push for the owner ([Merge gate](design/gate.md), [Steering](design/steering.md), [CLI](design/cli.md)). Release 0.220.6.
 - **Update** Git output uncapped; git cut off is an error, never an empty diff ([CLI engine](design/cli-engine.md)). Release 0.220.5.

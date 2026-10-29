@@ -1030,13 +1030,16 @@
       { "when": ["ciRed"], "action": "ciFix" },
       { "when": ["baseRed"], "action": "baseFix" },
       { "when": ["researchAsked"], "action": "research" },
+      { "when": ["workFinishes"], "action": "unitWork" },
       { "when": ["gateActs"], "action": "gateAction" },
       { "when": ["gatePending"], "action": "gateOrWork" },
       { "when": ["workReady"], "action": "unitWork" },
       { "when": ["incrementsUncut"], "action": "cutIncrements" },
       { "when": ["releaseDue"], "action": "releaseStep" },
       { "when": [], "action": "idle" }
-    ]
+    ],
+    "finish": ["nextMerge", "nextUntagged", "nextFixRound", "nextReview"],
+    "finishBefore": ["nextDraftUnits", "nextReviewIntent", "nextFinishDecision"]
   },
   "state": {
     "kinds": { "act": "act", "human": "human", "wait": "wait" },
