@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-29
 
+- **Update** M30 B265 built: link targets left out of the approval hash, so a rename keeps approvals ([Approvals](design/approvals.md)). Release 0.216.0.
 - **Update** M30 B264 built: an intent re-review reads the diff since the last one and answers its findings ([Intake](design/intake.md)). Release 0.215.0.
 - **Update** M30 B263 built: a Unit with no domain module serves its stories without slices ([Vertical slices](design/vertical-slices.md)); a superseded draft decision needs no sections ([Standard formats](design/standards.md)). Release 0.214.0.
 - **Update** A decision's `supersedes` read as written, not as a YAML 1.1 octal number ([Inception](design/inception.md)). Release 0.213.1.

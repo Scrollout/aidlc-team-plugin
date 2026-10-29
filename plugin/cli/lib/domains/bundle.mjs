@@ -10,6 +10,7 @@ import { kindProblems } from './method.mjs';
 import { generatedRules, moduleProblems, namingProblems } from './naming.mjs';
 import { inside as inGlob } from '../foundation/glob.mjs';
 import { gitLines } from '../foundation/git.mjs';
+import { execFileSync } from 'node:child_process';
 import { seam } from '../foundation/seams.mjs';
 
 const OKF = config.okf;
@@ -257,10 +258,27 @@ export function docSlug(title) {
 
 // A doc's approval hash: its front matter without the stamp and plan fields, keys sorted, and its body (docs/design/approvals.md).
 const sortKeys = (v) => (Array.isArray(v) ? v.map(sortKeys) : isMap(v) ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, sortKeys(v[k])])) : v);
-export function hashDoc(doc) {
-  const fm = Object.fromEntries(Object.entries(doc.fm ?? {}).filter(([k]) => !config.state.hashExclude.includes(k)));
-  return createHash('sha256').update(JSON.stringify(sortKeys(fm)) + '\n' + doc.lines.slice(doc.body).join('\n')).digest('hex');
+// The approval hash leaves out link targets, so a doc renamed and its links rewritten keeps every approval; `raw`
+// keeps them, as approvals made before did and reviews and cards still do.
+const linkBlind = (body) => body.replace(/\]\([^)\s]*\)/g, ']()');
+export function hashDoc(doc, raw = false) {
+  const fm = Object.fromEntries(Object.entries(doc.fm ?? {}).filter(([k]) => !config.state.hashExclude.includes(k))), body = doc.lines.slice(doc.body).join('\n');
+  return createHash('sha256').update(JSON.stringify(sortKeys(fm)) + '\n' + (raw ? body : linkBlind(body))).digest('hex');
 }
+// Whether a doc's approval still holds: its hash, or one made before link targets were left out.
+export const hashHolds = (doc) => [hashDoc(doc), hashDoc(doc, true)].includes(doc.fm?.verified_hash);
+// The text of a doc as last approved: the newest commit of it whose content matches its verified_hash.
+export function approvedText(file, hash) {
+  const cwd = dirname(file), name = basename(file); // paths from the doc's own folder, whatever links lead to it
+  for (const sha of gitLines(cwd, 'log', '--format=%H', '--', name)) {
+    const text = execFileSync('git', ['show', `${sha}:./${name}`], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }); // untrimmed: the hash covers the last newline
+    const doc = parseDoc(text);
+    if (hashDoc(doc) === hash || hashDoc(doc, true) === hash) return text;
+  }
+  return null;
+}
+// A doc approved before link targets were left out, changed since in link targets only: still approved, as nothing it says changed.
+export const linksOnly = (file, doc) => { const before = doc.fm?.verified_hash && approvedText(file, doc.fm.verified_hash); return Boolean(before) && hashDoc(parseDoc(before)) === hashDoc(doc); };
 
 // A generated doc's digest: its body's, so a hand edit shows (docs/design/bundle.md).
 export const digestOf = (body) => createHash('sha256').update(body).digest('hex').slice(0, config.text.digest);

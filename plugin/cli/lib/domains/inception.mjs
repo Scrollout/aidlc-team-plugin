@@ -7,7 +7,7 @@ import { bundleOf, CLI_DIR, config, done, isMap, list, readJson, relPath, UsageE
 import { sh } from '../foundation/git.mjs';
 import { msg, render } from '../foundation/text.mjs';
 import { loadProfile, withDefaults } from '../foundation/profile.mjs';
-import { docSlug, hashDoc, parseDoc, sectionOf, supersededId } from './bundle.mjs';
+import { docSlug, hashHolds, linksOnly, parseDoc, sectionOf, supersededId } from './bundle.mjs';
 import { glossaryOf } from './naming.mjs';
 import { reqId } from './plan.mjs';
 import { plug, seam } from '../foundation/seams.mjs';
@@ -39,7 +39,7 @@ const vagueIn = (q) => P.vague.find((w) => new RegExp(`\\b${w}\\b`, 'i').test(q.
 // The findings, through `add(code, doc, line, key, data)` and `inForce(intent, key)` from plan lint.
 export function lintInception({ bundle, profile, intents, requirements, merged, add, inForce, incrementLines, keyLine, base }) {
   const v2 = Boolean(profile.system);
-  const decisions = docsIn(bundle, config.grid.decisions).map((d) => ({ ...d, id: d.name.slice(0, config.ids.decisionDigits), fm: d.doc.fm, stale: Boolean(d.doc.fm.verified_hash) && d.doc.fm.verified_hash !== hashDoc(d.doc) }));
+  const decisions = docsIn(bundle, config.grid.decisions).map((d) => ({ ...d, id: d.name.slice(0, config.ids.decisionDigits), fm: d.doc.fm, stale: Boolean(d.doc.fm.verified_hash) && !hashHolds(d.doc) && !linksOnly(d.file, d.doc) }));
   const domains = docsIn(bundle, F.Domain).map((d) => ({ ...d, code: String(d.doc.fm.code ?? d.name.slice(0, -config.okf.ext.length)) })).map((d) => ({ ...d, id: d.code, owns: bullets(d.doc, P.owns).map(([, t]) => t.match(/`([^`]+)`/)?.[1]).filter(Boolean) }));
   const facts = new Map(docsIn(bundle, F.Fact).map((d) => [d.name.match(new RegExp(config.ids.factNumber))?.[0], d]));
   const stale = (fact) => (Date.now() - Date.parse(fact.doc.fm.at)) / 86400000 > Number(profile.facts?.maxAgeDays ?? P.maxAgeDays);

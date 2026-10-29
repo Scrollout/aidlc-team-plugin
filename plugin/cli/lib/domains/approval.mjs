@@ -1,12 +1,11 @@
 // Approvals: the owner's stamps and their hash, delegation and run mode, and the approve command (docs/design/approvals.md).
-import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { bundleOf, config, QUICK, done, isMap, isoDay, lapsed, list, readJson, UsageError, relPath } from '../foundation/data.mjs';
-import { git, gitLines, tryGit } from '../foundation/git.mjs';
+import { tryGit } from '../foundation/git.mjs';
 import { escapeRe, finding as codeFinding, msg } from '../foundation/text.mjs';
 import { loadProfile, withDefaults } from '../foundation/profile.mjs';
-import { hashDoc, parseDoc, sizeCap, supersededId } from './bundle.mjs';
+import { approvedText, hashDoc, hashHolds, parseDoc, sizeCap, supersededId } from './bundle.mjs';
 import { acsOf, computeLane, inForce, lintPlan, readPlan, reqId as reqIdOf, withIntents } from './plan.mjs';
 import { aidlcDir, mergedUnits, runtimeFile, sha256, writeJson } from '../foundation/store.mjs';
 
@@ -22,12 +21,12 @@ export const events = (fm) => (isMap(fm.verified) ? [fm.verified] : Array.isArra
 export function approval(doc) {
   const human = events(doc.fm).some((e) => S.approvers.some((a) => String(e.by ?? '').startsWith(a)));
   if (!human) return ST.draft;
-  return doc.fm.verified_hash === hashDoc(doc) ? ST.approved : ST.stale;
+  return hashHolds(doc) ? ST.approved : ST.stale;
 }
 
 // The docs an intent review reads, as one hash: the intent and the requirements it cites (docs/design/intake.md#review-before-approval).
 export function reviewedHash(intent, requirements) {
-  return sha256([intent, ...requirements.filter((r) => intent.requirements.includes(r.id))].map((d) => hashDoc(d.doc)).join('\n'));
+  return sha256([intent, ...requirements.filter((r) => intent.requirements.includes(r.id))].map((d) => hashDoc(d.doc, true)).join('\n'));
 }
 // A v2 intent judged by method 9 whose current docs no intent review has read.
 export function reviewDue(cwd, profile, plan, intent) {
@@ -48,18 +47,9 @@ export function ownerLines(cwd) {
     + (prompt ? msg('statusPrompt', { command: prompt.command, state: config.hooks.promptStates[prompt.ran ? 1 : prompt.refused ? 2 : 0], at: prompt.ran ?? prompt.refused ?? prompt.at }) : '');
 }
 
-// The text of a doc as last approved: the newest commit of it whose content matches its verified_hash.
-function approvedText(cwd, file, hash) {
-  const path = relPath(git(cwd, 'rev-parse', '--show-toplevel'), file);
-  for (const sha of gitLines(cwd, 'log', '--format=%H', '--', path)) {
-    const text = execFileSync('git', ['show', `${sha}:${path}`], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }); // untrimmed: the hash covers the last newline
-    if (hashDoc(parseDoc(text)) === hash) return text;
-  }
-  return null;
-}
 const acLines = (doc) => acsOf(doc).map((a) => a.text.trim()).join('\n');
 // A stale unit's ACs read as last approved: a delegated re-approval keeps them, as what done means is the owner's.
-export const acsKept = (cwd, file, doc) => { const before = approvedText(cwd, file, doc.fm.verified_hash); return before !== null && acLines(parseDoc(before)) === acLines(doc); };
+export const acsKept = (cwd, file, doc) => { const before = approvedText(file, doc.fm.verified_hash); return before !== null && acLines(parseDoc(before)) === acLines(doc); };
 
 // The latest approval of a doc by one of `by`, in epoch ms (0 when none). Answering an escalation takes the
 // owner (human: only); a delegated re-approval of a fixed spec is enough to restart a stopped builder.

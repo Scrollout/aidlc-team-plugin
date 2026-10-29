@@ -159,7 +159,7 @@ function renderCard(cwd, unitId, { preview = false, shared = sharedOf(cwd) } = {
   const file = templateFile(cwd, lane.lane === QUICK ? C.quickTemplate : C.template);
   const template = readFileSync(file, 'utf8');
   // The base is left out, so a base that moved for other units does not make a recorded review stale.
-  const hash = sha256(hashDoc(doc) + '\n' + render(template, { ...data, base: '', hash: '' }, file)).slice(0, C.hashLength);
+  const hash = sha256(hashDoc(doc, true) + '\n' + render(template, { ...data, base: '', hash: '' }, file)).slice(0, C.hashLength);
   const card = render(template, { ...data, hash }, file);
   // Findings and mutations come from review rounds: outside the cap, so a fix round never needs a re-approval; the
   // profile's sections grow with the project, not the unit, so they are outside it too (docs/design/bolt-card.md).

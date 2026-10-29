@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.216.0] - 2026-10-29
+### Changed
+- A rename keeps approvals (M30 B265). The approval hash leaves out link targets, so the links rewritten after a doc is renamed to its title slug stale nothing and are no `DOC-AMEND`; a doc stamped by an earlier version keeps its approval through a link-only edit, checked against its approved text in git.
+
 ## [0.215.0] - 2026-10-29
 ### Changed
 - Intent re-reviews converge (M30 B264). The intent review record keeps the commit it read; the next review's brief gives the diff since then and the earlier findings by id, and asks for new findings only on changed lines, so each round is narrower than the last.
@@ -550,7 +554,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.215.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.216.0...HEAD
+[0.216.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.215.0...v0.216.0
 [0.215.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.214.0...v0.215.0
 [0.214.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.213.1...v0.214.0
 [0.213.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.213.0...v0.213.1

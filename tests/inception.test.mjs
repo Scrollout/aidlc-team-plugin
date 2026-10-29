@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { lintPlan } from '../plugin/cli/lib/index.mjs';
+import { hashDoc, lintPlan, parseDoc } from '../plugin/cli/lib/index.mjs';
 import { approve, commit, makeRepo, read, run } from './state-repo.mjs';
 
 const V2 = { system: { core: ['src/**'] }, naming: { tokens: { system: 'shop' } }, modules: [
@@ -85,6 +85,19 @@ test('B177/AC-1 an approved decision edited is DOC-AMEND; approving one that sup
   assert.match(r.out, /docs\/decisions\/0003-decision-3\.md is superseded by docs\/decisions\/0006-decision-6\.md/);
   assert.match(read(dir, 'docs/decisions/0003-decision-3.md'), /^status: superseded by ADR-0006$/m); // as MADR writes it
   assert.ok(!codes(dir).some((l) => /DOC-AMEND 0003/.test(l)), 'superseding is no amendment');
+  // A link target rewritten after a rename keeps the approval; a changed word does not, and a delegated re-approval
+  // of a decision covers only link targets.
+  commit(dir, 'linked', { 'docs/decisions/0007-decision-7.md': decision(7, '').at(1).replace('x\n', 'See [the store](0003-decision-3.md).\n') });
+  approve(dir, '0007');
+  const d7 = 'docs/decisions/0007-decision-7.md';
+  // As approved before link targets were left out: the hash of the raw text.
+  commit(dir, 'legacy', { [d7]: read(dir, d7).replace(/^verified_hash: \w+$/m, `verified_hash: ${hashDoc(parseDoc(read(dir, d7)), true)}`) });
+  commit(dir, 'renamed', { [d7]: read(dir, d7).replace('(0003-decision-3.md)', '(0003-the-store.md)') });
+  assert.ok(!codes(dir).some((l) => /0007/.test(l)), 'a link target is no amendment');
+  commit(dir, 'reworded', { [d7]: read(dir, d7).replace('See [the store]', 'Use [the store]') });
+  assert.ok(codes(dir).some((l) => /DOC-AMEND 0007/.test(l)));
+  run(dir, ['delegate', 'reapprove']);
+  assert.match(run(dir, ['approve', '--auto', '0007']).err, /DOC-AMEND 0007/, 'a delegated re-approval amends no decision');
   // An unquoted 0012 is the decision 0012, though YAML 1.1 reads it as the octal 10.
   commit(dir, 'octal', Object.fromEntries([decision(10, ''), decision(12, ''), decision(13, 'supersedes: 0012\n')]));
   assert.match(run(dir, ['approve', '0013']).out, /0012-decision-12\.md is superseded/);
