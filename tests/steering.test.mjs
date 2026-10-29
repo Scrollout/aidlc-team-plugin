@@ -103,6 +103,14 @@ test('U15/AC-6 a delegated re-approval refuses a change to the acceptance criter
   write(bolt, { '.aidlc/local/profile.json': { approvals: { auto: ['reapprove'] } } });
   commit(bolt, 'add AC-2', { [U(1)]: read(bolt, U(1)).replace('it works.', 'it works.\n- AC-2 (unit): it also works offline.') });
   assert.match(run(bolt, ['approve', '--auto', 'U-1']).err, /changes its acceptance criteria: the owner approves it/);
+  // A requirement, the same, and next names the owner's approval, not the delegated one.
+  const req = '---\ntype: Requirement\ntitle: Orders\ndescription: Orders are taken.\n---\n\n# Requirement\nThe shop shall take orders.\n\n# Acceptance criteria\n- AC-1 (unit): Given an order, when it is placed, then it is stored.\n';
+  const withReq = project({ [U(1)]: unitDoc({ scope: ['a/**'] }), 'docs/requirements/R-1-orders.md': req });
+  approve(withReq, 'I-1', 'U-1', 'R-1');
+  write(withReq, { '.aidlc/local/profile.json': { approvals: { auto: ['reapprove'] } } });
+  commit(withReq, 'add R-1 AC-2', { 'docs/requirements/R-1-orders.md': read(withReq, 'docs/requirements/R-1-orders.md').replace('then it is stored.', 'then it is stored.\n- AC-2 (unit): Given an order, when it is placed twice, then one is stored.') });
+  assert.match(run(withReq, ['approve', '--auto', 'R-1']).err, /R-1 changes its acceptance criteria: the owner approves it/);
+  assert.doesNotMatch(run(withReq, ['next']).out, /aidlc approve --auto/, 'next asks the owner');
 });
 
 test('U15/AC-7 MODEL-MISMATCH names where the expected model comes from; the card prints the reviewer model', () => {

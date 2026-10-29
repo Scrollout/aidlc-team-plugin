@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.218.1] - 2026-10-29
+### Fixed
+- A delegated re-approval refuses a requirement whose acceptance criteria changed, as it refuses a bolt's, and `next` names the owner's approval for it instead of the delegated one.
+
 ## [0.218.0] - 2026-10-29
 ### Added
 - Names derived from one set of coordinates (M30 B267). The naming registry merges every kind the plugin's grammar, the stack pack's `naming` block, the architecture model's `model.grammar` and the project's `naming.grammar` name, so a kind any of them adds is printed by `aidlc name`; one without `template` and `regex` is `PROFILE-NAMING`.
@@ -584,7 +588,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.218.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.218.1...HEAD
+[0.218.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.218.0...v0.218.1
 [0.218.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.217.1...v0.218.0
 [0.217.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.217.0...v0.217.1
 [0.217.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.216.3...v0.217.0

@@ -167,7 +167,7 @@ export const commands = {
       const quick = S.workTypes.includes(doc.fm.type) && approval(doc) === ST.draft && computeLane(list(doc.fm.scope), profile, { floor }).lane === QUICK;
       const cls = approval(doc) === ST.stale ? S.auto[0] : quick ? S.auto[1] : null;
       if (auto && !auto.includes(cls)) throw new UsageError(msg('notDelegated', { name }));
-      if (auto && cls === S.auto[0] && S.workTypes.includes(doc.fm.type) && !acsKept(cwd, file, doc)) throw new UsageError(msg('notDelegatedAcs', { name })); // a bolt, or a v1 unit
+      if (auto && cls === S.auto[0] && S.acTypes.includes(doc.fm.type) && !acsKept(cwd, file, doc)) throw new UsageError(msg('notDelegatedAcs', { name })); // what done means: a bolt's, a unit's, a requirement's
       // The stamps count toward the doc's cap: an approved doc must still pass the docs check (docs/design/approvals.md).
       const stamped = stamp(text, auto ? S.agent : S.human + by, at);
       const over = stampOver(stamped, doc, profile);
