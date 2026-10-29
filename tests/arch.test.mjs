@@ -66,6 +66,11 @@ test('B169/AC-1 a runtime hosts the domains it imports directly; reaching anothe
   ];
   assert.deepEqual(lines(reachFindings(edges, PROFILE)), ['ARCH-REACH runtime shop-api reaches internal/domains/billing/application, inside billing, which it does not host: cmd/shop-api -> internal/pipeline/ingress -> internal/domains/billing/client -> internal/domains/billing/application']);
   assert.deepEqual(reachFindings(edges.slice(0, 3), PROFILE), [], 'a client that links only itself is fine');
+  // An owner-approved decision under architecture.kinds.except lets its edges pass the kind and reach checks.
+  const edge = 'internal/domains/billing/client -> internal/domains/billing/application', approved = new Map([['docs/decisions/0009-x.md', `- ${edge}\n`]]);
+  const excepting = { ...PROFILE, architecture: { kinds: { except: ['docs/decisions/0009-x.md'] } } };
+  assert.deepEqual(reachFindings(edges, excepting, approved), [], 'the excepted edge is not walked');
+  assert.deepEqual(kindFindings([['internal/pipeline/ingress', 'internal/domains/billing/application']], excepting, new Map([['docs/decisions/0009-x.md', '- internal/pipeline/ingress -> internal/domains/billing/application\n']])), []);
 });
 
 test('B168/AC-1 a module surface is its client and events; ARCH-API judges modules without kinds, ARCH-KIND those with', async () => {

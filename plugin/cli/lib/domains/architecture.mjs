@@ -16,7 +16,7 @@ const inSurface = (m, path) => hit(surfaceOf(m), path);
 const layerOf = (m, path) => { const l = Object.entries(m.layers ?? {}).find(([, globs]) => hit(globs, path))?.[0]; return l && (V.layerAliases[l] ?? l); };
 
 
-export const exceptDocs = (arch) => [...(arch.boundaries ?? []).flatMap((b) => list(b.except)), ...[arch.data, arch.api, arch.acyclic].flatMap((r) => list(r?.except))];
+export const exceptDocs = (arch) => [...(arch.boundaries ?? []).flatMap((b) => list(b.except)), ...[arch.data, arch.api, arch.acyclic, arch.kinds].flatMap((r) => list(r?.except))];
 
 // Denied edges of the dependency graph the project's `architecture.graph` command prints. An approved
 // `except` decision covers the edges it lists as `<from> -> <to>` lines, or the whole boundary if it lists none.
@@ -74,11 +74,13 @@ export function moduleFindings(edges, profile, approved = new Map()) {
 }
 
 // An edge the kind table forbids: by the depending module's kind, the kinds it may reach and the surface it must use.
-export function kindFindings(edges, profile) {
+// `architecture.kinds.except` names the decisions whose edges the kind and reach checks let pass, as for the others.
+const kindsExcept = (profile) => profile.architecture?.kinds?.except;
+export function kindFindings(edges, profile, approved = new Map()) {
   const mods = modsOf(profile), out = [];
   for (const [from, to] of edges) {
     const [a, b] = [moduleAt(mods, from), moduleAt(mods, to)];
-    if (!a?.kind || !b?.kind || a === b) continue;
+    if (!a?.kind || !b?.kind || a === b || excepted(kindsExcept(profile), approved, from, to)) continue;
     const allowed = V.kindRules[a.kind] ?? {};
     if (list(allowed.any).includes(b.kind)) continue;
     if (list(allowed.surface).includes(b.kind) && inSurface(b, to)) continue;
@@ -104,7 +106,7 @@ export function layerFindings(edges, profile) {
 
 // A runtime hosts the domains whose internals it imports directly; through anything it links it may reach only
 // the surfaces of the others (docs/design/architecture-model.md#checks).
-export function reachFindings(edges, profile) {
+export function reachFindings(edges, profile, approved = new Map()) {
   const mods = modsOf(profile), out = [], next = new Map();
   for (const [from, to] of edges) next.set(from, [...(next.get(from) ?? []), to]);
   for (const r of mods.filter((m) => m.kind === 'runtime')) {
@@ -114,7 +116,7 @@ export function reachFindings(edges, profile) {
     while (queue.length) {
       const p = queue.shift();
       for (const q of next.get(p) ?? []) {
-        if (via.has(q)) continue;
+        if (via.has(q) || excepted(kindsExcept(profile), approved, p, q)) continue;
         via.set(q, [...via.get(p), q]);
         queue.push(q);
         const d = moduleAt(mods, q);

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { hashDoc, lintPlan, parseDoc } from '../plugin/cli/lib/index.mjs';
-import { approve, commit, makeRepo, read, run } from './state-repo.mjs';
+import { approve, commit, git, makeRepo, read, run } from './state-repo.mjs';
 
 const V2 = { system: { core: ['src/**'] }, naming: { tokens: { system: 'shop' } }, modules: [
   { id: 'quotas', kind: 'domain', paths: ['src/quotas/**'] }, { id: 'deployments', kind: 'domain', paths: ['src/deployments/**'] },
@@ -91,13 +91,18 @@ test('B177/AC-1 an approved decision edited is DOC-AMEND; approving one that sup
   approve(dir, '0007');
   const d7 = 'docs/decisions/0007-decision-7.md';
   // As approved before link targets were left out: the hash of the raw text.
-  commit(dir, 'legacy', { [d7]: read(dir, d7).replace(/^verified_hash: \w+$/m, `verified_hash: ${hashDoc(parseDoc(read(dir, d7)), true)}`) });
+  commit(dir, 'legacy', { [d7]: read(dir, d7).replace(/^verified_hash: \w+$/m, `verified_hash: ${hashDoc(parseDoc(read(dir, d7)), 'raw')}`) });
   // Renamed, its link rewritten and its provenance restamped, all in one commit.
   const moved = 'docs/decisions/0007-the-store-link.md', text = read(dir, d7);
   rmSync(join(dir, d7));
   commit(dir, 'renamed', { [moved]: text.replace('(0003-decision-3.md)', '(0003-the-store.md)').replace('description: d.\n', 'description: d.\ngenerated: { by: x, at: 2026-10-29T00:00:00Z }\n') });
   assert.ok(!codes(dir).some((l) => /0007/.test(l)), 'a link target is no amendment');
   assert.doesNotMatch(run(dir, ['next']).out, /re-approve[^\n]*0007/, 'nor a re-approval');
+  // In a merge not yet committed, as the gate builds one, HEAD's history lacks the renamed doc: still approved.
+  const trial = join(dir, '..', 'trial');
+  git(dir, 'branch', '-q', 'renames'); git(dir, 'worktree', 'add', '-q', '--detach', trial, 'HEAD~1'); git(trial, 'merge', '-q', '--no-ff', '--no-commit', 'renames');
+  assert.ok(!codes(trial).some((l) => /0007/.test(l)), 'a merge in progress is no amendment either');
+  git(dir, 'worktree', 'remove', '--force', trial);
   commit(dir, 'reworded', { [moved]: read(dir, moved).replace('See [the store]', 'Use [the store]') });
   assert.ok(codes(dir).some((l) => /DOC-AMEND 0007/.test(l)));
   run(dir, ['delegate', 'reapprove']);

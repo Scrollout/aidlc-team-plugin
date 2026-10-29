@@ -285,7 +285,9 @@ export function hashHolds(doc, file = doc?.file) {
 // The text of a doc as last approved: the newest commit of it whose content matches its verified_hash.
 export function approvedText(file, hash) {
   // Through renames: each commit with the path the doc had then, from the repository's root.
-  const cwd = dirname(file), lines = gitLines(cwd, 'log', '--follow', '--format=%H', '--name-only', '--', basename(file)).filter(Boolean);
+  // A merge not yet committed (the gate's) holds a renamed doc that HEAD's history lacks: then every branch's.
+  const cwd = dirname(file), log = (...from) => gitLines(cwd, 'log', ...from, '--follow', '--format=%H', '--name-only', '--', basename(file)).filter(Boolean);
+  const head = log(), lines = head.length ? head : log('--all');
   for (let k = 0; k + 1 < lines.length; k += 2) {
     const text = execFileSync('git', ['show', `${lines[k]}:${lines[k + 1]}`], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }); // untrimmed: the hash covers the last newline
     const doc = parseDoc(text);

@@ -60,7 +60,7 @@ Inside a domain that declares them, its horizontal layers point inward (`vocabul
 | `ARCH-REACH` | M17 B169 | a runtime reaching, through anything it links, internals of a domain it does not host (it hosts the domains it imports beyond their surfaces) |
 | `ARCH-DATA`, `ARCH-CYCLE` | existing | as today |
 
-All of them run at every gate on the merged tree. A project writes only exceptions, each an owner-approved decision listing its edges.
+All of them run at every gate on the merged tree. A project writes only exceptions, each an owner-approved decision listing its edges (`- <from> -> <to>`), named under the rule's `except`: a boundary's, `architecture.data`, `api`, `acyclic`, and `kinds` for `ARCH-KIND` and `ARCH-REACH`, whose walk does not cross an excepted edge.
 
 # Profile check
 With `modules` in the profile, `check` reports `PROFILE-ARCH`: an error when data ownership is off (no `architecture.data`, so the gate cannot see a domain reaching another's data), a warning in an adopted project until the migration intent sets the owners ([Data ownership](data-ownership.md#adoption)); a warning when `architecture.acyclic` is off or a module has no `api`.

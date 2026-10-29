@@ -120,7 +120,7 @@ function architecture(cwd, profile, key = 'gateCheck') {
     if (!ok) out.push(finding('ARCH-CHECK', '.', 1, key, { command: arch.graph }));
     const approved = new Map(exceptDocs(arch).map((d) => [d, existsSync(join(cwd, d)) ? readFileSync(join(cwd, d), 'utf8') : ''])
       .filter(([, text]) => text && approval(parseDoc(text)) === ST.approved));
-    out.push(...boundaryFindings(edges, arch, approved), ...moduleFindings(edges, profile, approved), ...kindFindings(edges, profile), ...layerFindings(edges, profile), ...reachFindings(edges, profile));
+    out.push(...boundaryFindings(edges, arch, approved), ...moduleFindings(edges, profile, approved), ...kindFindings(edges, profile, approved), ...layerFindings(edges, profile), ...reachFindings(edges, profile, approved));
   }
   for (const command of list(arch.checks)) if (!shell(cwd, command)) out.push(finding('ARCH-CHECK', '.', 1, key, { command }));
   return out;
