@@ -1879,7 +1879,7 @@
       "namespace-api": { "template": "{{Namespace}}", "needs": ["org", "system"], "regex": "^[A-Z][A-Za-z0-9]*(\\.[A-Z][A-Za-z0-9]*)+$" },
       "path": { "template": "/{{typeCamel}}/{{{singularCamel}}Name}", "needs": ["domain"], "regex": "^/[a-z][A-Za-z0-9]*/\\{[a-z][A-Za-z0-9]*Name\\}$" },
       "permission": { "template": "{{Namespace}}/{{typeCamel}}/{{action}}", "needs": ["org", "system", "domain", "action"], "regex": "^[A-Z][A-Za-z0-9.]+/[a-z][A-Za-z0-9/]*/(read|write|delete|action)$", "scope": "global", "nest": { "at": "/", "pattern": "(?:/[a-z][A-Za-z0-9]*)*" } },
-      "event": { "other": "[A-Z][A-Za-z0-9]*(?:\\.[A-Z][A-Za-z0-9]*)*\\.[A-Z][A-Za-z0-9]*(?:{{past}})", "template": "{{Namespace}}.{{SingularPascal}}{{PastVerb}}", "needs": ["org", "system", "domain", "verb"], "regex": "^[A-Z][A-Za-z0-9]*(\\.[A-Z][A-Za-z0-9]*)+$", "scope": "global" },
+      "event": { "other": "[A-Z][A-Za-z0-9]*(?:\\.[A-Z][A-Za-z0-9]*)*\\.[A-Z][a-z0-9]+(?:[A-Z][a-z0-9]+)*?(?:{{past}}|[A-Z][a-z0-9]*ed)", "template": "{{Namespace}}.{{SingularPascal}}{{PastVerb}}", "needs": ["org", "system", "domain", "verb"], "regex": "^[A-Z][A-Za-z0-9]*(\\.[A-Z][A-Za-z0-9]*)+$", "scope": "global" },
       "api-version": { "template": "{{date}}{{previewSuffix}}", "needs": ["date"], "regex": "^(20\\d{2})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])(-preview)?$" },
       "schema": { "template": "{{domain}}", "needs": ["domain"], "regex": "^[a-z][a-z0-9]*$", "max": 63 },
       "db-role": { "template": "{{system}}_{{domain}}", "needs": ["system", "domain"], "regex": "^[a-z][a-z0-9]*_[a-z][a-z0-9]*$", "max": 63 },

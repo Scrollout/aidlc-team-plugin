@@ -152,7 +152,7 @@ export function generatedRules(profile, bundle, root) {
       for (const n of spec.path ? names : []) { const p = render(spec.path, { ...esc(t), ...esc(n.flags), name: '\0' }); at.set(p, [...(at.get(p) ?? []), n.name]); }
       // A kind's `nest` lets child segments in before its last `at`; another namespace is judged by the kind's regex.
       const shape = spec.regex.replace(/^\^|\$$/g, ''), own = namespaceOf(t), nested = (n) => (spec.nest ? alt([n.slice(0, n.lastIndexOf(spec.nest.at))]) + spec.nest.pattern + alt([n.slice(n.lastIndexOf(spec.nest.at))]) : alt([n]));
-      const exact = names.map((n) => nested(n.name)).join('|'), ns = `{{${N.namespaceToken}}}`, others = spec.find?.includes(ns) && own ? `|${render(N.patterns.otherNamespace, { own: alt([own]), shape: spec.other ? render(spec.other, { past: `${alt(Object.values(N.pastTense))}|${N.pastSuffix}` }) : shape })}` : '';
+      const exact = names.map((n) => nested(n.name)).join('|'), ns = `{{${N.namespaceToken}}}`, others = spec.find?.includes(ns) && own ? `|${render(N.patterns.otherNamespace, { own: alt([own]), shape: spec.other ? render(spec.other, { past: alt(Object.values(N.pastTense)) }) : shape })}` : '';
       const pattern = spec.path ? [...at].map(([p, ns]) => p.replace('\0', `(?:${alt(ns)})`)).join('|') : names.length ? exact + others : shape;
       if (pattern) out.push({ id: kind, files: list(spec.files), ...(spec.find && { find: render(spec.find.replaceAll(ns, '\0'), { ...esc(t), actions: alt(N.actions) }, N.grammarSource + kind).replaceAll('\0', N.patterns.anyNamespace) }), pattern, why: spec.why ?? N.ruleWhy });
     } catch (e) { if (!(e instanceof TemplateError)) throw e; } // a token the registry lacks: no rule yet

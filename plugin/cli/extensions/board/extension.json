@@ -44,6 +44,7 @@
     "board": {
       "gh": "gh",
       "boards": { "github": { "on": "repo" } },
+      "off": "board",
       "perPage": 100,
       "maxBody": 1500,
       "errorArgs": 3,

@@ -286,7 +286,8 @@ function project(gh, docs, out, backoff, read) {
 // Each board keeps its own file; one line names sync for all of them.
 const boardFile = (cwd, key = KEY) => join(aidlcDir(cwd), B.boards[key].file ?? config.state.board);
 const hashOf = (docs) => createHash('sha256').update(JSON.stringify(docs)).digest('hex');
-const boards = (profile) => Object.keys(B.boards).filter((key) => profile[key]?.[B.boards[key].on]);
+// A board is on when its section has its key and no `board: false`, so a repository kept only for CI writes no board.
+const boards = (profile) => Object.keys(B.boards).filter((key) => profile[key]?.[B.boards[key].on] && profile[key][B.off] !== false);
 function boardBehind(st) { // a board that cannot be planned offline is sync's error to report, not next's
   try { return boards(st.profile).some((key) => readJson(boardFile(st.cwd, key))?.hash !== hashOf(wanted(st.cwd, st, key).docs)) ? msg('boardBehind', {}) : ''; } catch { return ''; }
 }
@@ -345,7 +346,7 @@ function ciWait(cwd) {
 export const commands = {
   sync(args, { cwd }) { // each board the profile sets: GitHub's here, the others through their extensions
     const st = readState(cwd), others = seam('boardSync', st.profile);
-    return done((st.profile.github || !others.length ? sync(cwd, st) : '') + others.map((f) => f(cwd, st)).join(''));
+    return done((boards(st.profile).includes(KEY) || !others.length ? sync(cwd, st) : '') + others.map((f) => f(cwd, st)).join(''));
   },
   ci([sub, ...more], { cwd }) {
     if (sub !== 'wait' || more.length) throw new UsageError(msg('ciUsage', {}));
@@ -354,7 +355,7 @@ export const commands = {
 };
 
 // The board follows a merge, best effort: it never fails one (docs/design/board.md).
-plug('afterMerge', (cwd) => { try { return sync(cwd); } catch (e) { return msg('boardFailed', { error: e.message.split('\n')[0] }); } }, (profile) => Boolean(profile.github));
+plug('afterMerge', (cwd) => { try { return sync(cwd); } catch (e) { return msg('boardFailed', { error: e.message.split('\n')[0] }); } }, (profile) => boards(profile).includes(KEY));
 plug('statusTail', boardBehind);
 plug('issueTitle', issueTitle);
 

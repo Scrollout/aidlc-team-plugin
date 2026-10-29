@@ -30,8 +30,8 @@
     "runtime": [["runtime.go", "{{dir}}/main.go"]]
   },
   "naming": { "grammar": {
-    "event": { "files": ["cmd/**/*.go", "internal/**/*.go"], "find": "[\"`]({{Namespace}}\\.[A-Za-z0-9.]+)[\"`]" },
-    "permission": { "files": ["cmd/**/*.go", "internal/**/*.go"], "find": "[\"`]({{Namespace}}/[^\"`\\s]+/(?:{{actions}}))[\"`]" }
+    "event": { "files": ["cmd/**/*.go", "internal/**/*.go", "api/**/*.yaml"], "find": "(?:^|[\\s'\"`:])({{Namespace}}\\.[A-Za-z0-9.]+)(?=$|[\\s'\"`,])" },
+    "permission": { "files": ["cmd/**/*.go", "internal/**/*.go", "api/**/*.yaml"], "find": "(?:^|[\\s'\"`:])({{Namespace}}/(?:[^\\s'\"`/]+/)*(?i:{{actions}})[A-Za-z0-9]*)(?=$|[\\s'\"`,])" }
   } },
   "compileError": "\\[(build|setup) failed\\]",
   "eventType": "Type\\s*=\\s*\"([^\"]+)\"",

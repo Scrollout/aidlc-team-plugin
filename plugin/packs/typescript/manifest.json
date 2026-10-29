@@ -26,8 +26,8 @@
     "runtime": [["runtime.ts", "{{dir}}/main.ts"]]
   },
   "naming": { "grammar": {
-    "event": { "files": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.mts"], "find": "['\"`]({{Namespace}}\\.[A-Za-z0-9.]+)['\"`]" },
-    "permission": { "files": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.mts"], "find": "['\"`]({{Namespace}}/[^'\"`\\s]+/(?:{{actions}}))['\"`]" }
+    "event": { "files": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.mts", "api/**/*.yaml"], "find": "(?:^|[\\s'\"`:])({{Namespace}}\\.[A-Za-z0-9.]+)(?=$|[\\s'\"`,])" },
+    "permission": { "files": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.mts", "api/**/*.yaml"], "find": "(?:^|[\\s'\"`:])({{Namespace}}/(?:[^\\s'\"`/]+/)*(?i:{{actions}})[A-Za-z0-9]*)(?=$|[\\s'\"`,])" }
   } },
   "compileError": "ERR_MODULE_NOT_FOUND|SyntaxError: |does not provide an export named",
   "eventType": "Type\\s*=\\s*['\"]([^'\"]+)['\"]",

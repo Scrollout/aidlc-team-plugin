@@ -83,7 +83,7 @@ function syncJira(cwd, st = readState(cwd)) {
         const parent = d.parent && items.find((p) => p.key === d.parent)?.found?.key;
         const made = acli(['create', '--project', P.project, '--type', d.type, '--summary', d.title, '--description-file', describe(d), '--label', d.labels.join(','), ...(parent ? ['--parent', parent] : []), '--json']);
         item = view(made.key);
-        out.push(msg('jiraCreated', { key: made.key, title: d.title }));
+        out.push(msg('jiraCreated', { key: made.key, type: d.type, title: d.title, under: parent ? msg('jiraUnder', { parent }) : '' }));
       } else {
         // What the plugin set and the plan no longer gives goes; what people added stays.
         const now = list(item.fields?.labels), set = last[d.key]?.labels ?? [];

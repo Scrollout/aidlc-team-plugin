@@ -49,3 +49,4 @@ A created item is viewed once (`view KAN-2 --json`) for its status.
 
 # Structure
 The board extension keeps the derivation and serves it for either key through the `boardItems` seam: a tracker's items, their hash and its state file. The `jira` extension writes them through acli, and plugs `boardSync`, which the board's `sync` command calls, and `afterMerge`. Neither imports the other ([Library](library.md#seams)), and each plug counts only when the profile has its section. The two transports share nothing but the items, so each stays in its extension.
+- A section kept for something else, such as `github.repo` for CI, sets `board: false`, and that board stays off.

@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.220.1] - 2026-10-29
+### Fixed
+- A permission is found by any action-like last word, so a bad action (`Write`, `readAll`, `deleteAll`) or a missing type is found and refused, not missed.
+- Integration event and permission names are found in the API contracts (`api/**/*.yaml`) too, quoted with either quote or bare.
+- Another namespace's event needs a noun before its past participle (`Sample.Things.Created` is refused); a plural noun cannot be told from a singular one ending in s, so it stays the reviewer's.
+- A `github` section kept only for CI wrote the GitHub board too: a board's section now says `board: false` to keep it off, so `sync` and `merge` write only the boards the profile turns on.
+- `sync` on a Jira project names each item's type and parent when it creates it (`created KAN-2 Story B-1 Export under KAN-1`).
+
 ## [0.220.0] - 2026-10-29
 ### Added
 - The board on a Jira project (M30 B268). A `jira` section in the profile (`site`, `project`, an optional `board`; `jira.acli` names another acli) makes `aidlc sync` project the board's items onto the Jira project through acli, which owns the login: an intent is an Epic, a bolt a Story under it, a fix a Task, `depends` are "Blocks" links, labels as on GitHub plus a marker label (`aidlc-<id>`), the ACs as an ADF checklist, and the template's status map applied by a transition. `board.issue` may name a Jira key. Sync reads first and writes only differences; `merge` runs it afterwards, a failure is a warning; `next` and `status` name sync while either board is behind.
@@ -614,7 +622,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.0...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.1...HEAD
+[0.220.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.0...v0.220.1
 [0.220.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.219.2...v0.220.0
 
 [0.219.2]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.219.1...v0.219.2

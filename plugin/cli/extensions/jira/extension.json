@@ -5,7 +5,8 @@
   "data": {
     "okf": { "profileKeys": { "top": ["jira"] } },
     "messages": {
-      "jiraCreated": "created {{key}} {{title}}\n",
+      "jiraCreated": "created {{key}} {{type}} {{title}}{{under}}\n",
+      "jiraUnder": " under {{parent}}",
       "jiraUpdated": "updated {{key}}: {{what}}\n",
       "jiraMoved": "moved {{key}} to {{status}}\n",
       "jiraBlocked": "{{key}} is blocked by {{by}}\n",

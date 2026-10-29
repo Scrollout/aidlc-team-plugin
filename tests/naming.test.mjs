@@ -49,16 +49,22 @@ test('B267/AC-2 the registry generates the event, permission and table rules: ea
   // Another namespace's event ends in a past participle; a resource type is no permission.
   assert.ok(full(rules.event, 'Sample.Things.WidgetCreated') && full(rules.event, 'Sample.Things.WidgetRead') && !full(rules.event, 'Sample.Things.WidgetCreate'));
   assert.deepEqual(found(rules.permission, 'a := "Sample.Resources/samples"; b := "Sample.Resources/samples/parts/bits"; c := "Sample.Resources/samples/read"'), ['Sample.Resources/samples/read']);
+  // A bad action is found, then refused; a contract's unquoted or single-quoted name is found; an event needs a noun.
+  const bad = found(rules.permission, 'a: "Sample.Things/widgets/Write"\nb: Sample.Things/widgets/readAll\nc: \'Acme.Shop/orders/deleteAll\'\nd: "Sample.Things/read"');
+  assert.deepEqual(bad, ['Sample.Things/widgets/Write', 'Sample.Things/widgets/readAll', 'Acme.Shop/orders/deleteAll', 'Sample.Things/read']);
+  assert.ok(bad.every((n) => !full(rules.permission, n)), 'each refused');
+  assert.deepEqual(found(rules.event, "x-event: Acme.Shop.OrderCreated\ny: 'Sample.Things.WidgetCreated'"), ['Acme.Shop.OrderCreated', 'Sample.Things.WidgetCreated']);
+  assert.ok(!full(rules.event, 'Sample.Things.Created'), 'no noun before the participle');
   // find looks at every namespace's names in a string literal of the stack; the pattern judges each.
   assert.deepEqual(found(rules.event, 'const T = "Acme.Shop.OrderPlaced"; x := "Other.Ns.Thing"; p := "Acme.Shop/orders/read"'), ['Acme.Shop.OrderPlaced', 'Other.Ns.Thing']);
   assert.deepEqual(found(rules.permission, 'p := "Acme.Shop/orders/read"; q := "Other.Ns/things/write"'), ['Acme.Shop/orders/read', 'Other.Ns/things/write']);
-  assert.deepEqual(rules.event.files, ['cmd/**/*.go', 'internal/**/*.go'], 'the Go pack says where');
+  assert.deepEqual(rules.event.files, ['cmd/**/*.go', 'internal/**/*.go', 'api/**/*.yaml'], 'the Go pack says where, the API contracts included');
   // table: stack-neutral, an open token, so the kind's regex.
   assert.deepEqual(found(rules.table, 'CREATE TABLE IF NOT EXISTS orders.order_lines (\ncreate unlogged table Orders.Lines(id int);'), ['orders.order_lines', 'Orders.Lines']);
   assert.ok(full(rules.table, 'orders.order_lines') && !full(rules.table, 'Orders.Lines') && !full(rules.table, 'orders.lines_') && !full(rules.table, 'orders.order__lines'));
   // TypeScript says its own files; without a pack, only the stack-neutral kinds.
   const ts = Object.fromEntries(generatedRules({ naming: NAMING }, null, makeRepo({ 'tsconfig.json': '{}\n' }, { naming: NAMING })).map((r) => [r.id, r]));
-  assert.deepEqual(ts.event.files, ['src/**/*.ts', 'src/**/*.tsx', 'src/**/*.mts']);
+  assert.deepEqual(ts.event.files, ['src/**/*.ts', 'src/**/*.tsx', 'src/**/*.mts', 'api/**/*.yaml']);
   assert.deepEqual(generatedRules({ naming: NAMING }).map((r) => r.id), ['migration', 'namespace', 'banned', 'table']);
   const shaped = generatedRules({ naming: { tokens: { system: 'shop' }, domains: { orders: {} } } }, null, dir).find((r) => r.id === 'event');
   assert.ok(full(shaped, 'Any.Ns.ThingMade') && !full(shaped, 'any.ns.thing'), 'no org, no project namespace: every event by the kind\'s shape');

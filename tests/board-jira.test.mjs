@@ -52,7 +52,8 @@ test('B268/AC-1 an intent and its two bolts become an Epic and two Stories under
   const text = JSON.stringify(u1.fields.description);
   assert.match(text, /Doc: docs\/units\/U-1-export\.md/, 'with no repository, the link is the doc\'s path');
   assert.doesNotMatch(text, /<!--/, 'no HTML marker in a Jira description');
-  assert.match(r.out, new RegExp(`^created ${i1.key} I-1 Shop$`, 'm'));
+  assert.match(r.out, new RegExp(`^created ${i1.key} Epic I-1 Shop$`, 'm'));
+  assert.match(r.out, new RegExp(`^created \\S+ Story U-1 Export under ${i1.key}$`, 'm'), 'the type and the parent are named');
   const created = writes(ctx).filter((c) => c.args[0] === 'create');
   assert.deepEqual(created.map((c) => c.args.slice(0, 5)), ['I-1', 'U-1', 'U-2'].map((_, k) => ['create', '--project', 'KAN', '--type', k ? 'Story' : 'Epic']));
 });
@@ -169,4 +170,11 @@ test('B268/AC-3 a failing acli reports its own error; after a merge it is a warn
   const st = readState(ctx.dir);
   const after = seam('afterMerge', st.profile).map((f) => f(ctx.dir, st)).join('');
   assert.match(after, /^warning: the board on KAN did not sync, run aidlc sync: search --jql: unauthorized/);
+});
+
+test('B268/AC-1 a github section kept only for CI, with board: false, writes no GitHub board', () => {
+  const ctx = setup({ github: { repo: 'acme/shop', board: false } });
+  assert.equal(aidlc(ctx, 'sync').code, 0);
+  assert.equal(JSON.parse(readFileSync(ctx.gh, 'utf8')).calls.length, 0, 'no gh call');
+  assert.ok(stub(ctx).items.length > 0, 'Jira still synced');
 });
