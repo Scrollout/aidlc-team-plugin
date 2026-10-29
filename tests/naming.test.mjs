@@ -106,3 +106,12 @@ test('B267/AC-2 an integration event takes the verb\'s past participle: a spelli
   assert.deepEqual(['resolve', 'set', 'build', 'apply', 'archive'].map((verb) => nameOf('event', { domain: 'orders', verb }, reg)),
     ['Acme.Shop.OrderResolved', 'Acme.Shop.OrderSet', 'Acme.Shop.OrderBuilt', 'Acme.Shop.OrderApplied', 'Acme.Shop.OrderArchived']);
 });
+
+test('B267/AC-2 an extension module is an image part: aidlc name image --extension, and the generated image rule accepts it', () => {
+  const profile = { naming: { tokens: { system: 'shop', org: 'acme', registry: 'ghcr.io' }, domains: { orders: {} } }, modules: [{ id: 'orders', kind: 'domain', paths: ['src/orders/**'] }, { id: 'payments', kind: 'extension', paths: ['src/ext/payments/**'] }] };
+  const dir = makeRepo(I1, profile);
+  assert.equal(run(dir, ['name', 'image', '--extension', 'payments', '--role', 'api']).out, 'ghcr.io/acme/shop-payments-api:<semver>\n');
+  assert.match(run(dir, ['name', 'image', '--extension', 'billing', '--role', 'api']).err, /billing/);
+  const rule = generatedRules(profile, null, dir).find((r) => r.id === 'image');
+  assert.ok(full(rule, 'ghcr.io/acme/shop-payments-api:sha-1') && !full(rule, 'ghcr.io/acme/shop-billing-api:sha-1'));
+});

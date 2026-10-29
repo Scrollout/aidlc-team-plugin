@@ -23,7 +23,7 @@ export function registry(profile, bundle, root) {
   // which only `aidlc models apply` writes), then the project's own override (decision 0021); any layer adds a kind.
   const layers = [N.grammar, (root ? seam('namingLayer', profile).map((f) => f(root)).find(isMap) : null)?.grammar, profile.model?.grammar, own.grammar].map((g) => (isMap(g) ? g : {}));
   const grammar = Object.fromEntries([...new Set(layers.flatMap(Object.keys))].map((k) => [k, Object.assign({ needs: [] }, ...layers.map((g) => (isMap(g[k]) ? g[k] : {})))]));
-  return { tokens: { ...(own.tokens ?? {}) }, domains, vocabularies, grammar, classes: { ...N.classes, ...(own.classes ?? {}) }, banned: [...new Set([...N.banned, ...(own.banned ?? [])])] };
+  return { tokens: { ...(own.tokens ?? {}) }, domains, vocabularies, extensions: (profile.modules ?? []).filter((m) => m.kind === N.extensionKind).map((m) => String(m.id ?? m.name)), grammar, classes: { ...N.classes, ...(own.classes ?? {}) }, banned: [...new Set([...N.banned, ...(own.banned ?? [])])] };
 }
 
 // What the profile's naming gets wrong, as [message key, data, level?]: a kind with no template or regex, an unknown
@@ -82,7 +82,7 @@ export function nameOf(kind, flags, reg) {
     known('domain', flags.domain, Object.keys(reg.domains), N.where.domain);
     Object.assign(v, { domain: flags.domain, part: flags.domain, ...domainForms(flags.domain, reg) });
   }
-  if (flags.stage !== undefined) v.part = known('stage', flags.stage, reg.vocabularies.pipeline, N.where.pipeline);
+  if (flags.stage !== undefined) v.part = known('stage', flags.stage, reg.vocabularies.pipeline, N.where.pipeline); if (flags.extension !== undefined) v.part = known('extension', flags.extension, reg.extensions ?? [], N.where.extension);
   if (flags.verb !== undefined) Object.assign(v, { verb: known('verb', flags.verb, reg.vocabularies.verb, N.where.verb), OperationVerb: N.operationVerbs[flags.verb] ?? cap(flags.verb), PastVerb: pastOf(flags.verb) });
   v.role = known('role', flags.role, reg.vocabularies.role, N.where.role);
   v.roleSuffix = flags.role ? `-${flags.role}` : '';
@@ -142,7 +142,7 @@ export function generatedRules(profile, bundle, root) {
   if (!isMap(profile.naming)) return [];
   const reg = registry(profile, bundle, root), t = reg.tokens, G = N.generated, domains = Object.keys(reg.domains), out = [];
   if (domains.length) out.push({ id: 'migration', ...G.migration, pattern: render(N.patterns.migration, { domains: alt(domains) }) });
-  if (t.registry && t.org && t.system) out.push({ id: 'image', ...G.image, pattern: render(N.patterns.image, { registry: alt([t.registry]), org: alt([t.org]), system: alt([t.system]), parts: alt([...domains, ...reg.vocabularies.pipeline]), roles: alt(reg.vocabularies.role) }) });
+  if (t.registry && t.org && t.system) out.push({ id: 'image', ...G.image, pattern: render(N.patterns.image, { registry: alt([t.registry]), org: alt([t.org]), system: alt([t.system]), parts: alt([...domains, ...reg.vocabularies.pipeline, ...reg.extensions]), roles: alt(reg.vocabularies.role) }) });
   if (t.system) out.push({ id: 'namespace', ...G.namespace, pattern: render(N.patterns.namespace, { system: alt([t.system]), envs: alt(reg.vocabularies.env) }) });
   out.push({ id: 'banned', ...G.banned, pattern: render(N.patterns.banned, { banned: alt(reg.banned) }) });
   const lists = { domain: domains, action: N.actions, unit: N.metricUnits, ...reg.vocabularies }, esc = (o) => Object.fromEntries(Object.entries(o).filter(([, x]) => x !== undefined).map(([k, x]) => [k, alt([x])]));

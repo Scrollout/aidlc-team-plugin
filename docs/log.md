@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-29
 
+- **Update** An extension module is an image part ([Naming](design/naming.md)). Release 0.219.1.
 - **Update** Generated naming rules: past participles by rule and table, nested permission types, other namespaces by shape, stricter table names ([Naming coordinates](design/naming-coordinates.md)). Release 0.219.0.
 - **Update** The acceptance-criteria guard reads each AC as written, code spans included ([Approvals](design/approvals.md)). Release 0.218.2.
 - **Update** A delegated re-approval refuses a requirement's changed acceptance criteria too ([Approvals](design/approvals.md)). Release 0.218.1.
