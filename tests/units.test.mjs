@@ -62,6 +62,9 @@ test('B248/AC-1 from method 12 each Unit names the slices that serve its stories
   assert.deepEqual(found({ 'docs/intents/I-1-cakes.md': SLICED('Query getorder []', 'Command createpayment [US1.2]') }).filter((l) => /story US1\.1/.test(l)),
     ['I-1 unit of work orders: story US1.1 has no slice under Slices: name the vertical slice that serves it, <Kind> <slice> [US1.1]']);
   assert.deepEqual(found({ 'docs/intents/I-1-cakes.md': intent(unit('orders', ORDERS) + unit('payments', PAYMENTS)) }), [], 'an intent pinned to method 11 needs no slices');
+  // A Unit with no domain module is horizontal work: its stories need no slice; a domain's Unit still does.
+  const kinds = { ...V2, modules: [...V2.modules.map((m) => (m.id === 'payments' ? { ...m, kind: 'foundation' } : m))] };
+  assert.deepEqual(foundWith(kinds, { 'docs/intents/I-1-cakes.md': SLICED('Command createorder [US1.1]', 'none: a shared kit') }), [], 'horizontal work serves its stories without slices');
 });
 
 test('B248/AC-1 with a naming registry, a Unit\'s slice is a name the registry composes from its verbs and the Unit\'s domains', () => {

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.214.0] - 2026-10-29
+### Changed
+- Horizontal Units and superseded drafts (M30 B263). A Unit with no domain module, horizontal work such as a foundation kit, a pipeline stage or the toolchain, serves its stories without slices, so method 13 no longer demands a slice no such Unit may name. A superseded draft decision needs no MADR sections: it is history.
+
 ## [0.213.1] - 2026-10-29
 ### Fixed
 - A decision's `supersedes` is read as written: an unquoted `0022` named decision 0018, since YAML 1.1 reads it as octal, so approving the new decision marked the wrong one superseded. `approve`, `DOC-REF` and `DESIGN-COHERENCE` read the number from the front matter line.
@@ -542,7 +546,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.213.1...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.214.0...HEAD
+[0.214.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.213.1...v0.214.0
 [0.213.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.213.0...v0.213.1
 [0.213.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.212.0...v0.213.0
 [0.212.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.211.0...v0.212.0

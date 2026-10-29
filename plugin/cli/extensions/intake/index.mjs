@@ -256,7 +256,8 @@ function unitSlices(i, u, listed, profile, bundle, add, declared, root) {
     // Method 13: the slice declares the layers it cuts and what it reaches, checked as its # Surface line is (docs/design/slice-method.md).
     for (const d of declared ? seam('sliceDeclaration', profile) : []) for (const [key, data] of d.problems(d.parse(s.decl), { root, profile, bundle, slice: s.slice, domains, ui: u.parts[U.parts.kind.toLowerCase()] === U.slices.ui })) add('UNIT-WORK', i, u.n, 'unitSliceDecl', { name: u.name, problem: msg(key, data) });
   }
-  for (const story of listed.filter((x) => !slices.some((s) => s.stories.includes(x)))) add('UNIT-WORK', i, u.n, 'unitStorySlice', { name: u.name, story });
+  // A Unit with no domain module is horizontal work (a foundation kit, a pipeline stage, the toolchain): no slice can serve its stories.
+  if (domains.length) for (const story of listed.filter((x) => !slices.some((s) => s.stories.includes(x)))) add('UNIT-WORK', i, u.n, 'unitStorySlice', { name: u.name, story });
 }
 
 function unitsOfWork(i, profile, bolts, add, sliced, bundle, declared, root) {

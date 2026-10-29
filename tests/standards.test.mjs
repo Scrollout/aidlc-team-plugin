@@ -23,6 +23,7 @@ test('B208/AC-1 a draft decision in a v2 project keeps MADR sections, a one-way 
   assert.equal(run(dir, ['approve', '0001']).code, 0);
   assert.match(read(dir, 'docs/decisions/0001-store-orders.md'), new RegExp(`^status: accepted\\ndate: ${new Date().toISOString().slice(0, 10)}$`, 'm'));
   assert.deepEqual(schema(makeRepo({ 'docs/decisions/0001-store-orders.md': decision('# Decision\nKeep.\n') }, {})), [], 'a v1 project keeps its decisions');
+  assert.deepEqual(schema(makeRepo({ 'docs/decisions/0001-store-orders.md': decision('## Context\nWhere?\n', 'status: superseded by ADR-0002\n') }, V2)), [], 'a superseded decision is history, never edited into the new form');
 });
 
 test('B208/AC-2 the plugin\'s own decisions and its template are in MADR form', async () => {

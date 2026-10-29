@@ -279,7 +279,9 @@ function checkSchema(root, file, doc, type, add, v2) {
   for (const [key, p] of doc.fm.verified_hash || !v2 ? [] : Object.entries(schema.patterns ?? {})) {
     if (truthy(doc.fm[key]) && !new RegExp(p.pattern).test(String(doc.fm[key]))) add(file, 1, 'DOC-SCHEMA', 'docSchemaPattern', { type, key, value: String(doc.fm[key]), says: p.says, standard: schema.standard });
   }
-  for (const section of doc.fm.verified_hash || !v2 ? [] : sections) {
+  // A superseded decision is history: never edited into a newer form.
+  const history = String(doc.fm.status ?? '').startsWith(config.inception.superseded);
+  for (const section of doc.fm.verified_hash || !v2 || history ? [] : sections) {
     if (!doc.lines.some((l) => new RegExp(`^#{1,6}\\s+${section}\\s*$`, 'i').test(l))) add(file, 1, 'DOC-SCHEMA', 'docSchemaSection', { type, section, standard: schema.standard });
   }
   const folder = B.folders[type], at = relative(root, dirname(file)).split(sep)[0] || '.';
