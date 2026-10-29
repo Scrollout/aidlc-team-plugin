@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.220.6] - 2026-10-29
+### Fixed
+- `push` and `check --ci` admit in a bolt's merge commit every file the merge writes itself: the codebase map pages where a v2 bundle keeps them, the traceability pages, the glossary and the context map, so a base of gate merges pushes.
+### Added
+- `aidlc mode … --stop push`: the owner holds the base's push, and the Stop hook lets the turn end on it instead of asking for the push again.
+
 ## [0.220.5] - 2026-10-29
 ### Fixed
 - Git output has no size cap, so a branch whose diff runs to megabytes (generated schemas kept in the repository) no longer fails `next`, `status`, the hooks and the merge gate; git cut off before it finishes is an error, never an empty diff. The board extensions read their CLIs' output uncapped too.
@@ -638,7 +644,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.5...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.6...HEAD
+[0.220.6]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.5...v0.220.6
 [0.220.5]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.4...v0.220.5
 [0.220.4]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.3...v0.220.4
 [0.220.3]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.220.2...v0.220.3

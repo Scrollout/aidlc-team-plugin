@@ -97,11 +97,11 @@ function runLevel(tree, level, l, add) {
   return logged(l.run, r);
 }
 
-// Paths only `merge` writes: bundle indexes and logs, the codebase map, and the profile's shared files.
+// Paths only `merge` writes: bundle indexes and logs, the codebase map, traceability, glossary and context map, and the profile's shared files.
 export function mergeWritten(path, bundleRel, profile) {
-  const name = basename(path);
-  return ((name === config.okf.index || name === config.okf.log) && matches(path, `/${bundleRel}/**`))
-    || config.map.pages.some((pg) => path === `${bundleRel}/${(typeof profile.map === 'string' ? profile.map : config.map.file).slice(0, -config.okf.ext.length)}${pg.suffix}${config.okf.ext}`) || list(profile.shared).some((g) => matches(path, g));
+  const name = basename(path), map = (typeof profile.map === 'string' ? profile.map : profile.system ? config.map.fileV2 : config.map.file).slice(0, -config.okf.ext.length); // as map.mjs names it
+  const written = [config.naming.glossary.file, config.naming.glossary.contextMap, render(config.construction.trace, { id: '*' }), ...config.map.pages.map((pg) => `${map}${pg.suffix}${config.okf.ext}`)];
+  return ((name === config.okf.index || name === config.okf.log) && matches(path, `/${bundleRel}/**`)) || written.some((g) => matches(path, `/${bundleRel}/${g}`)) || list(profile.shared).some((g) => matches(path, g));
 }
 
 // Paths a direct (non-unit) commit may touch: the bundle, .aidlc and the files init writes.

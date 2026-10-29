@@ -163,3 +163,16 @@ test('U129/AC-1 the owner releases only a pushed base whose CI passed', () => {
   assert.match(aidlc(ctx, 'next').out, /^👉 I-1 is ready to release/);
   assert.equal(aidlc(ctx, 'release', 'I-1').code, 0);
 });
+
+test('0.220.6 the owner holds the push with mode --stop push: steer lets the turn end on it', () => {
+  const ctx = setup({ push: false });
+  const steer = () => {
+    const { NODE_TEST_CONTEXT, ...env } = process.env;
+    const r = spawnSync(process.execPath, [CLI, 'hook', 'steer'], { cwd: ctx.dir, encoding: 'utf8', env: { ...env, GH_STUB: ctx.stub }, input: JSON.stringify({ cwd: ctx.dir, hook_event_name: 'Stop', last_assistant_message: 'Done.' }) });
+    return r.stdout.trim() ? JSON.parse(r.stdout).decision ?? 'allow' : 'allow';
+  };
+  assert.match(aidlc(ctx, 'next').out, /aidlc push/);
+  assert.equal(steer(), 'block', 'a push nobody holds is the lead\'s');
+  assert.equal(aidlc(ctx, 'mode', 'attended', '--stop', 'push').code, 0);
+  assert.equal(steer(), 'allow');
+});

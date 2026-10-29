@@ -676,7 +676,7 @@
     "nextMigrate": "elaborate the migration intent with the owner in {{dir}}/I-1-<slug>.md (adopted at {{commit}}): docs, always-on context, profile, architecture baseline, data owners, naming rules, module audit, cleanup; then ask for approval",
     "nextStopped": "the builder of {{unit}} stopped ({{reason}}): if the bolt doc is wrong, fix it and ask the owner to re-approve it; otherwise remove the cause and start its builder again (card: aidlc card {{unit}})",
     "holdUsage": "usage: hold <bolt> [off|<reason>]",
-    "modeUsage": "usage: mode attended|unattended [--stop build|review|fix|merge|release] [--report <to>] | off",
+    "modeUsage": "usage: mode attended|unattended [--stop build|review|fix|merge|push|release] [--report <to>] | off",
     "modeSet": "run mode: {{run}}\n",
     "runLine": "{{mode}}{{#each stop}}, stop at {{this}}{{/each}}{{#each report}}, report to {{this}}{{/each}}",
     "statusRun": "run: {{run}}\n",
@@ -1103,6 +1103,7 @@
       "review": "nextReview",
       "fix": "nextFixRound",
       "merge": "nextMerge",
+      "push": "nextCiPush",
       "release": "nextRelease"
     },
     "approvers": [

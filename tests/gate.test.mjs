@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { approve, CHILD_ENV, CLI, commit, git, makeRepo, read, review, run, tempDir } from './state-repo.mjs';
+import { approve, CHILD_ENV, CLI, commit, git, makeRepo, read, review, run, tempDir, write } from './state-repo.mjs';
 import { CODE, codes, FAIL, FAIL_MERGED, LOG, merge, OK, PROFILE, setup, TEST } from './gate-repo.mjs';
 import { boundaryFindings, moduleFindings } from '../plugin/cli/lib/index.mjs';
 
@@ -324,4 +324,17 @@ test('U114/AC-2 a level red on the base alone is GATE-BASE: only fix bolts build
   assert.match(run(dir, ['next']).out, /^the base fails its unit level/, 'a plan commit keeps it red');
   assert.equal(run(dir, ['fix', 'the unit level', '--scope', 'docs/guide/**']).code, 0);
   assert.doesNotMatch(run(dir, ['next']).out, /merge U-1/, 'U-1 waits while the fix unit is live');
+});
+
+test('0.220.6 a merge commit may change what merge itself writes: codebase map pages, traceability, glossary, context map', () => {
+  const dir = setup();
+  git(dir, 'switch', '-q', '-c', 'side');
+  commit(dir, 'side work', { 'src/y.mjs': '1;\n' });
+  git(dir, 'switch', '-q', 'main');
+  git(dir, 'merge', '-q', '--no-ff', '--no-commit', 'side');
+  write(dir, { 'docs/codebase-map-graph.md': 'x\n', 'docs/architecture/traceability-i-1.md': 'x\n', 'docs/naming/glossary.md': 'x\n', 'docs/architecture/context-map.md': 'x\n' });
+  git(dir, 'add', '-A');
+  git(dir, 'commit', '-q', '-m', 'Merge U-1', '-m', 'Unit: U-1\nCard: x\nReview: x');
+  const r = run(dir, ['check', '--ci']);
+  assert.doesNotMatch(r.out, /outside its scope/, r.out);
 });

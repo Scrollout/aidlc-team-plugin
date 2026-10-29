@@ -20,7 +20,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-23T15:45:00Z }
 | `start <bolt>` | in a builder's worktree: names the branch `bolt/B-<n>`, checks the base matches the card, and merges the card's base into an existing branch | builder |
 | `approve [--auto] <doc>…` | stamps approval; a doc is a path, an ID (`B-3`, `I-1`, `R-12`) or a decision's number (`0010` or `10`) | owner (typed words, prompt or `!`); `--auto` the lead, for what the owner delegated ([0008](../decisions/0008-delegated-approvals.md)) |
 | `delegate <class>…\|off [--until <date>]` | lets the lead approve re-approvals and quick-lane bolts, or run `upgrade` ([0008](../decisions/0008-delegated-approvals.md)) | owner (prompt or `!`) |
-| `mode attended\|unattended [--stop <action>] [--report <to>]\|off` | records the owner's run mode in the personal profile: unattended or not, the `next` action to stop at, where to report | owner (prompt or `!`) |
+| `mode attended\|unattended [--stop <action>] [--report <to>]\|off` | records the owner's run mode in the personal profile: unattended or not, the `next` action to stop at (`build`, `review`, `fix`, `merge`, `push`, `release`; `push` holds the base's push for the owner), where to report | owner (prompt or `!`) |
 | `research <doc>` | prints the researcher's brief for the doc's held question ([0010](../decisions/0010-research-for-open-questions.md)) | lead |
 | `review I-<n>\|record <bolt\|intent> <file\|->` | prints an intent reviewer's brief; `record` stores a verdict (by diff hash) or an intent review (by its docs' hash, [Intake](intake.md)); `-` reads stdin | lead, reviewer |
 | `report <bolt> [file]` | stores the builder's report (JSON from the file, or stdin) | builder |
