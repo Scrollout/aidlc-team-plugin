@@ -54,7 +54,7 @@ generated: { by: tests/diagrams.mjs }
 | `VALUE-LITERAL` | move the value into the project's data files (the profile's values.data globs) and read it from there; list it in values.allow when it is the protocol of a tool the code calls (docs: Values as data) |
 | `SLICE-IMPORT` | move what both slices need into the domain model, an integration event or a shared domain service; a slice never imports another (docs: Vertical slices checked) |
 | `SLICE-ENTRY` | enter the slice from its domain's interface layer or from the runtime that hosts it, and only from there (docs: Vertical slices checked) |
-| `SLICE-PLACE` | put each file of a domain in one of its layers, each file of its application layer in one slice folder, and leave no folder empty (docs: Vertical slices checked) |
+| `SLICE-PLACE` | put each file of a domain in one of its shared parts or in a layer folder of one slice, <domain>/<slice>/<layer>, and leave no folder empty (docs: Vertical slices checked) |
 | `SLICE-SURFACE` | list each slice folder under the domain doc's # Surface as - Command <slice>: <the use case it serves> [I-<n>:US<g>.<s>], or - Query, and no other (docs: Vertical slices checked) |
 | `SLICE-STORY` | cite on each slice's surface line the stories it serves, as [I-<n>:US<g>.<s>], so every story of a unit of work that changes the domain has a slice (docs: Vertical slices checked) |
 | `SLICE-TEST` | give the slice a test in its folder, or a test that imports it (docs: Vertical slices checked) |

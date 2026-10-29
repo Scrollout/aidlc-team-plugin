@@ -10,7 +10,7 @@ generated: { by: claude-code/claude-opus-5-5, at: 2026-10-28T02:30:00Z }
 A vertical slice is the code of one business feature or use case ([0024](../decisions/0024-vertical-slices-are-features-horizontal-layers.md)). Unchecked, slices start calling each other, endpoints grow outside any slice, shared code drifts into a slice, and a slice's business reason is lost. Architecture test tools enforce the same shape as rules over the import graph and the folders: slices must not depend on each other, every class must sit in a declared layer, and a rule that matches nothing fails rather than passes. Traceability tools report a link that points nowhere and a requirement nothing covers.
 
 # What a slice is, as data
-- The stack pack's `layers` name the folders of a domain's horizontal layers, and its `scaffold.slice` the slice folder: `<domain>/<application>/<slice>/`.
+- A domain holds its slices, each one folder with a sub-folder per layer it cuts, `<domain>/<slice>/<layer>/`, beside the domain's shared parts: its domain model, `infrastructure/`, its `client/` and `events/` surfaces and the router in `interface/` ([0029](../decisions/0029-a-slice-holds-its-own-layers.md)). The stack pack's `sliceFolder`, `slicePaths` and `layers` say where, and its `scaffold.slice` writes it.
 - The domain doc's `# Surface` lists each slice on its own line: `- Command <slice>: <the use case it serves> [I-<n>:US<g>.<s>]`, or `- Query`. The story citation names the intent, since story ids are an intent's own.
 - The patterns, the folder names and the allowed shared folders are data in the pack and the stacks CLI extension; nothing is spelled in code ([Values as data](values.md)).
 
@@ -18,7 +18,7 @@ A vertical slice is the code of one business feature or use case ([0024](../deci
 Each is static and reads the graph the pack already builds; which layers may enter a slice is data in the stacks CLI extension.
 - `SLICE-IMPORT`: a file of one slice imports a file of another slice of any domain.
 - `SLICE-ENTRY`: a slice is imported from outside its domain's `interface` layer or a runtime that hosts it, or from nowhere.
-- `SLICE-PLACE`: a file of a layered domain sits in no declared layer, a file under `application` in no slice, or a declared layer or slice folder is empty.
+- `SLICE-PLACE`: a file of a layered domain sits in no shared part and in no layer folder of a slice, or a slice folder or a shared layer folder is empty.
 - `SLICE-SURFACE`: the slice folders and the domain doc's commands and queries are not the same set, or a surface line names no use case.
 - `SLICE-STORY`: a surface line cites no story, or one no intent holds; a story of an approved intent's unit of work that changes the domain is cited by no slice.
 - `SLICE-TEST`: no test sits in the slice's folder and none imports it.

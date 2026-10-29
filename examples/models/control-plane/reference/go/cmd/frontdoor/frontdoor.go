@@ -6,12 +6,13 @@ import (
 	"net/http"
 	"sync/atomic"
 
-	"example.com/controlplane/internal/domains/operations/application/getoperation"
-	opiface "example.com/controlplane/internal/domains/operations/interface"
+	getoperation "example.com/controlplane/internal/domains/operations/getoperation/application"
+	opiface "example.com/controlplane/internal/domains/operations/getoperation/interface"
 	opmodel "example.com/controlplane/internal/domains/operations/model"
-	"example.com/controlplane/internal/domains/resources/application/createresource"
-	"example.com/controlplane/internal/domains/resources/application/deleteresource"
-	iface "example.com/controlplane/internal/domains/resources/interface"
+	createresource "example.com/controlplane/internal/domains/resources/createresource/application"
+	createroute "example.com/controlplane/internal/domains/resources/createresource/interface"
+	deleteresource "example.com/controlplane/internal/domains/resources/deleteresource/application"
+	deleteroute "example.com/controlplane/internal/domains/resources/deleteresource/interface"
 	"example.com/controlplane/internal/foundation/answer"
 	"example.com/controlplane/internal/foundation/values"
 	"example.com/controlplane/internal/pipeline/stages"
@@ -61,7 +62,7 @@ func (f *FrontDoor) Routes() *http.ServeMux {
 	mux := http.NewServeMux()
 	get := getoperation.Handler{Operations: f.Ops}
 	mux.HandleFunc(http.MethodPut+" "+v.Routes.Resource, func(w http.ResponseWriter, r *http.Request) {
-		res, err := iface.ResourceOf(r)
+		res, err := createroute.ResourceOf(r)
 		if err != nil {
 			answer.Fail(w, http.StatusBadRequest, v.Errors.BadContent)
 			return
@@ -84,14 +85,14 @@ func (f *FrontDoor) Routes() *http.ServeMux {
 			return
 		}
 		outcome, err := f.Put.Handle(r.Context(), res)
-		iface.AnswerCreate(w, res, outcome, err)
+		createroute.AnswerCreate(w, res, outcome, err)
 	})
 	mux.HandleFunc(http.MethodDelete+" "+v.Routes.Resource, func(w http.ResponseWriter, r *http.Request) {
 		if _, ok := f.admit(w, r, nil); !ok {
 			return
 		}
 		was, err := f.Delete.Handle(r.Context(), r.URL.Path)
-		iface.AnswerDelete(w, was, err)
+		deleteroute.AnswerDelete(w, was, err)
 	})
 	mux.HandleFunc(http.MethodGet+" "+v.Routes.Operation, func(w http.ResponseWriter, r *http.Request) {
 		op, ok := get.Handle(r.Context(), r.PathValue(v.Params.ID))

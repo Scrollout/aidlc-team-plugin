@@ -236,7 +236,7 @@ test('the control-plane Go reference keeps its values in data and its code in ve
   const added = readdirSync(dir, { recursive: true }).map(String).filter((f) => f.endsWith('.go')).map((f) => f.split(sep).join('/'))
     .flatMap((f) => readFileSync(join(dir, f), 'utf8').split('\n').map((text, k) => ({ file: f, line: k + 1, text })));
   assert.deepEqual(valueFindings(dir, profile, [], added).map((f) => `${f.path}:${f.line} ${f.data.value}`), [], 'every line read as added: no literal value in code');
-  assert.ok(existsSync(join(dir, 'internal/domains/operations/application/getoperation/handler_test.go')), 'the operations query slice, with its test');
+  assert.ok(existsSync(join(dir, 'internal/domains/operations/getoperation/application/handler_test.go')), 'the operations query slice, with its test');
 });
 
 // M28 B247: slices in models (docs/design/vertical-slices.md#planned-before-built).

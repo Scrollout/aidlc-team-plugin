@@ -27,7 +27,7 @@ In the gate's proof-revert, a level whose run fails with a compile error proves 
 `REVIEW-SECURITY`: a finding in the latest `security` round, at any confidence, blocks the merge until the owner runs `aidlc dispose B-<n> F-<k> fixed|accepted "<reason>" [--until <date>]`. `F-<k>` numbers that round's findings. An accepted finding past its `until` blocks again.
 
 # Increment 1 runs on its target
-- `INCR-SKELETON`: with `deploy` in the profile, increment 1 of an intent holds a top-level AC and a bolt binding a `delivery` module; from method 13, its first bolt's first slice cuts every layer the pack has, any `ui` form counting as `ui` ([Building a slice](slice-method.md#proved)). It blocks approval.
+- `INCR-SKELETON`: with `deploy` in the profile, increment 1 of an intent holds a top-level AC and a bolt binding a `delivery` module, the latter not for an intent with a `baseline`, whose code already runs; from method 13, its first bolt's first slice cuts every layer the pack has, any `ui` form counting as `ui` ([Building a slice](slice-method.md#proved)). It blocks approval.
 - `INCR-DONE`: an increment is done when its bolts are in the last passing release and its smoke passed. The gate refuses a bolt of a later increment while increment 1 is not done.
 
 # Delivered means proven

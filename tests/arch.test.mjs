@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { kindFindings, layerFindings, reachFindings } from '../plugin/cli/lib/index.mjs';
 
-const layers = (d) => ({ interface: [`internal/domains/${d}/interface/**`], application: [`internal/domains/${d}/application/**`], model: [`internal/domains/${d}/model/**`], infrastructure: [`internal/domains/${d}/infrastructure/**`] });
+const layers = (d) => ({ interface: [`internal/domains/${d}/interface/**`, `internal/domains/${d}/*/interface/**`], application: [`internal/domains/${d}/*/application/**`], model: [`internal/domains/${d}/model/**`], infrastructure: [`internal/domains/${d}/infrastructure/**`] }); // slice first (decision 0029)
 const domain = (d) => ({ id: d, kind: 'domain', paths: [`internal/domains/${d}/**`], layers: layers(d), surfaces: { client: [`internal/domains/${d}/client`], events: [`internal/domains/${d}/events`], server: [`internal/domains/${d}/interface`] } });
 const PROFILE = { modules: [
   domain('orders'), domain('billing'),
@@ -18,38 +18,38 @@ const lines = (fs) => fs.map((f) => `${f.code} ${f.message}`);
 
 test('B166/AC-1 the kind table decides each edge: domains reach other domains only through client or events, the core never an extension, product code never delivery', () => {
   assert.deepEqual(lines(kindFindings([
-    ['internal/domains/orders/application', 'internal/foundation/database'],
-    ['internal/domains/orders/application', 'internal/domains/billing/client'],
-    ['internal/domains/orders/application', 'internal/domains/billing/infrastructure'],
+    ['internal/domains/orders/placeorder/application', 'internal/foundation/database'],
+    ['internal/domains/orders/placeorder/application', 'internal/domains/billing/client'],
+    ['internal/domains/orders/placeorder/application', 'internal/domains/billing/infrastructure'],
     ['internal/foundation/database', 'internal/domains/orders/model'],
     ['internal/pipeline/ingress', 'internal/domains/orders/events'],
     ['internal/domains/orders/model', 'extensions/payments'],
-    ['internal/domains/orders/application', 'tools/archgraph'],
+    ['internal/domains/orders/placeorder/application', 'tools/archgraph'],
     ['tools/archgraph', 'internal/domains/orders/model'],
     ['cmd/shop-api', 'internal/domains/orders/interface'],
-    ['internal/domains/orders/application', 'internal/domains/orders/model'],
+    ['internal/domains/orders/placeorder/application', 'internal/domains/orders/model'],
     ['vendor/x', 'internal/domains/orders/model'],
   ], PROFILE)), [
-    'ARCH-KIND internal/domains/orders/application -> internal/domains/billing/infrastructure: orders (domain) may not depend on billing (domain), only on its client or integration events (internal/domains/billing/client, internal/domains/billing/events)',
+    'ARCH-KIND internal/domains/orders/placeorder/application -> internal/domains/billing/infrastructure: orders (domain) may not depend on billing (domain), only on its client or integration events (internal/domains/billing/client, internal/domains/billing/events)',
     'ARCH-KIND internal/foundation/database -> internal/domains/orders/model: database (foundation) may not depend on orders (domain)',
     'ARCH-KIND internal/domains/orders/model -> extensions/payments: orders (domain) may not depend on payments (extension)',
-    'ARCH-KIND internal/domains/orders/application -> tools/archgraph: orders (domain) may not depend on deploy (delivery)',
+    'ARCH-KIND internal/domains/orders/placeorder/application -> tools/archgraph: orders (domain) may not depend on deploy (delivery)',
   ]);
   assert.deepEqual(kindFindings([['a/x', 'b/y']], { modules: [{ id: 'a', paths: ['a/**'] }, { id: 'b', paths: ['b/**'] }] }), [], 'a v1 profile without kinds: nothing');
 });
 
 test('B167/AC-1 layers point inward: interface to application and model, application and infrastructure to model; a model depends only on foundation', () => {
   assert.deepEqual(lines(layerFindings([
-    ['internal/domains/orders/interface', 'internal/domains/orders/application'],
-    ['internal/domains/orders/application', 'internal/domains/orders/model'],
+    ['internal/domains/orders/interface', 'internal/domains/orders/placeorder/application'],
+    ['internal/domains/orders/placeorder/application', 'internal/domains/orders/model'],
     ['internal/domains/orders/infrastructure', 'internal/domains/orders/model'],
     ['internal/domains/orders/model', 'internal/domains/orders/infrastructure'],
-    ['internal/domains/orders/application', 'internal/domains/orders/interface'],
+    ['internal/domains/orders/placeorder/application', 'internal/domains/orders/interface'],
     ['internal/domains/orders/model', 'internal/foundation/config'],
     ['internal/domains/orders/model', 'internal/domains/billing/client'],
   ], PROFILE)), [
     'ARCH-LAYER internal/domains/orders/model -> internal/domains/orders/infrastructure: model may not depend on infrastructure in orders',
-    'ARCH-LAYER internal/domains/orders/application -> internal/domains/orders/interface: application may not depend on interface in orders',
+    'ARCH-LAYER internal/domains/orders/placeorder/application -> internal/domains/orders/interface: application may not depend on interface in orders',
     'ARCH-LAYER internal/domains/orders/model -> internal/domains/billing/client: the domain model of orders depends on billing (domain); a domain model depends only on foundation kits',
   ]);
   const v1 = { modules: [{ id: 'registry', kind: 'domain', paths: ['internal/registry/**'], layers: { api: ['internal/registry/api/**'], app: ['internal/registry/app/**'], domain: ['internal/registry/domain/**'], store: ['internal/registry/store/**'] } }] };
@@ -61,16 +61,16 @@ test('B169/AC-1 a runtime hosts the domains it imports directly; reaching anothe
     ['cmd/shop-api', 'internal/domains/orders/interface'],
     ['cmd/shop-api', 'internal/pipeline/ingress'],
     ['internal/pipeline/ingress', 'internal/domains/billing/client'],
-    ['internal/domains/billing/client', 'internal/domains/billing/application'],
-    ['internal/domains/orders/interface', 'internal/domains/orders/application'],
+    ['internal/domains/billing/client', 'internal/domains/billing/chargebill/application'],
+    ['internal/domains/orders/interface', 'internal/domains/orders/placeorder/application'],
   ];
-  assert.deepEqual(lines(reachFindings(edges, PROFILE)), ['ARCH-REACH runtime shop-api reaches internal/domains/billing/application, inside billing, which it does not host: cmd/shop-api -> internal/pipeline/ingress -> internal/domains/billing/client -> internal/domains/billing/application']);
+  assert.deepEqual(lines(reachFindings(edges, PROFILE)), ['ARCH-REACH runtime shop-api reaches internal/domains/billing/chargebill/application, inside billing, which it does not host: cmd/shop-api -> internal/pipeline/ingress -> internal/domains/billing/client -> internal/domains/billing/chargebill/application']);
   assert.deepEqual(reachFindings(edges.slice(0, 3), PROFILE), [], 'a client that links only itself is fine');
   // An owner-approved decision under architecture.kinds.except lets its edges pass the kind and reach checks.
-  const edge = 'internal/domains/billing/client -> internal/domains/billing/application', approved = new Map([['docs/decisions/0009-x.md', `- ${edge}\n`]]);
+  const edge = 'internal/domains/billing/client -> internal/domains/billing/chargebill/application', approved = new Map([['docs/decisions/0009-x.md', `- ${edge}\n`]]);
   const excepting = { ...PROFILE, architecture: { kinds: { except: ['docs/decisions/0009-x.md'] } } };
   assert.deepEqual(reachFindings(edges, excepting, approved), [], 'the excepted edge is not walked');
-  assert.deepEqual(kindFindings([['internal/pipeline/ingress', 'internal/domains/billing/application']], excepting, new Map([['docs/decisions/0009-x.md', '- internal/pipeline/ingress -> internal/domains/billing/application\n']])), []);
+  assert.deepEqual(kindFindings([['internal/pipeline/ingress', 'internal/domains/billing/chargebill/application']], excepting, new Map([['docs/decisions/0009-x.md', '- internal/pipeline/ingress -> internal/domains/billing/chargebill/application\n']])), []);
 });
 
 test('B168/AC-1 a module surface is its client and events; ARCH-API judges modules without kinds, ARCH-KIND those with', async () => {

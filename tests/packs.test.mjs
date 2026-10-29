@@ -9,7 +9,7 @@ import { I1, U, approve, makeRepo, read, run, tempDir, unitDoc } from './state-r
 
 const ROOT = join(import.meta.dirname, '..');
 const GO_REF = join(ROOT, 'plugin/packs/go/reference');
-const layers = (d) => Object.fromEntries(['interface', 'application', 'model', 'infrastructure'].map((l) => [l, [`internal/domains/${d}/${l}/**`]]));
+const layers = (d, at = 'internal/domains') => ({ interface: [`${at}/${d}/interface/**`, `${at}/${d}/*/interface/**`], application: [`${at}/${d}/*/application/**`], model: [`${at}/${d}/model/**`], infrastructure: [`${at}/${d}/infrastructure/**`] }); // slice first (decision 0029)
 const NOTES = { naming: { tokens: { system: 'ref', org: 'example' }, domains: { notes: {} } }, architecture: { data: { prefix: 'data/' }, acyclic: true }, modules: [
   { id: 'notes', kind: 'domain', paths: ['internal/domains/notes/**'], layers: layers('notes'), surfaces: { client: ['internal/domains/notes/client'], events: ['internal/domains/notes/events'], server: ['internal/domains/notes/interface'] }, data: ['data/notes/**'] },
   { id: 'notes-api', kind: 'runtime', paths: ['cmd/notes-api/**'] },
@@ -17,14 +17,14 @@ const NOTES = { naming: { tokens: { system: 'ref', org: 'example' }, domains: { 
 
 test('B170/AC-1 the Go pack reads imports inside the module and data edges from migrations, with no toolchain run', () => {
   const edges = packGraph(GO_REF, NOTES).map((e) => e.join(' -> '));
-  for (const e of ['cmd/notes-api -> internal/domains/notes/interface', 'internal/domains/notes/application/createnote -> internal/domains/notes/model', 'internal/domains/notes/infrastructure -> internal/domains/notes/model', 'internal/domains/notes/infrastructure -> data/notes/notes']) assert.ok(edges.includes(e), e);
+  for (const e of ['cmd/notes-api -> internal/domains/notes/interface', 'internal/domains/notes/createnote/application -> internal/domains/notes/model', 'internal/domains/notes/infrastructure -> internal/domains/notes/model', 'internal/domains/notes/infrastructure -> data/notes/notes']) assert.ok(edges.includes(e), e);
   assert.ok(!edges.some((e) => /_test|context|net\/http/.test(e)), 'tests and the standard library are no edges');
 });
 
 test('B171/AC-2 the Go reference domain passes every architecture check on its own graph', () => {
   const edges = packGraph(GO_REF, NOTES);
   assert.deepEqual([...kindFindings(edges, NOTES), ...layerFindings(edges, NOTES), ...reachFindings(edges, NOTES), ...moduleFindings(edges, NOTES)].map((f) => f.message), []);
-  for (const f of ['internal/domains/notes/application/createnote/handler_test.go', 'internal/domains/notes/application/getnote/handler_test.go', 'internal/domains/notes/model/note_test.go']) assert.ok(existsSync(join(GO_REF, f)), `${f}: fully tested`);
+  for (const f of ['internal/domains/notes/createnote/application/handler_test.go', 'internal/domains/notes/getnote/application/handler_test.go', 'internal/domains/notes/model/note_test.go']) assert.ok(existsSync(join(GO_REF, f)), `${f}: fully tested`);
 });
 
 test('B170/AC-1 a schema-qualified table of another domain is a data edge, so ARCH-DATA sees the reach; aidlc graph prints the edges', () => {
@@ -49,8 +49,8 @@ test('B171/AC-1 aidlc scaffold writes each kind at its folder with names from th
   const dir = makeRepo({ ...I1, 'go.mod': 'module example.com/shop\n\ngo 1.22\n' }, { naming: { tokens: { system: 'shop' }, domains: { roleassignments: { name: 'Role assignments' } } } });
   assert.equal(run(dir, ['scaffold', 'domain', 'roleassignments']).code, 0);
   assert.match(read(dir, 'internal/domains/roleassignments/model/roleassignment.go'), /^type RoleAssignment struct \{$/m);
-  assert.match(run(dir, ['scaffold', 'slice', 'create', '--domain', 'roleassignments']).out, /^wrote internal\/domains\/roleassignments\/application\/createroleassignment\/handler\.go$/m);
-  assert.match(read(dir, 'internal/domains/roleassignments/application/createroleassignment/handler_test.go'), /t\.Fatal\("write the acceptance test first"\)/, 'tests first: the scaffolded test fails');
+  assert.match(run(dir, ['scaffold', 'slice', 'create', '--domain', 'roleassignments']).out, /^wrote internal\/domains\/roleassignments\/createroleassignment\/application\/handler\.go$/m);
+  assert.match(read(dir, 'internal/domains/roleassignments/createroleassignment/application/handler_test.go'), /t\.Fatal\("write the acceptance test first"\)/, 'tests first: the scaffolded test fails');
   assert.match(run(dir, ['scaffold', 'runtime', 'shop-ingress-gateway']).out, /^wrote cmd\/shop-ingress-gateway\/main\.go$/m);
   assert.match(run(dir, ['scaffold', 'domain', 'roleassignments']).out, /^kept internal\/domains\/roleassignments\/model\/roleassignment\.go: it exists$/m);
   assert.match(run(dir, ['scaffold', 'foundation', 'store']).err, /kit store is not in the registry/);
@@ -81,14 +81,13 @@ test('B171/AC-2 a bolt that names a domain gets the reference slices on its card
 
 test('B172/AC-1 the TypeScript pack reads relative imports and migrations; its reference domain passes every architecture check; scaffold works the same', () => {
   const TS_REF = join(ROOT, 'plugin/packs/typescript/reference');
-  const lay = (d) => Object.fromEntries(['interface', 'application', 'model', 'infrastructure'].map((l) => [l, [`src/domains/${d}/${l}/**`]]));
-  const profile = { ...NOTES, modules: [{ ...NOTES.modules[0], paths: ['src/domains/notes/**'], layers: lay('notes'), surfaces: { client: ['src/domains/notes/client'], events: ['src/domains/notes/events'], server: ['src/domains/notes/interface'] } }, { id: 'notes-api', kind: 'runtime', paths: ['src/runtimes/notes-api/**'] }] };
+  const profile = { ...NOTES, modules: [{ ...NOTES.modules[0], paths: ['src/domains/notes/**'], layers: layers('notes', 'src/domains'), surfaces: { client: ['src/domains/notes/client'], events: ['src/domains/notes/events'], server: ['src/domains/notes/interface'] } }, { id: 'notes-api', kind: 'runtime', paths: ['src/runtimes/notes-api/**'] }] };
   const edges = packGraph(TS_REF, profile), lines = edges.map((e) => e.join(' -> '));
-  for (const e of ['src/runtimes/notes-api -> src/domains/notes/interface', 'src/domains/notes/application/createnote -> src/domains/notes/model', 'src/domains/notes/infrastructure -> data/notes/notes']) assert.ok(lines.includes(e), e);
+  for (const e of ['src/runtimes/notes-api -> src/domains/notes/interface', 'src/domains/notes/createnote/application -> src/domains/notes/model', 'src/domains/notes/infrastructure -> data/notes/notes']) assert.ok(lines.includes(e), e);
   assert.ok(!lines.some((e) => /data\/notes\/(save|get|set)$/.test(e)), 'a call on a variable named like the domain is no table');
   assert.deepEqual([...kindFindings(edges, profile), ...layerFindings(edges, profile), ...reachFindings(edges, profile), ...moduleFindings(edges, profile)].map((f) => f.message), []);
   const dir = makeRepo({ ...I1, 'tsconfig.json': '{}\n' }, { naming: { tokens: { system: 'shop' }, domains: { orders: {} } } });
-  assert.match(run(dir, ['scaffold', 'slice', 'create', '--domain', 'orders']).out, /^wrote src\/domains\/orders\/application\/createorder\/handler\.ts\nwrote src\/domains\/orders\/application\/createorder\/handler\.spec\.ts$/m);
+  assert.match(run(dir, ['scaffold', 'slice', 'create', '--domain', 'orders']).out, /^wrote src\/domains\/orders\/createorder\/application\/handler\.ts\nwrote src\/domains\/orders\/createorder\/application\/handler\.spec\.ts$/m);
   assert.match(run(dir, ['scaffold', 'domain', 'orders']).out, /^wrote src\/domains\/orders\/model\/order\.ts$/m);
   assert.match(read(dir, 'src/domains/orders/model/order.ts'), /^export interface Order \{$/m);
 });

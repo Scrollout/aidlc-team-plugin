@@ -28,27 +28,27 @@ test('B245/AC-1 the pack\'s reference keeps its slices apart, entered from its i
 test('B245/AC-1 a slice importing a slice, a slice entered sideways or from nowhere, a file outside the layers, an empty folder', () => {
   const dir = makeRepo({
     'go.mod': 'module example.com/shop\n\ngo 1.22\n',
-    [`${D}/application/placeorder/handler.go`]: go('placeorder', [`${D}/application/listorders`, `${D}/model`]),
-    [`${D}/application/placeorder/handler_test.go`]: 'package placeorder\n',
-    [`${D}/application/listorders/handler.go`]: go('listorders', [`${D}/model`]),
-    [`${D}/application/cancelorder/handler.go`]: go('cancelorder'),
-    [`${D}/application/helpers.go`]: go('application'),
+    [`${D}/placeorder/application/handler.go`]: go('placeorder', [`${D}/listorders/application`, `${D}/model`]),
+    [`${D}/placeorder/application/handler_test.go`]: 'package placeorder\n',
+    [`${D}/listorders/application/handler.go`]: go('listorders', [`${D}/model`]),
+    [`${D}/cancelorder/application/handler.go`]: go('cancelorder'),
+    [`${D}/helpers.go`]: go('orders'),
     [`${D}/model/order.go`]: go('model'),
-    [`${D}/infrastructure/store.go`]: go('infrastructure', [`${D}/application/listorders`]),
-    [`${D}/interface/http.go`]: go('iface', [`${D}/application/placeorder`]),
+    [`${D}/infrastructure/store.go`]: go('infrastructure', [`${D}/listorders/application`]),
+    [`${D}/interface/http.go`]: go('iface', [`${D}/placeorder/application`]),
     [`${D}/utils/strings.go`]: go('utils'),
     [`${D}/events/.keep`]: '',
     'cmd/shop-api/main.go': go('main', [`${D}/interface`]),
   }, ORDERS);
   assert.deepEqual(lines(sliceFindings(dir, ORDERS)), [
-    `SLICE-ENTRY ${D}/application/cancelorder sliceUnreached`,
-    `SLICE-ENTRY ${D}/application/listorders sliceUnreached`,
+    `SLICE-ENTRY ${D}/cancelorder sliceUnreached`,
     `SLICE-ENTRY ${D}/infrastructure sliceEntry`,
-    `SLICE-IMPORT ${D}/application/placeorder sliceImport`,
-    `SLICE-PLACE ${D}/application/helpers.go sliceLoose`,
+    `SLICE-ENTRY ${D}/listorders sliceUnreached`,
+    `SLICE-IMPORT ${D}/placeorder/application sliceImport`,
+    `SLICE-PLACE ${D}/helpers.go slicePlace`,
     `SLICE-PLACE ${D}/utils/strings.go slicePlace`,
-    `SLICE-TEST ${D}/application/cancelorder sliceTest`,
-    `SLICE-TEST ${D}/application/listorders sliceTest`,
+    `SLICE-TEST ${D}/cancelorder sliceTest`,
+    `SLICE-TEST ${D}/listorders sliceTest`,
   ]);
 });
 
@@ -56,8 +56,8 @@ test('B245/AC-2 the slice folders equal the domain doc\'s commands and queries, 
   const doc = (surface) => `---\ntype: Domain\ntitle: Orders\ndescription: Orders.\ncode: orders\nkind: domain\n---\n\n# Surface\n${surface}\n`;
   const files = (surface) => ({
     'go.mod': 'module example.com/shop\n\ngo 1.22\n',
-    [`${D}/application/placeorder/handler.go`]: go('placeorder', [`${D}/model`]), [`${D}/application/placeorder/handler_test.go`]: 'package placeorder\n',
-    [`${D}/model/order.go`]: go('model'), [`${D}/interface/http.go`]: go('iface', [`${D}/application/placeorder`]),
+    [`${D}/placeorder/application/handler.go`]: go('placeorder', [`${D}/model`]), [`${D}/placeorder/application/handler_test.go`]: 'package placeorder\n',
+    [`${D}/model/order.go`]: go('model'), [`${D}/interface/http.go`]: go('iface', [`${D}/placeorder/application`]),
     'docs/intents/I-1-orders.md': intent, 'docs/domains/orders.md': doc(surface),
   });
   const found = (surface) => lines(sliceFindings(makeRepo(files(surface), ORDERS), ORDERS));
@@ -87,8 +87,8 @@ test('B245/AC-2 the slice folders equal the domain doc\'s commands and queries, 
 const NAMED = { ...ORDERS, naming: { tokens: { system: 'shop', org: 'acme' }, domains: { orders: {} } } };
 const shop = (extra = {}) => ({
   'go.mod': 'module example.com/shop\n\ngo 1.22\n',
-  [`${D}/application/createorder/handler.go`]: go('createorder', [`${D}/model`]), [`${D}/application/createorder/handler_test.go`]: 'package createorder\n',
-  [`${D}/model/order.go`]: go('model'), [`${D}/interface/http.go`]: go('iface', [`${D}/application/createorder`]),
+  [`${D}/createorder/application/handler.go`]: go('createorder', [`${D}/model`]), [`${D}/createorder/application/handler_test.go`]: 'package createorder\n',
+  [`${D}/model/order.go`]: go('model'), [`${D}/interface/http.go`]: go('iface', [`${D}/createorder/application`]),
   ...extra,
 });
 const api = (ops) => `openapi: 3.1.0\ninfo: { title: Orders, version: 2026-10-01 }\npaths:\n${ops.map(([path, method, id]) => `  ${path}:\n    ${method}:\n      operationId: ${id}\n`).join('')}`;
@@ -96,27 +96,27 @@ const api = (ops) => `openapi: 3.1.0\ninfo: { title: Orders, version: 2026-10-01
 test('B246/AC-1 a slice is a name the registry composes, and each operation id maps once to the slice of its domain and verb', () => {
   assert.deepEqual(lines(sliceFindings(makeRepo(shop({ 'api/orders/openapi.yaml': api([['/orders/{orderName}', 'put', 'Orders_CreateOrUpdate']]) }), NAMED), NAMED)), [], 'named and routed');
   const dir = makeRepo(shop({
-    [`${D}/application/placeorder/handler.go`]: go('placeorder', [`${D}/model`]), [`${D}/application/placeorder/handler_test.go`]: 'package placeorder\n',
-    [`${D}/interface/http.go`]: go('iface', [`${D}/application/createorder`, `${D}/application/placeorder`]),
+    [`${D}/placeorder/application/handler.go`]: go('placeorder', [`${D}/model`]), [`${D}/placeorder/application/handler_test.go`]: 'package placeorder\n',
+    [`${D}/interface/http.go`]: go('iface', [`${D}/createorder/application`, `${D}/placeorder/application`]),
     'api/orders/openapi.yaml': api([['/orders/{orderName}', 'put', 'Orders_CreateOrUpdate'], ['/orders/{orderName}/copy', 'put', 'Orders_CreateOrUpdate'], ['/orders', 'get', 'Orders_List'], ['/orders/{orderName}/bake', 'post', 'Orders_Bake']]),
   }), NAMED);
   assert.deepEqual(lines(sliceFindings(dir, NAMED)), [
-    `SLICE-NAME ${D}/application/placeorder sliceName`,
+    `SLICE-NAME ${D}/placeorder sliceName`,
     'SLICE-ROUTE api/orders/openapi.yaml sliceRouteNone',
     'SLICE-ROUTE api/orders/openapi.yaml sliceRouteTwice',
     'SLICE-ROUTE api/orders/openapi.yaml sliceRouteUnknown',
-    `SLICE-ROUTE ${D}/application/placeorder sliceNoRoute`,
+    `SLICE-ROUTE ${D}/placeorder sliceNoRoute`,
   ]);
 });
 
 test('B246/AC-2 a bolt that adds a slice also wires its route and lists it in the domain doc', () => {
   const dir = makeRepo(shop(), NAMED);
-  const slice = { [`${D}/application/getorder/handler.go`]: go('getorder', [`${D}/model`]), [`${D}/application/getorder/handler_test.go`]: 'package getorder\n' };
+  const slice = { [`${D}/getorder/application/handler.go`]: go('getorder', [`${D}/model`]), [`${D}/getorder/application/handler_test.go`]: 'package getorder\n' };
   write(dir, slice);
   const gate = (paths) => lines(seam('gateChecks', NAMED).flatMap((check) => check(dir, NAMED, paths)).filter((f) => f.code === 'SLICE-DELIVER'));
-  assert.deepEqual(gate(Object.keys(slice)), [`SLICE-DELIVER ${D}/application/getorder sliceDeliverRoute`, `SLICE-DELIVER ${D}/application/getorder sliceDeliverDoc`].sort());
+  assert.deepEqual(gate(Object.keys(slice)), [`SLICE-DELIVER ${D}/getorder sliceDeliverRoute`, `SLICE-DELIVER ${D}/getorder sliceDeliverDoc`].sort());
   assert.deepEqual(gate([...Object.keys(slice), `${D}/interface/http.go`, 'docs/domains/orders.md']), [], 'delivered whole');
-  assert.deepEqual(gate([`${D}/application/createorder/handler.go`]), [], 'a slice the base holds is no new slice');
+  assert.deepEqual(gate([`${D}/createorder/application/handler.go`]), [], 'a slice the base holds is no new slice');
 });
 
 // M28 B249: the slices a bolt delivers, held to its domain doc and to its diff.
@@ -131,8 +131,8 @@ test('B249/AC-1 a bolt\'s slices are on its bound domain\'s surface, a horizonta
   const dir = makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', [`${D}/model/order.go`]: go('model') }, ORDERS);
   const unit = { id: 'B-1', modules: ['orders'], fm: { intent: 'I-1', slices: ['createorder'] } };
   const gate = (paths) => seam('gateChecks', ORDERS).flatMap((check) => check(dir, ORDERS, paths, [], unit)).filter((f) => f.key === 'sliceDeliverListed').map((f) => f.path);
-  assert.deepEqual(gate([`${D}/model/order.go`]), [`${D}/application/createorder`], 'a listed slice the bolt does not touch');
-  assert.deepEqual(gate([`${D}/application/createorder/handler.go`]), []);
+  assert.deepEqual(gate([`${D}/model/order.go`]), [`${D}/createorder`], 'a listed slice the bolt does not touch');
+  assert.deepEqual(gate([`${D}/createorder/application/handler.go`]), []);
 });
 
 // M29 B250: a slice's declaration, the same on its # Surface line as on its Unit of work's (docs/design/slice-method.md#one-grammar).
@@ -145,8 +145,8 @@ test('B250/AC-2 a # Surface line declares the slice\'s cuts and parts, required 
   const doc = (surface) => `---\ntype: Domain\ntitle: Orders\ndescription: Orders.\ncode: orders\nkind: domain\n---\n\n# Surface\n${surface}\n`;
   const files = (surface, method) => ({
     'go.mod': 'module example.com/shop\n\ngo 1.22\n',
-    [`${D}/application/placeorder/handler.go`]: go('placeorder', [`${D}/model`]), [`${D}/application/placeorder/handler_test.go`]: 'package placeorder\n',
-    [`${D}/model/order.go`]: go('model'), [`${D}/interface/http.go`]: go('iface', [`${D}/application/placeorder`]),
+    [`${D}/placeorder/application/handler.go`]: go('placeorder', [`${D}/model`]), [`${D}/placeorder/application/handler_test.go`]: 'package placeorder\n',
+    [`${D}/model/order.go`]: go('model'), [`${D}/interface/http.go`]: go('iface', [`${D}/placeorder/application`]),
     'docs/intents/I-1-orders.md': intent.replace('method: 12', `method: ${method}`), 'docs/domains/orders.md': doc(surface),
   });
   const found = (surface, method = 13) => lines(sliceFindings(makeRepo(files(surface, method), ORDERS), ORDERS));
@@ -166,27 +166,27 @@ test('B250/AC-2 a # Surface line declares the slice\'s cuts and parts, required 
 
 // M29 B251: each pack says where a slice's own code sits in each layer, and scaffolds the layers a slice cuts
 // (docs/design/slice-method.md#layers).
-test('B251/AC-1 each pack lists slicePaths, the route under interface/<slice> and ui where the stack has one; the surfaces sit beside the layers', () => {
+test('B251/AC-1 each pack lists slicePaths, a slice\'s layers under its own folder, <slice>/interface, and ui where the stack has one; the shared parts sit beside the slices', () => {
   const read = (s) => JSON.parse(readFileSync(join(ROOT, `plugin/packs/${s}/manifest.json`), 'utf8'));
-  for (const s of ['go', 'typescript']) assert.match(read(s).slicePaths.interface, /\/interface\/\{\{slice\}\}\./, s);
+  for (const s of ['go', 'typescript']) assert.equal(read(s).slicePaths.interface, `${read(s).sliceFolder}/interface`, s);
   assert.deepEqual([read('typescript'), read('go')].map((m) => Object.keys(m.slicePaths).filter((k) => k.startsWith('ui.'))), [['ui.web', 'ui.cli'], ['ui.cli', 'ui.template']], 'the ui forms each stack serves, one flat key each');
-  const dir = makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', [`${D}/application/placeorder/handler.go`]: go('placeorder', [`${D}/model`]), [`${D}/application/placeorder/handler_test.go`]: 'package placeorder\n',
-    [`${D}/model/order.go`]: go('model'), [`${D}/interface/placeorder.go`]: go('iface', [`${D}/application/placeorder`]), [`${D}/client/client.go`]: go('client'), [`${D}/events/events.go`]: go('events') }, ORDERS);
-  assert.deepEqual(lines(sliceFindings(dir, ORDERS)).filter((l) => /SLICE-PLACE/.test(l)), [], 'client and events beside the layers');
+  const dir = makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', [`${D}/placeorder/application/handler.go`]: go('placeorder', [`${D}/model`]), [`${D}/placeorder/application/handler_test.go`]: 'package placeorder\n',
+    [`${D}/model/order.go`]: go('model'), [`${D}/placeorder/interface/route.go`]: go('iface', [`${D}/placeorder/application`]), [`${D}/client/client.go`]: go('client'), [`${D}/events/events.go`]: go('events') }, ORDERS);
+  assert.deepEqual(lines(sliceFindings(dir, ORDERS)).filter((l) => /SLICE-PLACE/.test(l)), [], 'client and events beside the slices');
 });
 
-test('B251/AC-2 scaffold writes the own code of each cut a slice declares, and every reference routes each slice under interface/<slice> and passes the slice checks', async () => {
+test('B251/AC-2 scaffold writes the own code of each cut a slice declares in the slice\'s folder, and every reference routes each slice under <slice>/interface and passes the slice checks', async () => {
   const { run } = await import('./state-repo.mjs');
   const doc = (line) => `---\ntype: Domain\ntitle: Orders\ndescription: Orders.\ncode: orders\nkind: domain\n---\n\n# Surface\n${line}\n`;
   const ts = makeRepo({ 'tsconfig.json': '{}\n', 'docs/domains/orders.md': doc('- Command createorder (ui, interface, application; entry shop-api): a customer orders [I-1:US1.1]') }, { naming: { tokens: { system: 'shop' }, domains: { orders: {} } } });
   const wrote = run(ts, ['scaffold', 'slice', 'create', '--domain', 'orders']).out.split('\n').filter(Boolean);
-  assert.deepEqual(wrote, ['ui/web/createorder/screen.ts', 'ui/web/createorder/screen.spec.ts', 'ui/cli/createorder/command.ts', 'ui/cli/createorder/command.spec.ts', 'interface/createorder.ts', 'interface/createorder.spec.ts', 'application/createorder/handler.ts', 'application/createorder/handler.spec.ts'].map((p) => `wrote src/domains/orders/${p}`));
+  assert.deepEqual(wrote, ['ui/web/screen.ts', 'ui/web/screen.spec.ts', 'ui/cli/command.ts', 'ui/cli/command.spec.ts', 'interface/route.ts', 'interface/route.spec.ts', 'application/handler.ts', 'application/handler.spec.ts'].map((p) => `wrote src/domains/orders/createorder/${p}`));
   const go2 = makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n' }, { naming: { tokens: { system: 'shop' }, domains: { orders: {} } } });
   assert.deepEqual(run(go2, ['scaffold', 'slice', 'get', '--domain', 'orders']).out.split('\n').filter(Boolean),
-    ['interface/getorder.go', 'interface/getorder_test.go', 'application/getorder/handler.go', 'application/getorder/handler_test.go'].map((p) => `wrote internal/domains/orders/${p}`), 'with no declaration, the cuts with own code but ui');
-  for (const [ref, files] of [['plugin/packs/go/reference', ['internal/domains/notes/interface/createnote.go', 'internal/domains/notes/interface/getnote.go']],
-    ['plugin/packs/typescript/reference', ['src/domains/notes/interface/createnote.ts', 'src/domains/notes/interface/getnote.ts', 'src/domains/notes/ui/web/createnote/screen.ts']],
-    ['examples/models/control-plane/reference/go', ['internal/domains/resources/interface/createresource.go', 'internal/domains/resources/interface/deleteresource.go', 'internal/domains/operations/interface/getoperation.go']]]) {
+    ['interface/route.go', 'interface/route_test.go', 'application/handler.go', 'application/handler_test.go'].map((p) => `wrote internal/domains/orders/getorder/${p}`), 'with no declaration, the cuts with own code but ui');
+  for (const [ref, files] of [['plugin/packs/go/reference', ['internal/domains/notes/createnote/interface/route.go', 'internal/domains/notes/getnote/interface/route.go']],
+    ['plugin/packs/typescript/reference', ['src/domains/notes/createnote/interface/route.ts', 'src/domains/notes/getnote/interface/route.ts', 'src/domains/notes/createnote/ui/web/screen.ts']],
+    ['examples/models/control-plane/reference/go', ['internal/domains/resources/createresource/interface/route.go', 'internal/domains/resources/deleteresource/interface/route.go', 'internal/domains/operations/getoperation/interface/route.go']]]) {
     for (const f of files) assert.ok(existsSync(join(ROOT, ref, f)), `${ref}: ${f}`);
   }
   const notes = { system: { core: ['src/**'] }, modules: [{ id: 'notes', kind: 'domain', paths: ['src/domains/notes/**'] }, { id: 'notes-api', kind: 'runtime', paths: ['src/runtimes/notes-api/**'] }] };
@@ -213,8 +213,8 @@ test('B252/AC-1 B252/AC-3 a listed slice\'s cuts are in the bolt\'s scope, and t
   const dir = makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', 'docs/domains/orders.md': doc }, ORDERS);
   const unit = { id: 'B-1', modules: ['orders'], fm: { intent: 'I-1', slices: ['createorder'] } };
   const gate = (paths) => seam('gateChecks', ORDERS).flatMap((check) => check(dir, ORDERS, paths, [], unit)).filter((f) => f.key === 'sliceDeliverCut').map((f) => `${f.data.cut} ${f.path}`);
-  assert.deepEqual(gate([`${D}/application/createorder/handler.go`, `${D}/interface/createorder.go`]), [`model ${D}/model`, 'migration migrations/orders']);
-  assert.deepEqual(gate([`${D}/application/createorder/handler.go`, `${D}/interface/createorder.go`, `${D}/model/order.go`, 'migrations/orders/0002_createorder.sql']), [], 'every cut changed');
+  assert.deepEqual(gate([`${D}/createorder/application/handler.go`, `${D}/createorder/interface/route.go`]), [`model ${D}/model`, 'migration migrations/orders']);
+  assert.deepEqual(gate([`${D}/createorder/application/handler.go`, `${D}/createorder/interface/route.go`, `${D}/model/order.go`, 'migrations/orders/0002_createorder.sql']), [], 'every cut changed');
 });
 
 test('B252/AC-2 the card lists each slice\'s cuts as ordered steps, test first, from the bottom layer up, after its scaffold command', () => {
@@ -224,7 +224,7 @@ test('B252/AC-2 the card lists each slice\'s cuts as ordered steps, test first, 
   const text = card({ slices: ['createorder'] });
   assert.match(text, /each one's failing test before its code/);
   assert.match(text, /hollow/, 'the reviewer reads the same card');
-  assert.ok(text.includes(`createorder: \`aidlc scaffold slice create --domain orders\`\n1. migration: migrations/orders\n2. model: ${D}/model\n3. application: ${D}/application/createorder\n4. interface: ${D}/interface/createorder.go\n`), text);
+  assert.ok(text.includes(`createorder: \`aidlc scaffold slice create --domain orders\`\n1. migration: migrations/orders\n2. model: ${D}/model\n3. application: ${D}/createorder/application\n4. interface: ${D}/createorder/interface\n`), text);
   assert.equal(card({}), '', 'a bolt listing no slice');
   assert.equal(card({ slices: ['createorder'] }, ORDERS).includes('aidlc scaffold'), false, 'no registry, no scaffold command');
 });
@@ -234,10 +234,10 @@ test('B252/AC-4 SLICE-DATA refuses a data edge a slice does not declare; SLICE-R
   const profile = { ...ORDERS, modules: [...ORDERS.modules, { id: 'admin-api', kind: 'runtime', paths: ['cmd/admin-api/**'] }] };
   const handler = (sql) => `package createorder\n\nconst q = "${sql}"\n`;
   const found = (files) => graphFindings(makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', 'docs/domains/orders.md': doc,
-    [`${D}/application/createorder/handler.go`]: handler('select id from orders.orders'), [`${D}/interface/createorder.go`]: go('iface', [`${D}/application/createorder`]),
+    [`${D}/createorder/application/handler.go`]: handler('select id from orders.orders'), [`${D}/createorder/interface/route.go`]: go('iface', [`${D}/createorder/application`]),
     'cmd/shop-api/main.go': go('main', [`${D}/interface`]), ...files }, profile), profile).map((f) => `${f.code} ${f.path} ${msg(f.key, f.data)}`);
   assert.deepEqual(found({}), [], 'declared data, routes mounted by the entry');
-  assert.deepEqual(found({ [`${D}/application/createorder/handler.go`]: handler('select id from orders.carts') }), [`SLICE-DATA ${D}/application/createorder slice orders/createorder reaches data node data/orders/carts, which its declaration does not name`]);
+  assert.deepEqual(found({ [`${D}/createorder/application/handler.go`]: handler('select id from orders.carts') }), [`SLICE-DATA ${D}/createorder/application slice orders/createorder reaches data node data/orders/carts, which its declaration does not name`]);
   assert.deepEqual(found({ 'cmd/shop-api/main.go': go('main'), 'cmd/admin-api/main.go': go('main', [`${D}/interface`]) }), [
     `SLICE-ROUTE ${D}/interface runtime shop-api, the entry of createorder in domain orders, does not import ${D}/interface`,
     'SLICE-ROUTE cmd/admin-api runtime admin-api imports domain orders\'s interface layer, though its slices name shop-api as their entry',
@@ -251,7 +251,7 @@ test('B252/AC-4 SLICE-INTEGRATE refuses a client, adapter or events import a sli
   const full = 'interface, application; entry shop-api; emits OrderPlaced; consumes PaymentTaken; calls billing';
   const found = (decl, imports) => graphFindings(makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', 'docs/domains/orders.md': surface(decl),
     'docs/domains/billing.md': '---\ntype: Domain\ntitle: Billing\ndescription: Billing.\ncode: billing\nkind: domain\n---\n\n# Surface\n- Events: PaymentTaken\n',
-    [`${D}/application/createorder/handler.go`]: go('createorder', imports), [`${D}/interface/createorder.go`]: go('iface', [`${D}/application/createorder`]),
+    [`${D}/createorder/application/handler.go`]: go('createorder', imports), [`${D}/createorder/interface/route.go`]: go('iface', [`${D}/createorder/application`]),
     [`${D}/events/events.go`]: go('events'), [`${B}/client/client.go`]: go('client'), [`${B}/events/events.go`]: go('events'), 'internal/adapters/stripe/stripe.go': go('stripe'),
     'cmd/shop-api/main.go': go('main', [`${D}/interface`]) }, profile), profile).map((f) => `${f.code} ${msg(f.key, f.data)}`);
   const all = [`${B}/client`, `${B}/events`, `${D}/events`];
@@ -267,12 +267,12 @@ test('B252/AC-4 SLICE-GOVERN refuses a slice with no permission behind an entry 
   const profile = { ...ORDERS, model: { name: 'shop' }, modules: [...ORDERS.modules, { id: 'authorize', kind: 'pipeline', paths: ['internal/pipeline/authorize/**'] }] };
   const surface = (decl) => `---\ntype: Domain\ntitle: Orders\ndescription: Orders.\ncode: orders\nkind: domain\n---\n\n# Surface\n- Command createorder (${decl}): a customer orders a cake [I-1:US1.1]\n`;
   const found = (decl, imports = [], p = profile) => graphFindings(makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', 'docs/domains/orders.md': surface(decl), '.aidlc/models/shop/model.json': JSON.stringify(model),
-    [`${D}/application/createorder/handler.go`]: go('createorder', imports), [`${D}/interface/createorder.go`]: go('iface', [`${D}/application/createorder`]),
+    [`${D}/createorder/application/handler.go`]: go('createorder', imports), [`${D}/createorder/interface/route.go`]: go('iface', [`${D}/createorder/application`]),
     'internal/pipeline/authorize/authorize.go': go('authorize'), 'cmd/shop-api/main.go': go('main', [`${D}/interface`]) }, p), p).map((f) => `${f.code} ${f.path} ${msg(f.key, f.data)}`);
   assert.deepEqual(found('interface, application; entry shop-api; permission orders.write'), [], 'its permission declared, its governance left to the entry');
   assert.deepEqual(found('interface, application; entry shop-api'), ['SLICE-GOVERN docs/domains/orders.md slice orders/createorder names no permission, though its entry shop-api applies authorize']);
   assert.deepEqual(found('interface, application; entry shop-api', [], { ...profile, model: undefined }), [], 'no chosen model, no stage the entry applies');
-  assert.deepEqual(found('interface, application; entry shop-api; permission orders.write', ['internal/pipeline/authorize']), [`SLICE-GOVERN ${D}/application/createorder slice orders/createorder imports internal/pipeline/authorize, a pipeline stage its entry runs for every slice`]);
+  assert.deepEqual(found('interface, application; entry shop-api; permission orders.write', ['internal/pipeline/authorize']), [`SLICE-GOVERN ${D}/createorder/application slice orders/createorder imports internal/pipeline/authorize, a pipeline stage its entry runs for every slice`]);
 });
 
 // M29 B260: the ui cut's forms (docs/design/slice-method.md#layers).
@@ -281,9 +281,9 @@ test('B260/AC-1 a pack maps each ui form it has to its path; a declaration cuts 
   const doc = (decl) => `---\ntype: Domain\ntitle: Notes\ndescription: Notes.\ncode: notes\nkind: domain\n---\n\n# Surface\n- Command createnote (${decl}): a writer keeps a note [I-1:US1.1]\n`;
   const dir = makeRepo({ 'tsconfig.json': '{}\n', 'docs/domains/notes.md': doc('ui, interface, application') }, notes);
   const [stacks] = seam('sliceDeclaration', notes), m = stacks.pack(dir).manifest;
-  assert.deepEqual(Object.fromEntries(Object.entries(m.slicePaths).filter(([k]) => k.startsWith('ui.'))), { 'ui.web': '{{dir}}/ui/web/{{slice}}', 'ui.cli': '{{dir}}/ui/cli/{{slice}}' }, 'the TypeScript pack has the web and cli forms');
+  assert.deepEqual(Object.fromEntries(Object.entries(m.slicePaths).filter(([k]) => k.startsWith('ui.'))), { 'ui.web': '{{dir}}/{{slice}}/ui/web', 'ui.cli': '{{dir}}/{{slice}}/ui/cli' }, 'the TypeScript pack has the web and cli forms');
   assert.deepEqual(stacks.declared(dir, notes, 'notes', 'createnote').cuts, ['ui.web', 'ui.cli', 'interface', 'application'], 'ui stands for every form the pack has');
-  assert.equal(stacks.path(m, 'notes', 'createnote', 'ui.web'), 'src/domains/notes/ui/web/createnote');
+  assert.equal(stacks.path(m, 'notes', 'createnote', 'ui.web'), 'src/domains/notes/createnote/ui/web');
   const problems = (decl, ui = false) => stacks.problems(stacks.parse(`(${decl})`), { root: dir, profile: notes, bundle: join(dir, 'docs'), slice: 'createnote', domains: ['notes'], ui }).map(([key, data]) => msg(key, data));
   assert.deepEqual(problems('ui.web, interface'), []);
   assert.deepEqual(problems('ui, interface'), []);
@@ -299,9 +299,9 @@ test('B260/AC-2 scaffold writes each ui form\'s own code and test; a template fo
   const doc = '---\ntype: Domain\ntitle: Orders\ndescription: Orders.\ncode: orders\nkind: domain\n---\n\n# Surface\n- Command createorder (ui, interface, application; entry shop-api): a customer orders [I-1:US1.1]\n';
   const dir = makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', 'docs/domains/orders.md': doc }, { naming: { tokens: { system: 'shop', org: 'acme' }, domains: { orders: {} } } });
   assert.deepEqual(run(dir, ['scaffold', 'slice', 'create', '--domain', 'orders']).out.split('\n').filter(Boolean),
-    ['ui/cli/createorder/command.go', 'ui/cli/createorder/command_test.go', 'ui/template/createorder/schema.json', 'ui/template/createorder/template_test.go', 'interface/createorder.go', 'interface/createorder_test.go', 'application/createorder/handler.go', 'application/createorder/handler_test.go'].map((p) => `wrote ${D}/${p}`));
-  assert.deepEqual(JSON.parse(readFileSync(join(dir, D, 'ui/template/createorder/schema.json'), 'utf8')), { type: 'Acme.Shop/orders', route: '/orders/{orderName}', operation: 'createorder', properties: {} });
-  assert.match(readFileSync(join(dir, D, 'ui/template/createorder/template_test.go'), 'utf8'), /deployment applying a template .* calls the slice's\n\/\/ route/);
+    ['ui/cli/command.go', 'ui/cli/command_test.go', 'ui/template/schema.json', 'ui/template/template_test.go', 'interface/route.go', 'interface/route_test.go', 'application/handler.go', 'application/handler_test.go'].map((p) => `wrote ${D}/createorder/${p}`));
+  assert.deepEqual(JSON.parse(readFileSync(join(dir, D, 'createorder/ui/template/schema.json'), 'utf8')), { type: 'Acme.Shop/orders', route: '/orders/{orderName}', operation: 'createorder', properties: {} });
+  assert.match(readFileSync(join(dir, D, 'createorder/ui/template/template_test.go'), 'utf8'), /deployment applying a template .* calls the slice's\n\/\/ route/);
 });
 
 // M29 B253: each slice proved through its entry and its hand-offs (docs/design/slice-method.md#proved).
@@ -313,12 +313,12 @@ test('B253/AC-1 SLICE-TEST: a route test names each slice and its permission; a 
   const route = 'func TestRoute_createorder(t *testing.T) { /* refused without orders.write */ }\n', handoff = '// createorder emits OrderPlaced; consumes PaymentTaken from billing; calls billing; polls until Succeeded\n';
   const found = (files, p = profile) => testFindings(makeRepo({ 'go.mod': 'module example.com/shop\n\ngo 1.22\n', 'docs/domains/orders.md': surface,
     'docs/domains/billing.md': '---\ntype: Domain\ntitle: Billing\ndescription: Billing.\ncode: billing\nkind: domain\n---\n\n# Surface\n- Events: PaymentTaken\n',
-    [`${D}/interface/createorder_test.go`]: route, 'tests/integration/orders_test.go': handoff, ...files }, p), p).map((f) => `${f.path} ${msg(f.key, f.data)}`);
+    [`${D}/createorder/interface/route_test.go`]: route, 'tests/integration/orders_test.go': handoff, ...files }, p), p).map((f) => `${f.path} ${msg(f.key, f.data)}`);
   assert.deepEqual(found({}), [], 'proved through its entry and each hand-off');
   assert.deepEqual(found({}, { ...profile, levels: { unit: { paths: ['**/*_test.go'] } } }), [], 'no level proves anything: nothing is required');
-  const at = `${D}/application/createorder`;
-  assert.deepEqual(found({ [`${D}/interface/createorder_test.go`]: 'func TestRoute(t *testing.T) {}\n' }), [`${at} slice orders/createorder has no test at a route level that names it, so nothing proves it through its entry`]);
-  assert.deepEqual(found({ [`${D}/interface/createorder_test.go`]: 'func TestRoute_createorder(t *testing.T) {}\n' }), [`${at} slice orders/createorder's route tests never name its permission orders.write, so none sees a call without it refused`]);
+  const at = `${D}/createorder/application`;
+  assert.deepEqual(found({ [`${D}/createorder/interface/route_test.go`]: 'func TestRoute(t *testing.T) {}\n' }), [`${at} slice orders/createorder has no test at a route level that names it, so nothing proves it through its entry`]);
+  assert.deepEqual(found({ [`${D}/createorder/interface/route_test.go`]: 'func TestRoute_createorder(t *testing.T) {}\n' }), [`${at} slice orders/createorder's route tests never name its permission orders.write, so none sees a call without it refused`]);
   assert.deepEqual(found({ 'tests/integration/orders_test.go': '// createorder emits OrderPlaced; consumes PaymentTaken; polls until failed\n' }), [
     `${at} slice orders/createorder declares billing, which no test at a handoff level names`,
     `${at} slice orders/createorder's hand-off test of PaymentTaken never names its publisher billing`]);
@@ -345,7 +345,7 @@ test('B253/AC-3 status counts the slices planned, partial and done; the map page
     'docs/domains/activity.md': dom('activity', '- Query listactivity (interface, application; consumes OrderPlaced): a customer reads the log [I-1:US1.1]'),
     'docs/domains/billing.md': dom('billing', '- Events: PaymentTaken'),
     'docs/bolts/B-1-take.md': '---\ntype: Bolt\ntitle: Take\ndescription: Take.\nintent: I-1\nmodules: [orders]\nslices: [createorder]\nscope: ["internal/**"]\n---\n\n# Why\nOrders.\n',
-    [`${D}/application/createorder/handler.go`]: go('createorder'), [`${D}/interface/createorder.go`]: go('iface') }, profile);
+    [`${D}/createorder/application/handler.go`]: go('createorder'), [`${D}/createorder/interface/route.go`]: go('iface') }, profile);
   const status = seam('statusLines', profile).at(-1)({ cwd: dir, profile }); // the slices extension's, plugged last
   assert.equal(status, 'slices: 1 planned, 1 partial, 0 done\n', 'status counts, the table stays on the map page');
   const [page] = seam('mapPages', profile).flatMap((p) => p(dir, profile, 'architecture/map'));
@@ -356,7 +356,7 @@ test('B253/AC-3 status counts the slices planned, partial and done; the map page
   assert.match(trace, /\| orders\/createorder \| orders\.write \| shop-api \|/);
   assert.doesNotMatch(trace, /listactivity/, 'only the slices the intent\'s bolts list');
   const [layerOf] = seam('layerOf', profile);
-  assert.deepEqual([`${D}/application/createorder/handler.go`, `${D}/model`, 'cmd/shop-api/main.go', 'README.md'].map((p) => layerOf(dir, profile, p)), ['application', 'model', 'runtime', null]);
+  assert.deepEqual([`${D}/createorder/application/handler.go`, `${D}/model`, 'cmd/shop-api/main.go', 'README.md'].map((p) => layerOf(dir, profile, p)), ['application', 'model', 'runtime', null]);
 });
 
 test('a pack is found once its detect file appears; a hand-off is listed once; a layer is a folder, not a prefix', () => {

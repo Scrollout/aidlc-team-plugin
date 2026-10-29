@@ -1,6 +1,6 @@
 // The createnote slice's route: it decodes the call, runs the slice's handler and answers.
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { createNote, type Publisher, type Repository } from '../application/createnote/handler.ts';
+import { createNote, type Publisher, type Repository } from '../application/handler.ts';
 
 export async function createnoteRoute(notes: Repository, events: Publisher, name: string, req: IncomingMessage, res: ServerResponse) {
   let body = '';

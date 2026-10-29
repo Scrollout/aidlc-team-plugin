@@ -1,9 +1,9 @@
-// Serves the notes domain over HTTP: the router is the layer's shared code, each route its slice's own.
+// Serves the notes domain over HTTP: the router is the domain's shared server surface, each route its slice's own.
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { Publisher, Repository as Writes } from '../application/createnote/handler.ts';
-import type { Repository as Reads } from '../application/getnote/handler.ts';
-import { createnoteRoute } from './createnote.ts';
-import { getnoteRoute } from './getnote.ts';
+import type { Publisher, Repository as Writes } from '../createnote/application/handler.ts';
+import type { Repository as Reads } from '../getnote/application/handler.ts';
+import { createnoteRoute } from '../createnote/interface/route.ts';
+import { getnoteRoute } from '../getnote/interface/route.ts';
 
 /** Mounts PUT and GET /notes/{noteName} on their slices' routes. */
 export function routes(notes: Writes & Reads, events: Publisher) {

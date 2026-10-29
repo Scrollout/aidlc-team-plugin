@@ -69,7 +69,8 @@ function lintConstruction({ profile, live: intents, units, all, add, keyLine, bu
     // Increment 1 is the walking skeleton: end to end, on its target (an intent without the section is one increment).
     const first = lines.length ? own.filter((u) => lines[0].ids.includes(u.id)) : own;
     if (profile.deploy && first.length && !first.some((u) => u.acs.some((a) => a.level === top))) add('INCR-SKELETON', i, 1, 'incrSkeletonAc', { level: top });
-    if (profile.deploy && first.length && !first.some((u) => u.modules.some((m) => kindOf(m) === C.delivery))) add('INCR-SKELETON', i, 1, 'incrSkeletonDelivery', {});
+    // An intent with a baseline changes code that already runs as its test levels prove: no skeleton to stand up.
+    if (profile.deploy && first.length && !list(i.fm.baseline).length && !first.some((u) => u.modules.some((m) => kindOf(m) === C.delivery))) add('INCR-SKELETON', i, 1, 'incrSkeletonDelivery', {});
     for (const line of lines.slice(1)) {
       for (const u of units.filter((x) => line.ids.includes(x.id) && fresh(x))) bindFindings(u, line, own, profile, add, keyLine);
     }

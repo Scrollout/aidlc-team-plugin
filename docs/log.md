@@ -7,6 +7,7 @@ title: aidlc-team-plugin docs history
 
 ## 2026-10-29
 
+- **Update** M30 B266 built: decision 0029 accepted, a slice holds its own layers ([Vertical slices](design/vertical-slices.md), [Stack packs](design/stack-packs.md), [Building a slice](design/slice-method.md)); `INCR-SKELETON` spares an intent with a baseline ([Construction](design/construction.md)). Release 0.217.0.
 - **Update** A fix round's card lists what the merge gate refused ([Bolt card](design/bolt-card.md)). Release 0.216.3.
 - **Update** A renamed doc's approval found in the gate's uncommitted merge; `architecture.kinds.except` for `ARCH-KIND` and `ARCH-REACH` ([Architecture model](design/architecture-model.md)). Release 0.216.2.
 - **Update** A link-only edit keeps an approval in `status` and `next` too, through renames, and `generated` is out of the approval hash ([Approvals](design/approvals.md)). Release 0.216.1.

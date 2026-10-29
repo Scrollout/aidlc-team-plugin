@@ -1,4 +1,4 @@
-// Package interface is the resources domain's routes: each slice's own call and answer, which the front door mounts
+// Package iface is the createresource slice's interface layer: its own call and answer, which the front door mounts
 // after the governance stages it applies to every slice.
 package iface
 
@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"example.com/controlplane/internal/domains/resources/application/createresource"
+	createresource "example.com/controlplane/internal/domains/resources/createresource/application"
 	"example.com/controlplane/internal/domains/resources/model"
 	"example.com/controlplane/internal/foundation/answer"
 	"example.com/controlplane/internal/foundation/values"

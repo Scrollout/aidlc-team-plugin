@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.217.0] - 2026-10-29
+### Changed
+- A slice holds its own layers (M30 B266, decision 0029). The stack packs lay a domain out slice first: each slice one folder, `<domain>/<slice>/<layer>/` (`ui/<form>`, `interface`, `application`), beside the domain's shared `model`, `infrastructure`, `client`, `events` and the router in `interface/`. `sliceFolder` and `slicePaths` say it as data; scaffold writes it; the Go, TypeScript and control-plane references follow it; the slice checks read a slice from its folder and a layer from the next segment. A project with slices laid out layer first moves them once, through a superseding decision of its own.
+- `INCR-SKELETON` asks no delivery bolt of an intent with a `baseline`, whose code already runs; its top-level AC stays required.
+
 ## [0.216.3] - 2026-10-29
 ### Fixed
 - A fix round after the merge gate refused a bolt gave a card with no findings, so the builder had nothing to fix: the gate keeps what refused it, and the card lists those findings for the current diff.
@@ -567,7 +572,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The last release before this changelog. The history before it is in `docs/log.md` and the git tags.
 
-[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.216.3...HEAD
+[unreleased]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.217.0...HEAD
+[0.217.0]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.216.3...v0.217.0
 [0.216.3]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.216.2...v0.216.3
 [0.216.2]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.216.1...v0.216.2
 [0.216.1]: https://github.com/Scrollout/aidlc-team-plugin/compare/v0.216.0...v0.216.1

@@ -17,8 +17,8 @@ One use case's cut of each horizontal layer it needs, scoped to it alone:
 
 # Layers
 - The stack pack maps each cut a slice makes to where its own code sits (`slicePaths`): `ui`, `interface`, `application`, `model`, `infrastructure`, `migration`. A pack names only the layers its stack has. `ui` takes forms, each a cut `ui.<form>` with its path: `cli`, a command; `web`, a page; `template`, the slice's entry in the declarative template a deployment applies. A slice cuts `ui.<form>`, or `ui` for every form the pack has; a UI on another stack is its own unit of work, consuming the slice's API.
-- **Own code** sits under the slice's name: each ui form in `ui/<form>/<slice>/`, its route, input and output types in `interface/<slice>`, its handler and validator in `application/<slice>/`. **Shared:** `model`, `infrastructure`, `migration` (the domain's migrations folder) and the router mounting every route, changed by the slice.
-- Surface folders `client/` and `events/` sit beside the layers; `SLICE-PLACE` accepts them.
+- **Own code** sits in the slice's folder, a sub-folder per layer ([0029](../decisions/0029-a-slice-holds-its-own-layers.md)): `<slice>/ui/<form>/`, `<slice>/interface/` (route and its types), `<slice>/application/` (handler, validator). **Shared**, beside the slices: `model`, `infrastructure`, `migration` and the router in the domain's `interface/`.
+- `client/` and `events/` sit beside the slices; `SLICE-PLACE` accepts them.
 - Names come from the registry (`aidlc name slice`); paths and layer names are pack data.
 
 # Declared

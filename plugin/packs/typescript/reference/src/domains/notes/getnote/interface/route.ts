@@ -1,6 +1,6 @@
 // The getnote slice's route: it runs the slice's handler and answers with the note.
 import type { ServerResponse } from 'node:http';
-import { getNote, type Repository } from '../application/getnote/handler.ts';
+import { getNote, type Repository } from '../application/handler.ts';
 
 export async function getnoteRoute(notes: Repository, name: string, res: ServerResponse) {
   try {

@@ -11,8 +11,8 @@ generated: { by: tests/diagrams.mjs }
 | vertical slice | the code of one use case, a command or a query, cutting through every horizontal layer it needs; it names the use case it serves | a user story, cut through all layers | a `Command` or `Query` line of its domain doc's `# Surface` |
 | command | a use case that changes state | - | a `Command` line of `# Surface` |
 | query | a use case that reads state, answering with a view | - | a `Query` line of `# Surface` |
-| route | a slice's entry in its domain's interface layer | - | `interface/<slice>` |
-| handler | a slice's use case code, with its validator | - | `application/<slice>/` |
+| route | a slice's entry, its interface layer, which its domain's router mounts | - | `<slice>/interface/` |
+| handler | a slice's use case code, with its validator | - | `<slice>/application/` |
 | declaration | what a slice states in one grammar: its cuts, then its data, entry, permission, async, emits, consumes and calls | - | a domain doc's `# Surface` line, a unit of work's `Slices` line |
 | cut | a layer a vertical slice cuts through, from the stack pack's `slicePaths` | - | a slice's declaration |
 | entry | the runtime serving a slice, and what it applies to each | - | a slice's `entry` |

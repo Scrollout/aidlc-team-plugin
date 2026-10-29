@@ -8,8 +8,8 @@ import (
 	"net/http"
 
 	opinfra "example.com/controlplane/internal/domains/operations/infrastructure"
-	"example.com/controlplane/internal/domains/resources/application/createresource"
-	"example.com/controlplane/internal/domains/resources/application/deleteresource"
+	createresource "example.com/controlplane/internal/domains/resources/createresource/application"
+	deleteresource "example.com/controlplane/internal/domains/resources/deleteresource/application"
 	"example.com/controlplane/internal/domains/resources/events"
 	"example.com/controlplane/internal/domains/resources/infrastructure"
 	"example.com/controlplane/internal/foundation/values"

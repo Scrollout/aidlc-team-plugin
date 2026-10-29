@@ -1,4 +1,4 @@
-// Package interface is the operations domain's routes: the getoperation slice's answers, its status and its result.
+// Package iface is the getoperation slice's interface layer: its answers, its status and its result.
 package iface
 
 import (

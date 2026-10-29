@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"example.com/reference/internal/domains/notes/application/createnote"
-	"example.com/reference/internal/domains/notes/application/getnote"
+	createnote "example.com/reference/internal/domains/notes/createnote/application"
+	getnote "example.com/reference/internal/domains/notes/getnote/application"
 	"example.com/reference/internal/domains/notes/events"
 	"example.com/reference/internal/domains/notes/model"
 )

@@ -236,13 +236,17 @@ plug('sliceDeclaration', { parse: declarationOf, problems: declarationProblems, 
 // entered from its domain's interface layer or a runtime, listed with its use case and stories in the domain doc, and
 // tested (docs/design/vertical-slices.md). Returns [{ code, path, key, data }].
 const V = config.slices;
+// A domain's layout (decision 0029): shared parts (slicePaths outside a slice, surfaces) beside slices, each with its layers.
+const layersOf = (m) => Object.values(m.slicePaths).filter((p) => !p.includes('{{slice}}') && p.startsWith('{{dir}}/')).map((p) => p.split('/')[1]), sharedOf = (m) => [...layersOf(m), ...Object.values(m.surfaces)];
+const ownOf = (m) => [...new Set(Object.values(m.slicePaths).filter((p) => p.includes('{{slice}}')).map((p) => p.slice(m.sliceFolder.length + 1).split('/')[0]))];
+const slicesIn = (root, dir, shared, own) => (existsSync(join(root, dir)) ? readdirSync(join(root, dir)).filter((n) => !shared.includes(n) && own.some((l) => existsSync(join(root, dir, n, l)))) : []);
 export function sliceFindings(root, profile) {
   const pack = packFor(root);
   if (!pack) return [];
   const m = pack.manifest, L = m.layers, out = [], add = (code, path, key, data) => out.push({ code, path, key, data });
   const files = sources(root, m), tests = sources(root, m, true), edges = importEdges(root, m, files), testEdges = importEdges(root, m, tests);
   const entryLayers = V.entryLayers.map((l) => L[l]), hosts = V.entryKinds.map((k) => m.folders[k].split('{{')[0]);
-  const placed = [...Object.values(L), ...Object.values(m.surfaces)];
+  const shared = sharedOf(m), own = ownOf(m);
   // Each intent's stories and the modules of their units of work, from the elaboration checks' seam.
   const bundle = bundleOf(root, withDefaults(profile)), plan = readPlan(bundle), held = new Set(), owed = new Map(), methods = new Map(plan.intents.map((i) => [i.id, methodOf(i)]));
   for (const i of plan.intents) {
@@ -254,14 +258,11 @@ export function sliceFindings(root, profile) {
   }
   const slices = [];
   for (const d of (profile.modules ?? []).filter((x) => x.kind === 'domain').map((x) => String(x.id ?? x.name))) {
-    const dir = render(m.folders.domain, { domain: d }), app = `${dir}/${L.application}`;
+    const dir = render(m.folders.domain, { domain: d }), folders = slicesIn(root, dir, shared, own);
     if (!existsSync(join(root, dir))) continue;
-    const mine = [...files, ...tests].filter((f) => f.startsWith(`${dir}/`));
-    for (const f of mine.filter((f) => !placed.includes(f.slice(dir.length + 1).split('/')[0]))) add('SLICE-PLACE', f, 'slicePlace', { file: f, domain: d, layers: placed.join(', ') });
-    for (const f of mine.filter((f) => dirname(f) === app)) add('SLICE-PLACE', f, 'sliceLoose', { file: f, application: app });
-    const folders = existsSync(join(root, app)) ? readdirSync(join(root, app)).filter((n) => statSync(join(root, app, n)).isDirectory()) : [];
-    for (const name of folders) slices.push({ domain: d, name, dir: `${app}/${name}`, root: dir });
-    for (const folder of [...folders.map((n) => `${app}/${n}`), ...Object.values(L).map((l) => `${dir}/${l}`).filter((p) => existsSync(join(root, p)))]) if (!files.some((f) => f.startsWith(`${folder}/`))) add('SLICE-PLACE', folder, 'sliceEmpty', { folder });
+    for (const f of [...files, ...tests].filter((f) => f.startsWith(`${dir}/`))) { const [top, layer] = f.slice(dir.length + 1).split('/'); if (!shared.includes(top) && !(folders.includes(top) && own.includes(layer))) add('SLICE-PLACE', f, 'slicePlace', { file: f, domain: d, shared: shared.join(', '), layers: own.join(', ') }); }
+    for (const name of folders) slices.push({ domain: d, name, dir: render(m.sliceFolder, { dir, slice: name }), root: dir });
+    for (const folder of [...slices.filter((x) => x.root === dir).map((x) => x.dir), ...layersOf(m).map((l) => `${dir}/${l}`).filter((p) => existsSync(join(root, p)))]) if (!files.some((f) => f.startsWith(`${folder}/`))) add('SLICE-PLACE', folder, 'sliceEmpty', { folder });
     const doc = join(bundle, config.okf.bundle.folders.Domain, `${d}${config.okf.ext}`);
     if (!existsSync(doc)) continue;
     const line = new RegExp(`^\\s*[-*]\\s+(?:${V.kinds.join('|')})\\s+(${V.name})\\s*(\\([^)]*\\))?:\\s*(.*)$`), rel = posix(relative(root, doc));
@@ -350,10 +351,10 @@ plug('planRules', ({ bundle, units, merged, add, profile, base }) => {
 function deliverFindings(tree, profile, paths, unit) {
   const pack = packFor(tree);
   if (!pack) return [];
-  const m = pack.manifest, L = m.layers, out = [], hosts = V.entryKinds.map((k) => m.folders[k].split('{{')[0]);
+  const m = pack.manifest, L = m.layers, out = [], hosts = V.entryKinds.map((k) => m.folders[k].split('{{')[0]), shared = sharedOf(m);
   for (const d of (profile.modules ?? []).filter((x) => x.kind === 'domain').map((x) => String(x.id ?? x.name))) {
-    const dir = render(m.folders.domain, { domain: d }), app = `${dir}/${L.application}`, doc = posix(relative(tree, join(bundleOf(tree, withDefaults(profile)), config.okf.bundle.folders.Domain, `${d}${config.okf.ext}`)));
-    const added = [...new Set(paths.filter((p) => p.startsWith(`${app}/`) && p.split('/').length > app.split('/').length + 1).map((p) => p.split('/').slice(0, app.split('/').length + 1).join('/')))].filter((s) => tryGit(tree, 'cat-file', '-e', `HEAD:${s}`) === null);
+    const dir = render(m.folders.domain, { domain: d }), doc = posix(relative(tree, join(bundleOf(tree, withDefaults(profile)), config.okf.bundle.folders.Domain, `${d}${config.okf.ext}`)));
+    const added = [...new Set(paths.filter((p) => p.startsWith(`${dir}/`)).map((p) => p.slice(dir.length + 1).split('/')).filter((x) => x.length > 1 && !shared.includes(x[0])).map((x) => render(m.sliceFolder, { dir, slice: x[0] })))].filter((s) => tryGit(tree, 'cat-file', '-e', `HEAD:${s}`) === null);
     for (const s of added) {
       const slice = `${d}/${s.split('/').at(-1)}`, layers = V.entryLayers.map((l) => `${dir}/${L[l]}/`);
       if (!paths.some((p) => layers.some((l) => p.startsWith(l)) || hosts.some((h) => p.startsWith(h)))) out.push({ code: 'SLICE-DELIVER', path: s, key: 'sliceDeliverRoute', data: { slice, layers: layers.join(', ') } });
@@ -362,10 +363,10 @@ function deliverFindings(tree, profile, paths, unit) {
   }
   const { domains, horizontal } = unit ? bindingOf(unit, profile) : { domains: [], horizontal: [] };
   for (const s of domains.length === 1 && !horizontal.length ? list(unit.fm.slices) : []) {
-    const folder = `${render(m.folders.domain, { domain: domains[0] })}/${L.application}/${s}`;
+    const folder = render(m.sliceFolder, { dir: render(m.folders.domain, { domain: domains[0] }), slice: s });
     if (!paths.some((p) => p.startsWith(`${folder}/`))) out.push({ code: 'SLICE-DELIVER', path: folder, key: 'sliceDeliverListed', data: { slice: `${domains[0]}/${s}`, unit: unit.id } });
     // A slice is delivered whole: each layer it cuts changes, its own code under its name or the shared layer's folder.
-    for (const cut of m.slicePaths ? (declaredCuts(tree, profile, domains[0], s) ?? []).filter((c) => m.slicePaths[c] && c !== L.application) : []) {
+    for (const cut of m.slicePaths ? (declaredCuts(tree, profile, domains[0], s) ?? []).filter((c) => m.slicePaths[c]) : []) {
       const at = cutPath(m, domains[0], s, cut);
       if (!changes(paths, at)) out.push({ code: 'SLICE-DELIVER', path: at, key: 'sliceDeliverCut', data: { slice: `${domains[0]}/${s}`, cut, unit: unit.id } });
     }

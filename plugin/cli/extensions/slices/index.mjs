@@ -192,7 +192,9 @@ plug('layerOf', (root, profile, path) => {
   const mod = moduleGlobs.get(profile).find((x) => x.globs.some((g) => g.test(path) || g.test(`${path}/`)))?.mod;
   if (!mod) return null;
   const [stacks] = seam('sliceDeclaration', profile), m = stacks?.pack(root)?.manifest, dir = m && mod.kind === 'domain' ? render(m.folders.domain, { domain: idOf(mod) }) : null;
-  return (dir && Object.keys(m.layers).find((l) => under(path, `${dir}/${m.layers[l]}`))) || mod.kind || null;
+  // A domain's shared part, or a slice's layer, the segment after its slice folder (decision 0029).
+  const seg = dir && under(path, dir) ? path.slice(dir.length + 1).split('/') : [], named = (x) => Object.keys(m.layers).find((l) => m.layers[l] === x);
+  return named(seg[0]) || named(seg[1]) || mod.kind || null;
 });
 
 // The slice checks over the whole tree, for check --tree; at the gate, as the stacks' slice checks, only findings

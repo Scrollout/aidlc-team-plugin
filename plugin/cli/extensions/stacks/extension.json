@@ -13,8 +13,7 @@
       "sliceImport": "slice {{from}} imports slice {{to}}: slices meet only through interfaces, integration events or shared domain services",
       "sliceEntry": "{{from}} imports slice {{slice}}, which only its domain's {{layers}} layer or a {{kinds}} module may enter",
       "sliceUnreached": "slice {{slice}} is entered from nowhere: no {{layers}} layer or {{kinds}} module imports it",
-      "slicePlace": "{{file}} sits in no layer of domain {{domain}} ({{layers}})",
-      "sliceLoose": "{{file}} sits in {{application}} but in no slice folder",
+      "slicePlace": "{{file}} sits in no shared part of domain {{domain}} ({{shared}}) and in no layer of a slice folder ({{layers}})",
       "sliceEmpty": "{{folder}} holds no source file",
       "sliceSurface": "domain {{domain}}: slice {{slice}} is {{where}}",
       "sliceSurfaceFolder": "a folder but not a command or query under # Surface",
@@ -120,7 +119,7 @@
         },
         "SLICE-PLACE": {
           "level": "error",
-          "fix": "put each file of a domain in one of its layers, each file of its application layer in one slice folder, and leave no folder empty (docs: Vertical slices checked)"
+          "fix": "put each file of a domain in one of its shared parts or in a layer folder of one slice, <domain>/<slice>/<layer>, and leave no folder empty (docs: Vertical slices checked)"
         },
         "SLICE-SURFACE": {
           "level": "error",

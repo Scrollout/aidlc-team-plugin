@@ -17,12 +17,13 @@
   "stringLiteral": "([\"'`])((?:\\\\.|(?!\\1)[^\\\\])*)\\1",
   "folders": { "domain": "internal/domains/{{domain}}", "pipeline": "internal/pipeline/{{stage}}", "foundation": "internal/foundation/{{kit}}", "adapter": "internal/adapters/{{system}}", "runtime": "cmd/{{deployable}}" },
   "layers": { "ui": "ui", "interface": "interface", "application": "application", "model": "model", "infrastructure": "infrastructure" },
-  "slicePaths": { "ui.cli": "{{dir}}/ui/cli/{{slice}}", "ui.template": "{{dir}}/ui/template/{{slice}}", "interface": "{{dir}}/interface/{{slice}}.go", "application": "{{dir}}/application/{{slice}}", "model": "{{dir}}/model", "infrastructure": "{{dir}}/infrastructure", "migration": "migrations/{{domain}}" },
+  "sliceFolder": "{{dir}}/{{slice}}",
+  "slicePaths": { "ui.cli": "{{dir}}/{{slice}}/ui/cli", "ui.template": "{{dir}}/{{slice}}/ui/template", "interface": "{{dir}}/{{slice}}/interface", "application": "{{dir}}/{{slice}}/application", "model": "{{dir}}/model", "infrastructure": "{{dir}}/infrastructure", "migration": "migrations/{{domain}}" },
   "surfaces": { "client": "client", "events": "events", "server": "interface" },
   "migrations": "migrations/{{domain}}",
   "scaffold": {
     "domain": [["domain/model.go", "{{dir}}/model/{{singular}}.go"], ["domain/events.go", "{{dir}}/events/events.go"], ["domain/client.go", "{{dir}}/client/client.go"], ["domain/infrastructure.go", "{{dir}}/infrastructure/infrastructure.go"], ["domain/interface.go", "{{dir}}/interface/interface.go"], ["domain/migration.sql", "migrations/{{domain}}/0001_create_{{domain}}.sql"]],
-    "slice": [["slice/command.go", "{{dir}}/ui/cli/{{operation}}/command.go", "ui.cli"], ["slice/command_test.go", "{{dir}}/ui/cli/{{operation}}/command_test.go", "ui.cli"], ["slice/schema.json", "{{dir}}/ui/template/{{operation}}/schema.json", "ui.template"], ["slice/template_test.go", "{{dir}}/ui/template/{{operation}}/template_test.go", "ui.template"], ["slice/route.go", "{{dir}}/interface/{{operation}}.go", "interface"], ["slice/route_test.go", "{{dir}}/interface/{{operation}}_test.go", "interface"], ["slice/handler.go", "{{dir}}/application/{{operation}}/handler.go", "application"], ["slice/handler_test.go", "{{dir}}/application/{{operation}}/handler_test.go", "application"]],
+    "slice": [["slice/command.go", "{{dir}}/{{operation}}/ui/cli/command.go", "ui.cli"], ["slice/command_test.go", "{{dir}}/{{operation}}/ui/cli/command_test.go", "ui.cli"], ["slice/schema.json", "{{dir}}/{{operation}}/ui/template/schema.json", "ui.template"], ["slice/template_test.go", "{{dir}}/{{operation}}/ui/template/template_test.go", "ui.template"], ["slice/route.go", "{{dir}}/{{operation}}/interface/route.go", "interface"], ["slice/route_test.go", "{{dir}}/{{operation}}/interface/route_test.go", "interface"], ["slice/handler.go", "{{dir}}/{{operation}}/application/handler.go", "application"], ["slice/handler_test.go", "{{dir}}/{{operation}}/application/handler_test.go", "application"]],
     "foundation": [["foundation.go", "{{dir}}/{{kit}}.go"]],
     "pipeline": [["pipeline.go", "{{dir}}/{{stage}}.go"]],
     "adapter": [["adapter.go", "{{dir}}/{{system}}.go"]],
@@ -30,5 +31,5 @@
   },
   "compileError": "\\[(build|setup) failed\\]",
   "eventType": "Type\\s*=\\s*\"([^\"]+)\"",
-  "reference": { "domain": "reference/internal/domains/notes", "command": "reference/internal/domains/notes/application/createnote", "query": "reference/internal/domains/notes/application/getnote" }
+  "reference": { "domain": "reference/internal/domains/notes", "command": "reference/internal/domains/notes/createnote", "query": "reference/internal/domains/notes/getnote" }
 }
